@@ -44,6 +44,7 @@ export const RankingQuestion = ({
   const [sortedItems, setSortedItems] = useState<Array<{ id: string; label: string }>>([]);
   const [unsortedItems, setUnsortedItems] = useState<Array<{ id: string; label: string }>>([]);
   const [error, setError] = useState<string | null>(null);
+
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -67,9 +68,23 @@ export const RankingQuestion = ({
 
   const handleItemClick = useCallback(
     (item: { id: string; label: string }) => {
-      const updatedSortedItems = [...sortedItems, item];
+      const isAlreadySorted = sortedItems.find((sortedItem) => sortedItem.id === item.id);
+
+      let updatedSortedItems;
+      let updatedUnsortedItems;
+
+      if (isAlreadySorted) {
+        // Item is already sorted, remove it from sortedItems and add to unsortedItems
+        updatedSortedItems = sortedItems.filter((sortedItem) => sortedItem.id !== item.id);
+        updatedUnsortedItems = [...unsortedItems, item];
+      } else {
+        // Item is not sorted, add it to sortedItems and remove from unsortedItems
+        updatedSortedItems = [...sortedItems, item];
+        updatedUnsortedItems = unsortedItems.filter((unsortedItem) => unsortedItem.id !== item.id);
+      }
+
       setSortedItems(updatedSortedItems);
-      setUnsortedItems(unsortedItems.filter((i) => i.id !== item.id));
+      setUnsortedItems(updatedUnsortedItems);
       onChange({ [question.id]: updatedSortedItems.map((i) => i.id) });
       setError(null);
     },
@@ -85,6 +100,7 @@ export const RankingQuestion = ({
       const [movedItem] = newSortedItems.splice(index, 1);
       const newIndex =
         direction === "up" ? Math.max(0, index - 1) : Math.min(newSortedItems.length, index + 1);
+
       newSortedItems.splice(newIndex, 0, movedItem);
 
       setSortedItems(newSortedItems);
@@ -122,84 +138,91 @@ export const RankingQuestion = ({
           <div className="fb-mt-4">
             <fieldset>
               <legend className="fb-sr-only">Ranking Items</legend>
-              {[...sortedItems, ...unsortedItems].map((item, idx) => {
-                const isSorted = sortedItems.includes(item);
-                const isFirst = isSorted && idx === 0;
-                const isLast = isSorted && idx === sortedItems.length - 1;
+              <div className="fb-relative">
+                {[...sortedItems, ...unsortedItems].map((item, idx) => {
+                  const isSorted = sortedItems.includes(item);
+                  const isFirst = isSorted && idx === 0;
+                  const isLast = isSorted && idx === sortedItems.length - 1;
 
-                return (
-                  <div
-                    key={item.id}
-                    tabIndex={idx + 1}
-                    onClick={() => !isSorted && handleItemClick(item)}
-                    className={cn(
-                      "fb-flex fb-items-center fb-mb-2 fb-pl-4 fb-border fb-border-border fb-transition-all fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer focus:fb-outline-none",
-                      isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
-                    )}
-                    autoFocus={idx === 0 && autoFocusEnabled}>
-                    <span
+                  return (
+                    <div
+                      key={item.id}
+                      tabIndex={idx + 1}
                       className={cn(
-                        "fb-mr-6 fb-w-6 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand",
-                        isSorted ? "fb-bg-brand fb-text-white" : "fb-border-dashed hover:fb-bg-brand"
-                      )}>
-                      {isSorted ? (idx + 1).toString() : ""}
-                    </span>
-                    <div className="fb-flex-grow fb-py-5 fb-font-medium fb-text-sm">{item.label}</div>
-                    {isSorted && (
-                      <div className="fb-ml-auto fb-flex fb-flex-col fb-border-l fb-border-brand">
-                        <button
-                          type="button"
-                          onClick={() => handleMove(item.id, "up")}
+                        "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer focus:fb-outline-none fb-transform fb-duration-500 fb-ease-in-out",
+                        isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
+                      )}
+                      autoFocus={idx === 0 && autoFocusEnabled}>
+                      <div
+                        className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group"
+                        onClick={() => handleItemClick(item)}>
+                        <span
                           className={cn(
-                            "fb-py-0.5 fb-px-2",
-                            isFirst
-                              ? "fb-opacity-30 fb-cursor-not-allowed"
-                              : "hover:fb-bg-bg-opacity-50 fb-rounded-custom"
-                          )}
-                          disabled={isFirst}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-chevron-up">
-                            <path d="m18 15-6-6-6 6" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleMove(item.id, "down")}
-                          className={cn(
-                            "fb-py-1 fb-px-2 fb-border-t fb-border-brand",
-                            isLast
-                              ? "fb-opacity-30 fb-cursor-not-allowed"
-                              : "hover:fb-bg-bg-opacity-50 fb-rounded-custom"
-                          )}
-                          disabled={isLast}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-chevron-down">
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
-                        </button>
+                            "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
+                            isSorted
+                              ? "fb-bg-brand fb-text-white fb-border"
+                              : "fb-border-dashed group-hover:fb-bg-white fb-text-transparent group-hover:fb-text-heading"
+                          )}>
+                          {(idx + 1).toString()}
+                        </span>
+                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm">{item.label}</div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {isSorted && (
+                        <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
+                          <button
+                            type="button"
+                            onClick={() => handleMove(item.id, "up")}
+                            className={cn(
+                              "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
+                              isFirst
+                                ? "fb-opacity-30 fb-cursor-not-allowed"
+                                : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
+                            )}
+                            disabled={isFirst}>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="lucide lucide-chevron-up">
+                              <path d="m18 15-6-6-6 6" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMove(item.id, "down")}
+                            className={cn(
+                              "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
+                              isLast
+                                ? "fb-opacity-30 fb-cursor-not-allowed"
+                                : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
+                            )}
+                            disabled={isLast}>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="lucide lucide-chevron-down">
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </fieldset>
           </div>
           {error && <div className="fb-text-red-500 fb-mt-2">{error}</div>}
