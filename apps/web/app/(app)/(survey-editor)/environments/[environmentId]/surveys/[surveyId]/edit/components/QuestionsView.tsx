@@ -1,7 +1,6 @@
 "use client";
 
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
-import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
 import {
   DndContext,
   DragEndEvent,
@@ -434,12 +433,12 @@ export const QuestionsView = ({
           activeQuestionId={activeQuestionId}
         />
 
-        <SurveyVariablesCard
+        {/* <SurveyVariablesCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           activeQuestionId={activeQuestionId}
           setActiveQuestionId={setActiveQuestionId}
-        />
+        /> */}
 
         <MultiLanguageCard
           localSurvey={localSurvey}
