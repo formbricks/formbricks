@@ -114,7 +114,7 @@ export const getResponsesByPersonId = reactCache(
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
             orderBy: {
-              updatedAt: "asc",
+              createdAt: "desc",
             },
           });
 
