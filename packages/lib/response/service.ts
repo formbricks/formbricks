@@ -498,6 +498,38 @@ export const getSurveySummary = reactCache(
     )()
 );
 
+export const getLogicEditorData = async (surveyId: string) => {
+  validateInputs([surveyId, ZId]);
+
+  try {
+    const survey = await getSurvey(surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    const batchSize = 3000;
+    const responseCount = await getResponseCountBySurveyId(surveyId);
+    const pages = Math.ceil(responseCount / batchSize);
+
+    const responsesArray = await Promise.all(
+      Array.from({ length: pages }, (_, i) => {
+        return getResponses(surveyId, batchSize, i * batchSize);
+      })
+    );
+    const responses = responsesArray.flat();
+
+    const { hiddenFields, userAttributes } = extractSurveyDetails(survey, responses);
+
+    return { hiddenFields, userAttributes };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
 export const getResponseDownloadUrl = async (
   surveyId: string,
   format: "csv" | "xlsx",

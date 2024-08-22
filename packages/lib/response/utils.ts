@@ -428,9 +428,10 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
     return `${idx + 1}. ${headline}`;
   });
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
-  const userAttributes = Array.from(
-    new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat())
-  );
+  const userAttributes =
+    survey.type === "app"
+      ? Array.from(new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat()))
+      : [];
 
   return { metaDataFields, questions, hiddenFields, userAttributes };
 };

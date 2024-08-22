@@ -1,5 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react";
-import { InputCombobox } from "./InputCombobox";
+import { InputCombobox } from "./index";
 
 const meta = {
   title: "UI/InputCombobox",
@@ -38,7 +38,7 @@ export const Default: Story = {
     selected: null,
     onChangeValue: (option) => console.log(option),
     withInput: false,
-    size: "lg",
+    comboboxSize: "lg",
     allowMultiSelect: false,
   },
 };
@@ -88,6 +88,6 @@ export const MultiSelect: Story = {
 export const SmallSize: Story = {
   args: {
     ...Default.args,
-    size: "sm",
+    comboboxSize: "sm",
   },
 };

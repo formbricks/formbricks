@@ -13,22 +13,24 @@ import {
 import { Select, SelectContent, SelectTrigger } from "@formbricks/ui/Select";
 
 interface AdvancedLogicEditorConditions {
-  logicItem: TSurveyAdvancedLogic;
+  conditions: TSurveyAdvancedLogic["conditions"];
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
   questionIdx: number;
   logicIdx: number;
+  hiddenFields: string[];
+  userAttributes: string[];
 }
 
 export function AdvancedLogicEditorConditions({
-  logicItem,
+  conditions,
   logicIdx,
   question,
   questionIdx,
   updateQuestion,
+  hiddenFields,
+  userAttributes,
 }: AdvancedLogicEditorConditions) {
-  const conditions = logicItem.conditions;
-
   const handleAddConditionBelow = (resourceId: string, condition: TConditionBase) => {
     const advancedLogicCopy = structuredClone(question.advancedLogic);
 
@@ -105,12 +107,14 @@ export function AdvancedLogicEditorConditions({
               </div>
               <div className="w-full rounded-lg border border-slate-200 bg-slate-100 p-4">
                 <AdvancedLogicEditorConditions
+                  conditions={condition.conditions}
                   key={id}
-                  logicItem={condition}
                   updateQuestion={updateQuestion}
                   question={question}
                   questionIdx={questionIdx}
                   logicIdx={logicIdx}
+                  hiddenFields={hiddenFields}
+                  userAttributes={userAttributes}
                 />
               </div>
               <div className="mt-1">
@@ -165,6 +169,7 @@ export function AdvancedLogicEditorConditions({
                   onClick={() => {
                     handleAddConditionBelow(id, {
                       id: createId(),
+
                       connector: "and",
                     });
                   }}>

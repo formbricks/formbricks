@@ -9,7 +9,7 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getLogicEditorData, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
@@ -33,6 +33,7 @@ const Page = async ({ params }) => {
     organization,
     session,
     segments,
+    { hiddenFields, userAttributes },
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getProductByEnvironmentId(params.environmentId),
@@ -43,6 +44,7 @@ const Page = async ({ params }) => {
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
     getSegments(params.environmentId),
+    getLogicEditorData(params.surveyId),
   ]);
   if (!session) {
     throw new Error("Session not found");
@@ -87,6 +89,8 @@ const Page = async ({ params }) => {
       plan={organization.billing.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
+      hiddenFields={hiddenFields}
+      userAttributes={userAttributes}
     />
   );
 };

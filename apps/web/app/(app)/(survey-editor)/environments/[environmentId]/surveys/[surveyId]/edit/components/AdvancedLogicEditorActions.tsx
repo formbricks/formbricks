@@ -1,22 +1,46 @@
+import {
+  getOpeartorOptions,
+  getTargetOptions,
+  getValueOptions,
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { removeAction } from "@formbricks/lib/survey/logic/utils";
+import { useMemo } from "react";
+import { actionObjectiveOptions } from "@formbricks/lib/survey/logic/utils";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Select, SelectContent, SelectTrigger } from "@formbricks/ui/Select";
+import { InputCombobox } from "@formbricks/ui/InputCombobox";
 
 interface AdvancedLogicEditorActions {
+  localSurvey: TSurvey;
   logicItem: TSurveyAdvancedLogic;
   handleActionsChange: (action: "delete" | "addBelow" | "duplicate", actionIdx: number) => void;
+  hiddenFields: string[];
+  userAttributes: string[];
+  questionIdx: number;
+  attributeClasses: TAttributeClass[];
 }
 
-export function AdvancedLogicEditorActions({ logicItem, handleActionsChange }: AdvancedLogicEditorActions) {
+export function AdvancedLogicEditorActions({
+  localSurvey,
+  logicItem,
+  handleActionsChange,
+  hiddenFields,
+  userAttributes,
+  questionIdx,
+  attributeClasses,
+}: AdvancedLogicEditorActions) {
   const actions = logicItem.actions;
+  const transformedSurvey = useMemo(() => {
+    return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
+  }, [localSurvey, attributeClasses]);
 
   return (
     <div className="">
@@ -26,14 +50,50 @@ export function AdvancedLogicEditorActions({ logicItem, handleActionsChange }: A
           {actions.map((action, idx) => (
             <div className="flex w-full items-center justify-between gap-4">
               <span>{idx === 0 ? "Then" : "and"}</span>
-              <Select>
-                <SelectTrigger></SelectTrigger>
-                <SelectContent></SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger></SelectTrigger>
-                <SelectContent></SelectContent>
-              </Select>
+              <div className="flex grow items-center gap-1">
+                <InputCombobox
+                  key="objective"
+                  showSearch={false}
+                  options={actionObjectiveOptions}
+                  selected={action.objective}
+                  onChangeValue={() => {}}
+                  comboboxClasses="max-w-[200px]"
+                />
+                <InputCombobox
+                  key="target"
+                  showSearch={false}
+                  options={getTargetOptions(transformedSurvey.questions, questionIdx)}
+                  selected={action.objective}
+                  onChangeValue={() => {}}
+                  comboboxClasses="grow"
+                />
+                {action.objective === "calculate" && (
+                  <>
+                    <InputCombobox
+                      key="attribute"
+                      showSearch={false}
+                      options={getOpeartorOptions(action.variableType)}
+                      selected={action.operator}
+                      onChangeValue={() => {}}
+                    />
+                    <InputCombobox
+                      key="value"
+                      withInput={true}
+                      inputProps={{ placeholder: "Value" }}
+                      groupedOptions={getValueOptions(
+                        transformedSurvey.questions,
+                        questionIdx,
+                        hiddenFields,
+                        userAttributes
+                      )}
+                      onChangeValue={() => {}}
+                      comboboxClasses="flex"
+                      comboboxSize="sm"
+                    />
+                  </>
+                )}
+              </div>
+
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <MoreVerticalIcon className="h-4 w-4" />

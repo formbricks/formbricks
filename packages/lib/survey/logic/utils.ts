@@ -1,5 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TConditionBase, TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
+import {
+  TActionBase,
+  TActionObjective,
+  TConditionBase,
+  TSurveyAdvancedLogic,
+} from "@formbricks/types/surveys/logic";
 
 export const performOperationsOnConditions = (action, advancedLogicCopy, logicIdx, resourceId, condition) => {
   const logicItem = advancedLogicCopy[logicIdx];
@@ -120,3 +125,9 @@ export const createGroupFromResource = (group: TSurveyAdvancedLogic["conditions"
     if (type === "group") createGroupFromResource(group[i].conditions, resourceId);
   }
 };
+
+export const actionObjectiveOptions: { label: string; value: TActionObjective }[] = [
+  { label: "Calculate", value: TActionObjective.Calculate },
+  { label: "Require Answer", value: TActionObjective.RequireAnswer },
+  { label: "Jump to question", value: TActionObjective.JumpToQuestion },
+];

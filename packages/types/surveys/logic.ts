@@ -333,25 +333,60 @@ const ZCondition = z.union([
 
 export type TCondition = z.infer<typeof ZCondition>;
 
+export enum TActionObjective {
+  Calculate = "calculate",
+  RequireAnswer = "requireAnswer",
+  JumpToQuestion = "jumpToQuestion",
+}
+
+export const ZActionObjective = z.nativeEnum(TActionObjective);
+
 const ZActionBase = z.object({
   id: z.string().cuid2(),
-  objective: z.enum(["calculate", "requireAnswer", "jumpToQuestion"]),
+  objective: ZActionObjective,
 });
+
+export type TActionBase = z.infer<typeof ZActionBase>;
+
+export enum TActionCalculateVariableType {
+  Number = "number",
+  Text = "text",
+}
+
+export const ZActionCalculateVariableType = z.nativeEnum(TActionCalculateVariableType);
 
 const ZActionCalculateBase = ZActionBase.extend({
   objective: z.literal("calculate"),
   target: z.string(),
+  variableType: ZActionCalculateVariableType,
 });
 
+export enum TActionTextVariableCalculateOperator {
+  Assign = "assign",
+  Concat = "concat",
+}
+
+export const ZActionTextVariableCalculateOperator = z.nativeEnum(TActionTextVariableCalculateOperator);
+
 const ZActionTextVariableCalculate = ZActionCalculateBase.extend({
-  variableType: z.literal("text"),
-  operator: z.enum(["assign", "concat"]),
+  variableType: z.literal(TActionCalculateVariableType.Text),
+  operator: ZActionTextVariableCalculateOperator,
   value: z.string(),
 });
 
+export enum TActionNumberVariableCalculateOperator {
+  Add = "add",
+  Subtract = "subtract",
+  Multiply = "multiply",
+  Divide = "divide",
+  Assign = "assign",
+}
+
+export const ZActionNumberVariableCalculateOperator = z.nativeEnum(TActionNumberVariableCalculateOperator);
+
 const ZActionNumberVariableCalculate = ZActionCalculateBase.extend({
-  variableType: z.literal("number"),
-  operator: z.enum(["add", "subtract", "multiply", "divide", "assign"]),
+  variableType: z.literal(TActionCalculateVariableType.Number),
+  operator: ZActionNumberVariableCalculateOperator,
   value: z.number(),
 });
 
@@ -359,18 +394,16 @@ const ZActionCalculate = z.union([ZActionTextVariableCalculate, ZActionNumberVar
 
 const ZActionRequireAnswer = ZActionBase.extend({
   objective: z.literal("requireAnswer"),
-  target: z.string(),
 });
 
 const ZActionJumpToQuestion = ZActionBase.extend({
   objective: z.literal("jumpToQuestion"),
-  target: z.string(),
 });
 
 const ZAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToQuestion]);
 export type TAction = z.infer<typeof ZAction>;
 
-interface TGroupedConditions {
+export interface TGroupedConditions {
   id: string;
   type: "group";
   connector: TLogicalConnector;

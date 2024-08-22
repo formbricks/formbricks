@@ -13,6 +13,8 @@ interface ConditionalLogicProps {
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   attributeClasses: TAttributeClass[];
+  hiddenFields: string[];
+  userAttributes: string[];
 }
 
 const initialLogicState = {
@@ -32,6 +34,8 @@ export function ConditionalLogic({
   question,
   questionIdx,
   updateQuestion,
+  hiddenFields,
+  userAttributes,
 }: ConditionalLogicProps) {
   const addLogic = () => {
     updateQuestion(questionIdx, {
@@ -59,11 +63,15 @@ export function ConditionalLogic({
           {question.advancedLogic.map((logicItem, logicItemIdx) => (
             <div key={logicItem.id} className="flex items-start gap-2">
               <AdvancedLogicEditor
+                localSurvey={localSurvey}
                 logicItem={logicItem}
                 updateQuestion={updateQuestion}
                 question={question}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
+                userAttributes={userAttributes}
+                hiddenFields={hiddenFields}
+                attributeClasses={attributeClasses}
               />
               <Button
                 className="mt-1 p-0"

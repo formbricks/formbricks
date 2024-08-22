@@ -53,6 +53,8 @@ interface QuestionCardProps {
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
+  hiddenFields: string[];
+  userAttributes: string[];
 }
 
 export const QuestionCard = ({
@@ -73,6 +75,8 @@ export const QuestionCard = ({
   attributeClasses,
   addQuestion,
   isFormbricksCloud,
+  hiddenFields,
+  userAttributes,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -455,6 +459,8 @@ export const QuestionCard = ({
                   localSurvey={localSurvey}
                   updateQuestion={updateQuestion}
                   attributeClasses={attributeClasses}
+                  hiddenFields={hiddenFields}
+                  userAttributes={userAttributes}
                 />
               </Collapsible.CollapsibleContent>
             </Collapsible.Root>

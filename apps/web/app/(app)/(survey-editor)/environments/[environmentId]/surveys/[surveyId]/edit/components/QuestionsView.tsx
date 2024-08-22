@@ -49,6 +49,8 @@ interface QuestionsViewProps {
   isFormbricksCloud: boolean;
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
+  hiddenFields: string[];
+  userAttributes: string[];
 }
 
 export const QuestionsView = ({
@@ -65,6 +67,8 @@ export const QuestionsView = ({
   isFormbricksCloud,
   attributeClasses,
   plan,
+  hiddenFields,
+  userAttributes,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -390,6 +394,8 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
+          hiddenFields={hiddenFields}
+          userAttributes={userAttributes}
         />
       </DndContext>
 

@@ -1,23 +1,32 @@
 import { AdvancedLogicEditorActions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorActions";
 import { AdvancedLogicEditorConditions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorConditions";
 import { removeAction } from "@formbricks/lib/survey/logic/utils";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface AdvancedLogicEditorProps {
+  localSurvey: TSurvey;
   logicItem: TSurveyAdvancedLogic;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
   questionIdx: number;
   logicIdx: number;
+  hiddenFields: string[];
+  userAttributes: string[];
+  attributeClasses: TAttributeClass[];
 }
 
 export function AdvancedLogicEditor({
+  localSurvey,
   logicItem,
   updateQuestion,
   question,
   questionIdx,
   logicIdx,
+  hiddenFields,
+  userAttributes,
+  attributeClasses,
 }: AdvancedLogicEditorProps) {
   const handleActionsChange = (action: "delete" | "addBelow" | "duplicate", actionIdx: number) => {
     const actionsClone = structuredClone(logicItem.actions);
@@ -47,13 +56,23 @@ export function AdvancedLogicEditor({
   return (
     <div className="flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-100 p-4">
       <AdvancedLogicEditorConditions
-        logicItem={logicItem}
+        conditions={logicItem.conditions}
         updateQuestion={updateQuestion}
         question={question}
         questionIdx={questionIdx}
         logicIdx={logicIdx}
+        hiddenFields={hiddenFields}
+        userAttributes={userAttributes}
       />
-      <AdvancedLogicEditorActions logicItem={logicItem} handleActionsChange={handleActionsChange} />
+      <AdvancedLogicEditorActions
+        logicItem={logicItem}
+        handleActionsChange={handleActionsChange}
+        hiddenFields={hiddenFields}
+        localSurvey={localSurvey}
+        userAttributes={userAttributes}
+        questionIdx={questionIdx}
+        attributeClasses={attributeClasses}
+      />
     </div>
   );
 }
