@@ -1,208 +1,206 @@
 "use server";
 
-import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { canUserAccessProduct } from "@formbricks/lib/product/auth";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromProductId,
+  getOrganizationIdFromSegmentId,
+  getOrganizationIdFromSurveyId,
+} from "@formbricks/lib/organization/utils";
 import { getProduct } from "@formbricks/lib/product/service";
 import {
   cloneSegment,
   createSegment,
-  deleteSegment,
-  getSegment,
   resetSegmentInSurvey,
   updateSegment,
 } from "@formbricks/lib/segment/service";
-import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import {
-  deleteSurvey,
-  getSurvey,
-  loadNewSegmentInSurvey,
-  updateSurvey,
-} from "@formbricks/lib/survey/service";
-import { TActionClassInput } from "@formbricks/types/action-classes";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TProduct } from "@formbricks/types/product";
-import { TBaseFilters, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { loadNewSegmentInSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/common";
+import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
+import { ZSurvey } from "@formbricks/types/surveys/types";
 
-export const surveyMutateAction = async (survey: TSurvey): Promise<TSurvey> => {
-  return await updateSurvey(survey);
-};
-
-export const updateSurveyAction = async (survey: TSurvey): Promise<TSurvey> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await canUserAccessSurvey(session.user.id, survey.id);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(survey.environmentId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
-  return await updateSurvey(survey);
-};
-
-export const deleteSurveyAction = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const survey = await getSurvey(surveyId);
-  const { hasDeleteAccess } = await verifyUserRoleAccess(survey!.environmentId, session.user.id);
-  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
-
-  await deleteSurvey(surveyId);
-};
-
-export const refetchProductAction = async (productId: string): Promise<TProduct | null> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await canUserAccessProduct(session.user.id, productId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const product = await getProduct(productId);
-  return product;
-};
-
-export const createBasicSegmentAction = async ({
-  description,
-  environmentId,
-  filters,
-  isPrivate,
-  surveyId,
-  title,
-}: {
-  environmentId: string;
-  surveyId: string;
-  title: string;
-  description?: string;
-  isPrivate: boolean;
-  filters: TBaseFilters;
-}) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  const parsedFilters = ZSegmentFilters.safeParse(filters);
-
-  if (!parsedFilters.success) {
-    const errMsg =
-      parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-    throw new Error(errMsg);
-  }
-
-  const segment = await createSegment({
-    environmentId,
-    surveyId,
-    title,
-    description: description || "",
-    isPrivate,
-    filters,
+export const updateSurveyAction = authenticatedActionClient
+  .schema(ZSurvey)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.id),
+      rules: ["survey", "update"],
+    });
+    return await updateSurvey(parsedInput);
   });
-  surveyCache.revalidate({ id: surveyId });
 
-  return segment;
-};
+const ZRefetchProductAction = z.object({
+  productId: ZId,
+});
 
-export const updateBasicSegmentAction = async (
-  environmentId: string,
-  segmentId: string,
-  data: TSegmentUpdateInput
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const refetchProductAction = authenticatedActionClient
+  .schema(ZRefetchProductAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      rules: ["product", "read"],
+    });
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+    return await getProduct(parsedInput.productId);
+  });
 
-  const { filters } = data;
-  if (filters) {
-    const parsedFilters = ZSegmentFilters.safeParse(filters);
+const ZCreateBasicSegmentAction = z.object({
+  description: z.string().optional(),
+  environmentId: ZId,
+  filters: ZBaseFilters,
+  isPrivate: z.boolean(),
+  surveyId: ZId,
+  title: z.string(),
+});
+
+export const createBasicSegmentAction = authenticatedActionClient
+  .schema(ZCreateBasicSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["segment", "create"],
+    });
+
+    const parsedFilters = ZSegmentFilters.safeParse(parsedInput.filters);
 
     if (!parsedFilters.success) {
       const errMsg =
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
       throw new Error(errMsg);
     }
-  }
 
-  return await updateSegment(segmentId, data);
-};
+    const segment = await createSegment({
+      environmentId: parsedInput.environmentId,
+      surveyId: parsedInput.surveyId,
+      title: parsedInput.title,
+      description: parsedInput.description || "",
+      isPrivate: parsedInput.isPrivate,
+      filters: parsedInput.filters,
+    });
+    surveyCache.revalidate({ id: parsedInput.surveyId });
 
-export const loadNewBasicSegmentAction = async (surveyId: string, segmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  return await loadNewSegmentInSurvey(surveyId, segmentId);
-};
-
-export const cloneBasicSegmentAction = async (segmentId: string, surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  try {
-    const clonedSegment = await cloneSegment(segmentId, surveyId);
-    return clonedSegment;
-  } catch (err: any) {
-    throw new Error(err);
-  }
-};
-
-export const deleteBasicSegmentAction = async (environmentId: string, segmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  const foundSegment = await getSegment(segmentId);
-
-  if (!foundSegment) {
-    throw new Error(`Segment with id ${segmentId} not found`);
-  }
-
-  return await deleteSegment(segmentId);
-};
-
-export const resetBasicSegmentFiltersAction = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  return await resetSegmentInSurvey(surveyId);
-};
-
-export const getImagesFromUnsplashAction = async (searchQuery: string, page: number = 1) => {
-  if (!UNSPLASH_ACCESS_KEY) {
-    throw new Error("Unsplash access key is not set");
-  }
-  const baseUrl = "https://api.unsplash.com/search/photos";
-  const params = new URLSearchParams({
-    query: searchQuery,
-    client_id: UNSPLASH_ACCESS_KEY,
-    orientation: "landscape",
-    per_page: "9",
-    page: page.toString(),
+    return segment;
   });
 
-  try {
+const ZUpdateBasicSegmentAction = z.object({
+  segmentId: ZId,
+  data: ZSegmentUpdateInput,
+});
+
+export const updateBasicSegmentAction = authenticatedActionClient
+  .schema(ZUpdateBasicSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "update"],
+    });
+
+    const { filters } = parsedInput.data;
+    if (filters) {
+      const parsedFilters = ZSegmentFilters.safeParse(filters);
+
+      if (!parsedFilters.success) {
+        const errMsg =
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+        throw new Error(errMsg);
+      }
+    }
+
+    return await updateSegment(parsedInput.segmentId, parsedInput.data);
+  });
+
+const ZLoadNewBasicSegmentAction = z.object({
+  surveyId: ZId,
+  segmentId: ZId,
+});
+
+export const loadNewBasicSegmentAction = authenticatedActionClient
+  .schema(ZLoadNewBasicSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.surveyId),
+      rules: ["segment", "read"],
+    });
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    return await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
+  });
+
+const ZCloneBasicSegmentAction = z.object({
+  segmentId: ZId,
+  surveyId: ZId,
+});
+
+export const cloneBasicSegmentAction = authenticatedActionClient
+  .schema(ZCloneBasicSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "create"],
+    });
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
+
+    return await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
+  });
+
+const ZResetBasicSegmentFiltersAction = z.object({
+  surveyId: ZId,
+});
+
+export const resetBasicSegmentFiltersAction = authenticatedActionClient
+  .schema(ZResetBasicSegmentFiltersAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["segment", "update"],
+    });
+
+    return await resetSegmentInSurvey(parsedInput.surveyId);
+  });
+
+const ZGetImagesFromUnsplashAction = z.object({
+  searchQuery: z.string(),
+  page: z.number().optional(),
+});
+
+export const getImagesFromUnsplashAction = actionClient
+  .schema(ZGetImagesFromUnsplashAction)
+  .action(async ({ parsedInput }) => {
+    if (!UNSPLASH_ACCESS_KEY) {
+      throw new Error("Unsplash access key is not set");
+    }
+    const baseUrl = "https://api.unsplash.com/search/photos";
+    const params = new URLSearchParams({
+      query: parsedInput.searchQuery,
+      client_id: UNSPLASH_ACCESS_KEY,
+      orientation: "landscape",
+      per_page: "9",
+      page: (parsedInput.page || 1).toString(),
+    });
+
     const response = await fetch(`${baseUrl}?${params}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -227,14 +225,16 @@ export const getImagesFromUnsplashAction = async (searchQuery: string, page: num
         },
       };
     });
-  } catch (error) {
-    throw new Error("Error getting images from Unsplash");
-  }
-};
+  });
 
-export const triggerDownloadUnsplashImageAction = async (downloadUrl: string) => {
-  try {
-    const response = await fetch(`${downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
+const ZTriggerDownloadUnsplashImageAction = z.object({
+  downloadUrl: z.string(),
+});
+
+export const triggerDownloadUnsplashImageAction = actionClient
+  .schema(ZTriggerDownloadUnsplashImageAction)
+  .action(async ({ parsedInput }) => {
+    const response = await fetch(`${parsedInput.downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -245,20 +245,20 @@ export const triggerDownloadUnsplashImageAction = async (downloadUrl: string) =>
     }
 
     return;
-  } catch (error) {
-    throw new Error("Error downloading image from Unsplash");
-  }
-};
+  });
 
-export const createActionClassAction = async (environmentId: string, action: TActionClassInput) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZCreateActionClassAction = z.object({
+  action: ZActionClassInput,
+});
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, action.environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const createActionClassAction = authenticatedActionClient
+  .schema(ZCreateActionClassAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.action.environmentId),
+      rules: ["actionClass", "create"],
+    });
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(environmentId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
-  return await createActionClass(action.environmentId, action);
-};
+    return await createActionClass(parsedInput.action.environmentId, parsedInput.action);
+  });

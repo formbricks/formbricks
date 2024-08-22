@@ -53,11 +53,11 @@ export function EditMembershipRole({
 
     try {
       if (memberAccepted && memberId) {
-        await updateMembershipAction(memberId, organizationId, { role });
+        await updateMembershipAction({ userId: memberId, organizationId, data: { role } });
       }
 
       if (inviteId) {
-        await updateInviteAction(inviteId, organizationId, { role });
+        await updateInviteAction({ inviteId: inviteId, organizationId, data: { role } });
       }
     } catch (error) {
       toast.error("Something went wrong");
@@ -71,7 +71,7 @@ export function EditMembershipRole({
     setLoading(true);
     try {
       if (memberId) {
-        await transferOwnershipAction(organizationId, memberId);
+        await transferOwnershipAction({ organizationId, newOwnerId: memberId });
       }
 
       setLoading(false);

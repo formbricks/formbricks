@@ -3,9 +3,13 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyQuestion, TSurveyVariables } from "@formbricks/types/surveys/types";
 
-export const replaceRecallInfo = (text: string, responseData: TResponseData): string => {
+export const replaceRecallInfo = (
+  text: string,
+  responseData: TResponseData,
+  variables: TSurveyVariables
+): string => {
   let modifiedText = text;
 
   while (modifiedText.includes("recall:")) {
@@ -16,7 +20,13 @@ export const replaceRecallInfo = (text: string, responseData: TResponseData): st
     if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
 
     const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-    let value = null;
+    let value: string | null = null;
+
+    // Fetching value from variables based on recallItemId
+    if (variables.length) {
+      const variable = variables.find((variable) => variable.id === recallItemId);
+      value = variable?.value?.toString() ?? fallback;
+    }
 
     // Fetching value from responseData or attributes based on recallItemId
     if (responseData[recallItemId]) {
@@ -42,13 +52,15 @@ export const replaceRecallInfo = (text: string, responseData: TResponseData): st
 export const parseRecallInformation = (
   question: TSurveyQuestion,
   languageCode: string,
-  responseData: TResponseData
+  responseData: TResponseData,
+  variables: TSurveyVariables
 ) => {
   const modifiedQuestion = structuredClone(question);
   if (question.headline && question.headline[languageCode]?.includes("recall:")) {
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.headline, languageCode),
-      responseData
+      responseData,
+      variables
     );
   }
   if (
@@ -58,7 +70,8 @@ export const parseRecallInformation = (
   ) {
     modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.subheader, languageCode),
-      responseData
+      responseData,
+      variables
     );
   }
   return modifiedQuestion;

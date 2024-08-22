@@ -5,7 +5,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";

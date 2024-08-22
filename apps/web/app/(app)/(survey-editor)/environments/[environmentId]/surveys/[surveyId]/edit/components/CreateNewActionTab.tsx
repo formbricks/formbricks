@@ -135,10 +135,14 @@ export const CreateNewActionTab = ({
         };
       }
 
-      const newActionClass: TActionClass = await createActionClassAction(
-        environmentId,
-        updatedAction as TActionClassInput
-      );
+      // const newActionClass: TActionClass =
+      const createActionClassResposne = await createActionClassAction({
+        action: updatedAction as TActionClassInput,
+      });
+
+      if (!createActionClassResposne?.data) return;
+
+      const newActionClass = createActionClassResposne.data;
       if (setActionClasses) {
         setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }

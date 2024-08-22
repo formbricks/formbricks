@@ -1,128 +1,148 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromSegmentId,
+  getOrganizationIdFromSurveyId,
+} from "@formbricks/lib/organization/utils";
 import {
   cloneSegment,
   createSegment,
   deleteSegment,
-  getSegment,
   resetSegmentInSurvey,
   updateSegment,
 } from "@formbricks/lib/segment/service";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import type { TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
-import { ZSegmentFilters } from "@formbricks/types/segment";
+import { ZId } from "@formbricks/types/common";
+import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
-export const createSegmentAction = async ({
-  description,
-  environmentId,
-  filters,
-  isPrivate,
-  surveyId,
-  title,
-}: TSegmentCreateInput) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const createSegmentAction = authenticatedActionClient
+  .schema(ZSegmentCreateInput)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["segment", "create"],
+    });
 
-  const environmentAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  const parsedFilters = ZSegmentFilters.safeParse(filters);
-
-  if (!parsedFilters.success) {
-    const errMsg =
-      parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-    throw new Error(errMsg);
-  }
-
-  const segment = await createSegment({
-    environmentId,
-    surveyId,
-    title,
-    description,
-    isPrivate,
-    filters,
-  });
-
-  return segment;
-};
-
-export const updateSegmentAction = async (
-  environmentId: string,
-  segmentId: string,
-  data: TSegmentUpdateInput
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const environmentAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
-
-  const { filters } = data;
-  if (filters) {
-    const parsedFilters = ZSegmentFilters.safeParse(filters);
+    const parsedFilters = ZSegmentFilters.safeParse(parsedInput.filters);
 
     if (!parsedFilters.success) {
       const errMsg =
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
       throw new Error(errMsg);
     }
-  }
 
-  return await updateSegment(segmentId, data);
-};
+    return await createSegment(parsedInput);
+  });
 
-export const loadNewSegmentAction = async (surveyId: string, segmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZUpdateSegmentAction = z.object({
+  segmentId: ZId,
+  data: ZSegmentUpdateInput,
+});
 
-  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+export const updateSegmentAction = authenticatedActionClient
+  .schema(ZUpdateSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      data: parsedInput.data,
+      schema: ZSegmentUpdateInput,
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "update"],
+    });
 
-  return await loadNewSegmentInSurvey(surveyId, segmentId);
-};
+    const { filters } = parsedInput.data;
+    if (filters) {
+      const parsedFilters = ZSegmentFilters.safeParse(filters);
 
-export const cloneSegmentAction = async (segmentId: string, surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+      if (!parsedFilters.success) {
+        const errMsg =
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+        throw new Error(errMsg);
+      }
+    }
 
-  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+    return await updateSegment(parsedInput.segmentId, parsedInput.data);
+  });
 
-  try {
-    const clonedSegment = await cloneSegment(segmentId, surveyId);
-    return clonedSegment;
-  } catch (err: any) {
-    throw new Error(err);
-  }
-};
+const ZLoadNewSegmentAction = z.object({
+  surveyId: ZId,
+  segmentId: ZId,
+});
 
-export const deleteSegmentAction = async (environmentId: string, segmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const loadNewSegmentAction = authenticatedActionClient
+  .schema(ZLoadNewSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
 
-  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "read"],
+    });
 
-  const foundSegment = await getSegment(segmentId);
+    return await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
+  });
 
-  if (!foundSegment) {
-    throw new Error(`Segment with id ${segmentId} not found`);
-  }
+const ZCloneSegmentAction = z.object({
+  segmentId: ZId,
+  surveyId: ZId,
+});
 
-  return await deleteSegment(segmentId);
-};
+export const cloneSegmentAction = authenticatedActionClient
+  .schema(ZCloneSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["segment", "create"],
+    });
 
-export const resetSegmentFiltersAction = async (surveyId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "create"],
+    });
 
-  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
-  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+    return await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
+  });
 
-  return await resetSegmentInSurvey(surveyId);
-};
+const ZDeleteSegmentAction = z.object({
+  segmentId: ZId,
+});
+
+export const deleteSegmentAction = authenticatedActionClient
+  .schema(ZDeleteSegmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
+      rules: ["segment", "delete"],
+    });
+
+    return await deleteSegment(parsedInput.segmentId);
+  });
+
+const ZResetSegmentFiltersAction = z.object({
+  surveyId: ZId,
+});
+
+export const resetSegmentFiltersAction = authenticatedActionClient
+  .schema(ZResetSegmentFiltersAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    return await resetSegmentInSurvey(parsedInput.surveyId);
+  });
