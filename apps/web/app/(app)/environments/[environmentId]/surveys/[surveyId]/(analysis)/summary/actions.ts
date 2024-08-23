@@ -174,7 +174,7 @@ export const getOpenTextSummaryAction = authenticatedActionClient
     const topics = await clusterDocuments(documents, 3);
 
     const question = survey.questions.find((q) => q.id === parsedInput.questionId);
-    const prompt = `You are an AI research assistant and answer the question: "${question?.headline.default}". Please provide a short summary sentence and provide 3 bullet points for insights you got from these samples:\n${topics.map((t) => t.centralDocument.text).join("\n")}`;
+    const prompt = `You are an AI research assistant and answer the question: "${question?.headline.default}". Please in markdown provide a short summary sentence and provide 3 bullet points for insights you got from these samples including the number of responses for this topic:\n${topics.map((t) => t.centralDocument.text).join("\n")}`;
 
     try {
       const { text } = await generateText({
