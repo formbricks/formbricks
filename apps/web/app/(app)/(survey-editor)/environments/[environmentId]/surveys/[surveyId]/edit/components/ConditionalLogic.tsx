@@ -1,8 +1,11 @@
 import { AdvancedLogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditor";
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowRightIcon, SplitIcon, Trash2Icon } from "lucide-react";
+import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -13,7 +16,6 @@ interface ConditionalLogicProps {
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   attributeClasses: TAttributeClass[];
-  hiddenFields: string[];
   userAttributes: string[];
 }
 
@@ -34,12 +36,36 @@ export function ConditionalLogic({
   question,
   questionIdx,
   updateQuestion,
-  hiddenFields,
   userAttributes,
 }: ConditionalLogicProps) {
+  const transformedSurvey = useMemo(() => {
+    return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
+  }, [localSurvey, attributeClasses]);
+
   const addLogic = () => {
+    const condition: TSurveyAdvancedLogic = {
+      id: createId(),
+      conditions: [
+        {
+          id: createId(),
+          connector: null,
+          type: "question",
+          conditionValue: question.id,
+          questionType: question.type,
+          matchValue: null,
+        },
+      ],
+      actions: [
+        {
+          id: createId(),
+          objective: "jumpToQuestion",
+          target: "",
+        },
+      ],
+    };
+
     updateQuestion(questionIdx, {
-      advancedLogic: [...(question?.advancedLogic || []), initialLogicState],
+      advancedLogic: [...(question?.advancedLogic || []), condition],
     });
   };
 
@@ -63,15 +89,13 @@ export function ConditionalLogic({
           {question.advancedLogic.map((logicItem, logicItemIdx) => (
             <div key={logicItem.id} className="flex items-start gap-2">
               <AdvancedLogicEditor
-                localSurvey={localSurvey}
+                localSurvey={transformedSurvey}
                 logicItem={logicItem}
                 updateQuestion={updateQuestion}
                 question={question}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
                 userAttributes={userAttributes}
-                hiddenFields={hiddenFields}
-                attributeClasses={attributeClasses}
               />
               <Button
                 className="mt-1 p-0"

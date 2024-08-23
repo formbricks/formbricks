@@ -33,7 +33,7 @@ const Page = async ({ params }) => {
     organization,
     session,
     segments,
-    { hiddenFields, userAttributes },
+    { userAttributes },
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getProductByEnvironmentId(params.environmentId),
@@ -89,7 +89,6 @@ const Page = async ({ params }) => {
       plan={organization.billing.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
-      hiddenFields={hiddenFields}
       userAttributes={userAttributes}
     />
   );

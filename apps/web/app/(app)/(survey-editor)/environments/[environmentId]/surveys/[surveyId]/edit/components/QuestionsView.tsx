@@ -1,6 +1,7 @@
 "use client";
 
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
+import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
 import {
   DndContext,
   DragEndEvent,
@@ -49,7 +50,6 @@ interface QuestionsViewProps {
   isFormbricksCloud: boolean;
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
-  hiddenFields: string[];
   userAttributes: string[];
 }
 
@@ -67,7 +67,6 @@ export const QuestionsView = ({
   isFormbricksCloud,
   attributeClasses,
   plan,
-  hiddenFields,
   userAttributes,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
@@ -393,7 +392,6 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
-          hiddenFields={hiddenFields}
           userAttributes={userAttributes}
         />
       </DndContext>
@@ -439,12 +437,12 @@ export const QuestionsView = ({
           activeQuestionId={activeQuestionId}
         />
 
-        {/* <SurveyVariablesCard
+        <SurveyVariablesCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           activeQuestionId={activeQuestionId}
           setActiveQuestionId={setActiveQuestionId}
-        /> */}
+        />
 
         <MultiLanguageCard
           localSurvey={localSurvey}

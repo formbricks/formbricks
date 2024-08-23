@@ -20,7 +20,6 @@ interface QuestionsDraggableProps {
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
-  hiddenFields: string[];
   userAttributes: string[];
 }
 
@@ -40,7 +39,6 @@ export const QuestionsDroppable = ({
   attributeClasses,
   addQuestion,
   isFormbricksCloud,
-  hiddenFields,
   userAttributes,
 }: QuestionsDraggableProps) => {
   return (
@@ -66,7 +64,6 @@ export const QuestionsDroppable = ({
             attributeClasses={attributeClasses}
             addQuestion={addQuestion}
             isFormbricksCloud={isFormbricksCloud}
-            hiddenFields={hiddenFields}
             userAttributes={userAttributes}
           />
         ))}

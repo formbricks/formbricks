@@ -47,7 +47,11 @@ export const ZSurveyLogicCondition = z.enum([
   "isCompletelySubmitted",
 ]);
 
-const ZDyanmicLogicField = z.enum(["question", "variable", "attributeClass", "hiddenField"]);
+export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
+
+export const ZDyanmicLogicField = z.enum(["question", "variable", "attributeClass", "hiddenField"]);
+
+export type TDyanmicLogicField = z.infer<typeof ZDyanmicLogicField>;
 
 const ZMatchValueBase = z.object({
   type: z.enum(["static", "dynamic"]),
@@ -74,8 +78,8 @@ const ZConditionBase = z.object({
   connector: ZLogicalConnector.nullable(),
   type: ZDyanmicLogicField,
   conditionValue: z.string(),
-  conditionOperator: ZSurveyLogicCondition,
-  matchValue: ZMatchValue,
+  conditionOperator: ZSurveyLogicCondition.nullable(),
+  matchValue: ZMatchValue.nullable(),
 });
 
 export type TConditionBase = z.infer<typeof ZConditionBase>;
@@ -85,44 +89,41 @@ const ZConditionQuestionBase = ZConditionBase.extend({
   questionType: z.nativeEnum(TSurveyQuestionTypeEnum),
 });
 
+export type TConditionQuestionBase = z.infer<typeof ZConditionQuestionBase>;
+
 const ZOpenTextConditionBase = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.OpenText),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
 });
 
 const ZOpenTextStringConditon = ZOpenTextConditionBase.extend({
-  inputType: z.enum([
-    ZSurveyOpenTextQuestionInputType.enum.text,
-    ZSurveyOpenTextQuestionInputType.enum.email,
-    ZSurveyOpenTextQuestionInputType.enum.url,
-    ZSurveyOpenTextQuestionInputType.enum.phone,
-  ]),
+  inputType: z.enum(["text", "email", "url", "phone"]),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.contains,
-    ZSurveyLogicCondition.Enum.doesNotContain,
-    ZSurveyLogicCondition.Enum.startsWith,
-    ZSurveyLogicCondition.Enum.doesNotStartWith,
-    ZSurveyLogicCondition.Enum.endsWith,
-    ZSurveyLogicCondition.Enum.doesNotEndWith,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+    "startsWith",
+    "doesNotStartWith",
+    "endsWith",
+    "doesNotEndWith",
+    "isSubmitted",
+    "isSkipped",
   ]),
   matchValue: z.string().optional(),
 });
 
 const ZOpenTextNumberConditon = ZOpenTextConditionBase.extend({
-  inputType: z.literal(ZSurveyOpenTextQuestionInputType.enum.number),
+  inputType: z.literal("number"),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.isGreaterThan,
-    ZSurveyLogicCondition.Enum.isLessThan,
-    ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
-    ZSurveyLogicCondition.Enum.isLessThanOrEqual,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
+    "equals",
+    "doesNotEqual",
+    "isGreaterThan",
+    "isLessThan",
+    "isGreaterThanOrEqual",
+    "isLessThanOrEqual",
+    "isSubmitted",
+    "isSkipped",
   ]),
   matchValue: z.number().optional(),
 });
@@ -131,50 +132,44 @@ const ZOpenTextCondition = z.union([ZOpenTextStringConditon, ZOpenTextNumberCond
 
 const ZMultipleChoiceSingleCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.MultipleChoiceSingle),
-  conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.equalsOneOf,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
-  ]),
+  conditionOperator: z.enum(["equals", "doesNotEqual", "equalsOneOf", "isSubmitted", "isSkipped"]),
 });
 
 const ZMultipleChoiceMultiCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.includesAllOf,
-    ZSurveyLogicCondition.Enum.includesOneOf,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
+    "equals",
+    "doesNotEqual",
+    "includesAllOf",
+    "includesOneOf",
+    "isSubmitted",
+    "isSkipped",
   ]),
 });
 
 const ZPictureSelectionCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.includesAllOf,
-    ZSurveyLogicCondition.Enum.includesOneOf,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
+    "equals",
+    "doesNotEqual",
+    "includesAllOf",
+    "includesOneOf",
+    "isSubmitted",
+    "isSkipped",
   ]),
 });
 
 const ZRatingCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.Rating),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.isGreaterThan,
-    ZSurveyLogicCondition.Enum.isLessThan,
-    ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
-    ZSurveyLogicCondition.Enum.isLessThanOrEqual,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
+    "equals",
+    "doesNotEqual",
+    "isGreaterThan",
+    "isLessThan",
+    "isGreaterThanOrEqual",
+    "isLessThanOrEqual",
+    "isSubmitted",
+    "isSkipped",
   ]),
   matchValue: z.number().optional(),
 });
@@ -182,68 +177,57 @@ const ZRatingCondition = ZConditionQuestionBase.extend({
 const ZNPSCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.NPS),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.isGreaterThan,
-    ZSurveyLogicCondition.Enum.isLessThan,
-    ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
-    ZSurveyLogicCondition.Enum.isLessThanOrEqual,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
+    "equals",
+    "doesNotEqual",
+    "isGreaterThan",
+    "isLessThan",
+    "isGreaterThanOrEqual",
+    "isLessThanOrEqual",
+    "isSubmitted",
+    "isSkipped",
   ]),
   matchValue: z.number().optional(),
 });
 
 const ZCTACondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.CTA),
-  conditionOperator: z.enum([ZSurveyLogicCondition.Enum.isClicked, ZSurveyLogicCondition.Enum.isSkipped]),
+  conditionOperator: z.enum(["isClicked", "isSkipped"]),
   matchValue: z.undefined(),
 });
 
 const ZConsentCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.Consent),
-  conditionOperator: z.enum([ZSurveyLogicCondition.Enum.isAccepted, ZSurveyLogicCondition.Enum.isSkipped]),
+  conditionOperator: z.enum(["isAccepted", "isSkipped"]),
   matchValue: z.undefined(),
 });
 
 const ZDateCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.Date),
-  conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.isBefore,
-    ZSurveyLogicCondition.Enum.isAfter,
-    ZSurveyLogicCondition.Enum.isSubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
-  ]),
+  conditionOperator: z.enum(["equals", "doesNotEqual", "isBefore", "isAfter", "isSubmitted", "isSkipped"]),
   matchValue: z.string().optional(),
 });
 
 const ZFileUploadCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.FileUpload),
-  conditionOperator: z.enum([ZSurveyLogicCondition.Enum.isSubmitted, ZSurveyLogicCondition.Enum.isSkipped]),
+  conditionOperator: z.enum(["isSubmitted", "isSkipped"]),
   matchValue: z.undefined(),
 });
 
 const ZCalCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.Cal),
-  conditionOperator: z.enum([ZSurveyLogicCondition.Enum.isBooked, ZSurveyLogicCondition.Enum.isSkipped]),
+  conditionOperator: z.enum(["isBooked", "isSkipped"]),
   matchValue: z.undefined(),
 });
 
 const ZMatrixCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.Matrix),
-  conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.isPartiallySubmitted,
-    ZSurveyLogicCondition.Enum.isCompletelySubmitted,
-    ZSurveyLogicCondition.Enum.isSkipped,
-  ]),
+  conditionOperator: z.enum(["isPartiallySubmitted", "isCompletelySubmitted", "isSkipped"]),
   matchValue: z.undefined(),
 });
 
 const ZAddressCondition = ZConditionQuestionBase.extend({
   questionType: z.literal(TSurveyQuestionTypeEnum.Address),
-  conditionOperator: z.enum([ZSurveyLogicCondition.Enum.isSubmitted, ZSurveyLogicCondition.Enum.isSkipped]),
+  conditionOperator: z.enum(["isSubmitted", "isSkipped"]),
   matchValue: z.undefined(),
 });
 
@@ -271,26 +255,26 @@ const ZConditionVariableBase = ZConditionBase.extend({
 const ZConditionTextVariable = ZConditionVariableBase.extend({
   variableType: z.literal("text"),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.contains,
-    ZSurveyLogicCondition.Enum.doesNotContain,
-    ZSurveyLogicCondition.Enum.startsWith,
-    ZSurveyLogicCondition.Enum.doesNotStartWith,
-    ZSurveyLogicCondition.Enum.endsWith,
-    ZSurveyLogicCondition.Enum.doesNotEndWith,
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+    "startsWith",
+    "doesNotStartWith",
+    "endsWith",
+    "doesNotEndWith",
   ]),
 });
 
 const ZConditionNumberVariable = ZConditionVariableBase.extend({
   variableType: z.literal("number"),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.isGreaterThan,
-    ZSurveyLogicCondition.Enum.isLessThan,
-    ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
-    ZSurveyLogicCondition.Enum.isLessThanOrEqual,
+    "equals",
+    "doesNotEqual",
+    "isGreaterThan",
+    "isLessThan",
+    "isGreaterThanOrEqual",
+    "isLessThanOrEqual",
   ]),
 });
 
@@ -299,28 +283,28 @@ const ZConditionVariable = z.union([ZConditionTextVariable, ZConditionNumberVari
 const ZConditionAttributeClass = ZConditionBase.extend({
   type: z.literal("attributeClass"),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.contains,
-    ZSurveyLogicCondition.Enum.doesNotContain,
-    ZSurveyLogicCondition.Enum.startsWith,
-    ZSurveyLogicCondition.Enum.doesNotStartWith,
-    ZSurveyLogicCondition.Enum.endsWith,
-    ZSurveyLogicCondition.Enum.doesNotEndWith,
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+    "startsWith",
+    "doesNotStartWith",
+    "endsWith",
+    "doesNotEndWith",
   ]),
 });
 
 const ZConditionHiddenField = ZConditionBase.extend({
   type: z.literal("hiddenField"),
   conditionOperator: z.enum([
-    ZSurveyLogicCondition.Enum.equals,
-    ZSurveyLogicCondition.Enum.doesNotEqual,
-    ZSurveyLogicCondition.Enum.contains,
-    ZSurveyLogicCondition.Enum.doesNotContain,
-    ZSurveyLogicCondition.Enum.startsWith,
-    ZSurveyLogicCondition.Enum.doesNotStartWith,
-    ZSurveyLogicCondition.Enum.endsWith,
-    ZSurveyLogicCondition.Enum.doesNotEndWith,
+    "equals",
+    "doesNotEqual",
+    "contains",
+    "doesNotContain",
+    "startsWith",
+    "doesNotStartWith",
+    "endsWith",
+    "doesNotEndWith",
   ]),
 });
 
@@ -344,6 +328,7 @@ export const ZActionObjective = z.nativeEnum(TActionObjective);
 const ZActionBase = z.object({
   id: z.string().cuid2(),
   objective: ZActionObjective,
+  target: z.string(),
 });
 
 export type TActionBase = z.infer<typeof ZActionBase>;
@@ -371,7 +356,7 @@ export const ZActionTextVariableCalculateOperator = z.nativeEnum(TActionTextVari
 const ZActionTextVariableCalculate = ZActionCalculateBase.extend({
   variableType: z.literal(TActionCalculateVariableType.Text),
   operator: ZActionTextVariableCalculateOperator,
-  value: z.string(),
+  value: z.union([z.string(), ZMatchValueDynamic]),
 });
 
 export enum TActionNumberVariableCalculateOperator {
@@ -387,10 +372,12 @@ export const ZActionNumberVariableCalculateOperator = z.nativeEnum(TActionNumber
 const ZActionNumberVariableCalculate = ZActionCalculateBase.extend({
   variableType: z.literal(TActionCalculateVariableType.Number),
   operator: ZActionNumberVariableCalculateOperator,
-  value: z.number(),
+  value: z.union([z.number(), ZMatchValueDynamic]),
 });
 
-const ZActionCalculate = z.union([ZActionTextVariableCalculate, ZActionNumberVariableCalculate]);
+export const ZActionCalculate = z.union([ZActionTextVariableCalculate, ZActionNumberVariableCalculate]);
+
+export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
 const ZActionRequireAnswer = ZActionBase.extend({
   objective: z.literal("requireAnswer"),

@@ -1,8 +1,8 @@
 import { AdvancedLogicEditorActions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorActions";
 import { AdvancedLogicEditorConditions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorConditions";
+import { createId } from "@paralleldrive/cuid2";
 import { removeAction } from "@formbricks/lib/survey/logic/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
+import { TAction, TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface AdvancedLogicEditorProps {
@@ -12,9 +12,7 @@ interface AdvancedLogicEditorProps {
   question: TSurveyQuestion;
   questionIdx: number;
   logicIdx: number;
-  hiddenFields: string[];
   userAttributes: string[];
-  attributeClasses: TAttributeClass[];
 }
 
 export function AdvancedLogicEditor({
@@ -24,20 +22,27 @@ export function AdvancedLogicEditor({
   question,
   questionIdx,
   logicIdx,
-  hiddenFields,
   userAttributes,
-  attributeClasses,
 }: AdvancedLogicEditorProps) {
-  const handleActionsChange = (action: "delete" | "addBelow" | "duplicate", actionIdx: number) => {
+  const handleActionsChange = (
+    operation: "delete" | "addBelow" | "duplicate" | "update",
+    actionIdx: number,
+    action?: Partial<TAction>
+  ) => {
     const actionsClone = structuredClone(logicItem.actions);
     let updatedActions: TSurveyAdvancedLogic["actions"] = actionsClone;
 
-    if (action === "delete") {
+    if (operation === "delete") {
       updatedActions = removeAction(actionsClone, actionIdx);
-    } else if (action === "addBelow") {
-      updatedActions.splice(actionIdx + 1, 0, { objective: "" });
-    } else if (action === "duplicate") {
+    } else if (operation === "addBelow") {
+      updatedActions.splice(actionIdx + 1, 0, { id: createId(), objective: "jumpToQuestion", target: "" });
+    } else if (operation === "duplicate") {
       updatedActions.splice(actionIdx + 1, 0, actionsClone[actionIdx]);
+    } else if (operation === "update") {
+      updatedActions[actionIdx] = {
+        ...updatedActions[actionIdx],
+        ...action,
+      };
     }
 
     updateQuestion(questionIdx, {
@@ -60,18 +65,16 @@ export function AdvancedLogicEditor({
         updateQuestion={updateQuestion}
         question={question}
         questionIdx={questionIdx}
+        localSurvey={localSurvey}
         logicIdx={logicIdx}
-        hiddenFields={hiddenFields}
         userAttributes={userAttributes}
       />
       <AdvancedLogicEditorActions
         logicItem={logicItem}
         handleActionsChange={handleActionsChange}
-        hiddenFields={hiddenFields}
         localSurvey={localSurvey}
         userAttributes={userAttributes}
         questionIdx={questionIdx}
-        attributeClasses={attributeClasses}
       />
     </div>
   );

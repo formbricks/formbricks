@@ -18,6 +18,7 @@ export interface ComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
   label: string;
   value: string;
+  meta?: Record<string, string>;
 }
 
 export interface ComboboxGroupedOption {
@@ -32,7 +33,7 @@ interface InputComboboxProps {
   options?: ComboboxOption[];
   groupedOptions?: ComboboxGroupedOption[];
   selected?: string | string[] | null;
-  onChangeValue: (option: string | string[]) => void;
+  onChangeValue: (value: string | string[], option?: ComboboxOption) => void;
   inputProps?: React.ComponentProps<typeof Input>;
   withInput?: boolean;
   comboboxSize?: "sm" | "lg";
@@ -56,12 +57,16 @@ export const InputCombobox = ({
   comboboxClasses,
 }: InputComboboxProps) => {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState<ComboboxOption | ComboboxOption[] | null>(() => {
+  const [value, setValue] = React.useState<ComboboxOption | ComboboxOption[] | null>(null);
+
+  React.useEffect(() => {
+    const validOptions = options?.length ? options : groupedOptions?.flatMap((group) => group.options);
     if (Array.isArray(selected)) {
-      return options?.filter((option) => selected.includes(option.value)) || null;
+      setValue(validOptions?.filter((option) => selected.includes(option.value)) || null);
+    } else {
+      setValue(validOptions?.find((option) => option.value === selected) || null);
     }
-    return options?.find((option) => option.value === selected) || null;
-  });
+  }, [selected, options, groupedOptions]);
 
   const handleSelect = (option: ComboboxOption) => {
     if (allowMultiSelect) {
@@ -71,11 +76,11 @@ export const InputCombobox = ({
         onChangeValue(newValue.map((item) => item.value));
         setValue(newValue);
       } else {
-        onChangeValue([option.value]);
+        onChangeValue([option.value], option);
         setValue([option]);
       }
     } else {
-      onChangeValue(option.value);
+      onChangeValue(option.value, option);
       setValue(option);
       setOpen(false);
     }
@@ -107,21 +112,21 @@ export const InputCombobox = ({
                     <>
                       {idx !== 0 && <span>,</span>}
                       <div className="flex items-center gap-2">
-                        {item?.icon && <item.icon className="h-4 w-4 text-slate-300" />}
+                        {item?.icon && <item.icon className="h-5 w-5 shrink-0 text-slate-400" />}
                         <span>{item?.label}</span>
                       </div>
                     </>
                   ))
                 ) : (
                   <div className="flex items-center gap-2">
-                    {value?.icon && <value.icon className="h-4 w-4 text-slate-300" />}
+                    {value?.icon && <value.icon className="h-5 w-5 shrink-0 text-slate-400" />}
                     <span>{value?.label}</span>
                   </div>
                 )}
               </div>
             )}
             <ChevronDownIcon
-              className="text-slate-300"
+              className="shrink-0 text-slate-300"
               height={comboboxSize === "sm" ? 20 : 16}
               width={comboboxSize === "sm" ? 20 : 16}
             />
@@ -150,7 +155,7 @@ export const InputCombobox = ({
                         (!allowMultiSelect && typeof value === "string" && value === option.value)) && (
                         <CheckIcon className="mr-2 h-4 w-4 text-slate-300" />
                       )}
-                    {option.icon && <option.icon className="mr-2 h-4 w-4 shrink-0 text-slate-400" />}
+                    {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
                     {option.label}
                   </CommandItem>
                 ))}
@@ -169,7 +174,7 @@ export const InputCombobox = ({
                             (!allowMultiSelect && typeof value === "string" && value === option.value)) && (
                             <CheckIcon className="mr-2 h-4 w-4 shrink-0 text-slate-300" />
                           )}
-                        {option.icon && <option.icon className="mr-2 h-4 w-4 text-slate-300" />}
+                        {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
                         {option.label}
                       </CommandItem>
                     ))}

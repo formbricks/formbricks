@@ -1,24 +1,29 @@
+import {
+  getConditionOperatorOptions,
+  getConditionValueOptions,
+  getMatchValueProps,
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, MoreVerticalIcon, PlusIcon, Trash2Icon, WorkflowIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { performOperationsOnConditions } from "@formbricks/lib/survey/logic/utils";
-import { TConditionBase, TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TConditionBase, TSurveyAdvancedLogic, TSurveyLogicCondition } from "@formbricks/types/surveys/logic";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Select, SelectContent, SelectTrigger } from "@formbricks/ui/Select";
+import { InputCombobox } from "@formbricks/ui/InputCombobox";
 
 interface AdvancedLogicEditorConditions {
   conditions: TSurveyAdvancedLogic["conditions"];
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
+  localSurvey: TSurvey;
   questionIdx: number;
   logicIdx: number;
-  hiddenFields: string[];
   userAttributes: string[];
 }
 
@@ -26,15 +31,21 @@ export function AdvancedLogicEditorConditions({
   conditions,
   logicIdx,
   question,
+  localSurvey,
   questionIdx,
   updateQuestion,
-  hiddenFields,
   userAttributes,
 }: AdvancedLogicEditorConditions) {
-  const handleAddConditionBelow = (resourceId: string, condition: TConditionBase) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic);
+  const handleAddConditionBelow = (resourceId: string, condition: Partial<TConditionBase>) => {
+    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
 
-    performOperationsOnConditions("addConditionBelow", advancedLogicCopy, logicIdx, resourceId, condition);
+    performOperationsOnConditions({
+      action: "addConditionBelow",
+      advancedLogicCopy,
+      logicIdx,
+      resourceId,
+      condition,
+    });
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -43,10 +54,14 @@ export function AdvancedLogicEditorConditions({
 
   const handleConnectorChange = (resourceId: string, connector: TConditionBase["connector"]) => {
     if (!connector) return;
-    console.log("onConnectorChange", resourceId, connector);
-    const advancedLogicCopy = structuredClone(question.advancedLogic);
+    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
 
-    performOperationsOnConditions("toggleConnector", advancedLogicCopy, logicIdx, resourceId, connector);
+    performOperationsOnConditions({
+      action: "toggleConnector",
+      advancedLogicCopy,
+      logicIdx,
+      resourceId,
+    });
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -54,9 +69,14 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleRemoveCondition = (resourceId: string) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic);
+    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
 
-    performOperationsOnConditions("removeCondition", advancedLogicCopy, logicIdx, resourceId);
+    performOperationsOnConditions({
+      action: "removeCondition",
+      advancedLogicCopy,
+      logicIdx,
+      resourceId,
+    });
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -64,9 +84,9 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleDuplicateCondition = (resourceId: string) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic);
+    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
 
-    performOperationsOnConditions("duplicateCondition", advancedLogicCopy, logicIdx, resourceId);
+    performOperationsOnConditions({ action: "duplicateCondition", advancedLogicCopy, logicIdx, resourceId });
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -74,9 +94,30 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleCreateGroup = (resourceId: string) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic);
+    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
 
-    performOperationsOnConditions("createGroup", advancedLogicCopy, logicIdx, resourceId);
+    performOperationsOnConditions({
+      action: "createGroup",
+      advancedLogicCopy,
+      logicIdx,
+      resourceId,
+    });
+
+    updateQuestion(questionIdx, {
+      advancedLogic: advancedLogicCopy,
+    });
+  };
+
+  const handleUpdateCondition = (resourceId: string, updateConditionBody: Partial<TConditionBase>) => {
+    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
+
+    performOperationsOnConditions({
+      action: "updateCondition",
+      advancedLogicCopy,
+      logicIdx,
+      resourceId,
+      conditionBody: updateConditionBody,
+    });
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -110,10 +151,10 @@ export function AdvancedLogicEditorConditions({
                   conditions={condition.conditions}
                   key={id}
                   updateQuestion={updateQuestion}
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   logicIdx={logicIdx}
-                  hiddenFields={hiddenFields}
                   userAttributes={userAttributes}
                 />
               </div>
@@ -140,6 +181,9 @@ export function AdvancedLogicEditorConditions({
           );
         }
 
+        const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, userAttributes);
+        const conditionOperatorOptions = getConditionOperatorOptions(condition);
+        const { show, options } = getMatchValueProps(localSurvey, condition, questionIdx, userAttributes);
         return (
           <div key={id} className="flex items-center justify-between gap-4">
             <div className="flex items-start gap-2">
@@ -154,10 +198,43 @@ export function AdvancedLogicEditorConditions({
                 </span>
               </div>
             </div>
-            <Select>
-              <SelectTrigger></SelectTrigger>
-              <SelectContent></SelectContent>
-            </Select>
+            <InputCombobox
+              key="conditionValue"
+              showSearch={false}
+              groupedOptions={conditionValueOptions}
+              selected={condition.conditionValue}
+              onChangeValue={(val: string, option) => {
+                handleUpdateCondition(id, {
+                  conditionValue: val,
+                  ...option?.meta,
+                });
+              }}
+              comboboxClasses="grow"
+            />
+            <InputCombobox
+              key="conditionOperator"
+              showSearch={false}
+              options={conditionOperatorOptions}
+              selected={condition.conditionOperator}
+              onChangeValue={(val: TSurveyLogicCondition, option) => {
+                console.log("val", val, option);
+                handleUpdateCondition(id, {
+                  conditionOperator: val,
+                });
+              }}
+              comboboxClasses="grow"
+            />
+            {show && options.length > 0 && (
+              <InputCombobox
+                withInput
+                key="conditionMatchValue"
+                showSearch={false}
+                groupedOptions={options}
+                comboboxSize="sm"
+                selected={condition.conditionValue}
+                onChangeValue={() => {}}
+              />
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <MoreVerticalIcon className="h-4 w-4" />
@@ -169,8 +246,10 @@ export function AdvancedLogicEditorConditions({
                   onClick={() => {
                     handleAddConditionBelow(id, {
                       id: createId(),
-
                       connector: "and",
+                      conditionValue: localSurvey.questions[questionIdx].id,
+                      type: "question",
+                      questionType: localSurvey.questions[questionIdx].type,
                     });
                   }}>
                   <PlusIcon className="h-4 w-4" />

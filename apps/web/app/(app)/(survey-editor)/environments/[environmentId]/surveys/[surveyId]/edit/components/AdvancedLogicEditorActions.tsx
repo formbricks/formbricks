@@ -1,14 +1,20 @@
 import {
-  getOpeartorOptions,
-  getTargetOptions,
-  getValueOptions,
+  getActionOpeartorOptions,
+  getActionTargetOptions,
+  getActionValueOptions,
+  getActionVariableOptions,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useMemo } from "react";
 import { actionObjectiveOptions } from "@formbricks/lib/survey/logic/utils";
-import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
+import {
+  TAction,
+  TActionCalculateVariableType,
+  TActionNumberVariableCalculateOperator,
+  TActionObjective,
+  TActionTextVariableCalculateOperator,
+  TDyanmicLogicField,
+  TSurveyAdvancedLogic,
+} from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
@@ -21,27 +27,29 @@ import { InputCombobox } from "@formbricks/ui/InputCombobox";
 interface AdvancedLogicEditorActions {
   localSurvey: TSurvey;
   logicItem: TSurveyAdvancedLogic;
-  handleActionsChange: (action: "delete" | "addBelow" | "duplicate", actionIdx: number) => void;
-  hiddenFields: string[];
+  handleActionsChange: (
+    operation: "delete" | "addBelow" | "duplicate" | "update",
+    actionIdx: number,
+    action?: Partial<TAction>
+  ) => void;
   userAttributes: string[];
   questionIdx: number;
-  attributeClasses: TAttributeClass[];
 }
 
 export function AdvancedLogicEditorActions({
   localSurvey,
   logicItem,
   handleActionsChange,
-  hiddenFields,
   userAttributes,
   questionIdx,
-  attributeClasses,
 }: AdvancedLogicEditorActions) {
   const actions = logicItem.actions;
-  const transformedSurvey = useMemo(() => {
-    return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
-  }, [localSurvey, attributeClasses]);
 
+  const updateAction = (actionIdx: number, updatedAction: Partial<TAction>) => {
+    handleActionsChange("update", actionIdx, updatedAction);
+  };
+
+  console.log("actions", actions);
   return (
     <div className="">
       <div className="flex gap-2">
@@ -56,38 +64,82 @@ export function AdvancedLogicEditorActions({
                   showSearch={false}
                   options={actionObjectiveOptions}
                   selected={action.objective}
-                  onChangeValue={() => {}}
+                  onChangeValue={(val: TActionObjective) => {
+                    updateAction(idx, {
+                      objective: val,
+                      target: "",
+                      operator: undefined,
+                      variableType: undefined,
+                    });
+                  }}
                   comboboxClasses="max-w-[200px]"
                 />
                 <InputCombobox
                   key="target"
                   showSearch={false}
-                  options={getTargetOptions(transformedSurvey.questions, questionIdx)}
-                  selected={action.objective}
-                  onChangeValue={() => {}}
-                  comboboxClasses="grow"
+                  options={
+                    action.objective === "calculate"
+                      ? getActionVariableOptions(localSurvey)
+                      : getActionTargetOptions(localSurvey, questionIdx)
+                  }
+                  selected={action.target}
+                  onChangeValue={(val: string, option) => {
+                    updateAction(idx, {
+                      target: val,
+                      variableType: option?.meta?.variableType as TActionCalculateVariableType,
+                    });
+                  }}
+                  comboboxClasses="grow min-w-[100px]"
                 />
                 {action.objective === "calculate" && (
                   <>
                     <InputCombobox
                       key="attribute"
                       showSearch={false}
-                      options={getOpeartorOptions(action.variableType)}
+                      options={getActionOpeartorOptions(action.variableType)}
                       selected={action.operator}
-                      onChangeValue={() => {}}
+                      onChangeValue={(
+                        val: TActionNumberVariableCalculateOperator | TActionTextVariableCalculateOperator
+                      ) => {
+                        updateAction(idx, {
+                          operator: val,
+                        });
+                      }}
+                      comboboxClasses="min-w-[100px]"
                     />
                     <InputCombobox
                       key="value"
                       withInput={true}
-                      inputProps={{ placeholder: "Value" }}
-                      groupedOptions={getValueOptions(
-                        transformedSurvey.questions,
-                        questionIdx,
-                        hiddenFields,
-                        userAttributes
-                      )}
-                      onChangeValue={() => {}}
-                      comboboxClasses="flex"
+                      inputProps={{
+                        placeholder: "Value",
+                        value: typeof action.value !== "object" ? action.value : "",
+                        type: action.variableType,
+                        onChange: (e) => {
+                          let val: string | number = e.target.value;
+
+                          if (action.variableType === "number") {
+                            val = Number(val);
+                            updateAction(idx, {
+                              value: val,
+                            });
+                          } else if (action.variableType === "text") {
+                            updateAction(idx, {
+                              value: val,
+                            });
+                          }
+                        },
+                      }}
+                      groupedOptions={getActionValueOptions(localSurvey, questionIdx, userAttributes)}
+                      onChangeValue={(val: string, option) => {
+                        updateAction(idx, {
+                          value: {
+                            id: val,
+                            fieldType: option?.meta?.fieldType as TDyanmicLogicField,
+                            type: "dynamic",
+                          },
+                        });
+                      }}
+                      comboboxClasses="flex min-w-[100px]"
                       comboboxSize="sm"
                     />
                   </>
