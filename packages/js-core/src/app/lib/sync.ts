@@ -3,10 +3,8 @@ import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/type
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { NetworkError, Result, err, ok } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { getIsDebug } from "../../shared/utils";
 import { AppConfig } from "./config";
 
-const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
@@ -18,12 +16,12 @@ const syncWithBackend = async (
   try {
     let fetchOptions: RequestInit = {};
 
-    if (noCache || getIsDebug()) {
+    if (noCache) {
       fetchOptions.cache = "no-cache";
       logger.debug("No cache option set for sync");
     }
-
-    const url = `${apiHost}/api/v1/client/${environmentId}/app/sync/${userId}?version=${import.meta.env.VERSION}`;
+    logger.debug("syncing with backend");
+    const url = `${apiHost}/api/v1/client/${environmentId}/app/sync/${userId}?version=2.0.0`;
 
     const response = await fetch(url, fetchOptions);
 
@@ -48,7 +46,11 @@ const syncWithBackend = async (
   }
 };
 
-export const sync = async (params: TJsAppSyncParams, noCache = false): Promise<void> => {
+export const sync = async (
+  params: TJsAppSyncParams,
+  noCache = false,
+  appConfig: AppConfig
+): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params, noCache);
 
@@ -85,7 +87,7 @@ export const sync = async (params: TJsAppSyncParams, noCache = false): Promise<v
   }
 };
 
-export const addExpiryCheckListener = (): void => {
+export const addExpiryCheckListener = (appConfig: AppConfig): void => {
   const updateInterval = 1000 * 30; // every 30 seconds
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {
@@ -96,12 +98,16 @@ export const addExpiryCheckListener = (): void => {
           return;
         }
         logger.debug("Config has expired. Starting sync.");
-        await sync({
-          apiHost: appConfig.get().apiHost,
-          environmentId: appConfig.get().environmentId,
-          userId: appConfig.get().userId,
-          attributes: appConfig.get().state.attributes,
-        });
+        await sync(
+          {
+            apiHost: appConfig.get().apiHost,
+            environmentId: appConfig.get().environmentId,
+            userId: appConfig.get().userId,
+            attributes: appConfig.get().state.attributes,
+          },
+          false,
+          appConfig
+        );
       } catch (e) {
         console.error(`Error during expiry check: ${e}`);
         logger.debug("Extending config and try again later.");

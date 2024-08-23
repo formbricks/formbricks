@@ -2,7 +2,7 @@
 
 import "server-only";
 import { z } from "zod";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { authenticatedActionClient } from "../../actionClient";
 import { checkAuthorization } from "../../actionClient/utils";
 import { getOrganization } from "../service";

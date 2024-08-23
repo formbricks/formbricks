@@ -2,7 +2,8 @@ import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
 import { ZProduct } from "./product";
-import { ZResponseHiddenFieldValue } from "./responses";
+import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
+import { ZUploadFileConfig } from "./storage";
 import { ZSurvey } from "./surveys/types";
 
 export const ZJsPerson = z.object({
@@ -186,3 +187,22 @@ export const ZJsTrackProperties = z.object({
 });
 
 export type TJsTrackProperties = z.infer<typeof ZJsTrackProperties>;
+
+export const ZJsFileUploadParams = z.object({
+  file: z.object({ type: z.string(), name: z.string(), base64: z.string() }),
+  params: ZUploadFileConfig,
+});
+
+export type TJsFileUploadParams = z.infer<typeof ZJsFileUploadParams>;
+
+export const ZJsRNWebViewOnMessageData = z.object({
+  onFinished: z.boolean().nullish(),
+  onDisplay: z.boolean().nullish(),
+  onResponse: z.boolean().nullish(),
+  responseUpdate: ZResponseUpdate.nullish(),
+  onRetry: z.boolean().nullish(),
+  onClose: z.boolean().nullish(),
+  onFileUpload: z.boolean().nullish(),
+  fileUploadParams: ZJsFileUploadParams.nullish(),
+  uploadId: z.string().nullish(),
+});

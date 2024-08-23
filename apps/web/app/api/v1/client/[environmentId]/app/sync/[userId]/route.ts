@@ -47,12 +47,10 @@ export const GET = async (
     const version = request.nextUrl.searchParams.get("version");
 
     // validate using zod
-
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
       environmentId: params.environmentId,
       userId: params.userId,
     });
-
     if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",

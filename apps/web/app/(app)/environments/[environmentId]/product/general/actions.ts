@@ -5,7 +5,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromProductId } from "@formbricks/lib/organization/utils";
 import { deleteProduct, getProducts } from "@formbricks/lib/product/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 
 const ZProductDeleteAction = z.object({
   productId: ZId,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
-import { ZId } from "./environment";
+import { ZId } from "./common";
 
 export const ZAction = z.object({
   id: ZId,
