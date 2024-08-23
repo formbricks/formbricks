@@ -59,6 +59,9 @@
     "@formbricks/react-native#lint": {
       "dependsOn": ["@formbricks/api#build"]
     },
+    "@formbricks/js#lint": {
+      "dependsOn": ["@formbricks/js-core#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
@@ -126,13 +129,14 @@
         "PLAYWRIGHT_CI",
         "PRIVACY_URL",
         "RATE_LIMITING_DISABLED",
-        "REDIS_URL",
         "REDIS_HTTP_URL",
+        "REDIS_URL",
         "S3_ACCESS_KEY",
-        "S3_SECRET_KEY",
-        "S3_REGION",
         "S3_BUCKET_NAME",
         "S3_ENDPOINT_URL",
+        "S3_FORCE_PATH_STYLE",
+        "S3_REGION",
+        "S3_SECRET_KEY",
         "SENTRY_DSN",
         "SHORT_URL_BASE",
         "SIGNUP_DISABLED",

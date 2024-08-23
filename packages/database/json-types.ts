@@ -17,6 +17,7 @@ import {
   type TSurveyQuestions,
   type TSurveySingleUse,
   type TSurveyStyling,
+  type TSurveyVariables,
   type TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { type TUserNotificationSettings } from "@formbricks/types/user";
@@ -34,6 +35,7 @@ declare global {
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyEnding = TSurveyEnding;
     export type SurveyHiddenFields = TSurveyHiddenFields;
+    export type SurveyVariables = TSurveyVariables;
     export type SurveyProductOverwrites = TSurveyProductOverwrites;
     export type SurveyStyling = TSurveyStyling;
     export type SurveyClosedMessage = TSurveyClosedMessage;

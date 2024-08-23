@@ -161,9 +161,17 @@ const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
     setEditMode(true);
   }, []);
 
+  const linkAttributes = {
+    target: "_blank",
+    rel: "noopener noreferrer",
+  };
+
   const handleSubmit = () => {
     if (lastSelection && linkUrl) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
+        url: linkUrl,
+        ...linkAttributes,
+      });
     }
     setEditMode(false);
   };
@@ -415,8 +423,6 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
     if (!isLink) {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
         url: "https://",
-        target: "_blank",
-        rel: "noopener noreferrer",
       });
     } else {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
