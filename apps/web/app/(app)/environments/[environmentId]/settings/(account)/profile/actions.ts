@@ -8,7 +8,7 @@ import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { updateUser } from "@formbricks/lib/user/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ZUserUpdateInput } from "@formbricks/types/user";
 
 export const updateUserAction = authenticatedActionClient

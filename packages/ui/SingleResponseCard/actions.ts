@@ -17,7 +17,7 @@ import {
 } from "@formbricks/lib/responseNote/service";
 import { createTag } from "@formbricks/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnResponse/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 
 const ZCreateTagAction = z.object({
   environmentId: ZId,

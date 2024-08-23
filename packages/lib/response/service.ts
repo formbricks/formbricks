@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
@@ -114,7 +114,7 @@ export const getResponsesByPersonId = reactCache(
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
             orderBy: {
-              updatedAt: "asc",
+              createdAt: "desc",
             },
           });
 

@@ -9,7 +9,7 @@ import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZUpgradePlanAction = z.object({

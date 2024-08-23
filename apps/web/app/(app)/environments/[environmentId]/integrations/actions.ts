@@ -5,7 +5,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
 
 const ZCreateOrUpdateIntegrationAction = z.object({
