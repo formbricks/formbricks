@@ -7,7 +7,7 @@ import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromActionClassId } from "@formbricks/lib/organization/utils";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZDeleteActionClassAction = z.object({
