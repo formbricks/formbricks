@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
-import { ZAllowedFileExtension, ZColor, ZPlacement , ZId } from "../common";
+import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
