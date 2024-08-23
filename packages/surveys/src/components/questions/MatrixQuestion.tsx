@@ -40,9 +40,6 @@ export const MatrixQuestion = ({
 }: MatrixQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-  const isSubmitButtonVisible = question.required
-    ? Object.values(value).filter((answer) => answer.trim() !== "").length === question.rows.length
-    : true;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleSelect = useCallback(
@@ -154,6 +151,7 @@ export const MatrixQuestion = ({
                             dir="auto"
                             type="radio"
                             tabIndex={-1}
+                            required={true}
                             id={`${row}-${column}`}
                             name={getLocalizedValue(row, languageCode)}
                             value={getLocalizedValue(column, languageCode)}
@@ -184,14 +182,12 @@ export const MatrixQuestion = ({
           />
         )}
         <div></div>
-        {isSubmitButtonVisible && (
-          <SubmitButton
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
-            onClick={() => {}}
-            tabIndex={0}
-          />
-        )}
+        <SubmitButton
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+          tabIndex={0}
+        />
       </div>
     </form>
   );
