@@ -48,11 +48,12 @@ export function ConditionalLogic({
       conditions: [
         {
           id: createId(),
-          connector: null,
-          type: "question",
-          conditionValue: question.id,
-          questionType: question.type,
-          matchValue: null,
+          connector: "and",
+          conditions: [
+            {
+              id: createId(),
+            },
+          ],
         },
       ],
       actions: [
