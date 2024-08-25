@@ -323,6 +323,16 @@ export const ZActionNumberVariableCalculateOperator = z.enum([
   "divide",
   "assign",
 ]);
+export const ZActionVariableCalculateOperator = z.union([
+  ZActionTextVariableCalculateOperator,
+  ZActionNumberVariableCalculateOperator,
+]);
+
+export type TDyanmicLogicField = z.infer<typeof ZDyanmicLogicField>;
+export type TActionObjective = z.infer<typeof ZActionObjective>;
+export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
+export type TActionNumberVariableCalculateOperator = z.infer<typeof ZActionNumberVariableCalculateOperator>;
+export type TActionVariableCalculateOperator = z.infer<typeof ZActionVariableCalculateOperator>;
 
 // Conditions
 const ZLeftOperandBase = z.object({
@@ -378,26 +388,32 @@ export const ZRightOperand = z.union([
 
 export type TRightOperand = z.infer<typeof ZRightOperand>;
 
-export const ZSurveyAdvancedLogicCondition = z.object({
-  id: z.string().cuid2(),
-  leftOperand: ZLeftOperand,
-  operator: ZSurveyLogicCondition,
-  rightOperand: ZRightOperand.optional(),
-});
+export const ZSingleCondition = z
+  .object({
+    id: z.string().cuid2(),
+    leftOperand: ZLeftOperand,
+    operator: ZSurveyLogicCondition,
+    rightOperand: ZRightOperand.optional(),
+  })
+  .and(
+    z.object({
+      connector: z.undefined(),
+    })
+  );
 
-export type TSurveyAdvancedLogicCondition = z.infer<typeof ZSurveyAdvancedLogicCondition>;
+export type TSingleCondition = z.infer<typeof ZSingleCondition>;
 
-interface TSurveyAdvancedLogicConditions {
+export interface TConditionGroup {
   id: string;
-  connector: "and" | "or";
-  conditions: (TSurveyAdvancedLogicCondition | TSurveyAdvancedLogicConditions)[];
+  connector: "and" | "or" | null;
+  conditions: (TSingleCondition | TConditionGroup)[];
 }
 
-const ZSurveyAdvancedLogicConditions: z.ZodType<TSurveyAdvancedLogicConditions> = z.lazy(() =>
+const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
   z.object({
     id: z.string().cuid2(),
-    connector: z.enum(["and", "or"]),
-    conditions: z.array(z.union([ZSurveyAdvancedLogicCondition, ZSurveyAdvancedLogicConditions])),
+    connector: z.enum(["and", "or"]).nullable(),
+    conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
   })
 );
 
@@ -412,7 +428,7 @@ export type TActionBase = z.infer<typeof ZActionBase>;
 const ZActionCalculate = ZActionBase.extend({
   objective: z.literal("calculate"),
   variableId: z.string(),
-  operator: z.union([ZActionTextVariableCalculateOperator, ZActionNumberVariableCalculateOperator]),
+  operator: ZActionVariableCalculateOperator,
   value: z.object({
     type: z.union([z.literal("static"), ZDyanmicLogicField]),
     value: z.union([z.string(), z.number()]),
@@ -425,20 +441,23 @@ const ZActionRequireAnswer = ZActionBase.extend({
   objective: z.literal("requireAnswer"),
   target: z.string(),
 });
+export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
 
 const ZActionJumpToQuestion = ZActionBase.extend({
   objective: z.literal("jumpToQuestion"),
   target: z.string(),
 });
 
-const ZAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToQuestion]);
+export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;
+
+export const ZAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToQuestion]);
 export type TAction = z.infer<typeof ZAction>;
 
 const ZSurveyAdvancedLogicActions = z.array(ZAction);
 
 export const ZSurveyAdvancedLogic = z.object({
   id: z.string().cuid2(),
-  conditions: z.array(ZSurveyAdvancedLogicConditions),
+  conditions: ZConditionGroup,
   actions: ZSurveyAdvancedLogicActions,
 });
 

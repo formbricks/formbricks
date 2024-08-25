@@ -6,9 +6,16 @@ import {
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, MoreVerticalIcon, PlusIcon, Trash2Icon, WorkflowIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
-import { performOperationsOnConditions } from "@formbricks/lib/survey/logic/utils";
-import { TConditionBase, TSurveyAdvancedLogic, TSurveyLogicCondition } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import {
+  addConditionBelow,
+  createGroupFromResource,
+  duplicateCondition,
+  isConditionsGroup,
+  removeCondition,
+  toggleGroupConnector,
+} from "@formbricks/lib/survey/logic/utils";
+import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import { TSurvey, TSurveyLogicCondition, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,13 +25,14 @@ import {
 import { InputCombobox } from "@formbricks/ui/InputCombobox";
 
 interface AdvancedLogicEditorConditions {
-  conditions: TSurveyAdvancedLogic["conditions"];
+  conditions: TConditionGroup;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
   localSurvey: TSurvey;
   questionIdx: number;
   logicIdx: number;
   userAttributes: string[];
+  depth?: number;
 }
 
 export function AdvancedLogicEditorConditions({
@@ -35,33 +43,22 @@ export function AdvancedLogicEditorConditions({
   questionIdx,
   updateQuestion,
   userAttributes,
+  depth = 0,
 }: AdvancedLogicEditorConditions) {
-  const handleAddConditionBelow = (resourceId: string, condition: Partial<TConditionBase>) => {
+  const handleAddConditionBelow = (resourceId: string, condition: TSingleCondition) => {
     const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-
-    performOperationsOnConditions({
-      action: "addConditionBelow",
-      advancedLogicCopy,
-      logicIdx,
-      resourceId,
-      condition,
-    });
+    const logicItem = advancedLogicCopy[logicIdx];
+    addConditionBelow(logicItem.conditions, resourceId, condition);
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
     });
   };
 
-  const handleConnectorChange = (resourceId: string, connector: TConditionBase["connector"]) => {
-    if (!connector) return;
+  const handleConnectorChange = (groupId: string) => {
     const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-
-    performOperationsOnConditions({
-      action: "toggleConnector",
-      advancedLogicCopy,
-      logicIdx,
-      resourceId,
-    });
+    const logicItem = advancedLogicCopy[logicIdx];
+    toggleGroupConnector(logicItem.conditions, groupId);
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -70,13 +67,8 @@ export function AdvancedLogicEditorConditions({
 
   const handleRemoveCondition = (resourceId: string) => {
     const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-
-    performOperationsOnConditions({
-      action: "removeCondition",
-      advancedLogicCopy,
-      logicIdx,
-      resourceId,
-    });
+    const logicItem = advancedLogicCopy[logicIdx];
+    removeCondition(logicItem.conditions, resourceId);
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -85,8 +77,8 @@ export function AdvancedLogicEditorConditions({
 
   const handleDuplicateCondition = (resourceId: string) => {
     const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-
-    performOperationsOnConditions({ action: "duplicateCondition", advancedLogicCopy, logicIdx, resourceId });
+    const logicItem = advancedLogicCopy[logicIdx];
+    duplicateCondition(logicItem.conditions, resourceId);
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -95,29 +87,25 @@ export function AdvancedLogicEditorConditions({
 
   const handleCreateGroup = (resourceId: string) => {
     const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
+    const logicItem = advancedLogicCopy[logicIdx];
 
-    performOperationsOnConditions({
-      action: "createGroup",
-      advancedLogicCopy,
-      logicIdx,
-      resourceId,
-    });
+    createGroupFromResource(logicItem.conditions, resourceId);
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
     });
   };
 
-  const handleUpdateCondition = (resourceId: string, updateConditionBody: Partial<TConditionBase>) => {
+  const handleUpdateCondition = (resourceId: string, updateConditionBody: Partial<TSingleCondition>) => {
     const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
 
-    performOperationsOnConditions({
-      action: "updateCondition",
-      advancedLogicCopy,
-      logicIdx,
-      resourceId,
-      conditionBody: updateConditionBody,
-    });
+    // performOperationsOnConditions({
+    //   action: "updateCondition",
+    //   advancedLogicCopy,
+    //   logicIdx,
+    //   resourceId,
+    //   conditionBody: updateConditionBody,
+    // });
 
     updateQuestion(questionIdx, {
       advancedLogic: advancedLogicCopy,
@@ -126,167 +114,185 @@ export function AdvancedLogicEditorConditions({
 
   console.log("conditions", conditions);
 
-  return (
-    <div className="flex flex-col gap-4 rounded-lg">
-      {conditions.map((condition) => {
-        const { connector, id, type } = condition;
-
-        if (type === "group") {
-          return (
-            <div key={id} className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-2">
-                <div className="mt-1 w-auto" key={connector}>
-                  <span
-                    className={cn(Boolean(connector) && "cursor-pointer underline", "text-sm")}
-                    onClick={() => {
-                      if (!connector) return;
-                      handleConnectorChange(id, connector);
-                    }}>
-                    {connector ? connector : "When"}
-                  </span>
-                </div>
-              </div>
-              <div className="w-full rounded-lg border border-slate-200 bg-slate-100 p-4">
-                <AdvancedLogicEditorConditions
-                  conditions={condition.conditions}
-                  key={id}
-                  updateQuestion={updateQuestion}
-                  localSurvey={localSurvey}
-                  question={question}
-                  questionIdx={questionIdx}
-                  logicIdx={logicIdx}
-                  userAttributes={userAttributes}
-                />
-              </div>
-              <div className="mt-1">
-                <DropdownMenu key={`group-actions-${id}`}>
-                  <DropdownMenuTrigger key={`group-actions-${id}`}>
-                    <MoreVerticalIcon className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      className="flex items-center gap-2"
-                      disabled={conditions.length === 1}
-                      onClick={() => {
-                        handleRemoveCondition(id);
-                      }}>
-                      <Trash2Icon className="h-4 w-4" />
-                      Remove
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+  const renderCondition = (
+    condition: TSingleCondition | TConditionGroup,
+    index: number,
+    parentConditionGroup: TConditionGroup
+  ) => {
+    const connector = parentConditionGroup.connector;
+    if (isConditionsGroup(condition)) {
+      return (
+        <div key={condition.id} className="flex items-start justify-between gap-4">
+          {index === 0 ? (
+            <div className="w-14 text-sm">When</div>
+          ) : (
+            <div
+              className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
+              onClick={() => {
+                if (index !== 1) return;
+                handleConnectorChange(parentConditionGroup.id);
+              }}>
+              {connector}
             </div>
-          );
-        }
-
-        const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, userAttributes);
-        const conditionOperatorOptions = getConditionOperatorOptions(condition);
-        const { show, options } = getMatchValueProps(localSurvey, condition, questionIdx, userAttributes);
-        return (
-          <div key={id} className="flex items-center justify-between gap-4">
-            <div className="flex items-start gap-2">
-              <div className="w-auto" key={connector}>
-                <span
-                  className={cn(Boolean(connector) && "cursor-pointer underline", "text-sm")}
-                  onClick={() => {
-                    if (!connector) return;
-                    handleConnectorChange(id, connector);
-                  }}>
-                  {connector ? connector : "When"}
-                </span>
-              </div>
-            </div>
-            <InputCombobox
-              key="conditionValue"
-              showSearch={false}
-              groupedOptions={conditionValueOptions}
-              selected={condition.conditionValue}
-              onChangeValue={(val: string, option) => {
-                handleUpdateCondition(id, {
-                  conditionValue: val,
-                  ...option?.meta,
-                });
-              }}
-              comboboxClasses="grow"
+          )}
+          <div className="mt-2 rounded-lg border border-slate-200 bg-slate-100 p-4">
+            <AdvancedLogicEditorConditions
+              conditions={condition}
+              updateQuestion={updateQuestion}
+              localSurvey={localSurvey}
+              question={question}
+              questionIdx={questionIdx}
+              logicIdx={logicIdx}
+              userAttributes={userAttributes}
+              depth={depth + 1}
             />
-            <InputCombobox
-              key="conditionOperator"
-              showSearch={false}
-              options={conditionOperatorOptions}
-              selected={condition.conditionOperator}
-              onChangeValue={(val: TSurveyLogicCondition, option) => {
-                console.log("val", val, option);
-                handleUpdateCondition(id, {
-                  conditionOperator: val,
-                });
-              }}
-              comboboxClasses="grow"
-            />
-            {show && options.length > 0 && (
-              <InputCombobox
-                withInput
-                key="conditionMatchValue"
-                showSearch={false}
-                groupedOptions={options}
-                comboboxSize="sm"
-                selected={condition.conditionValue}
-                onChangeValue={() => {}}
-              />
-            )}
+          </div>
+          <div className="mt-2">
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <MoreVerticalIcon className="h-4 w-4" />
               </DropdownMenuTrigger>
-
               <DropdownMenuContent>
                 <DropdownMenuItem
                   className="flex items-center gap-2"
                   onClick={() => {
-                    handleAddConditionBelow(id, {
+                    handleAddConditionBelow(condition.id, {
                       id: createId(),
-                      connector: "and",
-                      conditionValue: localSurvey.questions[questionIdx].id,
-                      type: "question",
-                      questionType: localSurvey.questions[questionIdx].type,
+                      leftOperand: {
+                        id: localSurvey.questions[questionIdx].id,
+                        type: "question",
+                      },
+                      operator: "equals",
                     });
                   }}>
                   <PlusIcon className="h-4 w-4" />
                   Add condition below
                 </DropdownMenuItem>
-
                 <DropdownMenuItem
                   className="flex items-center gap-2"
-                  disabled={conditions.length === 1}
-                  onClick={() => {
-                    handleRemoveCondition(id);
-                  }}>
+                  disabled={depth === 0 && conditions.conditions.length === 1}
+                  onClick={() => handleRemoveCondition(condition.id)}>
                   <Trash2Icon className="h-4 w-4" />
                   Remove
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    handleDuplicateCondition(id);
-                  }}>
-                  <CopyIcon className="h-4 w-4" />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    handleCreateGroup(id);
-                  }}>
-                  <WorkflowIcon className="h-4 w-4" />
-                  Create group
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        );
-      })}
+        </div>
+      );
+    }
+
+    const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, userAttributes);
+    const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
+    const { show, options } = getMatchValueProps(localSurvey, condition, questionIdx, userAttributes);
+
+    return (
+      <div key={condition.id} className="mt-2 flex items-center justify-between gap-4">
+        {index === 0 ? (
+          <div className="w-14 text-sm">When</div>
+        ) : (
+          <div
+            className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
+            onClick={() => {
+              if (index !== 1) return;
+              handleConnectorChange(parentConditionGroup.id);
+            }}>
+            {connector}
+          </div>
+        )}
+        <InputCombobox
+          key="conditionValue"
+          showSearch={false}
+          groupedOptions={conditionValueOptions}
+          selected={condition.leftOperand.id}
+          onChangeValue={(val: string, option) => {
+            handleUpdateCondition(condition.id, {
+              leftOperand: {
+                id: val,
+                type: option?.meta?.type,
+              },
+            });
+          }}
+          comboboxClasses="grow"
+        />
+        <InputCombobox
+          key="conditionOperator"
+          showSearch={false}
+          options={conditionOperatorOptions}
+          selected={condition.operator}
+          onChangeValue={(val: TSurveyLogicCondition) => {
+            handleUpdateCondition(condition.id, {
+              operator: val,
+            });
+          }}
+          comboboxClasses="grow"
+        />
+        {show && options.length > 0 && (
+          <InputCombobox
+            withInput
+            key="conditionMatchValue"
+            showSearch={false}
+            groupedOptions={options}
+            comboboxSize="sm"
+            selected={condition.rightOperand?.value}
+            onChangeValue={(val) => {
+              handleUpdateCondition(condition.id, {
+                rightOperand: {
+                  ...condition.rightOperand,
+                  value: val,
+                },
+              });
+            }}
+          />
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <MoreVerticalIcon className="h-4 w-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              className="flex items-center gap-2"
+              onClick={() => {
+                handleAddConditionBelow(condition.id, {
+                  id: createId(),
+                  leftOperand: {
+                    id: localSurvey.questions[questionIdx].id,
+                    type: "question",
+                  },
+                  operator: "equals",
+                });
+              }}>
+              <PlusIcon className="h-4 w-4" />
+              Add condition below
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="flex items-center gap-2"
+              disabled={depth === 0 && conditions.conditions.length === 1}
+              onClick={() => handleRemoveCondition(condition.id)}>
+              <Trash2Icon className="h-4 w-4" />
+              Remove
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="flex items-center gap-2"
+              onClick={() => handleDuplicateCondition(condition.id)}>
+              <CopyIcon className="h-4 w-4" />
+              Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="flex items-center gap-2"
+              onClick={() => handleCreateGroup(condition.id)}>
+              <WorkflowIcon className="h-4 w-4" />
+              Create group
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {conditions.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { TSurveyQuestionTypeEnum, ZSurveyLogicCondition } from "@formbricks/types/surveys/logic";
+import { ZSurveyLogicCondition } from "@formbricks/types/surveys/logic";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const ruleEngine = {
   question: {

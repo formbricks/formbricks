@@ -19,17 +19,6 @@ interface ConditionalLogicProps {
   userAttributes: string[];
 }
 
-const initialLogicState = {
-  id: createId(),
-  conditions: [
-    {
-      id: createId(),
-      connector: null,
-    },
-  ],
-  actions: [{ objective: "" }],
-};
-
 export function ConditionalLogic({
   attributeClasses,
   localSurvey,
@@ -43,19 +32,36 @@ export function ConditionalLogic({
   }, [localSurvey, attributeClasses]);
 
   const addLogic = () => {
-    const condition: TSurveyAdvancedLogic = {
+    const initialCondition: TSurveyAdvancedLogic = {
       id: createId(),
-      conditions: [
-        {
-          id: createId(),
-          connector: "and",
-          conditions: [
-            {
-              id: createId(),
+      conditions: {
+        id: createId(),
+        connector: "and",
+        conditions: [
+          {
+            id: createId(),
+            leftOperand: {
+              type: "question",
+              id: localSurvey.questions[0].id,
             },
-          ],
-        },
-      ],
+            operator: "isSkipped",
+          },
+          {
+            id: createId(),
+            connector: "or",
+            conditions: [
+              {
+                id: createId(),
+                leftOperand: {
+                  type: "question",
+                  id: localSurvey.questions[0].id,
+                },
+                operator: "isSkipped",
+              },
+            ],
+          },
+        ],
+      },
       actions: [
         {
           id: createId(),
@@ -66,7 +72,7 @@ export function ConditionalLogic({
     };
 
     updateQuestion(questionIdx, {
-      advancedLogic: [...(question?.advancedLogic || []), condition],
+      advancedLogic: [...(question?.advancedLogic || []), initialCondition],
     });
   };
 

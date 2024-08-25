@@ -20,13 +20,11 @@ import {
 } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
-  TActionCalculateVariableType,
-  TActionNumberVariableCalculateOperator,
-  TActionTextVariableCalculateOperator,
-  TCondition,
-  TSurveyQuestionTypeEnum,
+  TActionObjective,
+  TActionVariableCalculateOperator,
+  TSingleCondition,
 } from "@formbricks/types/surveys/logic";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { ComboboxGroupedOption, ComboboxOption } from "@formbricks/ui/InputCombobox";
 
 // formats the text to highlight specific parts of the text with slashes
@@ -83,8 +81,6 @@ export const getConditionValueOptions = (
         value: question.id,
         meta: {
           type: "question",
-          questionType: question.type,
-          inputType: question.type === "openText" ? question.inputType : "",
         },
       };
     });
@@ -96,7 +92,6 @@ export const getConditionValueOptions = (
       value: variable.id,
       meta: {
         type: "variable",
-        variableType: variable.type,
       },
     };
   });
@@ -158,26 +153,40 @@ export const getConditionValueOptions = (
   return groupedOptions;
 };
 
-export const getConditionOperatorOptions = (condition: TCondition): ComboboxOption[] => {
-  if (condition.type === "attributeClass") {
+export const actionObjectiveOptions: ComboboxOption<TActionObjective>[] = [
+  { label: "Calculate", value: "calculate" },
+  { label: "Require Answer", value: "requireAnswer" },
+  { label: "Jump to question", value: "jumpToQuestion" },
+];
+
+export const getConditionOperatorOptions = (
+  condition: TSingleCondition,
+  localSurvey: TSurvey
+): ComboboxOption[] => {
+  if (condition.leftOperand.type === "userAttribute") {
     return ruleEngine.userAttribute.options;
-  } else if (condition.type === "variable") {
-    return ruleEngine.variable[condition.variableType].options;
-  } else if (condition.type === "hiddenField") {
+  } else if (condition.leftOperand.type === "variable") {
+    const variables = localSurvey.variables || [];
+    const variableType =
+      variables.find((variable) => variable.id === condition.leftOperand.id)?.type || "text";
+    return ruleEngine.variable[variableType].options;
+  } else if (condition.leftOperand.type === "hiddenField") {
     return ruleEngine.hiddenField.options;
-  } else if (condition.type === "question") {
-    if (condition.questionType === "openText") {
-      const inputType = condition.inputType === "number" ? "number" : "text";
+  } else if (condition.leftOperand.type === "question") {
+    const questions = localSurvey.questions || [];
+    const question = questions.find((question) => question.id === condition.leftOperand.id) || questions[0];
+    if (question.type === "openText") {
+      const inputType = question.inputType === "number" ? "number" : "text";
       return ruleEngine.question.openText[inputType].options;
     }
-    return ruleEngine.question[condition.questionType].options;
+    return ruleEngine.question[question.type].options;
   }
   return [];
 };
 
 export const getMatchValueProps = (
   localSurvey: TSurvey,
-  condition: TCondition,
+  condition: TSingleCondition,
   questionIdx: number,
   userAttributes: string[]
 ): { show: boolean; options: ComboboxGroupedOption[] } => {
@@ -190,7 +199,7 @@ export const getMatchValueProps = (
       "isPartiallySubmitted",
       "isSkipped",
       "isSubmitted",
-    ].includes(condition.conditionOperator)
+    ].includes(condition.operator)
   ) {
     return { show: false, options: [] };
   }
@@ -243,18 +252,18 @@ export const getMatchValueProps = (
   });
   const groupedOptions: ComboboxGroupedOption[] = [];
 
-  if (condition.type === "hiddenField") {
-    hiddenFieldsOptions = hiddenFieldsOptions?.filter((field) => field.value !== condition.conditionValue);
-  } else if (condition.type === "variable") {
-    variableOptions = variableOptions?.filter((variable) => variable.value !== condition.conditionValue);
-  } else if (condition.type === "attributeClass") {
+  if (condition.leftOperand.type === "hiddenField") {
+    hiddenFieldsOptions = hiddenFieldsOptions?.filter((field) => field.value !== condition.leftOperand.id);
+  } else if (condition.leftOperand.type === "variable") {
+    variableOptions = variableOptions?.filter((variable) => variable.value !== condition.leftOperand.id);
+  } else if (condition.leftOperand.type === "userAttribute") {
     userAttributesOptions = userAttributesOptions?.filter(
-      (attribute) => attribute.value !== condition.conditionValue
+      (attribute) => attribute.value !== condition.leftOperand.id
     );
-  } else if (condition.type === "question") {
-    questionOptions = questionOptions?.filter((question) => question.value !== condition.conditionValue);
+  } else if (condition.leftOperand.type === "question") {
+    questionOptions = questionOptions?.filter((question) => question.value !== condition.leftOperand.id);
 
-    const question = localSurvey.questions.find((question) => question.id === condition.conditionValue);
+    const question = localSurvey.questions.find((question) => question.id === condition.leftOperand.id);
 
     let choices: ComboboxOption[] = [];
     if (
@@ -361,39 +370,41 @@ export const getActionVariableOptions = (localSurvey: TSurvey): ComboboxOption[]
   });
 };
 
-export const getActionOpeartorOptions = (variableType: TActionCalculateVariableType): ComboboxOption[] => {
-  if (variableType === TActionCalculateVariableType.Number) {
+export const getActionOpeartorOptions = (
+  variableType?: TSurveyVariable["type"]
+): ComboboxOption<TActionVariableCalculateOperator>[] => {
+  if (variableType === "number") {
     return [
       {
         label: "Add +",
-        value: TActionNumberVariableCalculateOperator.Add,
+        value: "add",
       },
       {
         label: "Subtract -",
-        value: TActionNumberVariableCalculateOperator.Subtract,
+        value: "subtract",
       },
       {
         label: "Multiply *",
-        value: TActionNumberVariableCalculateOperator.Multiply,
+        value: "multiply",
       },
       {
         label: "Divide /",
-        value: TActionNumberVariableCalculateOperator.Divide,
+        value: "divide",
       },
       {
         label: "Assign =",
-        value: TActionNumberVariableCalculateOperator.Assign,
+        value: "assign",
       },
     ];
-  } else if (variableType === TActionCalculateVariableType.Text) {
+  } else if (variableType === "text") {
     return [
       {
         label: "Assign =",
-        value: TActionTextVariableCalculateOperator.Assign,
+        value: "assign",
       },
       {
         label: "Concat +",
-        value: TActionTextVariableCalculateOperator.Concat,
+        value: "concat",
       },
     ];
   }

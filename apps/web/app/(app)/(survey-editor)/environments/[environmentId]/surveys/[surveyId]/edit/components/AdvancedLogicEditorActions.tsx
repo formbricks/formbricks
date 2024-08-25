@@ -1,21 +1,20 @@
 import {
+  actionObjectiveOptions,
   getActionOpeartorOptions,
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
+import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { actionObjectiveOptions } from "@formbricks/lib/survey/logic/utils";
 import {
   TAction,
-  TActionCalculateVariableType,
-  TActionNumberVariableCalculateOperator,
   TActionObjective,
-  TActionTextVariableCalculateOperator,
-  TDyanmicLogicField,
+  TActionVariableCalculateOperator,
   TSurveyAdvancedLogic,
+  ZAction,
 } from "@formbricks/types/surveys/logic";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,11 +26,9 @@ import { InputCombobox } from "@formbricks/ui/InputCombobox";
 interface AdvancedLogicEditorActions {
   localSurvey: TSurvey;
   logicItem: TSurveyAdvancedLogic;
-  handleActionsChange: (
-    operation: "delete" | "addBelow" | "duplicate" | "update",
-    actionIdx: number,
-    action?: Partial<TAction>
-  ) => void;
+  logicIdx: number;
+  question: TSurveyQuestion;
+  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   userAttributes: string[];
   questionIdx: number;
 }
@@ -39,15 +36,77 @@ interface AdvancedLogicEditorActions {
 export function AdvancedLogicEditorActions({
   localSurvey,
   logicItem,
-  handleActionsChange,
+  logicIdx,
+  question,
+  updateQuestion,
   userAttributes,
   questionIdx,
 }: AdvancedLogicEditorActions) {
   const actions = logicItem.actions;
 
-  const updateAction = (actionIdx: number, updatedAction: Partial<TAction>) => {
-    handleActionsChange("update", actionIdx, updatedAction);
+  const handleActionsChange = (
+    operation: "delete" | "addBelow" | "duplicate" | "update",
+    actionIdx: number,
+    action?: TAction
+  ) => {
+    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
+    const logicItem = advancedLogicCopy[logicIdx];
+    const actionsClone = logicItem.actions;
+
+    if (operation === "delete") {
+      actionsClone.splice(actionIdx, 1);
+    } else if (operation === "addBelow") {
+      actionsClone.splice(actionIdx + 1, 0, { id: createId(), objective: "jumpToQuestion", target: "" });
+    } else if (operation === "duplicate") {
+      actionsClone.splice(actionIdx + 1, 0, { ...actionsClone[actionIdx], id: createId() });
+    } else if (operation === "update") {
+      if (!action) return;
+      actionsClone[actionIdx] = action;
+    }
+
+    updateQuestion(questionIdx, {
+      advancedLogic: advancedLogicCopy,
+    });
   };
+
+  const getUpdatedActionBody = (action, update) => {
+    switch (update.objective) {
+      case "calculate":
+        return {
+          ...action,
+          ...update,
+          objective: "calculate", // Ensure objective remains 'calculate'
+          variableId: "",
+          operator: "assign",
+          value: update.value ? { ...action.value, ...update.value } : { type: "static", value: "" },
+        };
+      case "requireAnswer":
+        return {
+          ...action,
+          ...update,
+          objective: "requireAnswer", // Ensure objective remains 'requireAnswer'
+          target: "",
+        };
+      case "jumpToQuestion":
+        return {
+          ...action,
+          ...update,
+          objective: "jumpToQuestion", // Ensure objective remains 'jumpToQuestion'
+          target: "",
+        };
+    }
+  };
+
+  function updateAction(actionIdx: number, update: Partial<TAction>) {
+    const action = actions[actionIdx];
+    const actionBody = getUpdatedActionBody(action, update);
+    const parsedActionBodyResult = ZAction.safeParse(actionBody);
+    if (!parsedActionBodyResult.success) {
+      console.error("Failed to update action", parsedActionBodyResult.error.errors);
+      return;
+    }
+    handleActionsChange("update", actionIdx, parsedActionBodyResult.data);
+  }
 
   console.log("actions", actions);
   return (
@@ -67,9 +126,6 @@ export function AdvancedLogicEditorActions({
                   onChangeValue={(val: TActionObjective) => {
                     updateAction(idx, {
                       objective: val,
-                      target: "",
-                      operator: undefined,
-                      variableType: undefined,
                     });
                   }}
                   comboboxClasses="max-w-[200px]"
@@ -82,11 +138,10 @@ export function AdvancedLogicEditorActions({
                       ? getActionVariableOptions(localSurvey)
                       : getActionTargetOptions(localSurvey, questionIdx)
                   }
-                  selected={action.target}
-                  onChangeValue={(val: string, option) => {
+                  selected={action.objective === "calculate" ? action.variableId : action.target}
+                  onChangeValue={(val: string) => {
                     updateAction(idx, {
-                      target: val,
-                      variableType: option?.meta?.variableType as TActionCalculateVariableType,
+                      ...(action.objective === "calculate" ? { variableId: val } : { target: val }),
                     });
                   }}
                   comboboxClasses="grow min-w-[100px]"
@@ -96,11 +151,11 @@ export function AdvancedLogicEditorActions({
                     <InputCombobox
                       key="attribute"
                       showSearch={false}
-                      options={getActionOpeartorOptions(action.variableType)}
+                      options={getActionOpeartorOptions(
+                        localSurvey.variables.find((v) => v.id === action.variableId)?.type
+                      )}
                       selected={action.operator}
-                      onChangeValue={(
-                        val: TActionNumberVariableCalculateOperator | TActionTextVariableCalculateOperator
-                      ) => {
+                      onChangeValue={(val: TActionVariableCalculateOperator) => {
                         updateAction(idx, {
                           operator: val,
                         });
@@ -112,30 +167,29 @@ export function AdvancedLogicEditorActions({
                       withInput={true}
                       inputProps={{
                         placeholder: "Value",
-                        value: typeof action.value !== "object" ? action.value : "",
-                        type: action.variableType,
+                        value: action.value?.value ?? "",
+                        type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
                         onChange: (e) => {
                           let val: string | number = e.target.value;
 
-                          if (action.variableType === "number") {
+                          const variable = localSurvey.variables.find((v) => v.id === action.variableId);
+                          if (variable?.type === "number") {
                             val = Number(val);
-                            updateAction(idx, {
-                              value: val,
-                            });
-                          } else if (action.variableType === "text") {
-                            updateAction(idx, {
-                              value: val,
-                            });
                           }
+                          updateAction(idx, {
+                            value: {
+                              type: "static",
+                              value: val,
+                            },
+                          });
                         },
                       }}
                       groupedOptions={getActionValueOptions(localSurvey, questionIdx, userAttributes)}
-                      onChangeValue={(val: string, option) => {
+                      onChangeValue={(val: string) => {
                         updateAction(idx, {
                           value: {
-                            id: val,
-                            fieldType: option?.meta?.fieldType as TDyanmicLogicField,
-                            type: "dynamic",
+                            type: "static",
+                            value: val,
                           },
                         });
                       }}

@@ -14,10 +14,10 @@ import {
 import { Input } from "../Input";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
-export interface ComboboxOption {
+export interface ComboboxOption<T = string> {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
   label: string;
-  value: string;
+  value: T;
   meta?: Record<string, string>;
 }
 
@@ -27,13 +27,13 @@ export interface ComboboxGroupedOption {
   options: ComboboxOption[];
 }
 
-interface InputComboboxProps {
+interface InputComboboxProps<T> {
   showSearch?: boolean;
   searchPlaceholder?: string;
-  options?: ComboboxOption[];
+  options?: ComboboxOption<T>[];
   groupedOptions?: ComboboxGroupedOption[];
-  selected?: string | string[] | null;
-  onChangeValue: (value: string | string[], option?: ComboboxOption) => void;
+  selected?: string | number | string[] | null;
+  onChangeValue: (value: T | T[], option?: ComboboxOption) => void;
   inputProps?: React.ComponentProps<typeof Input>;
   withInput?: boolean;
   comboboxSize?: "sm" | "lg";
@@ -55,7 +55,7 @@ export const InputCombobox = ({
   allowMultiSelect = false,
   showCheckIcon = false,
   comboboxClasses,
-}: InputComboboxProps) => {
+}: InputComboboxProps<string>) => {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState<ComboboxOption | ComboboxOption[] | null>(null);
 
@@ -69,6 +69,7 @@ export const InputCombobox = ({
   }, [selected, options, groupedOptions]);
 
   const handleSelect = (option: ComboboxOption) => {
+    console.log("option", option);
     if (allowMultiSelect) {
       if (Array.isArray(value)) {
         const doesExist = value.find((item) => item.value === option.value);
