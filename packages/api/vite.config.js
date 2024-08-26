@@ -1,7 +1,7 @@
-import inject from "@rollup/plugin-inject";
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
   build: {
@@ -16,9 +16,14 @@ export default defineConfig({
       // the proper extensions will be added
       fileName: "index",
     },
-    rollupOptions: {
-      plugins: [inject({ Buffer: ["Buffer", "Buffer"] })],
-    },
   },
-  plugins: [dts({ rollupTypes: true })],
+  plugins: [
+    dts({ rollupTypes: true }),
+    nodePolyfills({
+      include: ["buffer"],
+      globals: {
+        Buffer: true,
+      },
+    }),
+  ],
 });
