@@ -4,7 +4,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
 import { DataTableToolbar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/DataTableToolbar";
 import { DraggableTableHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/DraggableTableHeader";
-import { SelectedResponseSettings } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/SelectedResponseSettings";
 import { TableSettingsModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TableSettingsModal";
 import {
   DndContext,
@@ -120,19 +119,13 @@ export const DataTable = ({
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
         sensors={sensors}>
-        <div className="my-2 flex w-full items-center justify-between">
-          {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-            <SelectedResponseSettings table={table} deleteResponses={deleteResponses} />
-          ) : (
-            <div></div>
-          )}
-          <DataTableToolbar
-            setIsExpanded={setIsExpanded}
-            setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-            isExpanded={isExpanded}
-          />
-        </div>
-
+        <DataTableToolbar
+          setIsExpanded={setIsExpanded}
+          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+          isExpanded={isExpanded}
+          table={table}
+          deleteResponses={deleteResponses}
+        />
         <div className="rounded-md border">
           <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
             <TableHeader>
