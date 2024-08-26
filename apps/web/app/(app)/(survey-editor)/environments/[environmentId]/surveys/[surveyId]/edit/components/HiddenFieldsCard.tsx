@@ -1,6 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -71,7 +72,7 @@ export const HiddenFieldsCard = ({
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
-        <p>🥷</p>
+        <EyeOff className="h-4 w-4" />
       </div>
       <Collapsible.Root
         open={open}
