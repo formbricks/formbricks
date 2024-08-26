@@ -5,7 +5,7 @@ import {
   getResponseCountAction,
   getResponsesAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
+import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
@@ -29,7 +29,6 @@ interface ResponsePageProps {
   user?: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
-  totalResponseCount: number;
 }
 
 export const ResponsePage = ({
@@ -40,7 +39,6 @@ export const ResponsePage = ({
   user,
   environmentTags,
   responsesPerPage,
-  totalResponseCount,
 }: ResponsePageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -50,7 +48,6 @@ export const ResponsePage = ({
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -93,10 +90,10 @@ export const ResponsePage = ({
     setPage(newPage);
   }, [filters, isSharingPage, page, responses, responsesPerPage, sharingKey, surveyId]);
 
-  const deleteResponse = (responseId: string) => {
-    setResponses(responses.filter((response) => response.id !== responseId));
+  const deleteResponses = (responseIds: string[]) => {
+    setResponses(responses.filter((response) => !responseIds.includes(response.id)));
     if (responseCount) {
-      setResponseCount(responseCount - 1);
+      setResponseCount(responseCount - responseIds.length);
     }
   };
 
@@ -136,8 +133,6 @@ export const ResponsePage = ({
   useEffect(() => {
     const fetchInitialResponses = async () => {
       try {
-        setFetchingFirstPage(true);
-
         let responses: TResponse[] = [];
 
         if (isSharingPage) {
@@ -164,8 +159,8 @@ export const ResponsePage = ({
           setHasMore(false);
         }
         setResponses(responses);
-      } finally {
-        setFetchingFirstPage(false);
+      } catch (error) {
+        console.error(error);
       }
     };
     fetchInitialResponses();
@@ -183,21 +178,17 @@ export const ResponsePage = ({
         <CustomFilter survey={survey} />
         {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
       </div>
-      <ResponseTimeline
-        environment={environment}
-        surveyId={surveyId}
-        responses={responses}
+      <ResponseDataView
         survey={survey}
+        responses={responses}
         user={user}
+        environment={environment}
         environmentTags={environmentTags}
+        isViewer={isSharingPage}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
-        deleteResponse={deleteResponse}
+        deleteResponses={deleteResponses}
         updateResponse={updateResponse}
-        isFetchingFirstPage={isFetchingFirstPage}
-        responseCount={responseCount}
-        totalResponseCount={totalResponseCount}
-        isSharingPage={isSharingPage}
       />
     </>
   );
