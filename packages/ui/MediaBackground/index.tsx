@@ -168,7 +168,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
           </div>
         );
       default:
-        return <div className={`${baseClasses} ${loadedClass} bg-white`} />;
+        return <div className={`${baseClasses} ${loadedClass}`} />;
     }
   };
 

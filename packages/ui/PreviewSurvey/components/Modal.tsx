@@ -29,7 +29,9 @@ export const Modal = ({
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
-  const [overlayVisible, setOverlayVisible] = useState(true);
+  const [overlayVisible, setOverlayVisible] = useState(placement === "center");
+
+  console.log("placement", placement);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -78,7 +80,6 @@ export const Modal = ({
   };
 
   const scalingClasses = calculateScaling();
-  const overlayStyle = overlayVisible && darkOverlay ? "bg-gray-700/80" : "bg-white/50";
 
   useEffect(() => {
     if (!clickOutsideClose) {
@@ -137,7 +138,7 @@ export const Modal = ({
       aria-live="assertive"
       className={cn(
         "relative h-full w-full overflow-hidden rounded-b-md",
-        overlayStyle,
+        overlayVisible ? (darkOverlay ? "bg-gray-700/80" : "bg-white/50") : "",
         "transition-all duration-500 ease-in-out"
       )}>
       <div
