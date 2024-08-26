@@ -67,7 +67,7 @@ export const EditWelcomeCard = ({
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
-        <Hand className="h-4 w-4 transform" />
+        <Hand className="h-4 w-4" />
       </div>
       <Collapsible.Root
         open={open}
