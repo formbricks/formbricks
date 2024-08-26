@@ -1,3 +1,4 @@
+import inject from "@rollup/plugin-inject";
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
@@ -14,6 +15,9 @@ export default defineConfig({
       formats: ["es", "umd"],
       // the proper extensions will be added
       fileName: "index",
+    },
+    rollupOptions: {
+      plugins: [inject({ Buffer: ["Buffer", "Buffer"] })],
     },
   },
   plugins: [dts({ rollupTypes: true })],
