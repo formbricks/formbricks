@@ -680,19 +680,30 @@ export const evaluateSegment = async (
       return false;
     }
 
+    // We first evaluate all `and` conditions consecutively
+    let intermediateResults: boolean[] = [];
+
     // Given that the first filter in every group/sub-group always has a connector value of "null",
     // we initialize the finalResult with the result of the first filter.
-
-    let finalResult = resultPairs[0].result;
+    let currentAndGroupResult = resultPairs[0].result;
 
     for (let i = 1; i < resultPairs.length; i++) {
       const { result, connector } = resultPairs[i];
 
       if (connector === "and") {
-        finalResult = finalResult && result;
+        currentAndGroupResult = currentAndGroupResult && result;
       } else if (connector === "or") {
-        finalResult = finalResult || result;
+        intermediateResults.push(currentAndGroupResult);
+        currentAndGroupResult = result;
       }
+    }
+    // Push the final `and` group result
+    intermediateResults.push(currentAndGroupResult);
+
+    // Now we can evaluate the `or` conditions
+    let finalResult = intermediateResults[0];
+    for (let i = 1; i < intermediateResults.length; i++) {
+      finalResult = finalResult || intermediateResults[i];
     }
 
     return finalResult;
