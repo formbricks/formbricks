@@ -232,6 +232,7 @@ export const getS3UploadSignedUrl = async (
       Key: `${environmentId}/${accessType}/${fileName}`,
       Fields: {
         "Content-Type": contentType,
+        "Content-Encoding": "base64",
       },
       Conditions: postConditions,
     });
