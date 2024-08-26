@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
@@ -177,8 +178,9 @@ export const SurveysList = ({
         </div>
       ) : (
         <div className="flex h-full flex-col items-center justify-center">
-          <span className="mb-4 h-24 w-24 rounded-full bg-slate-100 p-6 text-5xl">🕵️</span>
-
+          <span className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 p-6">
+            <Search className="h-20 w-20" />
+          </span>
           <div className="text-slate-600">{isFetching ? "Fetching surveys..." : "No surveys found"}</div>
         </div>
       )}
