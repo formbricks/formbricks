@@ -1,10 +1,11 @@
+import { diffInDays } from "@formbricks/lib/utils/datetime";
 import {
   TActionClass,
   TActionClassNoCodeConfig,
   TActionClassPageUrlRule,
 } from "@formbricks/types/action-classes";
 import { TAttributes } from "@formbricks/types/attributes";
-import { TJsTrackProperties } from "@formbricks/types/js";
+import { TJsEnvironmentState, TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Logger } from "../shared/logger";
@@ -140,4 +141,84 @@ export const handleHiddenFields = (
   }
 
   return hiddenFieldsObject;
+};
+
+export const filterSurveys = (
+  state: TJsEnvironmentState,
+  personState: TJsPersonState
+): TJsEnvironmentState => {
+  const { product, surveys } = state.data;
+  const { displays, responses, lastDisplayAt, segments } = personState.data;
+
+  if (!displays) {
+    return state;
+  }
+
+  // Function to filter surveys based on displayOption criteria
+  let filteredSurveys = surveys.filter((survey: TSurvey) => {
+    switch (survey.displayOption) {
+      case "respondMultiple":
+        return true;
+      case "displayOnce":
+        return displays.filter((surveyId) => surveyId === survey.id).length === 0;
+      case "displayMultiple":
+        return responses.filter((surveyId) => surveyId === survey.id).length === 0;
+
+      case "displaySome":
+        if (survey.displayLimit === null) {
+          return true;
+        }
+
+        // Check if survey response exists, if so, stop here
+        if (responses.filter((surveyId) => surveyId === survey.id)) {
+          return false;
+        }
+
+        // Otherwise, check if displays length is less than displayLimit
+        return displays.filter((surveyId) => surveyId === survey.id).length < survey.displayLimit;
+
+      default:
+        throw Error("Invalid displayOption");
+    }
+  });
+
+  // filter surveys that meet the recontactDays criteria
+  filteredSurveys = filteredSurveys.filter((survey) => {
+    // if no survey was displayed yet, show the survey
+    if (!lastDisplayAt) {
+      return true;
+    }
+    // if survey has recontactDays, check if the last display was more than recontactDays ago
+    else if (survey.recontactDays !== null) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= survey.recontactDays;
+    }
+    // use recontactDays of the product if survey does not have recontactDays
+    else if (product.recontactDays !== null) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= product.recontactDays;
+    }
+    // if no recontactDays is set, show the survey
+    else {
+      return true;
+    }
+  });
+
+  // filter surveys based on segments
+  if (segments?.length) {
+    filteredSurveys = filteredSurveys.filter((survey) => {
+      if (survey.segment?.id) {
+        // if the segments array includes the survey segment id, show the survey
+        return segments.includes(survey.segment.id);
+      }
+
+      return false;
+    });
+  }
+
+  return {
+    ...state,
+    data: {
+      ...state.data,
+      surveys: filteredSurveys,
+    },
+  };
 };

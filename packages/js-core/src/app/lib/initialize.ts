@@ -1,5 +1,5 @@
 import { TAttributes } from "@formbricks/types/attributes";
-import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+import type { TJsAppConfigInput, TJsConfig } from "@formbricks/types/js";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -43,7 +43,7 @@ export const initialize = async (
     return okVoid();
   }
 
-  let existingConfig: TJSAppConfig | undefined;
+  let existingConfig: TJsConfig | undefined;
   try {
     existingConfig = appConfig.get();
     logger.debug("Found existing configuration.");
@@ -62,6 +62,8 @@ export const initialize = async (
     }
 
     logger.debug("Formbricks was set to an error state.");
+
+    // @ts-expect-error -- Error state has expiresAt at the root level
     if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
@@ -119,28 +121,36 @@ export const initialize = async (
 
   if (
     existingConfig &&
-    existingConfig.state &&
+    existingConfig.environmentState &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.apiHost === configInput.apiHost &&
-    existingConfig.userId === configInput.userId &&
-    existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
+    existingConfig.personState?.data?.userId === configInput.userId
   ) {
     logger.debug("Configuration fits init parameters.");
-    if (existingConfig.expiresAt < new Date()) {
-      logger.debug("Configuration expired.");
 
-      try {
-        await sync({
+    if (new Date(existingConfig.environmentState.expiresAt) < new Date()) {
+      logger.debug("Environment state expired. Syncing.");
+    }
+
+    if (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()) {
+      logger.debug("Person state expired. Syncing.");
+    }
+
+    try {
+      await sync(
+        {
           apiHost: configInput.apiHost,
           environmentId: configInput.environmentId,
           userId: configInput.userId,
-        });
-      } catch (e) {
-        putFormbricksInErrorState();
-      }
-    } else {
-      logger.debug("Configuration not expired. Extending expiration.");
-      appConfig.update(existingConfig);
+        },
+        {
+          noCache: false,
+          exisitingEnvironmentState: existingConfig.environmentState,
+          existingPersonState: existingConfig.personState,
+        }
+      );
+    } catch (e) {
+      putFormbricksInErrorState();
     }
   } else {
     logger.debug(
@@ -162,17 +172,21 @@ export const initialize = async (
     // and track the new session event
     await trackNoCodeAction("New Session");
   }
+
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
     appConfig.update({
-      environmentId: appConfig.get().environmentId,
-      apiHost: appConfig.get().apiHost,
-      userId: appConfig.get().userId,
-      state: {
-        ...appConfig.get().state,
-        attributes: { ...appConfig.get().state.attributes, ...configInput.attributes },
+      ...appConfig.get(),
+      personState: {
+        ...appConfig.get().personState,
+        data: {
+          ...appConfig.get().personState.data,
+          attributes: {
+            ...appConfig.get().personState.data.attributes,
+            ...updatedAttributes,
+          },
+        },
       },
-      expiresAt: appConfig.get().expiresAt,
     });
   }
 
@@ -189,17 +203,18 @@ export const initialize = async (
   return okVoid();
 };
 
-const handleErrorOnFirstInit = () => {
+export const handleErrorOnFirstInit = () => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
   }
 
   // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig: Partial<TJSAppConfig> = {
+  const initialErrorConfig = {
     status: "error",
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };
+
   // can't use config.update here because the config is not yet initialized
   wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
   throw new Error("Could not initialize formbricks");
@@ -235,7 +250,12 @@ export const putFormbricksInErrorState = (): void => {
   // change formbricks status to error
   appConfig.update({
     ...appConfig.get(),
+    environmentState: {
+      ...appConfig.get().environmentState,
+      expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    },
     status: "error",
+    // @ts-expect-error -- Error state has expiresAt at the root level
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   });
   deinitalize();

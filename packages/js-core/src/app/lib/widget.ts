@@ -15,7 +15,7 @@ import { sync } from "./sync";
 
 const containerId = "formbricks-app-container";
 
-const inAppConfig = AppConfig.getInstance();
+const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let isSurveyRunning = false;
@@ -68,8 +68,8 @@ const renderWidget = async (
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay} seconds.`);
   }
 
-  const product = inAppConfig.get().state.product;
-  const attributes = inAppConfig.get().state.attributes;
+  const { product } = appConfig.get().environmentState.data ?? {};
+  const { attributes } = appConfig.get().personState.data ?? {};
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
@@ -85,12 +85,12 @@ const renderWidget = async (
     languageCode = displayLanguage;
   }
 
-  const surveyState = new SurveyState(survey.id, null, null, inAppConfig.get().userId);
+  const surveyState = new SurveyState(survey.id, null, null, appConfig.get().personState.data.userId);
 
   const responseQueue = new ResponseQueue(
     {
-      apiHost: inAppConfig.get().apiHost,
-      environmentId: inAppConfig.get().environmentId,
+      apiHost: appConfig.get().apiHost,
+      environmentId: appConfig.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: () => {
         setIsError(true);
@@ -124,16 +124,16 @@ const renderWidget = async (
         setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
-        const { userId } = inAppConfig.get();
+        const { userId } = appConfig.get().personState.data;
 
         const api = new FormbricksAPI({
-          apiHost: inAppConfig.get().apiHost,
-          environmentId: inAppConfig.get().environmentId,
+          apiHost: appConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
         });
 
         const res = await api.client.display.create({
           surveyId: survey.id,
-          userId,
+          userId: userId ?? "",
         });
 
         if (!res.ok) {
@@ -146,8 +146,8 @@ const renderWidget = async (
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        const { userId } = inAppConfig.get();
-        surveyState.updateUserId(userId);
+        const { userId } = appConfig.get().personState.data;
+        surveyState.updateUserId(userId ?? "");
 
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
@@ -166,8 +166,8 @@ const renderWidget = async (
       onClose: closeSurvey,
       onFileUpload: async (file: File, params: TUploadFileConfig) => {
         const api = new FormbricksAPI({
-          apiHost: inAppConfig.get().apiHost,
-          environmentId: inAppConfig.get().environmentId,
+          apiHost: appConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
         });
 
         return await api.client.storage.uploadFile(file, params);
@@ -190,12 +190,13 @@ export const closeSurvey = async (): Promise<void> => {
   try {
     await sync(
       {
-        apiHost: inAppConfig.get().apiHost,
-        environmentId: inAppConfig.get().environmentId,
-        userId: inAppConfig.get().userId,
-        attributes: inAppConfig.get().state.attributes,
+        apiHost: appConfig.get().apiHost,
+        environmentId: appConfig.get().environmentId,
+        userId: appConfig.get().personState.data.userId ?? "",
       },
-      true
+      {
+        noCache: true,
+      }
     );
     setIsSurveyRunning(false);
   } catch (e: any) {
@@ -220,7 +221,7 @@ const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurv
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
-      script.src = `${inAppConfig.get().apiHost}/api/packages/surveys`;
+      script.src = `${appConfig.get().apiHost}/api/packages/surveys`;
       script.async = true;
       script.onload = () => resolve(window.formbricksSurveys);
       script.onerror = (error) => {

@@ -8,12 +8,12 @@ import {
   removePageUrlEventListeners,
   removeScrollDepthListener,
 } from "../lib/noCodeActions";
-import { addExpiryCheckListener, removeExpiryCheckListener } from "./sync";
+import { addPersonStateExpiryCheckListener, removeExpiryCheckListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
 
 export const addEventListeners = (): void => {
-  addExpiryCheckListener();
+  addPersonStateExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();

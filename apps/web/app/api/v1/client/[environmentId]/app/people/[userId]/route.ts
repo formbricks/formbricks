@@ -1,12 +1,13 @@
-import { getPersonSegmentIds } from "@/app/api/v1/client/[environmentId]/website/people/[userId]/lib/segments";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
+import { getAttributesByUserId } from "@formbricks/lib/attribute/service";
 import { getDisplaysByPersonId } from "@formbricks/lib/display/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPersonByUserId } from "@formbricks/lib/person/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
-import { TJsWebsitePersonState, ZJsWebsiteIdentifyInput } from "@formbricks/types/js";
+import { TJsPersonState, ZJsPersonIdentifyInput } from "@formbricks/types/js";
+import { getPersonSegmentIds } from "./lib/segments";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -20,7 +21,7 @@ export const GET = async (
     const { environmentId, userId } = params;
 
     // Validate input
-    const syncInputValidation = ZJsWebsiteIdentifyInput.safeParse({
+    const syncInputValidation = ZJsPersonIdentifyInput.safeParse({
       environmentId,
       userId,
     });
@@ -58,15 +59,22 @@ export const GET = async (
     const personResponses = await getResponsesByPersonId(person.id);
     const personDisplays = await getDisplaysByPersonId(person.id);
     const segments = await getPersonSegmentIds(environmentId, person, deviceType);
+    const attributes = await getAttributesByUserId(environmentId, userId);
 
     // If the person exists, return the persons's state
-    const userState: TJsWebsitePersonState = {
-      userId: person.userId,
-      segments,
-      displays: personDisplays?.map((display) => display.surveyId) ?? [],
-      responses: personResponses?.map((response) => response.surveyId) ?? [],
-      lastDisplayAt: personDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
-        .createdAt,
+    const userState: TJsPersonState = {
+      expiresAt: null,
+      data: {
+        userId: person.userId,
+        segments,
+        displays: personDisplays?.map((display) => display.surveyId) ?? [],
+        responses: personResponses?.map((response) => response.surveyId) ?? [],
+        attributes,
+        lastDisplayAt:
+          personDisplays.length > 0
+            ? personDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
+            : null,
+      },
     };
 
     return responses.successResponse(

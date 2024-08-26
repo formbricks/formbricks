@@ -7,7 +7,7 @@ import { sync } from "./sync";
 import { triggerSurvey } from "./widget";
 
 const logger = Logger.getInstance();
-const inAppConfig = AppConfig.getInstance();
+const appConfig = AppConfig.getInstance();
 
 export const trackAction = async (
   name: string,
@@ -15,7 +15,7 @@ export const trackAction = async (
   properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> => {
   const aliasName = alias || name;
-  const { userId } = inAppConfig.get();
+  const userId = appConfig.get().personState.data.userId;
 
   if (userId) {
     // we skip the resync on a new action since this leads to too many requests if the user has a lot of actions
@@ -23,14 +23,16 @@ export const trackAction = async (
     // when debug: sync after every action for testing purposes
     if (getIsDebug()) {
       logger.debug(`Resync after action "${aliasName} in debug mode"`);
+
       await sync(
         {
-          environmentId: inAppConfig.get().environmentId,
-          apiHost: inAppConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
+          apiHost: appConfig.get().apiHost,
           userId,
-          attributes: inAppConfig.get().state.attributes,
         },
-        true
+        {
+          noCache: true,
+        }
       );
     }
   }
@@ -38,7 +40,8 @@ export const trackAction = async (
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = inAppConfig.get().state?.surveys;
+  // const activeSurveys = appConfig.get().state?.surveys;
+  const activeSurveys = appConfig.get().environmentState.data.surveys;
 
   if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
@@ -59,9 +62,11 @@ export const trackCodeAction = (
   code: string,
   properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
-  const {
-    state: { actionClasses = [] },
-  } = inAppConfig.get();
+  // const {
+  //   state: { actionClasses = [] },
+  // } = appConfig.get();
+
+  const actionClasses = appConfig.get().environmentState.data.actionClasses;
 
   const codeActionClasses = actionClasses.filter((action) => action.type === "code");
   const action = codeActionClasses.find((action) => action.key === code);

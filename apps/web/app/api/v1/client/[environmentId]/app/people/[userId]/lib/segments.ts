@@ -22,21 +22,25 @@ export const getPersonSegmentIds = (
       if (!segments) {
         return [];
       }
+
       const attributes = await getAttributes(person.id);
 
-      const personSegments = segments.filter(async (segment) => {
-        return await evaluateSegment(
-          {
-            attributes,
-            actionIds: [],
-            deviceType,
-            environmentId,
-            personId: person.id,
-            userId: person.userId,
-          },
-          segment.filters
-        );
-      });
+      const personSegments = await Promise.all(
+        segments.filter(async (segment) =>
+          evaluateSegment(
+            {
+              attributes,
+              actionIds: [],
+              deviceType,
+              environmentId,
+              personId: person.id,
+              userId: person.userId,
+            },
+            segment.filters
+          )
+        )
+      );
+
       return personSegments.map((segment) => segment.id);
     },
     [`getPersonSegmentIds-${environmentId}-${person.id}-${deviceType}`],

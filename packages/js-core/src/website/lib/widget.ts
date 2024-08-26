@@ -2,14 +2,14 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { TJSWebsiteStateDisplay, TJsTrackProperties } from "@formbricks/types/js";
+import { TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Logger } from "../../shared/logger";
 import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
+import { filterSurveys as filterPublicSurveys } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
-import { filterPublicSurveys } from "./sync";
 
 const containerId = "formbricks-website-container";
 
@@ -66,8 +66,8 @@ const renderWidget = async (
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
   }
 
-  const product = websiteConfig.get().state.product;
-  const attributes = websiteConfig.get().state.attributes;
+  const product = websiteConfig.get().environmentState.data.product;
+  const attributes = websiteConfig.get().personState.data.attributes;
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
@@ -122,26 +122,6 @@ const renderWidget = async (
         setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
-        const localDisplay: TJSWebsiteStateDisplay = {
-          createdAt: new Date(),
-          surveyId: survey.id,
-          responded: false,
-        };
-
-        const existingDisplays = websiteConfig.get().state.displays;
-        const displays = existingDisplays ? [...existingDisplays, localDisplay] : [localDisplay];
-        const previousConfig = websiteConfig.get();
-
-        let state = filterPublicSurveys({
-          ...previousConfig.state,
-          displays,
-        });
-
-        websiteConfig.update({
-          ...previousConfig,
-          state,
-        });
-
         const api = new FormbricksAPI({
           apiHost: websiteConfig.get().apiHost,
           environmentId: websiteConfig.get().environmentId,
@@ -156,27 +136,59 @@ const renderWidget = async (
 
         const { id } = res.data;
 
+        const existingDisplays = websiteConfig.get().personState.data.displays;
+        const displays = existingDisplays ? [...existingDisplays, survey.id] : [survey.id];
+        const previousConfig = websiteConfig.get();
+
+        const updatedPersonState: TJsPersonState = {
+          ...previousConfig.personState,
+          data: {
+            ...previousConfig.personState.data,
+            displays,
+            lastDisplayAt: new Date(),
+          },
+        };
+
+        const updatedEnvironmentState = filterPublicSurveys(
+          previousConfig.environmentState,
+          updatedPersonState
+        );
+
+        websiteConfig.update({
+          ...previousConfig,
+          environmentState: updatedEnvironmentState,
+          personState: updatedPersonState,
+        });
+
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        const displays = websiteConfig.get().state.displays;
+        const displays = websiteConfig.get().personState.data.displays;
         const lastDisplay = displays && displays[displays.length - 1];
         if (!lastDisplay) {
           throw new Error("No lastDisplay found");
         }
-        if (!lastDisplay.responded) {
-          lastDisplay.responded = true;
-          const previousConfig = websiteConfig.get();
-          let state = filterPublicSurveys({
-            ...previousConfig.state,
-            displays,
-          });
-          websiteConfig.update({
-            ...previousConfig,
-            state,
-          });
-        }
+
+        const responses = websiteConfig.get().personState.data.responses;
+        const newPersonState: TJsPersonState = {
+          ...websiteConfig.get().personState,
+          data: {
+            ...websiteConfig.get().personState.data,
+            responses: [...responses, surveyState.surveyId],
+          },
+        };
+
+        const updatedEnvironmentState = filterPublicSurveys(
+          websiteConfig.get().environmentState,
+          newPersonState
+        );
+
+        websiteConfig.update({
+          ...websiteConfig.get(),
+          environmentState: updatedEnvironmentState,
+          personState: newPersonState,
+        });
 
         responseQueue.updateSurveyState(surveyState);
 
@@ -216,11 +228,14 @@ export const closeSurvey = async (): Promise<void> => {
   removeWidgetContainer();
   addWidgetContainer();
 
-  const state = websiteConfig.get().state;
-  const updatedState = filterPublicSurveys(state);
+  // const state = websiteConfig.get().state;
+  const { environmentState, personState } = websiteConfig.get();
+  const updatedEnvironmentState = filterPublicSurveys(environmentState, personState);
   websiteConfig.update({
     ...websiteConfig.get(),
-    state: updatedState,
+    // state: updatedState,
+    environmentState: updatedEnvironmentState,
+    personState,
   });
   setIsSurveyRunning(false);
   return;

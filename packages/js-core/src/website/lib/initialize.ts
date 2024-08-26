@@ -1,4 +1,4 @@
-import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+import type { TJsConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -41,7 +41,7 @@ export const initialize = async (
     return okVoid();
   }
 
-  let existingConfig: TJsWebsiteConfig | undefined;
+  let existingConfig: TJsConfig | undefined;
   try {
     existingConfig = websiteConfig.get();
     logger.debug("Found existing configuration.");
@@ -60,6 +60,8 @@ export const initialize = async (
     }
 
     logger.debug("Formbricks was set to an error state.");
+
+    // @ts-expect-error -- for the error state, we put the expiresAt field at the root level
     if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
@@ -94,13 +96,12 @@ export const initialize = async (
 
   if (
     existingConfig &&
-    existingConfig.state &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.apiHost === configInput.apiHost &&
-    existingConfig.expiresAt
+    existingConfig.environmentState
   ) {
     logger.debug("Configuration fits init parameters.");
-    if (existingConfig.expiresAt < new Date()) {
+    if (existingConfig.environmentState.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
 
       try {
@@ -135,13 +136,14 @@ export const initialize = async (
       const currentWebsiteConfig = websiteConfig.get();
 
       websiteConfig.update({
-        environmentId: currentWebsiteConfig.environmentId,
-        apiHost: currentWebsiteConfig.apiHost,
-        state: {
-          ...websiteConfig.get().state,
-          attributes: { ...websiteConfig.get().state.attributes, ...configInput.attributes },
+        ...currentWebsiteConfig,
+        personState: {
+          ...currentWebsiteConfig.personState,
+          data: {
+            ...currentWebsiteConfig.personState.data,
+            attributes: { ...currentWebsiteConfig.personState.data.attributes, ...configInput.attributes },
+          },
         },
-        expiresAt: websiteConfig.get().expiresAt,
       });
     }
 
@@ -162,17 +164,18 @@ export const initialize = async (
   return okVoid();
 };
 
-const handleErrorOnFirstInit = () => {
+export const handleErrorOnFirstInit = () => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
   }
 
-  // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig: Partial<TJSAppConfig> = {
+  const initialErrorConfig: Partial<TJsConfig> = {
     status: "error",
+    // @ts-expect-error -- for the error state, we put the expiresAt field at the root level
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };
+
   // can't use config.update here because the config is not yet initialized
   wrapThrows(() => localStorage.setItem(WEBSITE_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
   throw new Error("Could not initialize formbricks");
@@ -206,9 +209,11 @@ export const putFormbricksInErrorState = (): void => {
 
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
+  // TODO: figure this out
   websiteConfig.update({
     ...websiteConfig.get(),
     status: "error",
+    // @ts-expect-error -- Error state has expiresAt at the root level
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   });
   deinitalize();

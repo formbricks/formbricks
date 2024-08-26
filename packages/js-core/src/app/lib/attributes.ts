@@ -3,6 +3,7 @@ import { TAttributes } from "@formbricks/types/attributes";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import { AppConfig } from "./config";
+import { syncPersonState } from "./sync";
 
 const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
@@ -10,8 +11,27 @@ const logger = Logger.getInstance();
 export const updateAttribute = async (
   key: string,
   value: string | number
-): Promise<Result<void, NetworkError>> => {
-  const { apiHost, environmentId, userId } = appConfig.get();
+): Promise<
+  Result<
+    {
+      changed: boolean;
+      message: string;
+    },
+    Error | NetworkError
+  >
+> => {
+  const { apiHost, environmentId } = appConfig.get();
+  const userId = appConfig.get().personState.data.userId;
+
+  if (!userId) {
+    return err({
+      code: "network_error",
+      status: 500,
+      message: "Missing userId",
+      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      responseMessage: "Missing userId",
+    });
+  }
 
   const api = new FormbricksAPI({
     apiHost,
@@ -24,7 +44,13 @@ export const updateAttribute = async (
     // @ts-expect-error
     if (res.error.details?.ignore) {
       logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
-      return okVoid();
+      return {
+        ok: true,
+        value: {
+          changed: false,
+          message: res.error.message,
+        },
+      };
     }
 
     return err({
@@ -39,9 +65,22 @@ export const updateAttribute = async (
 
   if (res.data.changed) {
     logger.debug("Attribute updated in Formbricks");
+    return {
+      ok: true,
+      value: {
+        changed: true,
+        message: "Attribute updated in Formbricks",
+      },
+    };
   }
 
-  return okVoid();
+  return {
+    ok: true,
+    value: {
+      changed: false,
+      message: "Attribute not updated in Formbricks",
+    },
+  };
 };
 
 export const updateAttributes = async (
@@ -54,7 +93,8 @@ export const updateAttributes = async (
   const updatedAttributes = { ...attributes };
 
   try {
-    const existingAttributes = appConfig.get()?.state?.attributes;
+    // const existingAttributes = appConfig.get()?.state?.attributes;
+    const existingAttributes = appConfig.get().personState.data.attributes;
     if (existingAttributes) {
       for (const [key, value] of Object.entries(existingAttributes)) {
         if (updatedAttributes[key] === value) {
@@ -101,9 +141,10 @@ export const updateAttributes = async (
 };
 
 export const isExistingAttribute = (key: string, value: string): boolean => {
-  if (appConfig.get().state.attributes[key] === value) {
+  if (appConfig.get().personState.data.attributes[key] === value) {
     return true;
   }
+
   return false;
 };
 
@@ -116,6 +157,15 @@ export const setAttributeInApp = async (
     return okVoid();
   }
 
+  const userId = appConfig.get().personState.data.userId;
+
+  if (!userId) {
+    return err({
+      code: "missing_person",
+      message: "Missing userId",
+    });
+  }
+
   logger.debug("Setting attribute: " + key + " to value: " + value);
   // check if attribute already exists with this value
   if (isExistingAttribute(key, value.toString())) {
@@ -126,22 +176,22 @@ export const setAttributeInApp = async (
   const result = await updateAttribute(key, value);
 
   if (result.ok) {
-    // udpdate attribute in config
-    appConfig.update({
-      environmentId: appConfig.get().environmentId,
-      apiHost: appConfig.get().apiHost,
-      userId: appConfig.get().userId,
-      state: {
-        ...appConfig.get().state,
-        attributes: {
-          ...appConfig.get().state.attributes,
-          [key]: value.toString(),
-        },
-      },
-      expiresAt: appConfig.get().expiresAt,
-    });
+    if (result.value.changed) {
+      const personStateSyncResult = await syncPersonState({
+        apiHost: appConfig.get().apiHost,
+        environmentId: appConfig.get().environmentId,
+        userId,
+      });
+
+      if (personStateSyncResult) {
+        appConfig.update({
+          personState: personStateSyncResult,
+        });
+      }
+    }
+
     return okVoid();
   }
 
-  return err(result.error);
+  return err(result.error as NetworkError);
 };
