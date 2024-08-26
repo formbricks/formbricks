@@ -38,8 +38,6 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       return String(data);
     }
   };
-  console.log(question);
-  console.log(responseData);
   const questionType = question.type;
   switch (questionType) {
     case TSurveyQuestionTypeEnum.Rating:
