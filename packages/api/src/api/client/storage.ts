@@ -1,4 +1,5 @@
 /* eslint-disable no-console -- used for error logging */
+import { Buffer } from "node:buffer";
 import type { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
 
 export class StorageAPI {
@@ -74,7 +75,7 @@ export class StorageAPI {
         const buffer = Buffer.from(file.base64.split(",")[1], "base64");
         const blob = new Blob([buffer], { type: file.type });
 
-        formDataForS3.append("file", blob as unknown as Blob);
+        formDataForS3.append("file", blob);
       } catch (buffErr) {
         console.error({ buffErr });
 
