@@ -5,7 +5,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromSegmentId } from "@formbricks/lib/organization/utils";
 import { deleteSegment, updateSegment } from "@formbricks/lib/segment/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
 const ZDeleteBasicSegmentAction = z.object({

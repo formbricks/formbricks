@@ -20,6 +20,7 @@ import {
   S3_ACCESS_KEY,
   S3_BUCKET_NAME,
   S3_ENDPOINT_URL,
+  S3_FORCE_PATH_STYLE,
   S3_REGION,
   S3_SECRET_KEY,
   UPLOADS_DIR,
@@ -43,6 +44,7 @@ export const getS3Client = () => {
       credentials,
       region: S3_REGION,
       ...(S3_ENDPOINT_URL && { endpoint: S3_ENDPOINT_URL }),
+      forcePathStyle: S3_FORCE_PATH_STYLE,
     });
   }
 

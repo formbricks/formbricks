@@ -346,6 +346,66 @@ router.afterEach((to, from) => {
 
 Refer to our [Example VueJs project](https://github.com/formbricks/examples/tree/main/vuejs) for more help! Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
+## React Native
+
+Install the Formbricks React Native SDK using one of the package managers, i.e., npm, pnpm, or yarn.
+
+<Col>
+<CodeGroup title="Install Formbricks JS library">
+```shell {{ title: 'npm' }}
+npm install @formbricks/react-native
+```
+```shell {{ title: 'pnpm' }}
+pnpm add @formbricks/react-native
+```
+```shell {{ title: 'yarn' }}
+yarn add @formbricks/react-native
+```
+
+</CodeGroup>
+</Col>
+Now, update your App.js/App.tsx file to initialize Formbricks:
+<Col>
+<CodeGroup title="src/App.js">
+
+```js
+// other imports
+import Formbricks from "@formbricks/react-native";
+
+const config = {
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user-id>",
+};
+
+export default function App() {
+  return (
+    <>
+      {/* Your app content */}
+      <Formbricks initConfig={config} />
+    </>
+  );
+}
+```
+
+</CodeGroup>
+</Col>
+### Required customizations to be made
+
+<Properties>
+  <Property name="environment-id" type="string">
+    Formbricks Environment ID.
+  </Property>
+  <Property name="api-host" type="string">
+    URL of the hosted Formbricks instance.
+  </Property>
+  <Property name="userId" type="string">
+    User ID of the user who has active session.
+  </Property>
+</Properties>
+
+---
+
 ## Validate your setup
 
 Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:

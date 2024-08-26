@@ -278,6 +278,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
+  /// @zod.custom(imports.ZSurveyVariables)
+  /// [SurveyVariables]
+  variables           Json                    @default("[]")
   responses           Response[]
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?

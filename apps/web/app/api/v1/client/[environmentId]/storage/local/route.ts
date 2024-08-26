@@ -100,8 +100,11 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.unauthorizedResponse();
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file") as unknown as File;
+  const formData = await req.json();
+  const base64String = formData.fileBase64String as string;
+
+  const buffer = Buffer.from(base64String.split(",")[1], "base64");
+  const file = new Blob([buffer], { type: fileType });
 
   if (!file) {
     return responses.badRequestResponse("fileBuffer is required");
@@ -125,6 +128,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
       message: "File uploaded successfully",
     });
   } catch (err) {
+    console.error("err: ", err);
     if (err.name === "FileTooLargeError") {
       return responses.badRequestResponse(err.message);
     }
