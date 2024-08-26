@@ -59,7 +59,7 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
     if (isScriptLoaded) {
       renderInline();
     }
-  }, [isScriptLoaded]);
+  }, [isScriptLoaded, renderInline]);
 
   return <div id={containerId} className="h-full w-full" />;
 };

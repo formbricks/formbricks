@@ -31,12 +31,18 @@ const libraries = [
     description: "Simply add us to your router change and sit back!",
     logo: logoVueJs,
   },
+  {
+    href: "#react-native",
+    name: "React Native",
+    description: "Easily integrate our SDK with your React Native app for seamless survey support!",
+    logo: logoReactJs,
+  },
 ];
 
 export const Libraries = () => {
   return (
     <div className="my-16 xl:max-w-none">
-      <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-slate-900/5 sm:grid-cols-2 xl:max-w-none xl:grid-cols-3 dark:border-white/5">
+      <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-slate-900/5 xl:max-w-none xl:grid-cols-2 2xl:grid-cols-3 dark:border-white/5">
         {libraries.map((library) => (
           <a
             key={library.name}

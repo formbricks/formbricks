@@ -194,13 +194,23 @@ const renderWidget = async (
         });
       },
       onClose: closeSurvey,
-      onFileUpload: async (file: File, params: TUploadFileConfig) => {
+      onFileUpload: async (
+        file: { type: string; name: string; base64: string },
+        params: TUploadFileConfig
+      ) => {
         const api = new FormbricksAPI({
           apiHost: websiteConfig.get().apiHost,
           environmentId: websiteConfig.get().environmentId,
         });
 
-        return await api.client.storage.uploadFile(file, params);
+        return await api.client.storage.uploadFile(
+          {
+            name: file.name,
+            type: file.type,
+            base64: file.base64,
+          },
+          params
+        );
       },
       onRetry: () => {
         setIsError(false);
