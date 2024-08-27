@@ -38,7 +38,6 @@ interface AdvancedLogicEditorConditions {
   localSurvey: TSurvey;
   questionIdx: number;
   logicIdx: number;
-  userAttributes: string[];
   depth?: number;
 }
 
@@ -49,7 +48,6 @@ export function AdvancedLogicEditorConditions({
   localSurvey,
   questionIdx,
   updateQuestion,
-  userAttributes,
   depth = 0,
 }: AdvancedLogicEditorConditions) {
   const handleAddConditionBelow = (resourceId: string, condition: TSingleCondition) => {
@@ -143,7 +141,6 @@ export function AdvancedLogicEditorConditions({
               question={question}
               questionIdx={questionIdx}
               logicIdx={logicIdx}
-              userAttributes={userAttributes}
               depth={depth + 1}
             />
           </div>
@@ -182,9 +179,9 @@ export function AdvancedLogicEditorConditions({
       );
     }
 
-    const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, userAttributes);
+    const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx);
     const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
-    const { show, options, showInput = true } = getMatchValueProps(condition, localSurvey, userAttributes);
+    const { show, options, showInput = true } = getMatchValueProps(condition, localSurvey);
 
     return (
       <div key={condition.id} className="mt-2 flex items-center justify-between gap-4">

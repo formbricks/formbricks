@@ -31,7 +31,6 @@ interface AdvancedLogicEditorActions {
   logicIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  userAttributes: string[];
   questionIdx: number;
 }
 
@@ -41,7 +40,6 @@ export function AdvancedLogicEditorActions({
   logicIdx,
   question,
   updateQuestion,
-  userAttributes,
   questionIdx,
 }: AdvancedLogicEditorActions) {
   const actions = logicItem.actions;
@@ -157,12 +155,7 @@ export function AdvancedLogicEditorActions({
                           });
                         },
                       }}
-                      groupedOptions={getActionValueOptions(
-                        action.variableId,
-                        localSurvey,
-                        questionIdx,
-                        userAttributes
-                      )}
+                      groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx)}
                       onChangeValue={(val: string, option) => {
                         updateAction(idx, {
                           value: {

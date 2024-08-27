@@ -16,7 +16,6 @@ interface ConditionalLogicProps {
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   attributeClasses: TAttributeClass[];
-  userAttributes: string[];
 }
 
 export function ConditionalLogic({
@@ -25,7 +24,6 @@ export function ConditionalLogic({
   question,
   questionIdx,
   updateQuestion,
-  userAttributes,
 }: ConditionalLogicProps) {
   const transformedSurvey = useMemo(() => {
     return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
@@ -88,7 +86,6 @@ export function ConditionalLogic({
                 question={question}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
-                userAttributes={userAttributes}
               />
               <Button
                 className="mt-1 p-0"

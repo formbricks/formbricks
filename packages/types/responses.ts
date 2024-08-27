@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZAttributes } from "./attributes";
 import { ZId } from "./common";
-import { ZSurvey, ZSurveyLogicCondition } from "./surveys/types";
+import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
 export const ZResponseDataValue = z.union([
@@ -9,6 +9,26 @@ export const ZResponseDataValue = z.union([
   z.number(),
   z.array(z.string()),
   z.record(z.string()),
+]);
+
+export const ZResponseFilterCondition = z.enum([
+  "accepted",
+  "clicked",
+  "submitted",
+  "skipped",
+  "equals",
+  "notEquals",
+  "lessThan",
+  "lessEqual",
+  "greaterThan",
+  "greaterEqual",
+  "includesAll",
+  "includesOne",
+  "uploaded",
+  "notUploaded",
+  "booked",
+  "isCompletelySubmitted",
+  "isPartiallySubmitted",
 ]);
 
 export type TResponseDataValue = z.infer<typeof ZResponseDataValue>;
@@ -38,71 +58,71 @@ export const ZResponseHiddenFieldsFilter = z.record(z.array(z.string()));
 export type TResponseHiddenFieldsFilter = z.infer<typeof ZResponseHiddenFieldsFilter>;
 
 const ZResponseFilterCriteriaDataLessThan = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.lessThan),
+  op: z.literal(ZResponseFilterCondition.Values.lessThan),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataLessEqual = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.lessEqual),
+  op: z.literal(ZResponseFilterCondition.Values.lessEqual),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataGreaterEqual = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.greaterEqual),
+  op: z.literal(ZResponseFilterCondition.Values.greaterEqual),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataGreaterThan = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.greaterThan),
+  op: z.literal(ZResponseFilterCondition.Values.greaterThan),
   value: z.number(),
 });
 
 const ZResponseFilterCriteriaDataIncludesOne = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.includesOne),
+  op: z.literal(ZResponseFilterCondition.Values.includesOne),
   value: z.union([z.array(z.string()), z.array(z.number())]),
 });
 
 const ZResponseFilterCriteriaDataIncludesAll = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.includesAll),
+  op: z.literal(ZResponseFilterCondition.Values.includesAll),
   value: z.array(z.string()),
 });
 
 const ZResponseFilterCriteriaDataEquals = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.equals),
+  op: z.literal(ZResponseFilterCondition.Values.equals),
   value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataNotEquals = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.notEquals),
+  op: z.literal(ZResponseFilterCondition.Values.notEquals),
   value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataAccepted = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.accepted),
+  op: z.literal(ZResponseFilterCondition.Values.accepted),
 });
 
 const ZResponseFilterCriteriaDataClicked = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.clicked),
+  op: z.literal(ZResponseFilterCondition.Values.clicked),
 });
 
 const ZResponseFilterCriteriaDataSubmitted = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.submitted),
+  op: z.literal(ZResponseFilterCondition.Values.submitted),
 });
 
 const ZResponseFilterCriteriaDataSkipped = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.skipped),
+  op: z.literal(ZResponseFilterCondition.Values.skipped),
 });
 
 const ZResponseFilterCriteriaDataUploaded = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.uploaded),
+  op: z.literal(ZResponseFilterCondition.Values.uploaded),
 });
 
 const ZResponseFilterCriteriaDataNotUploaded = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.notUploaded),
+  op: z.literal(ZResponseFilterCondition.Values.notUploaded),
 });
 
 const ZResponseFilterCriteriaDataBooked = z.object({
-  op: z.literal(ZSurveyLogicCondition.Values.booked),
+  op: z.literal(ZResponseFilterCondition.Values.booked),
 });
 
 const ZResponseFilterCriteriaMatrix = z.object({

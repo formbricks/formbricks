@@ -240,8 +240,8 @@ export const ruleEngine = {
     [TSurveyQuestionTypeEnum.CTA]: {
       options: [
         {
-          label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          label: "is clicked",
+          value: ZSurveyLogicCondition.Enum.isClicked,
         },
         {
           label: "is skipped",
@@ -385,18 +385,6 @@ export const ruleEngine = {
     },
   },
   hiddenField: {
-    options: [
-      {
-        label: "equals",
-        value: ZSurveyLogicCondition.Enum.equals,
-      },
-      {
-        label: "does not equal",
-        value: ZSurveyLogicCondition.Enum.doesNotEqual,
-      },
-    ],
-  },
-  userAttribute: {
     options: [
       {
         label: "equals",

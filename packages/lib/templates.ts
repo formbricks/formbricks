@@ -441,7 +441,7 @@ const productMarketFitSuperhuman = (): TTemplate => {
       name: "Product Market Fit (Superhuman)",
       questions: [
         {
-          id: createId(),
+          id: reusableQuestionIds[0],
           html: {
             default:
               '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',

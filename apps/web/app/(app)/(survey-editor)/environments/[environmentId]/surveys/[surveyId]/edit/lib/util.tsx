@@ -16,7 +16,6 @@ import {
   PresentationIcon,
   Rows3Icon,
   StarIcon,
-  TagIcon,
 } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
@@ -64,8 +63,7 @@ const questionIconMapping = {
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
-  currQuestionIdx: number,
-  userAttributes: string[]
+  currQuestionIdx: number
 ): ComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
   const variables = localSurvey.variables || [];
@@ -107,17 +105,6 @@ export const getConditionValueOptions = (
     };
   });
 
-  const userAttributesOptions = userAttributes.map((attribute) => {
-    return {
-      icon: TagIcon,
-      label: attribute,
-      value: attribute,
-      meta: {
-        type: "userAttribute",
-      },
-    };
-  });
-
   if (questionOptions.length > 0) {
     groupedOptions.push({
       label: "Questions",
@@ -142,14 +129,6 @@ export const getConditionValueOptions = (
     });
   }
 
-  if (userAttributesOptions.length > 0) {
-    groupedOptions.push({
-      label: "User Attributes",
-      value: "userAttributes",
-      options: userAttributesOptions,
-    });
-  }
-
   return groupedOptions;
 };
 
@@ -163,9 +142,7 @@ export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey
 ): ComboboxOption[] => {
-  if (condition.leftOperand.type === "userAttribute") {
-    return ruleEngine.userAttribute.options;
-  } else if (condition.leftOperand.type === "variable") {
+  if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables || [];
     const variableType =
       variables.find((variable) => variable.id === condition.leftOperand.id)?.type || "text";
@@ -186,8 +163,7 @@ export const getConditionOperatorOptions = (
 
 export const getMatchValueProps = (
   condition: TSingleCondition,
-  localSurvey: TSurvey,
-  userAttributes: string[]
+  localSurvey: TSurvey
 ): { show?: boolean; showInput?: boolean; options: ComboboxGroupedOption[] } => {
   if (
     [
@@ -206,7 +182,6 @@ export const getMatchValueProps = (
   let questions = localSurvey.questions || [];
   let variables = localSurvey.variables || [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
-  let attributes = userAttributes || [];
 
   if (condition.leftOperand.type === "question") {
     const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.id);
@@ -257,8 +232,6 @@ export const getMatchValueProps = (
     variables = variables.filter((variable) => variable.id !== condition.leftOperand.id);
   } else if (condition.leftOperand.type === "hiddenField") {
     hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.id);
-  } else if (condition.leftOperand.type === "userAttribute") {
-    attributes = attributes.filter((attribute) => attribute !== condition.leftOperand.id);
   }
 
   let questionOptions = questions.map((question) => {
@@ -294,26 +267,12 @@ export const getMatchValueProps = (
     };
   });
 
-  let userAttributesOptions = attributes.map((attribute) => {
-    return {
-      icon: TagIcon,
-      label: attribute,
-      value: attribute,
-      meta: {
-        type: "userAttribute",
-      },
-    };
-  });
   const groupedOptions: ComboboxGroupedOption[] = [];
 
   if (condition.leftOperand.type === "hiddenField") {
     hiddenFieldsOptions = hiddenFieldsOptions?.filter((field) => field.value !== condition.leftOperand.id);
   } else if (condition.leftOperand.type === "variable") {
     variableOptions = variableOptions?.filter((variable) => variable.value !== condition.leftOperand.id);
-  } else if (condition.leftOperand.type === "userAttribute") {
-    userAttributesOptions = userAttributesOptions?.filter(
-      (attribute) => attribute.value !== condition.leftOperand.id
-    );
   } else if (condition.leftOperand.type === "question") {
     questionOptions = questionOptions?.filter((question) => question.value !== condition.leftOperand.id);
 
@@ -367,14 +326,6 @@ export const getMatchValueProps = (
       label: "Hidden Fields",
       value: "hiddenFields",
       options: hiddenFieldsOptions,
-    });
-  }
-
-  if (userAttributesOptions.length > 0) {
-    groupedOptions.push({
-      label: "User Attributes",
-      value: "userAttributes",
-      options: userAttributesOptions,
     });
   }
 
@@ -468,8 +419,7 @@ export const getActionOpeartorOptions = (
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
-  currQuestionIdx: number,
-  userAttributes: string[]
+  currQuestionIdx: number
 ): ComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
   const variables = localSurvey.variables || [];
@@ -516,17 +466,6 @@ export const getActionValueOptions = (
     };
   });
 
-  const userAttributesOptions = userAttributes.map((attribute) => {
-    return {
-      icon: TagIcon,
-      label: attribute,
-      value: attribute,
-      meta: {
-        type: "userAttribute",
-      },
-    };
-  });
-
   if (questionOptions.length > 0) {
     groupedOptions.push({
       label: "Questions",
@@ -548,14 +487,6 @@ export const getActionValueOptions = (
       label: "Hidden Fields",
       value: "hiddenFields",
       options: hiddenFieldsOptions,
-    });
-  }
-
-  if (userAttributesOptions.length > 0) {
-    groupedOptions.push({
-      label: "User Attributes",
-      value: "userAttributes",
-      options: userAttributesOptions,
     });
   }
 

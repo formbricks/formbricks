@@ -37,7 +37,6 @@ interface SurveyEditorProps {
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
-  userAttributes: string[];
 }
 
 export const SurveyEditor = ({
@@ -56,7 +55,6 @@ export const SurveyEditor = ({
   isFormbricksCloud,
   isUnsplashConfigured,
   plan,
-  userAttributes,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -172,7 +170,6 @@ export const SurveyEditor = ({
                 isFormbricksCloud={isFormbricksCloud}
                 attributeClasses={attributeClasses}
                 plan={plan}
-                userAttributes={userAttributes}
               />
             )}
 

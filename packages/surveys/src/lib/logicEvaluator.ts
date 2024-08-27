@@ -172,9 +172,6 @@ const getLeftOperandValue = (
 
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
-    case "userAttribute":
-      // !@gupta-piyush19: Implement user attributes
-      return "";
     case "hiddenField":
       return data[leftOperand.id];
     default:
@@ -202,9 +199,6 @@ const getRightOperandValue = (
 
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
-    case "userAttribute":
-      // !@gupta-piyush19: Implement user attributes
-      return "";
     case "hiddenField":
       return data[rightOperand.value];
     case "static":
@@ -275,9 +269,6 @@ const performCalculation = (
         }
         operandValue = val;
       }
-      break;
-    case "userAttribute":
-      // !@gupta-piyush19: Implement user attributes
       break;
   }
 

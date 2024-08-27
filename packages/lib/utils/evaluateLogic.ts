@@ -1,7 +1,7 @@
-import { getLocalizedValue } from "i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../i18n/utils";
 import { isConditionsGroup } from "../survey/logic/utils";
 
 export const evaluateAdvancedLogic = (
@@ -167,9 +167,6 @@ const getLeftOperandValue = (
 
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
-    case "userAttribute":
-      // !@gupta-piyush19: Implement user attributes
-      return "";
     case "hiddenField":
       return data[leftOperand.id];
     default:
@@ -197,9 +194,6 @@ const getRightOperandValue = (
 
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
-    case "userAttribute":
-      // !@gupta-piyush19: Implement user attributes
-      return "";
     case "hiddenField":
       return data[rightOperand.value];
     case "static":

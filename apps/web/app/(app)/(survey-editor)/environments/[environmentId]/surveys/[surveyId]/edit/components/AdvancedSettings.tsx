@@ -9,7 +9,6 @@ interface AdvancedSettingsProps {
   localSurvey: TSurvey;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   attributeClasses: TAttributeClass[];
-  userAttributes: string[];
 }
 
 export const AdvancedSettings = ({
@@ -18,7 +17,6 @@ export const AdvancedSettings = ({
   localSurvey,
   updateQuestion,
   attributeClasses,
-  userAttributes,
 }: AdvancedSettingsProps) => {
   return (
     <div>
@@ -29,7 +27,6 @@ export const AdvancedSettings = ({
           localSurvey={localSurvey}
           questionIdx={questionIdx}
           attributeClasses={attributeClasses}
-          userAttributes={userAttributes}
         />
       </div>
 

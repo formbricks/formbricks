@@ -313,7 +313,7 @@ export const ZSurveyLogicCondition = z.enum([
   "isCompletelySubmitted",
 ]);
 
-export const ZDyanmicLogicField = z.enum(["question", "variable", "userAttribute", "hiddenField"]);
+export const ZDyanmicLogicField = z.enum(["question", "variable", "hiddenField"]);
 export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQuestion"]);
 export const ZActionTextVariableCalculateOperator = z.enum(["assign", "concat"]);
 export const ZActionNumberVariableCalculateOperator = z.enum([
@@ -360,10 +360,6 @@ export const ZRightOperand = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("variable"),
-    value: z.string().cuid2(),
-  }),
-  z.object({
-    type: z.literal("userAttribute"),
     value: z.string().cuid2(),
   }),
   z.object({

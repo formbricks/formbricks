@@ -10,7 +10,6 @@ interface AdvancedLogicEditorProps {
   question: TSurveyQuestion;
   questionIdx: number;
   logicIdx: number;
-  userAttributes: string[];
 }
 
 export function AdvancedLogicEditor({
@@ -20,7 +19,6 @@ export function AdvancedLogicEditor({
   question,
   questionIdx,
   logicIdx,
-  userAttributes,
 }: AdvancedLogicEditorProps) {
   return (
     <div className="flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-100 p-4">
@@ -31,7 +29,6 @@ export function AdvancedLogicEditor({
         questionIdx={questionIdx}
         localSurvey={localSurvey}
         logicIdx={logicIdx}
-        userAttributes={userAttributes}
       />
       <AdvancedLogicEditorActions
         logicItem={logicItem}
@@ -39,7 +36,6 @@ export function AdvancedLogicEditor({
         question={question}
         updateQuestion={updateQuestion}
         localSurvey={localSurvey}
-        userAttributes={userAttributes}
         questionIdx={questionIdx}
       />
     </div>
