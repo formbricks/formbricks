@@ -80,6 +80,7 @@ const conditions = {
   cal: ["skipped", "booked"],
   matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
   address: ["submitted", "skipped"],
+  ranking: ["submitted", "skipped"],
 };
 
 export const LogicEditor = ({
