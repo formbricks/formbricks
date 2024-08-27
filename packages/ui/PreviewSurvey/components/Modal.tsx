@@ -31,8 +31,6 @@ export const Modal = ({
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(placement === "center");
 
-  console.log("placement", placement);
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       setWindowWidth(window.innerWidth);
