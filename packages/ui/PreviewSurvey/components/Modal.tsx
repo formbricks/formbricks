@@ -42,6 +42,10 @@ export const Modal = ({
     }
   }, []);
 
+  useEffect(() => {
+    setOverlayVisible(placement === "center");
+  }, [placement]);
+
   const calculateScaling = () => {
     if (windowWidth === null) return {};
 
@@ -80,26 +84,21 @@ export const Modal = ({
   const scalingClasses = calculateScaling();
 
   useEffect(() => {
-    if (!clickOutsideClose) {
-      setOverlayVisible(true);
-      setShow(true);
-    }
-
+    if (!clickOutsideClose || placement !== "center") return;
     const handleClickOutside = (e: MouseEvent) => {
       const previewBase = document.getElementById("preview-survey-base");
 
       if (
-        scalingClasses.transformOrigin === "" &&
         clickOutsideClose &&
         modalRef.current &&
         previewBase &&
         previewBase.contains(e.target as Node) &&
         !modalRef.current.contains(e.target as Node)
       ) {
+        setShow(false);
         setTimeout(() => {
-          setOverlayVisible(false);
-          setShow(false);
-        }, 500);
+          setShow(true);
+        }, 1000);
       }
     };
 
@@ -107,7 +106,7 @@ export const Modal = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutsideClose, scalingClasses.transformOrigin]);
+  }, [clickOutsideClose, placement]);
 
   useEffect(() => {
     setShow(isOpen);
