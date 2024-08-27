@@ -140,6 +140,7 @@ export const RankingQuestion = ({
               <legend className="fb-sr-only">Ranking Items</legend>
               <div className="fb-relative">
                 {[...sortedItems, ...unsortedItems].map((item, idx) => {
+                  if (!item) return;
                   const isSorted = sortedItems.includes(item);
                   const isFirst = isSorted && idx === 0;
                   const isLast = isSorted && idx === sortedItems.length - 1;
