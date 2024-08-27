@@ -17,8 +17,6 @@ let arePageUrlEventListenersAdded = false;
 
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
-  // const { state } = websiteConfig.get();
-  // const { actionClasses = [] } = state ?? {};
   const actionClasses = websiteConfig.get().environmentState.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(
@@ -97,9 +95,6 @@ export const removeClickEventListener = (): void => {
 let isExitIntentListenerAdded = false;
 
 const checkExitIntent = async (e: MouseEvent) => {
-  // const { state } = websiteConfig.get();
-  // const { actionClasses = [] } = state ?? {};
-
   const actionClasses = websiteConfig.get().environmentState.data.actionClasses;
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
@@ -150,9 +145,6 @@ const checkScrollDepth = async () => {
 
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
-
-    // const { state } = websiteConfig.get();
-    // const { actionClasses = [] } = state ?? {};
 
     const actionClasses = websiteConfig.get().environmentState.data.actionClasses;
 

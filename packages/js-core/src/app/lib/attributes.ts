@@ -94,7 +94,6 @@ export const updateAttributes = async (
   const updatedAttributes = { ...attributes };
 
   try {
-    // const existingAttributes = appConfig.get()?.state?.attributes;
     const existingAttributes = appConfig.get().personState.data.attributes;
     if (existingAttributes) {
       for (const [key, value] of Object.entries(existingAttributes)) {

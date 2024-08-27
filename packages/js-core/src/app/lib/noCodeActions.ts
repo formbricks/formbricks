@@ -17,8 +17,6 @@ let arePageUrlEventListenersAdded = false;
 
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
-  // const { state } = appConfig.get();
-  // const { actionClasses = [] } = state ?? {};
   const actionClasses = appConfig.get().environmentState.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(
