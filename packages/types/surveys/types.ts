@@ -272,7 +272,7 @@ export const ZSurveyAddressLogic = ZSurveyLogicBase.extend({
 
 export const ZSurveyRankingLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.union([z.array(z.string()), z.string()]).optional(),
+  value: z.undefined(),
 });
 
 export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
