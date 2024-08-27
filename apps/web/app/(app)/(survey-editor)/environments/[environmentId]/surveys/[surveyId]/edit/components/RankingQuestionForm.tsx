@@ -42,10 +42,8 @@ export const RankingQuestionForm = ({
   attributeClasses,
 }: RankingQuestionFormProps): JSX.Element => {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
-  const [isNew, setIsNew] = useState(true);
-  const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
+  const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
 
-  const questionRef = useRef<HTMLInputElement>(null);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const surveyLanguages = localSurvey.languages ?? [];
 
@@ -76,7 +74,6 @@ export const RankingQuestionForm = ({
   };
 
   const addChoice = (choiceIdx?: number) => {
-    setIsNew(false); // This question is no longer new.
     let newChoices = !question.choices ? [] : question.choices;
 
     const newChoice = {
@@ -96,7 +93,7 @@ export const RankingQuestionForm = ({
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
     const choiceValue = question.choices[choiceIdx].label[selectedLanguageCode];
     if (isInvalidValue === choiceValue) {
-      setisInvalidValue(null);
+      setIsInvalidValue(null);
     }
     let newLogic: any[] = [];
     question.logic?.forEach((logic) => {
@@ -130,13 +127,6 @@ export const RankingQuestionForm = ({
       lastChoiceRef.current?.focus();
     }
   }, [question.choices?.length]);
-
-  // This effect will run once on initial render, setting focus to the question input.
-  useEffect(() => {
-    if (isNew && questionRef.current) {
-      questionRef.current.focus();
-    }
-  }, [isNew]);
 
   return (
     <form>
