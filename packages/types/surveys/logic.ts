@@ -328,6 +328,7 @@ export const ZActionVariableCalculateOperator = z.union([
   ZActionNumberVariableCalculateOperator,
 ]);
 
+export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
 export type TDyanmicLogicField = z.infer<typeof ZDyanmicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
@@ -348,42 +349,27 @@ const ZLeftOperandHiddenField = ZLeftOperandBase.extend({
 export const ZLeftOperand = z.union([ZLeftOperandBase, ZLeftOperandHiddenField]);
 export type TLeftOperand = z.infer<typeof ZLeftOperand>;
 
-export const ZRightOperandBase = z.object({
-  type: z.union([z.literal("static"), ZDyanmicLogicField]),
-  value: z.union([z.string(), z.number(), z.array(z.string())]),
-});
-
-const ZRightOperandStatic = ZRightOperandBase.extend({
-  type: z.literal("static"),
-  value: z.union([z.string(), z.number(), z.array(z.string())]),
-});
-
-const ZRightOperandQuestion = ZRightOperandBase.extend({
-  type: z.literal("question"),
-  value: z.string().cuid2(),
-});
-
-const ZRightOperandVariable = ZRightOperandBase.extend({
-  type: z.literal("variable"),
-  value: z.string().cuid2(),
-});
-
-const ZRightOperandUserAttribute = ZRightOperandBase.extend({
-  type: z.literal("userAttribute"),
-  value: z.string().cuid2(),
-});
-
-const ZRightOperandHiddenField = ZRightOperandBase.extend({
-  type: z.literal("hiddenField"),
-  value: z.string(),
-});
-
-export const ZRightOperand = z.union([
-  ZRightOperandStatic,
-  ZRightOperandQuestion,
-  ZRightOperandVariable,
-  ZRightOperandUserAttribute,
-  ZRightOperandHiddenField,
+export const ZRightOperand = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("static"),
+    value: z.union([z.string(), z.number(), z.array(z.string())]),
+  }),
+  z.object({
+    type: z.literal("question"),
+    value: z.string().cuid2(),
+  }),
+  z.object({
+    type: z.literal("variable"),
+    value: z.string().cuid2(),
+  }),
+  z.object({
+    type: z.literal("userAttribute"),
+    value: z.string().cuid2(),
+  }),
+  z.object({
+    type: z.literal("hiddenField"),
+    value: z.string(),
+  }),
 ]);
 
 export type TRightOperand = z.infer<typeof ZRightOperand>;
@@ -418,6 +404,9 @@ const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
 );
 
 // Actions
+export const ZActionVariableValueType = z.union([z.literal("static"), ZDyanmicLogicField]);
+export type TActionVariableValueType = z.infer<typeof ZActionVariableValueType>;
+
 const ZActionBase = z.object({
   id: z.string().cuid2(),
   objective: ZActionObjective,
@@ -451,6 +440,7 @@ const ZActionJumpToQuestion = ZActionBase.extend({
 export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;
 
 export const ZAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToQuestion]);
+
 export type TAction = z.infer<typeof ZAction>;
 
 const ZSurveyAdvancedLogicActions = z.array(ZAction);

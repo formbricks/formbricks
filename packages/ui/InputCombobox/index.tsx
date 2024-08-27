@@ -69,7 +69,6 @@ export const InputCombobox = ({
   }, [selected, options, groupedOptions]);
 
   const handleSelect = (option: ComboboxOption) => {
-    console.log("option", option);
     if (allowMultiSelect) {
       if (Array.isArray(value)) {
         const doesExist = value.find((item) => item.value === option.value);
@@ -134,9 +133,12 @@ export const InputCombobox = ({
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className={cn("w-[200px] border border-slate-400 bg-slate-50 p-0 shadow-none", {
-            "pt-2": showSearch,
-          })}>
+          className={cn(
+            "max-h-[400px] w-[200px] overflow-y-auto border border-slate-400 bg-slate-50 p-0 shadow-none",
+            {
+              "pt-2": showSearch,
+            }
+          )}>
           <Command>
             {showSearch && (
               <CommandInput

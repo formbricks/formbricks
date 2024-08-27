@@ -12,6 +12,7 @@ import {
   TSurvey,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
+  TSurveyQuestion,
   TSurveyQuestionSummaryAddress,
   TSurveyQuestionSummaryDate,
   TSurveyQuestionSummaryFileUpload,
@@ -26,7 +27,7 @@ import {
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
-import { evaluateCondition } from "../utils/evaluateLogic";
+import { evaluateAdvancedLogic } from "../utils/evaluateLogic";
 import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
@@ -569,18 +570,9 @@ export const getSurveySummaryDropOff = (
             break;
           }
 
-          const questionHasCustomLogic = currQues.logic;
-          if (questionHasCustomLogic) {
-            let didLogicPass = false;
-            for (let logic of questionHasCustomLogic) {
-              if (!logic.destination) continue;
-              if (evaluateCondition(logic, response.data[currQues.id] ?? null)) {
-                didLogicPass = true;
-                currQuesIdx = survey.questions.findIndex((q) => q.id === logic.destination);
-                break;
-              }
-            }
-            if (!didLogicPass) currQuesIdx++;
+          const nextQuestionId = getNextQuestionId(survey, currQues, response.data);
+          if (nextQuestionId) {
+            currQuesIdx = survey.questions.findIndex((q) => q.id === nextQuestionId);
           } else {
             currQuesIdx++;
           }
@@ -599,26 +591,18 @@ export const getSurveySummaryDropOff = (
 
       impressionsArr[currQuesIdx]++;
 
-      let nextQuesIdx = currQuesIdx + 1;
-      const questionHasCustomLogic = currQues.logic;
-
-      if (questionHasCustomLogic) {
-        for (let logic of questionHasCustomLogic) {
-          if (!logic.destination) continue;
-          if (evaluateCondition(logic, response.data[currQues.id])) {
-            nextQuesIdx = survey.questions.findIndex((q) => q.id === logic.destination);
-            break;
-          }
+      const nextQuestionId = getNextQuestionId(survey, currQues, response.data);
+      if (nextQuestionId) {
+        const nextQuesIdx = survey.questions.findIndex((q) => q.id === nextQuestionId);
+        if (!response.data[nextQuestionId] && !response.finished) {
+          dropOffArr[nextQuesIdx]++;
+          impressionsArr[nextQuesIdx]++;
+          break;
         }
+        currQuesIdx = nextQuesIdx;
+      } else {
+        currQuesIdx++;
       }
-
-      if (!response.data[survey.questions[nextQuesIdx]?.id] && !response.finished) {
-        dropOffArr[nextQuesIdx]++;
-        impressionsArr[nextQuesIdx]++;
-        break;
-      }
-
-      currQuesIdx = nextQuesIdx;
     }
   });
 
@@ -660,6 +644,25 @@ export const getSurveySummaryDropOff = (
   });
 
   return dropOff;
+};
+
+const getNextQuestionId = (
+  survey: TSurvey,
+  question: TSurveyQuestion,
+  responseData: Record<string, any>
+): string | undefined => {
+  if (!question.logic) return undefined;
+
+  for (const logic of question.logic) {
+    if (evaluateAdvancedLogic(survey, responseData, logic.conditions, "default")) {
+      const jumpAction = logic.actions.find((action) => action.objective === "jumpToQuestion");
+      if (jumpAction) {
+        return jumpAction.target;
+      }
+    }
+  }
+
+  return undefined;
 };
 
 const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {

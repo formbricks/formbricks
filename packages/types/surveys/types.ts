@@ -227,130 +227,6 @@ export const ZSurveyPictureChoice = z.object({
 
 export type TSurveyChoice = z.infer<typeof ZSurveyChoice>;
 
-export const ZSurveyLogicCondition = z.enum([
-  "accepted",
-  "clicked",
-  "submitted",
-  "skipped",
-  "equals",
-  "notEquals",
-  "lessThan",
-  "lessEqual",
-  "greaterThan",
-  "greaterEqual",
-  "includesAll",
-  "includesOne",
-  "uploaded",
-  "notUploaded",
-  "booked",
-  "isCompletelySubmitted",
-  "isPartiallySubmitted",
-]);
-
-export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
-
-export const ZSurveyLogicBase = z.object({
-  condition: ZSurveyLogicCondition.optional(),
-  value: z.union([z.string(), z.array(z.string())]).optional(),
-  destination: ZSurveyQuestionId.optional(),
-});
-
-export const ZSurveyFileUploadLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["uploaded", "notUploaded"]).optional(),
-  value: z.undefined(),
-});
-
-export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.undefined(),
-});
-
-export const ZSurveyAddressLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.undefined(),
-});
-
-export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["skipped", "accepted"]).optional(),
-  value: z.undefined(),
-});
-
-export const ZSurveyMultipleChoiceLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "equals", "notEquals", "includesOne", "includesAll"]).optional(),
-  value: z.union([z.array(z.string()), z.string()]).optional(),
-});
-
-export const ZSurveyNPSLogic = ZSurveyLogicBase.extend({
-  condition: z
-    .enum([
-      "equals",
-      "notEquals",
-      "lessThan",
-      "lessEqual",
-      "greaterThan",
-      "greaterEqual",
-      "submitted",
-      "skipped",
-    ])
-    .optional(),
-  value: z.union([z.string(), z.number()]).optional(),
-});
-
-export const ZSurveyCTALogic = ZSurveyLogicBase.extend({
-  // "submitted" condition is legacy and should be removed later
-  condition: z.enum(["clicked", "submitted", "skipped"]).optional(),
-  value: z.undefined(),
-});
-
-export const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
-  condition: z
-    .enum([
-      "equals",
-      "notEquals",
-      "lessThan",
-      "lessEqual",
-      "greaterThan",
-      "greaterEqual",
-      "submitted",
-      "skipped",
-    ])
-    .optional(),
-  value: z.union([z.string(), z.number()]).optional(),
-});
-
-export const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "equals", "includesOne", "includesAll"]).optional(),
-  value: z.union([z.array(z.string()), z.string()]).optional(),
-});
-
-export const ZSurveyCalLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["booked", "skipped"]).optional(),
-  value: z.undefined(),
-});
-
-const ZSurveyMatrixLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["isCompletelySubmitted", "isPartiallySubmitted", "skipped"]).optional(),
-  value: z.undefined(),
-});
-
-export const ZSurveyLogic = z.union([
-  ZSurveyOpenTextLogic,
-  ZSurveyConsentLogic,
-  ZSurveyMultipleChoiceLogic,
-  ZSurveyNPSLogic,
-  ZSurveyCTALogic,
-  ZSurveyRatingLogic,
-  ZSurveyPictureSelectionLogic,
-  ZSurveyFileUploadLogic,
-  ZSurveyCalLogic,
-  ZSurveyMatrixLogic,
-  ZSurveyAddressLogic,
-]);
-
-export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
-
-export type TSurveyPictureSelectionLogic = z.infer<typeof ZSurveyPictureSelectionLogic>;
-
 export const ZSurveyQuestionBase = z.object({
   id: ZSurveyQuestionId,
   type: z.string(),
@@ -363,8 +239,7 @@ export const ZSurveyQuestionBase = z.object({
   backButtonLabel: ZI18nString.optional(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
-  logic: z.array(ZSurveyLogic).optional(),
-  advancedLogic: z.array(ZSurveyAdvancedLogic).optional(),
+  logic: z.array(ZSurveyAdvancedLogic).optional(),
   isDraft: z.boolean().optional(),
 });
 
@@ -375,7 +250,6 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
-  logic: z.array(ZSurveyOpenTextLogic).optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
 });
 
@@ -386,7 +260,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   html: ZI18nString.optional(),
   label: ZI18nString,
   placeholder: z.string().optional(),
-  logic: z.array(ZSurveyConsentLogic).optional(),
 });
 
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
@@ -403,25 +276,25 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
   choices: z
     .array(ZSurveyChoice)
     .min(2, { message: "Multiple Choice Question must have at least two choices" }),
-  logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
-}).refine(
-  (question) => {
-    const { logic, type } = question;
+});
+// .refine(
+//   (question) => {
+//     const { logic, type } = question;
 
-    if (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
-      // The single choice question should not have 'includesAll' logic
-      return !logic?.some((l) => l.condition === "includesAll");
-    }
-    // The multi choice question should not have 'notEquals' logic
-    return !logic?.some((l) => l.condition === "notEquals");
-  },
-  {
-    message:
-      "MultipleChoiceSingle question should not have 'includesAll' logic and MultipleChoiceMulti question should not have 'notEquals' logic",
-  }
-);
+//     if (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
+//       // The single choice question should not have 'includesAll' logic
+//       return !logic?.some((l) => l.condition === "includesAll");
+//     }
+//     // The multi choice question should not have 'notEquals' logic
+//     return !logic?.some((l) => l.condition === "notEquals");
+//   },
+//   {
+//     message:
+//       "MultipleChoiceSingle question should not have 'includesAll' logic and MultipleChoiceMulti question should not have 'notEquals' logic",
+//   }
+// );
 
 export type TSurveyMultipleChoiceQuestion = z.infer<typeof ZSurveyMultipleChoiceQuestion>;
 
@@ -430,7 +303,6 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
   isColorCodingEnabled: z.boolean().optional().default(false),
-  logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
 export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
@@ -441,7 +313,6 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
-  logic: z.array(ZSurveyCTALogic).optional(),
 });
 
 export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
@@ -453,7 +324,6 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
   isColorCodingEnabled: z.boolean().optional().default(false),
-  logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
 export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
@@ -472,7 +342,6 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   choices: z
     .array(ZSurveyPictureChoice)
     .min(2, { message: "Picture Selection question must have atleast 2 choices" }),
-  logic: z.array(ZSurveyPictureSelectionLogic).optional(),
 });
 
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
@@ -482,7 +351,6 @@ export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
   allowMultipleFiles: z.boolean(),
   maxSizeInMB: z.number().optional(),
   allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
-  logic: z.array(ZSurveyFileUploadLogic).optional(),
 });
 
 export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
@@ -491,7 +359,6 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string().min(1, { message: "Cal user name is required" }),
   calHost: z.string().optional(),
-  logic: z.array(ZSurveyCalLogic).optional(),
 });
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
@@ -500,7 +367,6 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZI18nString),
   columns: z.array(ZI18nString),
-  logic: z.array(ZSurveyMatrixLogic).optional(),
 });
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
@@ -721,7 +587,7 @@ export const ZSurvey = z
 
     // Custom default validation for each question
     questions.forEach((question, questionIndex) => {
-      const existingLogicConditions = new Set();
+      // const existingLogicConditions = new Set();
       multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
       if (multiLangIssue) {
         ctx.addIssue(multiLangIssue);
@@ -945,40 +811,40 @@ export const ZSurvey = z
         }
       }
 
-      if (question.logic) {
-        question.logic.forEach((logic, logicIndex) => {
-          const logicConditions = ["condition", "value", "destination"] as const;
-          const validFields = logicConditions.filter((field) => logic[field] !== undefined).length;
+      // if (question.logic) {
+      //   question.logic.forEach((logic, logicIndex) => {
+      //     const logicConditions = ["condition", "value", "destination"] as const;
+      //     const validFields = logicConditions.filter((field) => logic[field] !== undefined).length;
 
-          if (validFields < 2) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Logic for question ${String(questionIndex + 1)} is missing required fields`,
-              path: ["questions", questionIndex, "logic"],
-            });
-          }
+      //     if (validFields < 2) {
+      //       ctx.addIssue({
+      //         code: z.ZodIssueCode.custom,
+      //         message: `Logic for question ${String(questionIndex + 1)} is missing required fields`,
+      //         path: ["questions", questionIndex, "logic"],
+      //       });
+      //     }
 
-          if (question.required && logic.condition === "skipped") {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Logic for question ${String(questionIndex + 1)} is invalid. Required questions cannot be skipped.`,
-              path: ["questions", questionIndex, "logic"],
-            });
-          }
+      //     if (question.required && logic.condition === "skipped") {
+      //       ctx.addIssue({
+      //         code: z.ZodIssueCode.custom,
+      //         message: `Logic for question ${String(questionIndex + 1)} is invalid. Required questions cannot be skipped.`,
+      //         path: ["questions", questionIndex, "logic"],
+      //       });
+      //     }
 
-          // logic condition and value mapping should not be repeated
-          const thisLogic = `${logic.condition ?? ""}-${Array.isArray(logic.value) ? logic.value.sort().join(",") : String(logic.value)}`;
-          if (existingLogicConditions.has(thisLogic)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message:
-                "There are two competing logic conditions: Please update or delete one in the Questions tab.",
-              path: ["questions", questionIndex, "logic", logicIndex],
-            });
-          }
-          existingLogicConditions.add(thisLogic);
-        });
-      }
+      //     // logic condition and value mapping should not be repeated
+      //     const thisLogic = `${logic.condition ?? ""}-${Array.isArray(logic.value) ? logic.value.sort().join(",") : String(logic.value)}`;
+      //     if (existingLogicConditions.has(thisLogic)) {
+      //       ctx.addIssue({
+      //         code: z.ZodIssueCode.custom,
+      //         message:
+      //           "There are two competing logic conditions: Please update or delete one in the Questions tab.",
+      //         path: ["questions", questionIndex, "logic", logicIndex],
+      //       });
+      //     }
+      //     existingLogicConditions.add(thisLogic);
+      //   });
+      // }
     });
 
     const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(questions);

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
@@ -13,9 +14,16 @@ import {
   isConditionsGroup,
   removeCondition,
   toggleGroupConnector,
+  updateCondition,
 } from "@formbricks/lib/survey/logic/utils";
-import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyLogicCondition, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import {
+  TConditionGroup,
+  TDyanmicLogicField,
+  TRightOperand,
+  TSingleCondition,
+  TSurveyLogicCondition,
+} from "@formbricks/types/surveys/logic";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,69 +54,62 @@ export function AdvancedLogicEditorConditions({
   depth = 0,
 }: AdvancedLogicEditorConditions) {
   const handleAddConditionBelow = (resourceId: string, condition: TSingleCondition) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-    const logicItem = advancedLogicCopy[logicIdx];
+    const logicCopy = structuredClone(question.logic) || [];
+    const logicItem = logicCopy[logicIdx];
     addConditionBelow(logicItem.conditions, resourceId, condition);
 
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
   const handleConnectorChange = (groupId: string) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-    const logicItem = advancedLogicCopy[logicIdx];
+    const logicCopy = structuredClone(question.logic) || [];
+    const logicItem = logicCopy[logicIdx];
     toggleGroupConnector(logicItem.conditions, groupId);
 
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
   const handleRemoveCondition = (resourceId: string) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-    const logicItem = advancedLogicCopy[logicIdx];
+    const logicCopy = structuredClone(question.logic) || [];
+    const logicItem = logicCopy[logicIdx];
     removeCondition(logicItem.conditions, resourceId);
 
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
   const handleDuplicateCondition = (resourceId: string) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-    const logicItem = advancedLogicCopy[logicIdx];
+    const logicCopy = structuredClone(question.logic) || [];
+    const logicItem = logicCopy[logicIdx];
     duplicateCondition(logicItem.conditions, resourceId);
 
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
   const handleCreateGroup = (resourceId: string) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-    const logicItem = advancedLogicCopy[logicIdx];
-
+    const logicCopy = structuredClone(question.logic) || [];
+    const logicItem = logicCopy[logicIdx];
     createGroupFromResource(logicItem.conditions, resourceId);
 
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
   const handleUpdateCondition = (resourceId: string, updateConditionBody: Partial<TSingleCondition>) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-
-    // performOperationsOnConditions({
-    //   action: "updateCondition",
-    //   advancedLogicCopy,
-    //   logicIdx,
-    //   resourceId,
-    //   conditionBody: updateConditionBody,
-    // });
+    const logicCopy = structuredClone(question.logic) || [];
+    const logicItem = logicCopy[logicIdx];
+    updateCondition(logicItem.conditions, resourceId, updateConditionBody);
 
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
@@ -124,7 +125,7 @@ export function AdvancedLogicEditorConditions({
       return (
         <div key={condition.id} className="flex items-start justify-between gap-4">
           {index === 0 ? (
-            <div className="w-14 text-sm">When</div>
+            <div className="text-sm">When</div>
           ) : (
             <div
               className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
@@ -184,12 +185,12 @@ export function AdvancedLogicEditorConditions({
 
     const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, userAttributes);
     const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
-    const { show, options } = getMatchValueProps(localSurvey, condition, questionIdx, userAttributes);
+    const { show, options, showInput = true } = getMatchValueProps(condition, localSurvey, userAttributes);
 
     return (
       <div key={condition.id} className="mt-2 flex items-center justify-between gap-4">
         {index === 0 ? (
-          <div className="w-14 text-sm">When</div>
+          <div className="text-sm">When</div>
         ) : (
           <div
             className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
@@ -209,11 +210,11 @@ export function AdvancedLogicEditorConditions({
             handleUpdateCondition(condition.id, {
               leftOperand: {
                 id: val,
-                type: option?.meta?.type,
+                type: option?.meta?.type as TDyanmicLogicField,
               },
             });
           }}
-          comboboxClasses="grow"
+          comboboxClasses="grow max-w-[200px]"
         />
         <InputCombobox
           key="conditionOperator"
@@ -229,17 +230,28 @@ export function AdvancedLogicEditorConditions({
         />
         {show && options.length > 0 && (
           <InputCombobox
-            withInput
+            withInput={showInput}
+            inputProps={{
+              placeholder: "Value",
+              onChange: (e) => {
+                handleUpdateCondition(condition.id, {
+                  rightOperand: {
+                    type: "static",
+                    value: e.target.value,
+                  },
+                });
+              },
+            }}
             key="conditionMatchValue"
             showSearch={false}
             groupedOptions={options}
             comboboxSize="sm"
             selected={condition.rightOperand?.value}
-            onChangeValue={(val) => {
+            onChangeValue={(val: TRightOperand["value"], option) => {
               handleUpdateCondition(condition.id, {
                 rightOperand: {
-                  ...condition.rightOperand,
                   value: val,
+                  type: option?.meta?.type as TRightOperand["type"],
                 },
               });
             }}

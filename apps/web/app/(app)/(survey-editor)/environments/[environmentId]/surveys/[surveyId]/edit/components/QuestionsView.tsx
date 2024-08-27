@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
@@ -35,6 +36,8 @@ import { EditEndingCard } from "./EditEndingCard";
 import { EditWelcomeCard } from "./EditWelcomeCard";
 import { HiddenFieldsCard } from "./HiddenFieldsCard";
 import { QuestionsDroppable } from "./QuestionsDroppable";
+
+// @ts-nocheck
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;

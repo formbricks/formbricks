@@ -7,10 +7,12 @@ import {
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { getUpdatedActionBody } from "@formbricks/lib/survey/logic/utils";
 import {
   TAction,
   TActionObjective,
   TActionVariableCalculateOperator,
+  TActionVariableValueType,
   TSurveyAdvancedLogic,
   ZAction,
 } from "@formbricks/types/surveys/logic";
@@ -49,8 +51,8 @@ export function AdvancedLogicEditorActions({
     actionIdx: number,
     action?: TAction
   ) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic) || [];
-    const logicItem = advancedLogicCopy[logicIdx];
+    const logicCopy = structuredClone(question.logic) || [];
+    const logicItem = logicCopy[logicIdx];
     const actionsClone = logicItem.actions;
 
     if (operation === "delete") {
@@ -65,41 +67,13 @@ export function AdvancedLogicEditorActions({
     }
 
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
-  const getUpdatedActionBody = (action, update) => {
-    switch (update.objective) {
-      case "calculate":
-        return {
-          ...action,
-          ...update,
-          objective: "calculate", // Ensure objective remains 'calculate'
-          variableId: "",
-          operator: "assign",
-          value: update.value ? { ...action.value, ...update.value } : { type: "static", value: "" },
-        };
-      case "requireAnswer":
-        return {
-          ...action,
-          ...update,
-          objective: "requireAnswer", // Ensure objective remains 'requireAnswer'
-          target: "",
-        };
-      case "jumpToQuestion":
-        return {
-          ...action,
-          ...update,
-          objective: "jumpToQuestion", // Ensure objective remains 'jumpToQuestion'
-          target: "",
-        };
-    }
-  };
-
-  function updateAction(actionIdx: number, update: Partial<TAction>) {
+  function updateAction(actionIdx: number, updateActionBody: Partial<TAction>) {
     const action = actions[actionIdx];
-    const actionBody = getUpdatedActionBody(action, update);
+    const actionBody = getUpdatedActionBody(action, updateActionBody);
     const parsedActionBodyResult = ZAction.safeParse(actionBody);
     if (!parsedActionBodyResult.success) {
       console.error("Failed to update action", parsedActionBodyResult.error.errors);
@@ -108,7 +82,6 @@ export function AdvancedLogicEditorActions({
     handleActionsChange("update", actionIdx, parsedActionBodyResult.data);
   }
 
-  console.log("actions", actions);
   return (
     <div className="">
       <div className="flex gap-2">
@@ -116,7 +89,7 @@ export function AdvancedLogicEditorActions({
         <div className="flex w-full flex-col gap-y-2">
           {actions.map((action, idx) => (
             <div className="flex w-full items-center justify-between gap-4">
-              <span>{idx === 0 ? "Then" : "and"}</span>
+              <span className="text-sm">{idx === 0 ? "Then" : "and"}</span>
               <div className="flex grow items-center gap-1">
                 <InputCombobox
                   key="objective"
@@ -184,11 +157,16 @@ export function AdvancedLogicEditorActions({
                           });
                         },
                       }}
-                      groupedOptions={getActionValueOptions(localSurvey, questionIdx, userAttributes)}
-                      onChangeValue={(val: string) => {
+                      groupedOptions={getActionValueOptions(
+                        action.variableId,
+                        localSurvey,
+                        questionIdx,
+                        userAttributes
+                      )}
+                      onChangeValue={(val: string, option) => {
                         updateAction(idx, {
                           value: {
-                            type: "static",
+                            type: option?.meta?.type as TActionVariableValueType,
                             value: val,
                           },
                         });

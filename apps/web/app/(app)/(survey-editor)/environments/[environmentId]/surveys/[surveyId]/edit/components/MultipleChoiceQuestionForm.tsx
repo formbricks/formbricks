@@ -6,7 +6,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -69,8 +68,8 @@ export const MultipleChoiceQuestionForm = ({
   };
 
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
-    const newLabel = updatedAttributes.label.en;
-    const oldLabel = question.choices[choiceIdx].label;
+    // const newLabel = updatedAttributes.label.en;
+    // const oldLabel = question.choices[choiceIdx].label;
     let newChoices: any[] = [];
     if (question.choices) {
       newChoices = question.choices.map((choice, idx) => {
@@ -79,19 +78,22 @@ export const MultipleChoiceQuestionForm = ({
       });
     }
 
-    let newLogic: any[] = [];
-    question.logic?.forEach((logic) => {
-      let newL: string | string[] | undefined = logic.value;
-      if (Array.isArray(logic.value)) {
-        newL = logic.value.map((value) =>
-          value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : value
-        );
-      } else {
-        newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
-      }
-      newLogic.push({ ...logic, value: newL });
+    // let newLogic: any[] = [];
+    // question.logic?.forEach((logic) => {
+    //   let newL: string | string[] | undefined = logic.value;
+    //   if (Array.isArray(logic.value)) {
+    //     newL = logic.value.map((value) =>
+    //       value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : value
+    //     );
+    //   } else {
+    //     newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
+    //   }
+    //   newLogic.push({ ...logic, value: newL });
+    // });
+    updateQuestion(questionIdx, {
+      choices: newChoices,
+      // logic: newLogic
     });
-    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
   const addChoice = (choiceIdx?: number) => {
@@ -138,18 +140,21 @@ export const MultipleChoiceQuestionForm = ({
     if (isInvalidValue === choiceValue) {
       setisInvalidValue(null);
     }
-    let newLogic: any[] = [];
-    question.logic?.forEach((logic) => {
-      let newL: string | string[] | undefined = logic.value;
-      if (Array.isArray(logic.value)) {
-        newL = logic.value.filter((value) => value !== choiceValue);
-      } else {
-        newL = logic.value !== choiceValue ? logic.value : undefined;
-      }
-      newLogic.push({ ...logic, value: newL });
-    });
+    // let newLogic: any[] = [];
+    // question.logic?.forEach((logic) => {
+    //   let newL: string | string[] | undefined = logic.value;
+    //   if (Array.isArray(logic.value)) {
+    //     newL = logic.value.filter((value) => value !== choiceValue);
+    //   } else {
+    //     newL = logic.value !== choiceValue ? logic.value : undefined;
+    //   }
+    //   newLogic.push({ ...logic, value: newL });
+    // });
 
-    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+    updateQuestion(questionIdx, {
+      choices: newChoices,
+      //  logic: newLogic
+    });
   };
 
   useEffect(() => {

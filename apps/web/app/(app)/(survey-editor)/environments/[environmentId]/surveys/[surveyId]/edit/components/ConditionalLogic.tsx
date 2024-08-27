@@ -46,20 +46,6 @@ export function ConditionalLogic({
             },
             operator: "isSkipped",
           },
-          {
-            id: createId(),
-            connector: "or",
-            conditions: [
-              {
-                id: createId(),
-                leftOperand: {
-                  type: "question",
-                  id: localSurvey.questions[0].id,
-                },
-                operator: "isSkipped",
-              },
-            ],
-          },
         ],
       },
       actions: [
@@ -72,15 +58,15 @@ export function ConditionalLogic({
     };
 
     updateQuestion(questionIdx, {
-      advancedLogic: [...(question?.advancedLogic || []), initialCondition],
+      logic: [...(question?.logic || []), initialCondition],
     });
   };
 
   const handleDeleteLogic = (logicItemIdx: number) => {
-    const advancedLogicCopy = structuredClone(question.advancedLogic || []);
-    advancedLogicCopy.splice(logicItemIdx, 1);
+    const logicCopy = structuredClone(question.logic || []);
+    logicCopy.splice(logicItemIdx, 1);
     updateQuestion(questionIdx, {
-      advancedLogic: advancedLogicCopy,
+      logic: logicCopy,
     });
   };
 
@@ -91,9 +77,9 @@ export function ConditionalLogic({
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
-      {question.advancedLogic && question.advancedLogic?.length > 0 && (
+      {question.logic && question.logic?.length > 0 && (
         <div className="logic-scrollbar mt-2 flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-          {question.advancedLogic.map((logicItem, logicItemIdx) => (
+          {question.logic.map((logicItem, logicItemIdx) => (
             <div key={logicItem.id} className="flex items-start gap-2">
               <AdvancedLogicEditor
                 localSurvey={transformedSurvey}

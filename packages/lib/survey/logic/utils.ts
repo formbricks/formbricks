@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import { TAction, TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 
 type TCondition = TSingleCondition | TConditionGroup;
 
@@ -130,4 +130,39 @@ export const updateCondition = (
       updateCondition(item, resourceId, condition);
     }
   }
+};
+
+export const getUpdatedActionBody = (action: TAction, update: Partial<TAction>) => {
+  if (update.objective) {
+    if (update.objective === action.objective) return action;
+    switch (update.objective) {
+      case "calculate":
+        return {
+          ...action,
+          ...update,
+          objective: "calculate",
+          variableId: "",
+          operator: "assign",
+          value: update.value ? { ...update.value } : { type: "static", value: "" },
+        };
+      case "requireAnswer":
+        return {
+          ...action,
+          ...update,
+          objective: "requireAnswer",
+          target: "",
+        };
+      case "jumpToQuestion":
+        return {
+          ...action,
+          ...update,
+          objective: "jumpToQuestion",
+          target: "",
+        };
+    }
+  }
+  return {
+    ...action,
+    ...update,
+  };
 };

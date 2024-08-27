@@ -185,11 +185,10 @@ export const getConditionOperatorOptions = (
 };
 
 export const getMatchValueProps = (
-  localSurvey: TSurvey,
   condition: TSingleCondition,
-  questionIdx: number,
+  localSurvey: TSurvey,
   userAttributes: string[]
-): { show: boolean; options: ComboboxGroupedOption[] } => {
+): { show?: boolean; showInput?: boolean; options: ComboboxGroupedOption[] } => {
   if (
     [
       "isAccepted",
@@ -204,49 +203,104 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  let questionOptions = localSurvey.questions
-    .filter((_, idx) => idx !== questionIdx)
-    .map((question) => {
-      return {
-        icon: questionIconMapping[question.type],
-        label: getLocalizedValue(question.headline, "default"),
-        value: question.id,
-        meta: {
-          fieldType: "question",
-        },
-      };
-    });
+  let questions = localSurvey.questions || [];
+  let variables = localSurvey.variables || [];
+  let hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
+  let attributes = userAttributes || [];
 
-  let variableOptions = localSurvey.variables.map((variable) => {
+  if (condition.leftOperand.type === "question") {
+    const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.id);
+
+    if (
+      selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+      selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+    ) {
+      const choices = selectedQuestion.choices.map((choice) => {
+        return {
+          label: getLocalizedValue(choice.label, "default"),
+          value: choice.id,
+          meta: {
+            type: "static",
+          },
+        };
+      });
+
+      return {
+        show: true,
+        showInput: false,
+        options: [{ label: "Choices", value: "choices", options: choices }],
+      };
+    }
+
+    if (selectedQuestion?.type === TSurveyQuestionTypeEnum.PictureSelection) {
+      const choices = selectedQuestion.choices.map((choice, idx) => {
+        return {
+          label: choice.imageUrl.split("/").pop() || `Image ${idx + 1}`,
+          value: choice.id,
+          meta: {
+            type: "static",
+          },
+        };
+      });
+
+      return {
+        show: true,
+        showInput: false,
+        options: [{ label: "Choices", value: "choices", options: choices }],
+      };
+    }
+  }
+
+  if (condition.leftOperand.type === "question") {
+    questions = questions.filter((question) => question.id !== condition.leftOperand.id);
+  } else if (condition.leftOperand.type === "variable") {
+    variables = variables.filter((variable) => variable.id !== condition.leftOperand.id);
+  } else if (condition.leftOperand.type === "hiddenField") {
+    hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.id);
+  } else if (condition.leftOperand.type === "userAttribute") {
+    attributes = attributes.filter((attribute) => attribute !== condition.leftOperand.id);
+  }
+
+  let questionOptions = questions.map((question) => {
+    return {
+      icon: questionIconMapping[question.type],
+      label: getLocalizedValue(question.headline, "default"),
+      value: question.id,
+      meta: {
+        type: "question",
+      },
+    };
+  });
+
+  let variableOptions = variables.map((variable) => {
     return {
       icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
       label: variable.name,
       value: variable.id,
       meta: {
-        fieldType: "variable",
+        type: "variable",
       },
     };
   });
 
-  let hiddenFieldsOptions =
-    localSurvey?.hiddenFields?.fieldIds?.map((field) => {
-      return {
-        icon: EyeOffIcon,
-        label: field,
-        value: field,
-        meta: {
-          fieldType: "hiddenField",
-        },
-      };
-    }) || [];
+  let hiddenFieldsOptions = hiddenFields.map((field) => {
+    return {
+      icon: EyeOffIcon,
+      label: field,
+      value: field,
+      meta: {
+        type: "hiddenField",
+      },
+    };
+  });
 
-  let userAttributesOptions = userAttributes.map((attribute) => {
+  let userAttributesOptions = attributes.map((attribute) => {
     return {
       icon: TagIcon,
       label: attribute,
       value: attribute,
       meta: {
-        fieldType: "userAttribute",
+        type: "userAttribute",
       },
     };
   });
@@ -412,6 +466,7 @@ export const getActionOpeartorOptions = (
 };
 
 export const getActionValueOptions = (
+  variableId: string,
   localSurvey: TSurvey,
   currQuestionIdx: number,
   userAttributes: string[]
@@ -431,21 +486,24 @@ export const getActionValueOptions = (
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
-          fieldType: "question",
+          type: "question",
         },
       };
     });
 
-  const variableOptions = variables.map((variable) => {
-    return {
-      icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-      label: variable.name,
-      value: variable.id,
-      meta: {
-        fieldType: "variable",
-      },
-    };
-  });
+  const selectedVariable = variables.find((variable) => variable.id === variableId);
+  const variableOptions = variables
+    .filter((variable) => variable.type === selectedVariable?.type && variable.id !== variableId)
+    .map((variable) => {
+      return {
+        icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
+        label: variable.name,
+        value: variable.id,
+        meta: {
+          type: "variable",
+        },
+      };
+    });
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
     return {
@@ -453,7 +511,7 @@ export const getActionValueOptions = (
       label: field,
       value: field,
       meta: {
-        fieldType: "hiddenField",
+        type: "hiddenField",
       },
     };
   });
@@ -464,7 +522,7 @@ export const getActionValueOptions = (
       label: attribute,
       value: attribute,
       meta: {
-        fieldType: "userAttribute",
+        type: "userAttribute",
       },
     };
   });
