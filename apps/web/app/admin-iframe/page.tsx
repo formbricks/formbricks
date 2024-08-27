@@ -1,4 +1,4 @@
-const Page = async ({ params }) => {
+const Page = async () => {
   return (
     <div>
       <h1>Sample Iframe with auth Page</h1>
