@@ -8,6 +8,7 @@ import { Button } from "../Button";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
+import { SurveyLoading } from "./components/SurveyLoading";
 import { getFormattedFilters } from "./utils";
 
 interface SurveysListProps {
@@ -176,10 +177,15 @@ export const SurveysList = ({
           )}
         </div>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center">
-          <span className="mb-4 h-24 w-24 rounded-full bg-slate-100 p-6 text-5xl">🕵️</span>
-
-          <div className="text-slate-600">{isFetching ? "Fetching surveys..." : "No surveys found"}</div>
+        <div className="flex h-full w-full">
+          {isFetching ? (
+            <SurveyLoading orientation={orientation} />
+          ) : (
+            <div className="flex w-full flex-col items-center justify-center text-slate-600">
+              <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
+              No surveys found
+            </div>
+          )}
         </div>
       )}
     </div>

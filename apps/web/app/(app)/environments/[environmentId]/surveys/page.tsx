@@ -16,6 +16,7 @@ import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 import { SurveysList } from "@formbricks/ui/SurveysList";
 import { TemplateList } from "@formbricks/ui/TemplateList";
+import Loading from "./loading";
 
 export const metadata: Metadata = {
   title: "Your Surveys",
