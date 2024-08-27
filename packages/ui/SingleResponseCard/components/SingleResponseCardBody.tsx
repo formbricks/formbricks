@@ -131,6 +131,7 @@ export const SingleResponseCardBody = ({
           );
     }
   };
+
   return (
     <div className="p-6">
       {survey.welcomeCard.enabled && (
@@ -166,6 +167,7 @@ export const SingleResponseCardBody = ({
                         getLocalizedValue(question.headline, "default"),
                         {},
                         response.data,
+                        survey.variables,
                         true
                       )
                     )}

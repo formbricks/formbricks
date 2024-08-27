@@ -66,6 +66,7 @@ export const selectSurvey = {
   questions: true,
   endings: true,
   hiddenFields: true,
+  variables: true,
   displayOption: true,
   recontactDays: true,
   displayLimit: true,

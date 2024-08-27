@@ -108,8 +108,6 @@ export const ThemeStylingPreviewSurvey = ({
     setQuestionId(survey?.questions[0]?.id);
   };
 
-  const onFileUpload = async (file: File) => file.name;
-
   const isAppSurvey = previewType === "app" || previewType === "website";
 
   const scrollToEditLogoSection = () => {
@@ -168,7 +166,7 @@ export const ThemeStylingPreviewSurvey = ({
                 survey={{ ...survey, type: "app" }}
                 isBrandingEnabled={product.inAppSurveyBranding}
                 isRedirectDisabled={true}
-                onFileUpload={onFileUpload}
+                onFileUpload={async (file) => file.name}
                 styling={product.styling}
                 isCardBorderVisible={!highlightBorderColor}
                 languageCode="default"
@@ -190,7 +188,7 @@ export const ThemeStylingPreviewSurvey = ({
                   survey={{ ...survey, type: "link" }}
                   isBrandingEnabled={product.linkSurveyBranding}
                   isRedirectDisabled={true}
-                  onFileUpload={onFileUpload}
+                  onFileUpload={async (file) => file.name}
                   responseCount={42}
                   styling={product.styling}
                   languageCode="default"

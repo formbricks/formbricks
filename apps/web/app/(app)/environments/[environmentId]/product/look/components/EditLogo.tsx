@@ -120,7 +120,8 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
           allowedFileExtensions={["png", "jpeg", "jpg"]}
           environmentId={environmentId}
           onFileUpload={(files: string[]) => {
-            setLogoUrl(files[0]), setIsEditing(true);
+            setLogoUrl(files[0]);
+            setIsEditing(true);
           }}
         />
       )}
