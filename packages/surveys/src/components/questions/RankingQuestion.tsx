@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyQuestionChoice, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
 
 interface RankingQuestionProps {
   question: TSurveyRankingQuestion;
@@ -41,8 +41,8 @@ export const RankingQuestion = ({
   currentQuestionId,
 }: RankingQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-  const [sortedItems, setSortedItems] = useState<Array<{ id: string; label: string }>>([]);
-  const [unsortedItems, setUnsortedItems] = useState<Array<{ id: string; label: string }>>([]);
+  const [sortedItems, setSortedItems] = useState<TSurveyQuestionChoice[]>([]);
+  const [unsortedItems, setUnsortedItems] = useState<TSurveyQuestionChoice[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -50,7 +50,7 @@ export const RankingQuestion = ({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const questionChoices = useMemo(
-    () => question.choices.map((c) => ({ id: c.id, label: getLocalizedValue(c.label, languageCode) })),
+    () => question.choices.map((c) => ({ id: c.id, label: c.label })),
     [question.choices, languageCode]
   );
 
@@ -67,7 +67,7 @@ export const RankingQuestion = ({
   }, [value, questionChoices]);
 
   const handleItemClick = useCallback(
-    (item: { id: string; label: string }) => {
+    (item: TSurveyQuestionChoice) => {
       const isAlreadySorted = sortedItems.find((sortedItem) => sortedItem.id === item.id);
 
       let updatedSortedItems;
@@ -112,13 +112,19 @@ export const RankingQuestion = ({
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
-    if (question.required && sortedItems.length !== questionChoices.length) {
+
+    const hasIncompleteRanking =
+      (question.required && sortedItems.length !== questionChoices.length) ||
+      (!question.required && sortedItems.length > 0 && sortedItems.length < questionChoices.length);
+
+    if (hasIncompleteRanking) {
       setError("Please rank all items before submitting.");
       return;
     }
+
     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    onSubmit({ [question.id]: sortedItems.map((item) => item.label) }, updatedTtcObj);
+    onSubmit({ [question.id]: sortedItems.map((item) => item.id) }, updatedTtcObj);
   };
 
   return (
@@ -166,7 +172,9 @@ export const RankingQuestion = ({
                           )}>
                           {(idx + 1).toString()}
                         </span>
-                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm">{item.label}</div>
+                        <div className="fb-grow fb-shrink fb-font-medium fb-text-sm">
+                          {getLocalizedValue(item.label, languageCode)}
+                        </div>
                       </div>
                       {isSorted && (
                         <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">

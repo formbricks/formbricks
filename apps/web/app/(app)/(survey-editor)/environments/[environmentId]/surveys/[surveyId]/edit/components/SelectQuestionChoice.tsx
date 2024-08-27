@@ -9,16 +9,14 @@ import {
   TSurvey,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
+  TSurveyQuestionChoice,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
-  choice: {
-    id: string;
-    label: Record<string, string>;
-  };
+  choice: TSurveyQuestionChoice;
   choiceIdx: number;
   questionIdx: number;
   updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;

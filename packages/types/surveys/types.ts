@@ -215,7 +215,7 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
-export const ZSurveyChoice = z.object({
+export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
 });
@@ -225,7 +225,7 @@ export const ZSurveyPictureChoice = z.object({
   imageUrl: z.string(),
 });
 
-export type TSurveyChoice = z.infer<typeof ZSurveyChoice>;
+export type TSurveyQuestionChoice = z.infer<typeof ZSurveyQuestionChoice>;
 
 export const ZSurveyLogicCondition = z.enum([
   "accepted",
@@ -406,7 +406,7 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
   ]),
   choices: z
-    .array(ZSurveyChoice)
+    .array(ZSurveyQuestionChoice)
     .min(2, { message: "Multiple Choice Question must have at least two choices" }),
   logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: ZShuffleOption.optional(),
@@ -523,7 +523,9 @@ export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
-  choices: z.array(ZSurveyChoice).min(2, { message: "Ranking Question must have at least two options" }),
+  choices: z
+    .array(ZSurveyQuestionChoice)
+    .min(2, { message: "Ranking Question must have at least two options" }),
   otherOptionPlaceholder: ZI18nString.optional(),
   shuffleOption: ZShuffleOption.optional(),
 });
