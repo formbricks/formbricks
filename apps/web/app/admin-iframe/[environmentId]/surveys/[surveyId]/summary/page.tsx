@@ -1,6 +1,4 @@
-import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
-import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
@@ -15,7 +13,6 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
 
 const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
