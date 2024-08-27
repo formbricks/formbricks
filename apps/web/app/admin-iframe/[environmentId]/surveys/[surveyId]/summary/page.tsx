@@ -5,8 +5,6 @@ import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
@@ -53,32 +51,10 @@ const Page = async ({ params }) => {
   if (!organization) {
     throw new Error("Organization not found");
   }
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
-
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   return (
     <PageContentWrapper>
-      {/* <PageHeader
-        pageTitle={survey.name}
-        cta={
-          <SurveyAnalysisCTA
-            environment={environment}
-            survey={survey}
-            isViewer={isViewer}
-            webAppUrl={WEBAPP_URL}
-            user={user}
-          />
-        }
-        >
-        <SurveyAnalysisNavigation
-          environmentId={environment.id}
-          responseCount={totalResponseCount}
-          surveyId={survey.id}
-          activeId="summary"
-        />
-      </PageHeader> */}
       <SummaryPage
         environment={environment}
         survey={survey}
