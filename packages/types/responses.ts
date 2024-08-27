@@ -37,6 +37,10 @@ export const ZResponseData = z.record(ZResponseDataValue);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
+export const ZResponseVariables = z.record(z.union([z.string(), z.number()]));
+
+export type TResponseVariables = z.infer<typeof ZResponseVariables>;
+
 export const ZResponseTtc = z.record(z.number());
 
 export type TResponseTtc = z.infer<typeof ZResponseTtc>;
@@ -250,6 +254,7 @@ export const ZResponse = z.object({
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
+  variables: ZResponseVariables,
   ttc: ZResponseTtc.optional(),
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
@@ -270,6 +275,7 @@ export const ZResponseInput = z.object({
   finished: z.boolean(),
   language: z.string().optional(),
   data: ZResponseData,
+  variables: ZResponseVariables.optional(),
   ttc: ZResponseTtc.optional(),
   meta: z
     .object({
@@ -293,6 +299,7 @@ export type TResponseInput = z.infer<typeof ZResponseInput>;
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
   data: ZResponseData,
+  variables: ZResponseVariables.optional(),
   ttc: ZResponseTtc.optional(),
   language: z.string().optional(),
 });
@@ -312,6 +319,7 @@ export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
   language: z.string().optional(),
+  variables: ZResponseVariables.optional(),
   ttc: ZResponseTtc.optional(),
   meta: z
     .object({

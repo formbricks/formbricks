@@ -59,6 +59,7 @@ export const responseSelection = {
   data: true,
   meta: true,
   ttc: true,
+  variables: true,
   personAttributes: true,
   singleUseId: true,
   language: true,
@@ -203,6 +204,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     data,
     meta,
     singleUseId,
+    variables,
     ttc: initialTtc,
   } = responseInput;
 
@@ -248,6 +250,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       }),
       ...(meta && ({ meta } as Prisma.JsonObject)),
       singleUseId,
+      ...(variables && { variables }),
       ttc: ttc,
     };
 
@@ -649,6 +652,10 @@ export const updateResponse = async (
         : responseInput.ttc
       : {};
     const language = responseInput.language;
+    const variables = {
+      ...currentResponse.variables,
+      ...responseInput.variables,
+    };
 
     const responsePrisma = await prisma.response.update({
       where: {
@@ -659,6 +666,7 @@ export const updateResponse = async (
         data,
         ttc,
         language,
+        variables,
       },
       select: responseSelection,
     });

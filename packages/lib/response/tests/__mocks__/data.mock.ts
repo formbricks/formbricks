@@ -98,6 +98,7 @@ export const mockResponse: ResponseMock = {
   updatedAt: new Date(),
   language: "English",
   ttc: {},
+  variables: {},
 };
 
 const getMockTags = (tags: string[]): { tag: TTag }[] => {
@@ -125,6 +126,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
@@ -149,6 +151,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
@@ -172,6 +175,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
@@ -195,6 +199,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "eight",
@@ -218,6 +223,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "eight",

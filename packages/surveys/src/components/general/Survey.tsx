@@ -13,7 +13,12 @@ import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
-import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
+import type {
+  TResponseData,
+  TResponseDataValue,
+  TResponseTtc,
+  TResponseVariables,
+} from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 export const Survey = ({
@@ -63,6 +68,8 @@ export const Survey = ({
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
+  const [responseVariables, setResponseVariables] = useState<TResponseVariables>({});
+
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const questionIds = useMemo(
     () => localSurvey.questions.map((question) => question.id),
@@ -146,6 +153,11 @@ export const Survey = ({
     setResponseData(updatedResponseData);
   };
 
+  const onChangeVariables = (variables: TResponseVariables) => {
+    const updatedVariables = { ...responseVariables, ...variables };
+    setResponseVariables(updatedVariables);
+  };
+
   const makeQuestionsRequired = (questionIds: string[]): void => {
     const localSurveyClone = structuredClone(localSurvey);
     localSurveyClone.questions.forEach((question) => {
@@ -193,8 +205,8 @@ export const Survey = ({
       }
     }
 
-    // Update data with all calculation results
-    onChange(calculationResults);
+    // Update response variables with all calculation results
+    onChangeVariables(calculationResults);
 
     // Make all collected questions required
     if (allRequiredQuestionIds.length > 0) {
@@ -213,7 +225,13 @@ export const Survey = ({
       nextQuestionId === undefined ||
       !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
     onChange(responseData);
-    onResponse({ data: responseData, ttc, finished, language: selectedLanguage });
+    onResponse({
+      data: responseData,
+      ttc,
+      finished,
+      variables: responseVariables,
+      language: selectedLanguage,
+    });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*");

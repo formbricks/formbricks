@@ -270,6 +270,7 @@ export const LinkSurvey = ({
                 url: window.location.href,
                 source: sourceParam || "",
               },
+              variables: responseUpdate.variables,
               ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
             });
         }}
