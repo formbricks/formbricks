@@ -2,7 +2,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
+import { TJsFileUploadParams, TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -214,10 +214,7 @@ const renderWidget = async (
         });
       },
       onClose: closeSurvey,
-      onFileUpload: async (
-        file: { type: string; name: string; base64: string },
-        params: TUploadFileConfig
-      ) => {
+      onFileUpload: async (file: TJsFileUploadParams["file"], params: TUploadFileConfig) => {
         const api = new FormbricksAPI({
           apiHost: appConfig.get().apiHost,
           environmentId: appConfig.get().environmentId,
