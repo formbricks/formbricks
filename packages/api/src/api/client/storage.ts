@@ -1,4 +1,5 @@
 /* eslint-disable no-console -- used for error logging */
+import { Buffer } from "node:buffer";
 import type { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
 
 export class StorageAPI {
@@ -63,11 +64,23 @@ export class StorageAPI {
     }
 
     const formData: Record<string, string> = {};
+    const formDataForS3 = new FormData();
 
     if (presignedFields) {
       Object.keys(presignedFields).forEach((key) => {
-        formData[key] = presignedFields[key];
+        formDataForS3.append(key, presignedFields[key]);
       });
+
+      try {
+        const buffer = Buffer.from(file.base64.split(",")[1], "base64");
+        const blob = new Blob([buffer], { type: file.type });
+
+        formDataForS3.append("file", blob);
+      } catch (buffErr) {
+        console.error({ buffErr });
+
+        throw new Error("Error uploading file");
+      }
     }
 
     formData.fileBase64String = file.base64;
@@ -86,7 +99,7 @@ export class StorageAPI {
               },
             }
           : {}),
-        body: JSON.stringify(formData),
+        body: presignedFields ? formDataForS3 : JSON.stringify(formData),
       });
     } catch (err) {
       console.error("Error uploading file", err);

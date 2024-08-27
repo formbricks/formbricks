@@ -205,8 +205,8 @@ export const PreviewSurvey = ({
   const handlePreviewModalClose = () => {
     setIsModalOpen(false);
     setTimeout(() => {
-      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
       setIsModalOpen(true);
+      resetQuestionProgress();
     }, 1000);
   };
 

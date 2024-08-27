@@ -168,7 +168,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
           </div>
         );
       default:
-        return <div className={`${baseClasses} ${loadedClass} bg-white`} />;
+        return <div className={`${baseClasses} ${loadedClass}`} />;
     }
   };
 
@@ -185,7 +185,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         className={`relative h-[90%] max-h-[40rem] w-[22rem] overflow-hidden rounded-[3rem] border-[6px] border-slate-400 ${getFilterStyle()}`}>
         {/* below element is use to create notch for the mobile device mockup   */}
         <div className="absolute left-1/2 right-1/2 top-2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
-        {renderBackground()}
+        {survey.type === "link" && renderBackground()}
         {renderContent()}
       </div>
     );
