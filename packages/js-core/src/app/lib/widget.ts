@@ -2,16 +2,20 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { TJsTrackProperties } from "@formbricks/types/js";
+import { TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
+import {
+  filterSurveys,
+  getDefaultLanguageCode,
+  getLanguageCode,
+  handleHiddenFields,
+} from "../../shared/utils";
 import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
-import { sync } from "./sync";
 
 const containerId = "formbricks-app-container";
 
@@ -126,6 +130,11 @@ const renderWidget = async (
       onDisplay: async () => {
         const { userId } = appConfig.get().personState.data;
 
+        if (!userId) {
+          logger.debug("User ID not found. Skipping.");
+          return;
+        }
+
         const api = new FormbricksAPI({
           apiHost: appConfig.get().apiHost,
           environmentId: appConfig.get().environmentId,
@@ -133,7 +142,7 @@ const renderWidget = async (
 
         const res = await api.client.display.create({
           surveyId: survey.id,
-          userId: userId ?? "",
+          userId,
         });
 
         if (!res.ok) {
@@ -144,10 +153,37 @@ const renderWidget = async (
 
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
+
+        const existingDisplays = appConfig.get().personState.data.displays;
+        const displays = existingDisplays ? [...existingDisplays, survey.id] : [survey.id];
+        const previousConfig = appConfig.get();
+
+        const updatedPersonState: TJsPersonState = {
+          ...previousConfig.personState,
+          data: {
+            ...previousConfig.personState.data,
+            displays,
+            lastDisplayAt: new Date(),
+          },
+        };
+
+        const filteredSurveys = filterSurveys(previousConfig.environmentState, updatedPersonState);
+
+        appConfig.update({
+          ...previousConfig,
+          personState: updatedPersonState,
+          filteredSurveys,
+        });
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
         const { userId } = appConfig.get().personState.data;
-        surveyState.updateUserId(userId ?? "");
+
+        if (!userId) {
+          logger.debug("User ID not found. Skipping.");
+          return;
+        }
+
+        surveyState.updateUserId(userId);
 
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
@@ -161,6 +197,24 @@ const renderWidget = async (
             action,
           },
           hiddenFields,
+        });
+
+        const responses = appConfig.get().personState.data.responses;
+        const newPersonState: TJsPersonState = {
+          ...appConfig.get().personState,
+          data: {
+            ...appConfig.get().personState.data,
+            responses: [...responses, surveyState.surveyId],
+          },
+        };
+
+        const filteredSurveys = filterSurveys(appConfig.get().environmentState, newPersonState);
+
+        appConfig.update({
+          ...appConfig.get(),
+          environmentState: appConfig.get().environmentState,
+          personState: newPersonState,
+          filteredSurveys,
         });
       },
       onClose: closeSurvey,
@@ -186,18 +240,28 @@ export const closeSurvey = async (): Promise<void> => {
   removeWidgetContainer();
   addWidgetContainer();
 
-  // for identified users we sync to get the latest surveys
   try {
-    await sync(
-      {
-        apiHost: appConfig.get().apiHost,
-        environmentId: appConfig.get().environmentId,
-        userId: appConfig.get().personState.data.userId ?? "",
-      },
-      {
-        noCache: true,
-      }
-    );
+    // await sync(
+    //   {
+    //     apiHost: appConfig.get().apiHost,
+    //     environmentId: appConfig.get().environmentId,
+    //     userId: appConfig.get().personState.data.userId ?? "",
+    //   },
+    //   {
+    //     noCache: true,
+    //   }
+    // );
+
+    const { environmentState, personState } = appConfig.get();
+    const filteredSurveys = filterSurveys(environmentState, personState);
+
+    appConfig.update({
+      ...appConfig.get(),
+      environmentState,
+      personState,
+      filteredSurveys,
+    });
+
     setIsSurveyRunning(false);
   } catch (e: any) {
     errorHandler.handle(e);

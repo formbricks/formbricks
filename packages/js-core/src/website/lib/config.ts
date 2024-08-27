@@ -1,4 +1,4 @@
-import { TJsConfig, TJsWebsiteConfigUpdateInput } from "@formbricks/types/js";
+import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
 export const WEBSITE_LOCAL_STORAGE_KEY = "formbricks-js-website";
@@ -22,12 +22,15 @@ export class WebsiteConfig {
     return WebsiteConfig.instance;
   }
 
-  public update(newConfig: TJsWebsiteConfigUpdateInput): void {
+  public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
       this.config = {
         ...this.config,
         ...newConfig,
-        status: newConfig.status || "success",
+        status: {
+          value: newConfig.status?.value || "success",
+          expiresAt: newConfig.status?.expiresAt || null,
+        },
       };
 
       this.saveToLocalStorage();

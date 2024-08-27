@@ -1,5 +1,6 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import type { TJsAppConfigInput, TJsConfig } from "@formbricks/types/js";
+import { fetchEnvironmentState } from "../../shared/environmentState";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -12,13 +13,13 @@ import {
   wrapThrows,
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
-import { getIsDebug } from "../../shared/utils";
+import { fetchPersonState } from "../../shared/personState";
+import { filterSurveys, getIsDebug } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
-import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
 const appConfig = AppConfig.getInstance();
@@ -52,7 +53,7 @@ export const initialize = async (
   }
 
   // formbricks is in error state, skip initialization
-  if (existingConfig?.status === "error") {
+  if (existingConfig?.status?.value === "error") {
     if (isDebug) {
       logger.debug(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
@@ -63,8 +64,9 @@ export const initialize = async (
 
     logger.debug("Formbricks was set to an error state.");
 
-    // @ts-expect-error -- Error state has expiresAt at the root level
-    if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
+    const expiresAt = existingConfig?.status?.expiresAt;
+
+    if (expiresAt && new Date(expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
     } else {
@@ -127,28 +129,57 @@ export const initialize = async (
     existingConfig.personState?.data?.userId === configInput.userId
   ) {
     logger.debug("Configuration fits init parameters.");
+    let isEnvironmentStateExpired = false;
+    let isPersonStateExpired = false;
 
     if (new Date(existingConfig.environmentState.expiresAt) < new Date()) {
       logger.debug("Environment state expired. Syncing.");
+      isEnvironmentStateExpired = true;
     }
 
     if (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()) {
       logger.debug("Person state expired. Syncing.");
+      isPersonStateExpired = true;
     }
 
     try {
-      await sync(
-        {
-          apiHost: configInput.apiHost,
-          environmentId: configInput.environmentId,
-          userId: configInput.userId,
-        },
-        {
-          noCache: false,
-          exisitingEnvironmentState: existingConfig.environmentState,
-          existingPersonState: existingConfig.personState,
-        }
-      );
+      // fetch the environment state (if expired)
+      const environmentState = isEnvironmentStateExpired
+        ? await fetchEnvironmentState(
+            {
+              apiHost: configInput.apiHost,
+              environmentId: configInput.environmentId,
+            },
+            "app",
+            false
+          )
+        : existingConfig.environmentState;
+
+      // fetch the person state (if expired)
+      const personState = isPersonStateExpired
+        ? await fetchPersonState(
+            {
+              apiHost: configInput.apiHost,
+              environmentId: configInput.environmentId,
+              userId: configInput.userId,
+            },
+            false
+          )
+        : existingConfig.personState;
+
+      // filter the environment state wrt the person state
+      const filteredSurveys = filterSurveys(environmentState, personState);
+
+      // update the appConfig with the new filtered surveys
+      appConfig.update({
+        ...existingConfig,
+        environmentState,
+        personState,
+        filteredSurveys,
+      });
+
+      const surveyNames = filteredSurveys.map((s) => s.name);
+      logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
     } catch (e) {
       putFormbricksInErrorState();
     }
@@ -160,10 +191,31 @@ export const initialize = async (
     logger.debug("Syncing.");
 
     try {
-      await sync({
+      const environmentState = await fetchEnvironmentState(
+        {
+          apiHost: configInput.apiHost,
+          environmentId: configInput.environmentId,
+        },
+        "app",
+        false
+      );
+      const personState = await fetchPersonState(
+        {
+          apiHost: configInput.apiHost,
+          environmentId: configInput.environmentId,
+          userId: configInput.userId,
+        },
+        false
+      );
+
+      const filteredSurveys = filterSurveys(environmentState, personState);
+
+      appConfig.update({
         apiHost: configInput.apiHost,
         environmentId: configInput.environmentId,
-        userId: configInput.userId,
+        personState,
+        environmentState,
+        filteredSurveys,
       });
     } catch (e) {
       handleErrorOnFirstInit();
@@ -191,7 +243,7 @@ export const initialize = async (
   }
 
   logger.debug("Adding event listeners");
-  addEventListeners();
+  addEventListeners(appConfig);
   addCleanupEventListeners();
 
   setIsInitialized(true);
@@ -210,9 +262,11 @@ export const handleErrorOnFirstInit = () => {
   }
 
   // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig = {
-    status: "error",
-    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+  const initialErrorConfig: Partial<TJsConfig> = {
+    status: {
+      value: "error",
+      expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    },
   };
 
   // can't use config.update here because the config is not yet initialized
@@ -250,13 +304,10 @@ export const putFormbricksInErrorState = (): void => {
   // change formbricks status to error
   appConfig.update({
     ...appConfig.get(),
-    environmentState: {
-      ...appConfig.get().environmentState,
+    status: {
+      value: "error",
       expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
     },
-    status: "error",
-    // @ts-expect-error -- Error state has expiresAt at the root level
-    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   });
   deinitalize();
 };

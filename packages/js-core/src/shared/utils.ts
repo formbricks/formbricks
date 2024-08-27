@@ -143,15 +143,23 @@ export const handleHiddenFields = (
   return hiddenFieldsObject;
 };
 
+/**
+ * Filters surveys based on the displayOption, recontactDays, and segments
+ * @param environmentSate The environment state
+ * @param personState The person state
+ * @returns
+ */
+
+// takes the environment and person state and returns the filtered surveys
 export const filterSurveys = (
-  state: TJsEnvironmentState,
+  environmentState: TJsEnvironmentState,
   personState: TJsPersonState
-): TJsEnvironmentState => {
-  const { product, surveys } = state.data;
+): TSurvey[] => {
+  const { product, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments } = personState.data;
 
   if (!displays) {
-    return state;
+    return [];
   }
 
   // Function to filter surveys based on displayOption criteria
@@ -214,11 +222,5 @@ export const filterSurveys = (
     });
   }
 
-  return {
-    ...state,
-    data: {
-      ...state.data,
-      surveys: filteredSurveys,
-    },
-  };
+  return filteredSurveys;
 };

@@ -1,4 +1,8 @@
 import {
+  addEnvironmentStateExpiryCheckListener,
+  clearEnvironmentStateExpiryCheckListener,
+} from "../../shared/environmentState";
+import {
   addClickEventListener,
   addExitIntentListener,
   addPageUrlEventListeners,
@@ -8,12 +12,13 @@ import {
   removePageUrlEventListeners,
   removeScrollDepthListener,
 } from "../lib/noCodeActions";
-import { addExpiryCheckListener, removeExpiryCheckListener } from "./sync";
+import { WebsiteConfig } from "./config";
 
 let areRemoveEventListenersAdded = false;
 
-export const addEventListeners = (): void => {
-  addExpiryCheckListener();
+export const addEventListeners = (config: WebsiteConfig): void => {
+  addEnvironmentStateExpiryCheckListener("website", config);
+  clearEnvironmentStateExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();
@@ -23,7 +28,7 @@ export const addEventListeners = (): void => {
 export const addCleanupEventListeners = (): void => {
   if (areRemoveEventListenersAdded) return;
   window.addEventListener("beforeunload", () => {
-    removeExpiryCheckListener();
+    clearEnvironmentStateExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
@@ -35,7 +40,7 @@ export const addCleanupEventListeners = (): void => {
 export const removeCleanupEventListeners = (): void => {
   if (!areRemoveEventListenersAdded) return;
   window.removeEventListener("beforeunload", () => {
-    removeExpiryCheckListener();
+    clearEnvironmentStateExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
@@ -45,7 +50,7 @@ export const removeCleanupEventListeners = (): void => {
 };
 
 export const removeAllEventListeners = (): void => {
-  removeExpiryCheckListener();
+  clearEnvironmentStateExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
   removeExitIntentListener();

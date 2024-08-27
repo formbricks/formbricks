@@ -23,70 +23,84 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const GET = async (
   _: NextRequest,
-  { params }: { params: { environmentId: string } }
+  {
+    params,
+  }: {
+    params: {
+      environmentId: string;
+    };
+  }
 ): Promise<Response> => {
   try {
-    const syncInputValidation = ZJsSyncInput.safeParse({
+    // validate using zod
+    const inputValidation = ZJsSyncInput.safeParse({
       environmentId: params.environmentId,
     });
 
-    if (!syncInputValidation.success) {
+    if (!inputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(syncInputValidation.error),
+        transformErrorToDetails(inputValidation.error),
         true
       );
     }
 
-    const { environmentId } = syncInputValidation.data;
+    const { environmentId } = inputValidation.data;
 
-    const [environment, organization, product] = await Promise.all([
-      getEnvironment(environmentId),
-      getOrganizationByEnvironmentId(environmentId),
-      getProductByEnvironmentId(environmentId),
-    ]);
-
-    if (!organization) {
-      throw new Error("Organization does not exist");
-    }
-
+    const environment = await getEnvironment(environmentId);
     if (!environment) {
       throw new Error("Environment does not exist");
     }
+
+    const product = await getProductByEnvironmentId(environmentId);
 
     if (!product) {
       throw new Error("Product not found");
     }
 
-    if (product.config.channel && product.config.channel !== "website") {
-      return responses.forbiddenResponse("Product channel is not website", true);
+    if (product.config.channel && product.config.channel !== "app") {
+      return responses.forbiddenResponse("Product channel is not app", true);
     }
 
-    // check if response limit is reached
-    let isWebsiteSurveyResponseLimitReached = false;
+    if (!environment.appSetupCompleted) {
+      await Promise.all([
+        updateEnvironment(environment.id, { appSetupCompleted: true }),
+        capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
+      ]);
+    }
+
+    // check organization subscriptions
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+
+    if (!organization) {
+      throw new Error("Organization does not exist");
+    }
+
+    // check if MAU limit is reached
+    let isMonthlyResponsesLimitReached = false;
+
     if (IS_FORMBRICKS_CLOUD) {
-      const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
       const monthlyResponseLimit = organization.billing.limits.monthly.responses;
 
-      isWebsiteSurveyResponseLimitReached =
+      const currentResponseCount = await getMonthlyOrganizationResponseCount(organization.id);
+      isMonthlyResponsesLimitReached =
         monthlyResponseLimit !== null && currentResponseCount >= monthlyResponseLimit;
-
-      if (isWebsiteSurveyResponseLimitReached) {
-        try {
-          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: organization.billing.plan,
-            limits: { monthly: { responses: monthlyResponseLimit, miu: null } },
-          });
-        } catch (error) {
-          console.error(`Error sending plan limits reached event to Posthog: ${error}`);
-        }
-      }
     }
-    if (!environment?.websiteSetupCompleted) {
-      await Promise.all([
-        updateEnvironment(environment.id, { websiteSetupCompleted: true }),
-        capturePosthogEnvironmentEvent(environmentId, "website setup completed"),
-      ]);
+
+    if (isMonthlyResponsesLimitReached) {
+      try {
+        await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
+          plan: organization.billing.plan,
+          limits: {
+            monthly: {
+              miu: organization.billing.limits.monthly.miu,
+              responses: organization.billing.limits.monthly.responses,
+            },
+          },
+        });
+      } catch (err) {
+        console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+      }
     }
 
     const [surveys, actionClasses] = await Promise.all([
@@ -94,9 +108,8 @@ export const GET = async (
       getActionClasses(environmentId),
     ]);
 
-    // Common filter condition for selecting surveys that are in progress, are of type 'website' and have no active segment filtering.
     const filteredSurveys = surveys.filter(
-      (survey) => survey.status === "inProgress" && survey.type === "website"
+      (survey) => survey.type === "app" && survey.status === "inProgress"
     );
 
     const updatedProduct: any = {
@@ -108,18 +121,14 @@ export const GET = async (
     };
 
     const state: TJsEnvironmentState["data"] = {
-      surveys: filteredSurveys,
+      surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
       actionClasses,
       product: updatedProduct,
     };
 
-    return responses.successResponse(
-      { ...state },
-      true,
-      "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
-    );
+    return responses.successResponse({ ...state }, true);
   } catch (error) {
     console.error(error);
-    return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
+    return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 };

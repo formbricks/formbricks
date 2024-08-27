@@ -7,8 +7,8 @@ import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/re
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Logger } from "../../shared/logger";
-import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
 import { filterSurveys as filterPublicSurveys } from "../../shared/utils";
+import { getDefaultLanguageCode, getLanguageCode, handleHiddenFields } from "../../shared/utils";
 import { WebsiteConfig } from "./config";
 
 const containerId = "formbricks-website-container";
@@ -149,15 +149,13 @@ const renderWidget = async (
           },
         };
 
-        const updatedEnvironmentState = filterPublicSurveys(
-          previousConfig.environmentState,
-          updatedPersonState
-        );
+        const filteredSurveys = filterPublicSurveys(previousConfig.environmentState, updatedPersonState);
 
         websiteConfig.update({
           ...previousConfig,
-          environmentState: updatedEnvironmentState,
+          environmentState: previousConfig.environmentState,
           personState: updatedPersonState,
+          filteredSurveys,
         });
 
         surveyState.updateDisplayId(id);
@@ -179,15 +177,13 @@ const renderWidget = async (
           },
         };
 
-        const updatedEnvironmentState = filterPublicSurveys(
-          websiteConfig.get().environmentState,
-          newPersonState
-        );
+        const filteredSurveys = filterPublicSurveys(websiteConfig.get().environmentState, newPersonState);
 
         websiteConfig.update({
           ...websiteConfig.get(),
-          environmentState: updatedEnvironmentState,
+          environmentState: websiteConfig.get().environmentState,
           personState: newPersonState,
+          filteredSurveys,
         });
 
         responseQueue.updateSurveyState(surveyState);
@@ -228,14 +224,13 @@ export const closeSurvey = async (): Promise<void> => {
   removeWidgetContainer();
   addWidgetContainer();
 
-  // const state = websiteConfig.get().state;
   const { environmentState, personState } = websiteConfig.get();
-  const updatedEnvironmentState = filterPublicSurveys(environmentState, personState);
+  const filteredSurveys = filterPublicSurveys(environmentState, personState);
   websiteConfig.update({
     ...websiteConfig.get(),
-    // state: updatedState,
-    environmentState: updatedEnvironmentState,
+    environmentState,
     personState,
+    filteredSurveys,
   });
   setIsSurveyRunning(false);
   return;

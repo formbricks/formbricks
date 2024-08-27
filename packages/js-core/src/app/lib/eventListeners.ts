@@ -1,4 +1,12 @@
 import {
+  addEnvironmentStateExpiryCheckListener,
+  clearEnvironmentStateExpiryCheckListener,
+} from "../../shared/environmentState";
+import {
+  addPersonStateExpiryCheckListener,
+  clearPersonStateExpiryCheckListener,
+} from "../../shared/personState";
+import {
   addClickEventListener,
   addExitIntentListener,
   addPageUrlEventListeners,
@@ -8,12 +16,13 @@ import {
   removePageUrlEventListeners,
   removeScrollDepthListener,
 } from "../lib/noCodeActions";
-import { addPersonStateExpiryCheckListener, removeExpiryCheckListener } from "./sync";
+import { AppConfig } from "./config";
 
 let areRemoveEventListenersAdded = false;
 
-export const addEventListeners = (): void => {
-  addPersonStateExpiryCheckListener();
+export const addEventListeners = (config: AppConfig): void => {
+  addEnvironmentStateExpiryCheckListener("app", config);
+  addPersonStateExpiryCheckListener(config);
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();
@@ -23,7 +32,8 @@ export const addEventListeners = (): void => {
 export const addCleanupEventListeners = (): void => {
   if (areRemoveEventListenersAdded) return;
   window.addEventListener("beforeunload", () => {
-    removeExpiryCheckListener();
+    clearEnvironmentStateExpiryCheckListener();
+    clearPersonStateExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
@@ -35,7 +45,8 @@ export const addCleanupEventListeners = (): void => {
 export const removeCleanupEventListeners = (): void => {
   if (!areRemoveEventListenersAdded) return;
   window.removeEventListener("beforeunload", () => {
-    removeExpiryCheckListener();
+    clearEnvironmentStateExpiryCheckListener();
+    clearPersonStateExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
@@ -45,7 +56,8 @@ export const removeCleanupEventListeners = (): void => {
 };
 
 export const removeAllEventListeners = (): void => {
-  removeExpiryCheckListener();
+  clearEnvironmentStateExpiryCheckListener();
+  clearPersonStateExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
   removeExitIntentListener();

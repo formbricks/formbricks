@@ -16,7 +16,7 @@ export const trackAction = async (
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = websiteConfig.get().environmentState.data.surveys;
+  const activeSurveys = websiteConfig.get().filteredSurveys;
 
   if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {

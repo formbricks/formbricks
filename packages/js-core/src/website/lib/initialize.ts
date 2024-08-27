@@ -1,4 +1,5 @@
 import type { TJsConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+import { fetchEnvironmentState } from "../../shared/environmentState";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -11,12 +12,13 @@ import {
   wrapThrows,
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
+import { DEFAULT_PERSON_STATE_WEBSITE } from "../../shared/personState";
 import { getIsDebug } from "../../shared/utils";
+import { filterSurveys as filterPublicSurveys } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { WEBSITE_LOCAL_STORAGE_KEY, WebsiteConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
-import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
 const websiteConfig = WebsiteConfig.getInstance();
@@ -50,7 +52,7 @@ export const initialize = async (
   }
 
   // formbricks is in error state, skip initialization
-  if (existingConfig?.status === "error") {
+  if (existingConfig?.status?.value === "error") {
     if (isDebug) {
       logger.debug(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
@@ -61,8 +63,7 @@ export const initialize = async (
 
     logger.debug("Formbricks was set to an error state.");
 
-    // @ts-expect-error -- for the error state, we put the expiresAt field at the root level
-    if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
+    if (existingConfig?.status?.expiresAt && new Date(existingConfig?.status?.expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
     } else {
@@ -105,9 +106,26 @@ export const initialize = async (
       logger.debug("Configuration expired.");
 
       try {
-        await sync({
+        // fetch the environment state
+
+        const environmentState = await fetchEnvironmentState(
+          {
+            apiHost: configInput.apiHost,
+            environmentId: configInput.environmentId,
+          },
+          "website"
+        );
+
+        // filter the surveys with the default person state
+
+        const filteredSurveys = filterPublicSurveys(environmentState, DEFAULT_PERSON_STATE_WEBSITE);
+
+        websiteConfig.update({
           apiHost: configInput.apiHost,
           environmentId: configInput.environmentId,
+          environmentState,
+          personState: DEFAULT_PERSON_STATE_WEBSITE,
+          filteredSurveys,
         });
       } catch (e) {
         putFormbricksInErrorState();
@@ -124,9 +142,22 @@ export const initialize = async (
     logger.debug("Syncing.");
 
     try {
-      await sync({
+      const environmentState = await fetchEnvironmentState(
+        {
+          apiHost: configInput.apiHost,
+          environmentId: configInput.environmentId,
+        },
+        "website"
+      );
+
+      const filteredSurveys = filterPublicSurveys(environmentState, DEFAULT_PERSON_STATE_WEBSITE);
+
+      websiteConfig.update({
         apiHost: configInput.apiHost,
         environmentId: configInput.environmentId,
+        environmentState,
+        personState: DEFAULT_PERSON_STATE_WEBSITE,
+        filteredSurveys,
       });
     } catch (e) {
       handleErrorOnFirstInit();
@@ -152,7 +183,7 @@ export const initialize = async (
   }
 
   logger.debug("Adding event listeners");
-  addEventListeners();
+  addEventListeners(websiteConfig);
   addCleanupEventListeners();
 
   setIsInitialized(true);
@@ -171,9 +202,10 @@ export const handleErrorOnFirstInit = () => {
   }
 
   const initialErrorConfig: Partial<TJsConfig> = {
-    status: "error",
-    // @ts-expect-error -- for the error state, we put the expiresAt field at the root level
-    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    status: {
+      value: "error",
+      expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    },
   };
 
   // can't use config.update here because the config is not yet initialized
@@ -209,12 +241,12 @@ export const putFormbricksInErrorState = (): void => {
 
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
-  // TODO: figure this out
   websiteConfig.update({
     ...websiteConfig.get(),
-    status: "error",
-    // @ts-expect-error -- Error state has expiresAt at the root level
-    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    status: {
+      value: "error",
+      expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    },
   });
   deinitalize();
 };

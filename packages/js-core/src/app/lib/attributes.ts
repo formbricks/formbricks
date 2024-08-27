@@ -2,8 +2,9 @@ import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
+import { fetchPersonState } from "../../shared/personState";
+import { filterSurveys } from "../../shared/utils";
 import { AppConfig } from "./config";
-import { syncPersonState } from "./sync";
 
 const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
@@ -177,17 +178,19 @@ export const setAttributeInApp = async (
 
   if (result.ok) {
     if (result.value.changed) {
-      const personStateSyncResult = await syncPersonState({
+      const personState = await fetchPersonState({
         apiHost: appConfig.get().apiHost,
         environmentId: appConfig.get().environmentId,
         userId,
       });
 
-      if (personStateSyncResult) {
-        appConfig.update({
-          personState: personStateSyncResult,
-        });
-      }
+      const filteredSurveys = filterSurveys(appConfig.get().environmentState, personState);
+
+      appConfig.update({
+        ...appConfig.get(),
+        personState,
+        filteredSurveys,
+      });
     }
 
     return okVoid();

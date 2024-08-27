@@ -34,18 +34,18 @@ const AppPage = ({}) => {
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       // const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
-      const userId = "random-user-id-2";
-      // const userInitAttributes = {
-      //   language: "de",
-      //   "Init Attribute 1": "eight",
-      //   "Init Attribute 2": "two",
-      // };
+      const userId = "random-user-id-3";
+      const userInitAttributes = {
+        language: "de",
+        "Init Attribute 1": "eight",
+        "Init Attribute 2": "two",
+      };
 
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
-        // attributes: userInitAttributes,
+        attributes: userInitAttributes,
       });
     }
 

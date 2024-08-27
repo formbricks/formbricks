@@ -1,13 +1,13 @@
-import { TJsAppConfigUpdateInput, TJsConfig } from "@formbricks/types/js";
+import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
 export const IN_APP_LOCAL_STORAGE_KEY = "formbricks-js-app";
 
-type DeepPartial<T> = T extends object
-  ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
-  : T;
+// type DeepPartial<T> = T extends object
+//   ? {
+//       [P in keyof T]?: DeepPartial<T[P]>;
+//     }
+//   : T;
 
 export class AppConfig {
   private static instance: AppConfig | undefined;
@@ -28,39 +28,54 @@ export class AppConfig {
     return AppConfig.instance;
   }
 
-  public update(newConfig: DeepPartial<TJsAppConfigUpdateInput>): void {
+  // public update(newConfig: TJsConfig): void {
+  //   if (newConfig) {
+  //     // this.config = this.deepMerge(this.config, newConfig) as TJsConfig;
+  //     this.saveToLocalStorage();
+  //   }
+  // }
+
+  public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
-      this.config = this.deepMerge(this.config, newConfig) as TJsConfig;
+      this.config = {
+        ...this.config,
+        ...newConfig,
+        status: {
+          value: newConfig.status?.value || "success",
+          expiresAt: newConfig.status?.expiresAt || null,
+        },
+      };
+
       this.saveToLocalStorage();
     }
   }
 
-  private deepMerge(target: any, source: any): any {
-    if (typeof source !== "object" || source === null) {
-      return source;
-    }
+  // private _deepMerge(target: any, source: any): any {
+  //   if (typeof source !== "object" || source === null) {
+  //     return source;
+  //   }
 
-    if (typeof target !== "object" || target === null) {
-      return this.deepMerge({}, source);
-    }
+  //   if (typeof target !== "object" || target === null) {
+  //     return this._deepMerge({}, source);
+  //   }
 
-    for (const key in source) {
-      if (source.hasOwnProperty(key)) {
-        if (source[key] !== undefined) {
-          if (source[key] instanceof Date) {
-            // Directly assign the date if the value is a Date instance
-            target[key] = new Date(source[key].getTime());
-          } else if (typeof source[key] === "object" && !Array.isArray(source[key])) {
-            target[key] = this.deepMerge(target[key] || {}, source[key]);
-          } else {
-            target[key] = source[key];
-          }
-        }
-      }
-    }
+  //   for (const key in source) {
+  //     if (source.hasOwnProperty(key)) {
+  //       if (source[key] !== undefined) {
+  //         if (source[key] instanceof Date) {
+  //           // Directly assign the date if the value is a Date instance
+  //           target[key] = new Date(source[key].getTime());
+  //         } else if (typeof source[key] === "object" && !Array.isArray(source[key])) {
+  //           target[key] = this._deepMerge(target[key] || {}, source[key]);
+  //         } else {
+  //           target[key] = source[key];
+  //         }
+  //       }
+  //     }
+  //   }
 
-    return target;
-  }
+  //   return target;
+  // }
 
   public get(): TJsConfig {
     if (!this.config) {

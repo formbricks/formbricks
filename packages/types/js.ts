@@ -74,18 +74,12 @@ export const ZJsEnvironmentState = z.object({
 
 export type TJsEnvironmentState = z.infer<typeof ZJsEnvironmentState>;
 
-export const ZJsWebsiteSyncInput = z.object({
-  environmentId: z.string().cuid(),
-  version: z.string().optional(),
-});
-
-export type TJsWebsiteSyncInput = z.infer<typeof ZJsWebsiteSyncInput>;
-
 export const ZJsSyncInput = z.object({
   environmentId: z.string().cuid(),
   version: z.string().optional(),
-  sdkType: z.enum(["app", "website"]),
 });
+
+export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
 
 export const ZJsPersonState = z.object({
   expiresAt: z.date().nullable(),
@@ -113,30 +107,25 @@ export const ZJsConfig = z.object({
   apiHost: z.string(),
   environmentState: ZJsEnvironmentState,
   personState: ZJsPersonState,
-  status: z.enum(["success", "error"]).optional(),
+  filteredSurveys: z.array(ZSurvey).default([]),
+  status: z.object({
+    value: z.enum(["success", "error"]),
+    expiresAt: z.date().nullable(),
+  }),
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;
 
-export const ZJsWebsiteConfigUpdateInput = z.object({
-  environmentId: z.string().cuid(),
-  apiHost: z.string(),
-  environmentState: ZJsEnvironmentState,
-  personState: ZJsPersonState,
-  status: z.enum(["success", "error"]).optional(),
+export const ZJsConfigUpdateInput = ZJsConfig.omit({ status: true }).extend({
+  status: z
+    .object({
+      value: z.enum(["success", "error"]),
+      expiresAt: z.date().nullable(),
+    })
+    .optional(),
 });
 
-export type TJsWebsiteConfigUpdateInput = z.infer<typeof ZJsWebsiteConfigUpdateInput>;
-
-export const ZJsAppConfigUpdateInput = z.object({
-  environmentId: z.string().cuid(),
-  apiHost: z.string(),
-  environmentState: ZJsEnvironmentState,
-  personState: ZJsPersonState,
-  status: z.enum(["success", "error"]).optional(),
-});
-
-export type TJsAppConfigUpdateInput = z.infer<typeof ZJsAppConfigUpdateInput>;
+export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
 
 export const ZJsWebsiteConfigInput = z.object({
   environmentId: z.string().cuid(),
