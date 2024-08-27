@@ -4,13 +4,12 @@ import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/s
 import { generateText } from "ai";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
+import { clusterDocuments } from "@formbricks/ee/ai-analysis/lib/document/kmeans";
+import { getQuestionResponseReferenceId } from "@formbricks/ee/ai-analysis/lib/document/utils";
+import { llmModel } from "@formbricks/ee/ai/lib/utils";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { llmModel } from "@formbricks/lib/ai";
-import { clusterDocuments } from "@formbricks/lib/document/kmeans";
-import { getDocumentsByTypeAndReferenceId } from "@formbricks/lib/document/service";
-import { getQuestionResponseReferenceId } from "@formbricks/lib/document/utils";
 import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
@@ -166,10 +165,7 @@ export const getOpenTextSummaryAction = authenticatedActionClient
       throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
     }
 
-    const documents = await getDocumentsByTypeAndReferenceId(
-      "questionResponse",
-      getQuestionResponseReferenceId(parsedInput.surveyId, parsedInput.questionId)
-    );
+    const documents = []; // TODO
 
     const topics = await clusterDocuments(documents, 3);
 

@@ -1,5 +1,5 @@
 import { createAzure } from "@ai-sdk/azure";
-import { env } from "./env";
+import { env } from "@formbricks/lib/env";
 
 export const llmModel = createAzure({
   resourceName: env.AI_AZURE_LLM_RESSOURCE_NAME, // Azure resource name

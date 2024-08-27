@@ -14,7 +14,6 @@
     "test": "dotenv -e ../../.env -- vitest run"
   },
   "dependencies": {
-    "@ai-sdk/azure": "^0.0.17",
     "@aws-sdk/client-s3": "3.631.0",
     "@aws-sdk/s3-presigned-post": "3.631.0",
     "@aws-sdk/s3-request-presigner": "3.631.0",
@@ -24,7 +23,6 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@t3-oss/env-nextjs": "^0.11.0",
     "@ungap/structured-clone": "^1.2.0",
-    "ai": "^3.2.37",
     "aws-crt": "^1.21.3",
     "date-fns": "^3.6.0",
     "jsonwebtoken": "^9.0.2",

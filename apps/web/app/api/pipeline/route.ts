@@ -1,13 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { embed } from "ai";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
+import { createDocument } from "@formbricks/ee/ai-analysis/lib/document/service";
 import { sendResponseFinishedEmail } from "@formbricks/email";
-import { embeddingsModel } from "@formbricks/lib/ai";
 import { CRON_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { createDocument } from "@formbricks/lib/document/service";
-import { getQuestionResponseReferenceId } from "@formbricks/lib/document/utils";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -180,17 +177,11 @@ export const POST = async (request: Request) => {
               continue;
             }
             const text = `${question.headline.default} Answer: ${response.data[question.id]}`;
-            const { embedding } = await embed({
-              model: embeddingsModel,
-              value: text,
-            });
             console.log("creating embedding for question response", question.id);
-            await createDocument({
-              environmentId,
-              referenceId: getQuestionResponseReferenceId(survey.id, question.id),
-              type: "questionResponse",
+            await createDocument(environmentId, {
+              responseId: response.id,
+              questionId: question.id,
               text,
-              vector: embedding,
             });
           }
         }

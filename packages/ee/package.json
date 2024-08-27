@@ -20,10 +20,12 @@
     "@types/react": "18.3.3"
   },
   "dependencies": {
+    "@ai-sdk/azure": "^0.0.17",
     "@formbricks/database": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "@radix-ui/react-collapsible": "^1.1.0",
+    "ai": "^3.2.37",
     "https-proxy-agent": "^7.0.5",
     "lucide-react": "^0.427.0",
     "next": "^14.2.5",

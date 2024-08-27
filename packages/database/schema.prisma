@@ -134,6 +134,7 @@ model Response {
   // singleUseId, used to prevent multiple responses
   singleUseId      String?
   language         String?
+  documents        Document[]
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
@@ -415,7 +416,7 @@ model Environment {
   tags                  Tag[]
   segments              Segment[]
   integration           Integration[]
-  documents             Document[]
+  documentGroups        DocumentGroup[]
 
   @@index([productId])
 }
@@ -661,20 +662,28 @@ model SurveyLanguage {
   @@index([languageId])
 }
 
-enum DocumentType {
-  questionResponse
-}
-
-model Document {
+model DocumentGroup {
   id            String                      @id @default(cuid())
   createdAt     DateTime                    @default(now()) @map(name: "created_at")
   updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
   environmentId String
   environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  type          DocumentType
-  referenceId   String
   text          String
   vector        Unsupported("vector(512)")?
+  documents     Document[]
+}
 
-  @@index([type, referenceId])
+model Document {
+  id              String                      @id @default(cuid())
+  createdAt       DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt       DateTime                    @updatedAt @map(name: "updated_at")
+  documentGroupId String?
+  documentGroup   DocumentGroup?              @relation(fields: [documentGroupId], references: [id], onDelete: Cascade)
+  responseId      String?
+  response        Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId      String?
+  text            String
+  vector          Unsupported("vector(512)")?
+
+  @@unique([responseId, questionId])
 }

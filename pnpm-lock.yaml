@@ -635,6 +635,9 @@ importers:
 
   packages/ee:
     dependencies:
+      '@ai-sdk/azure':
+        specifier: ^0.0.17
+        version: 0.0.17(zod@3.23.8)
       '@formbricks/database':
         specifier: workspace:*
         version: link:../database
@@ -647,6 +650,9 @@ importers:
       '@radix-ui/react-collapsible':
         specifier: ^1.1.0
         version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524)
+      ai:
+        specifier: ^3.2.37
+        version: 3.3.13(react@19.0.0-rc-935180c7e0-20240524)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.38(typescript@5.5.4))(zod@3.23.8)
       https-proxy-agent:
         specifier: ^7.0.5
         version: 7.0.5
@@ -791,9 +797,6 @@ importers:
 
   packages/lib:
     dependencies:
-      '@ai-sdk/azure':
-        specifier: ^0.0.17
-        version: 0.0.17(zod@3.23.8)
       '@aws-sdk/client-s3':
         specifier: 3.631.0
         version: 3.631.0(aws-crt@1.21.3)
@@ -821,9 +824,6 @@ importers:
       '@ungap/structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
-      ai:
-        specifier: ^3.2.37
-        version: 3.3.13(react@19.0.0-rc-935180c7e0-20240524)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.38(typescript@5.5.4))(zod@3.23.8)
       aws-crt:
         specifier: ^1.21.3
         version: 1.21.3

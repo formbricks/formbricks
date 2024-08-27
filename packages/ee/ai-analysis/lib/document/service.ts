@@ -1,41 +1,70 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { embed, generateText } from "ai";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZString } from "@formbricks/types/common";
-import {
-  TDocument,
-  TDocumentCreateInput,
-  ZDocumentCreateInput,
-  ZDocumentType,
-} from "@formbricks/types/documents";
+import { cache } from "@formbricks/lib/cache";
+import { validateInputs } from "@formbricks/lib/utils/validate";
+import { TDocument, TDocumentCreateInput, ZDocumentCreateInput } from "@formbricks/types/documents";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import { cache } from "../cache";
-import { validateInputs } from "../utils/validate";
+import { embeddingsModel, llmModel } from "../../../ai/lib/utils";
+import { createDocumentGroup, findNearestDocumentGroups } from "../document-group/service";
 import { documentCache } from "./cache";
 
 export type TPrismaDocument = Omit<TDocument, "vector"> & {
   vector: string;
 };
 
-export const createDocument = async (documentInput: TDocumentCreateInput): Promise<TDocument> => {
+export const createDocument = async (
+  environmentId: string,
+  documentInput: TDocumentCreateInput
+): Promise<TDocument> => {
   validateInputs([documentInput, ZDocumentCreateInput]);
 
   try {
-    const { vector, ...data } = documentInput;
+    // Generate text embedding
+    const { embedding } = await embed({
+      model: embeddingsModel,
+      value: documentInput.text,
+    });
 
+    // find fitting documentGroup
+    let documentGroupId;
+    const nearestDocumentGroups = await findNearestDocumentGroups(environmentId, embedding, 1, 0.2);
+    if (nearestDocumentGroups.length > 0) {
+      documentGroupId = nearestDocumentGroups[0].id;
+    } else {
+      // create documentGroup
+      // generate name for documentGroup
+      const { text } = await generateText({
+        model: llmModel,
+        system: `You are a Customer Experience Management platform. You are asked to transform a user feedback into a well defined and consice insight (feature request, complaint, loved feature or bug) like "The dashboard is slow" or "The ability to export data from the app"`,
+        prompt: `The user feedback: "${documentInput.text}"`,
+      });
+
+      const documentGroup = await createDocumentGroup({
+        environmentId,
+        text,
+      });
+      documentGroupId = documentGroup.id;
+    }
+
+    // create document
     const prismaDocument = await prisma.document.create({
-      data,
+      data: {
+        ...documentInput,
+        documentGroupId,
+      },
     });
 
     const document = {
       ...prismaDocument,
-      vector,
+      vector: embedding,
     };
 
-    // update vector
-    const vectorString = `[${vector.join(",")}]`;
+    // update document vector with the embedding
+    const vectorString = `[${embedding.join(",")}]`;
     await prisma.$executeRaw`
       UPDATE "Document"
       SET "vector" = ${vectorString}::vector(512)
@@ -44,8 +73,12 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
 
     documentCache.revalidate({
       id: document.id,
-      type: document.type,
-      referenceId: document.referenceId,
+    });
+
+    // search for nearest documentGroup
+    await createDocumentGroup({
+      environmentId,
+      text: document.text,
     });
 
     return document;
@@ -57,11 +90,11 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
   }
 };
 
-export const getDocumentsByTypeAndReferenceId = reactCache(
-  (type: string, referenceId: string): Promise<TDocument[]> =>
+export const getDocumentsByResponseIdQuestionId = reactCache(
+  (responseId: string, questionId: string): Promise<TDocument[]> =>
     cache(
       async () => {
-        validateInputs([type, ZDocumentType], [referenceId, ZString]);
+        validateInputs([responseId, ZId], [questionId, ZId]);
 
         try {
           const prismaDocuments: TPrismaDocument[] = await prisma.$queryRaw`
@@ -69,13 +102,13 @@ export const getDocumentsByTypeAndReferenceId = reactCache(
               id,
               created_at AS "createdAt",
               updated_at AS "updatedAt",
-              type,
+              "responseId",
+              "questionId",
               text,
-              "referenceId",
               vector::text
             FROM "Document" d
-            WHERE d."type" = ${type}::"DocumentType"
-              AND d."referenceId" = ${referenceId}
+            WHERE d."responseId" = ${responseId}
+              AND d."questionId" = ${questionId}
           `;
 
           const documents = prismaDocuments.map((prismaDocument) => {
@@ -99,9 +132,9 @@ export const getDocumentsByTypeAndReferenceId = reactCache(
           throw error;
         }
       },
-      [`getDocumentsByTypeAndReferenceId-${type}-${referenceId}`],
+      [`getDocumentsByResponseIdQuestionId-${responseId}-${questionId}`],
       {
-        tags: [documentCache.tag.byTypeAndReferenceId(type, referenceId)],
+        tags: [documentCache.tag.byResponseIdQuestionId(responseId, questionId)],
       }
     )()
 );
@@ -122,9 +155,9 @@ export const findNearestDocuments = async (
       id,
       created_at AS "createdAt",
       updated_at AS "updatedAt",
-      type,
       text,
-      "referenceId",
+      "responseId",
+      "questionId",
       vector::text
     FROM "Document" d
     WHERE d."environmentId" = ${environmentId}
