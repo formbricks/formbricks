@@ -11,11 +11,27 @@ import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@form
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import {
+  getResponse,
+  getResponseBySingleUseId,
+  getResponseCountBySurveyId,
+} from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { getEmailVerificationDetails } from "./lib/helpers";
+
+const PrintError = ({ children }: { children: string }) => {
+  return (
+    <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 py-8 text-center">
+      <div></div>
+      <div className="flex flex-col items-center space-y-3 text-slate-300">
+        <h1 className="text-4xl font-bold text-slate-800">{children}</h1>
+      </div>
+      <div></div>
+    </div>
+  );
+};
 
 interface LinkSurveyPageProps {
   params: {
@@ -24,6 +40,7 @@ interface LinkSurveyPageProps {
   searchParams: {
     suId?: string;
     userId?: string;
+    responseId?: string;
     verify?: string;
     lang?: string;
     embed?: string;
@@ -47,10 +64,24 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   const survey = await getSurvey(params.surveyId);
 
   const suId = searchParams.suId;
+  const userId = searchParams.userId;
+  const responseId = searchParams.responseId;
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
   const isEmbed = searchParams.embed === "true" ? true : false;
+
+  let prevResponse: TResponse | null = null;
+  if (responseId) {
+    prevResponse = await getResponse(responseId);
+    if (!prevResponse) {
+      return <PrintError>Response not found</PrintError>;
+    }
+
+    if (prevResponse.person?.userId !== userId) {
+      return <PrintError>userId of response does not match with current userId</PrintError>;
+    }
+  }
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
@@ -144,7 +175,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
 
   const languageCode = getLanguageCode();
 
-  const userId = searchParams.userId;
   if (userId) {
     // make sure the person exists or get's created
     const person = await getPersonByUserId(survey.environmentId, userId);
@@ -185,6 +215,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      prevResponse={prevResponse ? prevResponse : undefined}
       webAppUrl={WEBAPP_URL}
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}

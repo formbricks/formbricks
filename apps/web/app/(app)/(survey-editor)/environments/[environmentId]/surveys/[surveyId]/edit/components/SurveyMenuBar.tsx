@@ -30,6 +30,12 @@ interface SurveyMenuBarProps {
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
+  hideFormName?: boolean;
+  hideBackButton?: boolean;
+  hideSurveyStatusDropdown?: boolean;
+  hideSaveAndClose?: boolean;
+  hideContinueToSettings?: boolean;
+  hidePublish?: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -44,6 +50,12 @@ export const SurveyMenuBar = ({
   responseCount,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  hideFormName = false,
+  hideBackButton = false,
+  hideSurveyStatusDropdown = false,
+  hideSaveAndClose = false,
+  hideContinueToSettings = false,
+  hidePublish = false,
 }: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -164,6 +176,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       const updatedSurvey = await updateSurveyAction({ ...localSurvey, segment });
 
+      window.parent.postMessage({ type: "Survey.updated", data: { updatedSurvey } }, "*");
       setIsSurveySaving(false);
       setLocalSurvey(updatedSurvey);
 
@@ -216,23 +229,29 @@ export const SurveyMenuBar = ({
     <>
       <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
         <div className="flex items-center space-x-2 whitespace-nowrap">
-          <Button
-            variant="secondary"
-            StartIcon={ArrowLeftIcon}
-            onClick={() => {
-              handleBack();
-            }}>
-            Back
-          </Button>
-          <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
-          <Input
-            defaultValue={localSurvey.name}
-            onChange={(e) => {
-              const updatedSurvey = { ...localSurvey, name: e.target.value };
-              setLocalSurvey(updatedSurvey);
-            }}
-            className="w-72 border-white hover:border-slate-200 "
-          />
+          {!hideBackButton && (
+            <Button
+              variant="secondary"
+              StartIcon={ArrowLeftIcon}
+              onClick={() => {
+                handleBack();
+              }}>
+              Back
+            </Button>
+          )}
+          {!hideFormName && (
+            <>
+              <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
+              <Input
+                defaultValue={localSurvey.name}
+                onChange={(e) => {
+                  const updatedSurvey = { ...localSurvey, name: e.target.value };
+                  setLocalSurvey(updatedSurvey);
+                }}
+                className="w-72 border-white hover:border-slate-200 "
+              />
+            </>
+          )}
         </div>
         {responseCount > 0 && (
           <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm lg:mx-auto">
@@ -252,13 +271,15 @@ export const SurveyMenuBar = ({
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
-          <div className="mr-4 flex items-center">
-            <SurveyStatusDropdown
-              survey={survey}
-              environment={environment}
-              updateLocalSurveyStatus={updateLocalSurveyStatus}
-            />
-          </div>
+          {!hideSurveyStatusDropdown && (
+            <div className="mr-4 flex items-center">
+              <SurveyStatusDropdown
+                survey={survey}
+                environment={environment}
+                updateLocalSurveyStatus={updateLocalSurveyStatus}
+              />
+            </div>
+          )}
           <Button
             disabled={disableSave}
             variant="secondary"
@@ -267,7 +288,7 @@ export const SurveyMenuBar = ({
             onClick={() => handleSurveySave()}>
             Save
           </Button>
-          {localSurvey.status !== "draft" && (
+          {!hideSaveAndClose && localSurvey.status !== "draft" && (
             <Button
               disabled={disableSave}
               variant="darkCTA"
@@ -277,7 +298,7 @@ export const SurveyMenuBar = ({
               Save & Close
             </Button>
           )}
-          {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
+          {!hideContinueToSettings && localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
             <Button
               variant="darkCTA"
               onClick={() => {
@@ -289,7 +310,7 @@ export const SurveyMenuBar = ({
             </Button>
           )}
           {/* Always display Publish button for link surveys for better CR */}
-          {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
+          {!hidePublish && localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
             <Button
               disabled={isSurveySaving || containsEmptyTriggers}
               variant="darkCTA"

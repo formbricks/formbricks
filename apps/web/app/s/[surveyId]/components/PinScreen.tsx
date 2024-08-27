@@ -18,6 +18,7 @@ interface PinScreenProps {
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
+  prevResponse?: TResponse;
   webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
@@ -37,6 +38,7 @@ export const PinScreen = (props: PinScreenProps) => {
     userId,
     singleUseId,
     singleUseResponse,
+    prevResponse,
     IMPRINT_URL,
     PRIVACY_URL,
     IS_FORMBRICKS_CLOUD,
@@ -119,6 +121,7 @@ export const PinScreen = (props: PinScreenProps) => {
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
+      prevResponse={prevResponse}
       webAppUrl={webAppUrl}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
