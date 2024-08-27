@@ -1,105 +1,78 @@
 "use server";
 
-import { getServerSession } from "next-auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
-import { getUser, updateUser } from "@formbricks/lib/user/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TUserUpdateInput } from "@formbricks/types/user";
+import { updateUser } from "@formbricks/lib/user/service";
+import { ZId } from "@formbricks/types/common";
+import { ZUserUpdateInput } from "@formbricks/types/user";
 
-export const updateUserAction = async (data: Partial<TUserUpdateInput>) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const updateUserAction = authenticatedActionClient
+  .schema(ZUserUpdateInput.partial())
+  .action(async ({ parsedInput, ctx }) => {
+    return await updateUser(ctx.user.id, parsedInput);
+  });
 
-  return await updateUser(session.user.id, data);
-};
+const ZSetupTwoFactorAuthAction = z.object({
+  password: z.string(),
+});
 
-export const setupTwoFactorAuthAction = async (password: string) => {
-  const session = await getServerSession(authOptions);
+export const setupTwoFactorAuthAction = authenticatedActionClient
+  .schema(ZSetupTwoFactorAuthAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await setupTwoFactorAuth(ctx.user.id, parsedInput.password);
+  });
 
-  if (!session) {
-    throw new Error("Not authenticated");
-  }
+const ZEnableTwoFactorAuthAction = z.object({
+  code: z.string(),
+});
 
-  if (!session.user.id) {
-    throw new Error("User not found");
-  }
+export const enableTwoFactorAuthAction = authenticatedActionClient
+  .schema(ZEnableTwoFactorAuthAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await enableTwoFactorAuth(ctx.user.id, parsedInput.code);
+  });
 
-  return await setupTwoFactorAuth(session.user.id, password);
-};
+const ZDisableTwoFactorAuthAction = z.object({
+  code: z.string(),
+  password: z.string(),
+  backupCode: z.string().optional(),
+});
 
-export const enableTwoFactorAuthAction = async (code: string) => {
-  const session = await getServerSession(authOptions);
+export const disableTwoFactorAuthAction = authenticatedActionClient
+  .schema(ZDisableTwoFactorAuthAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await disableTwoFactorAuth(ctx.user.id, parsedInput);
+  });
 
-  if (!session) {
-    throw new Error("Not authenticated");
-  }
+const ZUpdateAvatarAction = z.object({
+  avatarUrl: z.string(),
+});
 
-  if (!session.user.id) {
-    throw new Error("User not found");
-  }
+export const updateAvatarAction = authenticatedActionClient
+  .schema(ZUpdateAvatarAction)
+  .action(async ({ parsedInput, ctx }) => {
+    return await updateUser(ctx.user.id, { imageUrl: parsedInput.avatarUrl });
+  });
 
-  return await enableTwoFactorAuth(session.user.id, code);
-};
+const ZRemoveAvatarAction = z.object({
+  environmentId: ZId,
+});
 
-type TDisableTwoFactorAuthParams = {
-  code: string;
-  password: string;
-  backupCode?: string;
-};
+export const removeAvatarAction = authenticatedActionClient
+  .schema(ZRemoveAvatarAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["environment", "read"],
+    });
 
-export const disableTwoFactorAuthAction = async (params: TDisableTwoFactorAuthParams) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    throw new Error("Not authenticated");
-  }
-
-  if (!session.user.id) {
-    throw new Error("User not found");
-  }
-
-  return await disableTwoFactorAuth(session.user.id, params);
-};
-
-export const updateAvatarAction = async (avatarUrl: string) => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    throw new Error("Not authenticated");
-  }
-
-  if (!session.user.id) {
-    throw new Error("User not found");
-  }
-
-  return await updateUser(session.user.id, { imageUrl: avatarUrl });
-};
-
-export const removeAvatarAction = async (environmentId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error("Not authenticated");
-  }
-  if (!session.user.id) {
-    throw new Error("User not found");
-  }
-
-  const user = await getUser(session.user.id);
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isUserAuthorized) {
-    throw new Error("Not Authorized");
-  }
-
-  try {
-    const imageUrl = user.imageUrl;
+    const imageUrl = ctx.user.imageUrl;
     if (!imageUrl) {
       throw new Error("Image not found");
     }
@@ -109,12 +82,9 @@ export const removeAvatarAction = async (environmentId: string) => {
       throw new Error("Invalid filename");
     }
 
-    const deletionResult = await deleteFile(environmentId, "public", fileName);
+    const deletionResult = await deleteFile(parsedInput.environmentId, "public", fileName);
     if (!deletionResult.success) {
       throw new Error("Deletion failed");
     }
-    return await updateUser(session.user.id, { imageUrl: null });
-  } catch (error) {
-    throw new Error(`${"Deletion failed"}: ${error.message}`);
-  }
-};
+    return await updateUser(ctx.user.id, { imageUrl: null });
+  });

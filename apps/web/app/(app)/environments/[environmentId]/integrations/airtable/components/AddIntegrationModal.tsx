@@ -144,7 +144,7 @@ export const AddIntegrationModal = ({
 
       const actionMessage = isEditMode ? "updated" : "added";
 
-      await createOrUpdateIntegrationAction(environmentId, airtableIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: airtableIntegrationData });
       toast.success(`Integration ${actionMessage} successfully`);
       handleClose();
     } catch (e) {
@@ -176,7 +176,7 @@ export const AddIntegrationModal = ({
       const integrationData = structuredClone(airtableIntegrationData);
       integrationData.config.data.splice(index, 1);
 
-      await createOrUpdateIntegrationAction(environmentId, integrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData });
       handleClose();
       router.refresh();
 

@@ -42,10 +42,16 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
     // Fetch the initial data for the filter and load it into the state
     const handleInitialData = async () => {
       if (isOpen) {
-        const { attributes, meta, environmentTags, hiddenFields } = isSharingPage
-          ? await getSurveyFilterDataBySurveySharingKeyAction(sharingKey, survey.environmentId)
-          : await getSurveyFilterDataAction(survey.id, survey.environmentId);
+        const surveyFilterData = isSharingPage
+          ? await getSurveyFilterDataBySurveySharingKeyAction({
+              sharingKey,
+              environmentId: survey.environmentId,
+            })
+          : await getSurveyFilterDataAction({ surveyId: survey.id });
 
+        if (!surveyFilterData?.data) return;
+
+        const { attributes, meta, environmentTags, hiddenFields } = surveyFilterData.data;
         const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
           survey,
           environmentTags,

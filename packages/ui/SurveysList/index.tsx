@@ -5,6 +5,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { Button } from "../Button";
+import { LoadingSpinner } from "../LoadingSpinner";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
@@ -61,29 +62,43 @@ export const SurveysList = ({
   useEffect(() => {
     const fetchInitialSurveys = async () => {
       setIsFetching(true);
-      const res = await getSurveysAction(environment.id, surveysLimit, undefined, filters);
-      if (res.length < surveysLimit) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
+      const res = await getSurveysAction({
+        environmentId: environment.id,
+        limit: surveysLimit,
+        offset: undefined,
+        filterCriteria: filters,
+      });
+      if (res?.data) {
+        if (res.data.length < surveysLimit) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+        setSurveys(res.data);
+        setIsFetching(false);
       }
-      setSurveys(res);
-      setIsFetching(false);
     };
     fetchInitialSurveys();
   }, [environment.id, surveysLimit, filters]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
-    const newSurveys = await getSurveysAction(environment.id, surveysLimit, surveys.length, filters);
-    if (newSurveys.length === 0 || newSurveys.length < surveysLimit) {
-      setHasMore(false);
-    } else {
-      setHasMore(true);
-    }
+    const res = await getSurveysAction({
+      environmentId: environment.id,
+      limit: surveysLimit,
+      offset: surveys.length,
+      filterCriteria: filters,
+    });
+    if (res?.data) {
+      if (res.data.length === 0 || res.data.length < surveysLimit) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
 
-    setSurveys([...surveys, ...newSurveys]);
-    setIsFetching(false);
+      setSurveys([...surveys, ...res.data]);
+      setIsFetching(false);
+    }
   }, [environment.id, surveys, surveysLimit, filters]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
@@ -162,10 +177,11 @@ export const SurveysList = ({
           )}
         </div>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center">
-          <span className="mb-4 h-24 w-24 rounded-full bg-slate-100 p-6 text-5xl">🕵️</span>
-
-          <div className="text-slate-600">{isFetching ? "Fetching surveys..." : "No surveys found"}</div>
+        <div className="flex h-full flex-col items-center justify-center py-12">
+          <LoadingSpinner />
+          <div className="text-sm text-slate-500">
+            {isFetching ? "Fetching surveys..." : "No surveys found"}
+          </div>
         </div>
       )}
     </div>

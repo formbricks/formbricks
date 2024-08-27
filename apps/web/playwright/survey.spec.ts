@@ -25,7 +25,7 @@ test.describe("Survey Create & Submit Response", async () => {
       await page.getByRole("button", { name: "Publish" }).click();
 
       // Get URL
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -167,9 +167,11 @@ test.describe("Survey Create & Submit Response", async () => {
       await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[1] })).toBeVisible();
       await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[2] })).toBeVisible();
       await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[3] })).toBeVisible();
-      await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
       await page.getByRole("row", { name: "Rose 🌹" }).getByRole("cell").nth(1).click();
+      await page.getByRole("row", { name: "Sunflower 🌻" }).getByRole("cell").nth(1).click();
+      await page.getByRole("row", { name: "Hibiscus 🌺" }).getByRole("cell").nth(1).click();
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // Address Question
@@ -435,7 +437,8 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.getByRole("button", { name: "Publish" }).click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+    // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
     await page.getByLabel("Copy survey link to clipboard").click();

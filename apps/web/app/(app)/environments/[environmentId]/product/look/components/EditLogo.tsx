@@ -11,7 +11,7 @@ import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
-import { updateProductAction } from "../actions";
+import { updateProductAction } from "../../actions";
 
 interface EditLogoProps {
   product: TProduct;
@@ -61,7 +61,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       const updatedProduct: TProductUpdateInput = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
-      await updateProductAction(product.id, updatedProduct);
+      await updateProductAction({ productId: product.id, data: updatedProduct });
       toast.success("Logo updated successfully");
     } catch (error) {
       toast.error("Failed to update the logo");
@@ -83,7 +83,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       const updatedProduct: TProductUpdateInput = {
         logo: { url: undefined, bgColor: undefined },
       };
-      await updateProductAction(product.id, updatedProduct);
+      await updateProductAction({ productId: product.id, data: updatedProduct });
       toast.success("Logo removed successfully", { icon: "🗑️" });
     } catch (error) {
       toast.error("Failed to remove the logo");
@@ -120,7 +120,8 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
           allowedFileExtensions={["png", "jpeg", "jpg"]}
           environmentId={environmentId}
           onFileUpload={(files: string[]) => {
-            setLogoUrl(files[0]), setIsEditing(true);
+            setLogoUrl(files[0]);
+            setIsEditing(true);
           }}
         />
       )}

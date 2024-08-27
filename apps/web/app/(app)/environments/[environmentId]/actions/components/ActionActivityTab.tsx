@@ -2,6 +2,7 @@
 
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -25,16 +26,18 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
     setLoading(true);
 
     const updateState = async () => {
-      try {
-        setLoading(true);
-        const activeInactiveSurveys = await getActiveInactiveSurveysAction(actionClass.id, environmentId);
-        setActiveSurveys(activeInactiveSurveys.activeSurveys);
-        setInactiveSurveys(activeInactiveSurveys.inactiveSurveys);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      const getActiveInactiveSurveysResponse = await getActiveInactiveSurveysAction({
+        actionClassId: actionClass.id,
+      });
+      if (getActiveInactiveSurveysResponse?.data) {
+        setActiveSurveys(getActiveInactiveSurveysResponse.data.activeSurveys);
+        setInactiveSurveys(getActiveInactiveSurveysResponse.data.inactiveSurveys);
+      } else {
+        const errorMessage = getFormattedErrorMessage(getActiveInactiveSurveysResponse);
+        setError(new Error(errorMessage));
       }
+      setLoading(false);
     };
 
     updateState();

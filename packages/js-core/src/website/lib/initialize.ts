@@ -1,4 +1,5 @@
 import type { TJsConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+import { WEBSITE_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import { fetchEnvironmentState } from "../../shared/environmentState";
 import {
   ErrorHandler,
@@ -16,7 +17,7 @@ import { DEFAULT_PERSON_STATE_WEBSITE } from "../../shared/personState";
 import { getIsDebug } from "../../shared/utils";
 import { filterSurveys as filterPublicSurveys } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
-import { WEBSITE_LOCAL_STORAGE_KEY, WebsiteConfig } from "./config";
+import { WebsiteConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
@@ -209,7 +210,9 @@ export const handleErrorOnFirstInit = () => {
   };
 
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(WEBSITE_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() =>
+    localStorage.setItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig))
+  )();
   throw new Error("Could not initialize formbricks");
 };
 

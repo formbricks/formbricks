@@ -1,5 +1,6 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import type { TJsAppConfigInput, TJsConfig } from "@formbricks/types/js";
+import { APP_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import { fetchEnvironmentState } from "../../shared/environmentState";
 import {
   ErrorHandler,
@@ -17,7 +18,7 @@ import { fetchPersonState } from "../../shared/personState";
 import { filterSurveys, getIsDebug } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
-import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
+import { AppConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
@@ -113,7 +114,8 @@ export const initialize = async (
       configInput.apiHost,
       configInput.environmentId,
       configInput.userId,
-      configInput.attributes
+      configInput.attributes,
+      appConfig
     );
     if (res.ok !== true) {
       return err(res.error);
@@ -270,7 +272,7 @@ export const handleErrorOnFirstInit = () => {
   };
 
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() => localStorage.setItem(APP_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
   throw new Error("Could not initialize formbricks");
 };
 

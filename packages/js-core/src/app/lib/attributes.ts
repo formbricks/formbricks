@@ -53,7 +53,6 @@ export const updateAttribute = async (
         },
       };
     }
-
     return err({
       code: "network_error",
       // @ts-expect-error
@@ -88,7 +87,8 @@ export const updateAttributes = async (
   apiHost: string,
   environmentId: string,
   userId: string,
-  attributes: TAttributes
+  attributes: TAttributes,
+  appConfig: AppConfig
 ): Promise<Result<TAttributes, NetworkError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
@@ -151,7 +151,8 @@ export const isExistingAttribute = (key: string, value: string): boolean => {
 
 export const setAttributeInApp = async (
   key: string,
-  value: any
+  value: any,
+  appConfig: AppConfig
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   if (key === "userId") {
     logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");
@@ -174,7 +175,7 @@ export const setAttributeInApp = async (
     return okVoid();
   }
 
-  const result = await updateAttribute(key, value);
+  const result = await updateAttribute(key, value.toString());
 
   if (result.ok) {
     if (result.value.changed) {

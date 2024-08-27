@@ -13,6 +13,7 @@ import {
   getDefaultLanguageCode,
   getLanguageCode,
   handleHiddenFields,
+  shouldDisplayBasedOnPercentage,
 } from "../../shared/utils";
 import { AppConfig } from "./config";
 import { putFormbricksInErrorState } from "./initialize";
@@ -28,11 +29,6 @@ let setIsResponseSendingFinished = (_: boolean) => {};
 
 export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
-};
-
-const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
-  const randomNum = Math.floor(Math.random() * 10000) / 100;
-  return randomNum <= displayPercentage;
 };
 
 export const triggerSurvey = async (
@@ -218,13 +214,23 @@ const renderWidget = async (
         });
       },
       onClose: closeSurvey,
-      onFileUpload: async (file: File, params: TUploadFileConfig) => {
+      onFileUpload: async (
+        file: { type: string; name: string; base64: string },
+        params: TUploadFileConfig
+      ) => {
         const api = new FormbricksAPI({
           apiHost: appConfig.get().apiHost,
           environmentId: appConfig.get().environmentId,
         });
 
-        return await api.client.storage.uploadFile(file, params);
+        return await api.client.storage.uploadFile(
+          {
+            type: file.type,
+            name: file.name,
+            base64: file.base64,
+          },
+          params
+        );
       },
       onRetry: () => {
         setIsError(false);
@@ -241,17 +247,6 @@ export const closeSurvey = async (): Promise<void> => {
   addWidgetContainer();
 
   try {
-    // await sync(
-    //   {
-    //     apiHost: appConfig.get().apiHost,
-    //     environmentId: appConfig.get().environmentId,
-    //     userId: appConfig.get().personState.data.userId ?? "",
-    //   },
-    //   {
-    //     noCache: true,
-    //   }
-    // );
-
     const { environmentState, personState } = appConfig.get();
     const filteredSurveys = filterSurveys(environmentState, personState);
 

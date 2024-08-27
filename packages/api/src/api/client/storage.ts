@@ -1,3 +1,5 @@
+/* eslint-disable no-console -- used for error logging */
+import { Buffer } from "node:buffer";
 import type { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
 
 export class StorageAPI {
@@ -10,11 +12,15 @@ export class StorageAPI {
   }
 
   async uploadFile(
-    file: File,
+    file: {
+      type: string;
+      name: string;
+      base64: string;
+    },
     { allowedFileExtensions, surveyId }: TUploadFileConfig | undefined = {}
   ): Promise<string> {
-    if (!(file instanceof Blob) || !(file instanceof File)) {
-      throw new Error(`Invalid file type. Expected Blob or File, but received ${typeof file}`);
+    if (!file.name || !file.type || !file.base64) {
+      throw new Error(`Invalid file object`);
     }
 
     const payload = {
@@ -57,22 +63,47 @@ export class StorageAPI {
       };
     }
 
-    const formData = new FormData();
+    const formData: Record<string, string> = {};
+    const formDataForS3 = new FormData();
 
     if (presignedFields) {
       Object.keys(presignedFields).forEach((key) => {
-        formData.append(key, presignedFields[key]);
+        formDataForS3.append(key, presignedFields[key]);
       });
+
+      try {
+        const buffer = Buffer.from(file.base64.split(",")[1], "base64");
+        const blob = new Blob([buffer], { type: file.type });
+
+        formDataForS3.append("file", blob);
+      } catch (buffErr) {
+        console.error({ buffErr });
+
+        throw new Error("Error uploading file");
+      }
     }
 
-    // Add the actual file to be uploaded
-    formData.append("file", file);
+    formData.fileBase64String = file.base64;
 
-    const uploadResponse = await fetch(signedUrl, {
-      method: "POST",
-      ...(signingData ? { headers: requestHeaders } : {}),
-      body: formData,
-    });
+    let uploadResponse: Response = {} as Response;
+
+    const signedUrlCopy = signedUrl.replace("http://localhost:3000", this.apiHost);
+
+    try {
+      uploadResponse = await fetch(signedUrlCopy, {
+        method: "POST",
+        ...(signingData
+          ? {
+              headers: {
+                ...requestHeaders,
+              },
+            }
+          : {}),
+        body: presignedFields ? formDataForS3 : JSON.stringify(formData),
+      });
+    } catch (err) {
+      console.error("Error uploading file", err);
+    }
 
     if (!uploadResponse.ok) {
       // if local storage is used, we'll use the json response:

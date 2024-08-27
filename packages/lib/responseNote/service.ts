@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseNote } from "@formbricks/types/responses";
 import { cache } from "../cache";
@@ -70,7 +70,7 @@ export const createResponseNote = async (
 };
 
 export const getResponseNote = reactCache(
-  (responseNoteId: string): Promise<TResponseNote | null> =>
+  (responseNoteId: string): Promise<(TResponseNote & { responseId: string }) | null> =>
     cache(
       async () => {
         try {
@@ -78,7 +78,10 @@ export const getResponseNote = reactCache(
             where: {
               id: responseNoteId,
             },
-            select: responseNoteSelect,
+            select: {
+              ...responseNoteSelect,
+              responseId: true,
+            },
           });
           return responseNote;
         } catch (error) {

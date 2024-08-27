@@ -1,18 +1,25 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { ZId } from "@formbricks/types/common";
 
-export const generateSingleUseIdAction = async (surveyId: string, isEncrypted: boolean): Promise<string> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZGenerateSingleUseIdAction = z.object({
+  surveyId: ZId,
+  isEncrypted: z.boolean(),
+});
 
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
+export const generateSingleUseIdAction = authenticatedActionClient
+  .schema(ZGenerateSingleUseIdAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
 
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
-
-  return generateSurveySingleUseId(isEncrypted);
-};
+    return generateSurveySingleUseId(parsedInput.isEncrypted);
+  });

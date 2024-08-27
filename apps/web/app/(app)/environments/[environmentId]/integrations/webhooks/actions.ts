@@ -1,58 +1,77 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { canUserAccessWebhook } from "@formbricks/lib/webhook/auth";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWebhookId,
+} from "@formbricks/lib/organization/utils";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
 import { testEndpoint } from "@formbricks/lib/webhook/utils";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
+import { ZId } from "@formbricks/types/common";
+import { ZWebhookInput } from "@formbricks/types/webhooks";
 
-export const createWebhookAction = async (
-  environmentId: string,
-  webhookInput: TWebhookInput
-): Promise<TWebhook> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZCreateWebhookAction = z.object({
+  environmentId: ZId,
+  webhookInput: ZWebhookInput,
+});
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const createWebhookAction = authenticatedActionClient
+  .schema(ZCreateWebhookAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["webhook", "create"],
+    });
 
-  return await createWebhook(environmentId, webhookInput);
-};
+    return await createWebhook(parsedInput.environmentId, parsedInput.webhookInput);
+  });
 
-export const deleteWebhookAction = async (id: string): Promise<TWebhook> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZDeleteWebhookAction = z.object({
+  id: ZId,
+});
 
-  const isAuthorized = await canUserAccessWebhook(session.user.id, id);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const deleteWebhookAction = authenticatedActionClient
+  .schema(ZDeleteWebhookAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromWebhookId(parsedInput.id),
+      rules: ["webhook", "delete"],
+    });
 
-  return await deleteWebhook(id);
-};
+    return await deleteWebhook(parsedInput.id);
+  });
 
-export const updateWebhookAction = async (
-  environmentId: string,
-  webhookId: string,
-  webhookInput: Partial<TWebhookInput>
-): Promise<TWebhook> => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZUpdateWebhookAction = z.object({
+  webhookId: ZId,
+  webhookInput: ZWebhookInput,
+});
 
-  const isAuthorized = await canUserAccessWebhook(session.user.id, webhookId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const updateWebhookAction = authenticatedActionClient
+  .schema(ZUpdateWebhookAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromWebhookId(parsedInput.webhookId),
+      rules: ["webhook", "update"],
+    });
 
-  return await updateWebhook(environmentId, webhookId, webhookInput);
-};
+    return await updateWebhook(parsedInput.webhookId, parsedInput.webhookInput);
+  });
 
-export const testEndpointAction = async (url: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZTestEndpointAction = z.object({
+  url: z.string(),
+});
 
-  const res = await testEndpoint(url);
+export const testEndpointAction = authenticatedActionClient
+  .schema(ZTestEndpointAction)
+  .action(async ({ parsedInput }) => {
+    const res = await testEndpoint(parsedInput.url);
 
-  if (!res.ok) {
-    throw res.error;
-  }
-};
+    if (!res.ok) {
+      throw res.error;
+    }
+  });

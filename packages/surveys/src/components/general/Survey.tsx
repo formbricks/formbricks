@@ -81,6 +81,7 @@ export const Survey = ({
       return survey.questions.find((q) => q.id === questionId);
     }
   }, [questionId, survey, history]);
+
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
   const getShowSurveyCloseButton = (offset: number) => {
@@ -297,7 +298,7 @@ export const Survey = ({
             <QuestionConditional
               key={question.id}
               surveyId={survey.id}
-              question={parseRecallInformation(question, selectedLanguage, responseData)}
+              question={parseRecallInformation(question, selectedLanguage, responseData, survey.variables)}
               value={responseData[question.id]}
               onChange={onChange}
               onSubmit={onSubmit}

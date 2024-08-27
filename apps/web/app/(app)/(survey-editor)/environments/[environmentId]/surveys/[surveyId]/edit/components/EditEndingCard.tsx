@@ -8,7 +8,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { GripIcon } from "lucide-react";
+import { GripIcon, Handshake, Undo2 } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -129,7 +129,13 @@ export const EditEndingCard = ({
           "flex w-10 flex-col items-center justify-between rounded-l-lg border-b border-l border-t py-2 group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
-        <p className="mt-3">{endingCard.type === "endScreen" ? "🙏" : "↪️"}</p>
+        <div className="mt-3 flex w-full justify-center">
+          {endingCard.type === "endScreen" ? (
+            <Handshake className="h-4 w-4" />
+          ) : (
+            <Undo2 className="h-4 w-4 rotate-180" />
+          )}
+        </div>
         <button className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>

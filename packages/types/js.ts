@@ -2,7 +2,8 @@ import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
 import { ZProduct } from "./product";
-import { ZResponseHiddenFieldValue } from "./responses";
+import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
+import { ZUploadFileConfig } from "./storage";
 import { ZSurvey } from "./surveys/types";
 
 export const ZJsPerson = z.object({
@@ -40,10 +41,6 @@ export const ZJsAppStateSync = z.object({
 
 export type TJsAppStateSync = z.infer<typeof ZJsAppStateSync>;
 
-export const ZJsWebsiteStateSync = ZJsAppStateSync.omit({ person: true });
-
-export type TJsWebsiteStateSync = z.infer<typeof ZJsWebsiteStateSync>;
-
 export const ZJsAppState = z.object({
   attributes: ZAttributes,
   surveys: z.array(ZSurvey),
@@ -52,6 +49,41 @@ export const ZJsAppState = z.object({
 });
 
 export type TJsAppState = z.infer<typeof ZJsAppState>;
+
+export const ZJsAppConfigUpdateInput = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  userId: z.string(),
+  state: ZJsAppState,
+  expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
+});
+
+export type TJsAppConfigUpdateInput = z.infer<typeof ZJsAppConfigUpdateInput>;
+
+export const ZJSAppConfig = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  userId: z.string(),
+  state: ZJsAppState,
+  expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
+});
+
+export type TJSAppConfig = z.infer<typeof ZJSAppConfig>;
+
+export const ZJsWebsiteStateSync = ZJsAppStateSync.omit({ person: true });
+
+export type TJsWebsiteStateSync = z.infer<typeof ZJsWebsiteStateSync>;
+
+export const ZJsAppSyncParams = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  userId: z.string(),
+  attributes: ZAttributes.optional(),
+});
+
+export type TJsAppSyncParams = z.infer<typeof ZJsAppSyncParams>;
 
 export const ZJsWebsiteState = z.object({
   surveys: z.array(ZSurvey),
@@ -206,3 +238,22 @@ export const ZJsTrackProperties = z.object({
 });
 
 export type TJsTrackProperties = z.infer<typeof ZJsTrackProperties>;
+
+export const ZJsFileUploadParams = z.object({
+  file: z.object({ type: z.string(), name: z.string(), base64: z.string() }),
+  params: ZUploadFileConfig,
+});
+
+export type TJsFileUploadParams = z.infer<typeof ZJsFileUploadParams>;
+
+export const ZJsRNWebViewOnMessageData = z.object({
+  onFinished: z.boolean().nullish(),
+  onDisplay: z.boolean().nullish(),
+  onResponse: z.boolean().nullish(),
+  responseUpdate: ZResponseUpdate.nullish(),
+  onRetry: z.boolean().nullish(),
+  onClose: z.boolean().nullish(),
+  onFileUpload: z.boolean().nullish(),
+  fileUploadParams: ZJsFileUploadParams.nullish(),
+  uploadId: z.string().nullish(),
+});
