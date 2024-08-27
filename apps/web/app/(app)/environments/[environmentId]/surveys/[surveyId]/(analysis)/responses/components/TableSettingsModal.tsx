@@ -11,7 +11,6 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
-import React from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Modal } from "@formbricks/ui/Modal";
 
@@ -56,7 +55,7 @@ export const TableSettingsModal = ({
             </div>
           </div>
         </div>
-        <div className="max-h-[75vh] space-y-4 overflow-auto p-8">
+        <div className="max-h-[75vh] space-y-2 overflow-auto p-8">
           <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
             <SortableContext items={columnOrder} strategy={verticalListSortingStrategy}>
               {columnOrder.map((columnId) => {

@@ -19,7 +19,7 @@ import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Maximize2Icon } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -126,7 +126,7 @@ export const DataTable = ({
           table={table}
           deleteResponses={deleteResponses}
         />
-        <div className="rounded-md border">
+        <div>
           <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -147,10 +147,7 @@ export const DataTable = ({
             <TableBody>
               {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={cn(row.getIsSelected() ? "bg-slate-200" : "", "group hover:bg-slate-200")}>
+                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"} className="group">
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
@@ -175,7 +172,7 @@ export const DataTable = ({
                                   setSelectedResponseCard(response);
                                 }
                               }}>
-                              <Maximize2Icon className="ml-4 h-4 w-4" />
+                              <Maximize2Icon className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
@@ -216,8 +213,8 @@ export const DataTable = ({
             open={!!selectedResponseCard}
             setOpen={(isOpen) => !isOpen && setSelectedResponseCard(null)}
             closeOnOutsideClick={true}
-            className="max-h-[80vh] overflow-auto"
-            size="xl">
+            className="max-h-[80vh] overflow-auto rounded-lg bg-slate-50"
+            size="xxl">
             <SingleResponseCard
               survey={survey}
               response={selectedResponseCard}

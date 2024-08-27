@@ -5,7 +5,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { Column } from "@tanstack/react-table";
 import { capitalize } from "lodash";
 import { GripVertical } from "lucide-react";
-import React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Switch } from "@formbricks/ui/Switch";
@@ -51,9 +50,11 @@ export const TableSettingsModalItem = ({ column, survey }: TableSettingsModalIte
   return (
     <div ref={setNodeRef} style={style} id={column.id}>
       <div {...listeners} {...attributes}>
-        <div key={column.id} className="flex w-full justify-between">
+        <div
+          key={column.id}
+          className="flex w-full items-center justify-between rounded-md p-1.5 hover:cursor-move hover:bg-slate-100">
           <div className="flex items-center space-x-2">
-            <button className="hover:cursor-move group-hover:opacity-100" onClick={(e) => e.preventDefault()}>
+            <button onClick={(e) => e.preventDefault()}>
               <GripVertical className="h-4 w-4" />
             </button>
             {question ? (

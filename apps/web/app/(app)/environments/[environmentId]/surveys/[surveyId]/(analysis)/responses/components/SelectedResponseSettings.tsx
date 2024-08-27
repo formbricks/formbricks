@@ -1,7 +1,7 @@
 import { TTableData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
 import { Table } from "@tanstack/react-table";
 import { Trash2Icon } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { deleteResponseAction } from "@formbricks/ui/SingleResponseCard/actions";
@@ -43,26 +43,26 @@ export const SelectedResponseSettings = ({ table, deleteResponses }: SelectedRes
   };
 
   // Helper component for the separator
-  const Separator = () => <div className="mx-2">|</div>;
+  const Separator = () => <div className="">|</div>;
 
   // Helper component for selectable options
   const SelectableOption = ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <div className="cursor-pointer rounded-md p-2 hover:bg-slate-600" onClick={onClick}>
+    <div className="cursor-pointer rounded-md p-1 hover:bg-slate-500" onClick={onClick}>
       {label}
     </div>
   );
 
   return (
-    <div className="flex items-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
-      <div className="rounded-md p-2">{selectedRowCount} responses selected</div>
+    <div className="flex items-center gap-x-2 rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
+      <div>{selectedRowCount} responses selected</div>
       <Separator />
       <SelectableOption label="Select all" onClick={() => handleToggleAllRowsSelection(true)} />
       <SelectableOption label="Clear selection" onClick={() => handleToggleAllRowsSelection(false)} />
       <Separator />
       <div
-        className="ml-2 cursor-pointer rounded-md bg-slate-500 p-1"
+        className="cursor-pointer rounded-md bg-slate-500 p-1 hover:bg-slate-600"
         onClick={() => setIsDeleteDialogOpen(true)}>
-        <Trash2Icon className="h-4 w-4" />
+        <Trash2Icon strokeWidth={1.5} className="h-4 w-4" />
       </div>
       <DeleteDialog
         open={isDeleteDialogOpen}

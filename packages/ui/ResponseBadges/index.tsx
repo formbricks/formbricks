@@ -9,7 +9,7 @@ export const ResponseBadges = ({ items, isExpanded = false }: ResponseBadgesProp
   return (
     <div className={cn("my-1 flex gap-2", isExpanded ? "flex-wrap" : "")}>
       {items.map((item, index) => (
-        <span key={index} className="rounded-md bg-slate-200 p-2">
+        <span key={index} className="rounded-md bg-slate-200 px-2 py-1">
           {item}
         </span>
       ))}
