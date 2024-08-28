@@ -87,7 +87,7 @@ export const fetchPersonState = async (
  * @param appConfig - The app config
  */
 export const addPersonStateExpiryCheckListener = (appConfig: AppConfig): void => {
-  const updateInterval = 1000 * 30; // every 30 seconds
+  const updateInterval = 1000 * 60; // every 60 seconds
 
   if (typeof window !== "undefined" && personStateSyncIntervalId === null) {
     personStateSyncIntervalId = window.setInterval(async () => {
@@ -97,22 +97,14 @@ export const addPersonStateExpiryCheckListener = (appConfig: AppConfig): void =>
         return;
       }
 
-      // we fetch the person state from the backend and update the config
-      const personState = await fetchPersonState(
-        {
-          apiHost: appConfig.get().apiHost,
-          environmentId: appConfig.get().environmentId,
-          userId,
-        },
-        true
-      );
-      const environmentState = appConfig.get().environmentState;
-      const filteredSurveys = filterSurveys(environmentState, personState);
+      // extend the personState validity by 30 minutes:
 
       appConfig.update({
         ...appConfig.get(),
-        personState,
-        filteredSurveys,
+        personState: {
+          ...appConfig.get().personState,
+          expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
+        },
       });
     }, updateInterval);
   }

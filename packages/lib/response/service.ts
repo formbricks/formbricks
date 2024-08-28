@@ -323,6 +323,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       environmentId: environmentId,
       id: response.id,
       personId: response.person?.id,
+      userId: userId ?? undefined,
       surveyId: response.surveyId,
       singleUseId: singleUseId ? singleUseId : undefined,
     });

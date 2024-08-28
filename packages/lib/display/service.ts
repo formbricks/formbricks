@@ -145,6 +145,8 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       id: display.id,
       personId: display.personId,
       surveyId: display.surveyId,
+      userId,
+      environmentId,
     });
     return display;
   } catch (error) {
