@@ -5,27 +5,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import { EyeOffIcon, MailIcon } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TResponseNote } from "@formbricks/types/responses";
+import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { ResponseBadges } from "@formbricks/ui/ResponseBadges";
 import { RenderResponse } from "@formbricks/ui/SingleResponseCard/components/RenderResponse";
-
-export interface TTableData {
-  responseId: string;
-  createdAt: Date;
-  status: string;
-  verifiedEmail: string;
-  tags: {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    name: string;
-    environmentId: string;
-  }[];
-  notes: TResponseNote[];
-  language: string | null;
-}
 
 const getAddressFieldLabel = (field: string) => {
   switch (field) {
@@ -51,7 +35,7 @@ const getColumnHeaderForQuestion = (
   question: TSurveyQuestion,
   survey: TSurvey,
   isExpanded: boolean
-): ColumnDef<TTableData>[] => {
+): ColumnDef<TResponseTableData>[] => {
   switch (question.type) {
     case "matrix":
       return question.rows.map((matrixRow) => {
@@ -68,8 +52,10 @@ const getColumnHeaderForQuestion = (
             );
           },
           cell: ({ row }) => {
-            const responseValue = row.original[matrixRow.default];
-            return <p>{responseValue}</p>;
+            const responseValue = row.original.responseData[matrixRow.default];
+            if (typeof responseValue === "string") {
+              return <p>{responseValue}</p>;
+            }
           },
         };
       });
@@ -90,54 +76,13 @@ const getColumnHeaderForQuestion = (
             );
           },
           cell: ({ row }) => {
-            const responseValue = row.original[addressField];
-            return <p>{responseValue}</p>;
+            const responseValue = row.original.responseData[addressField];
+            if (typeof responseValue === "string") {
+              return <p>{responseValue}</p>;
+            }
           },
         };
       });
-
-    case "consent":
-    case "nps":
-    case "cta":
-    case "multipleChoiceMulti":
-    case "multipleChoiceSingle":
-      return [
-        {
-          accessorKey: question.id,
-          header: () => (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 overflow-hidden">
-                <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
-                <span className="truncate">
-                  {getLocalizedValue(
-                    recallToHeadline(question.headline, survey, false, "default", []),
-                    "default"
-                  )}
-                </span>
-              </div>
-            </div>
-          ),
-          cell: ({ row }) => {
-            const responseValue = row.original[question.id];
-            const language = row.original.language;
-            if (typeof responseValue === "string" || typeof responseValue === "number") {
-              return <ResponseBadges items={[responseValue.toString()]} isExpanded={isExpanded} />;
-            } else if (Array.isArray(responseValue)) {
-              return <ResponseBadges items={responseValue} isExpanded={isExpanded} />;
-            } else {
-              return (
-                <RenderResponse
-                  question={question}
-                  survey={survey}
-                  responseData={responseValue}
-                  language={language}
-                  isExpanded={isExpanded}
-                />
-              );
-            }
-          },
-        },
-      ];
 
     default:
       return [
@@ -157,7 +102,7 @@ const getColumnHeaderForQuestion = (
             </div>
           ),
           cell: ({ row }) => {
-            const responseValue = row.original[question.id];
+            const responseValue = row.original.responseData[question.id];
             const language = row.original.language;
             return (
               <RenderResponse
@@ -178,16 +123,16 @@ export const generateColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isViewer: boolean
-): ColumnDef<TTableData>[] => {
+): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
     getColumnHeaderForQuestion(question, survey, isExpanded)
   );
-  const selectionColumn: ColumnDef<TTableData> = {
+  const selectionColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "select",
     size: 75,
     enableResizing: false,
     header: ({ table }) => (
-      <div className="flex w-full items-center justify-center">
+      <div className="flex w-full items-center justify-center pr-4">
         <Checkbox
           checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
@@ -207,7 +152,7 @@ export const generateColumns = (
     ),
   };
 
-  const dateColumn: ColumnDef<TTableData> = {
+  const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt", // Use the correct key where the date is stored in your response data
     header: () => <span>Date</span>,
     cell: ({ row }) => {
@@ -237,7 +182,7 @@ export const generateColumns = (
     },
   };
 
-  const statusColumn: ColumnDef<TTableData> = {
+  const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
     header: () => <span>Status</span>,
     cell: ({ row }) => {
@@ -246,7 +191,7 @@ export const generateColumns = (
     },
   };
 
-  const tagsColumn: ColumnDef<TTableData> = {
+  const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
     header: () => <span>Tags</span>,
     cell: ({ getValue }) => {
@@ -258,7 +203,7 @@ export const generateColumns = (
     },
   };
 
-  const notesColumn: ColumnDef<TTableData> = {
+  const notesColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "notes",
     header: () => <span>Notes</span>,
     cell: ({ getValue }) => {
@@ -270,7 +215,7 @@ export const generateColumns = (
     },
   };
 
-  const hiddenFieldColumns: ColumnDef<TTableData>[] = survey.hiddenFields.fieldIds
+  const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
     ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
         return {
           accessorKey: hiddenFieldId,
@@ -292,7 +237,7 @@ export const generateColumns = (
       })
     : [];
 
-  const verifiedEmailColumn: ColumnDef<TTableData> = {
+  const verifiedEmailColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "verifiedEmail",
     header: () => (
       <div className="flex items-center space-x-2 overflow-hidden">

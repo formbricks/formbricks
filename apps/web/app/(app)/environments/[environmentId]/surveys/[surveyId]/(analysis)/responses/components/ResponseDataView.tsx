@@ -1,14 +1,14 @@
+import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { DataTable } from "./DataTable";
 
 interface ResponseDataViewProps {
   survey: TSurvey;
-  responses: TResponse[];
+  responses: TResponse[] | null;
   user?: TUser;
   environment: TEnvironment;
   environmentTags: TTag[];
@@ -19,7 +19,56 @@ interface ResponseDataViewProps {
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
 }
 
-export const ResponseDataView = ({
+const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
+  const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
+  return Array.isArray(responseValue)
+    ? responseValue.reduce((acc, curr, index) => {
+        acc[addressKeys[index]] = curr || ""; // Fallback to empty string if undefined
+        return acc;
+      }, {})
+    : {};
+};
+
+const extractResponseData = (response: TResponse, survey: TSurvey): Record<string, any> => {
+  let responseData: Record<string, any> = {};
+
+  survey.questions.forEach((question) => {
+    const responseValue = response.data[question.id];
+    switch (question.type) {
+      case "matrix":
+        if (typeof responseValue === "object") {
+          responseData = { ...responseData, ...responseValue };
+        }
+        break;
+      case "address":
+        responseData = { ...responseData, ...formatAddressData(responseValue) };
+        break;
+      default:
+        responseData[question.id] = responseValue;
+    }
+  });
+
+  survey.hiddenFields.fieldIds?.forEach((fieldId) => {
+    responseData[fieldId] = response.data[fieldId];
+  });
+
+  return responseData;
+};
+
+const mapResponsesToTableData = (responses: TResponse[], survey: TSurvey): TResponseTableData[] => {
+  return responses.map((response) => ({
+    responseData: extractResponseData(response, survey),
+    createdAt: response.createdAt,
+    status: response.finished ? "Completed ✅" : "Not Completed ⏳",
+    responseId: response.id,
+    tags: response.tags,
+    notes: response.notes,
+    verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
+    language: response.language,
+  }));
+};
+
+export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   survey,
   responses,
   user,
@@ -30,63 +79,12 @@ export const ResponseDataView = ({
   hasMore,
   deleteResponses,
   updateResponse,
-}: ResponseDataViewProps) => {
-  const getResponseData = (response: TResponse, survey: TSurvey) => {
-    let responseData = {};
-
-    survey.questions.forEach((question) => {
-      const responseValue = response.data[question.id];
-
-      switch (question.type) {
-        case "matrix":
-          if (typeof responseValue === "object") {
-            responseData = { ...responseData, ...responseValue };
-          }
-          break;
-
-        case "address":
-          // Assume responseValue is an array with specific order
-          const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
-          const addressData = Array.isArray(responseValue)
-            ? responseValue.reduce((acc, curr, index) => {
-                acc[addressKeys[index]] = curr || ""; // Fallback to empty string if undefined
-                return acc;
-              }, {})
-            : {};
-          responseData = { ...responseData, ...addressData };
-          break;
-
-        default:
-          // Assign all other types directly
-          responseData[question.id] = responseValue;
-      }
-    });
-    survey.hiddenFields.fieldIds?.forEach((fieldId) => {
-      const responseValue = response.data[fieldId];
-      responseData[fieldId] = responseValue;
-    });
-
-    return responseData;
-  };
-
-  const getData = () => {
-    return responses.map((response) => ({
-      ...getResponseData(response, survey),
-      createdAt: response.createdAt,
-      status: response.finished ? "Completed ✅" : "Not Completed ⏳",
-      responseId: response.id,
-      tags: response.tags,
-      notes: response.notes,
-      verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
-      language: response.language,
-    }));
-  };
-
-  const data = getData();
+}) => {
+  const data = responses ? mapResponsesToTableData(responses, survey) : null;
 
   return (
-    <div className="container mx-auto">
-      <DataTable
+    <div className="w-full">
+      <ResponseTable
         data={data}
         survey={survey}
         responses={responses}

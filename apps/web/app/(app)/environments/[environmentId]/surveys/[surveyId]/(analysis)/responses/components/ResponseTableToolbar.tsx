@@ -1,24 +1,24 @@
-import { TTableData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
 import { SelectedResponseSettings } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/SelectedResponseSettings";
 import { Table } from "@tanstack/react-table";
 import { MoveVerticalIcon, SettingsIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
+import { TResponseTableData } from "@formbricks/types/responses";
 
-interface DataTableToolbarProps {
+interface ResponseTableToolbarProps {
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;
   setIsExpanded: (isExpanded: boolean) => void;
   isExpanded: boolean;
-  table: Table<TTableData>;
+  table: Table<TResponseTableData>;
   deleteResponses: (responseIds: string[]) => void;
 }
 
-export const DataTableToolbar = ({
+export const ResponseTableToolbar = ({
   setIsExpanded,
   setIsTableSettingsModalOpen,
   isExpanded,
   table,
   deleteResponses,
-}: DataTableToolbarProps) => {
+}: ResponseTableToolbarProps) => {
   return (
     <div className="my-2 flex w-full items-center justify-between">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (

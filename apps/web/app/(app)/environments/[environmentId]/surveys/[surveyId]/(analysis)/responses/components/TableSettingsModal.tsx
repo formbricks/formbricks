@@ -1,4 +1,3 @@
-import { TTableData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
 import { TableSettingsModalItem } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TableSettingsModalItem";
 import {
   DndContext,
@@ -11,6 +10,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
+import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Modal } from "@formbricks/ui/Modal";
 
@@ -18,7 +18,7 @@ interface TableSettingsModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   survey: TSurvey;
-  table: Table<TTableData>;
+  table: Table<TResponseTableData>;
   columnOrder: string[];
   handleDragEnd: (event: DragEndEvent) => void;
 }

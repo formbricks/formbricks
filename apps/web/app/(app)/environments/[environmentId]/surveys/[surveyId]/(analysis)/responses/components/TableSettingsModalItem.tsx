@@ -1,4 +1,3 @@
-import { TTableData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
 import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -6,11 +5,12 @@ import { Column } from "@tanstack/react-table";
 import { capitalize } from "lodash";
 import { GripVertical } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface TableSettingsModalItemProps {
-  column: Column<TTableData, unknown>;
+  column: Column<TResponseTableData, unknown>;
   survey: TSurvey;
 }
 

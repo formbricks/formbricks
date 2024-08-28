@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@formbricks/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { processResponseData } from "@formbricks/lib/responses";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
@@ -55,12 +56,9 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyQuestionTypeEnum.Date:
       if (typeof responseData === "string") {
         const formattedDateString = formatDateWithOrdinal(new Date(responseData));
-        return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
-      }
-      break;
-    case TSurveyQuestionTypeEnum.Cal:
-      if (typeof responseData === "string") {
-        return <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">{responseData}</p>;
+        return (
+          <p className="ph-no-capture my-1 truncate font-normal text-slate-700">{formattedDateString}</p>
+        );
       }
       break;
     case TSurveyQuestionTypeEnum.PictureSelection:
@@ -90,7 +88,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
               return (
                 <p
                   key={rowValueInSelectedLanguage}
-                  className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
+                  className="ph-no-capture my-1 font-normal capitalize text-slate-700">
                   {rowValueInSelectedLanguage}:{processResponseData(responseData[rowValueInSelectedLanguage])}
                 </p>
               );
@@ -109,6 +107,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
     case TSurveyQuestionTypeEnum.NPS:
     case TSurveyQuestionTypeEnum.Consent:
+    case TSurveyQuestionTypeEnum.Cal:
       if (typeof responseData === "string" || typeof responseData === "number") {
         return <ResponseBadges items={[responseData.toString()]} isExpanded={true} />;
       } else if (Array.isArray(responseData)) {
@@ -122,7 +121,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         Array.isArray(responseData)
       ) {
         return (
-          <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
+          <p
+            className={cn(
+              "ph-no-capture my-1 truncate font-normal text-slate-700",
+              isExpanded ? "whitespace-pre-line" : "whitespace-nowrap"
+            )}>
             {Array.isArray(responseData) ? handleArray(responseData) : responseData}
           </p>
         );

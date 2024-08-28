@@ -1,13 +1,13 @@
-import { TTableData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
 import { Table } from "@tanstack/react-table";
 import { Trash2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
+import { TResponseTableData } from "@formbricks/types/responses";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { deleteResponseAction } from "@formbricks/ui/SingleResponseCard/actions";
 
 interface SelectedResponseSettingsProps {
-  table: Table<TTableData>;
+  table: Table<TResponseTableData>;
   deleteResponses: (responseIds: string[]) => void;
 }
 

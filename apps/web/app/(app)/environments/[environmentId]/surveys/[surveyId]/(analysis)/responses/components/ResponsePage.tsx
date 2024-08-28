@@ -45,7 +45,7 @@ export const ResponsePage = ({
   const isSharingPage = !!sharingKey;
 
   const [responseCount, setResponseCount] = useState<number | null>(null);
-  const [responses, setResponses] = useState<TResponse[]>([]);
+  const [responses, setResponses] = useState<TResponse[] | null>(null);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -86,19 +86,21 @@ export const ResponsePage = ({
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
     }
-    setResponses([...responses, ...newResponses]);
+    setResponses([...(responses ?? []), ...newResponses]);
     setPage(newPage);
   }, [filters, isSharingPage, page, responses, responsesPerPage, sharingKey, surveyId]);
 
   const deleteResponses = (responseIds: string[]) => {
-    setResponses(responses.filter((response) => !responseIds.includes(response.id)));
+    setResponses((responses ?? []).filter((response) => !responseIds.includes(response.id)));
     if (responseCount) {
       setResponseCount(responseCount - responseIds.length);
     }
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {
-    setResponses(responses.map((response) => (response.id === responseId ? updatedResponse : response)));
+    if (responses) {
+      setResponses(responses.map((response) => (response.id === responseId ? updatedResponse : response)));
+    }
   };
 
   useEffect(() => {

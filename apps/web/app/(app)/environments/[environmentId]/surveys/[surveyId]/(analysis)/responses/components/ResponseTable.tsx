@@ -1,9 +1,7 @@
-import {
-  TTableData,
-  generateColumns,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
-import { DataTableToolbar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/DataTableToolbar";
-import { DraggableTableHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/DraggableTableHeader";
+import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
+import { generateColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { ResponseTableHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableHeader";
+import { ResponseTableToolbar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableToolbar";
 import { TableSettingsModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TableSettingsModal";
 import {
   DndContext,
@@ -17,24 +15,23 @@ import {
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { Maximize2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
+import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 import { Modal } from "@formbricks/ui/Modal";
 import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
+import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
-interface DataTableProps {
-  data: TTableData[];
+interface ResponseTableProps {
+  data: TResponseTableData[] | null;
   survey: TSurvey;
-  responses: TResponse[];
+  responses: TResponse[] | null;
   environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
@@ -45,7 +42,7 @@ interface DataTableProps {
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
 }
 
-export const DataTable = ({
+export const ResponseTable = ({
   data,
   survey,
   responses,
@@ -57,8 +54,7 @@ export const DataTable = ({
   hasMore,
   deleteResponses,
   updateResponse,
-}: DataTableProps) => {
-  // State for table controls
+}: ResponseTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
@@ -76,10 +72,27 @@ export const DataTable = ({
     useSensor(KeyboardSensor, {})
   );
 
+  // Memoize table data and columns
+  const tableData = useMemo(() => data ?? Array(10).fill({}), [data]);
+  const tableColumns = useMemo(
+    () =>
+      !data || data.length === 0
+        ? columns.map((column) => ({
+            ...column,
+            cell: () => (
+              <Skeleton className="w-full">
+                <div className="h-6"></div>
+              </Skeleton>
+            ),
+          }))
+        : columns,
+    [columns, data]
+  );
+
   // React Table instance
   const table = useReactTable({
-    data,
-    columns,
+    data: tableData,
+    columns: tableColumns,
     getRowId: (originalRow) => originalRow.responseId,
     getCoreRowModel: getCoreRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -119,7 +132,7 @@ export const DataTable = ({
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
         sensors={sensors}>
-        <DataTableToolbar
+        <ResponseTableToolbar
           setIsExpanded={setIsExpanded}
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded}
@@ -133,7 +146,7 @@ export const DataTable = ({
                 <tr key={headerGroup.id}>
                   <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
                     {headerGroup.headers.map((header) => (
-                      <DraggableTableHeader
+                      <ResponseTableHeader
                         key={header.id}
                         header={header}
                         setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
@@ -147,36 +160,19 @@ export const DataTable = ({
             <TableBody>
               {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"} className="group">
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={"group cursor-pointer"}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell
+                      <ResponseTableCell
                         key={cell.id}
-                        className="border border-slate-300"
-                        style={{ width: `${cell.column.getSize()}px` }}>
-                        <div className="flex w-full items-center">
-                          <div
-                            className={cn(
-                              "flex flex-1 items-center truncate",
-                              isExpanded ? "h-full" : "h-10"
-                            )}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </div>
-
-                          {cell.column.id === "createdAt" && (
-                            <Button
-                              variant="minimal"
-                              className="hidden h-full flex-shrink-0 items-center group-hover:flex"
-                              onClick={() => {
-                                const response = responses.find((response) => response.id === row.id);
-                                if (response) {
-                                  setSelectedResponseCard(response);
-                                }
-                              }}>
-                              <Maximize2Icon className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+                        cell={cell}
+                        row={row}
+                        isExpanded={isExpanded}
+                        setSelectedResponseCard={setSelectedResponseCard}
+                        responses={responses}
+                      />
                     ))}
                   </TableRow>
                 ))
@@ -191,7 +187,7 @@ export const DataTable = ({
           </Table>
         </div>
 
-        {hasMore && data.length > 0 && (
+        {data && hasMore && data.length > 0 && (
           <div className="mt-4 flex justify-center">
             <Button onClick={fetchNextPage} className="bg-blue-500 text-white">
               Load More

@@ -1,19 +1,30 @@
 import { ColumnSettingsDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ColumnSettingsDropdown";
-import { TTableData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
-// needed for row & cell level scope DnD setup
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Header, flexRender } from "@tanstack/react-table";
+import { Column, Header, flexRender } from "@tanstack/react-table";
 import { GripVerticalIcon } from "lucide-react";
 import React, { CSSProperties } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { TResponseTableData } from "@formbricks/types/responses";
+import { TableHead } from "@formbricks/ui/Table";
 
-interface DraggableTableHeaderProps {
-  header: Header<TTableData, unknown>;
+interface ResponseTableHeaderProps {
+  header: Header<TResponseTableData, unknown>;
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;
 }
 
-export const DraggableTableHeader = ({ header, setIsTableSettingsModalOpen }: DraggableTableHeaderProps) => {
+export const getCommonPinningStyles = (column: Column<TResponseTableData>): CSSProperties => {
+  return {
+    boxShadow: "-4px 0 4px -4px gray inset",
+    left: `${column.getStart("left") - 1}px`,
+    right: `${column.getAfter("right")}px`,
+    position: "sticky",
+    width: column.getSize(),
+    zIndex: 1,
+  };
+};
+
+export const ResponseTableHeader = ({ header, setIsTableSettingsModalOpen }: ResponseTableHeaderProps) => {
   const { attributes, isDragging, listeners, setNodeRef, transform } = useSortable({
     id: header.column.id,
   });
@@ -26,15 +37,16 @@ export const DraggableTableHeader = ({ header, setIsTableSettingsModalOpen }: Dr
     whiteSpace: "nowrap",
     width: header.column.getSize(),
     zIndex: isDragging ? 1 : 0,
+    ...(header.column.id === "select" ? getCommonPinningStyles(header.column) : {}),
   };
 
   return (
-    <th
+    <TableHead
       colSpan={header.colSpan}
       ref={setNodeRef}
       style={style}
       key={header.id}
-      className="group relative border border-slate-300 p-2 px-4">
+      className="group relative border border-slate-300 bg-slate-200 p-2 px-4 text-center">
       <div className="flex items-center justify-between">
         <div className="flex-1 truncate text-left">
           {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
@@ -66,6 +78,6 @@ export const DraggableTableHeader = ({ header, setIsTableSettingsModalOpen }: Dr
           )}
         />
       </div>
-    </th>
+    </TableHead>
   );
 };

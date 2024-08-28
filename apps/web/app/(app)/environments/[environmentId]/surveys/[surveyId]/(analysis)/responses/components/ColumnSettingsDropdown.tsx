@@ -1,7 +1,7 @@
-import { TTableData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/Columns";
 import { Column } from "@tanstack/react-table";
 import { EllipsisVerticalIcon, EyeOffIcon, SettingsIcon } from "lucide-react";
 import React from "react";
+import { TResponseTableData } from "@formbricks/types/responses";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 
 interface ColumnSettingsDropdownProps {
-  column: Column<TTableData>;
+  column: Column<TResponseTableData>;
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;
 }
 
