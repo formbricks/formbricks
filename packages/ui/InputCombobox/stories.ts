@@ -38,7 +38,6 @@ export const Default: Story = {
     selected: null,
     onChangeValue: (option) => console.log(option),
     withInput: false,
-    comboboxSize: "lg",
     allowMultiSelect: false,
   },
 };
@@ -88,6 +87,5 @@ export const MultiSelect: Story = {
 export const SmallSize: Story = {
   args: {
     ...Default.args,
-    comboboxSize: "sm",
   },
 };

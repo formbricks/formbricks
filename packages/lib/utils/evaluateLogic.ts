@@ -196,6 +196,8 @@ const getRightOperandValue = (
       return variableValue || "";
     case "hiddenField":
       return data[rightOperand.value];
+    case "choice":
+      return rightOperand.value;
     case "static":
       return rightOperand.value;
     default:

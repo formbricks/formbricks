@@ -189,6 +189,8 @@ const getRightOperandValue = (
   switch (rightOperand.type) {
     case "question":
       return data[rightOperand.value];
+    case "choice":
+      return rightOperand.value;
     case "variable":
       const variables = localSurvey.variables || [];
       const variable = variables.find((v) => v.id === rightOperand.value);
@@ -297,9 +299,7 @@ const performCalculation = (
       result = Number(currentValue) * Number(operandValue);
       break;
     case "divide":
-      if (Number(operandValue) === 0) {
-        throw new Error("Division by zero");
-      }
+      if (Number(operandValue) === 0) return undefined;
       result = Number(currentValue) / Number(operandValue);
       break;
     case "assign":

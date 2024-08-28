@@ -115,7 +115,7 @@ export function AdvancedLogicEditorActions({
                       ...(action.objective === "calculate" ? { variableId: val } : { target: val }),
                     });
                   }}
-                  comboboxClasses="grow min-w-[100px]"
+                  comboboxClasses="grow min-w-[100px]  max-w-[200px]"
                 />
                 {action.objective === "calculate" && (
                   <>
@@ -131,11 +131,12 @@ export function AdvancedLogicEditorActions({
                           operator: val,
                         });
                       }}
-                      comboboxClasses="min-w-[100px]"
+                      comboboxClasses="min-w-[100px] max-w-[200px]"
                     />
                     <InputCombobox
                       key="value"
                       withInput={true}
+                      clearable={true}
                       inputProps={{
                         placeholder: "Value",
                         value: action.value?.value ?? "",
@@ -164,8 +165,7 @@ export function AdvancedLogicEditorActions({
                           },
                         });
                       }}
-                      comboboxClasses="flex min-w-[100px]"
-                      comboboxSize="sm"
+                      comboboxClasses="flex min-w-[100px] max-w-[200px]"
                     />
                   </>
                 )}

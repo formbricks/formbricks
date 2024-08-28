@@ -124,12 +124,14 @@ export const MultipleChoiceQuestionForm = ({
   const deleteChoice = (choiceIdx: number) => {
     const choiceToDelete = question.choices[choiceIdx].id;
 
-    const questionIdx = findOptionUsedInLogic(localSurvey, question.id, choiceToDelete);
-    if (questionIdx !== -1) {
-      toast.error(
-        `This option is used in logic for question ${questionIdx + 1}. Please fix the logic first before deleting.`
-      );
-      return;
+    if (choiceToDelete !== "other") {
+      const questionIdx = findOptionUsedInLogic(localSurvey, question.id, choiceToDelete);
+      if (questionIdx !== -1) {
+        toast.error(
+          `This option is used in logic for question ${questionIdx + 1}. Please fix the logic first before deleting.`
+        );
+        return;
+      }
     }
 
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);

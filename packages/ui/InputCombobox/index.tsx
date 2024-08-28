@@ -1,5 +1,5 @@
-import { CheckIcon, ChevronDownIcon, LucideProps } from "lucide-react";
-import React from "react";
+import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
+import React, { useEffect } from "react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { cn } from "@formbricks/lib/cn";
 import {
@@ -14,7 +14,7 @@ import {
 import { Input } from "../Input";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
-export interface ComboboxOption<T = string> {
+export interface ComboboxOption<T = string | number> {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
   label: string;
   value: T;
@@ -23,7 +23,7 @@ export interface ComboboxOption<T = string> {
 
 export interface ComboboxGroupedOption {
   label: string;
-  value: string;
+  value: string | number;
   options: ComboboxOption[];
 }
 
@@ -35,6 +35,7 @@ interface InputComboboxProps<T> {
   selected?: string | number | string[] | null;
   onChangeValue: (value: T | T[], option?: ComboboxOption) => void;
   inputProps?: React.ComponentProps<typeof Input>;
+  clearable?: boolean;
   withInput?: boolean;
   comboboxSize?: "sm" | "lg";
   allowMultiSelect?: boolean;
@@ -50,29 +51,42 @@ export const InputCombobox = ({
   groupedOptions,
   selected,
   onChangeValue,
+  clearable = false,
   withInput = false,
-  comboboxSize = "lg",
+  // comboboxSize = "lg",
   allowMultiSelect = false,
   showCheckIcon = false,
   comboboxClasses,
-}: InputComboboxProps<string>) => {
+}: InputComboboxProps<string | number>) => {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState<ComboboxOption | ComboboxOption[] | null>(null);
+  const [hideInput, setHideInput] = React.useState(false);
+
+  useEffect(() => {
+    const validOptions = options?.length ? options : groupedOptions?.flatMap((group) => group.options);
+    if (validOptions?.find((option) => option.value === selected)) {
+      setHideInput(true);
+    }
+  }, []);
 
   React.useEffect(() => {
     const validOptions = options?.length ? options : groupedOptions?.flatMap((group) => group.options);
     if (Array.isArray(selected)) {
-      setValue(validOptions?.filter((option) => selected.includes(option.value)) || null);
+      setValue(validOptions?.filter((option) => selected.includes(option.value as string)) || null);
     } else {
       setValue(validOptions?.find((option) => option.value === selected) || null);
     }
   }, [selected, options, groupedOptions]);
 
   const handleSelect = (option: ComboboxOption) => {
+    let shouldHideInput = true;
     if (allowMultiSelect) {
       if (Array.isArray(value)) {
         const doesExist = value.find((item) => item.value === option.value);
         const newValue = doesExist ? value.filter((item) => item.value !== option.value) : [...value, option];
+        if (!newValue.length) {
+          shouldHideInput = false;
+        }
         onChangeValue(newValue.map((item) => item.value));
         setValue(newValue);
       } else {
@@ -84,12 +98,16 @@ export const InputCombobox = ({
       setValue(option);
       setOpen(false);
     }
+    if (withInput) setHideInput(shouldHideInput);
   };
 
   return (
     <div className={cn("flex", comboboxClasses)}>
-      {withInput && (
-        <Input className="w-[200px] rounded-r-none border border-slate-300 bg-white" {...inputProps} />
+      {withInput && !hideInput && (
+        <Input
+          className="w-[400px] min-w-0 rounded-r-none border border-slate-300 bg-white"
+          {...inputProps}
+        />
       )}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -98,38 +116,49 @@ export const InputCombobox = ({
             aria-controls="options"
             aria-expanded={open}
             className={cn(
-              "flex h-10 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white",
+              "flex h-10 w-full cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white",
               {
                 "rounded-l-none": withInput,
-                "w-10": comboboxSize === "sm",
-                "w-full grow justify-between gap-2 p-2": comboboxSize === "lg",
+                // "w-10": comboboxSize === "sm",
+                // "w-full grow justify-between gap-2 p-2": comboboxSize === "lg",
               }
             )}>
-            {comboboxSize === "lg" && (
-              <div className="ellipsis flex w-full gap-2 truncate">
-                {Array.isArray(value) ? (
-                  value.map((item, idx) => (
-                    <>
-                      {idx !== 0 && <span>,</span>}
-                      <div className="flex items-center gap-2">
-                        {item?.icon && <item.icon className="h-5 w-5 shrink-0 text-slate-400" />}
-                        <span>{item?.label}</span>
-                      </div>
-                    </>
-                  ))
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {value?.icon && <value.icon className="h-5 w-5 shrink-0 text-slate-400" />}
-                    <span>{value?.label}</span>
-                  </div>
-                )}
-              </div>
+            {/* {comboboxSize === "lg" && ( */}
+            <div className="ellipsis flex w-full gap-2 truncate px-2">
+              {Array.isArray(value) ? (
+                value.map((item, idx) => (
+                  <>
+                    {idx !== 0 && <span>,</span>}
+                    <div className="flex items-center gap-2">
+                      {item?.icon && <item.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+                      <span>{item?.label}</span>
+                    </div>
+                  </>
+                ))
+              ) : (
+                <div className="flex items-center gap-2">
+                  {value?.icon && <value.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+                  <span>{value?.label}</span>
+                </div>
+              )}
+            </div>
+            {/* )} */}
+            {clearable && selected ? (
+              <XIcon
+                className="shrink-0 text-slate-300"
+                onClick={() => {
+                  onChangeValue("");
+                  setValue(null);
+                  setHideInput(false);
+                }}
+              />
+            ) : (
+              <ChevronDownIcon
+                className="shrink-0 text-slate-300"
+                // height={comboboxSize === "sm" ? 20 : 16}
+                // width={comboboxSize === "sm" ? 20 : 16}
+              />
             )}
-            <ChevronDownIcon
-              className="shrink-0 text-slate-300"
-              height={comboboxSize === "sm" ? 20 : 16}
-              width={comboboxSize === "sm" ? 20 : 16}
-            />
           </div>
         </PopoverTrigger>
         <PopoverContent

@@ -40,7 +40,7 @@ export function ConditionalLogic({
             id: createId(),
             leftOperand: {
               type: "question",
-              id: localSurvey.questions[0].id,
+              id: localSurvey.questions[questionIdx].id,
             },
             operator: "isSkipped",
           },

@@ -697,7 +697,7 @@ const churnSurvey = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[0],
                     },
                   },
@@ -725,7 +725,7 @@ const churnSurvey = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -753,7 +753,7 @@ const churnSurvey = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[2],
                     },
                   },
@@ -781,7 +781,7 @@ const churnSurvey = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[3],
                     },
                   },
@@ -809,7 +809,7 @@ const churnSurvey = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[4],
                     },
                   },
@@ -1020,7 +1020,7 @@ const earnedAdvocacyScore = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -1103,7 +1103,7 @@ const earnedAdvocacyScore = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[3],
                     },
                   },
@@ -1180,7 +1180,7 @@ const improveTrialConversion = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[0],
                     },
                   },
@@ -1208,7 +1208,7 @@ const improveTrialConversion = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -1236,7 +1236,7 @@ const improveTrialConversion = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[2],
                     },
                   },
@@ -1264,7 +1264,7 @@ const improveTrialConversion = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[3],
                     },
                   },
@@ -1292,7 +1292,7 @@ const improveTrialConversion = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[4],
                     },
                   },
@@ -1688,7 +1688,7 @@ const improveActivationRate = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -1716,7 +1716,7 @@ const improveActivationRate = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[2],
                     },
                   },
@@ -1744,7 +1744,7 @@ const improveActivationRate = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[3],
                     },
                   },
@@ -1772,7 +1772,7 @@ const improveActivationRate = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[4],
                     },
                   },
@@ -2328,7 +2328,7 @@ const feedbackBox = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[0],
                     },
                   },
@@ -2356,7 +2356,7 @@ const feedbackBox = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -3497,7 +3497,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -3525,7 +3525,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[0],
                     },
                   },
@@ -3553,7 +3553,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[2],
                     },
                   },
@@ -3839,7 +3839,7 @@ const identifySignUpBarriers = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[0],
                     },
                   },
@@ -3867,7 +3867,7 @@ const identifySignUpBarriers = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -3895,7 +3895,7 @@ const identifySignUpBarriers = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[2],
                     },
                   },
@@ -3923,7 +3923,7 @@ const identifySignUpBarriers = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[3],
                     },
                   },
@@ -3951,7 +3951,7 @@ const identifySignUpBarriers = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[4],
                     },
                   },
@@ -4799,7 +4799,7 @@ const understandLowEngagement = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[0],
                     },
                   },
@@ -4827,7 +4827,7 @@ const understandLowEngagement = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[1],
                     },
                   },
@@ -4855,7 +4855,7 @@ const understandLowEngagement = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[2],
                     },
                   },
@@ -4883,7 +4883,7 @@ const understandLowEngagement = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: reusableOptionIds[3],
                     },
                   },
@@ -4911,7 +4911,7 @@ const understandLowEngagement = (): TTemplate => {
                     },
                     operator: "equals",
                     rightOperand: {
-                      type: "static",
+                      type: "choice",
                       value: "other",
                     },
                   },

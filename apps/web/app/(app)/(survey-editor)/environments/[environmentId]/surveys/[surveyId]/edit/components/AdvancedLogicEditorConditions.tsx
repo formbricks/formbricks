@@ -181,7 +181,7 @@ export function AdvancedLogicEditorConditions({
 
     const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx);
     const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
-    const { show, options, showInput = true } = getMatchValueProps(condition, localSurvey);
+    const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey);
 
     return (
       <div key={condition.id} className="mt-2 flex items-center justify-between gap-4">
@@ -210,7 +210,7 @@ export function AdvancedLogicEditorConditions({
               },
             });
           }}
-          comboboxClasses="grow max-w-[200px]"
+          comboboxClasses="grow min-w-[100px] max-w-[200px]"
         />
         <InputCombobox
           key="conditionOperator"
@@ -222,13 +222,15 @@ export function AdvancedLogicEditorConditions({
               operator: val,
             });
           }}
-          comboboxClasses="grow"
+          comboboxClasses="grow min-w-[100px] max-w-[200px]"
         />
-        {show && options.length > 0 && (
+        {show && (
           <InputCombobox
             withInput={showInput}
             inputProps={{
+              type: inputType,
               placeholder: "Value",
+              value: condition.rightOperand?.value,
               onChange: (e) => {
                 handleUpdateCondition(condition.id, {
                   rightOperand: {
@@ -241,13 +243,15 @@ export function AdvancedLogicEditorConditions({
             key="conditionMatchValue"
             showSearch={false}
             groupedOptions={options}
-            comboboxSize="sm"
+            allowMultiSelect={["equalsOneOf", "includesAllOf", "includesOneOf"].includes(condition.operator)}
+            comboboxClasses="grow min-w-[100px] max-w-[300px]"
             selected={condition.rightOperand?.value}
+            clearable={true}
             onChangeValue={(val: TRightOperand["value"], option) => {
               handleUpdateCondition(condition.id, {
                 rightOperand: {
                   value: val,
-                  type: option?.meta?.type as TRightOperand["type"],
+                  type: (option?.meta?.type as TRightOperand["type"]) ?? "static",
                 },
               });
             }}

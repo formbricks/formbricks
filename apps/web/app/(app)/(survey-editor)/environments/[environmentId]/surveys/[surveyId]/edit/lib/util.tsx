@@ -17,6 +17,7 @@ import {
   Rows3Icon,
   StarIcon,
 } from "lucide-react";
+import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
 import {
@@ -170,7 +171,12 @@ export const getConditionOperatorOptions = (
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey
-): { show?: boolean; showInput?: boolean; options: ComboboxGroupedOption[] } => {
+): {
+  show?: boolean;
+  showInput?: boolean;
+  inputType?: HTMLInputTypeAttribute;
+  options: ComboboxGroupedOption[];
+} => {
   if (
     [
       "isAccepted",
@@ -189,48 +195,8 @@ export const getMatchValueProps = (
   let variables = localSurvey.variables || [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
 
-  if (condition.leftOperand.type === "question") {
-    const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.id);
-
-    if (
-      selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-      selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
-    ) {
-      const choices = selectedQuestion.choices.map((choice) => {
-        return {
-          label: getLocalizedValue(choice.label, "default"),
-          value: choice.id,
-          meta: {
-            type: "static",
-          },
-        };
-      });
-
-      return {
-        show: true,
-        showInput: false,
-        options: [{ label: "Choices", value: "choices", options: choices }],
-      };
-    }
-
-    if (selectedQuestion?.type === TSurveyQuestionTypeEnum.PictureSelection) {
-      const choices = selectedQuestion.choices.map((choice, idx) => {
-        return {
-          label: choice.imageUrl.split("/").pop() || `Image ${idx + 1}`,
-          value: choice.id,
-          meta: {
-            type: "static",
-          },
-        };
-      });
-
-      return {
-        show: true,
-        showInput: false,
-        options: [{ label: "Choices", value: "choices", options: choices }],
-      };
-    }
-  }
+  const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.id);
+  const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.id);
 
   if (condition.leftOperand.type === "question") {
     questions = questions.filter((question) => question.id !== condition.leftOperand.id);
@@ -240,66 +206,517 @@ export const getMatchValueProps = (
     hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.id);
   }
 
-  const questionOptions = questions.map((question) => {
-    return {
-      icon: questionIconMapping[question.type],
-      label: getLocalizedValue(question.headline, "default"),
-      value: question.id,
-      meta: {
-        type: "question",
-      },
-    };
-  });
+  if (condition.leftOperand.type === "question") {
+    if (selectedQuestion?.type === TSurveyQuestionTypeEnum.OpenText) {
+      const allowedQuestions = questions.filter((question) =>
+        [
+          TSurveyQuestionTypeEnum.OpenText,
+          TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          TSurveyQuestionTypeEnum.Rating,
+          TSurveyQuestionTypeEnum.NPS,
+          TSurveyQuestionTypeEnum.Date,
+        ].includes(question.type)
+      );
 
-  const variableOptions = variables.map((variable) => {
-    return {
-      icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-      label: variable.name,
-      value: variable.id,
-      meta: {
-        type: "variable",
-      },
-    };
-  });
+      const questionOptions = allowedQuestions.map((question) => {
+        return {
+          icon: questionIconMapping[question.type],
+          label: getLocalizedValue(question.headline, "default"),
+          value: question.id,
+          meta: {
+            type: "question",
+          },
+        };
+      });
 
-  const hiddenFieldsOptions = hiddenFields.map((field) => {
-    return {
-      icon: EyeOffIcon,
-      label: field,
-      value: field,
-      meta: {
-        type: "hiddenField",
-      },
-    };
-  });
+      const variableOptions = variables.map((variable) => {
+        return {
+          icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
+          label: variable.name,
+          value: variable.id,
+          meta: {
+            type: "variable",
+          },
+        };
+      });
 
-  const groupedOptions: ComboboxGroupedOption[] = [];
+      const hiddenFieldsOptions = hiddenFields.map((field) => {
+        return {
+          icon: EyeOffIcon,
+          label: field,
+          value: field,
+          meta: {
+            type: "hiddenField",
+          },
+        };
+      });
 
-  if (questionOptions.length > 0) {
-    groupedOptions.push({
-      label: "Questions",
-      value: "questions",
-      options: questionOptions,
+      const groupedOptions: ComboboxGroupedOption[] = [];
+
+      if (questionOptions.length > 0) {
+        groupedOptions.push({
+          label: "Questions",
+          value: "questions",
+          options: questionOptions,
+        });
+      }
+
+      if (variableOptions.length > 0) {
+        groupedOptions.push({
+          label: "Variables",
+          value: "variables",
+          options: variableOptions,
+        });
+      }
+
+      if (hiddenFieldsOptions.length > 0) {
+        groupedOptions.push({
+          label: "Hidden Fields",
+          value: "hiddenFields",
+          options: hiddenFieldsOptions,
+        });
+      }
+      return {
+        show: true,
+        showInput: true,
+        inputType: selectedQuestion.inputType === "number" ? "number" : "text",
+        options: groupedOptions,
+      };
+    } else if (
+      selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+      selectedQuestion?.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+    ) {
+      const choices = selectedQuestion.choices.map((choice) => {
+        return {
+          label: getLocalizedValue(choice.label, "default"),
+          value: choice.id,
+          meta: {
+            type: "choice",
+          },
+        };
+      });
+
+      return {
+        show: true,
+        showInput: false,
+        options: [{ label: "Choices", value: "choices", options: choices }],
+      };
+    } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.PictureSelection) {
+      const choices = selectedQuestion.choices.map((choice, idx) => {
+        return {
+          label: choice.imageUrl.split("/").pop() || `Image ${idx + 1}`,
+          value: choice.id,
+          meta: {
+            type: "choice",
+          },
+        };
+      });
+
+      return {
+        show: true,
+        showInput: false,
+        options: [{ label: "Choices", value: "choices", options: choices }],
+      };
+    } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.Rating) {
+      const choices = Array.from({ length: selectedQuestion.range }, (_, idx) => {
+        return {
+          label: `${idx + 1}`,
+          value: idx + 1,
+          meta: {
+            type: "choice",
+          },
+        };
+      });
+
+      const numberVariables = variables.filter((variable) => variable.type === "number");
+
+      const variableOptions = numberVariables.map((variable) => {
+        return {
+          icon: FileDigitIcon,
+          label: variable.name,
+          value: variable.id,
+          meta: {
+            type: "variable",
+          },
+        };
+      });
+
+      const groupedOptions: ComboboxGroupedOption[] = [];
+
+      if (choices.length > 0) {
+        groupedOptions.push({
+          label: "Choices",
+          value: "choices",
+          options: choices,
+        });
+      }
+
+      if (variableOptions.length > 0) {
+        groupedOptions.push({
+          label: "Variables",
+          value: "variables",
+          options: variableOptions,
+        });
+      }
+
+      return {
+        show: true,
+        showInput: false,
+        options: groupedOptions,
+      };
+    } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.NPS) {
+      const choices = Array.from({ length: 11 }, (_, idx) => {
+        return {
+          label: `${idx}`,
+          value: idx,
+          meta: {
+            type: "choice",
+          },
+        };
+      });
+
+      const numberVariables = variables.filter((variable) => variable.type === "number");
+
+      const variableOptions = numberVariables.map((variable) => {
+        return {
+          icon: FileDigitIcon,
+          label: variable.name,
+          value: variable.id,
+          meta: {
+            type: "variable",
+          },
+        };
+      });
+
+      const groupedOptions: ComboboxGroupedOption[] = [];
+
+      if (choices.length > 0) {
+        groupedOptions.push({
+          label: "Choices",
+          value: "choices",
+          options: choices,
+        });
+      }
+
+      if (variableOptions.length > 0) {
+        groupedOptions.push({
+          label: "Variables",
+          value: "variables",
+          options: variableOptions,
+        });
+      }
+
+      return {
+        show: true,
+        showInput: false,
+        options: groupedOptions,
+      };
+    } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.Date) {
+      const openTextQuestions = questions.filter(
+        (question) => question.type === TSurveyQuestionTypeEnum.OpenText
+      );
+
+      const questionOptions = openTextQuestions.map((question) => {
+        return {
+          icon: questionIconMapping[question.type],
+          label: getLocalizedValue(question.headline, "default"),
+          value: question.id,
+          meta: {
+            type: "question",
+          },
+        };
+      });
+
+      const stringVariables = variables.filter((variable) => variable.type === "text");
+
+      const variableOptions = stringVariables.map((variable) => {
+        return {
+          icon: FileType2Icon,
+          label: variable.name,
+          value: variable.id,
+          meta: {
+            type: "variable",
+          },
+        };
+      });
+
+      const hiddenFieldsOptions = hiddenFields.map((field) => {
+        return {
+          icon: EyeOffIcon,
+          label: field,
+          value: field,
+          meta: {
+            type: "hiddenField",
+          },
+        };
+      });
+
+      const groupedOptions: ComboboxGroupedOption[] = [];
+
+      if (questionOptions.length > 0) {
+        groupedOptions.push({
+          label: "Questions",
+          value: "questions",
+          options: questionOptions,
+        });
+      }
+
+      if (variableOptions.length > 0) {
+        groupedOptions.push({
+          label: "Variables",
+          value: "variables",
+          options: variableOptions,
+        });
+      }
+
+      if (hiddenFieldsOptions.length > 0) {
+        groupedOptions.push({
+          label: "Hidden Fields",
+          value: "hiddenFields",
+          options: hiddenFieldsOptions,
+        });
+      }
+
+      return {
+        show: true,
+        showInput: true,
+        inputType: "date",
+        options: groupedOptions,
+      };
+    }
+  } else if (condition.leftOperand.type === "variable") {
+    if (selectedVariable?.type === "text") {
+      const allowedQuestions = questions.filter((question) =>
+        [
+          TSurveyQuestionTypeEnum.OpenText,
+          TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          TSurveyQuestionTypeEnum.Rating,
+          TSurveyQuestionTypeEnum.NPS,
+          TSurveyQuestionTypeEnum.Date,
+        ].includes(question.type)
+      );
+
+      const questionOptions = allowedQuestions.map((question) => {
+        return {
+          icon: questionIconMapping[question.type],
+          label: getLocalizedValue(question.headline, "default"),
+          value: question.id,
+          meta: {
+            type: "question",
+          },
+        };
+      });
+
+      const stringVariables = variables.filter((variable) => variable.type === "text");
+
+      const variableOptions = stringVariables.map((variable) => {
+        return {
+          icon: FileType2Icon,
+          label: variable.name,
+          value: variable.id,
+          meta: {
+            type: "variable",
+          },
+        };
+      });
+
+      const hiddenFieldsOptions = hiddenFields.map((field) => {
+        return {
+          icon: EyeOffIcon,
+          label: field,
+          value: field,
+          meta: {
+            type: "hiddenField",
+          },
+        };
+      });
+
+      const groupedOptions: ComboboxGroupedOption[] = [];
+
+      if (questionOptions.length > 0) {
+        groupedOptions.push({
+          label: "Questions",
+          value: "questions",
+          options: questionOptions,
+        });
+      }
+
+      if (variableOptions.length > 0) {
+        groupedOptions.push({
+          label: "Variables",
+          value: "variables",
+          options: variableOptions,
+        });
+      }
+
+      if (hiddenFieldsOptions.length > 0) {
+        groupedOptions.push({
+          label: "Hidden Fields",
+          value: "hiddenFields",
+          options: hiddenFieldsOptions,
+        });
+      }
+
+      return {
+        show: true,
+        showInput: true,
+        inputType: "text",
+        options: groupedOptions,
+      };
+    } else if (selectedVariable?.type === "number") {
+      const allowedQuestions = questions.filter((question) =>
+        [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+      );
+
+      const questionOptions = allowedQuestions.map((question) => {
+        return {
+          icon: questionIconMapping[question.type],
+          label: getLocalizedValue(question.headline, "default"),
+          value: question.id,
+          meta: {
+            type: "question",
+          },
+        };
+      });
+
+      const numberVariables = variables.filter((variable) => variable.type === "number");
+
+      const variableOptions = numberVariables.map((variable) => {
+        return {
+          icon: FileDigitIcon,
+          label: variable.name,
+          value: variable.id,
+          meta: {
+            type: "variable",
+          },
+        };
+      });
+
+      const hiddenFieldsOptions = hiddenFields.map((field) => {
+        return {
+          icon: EyeOffIcon,
+          label: field,
+          value: field,
+          meta: {
+            type: "hiddenField",
+          },
+        };
+      });
+
+      const groupedOptions: ComboboxGroupedOption[] = [];
+
+      if (questionOptions.length > 0) {
+        groupedOptions.push({
+          label: "Questions",
+          value: "questions",
+          options: questionOptions,
+        });
+      }
+
+      if (variableOptions.length > 0) {
+        groupedOptions.push({
+          label: "Variables",
+          value: "variables",
+          options: variableOptions,
+        });
+      }
+
+      if (hiddenFieldsOptions.length > 0) {
+        groupedOptions.push({
+          label: "Hidden Fields",
+          value: "hiddenFields",
+          options: hiddenFieldsOptions,
+        });
+      }
+
+      return {
+        show: true,
+        showInput: true,
+        inputType: "number",
+        options: groupedOptions,
+      };
+    }
+  } else if (condition.leftOperand.type === "hiddenField") {
+    const allowedQuestions = questions.filter((question) =>
+      [
+        TSurveyQuestionTypeEnum.OpenText,
+        TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+        TSurveyQuestionTypeEnum.Rating,
+        TSurveyQuestionTypeEnum.NPS,
+        TSurveyQuestionTypeEnum.Date,
+      ].includes(question.type)
+    );
+
+    const questionOptions = allowedQuestions.map((question) => {
+      return {
+        icon: questionIconMapping[question.type],
+        label: getLocalizedValue(question.headline, "default"),
+        value: question.id,
+        meta: {
+          type: "question",
+        },
+      };
     });
+
+    const variableOptions = variables.map((variable) => {
+      return {
+        icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
+        label: variable.name,
+        value: variable.id,
+        meta: {
+          type: "variable",
+        },
+      };
+    });
+
+    const hiddenFieldsOptions = hiddenFields.map((field) => {
+      return {
+        icon: EyeOffIcon,
+        label: field,
+        value: field,
+        meta: {
+          type: "hiddenField",
+        },
+      };
+    });
+
+    const groupedOptions: ComboboxGroupedOption[] = [];
+
+    if (questionOptions.length > 0) {
+      groupedOptions.push({
+        label: "Questions",
+        value: "questions",
+        options: questionOptions,
+      });
+    }
+
+    if (variableOptions.length > 0) {
+      groupedOptions.push({
+        label: "Variables",
+        value: "variables",
+        options: variableOptions,
+      });
+    }
+
+    if (hiddenFieldsOptions.length > 0) {
+      groupedOptions.push({
+        label: "Hidden Fields",
+        value: "hiddenFields",
+        options: hiddenFieldsOptions,
+      });
+    }
+
+    return {
+      show: true,
+      showInput: true,
+      inputType: "text",
+      options: groupedOptions,
+    };
   }
 
-  if (variableOptions.length > 0) {
-    groupedOptions.push({
-      label: "Variables",
-      value: "variables",
-      options: variableOptions,
-    });
-  }
-
-  if (hiddenFieldsOptions.length > 0) {
-    groupedOptions.push({
-      label: "Hidden Fields",
-      value: "hiddenFields",
-      options: hiddenFieldsOptions,
-    });
-  }
-
-  return { show: true, options: groupedOptions };
+  return { show: false, options: [] };
 };
 
 export const getActionTargetOptions = (
@@ -397,36 +814,6 @@ export const getActionValueOptions = (
   const variables = localSurvey.variables || [];
   const questions = localSurvey.questions;
 
-  const groupedOptions: ComboboxGroupedOption[] = [];
-
-  // const questionOptions = getActionTargetOptions(questions, currQuestionIdx);
-  const questionOptions = questions
-    .filter((_, idx) => idx !== currQuestionIdx)
-    .map((question) => {
-      return {
-        icon: questionIconMapping[question.type],
-        label: getLocalizedValue(question.headline, "default"),
-        value: question.id,
-        meta: {
-          type: "question",
-        },
-      };
-    });
-
-  const selectedVariable = variables.find((variable) => variable.id === variableId);
-  const variableOptions = variables
-    .filter((variable) => variable.type === selectedVariable?.type && variable.id !== variableId)
-    .map((variable) => {
-      return {
-        icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-        label: variable.name,
-        value: variable.id,
-        meta: {
-          type: "variable",
-        },
-      };
-    });
-
   const hiddenFieldsOptions = hiddenFields.map((field) => {
     return {
       icon: EyeOffIcon,
@@ -438,31 +825,135 @@ export const getActionValueOptions = (
     };
   });
 
-  if (questionOptions.length > 0) {
-    groupedOptions.push({
-      label: "Questions",
-      value: "questions",
-      options: questionOptions,
+  const selectedVariable = variables.find((variable) => variable.id === variableId);
+
+  if (!selectedVariable) return [];
+
+  if (selectedVariable.type === "text") {
+    const allowedQuestions = questions.filter(
+      (question, idx) =>
+        idx !== currQuestionIdx &&
+        [
+          TSurveyQuestionTypeEnum.OpenText,
+          TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          TSurveyQuestionTypeEnum.Rating,
+          TSurveyQuestionTypeEnum.NPS,
+          TSurveyQuestionTypeEnum.Date,
+        ].includes(question.type)
+    );
+
+    const questionOptions = allowedQuestions.map((question) => {
+      return {
+        icon: questionIconMapping[question.type],
+        label: getLocalizedValue(question.headline, "default"),
+        value: question.id,
+        meta: {
+          type: "question",
+        },
+      };
     });
+
+    const stringVariables = variables.filter((variable) => variable.type === "text");
+
+    const variableOptions = stringVariables.map((variable) => {
+      return {
+        icon: FileType2Icon,
+        label: variable.name,
+        value: variable.id,
+        meta: {
+          type: "variable",
+        },
+      };
+    });
+
+    const groupedOptions: ComboboxGroupedOption[] = [];
+
+    if (questionOptions.length > 0) {
+      groupedOptions.push({
+        label: "Questions",
+        value: "questions",
+        options: questionOptions,
+      });
+    }
+
+    if (variableOptions.length > 0) {
+      groupedOptions.push({
+        label: "Variables",
+        value: "variables",
+        options: variableOptions,
+      });
+    }
+
+    if (hiddenFieldsOptions.length > 0) {
+      groupedOptions.push({
+        label: "Hidden Fields",
+        value: "hiddenFields",
+        options: hiddenFieldsOptions,
+      });
+    }
+
+    return groupedOptions;
+  } else if (selectedVariable.type === "number") {
+    const allowedQuestions = questions.filter(
+      (question, idx) =>
+        idx !== currQuestionIdx &&
+        [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+    );
+
+    const questionOptions = allowedQuestions.map((question) => {
+      return {
+        icon: questionIconMapping[question.type],
+        label: getLocalizedValue(question.headline, "default"),
+        value: question.id,
+        meta: {
+          type: "question",
+        },
+      };
+    });
+
+    const numberVariables = variables.filter((variable) => variable.type === "number");
+
+    const variableOptions = numberVariables.map((variable) => {
+      return {
+        icon: FileDigitIcon,
+        label: variable.name,
+        value: variable.id,
+        meta: {
+          type: "variable",
+        },
+      };
+    });
+
+    const groupedOptions: ComboboxGroupedOption[] = [];
+
+    if (questionOptions.length > 0) {
+      groupedOptions.push({
+        label: "Questions",
+        value: "questions",
+        options: questionOptions,
+      });
+    }
+
+    if (variableOptions.length > 0) {
+      groupedOptions.push({
+        label: "Variables",
+        value: "variables",
+        options: variableOptions,
+      });
+    }
+
+    if (hiddenFieldsOptions.length > 0) {
+      groupedOptions.push({
+        label: "Hidden Fields",
+        value: "hiddenFields",
+        options: hiddenFieldsOptions,
+      });
+    }
+
+    return groupedOptions;
   }
 
-  if (variableOptions.length > 0) {
-    groupedOptions.push({
-      label: "Variables",
-      value: "variables",
-      options: variableOptions,
-    });
-  }
-
-  if (hiddenFieldsOptions.length > 0) {
-    groupedOptions.push({
-      label: "Hidden Fields",
-      value: "hiddenFields",
-      options: hiddenFieldsOptions,
-    });
-  }
-
-  return groupedOptions;
+  return [];
 };
 
 export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): number => {
@@ -516,7 +1007,7 @@ export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optio
 
   const isUsedInOperand = (condition: TSingleCondition): boolean => {
     if (condition.leftOperand.type === "question" && condition.leftOperand.id === questionId) {
-      if (condition.rightOperand && condition.rightOperand.type === "static") {
+      if (condition.rightOperand && condition.rightOperand.type === "choice") {
         if (Array.isArray(condition.rightOperand.value)) {
           return condition.rightOperand.value.includes(optionId);
         } else {
