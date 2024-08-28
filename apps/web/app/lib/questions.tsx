@@ -134,7 +134,7 @@ export const questionTypes: TQuestion[] = [
   },
   {
     id: QuestionId.CTA,
-    label: "Call-to-Action",
+    label: "Call-to-Action (Statement)",
     description: "Prompt respondents to perform an action",
     icon: MousePointerClickIcon,
     preset: {

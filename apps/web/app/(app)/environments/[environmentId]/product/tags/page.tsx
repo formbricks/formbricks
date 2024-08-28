@@ -57,7 +57,7 @@ const Page = async ({ params }) => {
           productChannel={currentProductChannel}
         />
       </PageHeader>
-      <SettingsCard title="Manage Tags" description="Add, merge and remove response tags.">
+      <SettingsCard title="Manage Tags" description="Merge and remove response tags.">
         <EditTagsWrapper
           environment={environment}
           environmentTags={tags}
