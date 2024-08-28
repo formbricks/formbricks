@@ -1,5 +1,5 @@
 import { type TAttributes } from "@formbricks/types/attributes";
-import { type TJSAppConfig, type TJsAppConfigInput } from "@formbricks/types/js";
+import { type TJsAppConfigInput, type TJsRNConfig } from "@formbricks/types/js";
 import {
   ErrorHandler,
   type MissingFieldError,
@@ -60,10 +60,10 @@ export const initialize = async (
     if (!res.ok) {
       return err(res.error);
     }
-    updatedAttributes = res.value;
+    updatedAttributes = res.data;
   }
 
-  let existingConfig: TJSAppConfig | undefined;
+  let existingConfig: TJsRNConfig | undefined;
   try {
     existingConfig = appConfig.get();
   } catch (e) {
@@ -87,8 +87,8 @@ export const initialize = async (
           environmentId: c.environmentId,
           userId: c.userId,
         },
-        true,
-        appConfig
+        appConfig,
+        true
       );
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
@@ -104,8 +104,8 @@ export const initialize = async (
         environmentId: c.environmentId,
         userId: c.userId,
       },
-      true,
-      appConfig
+      appConfig,
+      true
     );
 
     // and track the new session event

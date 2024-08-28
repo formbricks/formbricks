@@ -1,20 +1,23 @@
-import { TAttributes } from "@formbricks/types/attributes";
-import { TJsAppState, TJsAppStateSync, TJsAppSyncParams } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { NetworkError, Result, err, ok } from "../../../js-core/src/shared/errors";
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- required */
+
+/* eslint-disable no-console -- required for logging */
+import type { TAttributes } from "@formbricks/types/attributes";
+import { type Result, err, ok } from "@formbricks/types/error-handlers";
+import type { NetworkError } from "@formbricks/types/errors";
+import type { TJsAppState, TJsAppStateSync, TJsRNSyncParams } from "@formbricks/types/js";
 import { Logger } from "../../../js-core/src/shared/logger";
-import { AppConfig } from "./config";
+import type { RNConfig } from "./config";
 
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
 
 const syncWithBackend = async (
-  { apiHost, environmentId, userId }: TJsAppSyncParams,
+  { apiHost, environmentId, userId }: TJsRNSyncParams,
   noCache: boolean
 ): Promise<Result<TJsAppStateSync, NetworkError>> => {
   try {
-    let fetchOptions: RequestInit = {};
+    const fetchOptions: RequestInit = {};
 
     if (noCache) {
       fetchOptions.cache = "no-cache";
@@ -26,7 +29,7 @@ const syncWithBackend = async (
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
-      const jsonRes = await response.json();
+      const jsonRes = (await response.json()) as { message: string };
 
       return err({
         code: "network_error",
@@ -34,45 +37,41 @@ const syncWithBackend = async (
         message: "Error syncing with backend",
         url,
         responseMessage: jsonRes.message,
-      });
+      }) as Result<TJsAppStateSync, NetworkError>;
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { data: TJsAppStateSync };
     const { data: state } = data;
 
-    return ok(state as TJsAppStateSync);
+    return ok(state);
   } catch (e) {
     return err(e as NetworkError);
   }
 };
 
-export const sync = async (
-  params: TJsAppSyncParams,
-  noCache = false,
-  appConfig: AppConfig
-): Promise<void> => {
+export const sync = async (params: TJsRNSyncParams, appConfig: RNConfig, noCache = false): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params, noCache);
 
-    if (syncResult?.ok !== true) {
-      throw syncResult.error;
+    if (!syncResult.ok) {
+      throw syncResult.error as unknown as Error;
     }
 
-    let attributes: TAttributes = params.attributes || {};
+    const attributes: TAttributes = params.attributes ?? {};
 
-    if (syncResult.value.language) {
-      attributes.language = syncResult.value.language;
+    if (syncResult.data.language) {
+      attributes.language = syncResult.data.language;
     }
 
-    let state: TJsAppState = {
-      surveys: syncResult.value.surveys as TSurvey[],
-      actionClasses: syncResult.value.actionClasses,
-      product: syncResult.value.product,
+    const state: TJsAppState = {
+      surveys: syncResult.data.surveys,
+      actionClasses: syncResult.data.actionClasses,
+      product: syncResult.data.product,
       attributes,
     };
 
     const surveyNames = state.surveys.map((s) => s.name);
-    logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
+    logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
 
     appConfig.update({
       apiHost: params.apiHost,
@@ -82,39 +81,42 @@ export const sync = async (
       expiresAt: new Date(new Date().getTime() + 2 * 60000), // 2 minutes in the future
     });
   } catch (error) {
-    console.error(`Error during sync: ${error}`);
+    console.error(`Error during sync: ${error as string}`);
     throw error;
   }
 };
 
-export const addExpiryCheckListener = (appConfig: AppConfig): void => {
+export const addExpiryCheckListener = (appConfig: RNConfig): void => {
   const updateInterval = 1000 * 30; // every 30 seconds
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {
-    syncIntervalId = window.setInterval(async () => {
-      try {
-        // check if the config has not expired yet
-        if (appConfig.get().expiresAt && new Date(appConfig.get().expiresAt) >= new Date()) {
-          return;
+    syncIntervalId = window.setInterval(
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises -- we want to run this function async
+      async () => {
+        try {
+          // check if the config has not expired yet
+          if (appConfig.get().expiresAt && new Date(appConfig.get().expiresAt) >= new Date()) {
+            return;
+          }
+          logger.debug("Config has expired. Starting sync.");
+          await sync(
+            {
+              apiHost: appConfig.get().apiHost,
+              environmentId: appConfig.get().environmentId,
+              userId: appConfig.get().userId,
+              attributes: appConfig.get().state.attributes,
+            },
+            appConfig
+          );
+        } catch (e) {
+          console.error(`Error during expiry check: ${e as string}`);
+          logger.debug("Extending config and try again later.");
+          const existingConfig = appConfig.get();
+          appConfig.update(existingConfig);
         }
-        logger.debug("Config has expired. Starting sync.");
-        await sync(
-          {
-            apiHost: appConfig.get().apiHost,
-            environmentId: appConfig.get().environmentId,
-            userId: appConfig.get().userId,
-            attributes: appConfig.get().state.attributes,
-          },
-          false,
-          appConfig
-        );
-      } catch (e) {
-        console.error(`Error during expiry check: ${e}`);
-        logger.debug("Extending config and try again later.");
-        const existingConfig = appConfig.get();
-        appConfig.update(existingConfig);
-      }
-    }, updateInterval);
+      },
+      updateInterval
+    );
   }
 };
 

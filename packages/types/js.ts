@@ -61,7 +61,7 @@ export const ZJsAppConfigUpdateInput = z.object({
 
 export type TJsAppConfigUpdateInput = z.infer<typeof ZJsAppConfigUpdateInput>;
 
-export const ZJSAppConfig = z.object({
+export const ZJsRNConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   userId: z.string(),
@@ -70,20 +70,20 @@ export const ZJSAppConfig = z.object({
   status: z.enum(["success", "error"]).optional(),
 });
 
-export type TJSAppConfig = z.infer<typeof ZJSAppConfig>;
+export type TJsRNConfig = z.infer<typeof ZJsRNConfig>;
 
 export const ZJsWebsiteStateSync = ZJsAppStateSync.omit({ person: true });
 
 export type TJsWebsiteStateSync = z.infer<typeof ZJsWebsiteStateSync>;
 
-export const ZJsAppSyncParams = z.object({
+export const ZJsRNSyncParams = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   userId: z.string(),
   attributes: ZAttributes.optional(),
 });
 
-export type TJsAppSyncParams = z.infer<typeof ZJsAppSyncParams>;
+export type TJsRNSyncParams = z.infer<typeof ZJsRNSyncParams>;
 
 export const ZJsWebsiteState = z.object({
   surveys: z.array(ZSurvey),

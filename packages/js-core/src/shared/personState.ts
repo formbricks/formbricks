@@ -2,7 +2,7 @@ import { TJsPersonState, TJsPersonSyncParams } from "@formbricks/types/js";
 import { AppConfig } from "../app/lib/config";
 import { err } from "./errors";
 import { Logger } from "./logger";
-import { filterSurveys, getIsDebug } from "./utils";
+import { getIsDebug } from "./utils";
 
 const logger = Logger.getInstance();
 let personStateSyncIntervalId: number | null = null;
