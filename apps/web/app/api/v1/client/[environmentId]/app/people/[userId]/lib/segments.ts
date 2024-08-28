@@ -1,6 +1,6 @@
+import { attributeCache } from "@formbricks/lib/attribute/cache";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
-import { personCache } from "@formbricks/lib/person/cache";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { evaluateSegment, getSegments } from "@formbricks/lib/segment/service";
 import { validateInputs } from "@formbricks/lib/utils/validate";
@@ -45,6 +45,6 @@ export const getPersonSegmentIds = (
     },
     [`getPersonSegmentIds-${environmentId}-${person.id}-${deviceType}`],
     {
-      tags: [segmentCache.tag.byEnvironmentId(environmentId), personCache.tag.byId(person.id)],
+      tags: [segmentCache.tag.byEnvironmentId(environmentId), attributeCache.tag.byPersonId(person.id)],
     }
   )();

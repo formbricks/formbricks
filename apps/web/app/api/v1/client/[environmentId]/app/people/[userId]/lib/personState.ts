@@ -121,6 +121,7 @@ export const getPersonState = async ({
     },
     [`personState-${environmentId}-${userId}`],
     {
+      ...(IS_FORMBRICKS_CLOUD && { revalidate: 24 * 60 * 60 }),
       tags: [
         environmentCache.tag.byId(environmentId),
         organizationCache.tag.byEnvironmentId(environmentId),

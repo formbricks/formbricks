@@ -179,6 +179,8 @@ const renderWidget = async (
           return;
         }
 
+        const isNewResponse = surveyState.responseId === null;
+
         surveyState.updateUserId(userId);
 
         responseQueue.updateSurveyState(surveyState);
@@ -195,23 +197,25 @@ const renderWidget = async (
           hiddenFields,
         });
 
-        const responses = appConfig.get().personState.data.responses;
-        const newPersonState: TJsPersonState = {
-          ...appConfig.get().personState,
-          data: {
-            ...appConfig.get().personState.data,
-            responses: [...responses, surveyState.surveyId],
-          },
-        };
+        if (isNewResponse) {
+          const responses = appConfig.get().personState.data.responses;
+          const newPersonState: TJsPersonState = {
+            ...appConfig.get().personState,
+            data: {
+              ...appConfig.get().personState.data,
+              responses: [...responses, surveyState.surveyId],
+            },
+          };
 
-        const filteredSurveys = filterSurveys(appConfig.get().environmentState, newPersonState);
+          const filteredSurveys = filterSurveys(appConfig.get().environmentState, newPersonState);
 
-        appConfig.update({
-          ...appConfig.get(),
-          environmentState: appConfig.get().environmentState,
-          personState: newPersonState,
-          filteredSurveys,
-        });
+          appConfig.update({
+            ...appConfig.get(),
+            environmentState: appConfig.get().environmentState,
+            personState: newPersonState,
+            filteredSurveys,
+          });
+        }
       },
       onClose: closeSurvey,
       onFileUpload: async (file: TJsFileUploadParams["file"], params: TUploadFileConfig) => {
