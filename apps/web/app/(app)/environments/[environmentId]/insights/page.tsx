@@ -1,11 +1,10 @@
-import { DocumentSearch } from "@/app/(app)/environments/[environmentId]/documents/components/DocumentSearch";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { getInsights } from "@formbricks/ee/ai-analysis/lib/insight/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
+import { Card } from "@formbricks/ui/Card";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
@@ -22,7 +21,7 @@ interface SurveyTemplateProps {
   };
 }
 
-const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
+const Page = async ({ params }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -34,10 +33,14 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     throw new Error("User not found");
   }
 
+  const insights = await getInsights(params.environmentId);
+
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Documents" />
-      <DocumentSearch environmentId={params.environmentId} />
+      <PageHeader pageTitle="Insights" />
+      {insights.map((insight) => (
+        <Card key={insight.id} label={insight.title} description={insight.description} />
+      ))}
     </PageContentWrapper>
   );
 };

@@ -1,15 +1,52 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { cache } from "@formbricks/lib/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TInsight, TInsightCreateInput, ZInsightCreateInput } from "@formbricks/types/insights";
 import { insightCache } from "./cache";
 
-export type TPrismaInsight = Omit<TInsight, "vector"> & {
-  vector: string;
-};
+const INSIGHTS_PER_PAGE = 10;
+
+export const getInsights = reactCache(
+  (environmentId: string, limit?: number, offset?: number): Promise<TInsight[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+
+        limit = limit ?? INSIGHTS_PER_PAGE;
+        try {
+          const insights = await prisma.insight.findMany({
+            where: {
+              environmentId,
+            },
+            orderBy: [
+              {
+                createdAt: "desc",
+              },
+            ],
+            take: limit ? limit : undefined,
+            skip: offset ? offset : undefined,
+          });
+
+          return insights;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getInsights-${environmentId}-${limit}-${offset}`],
+      {
+        tags: [insightCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
 
 export const createInsight = async (insightGroupInput: TInsightCreateInput): Promise<TInsight> => {
   validateInputs([insightGroupInput, ZInsightCreateInput]);
@@ -59,7 +96,7 @@ export const findNearestInsights = async (
   const vectorString = `[${vector.join(",")}]`;
 
   // Execute raw SQL query to find nearest neighbors and exclude the vector column
-  const prismaInsights: TPrismaInsight[] = await prisma.$queryRaw`
+  const insights: TInsight[] = await prisma.$queryRaw`
     SELECT
       id,
       created_at AS "createdAt",
@@ -67,26 +104,13 @@ export const findNearestInsights = async (
       title,
       description,
       category,
-      "environmentId",
-      vector::text
+      "environmentId"
     FROM "Insight" d
     WHERE d."environmentId" = ${environmentId}
       AND d."vector" <=> ${vectorString}::vector(512) <= ${threshold}
     ORDER BY d."vector" <=> ${vectorString}::vector(512)
     LIMIT ${limit};
   `;
-
-  const insights = prismaInsights.map((prismaDocumentGroup) => {
-    // Convert the string representation of the vector back to an array of numbers
-    const vector = prismaDocumentGroup.vector
-      .slice(1, -1) // Remove the surrounding square brackets
-      .split(",") // Split the string into an array of strings
-      .map(Number); // Convert each string to a number
-    return {
-      ...prismaDocumentGroup,
-      vector,
-    };
-  });
 
   return insights;
 };

@@ -12,7 +12,6 @@ export const ZInsight = z.object({
   environmentId: ZId,
   title: z.string(),
   description: z.string(),
-  vector: z.array(z.number()).length(512),
   category: ZInsightCategory,
 });
 

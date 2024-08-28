@@ -1,12 +1,8 @@
 "use server";
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
-import { generateText } from "ai";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
-import { clusterDocuments } from "@formbricks/ee/ai-analysis/lib/document/kmeans";
-import { getQuestionResponseReferenceId } from "@formbricks/ee/ai-analysis/lib/document/utils";
-import { llmModel } from "@formbricks/ee/ai/lib/utils";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/email";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -143,43 +139,4 @@ export const getEmailHtmlAction = authenticatedActionClient
     });
 
     return await getEmailTemplateHtml(parsedInput.surveyId);
-  });
-
-const ZGetOpenTextSummaryAction = z.object({
-  surveyId: ZId,
-  questionId: ZId,
-});
-
-export const getOpenTextSummaryAction = authenticatedActionClient
-  .schema(ZGetOpenTextSummaryAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "read"],
-    });
-
-    const survey = await getSurvey(parsedInput.surveyId);
-
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-    }
-
-    const documents = []; // TODO
-
-    const topics = await clusterDocuments(documents, 3);
-
-    const question = survey.questions.find((q) => q.id === parsedInput.questionId);
-    const prompt = `You are an AI research assistant and answer the question: "${question?.headline.default}". Please in markdown provide a short summary sentence and provide 3 bullet points for insights you got from these samples including the number of responses for this topic:\n${topics.map((t) => t.centralDocument.text).join("\n")}`;
-
-    try {
-      const { text } = await generateText({
-        model: llmModel,
-        prompt,
-      });
-      return text;
-    } catch (error) {
-      console.error(error);
-      throw new Error("Failed to generate summary");
-    }
   });
