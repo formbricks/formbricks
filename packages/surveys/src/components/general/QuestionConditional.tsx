@@ -12,6 +12,7 @@ import { NPSQuestion } from "@/components/questions/NPSQuestion";
 import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -22,7 +23,7 @@ interface QuestionConditionalProps {
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   languageCode: string;

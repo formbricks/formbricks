@@ -1,5 +1,6 @@
 import { TAttributes } from "@formbricks/types/attributes";
 import type { TJSAppConfig, TJsAppConfigInput } from "@formbricks/types/js";
+import { APP_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -15,7 +16,7 @@ import { Logger } from "../../shared/logger";
 import { getIsDebug } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
-import { AppConfig, IN_APP_LOCAL_STORAGE_KEY } from "./config";
+import { AppConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
 import { sync } from "./sync";
@@ -109,7 +110,8 @@ export const initialize = async (
       configInput.apiHost,
       configInput.environmentId,
       configInput.userId,
-      configInput.attributes
+      configInput.attributes,
+      appConfig
     );
     if (res.ok !== true) {
       return err(res.error);
@@ -130,11 +132,15 @@ export const initialize = async (
       logger.debug("Configuration expired.");
 
       try {
-        await sync({
-          apiHost: configInput.apiHost,
-          environmentId: configInput.environmentId,
-          userId: configInput.userId,
-        });
+        await sync(
+          {
+            apiHost: configInput.apiHost,
+            environmentId: configInput.environmentId,
+            userId: configInput.userId,
+          },
+          undefined,
+          appConfig
+        );
       } catch (e) {
         putFormbricksInErrorState();
       }
@@ -150,11 +156,15 @@ export const initialize = async (
     logger.debug("Syncing.");
 
     try {
-      await sync({
-        apiHost: configInput.apiHost,
-        environmentId: configInput.environmentId,
-        userId: configInput.userId,
-      });
+      await sync(
+        {
+          apiHost: configInput.apiHost,
+          environmentId: configInput.environmentId,
+          userId: configInput.userId,
+        },
+        undefined,
+        appConfig
+      );
     } catch (e) {
       handleErrorOnFirstInit();
     }
@@ -201,7 +211,7 @@ const handleErrorOnFirstInit = () => {
     expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   };
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(IN_APP_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() => localStorage.setItem(APP_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
   throw new Error("Could not initialize formbricks");
 };
 

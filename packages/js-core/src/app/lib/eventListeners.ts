@@ -8,12 +8,14 @@ import {
   removePageUrlEventListeners,
   removeScrollDepthListener,
 } from "../lib/noCodeActions";
+import { AppConfig } from "./config";
 import { addExpiryCheckListener, removeExpiryCheckListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
+const appConfig = AppConfig.getInstance();
 
 export const addEventListeners = (): void => {
-  addExpiryCheckListener();
+  addExpiryCheckListener(appConfig);
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();

@@ -306,11 +306,13 @@ export const Survey = ({
               key="end"
               headline={replaceRecallInfo(
                 getLocalizedValue(survey.failureCard.headline, selectedLanguage),
-                responseData
+                responseData,
+                survey.variables
               )}
               subheader={replaceRecallInfo(
                 getLocalizedValue(survey.failureCard.subheader, selectedLanguage),
-                responseData
+                responseData,
+                survey.variables
               )}
               isResponseSendingFinished={isResponseSendingFinished}
               buttonLabel={getLocalizedValue(survey.failureCard.buttonLabel, selectedLanguage)}

@@ -107,6 +107,7 @@ export const isS3Configured = () => {
 
 // Colors for Survey Bg
 export const SURVEY_BG_COLORS = [
+  "#FFFFFF",
   "#FFF2D8",
   "#EAD7BB",
   "#BCA37F",
