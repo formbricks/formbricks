@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { createDocument } from "@formbricks/ee/ai-analysis/lib/document/service";
+import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { CRON_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -163,26 +164,31 @@ export const POST = async (request: Request) => {
 
     // generate embeddings for all open text question responses for enterprise and scale plans
     const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
-    if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD && IS_AI_ENABLED) {
-      const organization = await getOrganizationByEnvironmentId(environmentId);
-      if (!organization) {
-        throw new Error("Organization not found");
-      }
-      if (organization.billing.plan === "enterprise" || organization.billing.plan === "scale") {
-        for (const question of survey.questions) {
-          if (question.type === "openText") {
-            const isQuestionAnswered = response.data[question.id] !== undefined;
-            console.log("isQuestionAnswered", isQuestionAnswered);
-            if (!isQuestionAnswered) {
-              continue;
+    if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD) {
+      const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+      const isAiEnabled = isEnterpriseEdition && IS_AI_ENABLED;
+      if (hasSurveyOpenTextQuestions && isAiEnabled) {
+        const organization = await getOrganizationByEnvironmentId(environmentId);
+        if (!organization) {
+          throw new Error("Organization not found");
+        }
+        if (organization.billing.plan === "enterprise" || organization.billing.plan === "scale") {
+          for (const question of survey.questions) {
+            if (question.type === "openText") {
+              const isQuestionAnswered = response.data[question.id] !== undefined;
+              console.log("isQuestionAnswered", isQuestionAnswered);
+              if (!isQuestionAnswered) {
+                continue;
+              }
+              const text = `**${question.headline.default}**\n${response.data[question.id]}`;
+              console.log("creating embedding for question response", question.id);
+              await createDocument({
+                environmentId,
+                responseId: response.id,
+                questionId: question.id,
+                text,
+              });
             }
-            const text = `${question.headline.default} Answer: ${response.data[question.id]}`;
-            console.log("creating embedding for question response", question.id);
-            await createDocument(environmentId, {
-              responseId: response.id,
-              questionId: question.id,
-              text,
-            });
           }
         }
       }

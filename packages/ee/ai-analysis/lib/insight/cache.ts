@@ -5,7 +5,7 @@ interface RevalidateProps {
   environmentId?: string;
 }
 
-export const documentGroupCache = {
+export const insightCache = {
   tag: {
     byId(id: string) {
       return `documentGroups-${id}`;

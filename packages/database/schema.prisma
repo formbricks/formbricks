@@ -416,7 +416,8 @@ model Environment {
   tags                  Tag[]
   segments              Segment[]
   integration           Integration[]
-  documentGroups        DocumentGroup[]
+  documents             Document[]
+  insights              Insight[]
 
   @@index([productId])
 }
@@ -662,28 +663,54 @@ model SurveyLanguage {
   @@index([languageId])
 }
 
-model DocumentGroup {
+enum InsightCategory {
+  enhancementRequest
+  complaint
+  praise
+}
+
+model Insight {
   id            String                      @id @default(cuid())
   createdAt     DateTime                    @default(now()) @map(name: "created_at")
   updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
   environmentId String
   environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  text          String
+  category      InsightCategory
+  title         String
+  description   String
   vector        Unsupported("vector(512)")?
-  documents     Document[]
+  documents     DocumentInsight[]
+}
+
+model DocumentInsight {
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  insightId  String
+  insight    Insight  @relation(fields: [insightId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, insightId])
+  @@index([insightId])
+}
+
+enum Sentiment {
+  positive
+  negative
+  neutral
 }
 
 model Document {
-  id              String                      @id @default(cuid())
-  createdAt       DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt       DateTime                    @updatedAt @map(name: "updated_at")
-  documentGroupId String?
-  documentGroup   DocumentGroup?              @relation(fields: [documentGroupId], references: [id], onDelete: Cascade)
-  responseId      String?
-  response        Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  questionId      String?
-  text            String
-  vector          Unsupported("vector(512)")?
+  id            String                      @id @default(cuid())
+  createdAt     DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
+  environmentId String
+  environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  responseId    String?
+  response      Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId    String?
+  sentiment     Sentiment
+  text          String
+  vector        Unsupported("vector(512)")?
+  insights      DocumentInsight[]
 
   @@unique([responseId, questionId])
 }

@@ -1,25 +1,30 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { embed, generateText } from "ai";
+import { embed, generateObject } from "ai";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { TDocument, TDocumentCreateInput, ZDocumentCreateInput } from "@formbricks/types/documents";
+import {
+  TDocument,
+  TDocumentCreateInput,
+  ZDocumentCreateInput,
+  ZDocumentSentiment,
+} from "@formbricks/types/documents";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
+import { ZInsightCategory } from "@formbricks/types/insights";
 import { embeddingsModel, llmModel } from "../../../ai/lib/utils";
-import { createDocumentGroup, findNearestDocumentGroups } from "../document-group/service";
+import { createInsight, findNearestInsights } from "../insight/service";
+import { getInsightVectorText } from "../insight/utils";
 import { documentCache } from "./cache";
 
 export type TPrismaDocument = Omit<TDocument, "vector"> & {
   vector: string;
 };
 
-export const createDocument = async (
-  environmentId: string,
-  documentInput: TDocumentCreateInput
-): Promise<TDocument> => {
+export const createDocument = async (documentInput: TDocumentCreateInput): Promise<TDocument> => {
   validateInputs([documentInput, ZDocumentCreateInput]);
 
   try {
@@ -29,32 +34,33 @@ export const createDocument = async (
       value: documentInput.text,
     });
 
-    // find fitting documentGroup
-    let documentGroupId;
-    const nearestDocumentGroups = await findNearestDocumentGroups(environmentId, embedding, 1, 0.2);
-    if (nearestDocumentGroups.length > 0) {
-      documentGroupId = nearestDocumentGroups[0].id;
-    } else {
-      // create documentGroup
-      // generate name for documentGroup
-      const { text } = await generateText({
-        model: llmModel,
-        system: `You are a Customer Experience Management platform. You are asked to transform a user feedback into a well defined and consice insight (feature request, complaint, loved feature or bug) like "The dashboard is slow" or "The ability to export data from the app"`,
-        prompt: `The user feedback: "${documentInput.text}"`,
-      });
+    // generate sentiment and insights
+    const { object } = await generateObject({
+      model: llmModel,
+      schema: z.object({
+        sentiment: ZDocumentSentiment,
+        insights: z.array(
+          z.object({
+            title: z.string(),
+            description: z.string(),
+            category: ZInsightCategory,
+          })
+        ),
+      }),
+      system: `You are an XM researcher. You analyse user feedback and extract insights and the sentiment from it. You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. An insight consist of a title and description (e.g. title: "Interactive charts and graphics", description: "Users would love to see a visualization of the analytics data") as well as tag it with the right category`,
+      prompt: `Analyze this feedback: "${documentInput.text}"`,
+    });
 
-      const documentGroup = await createDocumentGroup({
-        environmentId,
-        text,
-      });
-      documentGroupId = documentGroup.id;
-    }
+    console.log(JSON.stringify(object, null, 2));
+
+    const sentiment = object.sentiment;
+    const insights = object.insights;
 
     // create document
     const prismaDocument = await prisma.document.create({
       data: {
         ...documentInput,
-        documentGroupId,
+        sentiment,
       },
     });
 
@@ -66,19 +72,54 @@ export const createDocument = async (
     // update document vector with the embedding
     const vectorString = `[${embedding.join(",")}]`;
     await prisma.$executeRaw`
-      UPDATE "Document"
-      SET "vector" = ${vectorString}::vector(512)
-      WHERE "id" = ${document.id};
-    `;
+        UPDATE "Document"
+        SET "vector" = ${vectorString}::vector(512)
+        WHERE "id" = ${document.id};
+      `;
+
+    // connect or create the insights
+    for (const insight of insights) {
+      if (typeof insight.title !== "string" || typeof insight.description !== "string") {
+        throw new Error("Insight title and description must be a string");
+      }
+      // create embedding for insight
+      const { embedding } = await embed({
+        model: embeddingsModel,
+        value: getInsightVectorText(insight.title, insight.description),
+      });
+      // find close insight to merge it with
+      const nearestInsights = await findNearestInsights(documentInput.environmentId, embedding, 1, 0.2);
+      if (nearestInsights.length > 0) {
+        // create a documentInsight with this insight
+        console.log(`Merging ${insight.title} with existing insight: ${nearestInsights[0].id}`);
+        await prisma.documentInsight.create({
+          data: {
+            documentId: document.id,
+            insightId: nearestInsights[0].id,
+          },
+        });
+      } else {
+        console.log(`Creating new insight for ${insight.title}`);
+        // create new insight and documentInsight
+        const newInsight = await createInsight({
+          environmentId: documentInput.environmentId,
+          title: insight.title,
+          description: insight.description,
+          category: insight.category,
+          vector: embedding,
+        });
+        // create a documentInsight with this insight
+        await prisma.documentInsight.create({
+          data: {
+            documentId: document.id,
+            insightId: newInsight.id,
+          },
+        });
+      }
+    }
 
     documentCache.revalidate({
       id: document.id,
-    });
-
-    // search for nearest documentGroup
-    await createDocumentGroup({
-      environmentId,
-      text: document.text,
     });
 
     return document;
@@ -142,10 +183,10 @@ export const getDocumentsByResponseIdQuestionId = reactCache(
 export const findNearestDocuments = async (
   environmentId: string,
   vector: number[],
-  limit: number = 5
+  limit: number = 5,
+  threshold: number = 0.5
 ): Promise<TDocument[]> => {
   validateInputs([environmentId, ZId]);
-  const threshold = 0.8; //0.2;
   // Convert the embedding array to a JSON-like string representation
   const vectorString = `[${vector.join(",")}]`;
 
@@ -155,9 +196,11 @@ export const findNearestDocuments = async (
       id,
       created_at AS "createdAt",
       updated_at AS "updatedAt",
+      "environmentId",
       text,
       "responseId",
       "questionId",
+      "documentGroupId",
       vector::text
     FROM "Document" d
     WHERE d."environmentId" = ${environmentId}

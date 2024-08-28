@@ -1,57 +1,40 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { embed } from "ai";
 import { prisma } from "@formbricks/database";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import {
-  TDocumentGroup,
-  TDocumentGroupCreateInput,
-  ZDocumentGroupCreateInput,
-} from "@formbricks/types/document-groups";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import { embeddingsModel } from "../../../ai/lib/utils";
-import { documentGroupCache } from "./cache";
+import { TInsight, TInsightCreateInput, ZInsightCreateInput } from "@formbricks/types/insights";
+import { insightCache } from "./cache";
 
-export type TPrismaDocumentGroup = Omit<TDocumentGroup, "vector"> & {
+export type TPrismaInsight = Omit<TInsight, "vector"> & {
   vector: string;
 };
 
-export const createDocumentGroup = async (
-  documentGroupInput: TDocumentGroupCreateInput
-): Promise<TDocumentGroup> => {
-  validateInputs([documentGroupInput, ZDocumentGroupCreateInput]);
+export const createInsight = async (insightGroupInput: TInsightCreateInput): Promise<TInsight> => {
+  validateInputs([insightGroupInput, ZInsightCreateInput]);
 
   try {
-    // Generate text embedding
-    const embeddingPromise = embed({
-      model: embeddingsModel,
-      value: documentGroupInput.text,
-    });
-
     // create document
-    const prismaDocumentGroupPromise = prisma.documentGroup.create({
-      data: documentGroupInput,
+    const { vector, ...data } = insightGroupInput;
+    const prismaInsight = await prisma.insight.create({
+      data,
     });
-
-    const [embeddingRes, prismaDocument] = await Promise.all([embeddingPromise, prismaDocumentGroupPromise]);
-
-    const { embedding } = embeddingRes;
 
     const documentGroup = {
-      ...prismaDocument,
-      vector: embedding,
+      ...prismaInsight,
+      vector: insightGroupInput.vector,
     };
 
     // update document vector with the embedding
-    const vectorString = `[${embedding.join(",")}]`;
+    const vectorString = `[${insightGroupInput.vector.join(",")}]`;
     await prisma.$executeRaw`
-      UPDATE "DocumentGroup"
+      UPDATE "Insight"
       SET "vector" = ${vectorString}::vector(512)
       WHERE "id" = ${documentGroup.id};
     `;
 
-    documentGroupCache.revalidate({
+    insightCache.revalidate({
       id: documentGroup.id,
       environmentId: documentGroup.environmentId,
     });
@@ -65,33 +48,35 @@ export const createDocumentGroup = async (
   }
 };
 
-export const findNearestDocumentGroups = async (
+export const findNearestInsights = async (
   environmentId: string,
   vector: number[],
   limit: number = 5,
   threshold: number = 0.5
-): Promise<TDocumentGroup[]> => {
+): Promise<TInsight[]> => {
   validateInputs([environmentId, ZId]);
   // Convert the embedding array to a JSON-like string representation
   const vectorString = `[${vector.join(",")}]`;
 
   // Execute raw SQL query to find nearest neighbors and exclude the vector column
-  const prismaDocumentGroups: TPrismaDocumentGroup[] = await prisma.$queryRaw`
+  const prismaInsights: TPrismaInsight[] = await prisma.$queryRaw`
     SELECT
       id,
       created_at AS "createdAt",
       updated_at AS "updatedAt",
-      text,
+      title,
+      description,
+      category,
       "environmentId",
       vector::text
-    FROM "DocumentGroup" d
+    FROM "Insight" d
     WHERE d."environmentId" = ${environmentId}
       AND d."vector" <=> ${vectorString}::vector(512) <= ${threshold}
     ORDER BY d."vector" <=> ${vectorString}::vector(512)
     LIMIT ${limit};
   `;
 
-  const documentGroups = prismaDocumentGroups.map((prismaDocumentGroup) => {
+  const insights = prismaInsights.map((prismaDocumentGroup) => {
     // Convert the string representation of the vector back to an array of numbers
     const vector = prismaDocumentGroup.vector
       .slice(1, -1) // Remove the surrounding square brackets
@@ -103,5 +88,5 @@ export const findNearestDocumentGroups = async (
     };
   });
 
-  return documentGroups;
+  return insights;
 };

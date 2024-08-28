@@ -1,13 +1,18 @@
 import { z } from "zod";
 import { ZId } from "./environment";
 
+export const ZDocumentSentiment = z.enum(["positive", "negative", "neutral"]);
+
+export type TDocumentSentiment = z.infer<typeof ZDocumentSentiment>;
+
 export const ZDocument = z.object({
   id: ZId,
   createdAt: z.date(),
   updatedAt: z.date(),
-  documentGroupId: ZId.nullable(),
+  environmentId: ZId,
   responseId: ZId.nullable(),
   questionId: ZId.nullable(),
+  sentiment: ZDocumentSentiment,
   text: z.string(),
   vector: z.array(z.number()).length(512),
 });
@@ -15,6 +20,7 @@ export const ZDocument = z.object({
 export type TDocument = z.infer<typeof ZDocument>;
 
 export const ZDocumentCreateInput = z.object({
+  environmentId: ZId,
   responseId: ZId.optional(),
   questionId: ZId.optional(),
   text: z.string(),
