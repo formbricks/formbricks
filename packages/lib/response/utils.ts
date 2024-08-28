@@ -671,7 +671,7 @@ const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: strin
 const checkForI18n = (response: TResponse, id: string, survey: TSurvey, languageCode: string) => {
   const question = survey.questions.find((question) => question.id === id);
 
-  if (question?.type === "multipleChoiceMulti") {
+  if (question?.type === "multipleChoiceMulti" || question?.type === "ranking") {
     // Initialize an array to hold the choice values
     let choiceValues = [] as string[];
 
@@ -1195,9 +1195,7 @@ export const getQuestionWiseSummary = (
       }
       case TSurveyQuestionTypeEnum.Ranking: {
         let values: TSurveyQuestionSummaryRanking["choices"] = [];
-        const questionChoices = question.choices
-          .filter((choice) => choice.label.default !== "Other")
-          .map((choice) => getLocalizedValue(choice.label, "default"));
+        const questionChoices = question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
         let totalResponseCount = 0;
         const choiceRankSums: Record<string, number> = {};
         const choiceCountMap: Record<string, number> = {};
@@ -1205,8 +1203,6 @@ export const getQuestionWiseSummary = (
           choiceRankSums[choice] = 0;
           choiceCountMap[choice] = 0;
         });
-        choiceRankSums["Other"] = 0;
-        const otherValues: TSurveyQuestionSummaryRanking["choices"][number]["others"] = [];
 
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
@@ -1223,13 +1219,6 @@ export const getQuestionWiseSummary = (
               if (questionChoices.includes(value)) {
                 choiceRankSums[value] += ranking;
                 choiceCountMap[value]++;
-              } else {
-                choiceRankSums["Other"] += ranking;
-                otherValues.push({
-                  value,
-                  person: response.person,
-                  personAttributes: response.personAttributes,
-                });
               }
             });
           }
@@ -1244,15 +1233,6 @@ export const getQuestionWiseSummary = (
             avgRanking: convertFloatTo2Decimal(avgRanking),
           });
         });
-
-        if (otherValues.length > 0) {
-          values.push({
-            value: "Other",
-            count: otherValues.length,
-            avgRanking: choiceRankSums["Other"] / otherValues.length,
-            others: otherValues.slice(0, VALUES_LIMIT),
-          });
-        }
 
         summary.push({
           type: question.type,

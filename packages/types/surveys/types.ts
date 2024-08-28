@@ -803,7 +803,8 @@ export const ZSurvey = z
 
       if (
         question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        question.type === TSurveyQuestionTypeEnum.Ranking
       ) {
         question.choices.forEach((choice, choiceIndex) => {
           multiLangIssue = validateQuestionLabels(
