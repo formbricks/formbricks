@@ -1,4 +1,4 @@
-import Logo from "@/images/powered-by-formbricks.svg";
+import OpinodoLogo from "@/images/opinodo-logo.png";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -108,7 +108,7 @@ export const SurveyLoadingAnimation = ({
           "flex flex-col items-center space-y-4",
           isReadyToTransition ? "animate-surveyExit" : "animate-surveyLoading"
         )}>
-        <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
+        <Image src={OpinodoLogo} alt="Brand logo" className="mx-auto w-40" />
         <LoadingSpinner />
       </div>
     </div>
