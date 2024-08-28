@@ -240,7 +240,7 @@ export const getMatchValueProps = (
     hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.id);
   }
 
-  let questionOptions = questions.map((question) => {
+  const questionOptions = questions.map((question) => {
     return {
       icon: questionIconMapping[question.type],
       label: getLocalizedValue(question.headline, "default"),
@@ -251,7 +251,7 @@ export const getMatchValueProps = (
     };
   });
 
-  let variableOptions = variables.map((variable) => {
+  const variableOptions = variables.map((variable) => {
     return {
       icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
       label: variable.name,
@@ -262,7 +262,7 @@ export const getMatchValueProps = (
     };
   });
 
-  let hiddenFieldsOptions = hiddenFields.map((field) => {
+  const hiddenFieldsOptions = hiddenFields.map((field) => {
     return {
       icon: EyeOffIcon,
       label: field,
@@ -274,42 +274,6 @@ export const getMatchValueProps = (
   });
 
   const groupedOptions: ComboboxGroupedOption[] = [];
-
-  if (condition.leftOperand.type === "hiddenField") {
-    hiddenFieldsOptions = hiddenFieldsOptions?.filter((field) => field.value !== condition.leftOperand.id);
-  } else if (condition.leftOperand.type === "variable") {
-    variableOptions = variableOptions?.filter((variable) => variable.value !== condition.leftOperand.id);
-  } else if (condition.leftOperand.type === "question") {
-    questionOptions = questionOptions?.filter((question) => question.value !== condition.leftOperand.id);
-
-    const question = localSurvey.questions.find((question) => question.id === condition.leftOperand.id);
-
-    let choices: ComboboxOption[] = [];
-    if (
-      question &&
-      (question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti)
-    ) {
-      choices = question.choices.map((choice) => ({
-        label: getLocalizedValue(choice.label, "default"),
-        value: choice.id,
-      }));
-    }
-    if (question && question.type === TSurveyQuestionTypeEnum.PictureSelection) {
-      choices = question.choices.map((choice, idx) => ({
-        label: choice.imageUrl.split("/").pop() || `Image ${idx + 1}`,
-        value: choice.id,
-      }));
-    }
-
-    if (choices.length > 0) {
-      groupedOptions.push({
-        label: "Choices",
-        value: "choices",
-        options: choices,
-      });
-    }
-  }
 
   if (questionOptions.length > 0) {
     groupedOptions.push({
@@ -336,10 +300,6 @@ export const getMatchValueProps = (
   }
 
   return { show: true, options: groupedOptions };
-
-  // const question = localSurvey.questions[questionIdx];
-
-  return { show: true, options: [] };
 };
 
 export const getActionTargetOptions = (
