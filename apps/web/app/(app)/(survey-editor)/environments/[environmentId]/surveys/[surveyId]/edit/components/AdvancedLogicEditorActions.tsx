@@ -107,7 +107,7 @@ export function AdvancedLogicEditorActions({
                   options={
                     action.objective === "calculate"
                       ? getActionVariableOptions(localSurvey)
-                      : getActionTargetOptions(localSurvey, questionIdx)
+                      : getActionTargetOptions(action, localSurvey, questionIdx)
                   }
                   selected={action.objective === "calculate" ? action.variableId : action.target}
                   onChangeValue={(val: string) => {

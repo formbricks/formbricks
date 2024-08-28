@@ -1,5 +1,6 @@
 "use client";
 
+import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -64,6 +65,25 @@ export const HiddenFieldsCard = ({
     });
   };
 
+  const handleDeleteHiddenField = (fieldId: string) => {
+    const quesIdx = findHiddenFieldUsedInLogic(localSurvey, fieldId);
+
+    if (quesIdx !== -1) {
+      toast.error(
+        `${fieldId} is used in logic of question ${quesIdx + 1}. Please remove it from logic first.`
+      );
+      return;
+    }
+
+    updateSurvey(
+      {
+        enabled: true,
+        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
+      },
+      fieldId
+    );
+  };
+
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
       <div
@@ -110,15 +130,7 @@ export const HiddenFieldsCard = ({
                 return (
                   <Tag
                     key={fieldId}
-                    onDelete={() => {
-                      updateSurvey(
-                        {
-                          enabled: true,
-                          fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
-                        },
-                        fieldId
-                      );
-                    }}
+                    onDelete={(fieldId) => handleDeleteHiddenField(fieldId)}
                     tagId={fieldId}
                     tagName={fieldId}
                   />

@@ -1,9 +1,11 @@
 "use client";
 
+import { findVariableUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { createId } from "@paralleldrive/cuid2";
 import { TrashIcon } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
@@ -75,8 +77,16 @@ export const SurveyVariablesCardItem = ({
   const onVaribleDelete = (variable: TSurveyVariable) => {
     const questions = [...localSurvey.questions];
 
-    // find if this variable is used in any question's recall and remove it for every language
+    const quesIdx = findVariableUsedInLogic(localSurvey, variable.id);
 
+    if (quesIdx !== -1) {
+      toast.error(
+        `${variable.name} is used in logic of question ${quesIdx + 1}. Please remove it from logic first.`
+      );
+      return;
+    }
+
+    // find if this variable is used in any question's recall and remove it for every language
     questions.forEach((question) => {
       for (const [languageCode, headline] of Object.entries(question.headline)) {
         if (headline.includes(`recall:${variable.id}`)) {

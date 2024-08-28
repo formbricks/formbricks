@@ -18,10 +18,16 @@ import {
   StarIcon,
 } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
 import {
+  TAction,
   TActionObjective,
   TActionVariableCalculateOperator,
+  TConditionGroup,
+  TLeftOperand,
+  TRightOperand,
   TSingleCondition,
+  TSurveyAdvancedLogic,
 } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { ComboboxGroupedOption, ComboboxOption } from "@formbricks/ui/InputCombobox";
@@ -336,7 +342,11 @@ export const getMatchValueProps = (
   return { show: true, options: [] };
 };
 
-export const getActionTargetOptions = (localSurvey: TSurvey, currQuestionIdx: number): ComboboxOption[] => {
+export const getActionTargetOptions = (
+  action: TAction,
+  localSurvey: TSurvey,
+  currQuestionIdx: number
+): ComboboxOption[] => {
   const questionOptions = localSurvey.questions
     .filter((_, idx) => idx !== currQuestionIdx)
     .map((question) => {
@@ -347,11 +357,13 @@ export const getActionTargetOptions = (localSurvey: TSurvey, currQuestionIdx: nu
       };
     });
 
+  if (action.objective === "requireAnswer") return questionOptions;
+
   const endingCardOptions = localSurvey.endings.map((ending) => {
     return {
       label:
         ending.type === "endScreen"
-          ? `🙏${getLocalizedValue(ending.headline, "default")}`
+          ? `🙏 ${getLocalizedValue(ending.headline, "default")}`
           : `🙏 ${ending.label || "Redirect Thank you card"}`,
       value: ending.id,
     };
@@ -491,4 +503,135 @@ export const getActionValueOptions = (
   }
 
   return groupedOptions;
+};
+
+export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): number => {
+  const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
+    if (isConditionsGroup(condition)) {
+      // It's a TConditionGroup
+      return condition.conditions.some(isUsedInCondition);
+    } else {
+      // It's a TSingleCondition
+      return (
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, questionId)) ||
+        isUsedInLeftOperand(condition.leftOperand, questionId)
+      );
+    }
+  };
+
+  const isUsedInLeftOperand = (leftOperand: TLeftOperand, id: string): boolean => {
+    return leftOperand.type === "question" && leftOperand.id === id;
+  };
+
+  const isUsedInRightOperand = (rightOperand: TRightOperand, id: string): boolean => {
+    return rightOperand.type === "question" && rightOperand.value === id;
+  };
+
+  const isUsedInAction = (action: TAction): boolean => {
+    return (
+      (action.objective === "jumpToQuestion" && action.target === questionId) ||
+      (action.objective === "requireAnswer" && action.target === questionId)
+    );
+  };
+
+  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+    return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
+  };
+
+  return survey.questions
+    .filter((question) => question.id !== questionId)
+    .findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
+};
+
+export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optionId: string): number => {
+  const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
+    if (isConditionsGroup(condition)) {
+      // It's a TConditionGroup
+      return condition.conditions.some(isUsedInCondition);
+    } else {
+      // It's a TSingleCondition
+      return isUsedInOperand(condition);
+    }
+  };
+
+  const isUsedInOperand = (condition: TSingleCondition): boolean => {
+    if (condition.leftOperand.type === "question" && condition.leftOperand.id === questionId) {
+      if (condition.rightOperand && condition.rightOperand.type === "static") {
+        if (Array.isArray(condition.rightOperand.value)) {
+          return condition.rightOperand.value.includes(optionId);
+        } else {
+          return condition.rightOperand.value === optionId;
+        }
+      }
+    }
+    return false;
+  };
+
+  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+    return isUsedInCondition(logicRule.conditions);
+  };
+
+  return survey.questions.findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
+};
+
+export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number => {
+  const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
+    if (isConditionsGroup(condition)) {
+      // It's a TConditionGroup
+      return condition.conditions.some(isUsedInCondition);
+    } else {
+      // It's a TSingleCondition
+      return (
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand)) ||
+        isUsedInLeftOperand(condition.leftOperand)
+      );
+    }
+  };
+
+  const isUsedInLeftOperand = (leftOperand: TLeftOperand): boolean => {
+    return leftOperand.type === "variable" && leftOperand.id === variableId;
+  };
+
+  const isUsedInRightOperand = (rightOperand: TRightOperand): boolean => {
+    return rightOperand.type === "variable" && rightOperand.value === variableId;
+  };
+
+  const isUsedInAction = (action: TAction): boolean => {
+    return action.objective === "calculate" && action.variableId === variableId;
+  };
+
+  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+    return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
+  };
+
+  return survey.questions.findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
+};
+
+export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number => {
+  const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
+    if (isConditionsGroup(condition)) {
+      // It's a TConditionGroup
+      return condition.conditions.some(isUsedInCondition);
+    } else {
+      // It's a TSingleCondition
+      return (
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand)) ||
+        isUsedInLeftOperand(condition.leftOperand)
+      );
+    }
+  };
+
+  const isUsedInLeftOperand = (leftOperand: TLeftOperand): boolean => {
+    return leftOperand.type === "hiddenField" && leftOperand.id === hiddenFieldId;
+  };
+
+  const isUsedInRightOperand = (rightOperand: TRightOperand): boolean => {
+    return rightOperand.type === "hiddenField" && rightOperand.value === hiddenFieldId;
+  };
+
+  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+    return isUsedInCondition(logicRule.conditions);
+  };
+
+  return survey.questions.findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
 };

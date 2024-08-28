@@ -2,6 +2,7 @@
 
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
+import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import {
   DndContext,
   DragEndEvent,
@@ -17,11 +18,18 @@ import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
+import {
+  TAction,
+  TConditionGroup,
+  TSingleCondition,
+  TSurveyAdvancedLogic,
+} from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
 import {
@@ -76,22 +84,75 @@ export const QuestionsView = ({
 
   const surveyLanguages = localSurvey.languages;
   const [backButtonLabel, setbackButtonLabel] = useState(null);
+
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
-    survey.questions.forEach((question) => {
-      if (question.headline[selectedLanguageCode].includes(`recall:${compareId}`)) {
-        question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replaceAll(
-          `recall:${compareId}`,
-          `recall:${updatedId}`
-        );
+    const updateConditions = (conditions: TConditionGroup): TConditionGroup => {
+      return {
+        ...conditions,
+        conditions: conditions.conditions.map((condition) => {
+          if (isConditionsGroup(condition)) {
+            return updateConditions(condition);
+          } else {
+            return updateSingleCondition(condition);
+          }
+        }),
+      };
+    };
+
+    const updateSingleCondition = (condition: TSingleCondition): TSingleCondition => {
+      let updatedCondition = { ...condition };
+
+      if (condition.leftOperand.id === compareId) {
+        updatedCondition.leftOperand = { ...condition.leftOperand, id: updatedId };
       }
-      if (!question.logic) return;
-      question.logic.forEach((rule) => {
-        if (rule.destination === compareId) {
-          rule.destination = updatedId;
+
+      if (condition.rightOperand?.type === "question" && condition.rightOperand.value === compareId) {
+        updatedCondition.rightOperand = { ...condition.rightOperand, value: updatedId };
+      }
+
+      return updatedCondition;
+    };
+
+    const updateActions = (actions: TAction[]): TAction[] => {
+      return actions.map((action) => {
+        let updatedAction = { ...action };
+
+        if (updatedAction.objective === "jumpToQuestion" && updatedAction.target === compareId) {
+          updatedAction.target = updatedId;
         }
+
+        if (updatedAction.objective === "requireAnswer" && updatedAction.target === compareId) {
+          updatedAction.target = updatedId;
+        }
+
+        return updatedAction;
       });
-    });
-    return survey;
+    };
+
+    return {
+      ...survey,
+      questions: survey.questions.map((question) => {
+        let updatedQuestion = { ...question };
+
+        if (question.headline[selectedLanguageCode].includes(`recall:${compareId}`)) {
+          question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replaceAll(
+            `recall:${compareId}`,
+            `recall:${updatedId}`
+          );
+        }
+
+        // Update advanced logic
+        if (question.logic) {
+          updatedQuestion.logic = question.logic.map((logicRule: TSurveyAdvancedLogic) => ({
+            ...logicRule,
+            conditions: updateConditions(logicRule.conditions),
+            actions: updateActions(logicRule.actions),
+          }));
+        }
+
+        return updatedQuestion;
+      }),
+    };
   };
 
   useEffect(() => {
@@ -210,6 +271,16 @@ export const QuestionsView = ({
     const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
     let updatedSurvey: TSurvey = { ...localSurvey };
 
+    // checking if this question is used in logic of any other question
+    const quesIdx = findQuestionUsedInLogic(localSurvey, questionId);
+
+    if (quesIdx !== -1) {
+      toast.error(
+        `This question is used in logic of question ${quesIdx + 1}. ${localSurvey.questions[quesIdx].headline["default"]}`
+      );
+      return;
+    }
+
     // check if we are recalling from this question for every language
     updatedSurvey.questions.forEach((question) => {
       for (const [languageCode, headline] of Object.entries(question.headline)) {
@@ -222,7 +293,7 @@ export const QuestionsView = ({
       }
     });
     updatedSurvey.questions.splice(questionIdx, 1);
-    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "");
+
     const firstEndingCard = localSurvey.endings[0];
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];

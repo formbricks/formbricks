@@ -19,7 +19,12 @@ import type {
   TResponseTtc,
   TResponseVariables,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
+
+interface VariableStackEntry {
+  questionId: string;
+  variables: TResponseVariables;
+}
 
 export const Survey = ({
   survey,
@@ -68,7 +73,13 @@ export const Survey = ({
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
-  const [responseVariables, setResponseVariables] = useState<TResponseVariables>({});
+  const [variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>(() => {
+    return localSurvey.variables.reduce((acc, variable) => {
+      acc[variable.id] = variable.value;
+      return acc;
+    }, {} as TResponseVariables);
+  });
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const questionIds = useMemo(
@@ -154,8 +165,8 @@ export const Survey = ({
   };
 
   const onChangeVariables = (variables: TResponseVariables) => {
-    const updatedVariables = { ...responseVariables, ...variables };
-    setResponseVariables(updatedVariables);
+    const updatedVariables = { ...currentVariables, ...variables };
+    setCurrentVariables(updatedVariables);
   };
 
   const makeQuestionsRequired = (questionIds: string[]): void => {
@@ -169,30 +180,45 @@ export const Survey = ({
     setlocalSurvey(localSurveyClone);
   };
 
-  const getNextQuestionId = (
-    survey: { questions: TSurveyQuestion[]; endings: { id: string }[] },
-    questionId: string,
-    data: TResponseData,
-    selectedLanguage: string
-  ): string | undefined => {
+  const pushVariableState = (questionId: string) => {
+    setVariableStack((prevStack) => [...prevStack, { questionId, variables: { ...currentVariables } }]);
+  };
+
+  const popVariableState = () => {
+    setVariableStack(() => {
+      const newStack = [...variableStack];
+      const poppedState = newStack.pop();
+      if (poppedState) {
+        setCurrentVariables(poppedState.variables);
+      }
+      return newStack;
+    });
+  };
+
+  const evaluateLogicAndGetNextQuestionId = (
+    data: TResponseData
+  ): { nextQuestionId: string | undefined; calculatedVariables: TResponseVariables } => {
     const questions = survey.questions;
     const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
 
-    if (questionId === "start") return questions[0]?.id || firstEndingId;
+    if (questionId === "start")
+      return { nextQuestionId: questions[0]?.id || firstEndingId, calculatedVariables: {} };
 
-    if (currIdxTemp === -1) throw new Error("Question not found");
+    if (!currQuesTemp) throw new Error("Question not found");
 
     let firstJumpTarget: string | undefined;
     const allRequiredQuestionIds: string[] = [];
-    const calculationResults: Record<string, number | string> = {};
 
-    if (currQuesTemp?.logic && currQuesTemp.logic.length > 0) {
+    let calculationResults = { ...currentVariables };
+
+    if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
       for (const logic of currQuesTemp.logic) {
         if (evaluateAdvancedLogic(localSurvey, data, logic.conditions, selectedLanguage)) {
           const { jumpTarget, requiredQuestionIds, calculations } = performActions(
             localSurvey,
             logic.actions,
-            data
+            data,
+            calculationResults
           );
 
           if (jumpTarget && !firstJumpTarget) {
@@ -200,13 +226,10 @@ export const Survey = ({
           }
 
           allRequiredQuestionIds.push(...requiredQuestionIds);
-          Object.assign(calculationResults, calculations);
+          calculationResults = { ...calculationResults, ...calculations };
         }
       }
     }
-
-    // Update response variables with all calculation results
-    onChangeVariables(calculationResults);
 
     // Make all collected questions required
     if (allRequiredQuestionIds.length > 0) {
@@ -214,22 +237,29 @@ export const Survey = ({
     }
 
     // Return the first jump target if found, otherwise go to the next question or ending
-    return firstJumpTarget || questions[currentQuestionIndex + 1]?.id || firstEndingId;
+    const nextQuestionId = firstJumpTarget || questions[currentQuestionIndex + 1]?.id || firstEndingId;
+
+    return { nextQuestionId, calculatedVariables: calculationResults };
   };
 
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(localSurvey, questionId, responseData, selectedLanguage);
+
+    pushVariableState(questionId);
+
+    const { nextQuestionId, calculatedVariables } = evaluateLogicAndGetNextQuestionId(responseData);
     const finished =
       nextQuestionId === undefined ||
       !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
+
     onChange(responseData);
+    onChangeVariables(calculatedVariables);
     onResponse({
       data: responseData,
       ttc,
       finished,
-      variables: responseVariables,
+      variables: calculatedVariables,
       language: selectedLanguage,
     });
     if (finished) {
@@ -256,6 +286,7 @@ export const Survey = ({
       // otherwise go back to previous question in array
       prevQuestionId = localSurvey.questions[currIdxTemp - 1]?.id;
     }
+    popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
   };

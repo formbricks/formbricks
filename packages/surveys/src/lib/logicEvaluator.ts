@@ -1,6 +1,6 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
   TAction,
   TActionCalculate,
@@ -211,21 +211,22 @@ const getRightOperandValue = (
 export const performActions = (
   survey: TSurvey,
   actions: TAction[],
-  data: TResponseData
+  data: TResponseData,
+  calculationResults: TResponseVariables
 ): {
   jumpTarget: string | undefined;
   requiredQuestionIds: string[];
-  calculations: Record<string, number | string>;
+  calculations: TResponseVariables;
 } => {
   let jumpTarget: string | undefined;
   const requiredQuestionIds: string[] = [];
-  const calculations: Record<string, number | string> = {};
+  const calculations: TResponseVariables = { ...calculationResults };
 
   actions.forEach((action) => {
     switch (action.objective) {
       case "calculate":
-        const result = performCalculation(survey, action, data);
-        if (result) calculations[action.variableId] = result;
+        const result = performCalculation(survey, action, data, calculations);
+        if (result !== undefined) calculations[action.variableId] = result;
         break;
       case "requireAnswer":
         requiredQuestionIds.push(action.target);
@@ -244,14 +245,18 @@ export const performActions = (
 const performCalculation = (
   survey: TSurvey,
   action: TActionCalculate,
-  data: TResponseData
+  data: TResponseData,
+  calculations: Record<string, number | string>
 ): number | string | undefined => {
   const variables = survey.variables || [];
   const variable = variables.find((v) => v.id === action.variableId);
 
   if (!variable) return undefined;
 
-  let currentValue = data[action.variableId] || variable.type === "number" ? 0 : "";
+  let currentValue = calculations[action.variableId];
+  if (currentValue === undefined) {
+    currentValue = variable.type === "number" ? 0 : "";
+  }
   let operandValue: string | number | undefined;
 
   // Determine the operand value based on the action.value type
@@ -259,8 +264,13 @@ const performCalculation = (
     case "static":
       operandValue = action.value.value;
       break;
-    case "question":
     case "variable":
+      const value = calculations[action.value.value];
+      if (typeof value === "number" || typeof value === "string") {
+        operandValue = value;
+      }
+      break;
+    case "question":
     case "hiddenField":
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
@@ -272,7 +282,7 @@ const performCalculation = (
       break;
   }
 
-  if (!operandValue) return undefined;
+  if (operandValue === undefined || operandValue === null) return undefined;
 
   let result: number | string;
 
