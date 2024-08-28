@@ -151,6 +151,64 @@ export const getResponsesByPersonId = reactCache(
     )()
 );
 
+export const getResponsesByUserId = reactCache(
+  (environmentId: string, userId: string, page?: number): Promise<TResponse[] | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
+
+        const person = await getPersonByUserId(environmentId, userId);
+
+        if (!person) {
+          throw new ResourceNotFoundError("Person", userId);
+        }
+
+        try {
+          const responsePrisma = await prisma.response.findMany({
+            where: {
+              personId: person.id,
+            },
+            select: responseSelection,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+
+          if (!responsePrisma) {
+            throw new ResourceNotFoundError("Response from PersonId", person.id);
+          }
+
+          let responses: TResponse[] = [];
+
+          await Promise.all(
+            responsePrisma.map(async (response) => {
+              const responseNotes = await getResponseNotes(response.id);
+              responses.push({
+                ...response,
+                notes: responseNotes,
+                tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+              });
+            })
+          );
+
+          return responses;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getResponsesByUserId-${environmentId}-${userId}-${page}`],
+      {
+        tags: [responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
+      }
+    )()
+);
+
 export const getResponseBySingleUseId = reactCache(
   (surveyId: string, singleUseId: string): Promise<TResponse | null> =>
     cache(

@@ -4,7 +4,7 @@ import { personCache } from "@formbricks/lib/person/cache";
 import { segmentCache } from "@formbricks/lib/segment/cache";
 import { evaluateSegment, getSegments } from "@formbricks/lib/segment/service";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { TPerson, ZPerson } from "@formbricks/types/people";
 
 export const getPersonSegmentIds = (

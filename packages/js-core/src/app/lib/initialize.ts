@@ -152,21 +152,17 @@ export const initialize = async (
               apiHost: configInput.apiHost,
               environmentId: configInput.environmentId,
             },
-            "app",
-            false
+            "app"
           )
         : existingConfig.environmentState;
 
       // fetch the person state (if expired)
       const personState = isPersonStateExpired
-        ? await fetchPersonState(
-            {
-              apiHost: configInput.apiHost,
-              environmentId: configInput.environmentId,
-              userId: configInput.userId,
-            },
-            false
-          )
+        ? await fetchPersonState({
+            apiHost: configInput.apiHost,
+            environmentId: configInput.environmentId,
+            userId: configInput.userId,
+          })
         : existingConfig.personState;
 
       // filter the environment state wrt the person state

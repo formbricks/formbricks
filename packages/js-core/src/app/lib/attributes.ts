@@ -178,11 +178,14 @@ export const setAttributeInApp = async (
 
   if (result.ok) {
     if (result.value.changed) {
-      const personState = await fetchPersonState({
-        apiHost: appConfig.get().apiHost,
-        environmentId: appConfig.get().environmentId,
-        userId,
-      });
+      const personState = await fetchPersonState(
+        {
+          apiHost: appConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
+          userId,
+        },
+        true
+      );
 
       const filteredSurveys = filterSurveys(appConfig.get().environmentState, personState);
 
