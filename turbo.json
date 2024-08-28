@@ -47,11 +47,20 @@
       "persistent": true,
       "dependsOn": ["@formbricks/api#build"]
     },
+    "@formbricks/react-native#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/react-native#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"]
+    },
+    "@formbricks/react-native#lint": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
-    },
-    "@formbricks/database#lint": {
-      "dependsOn": ["@formbricks/database#build"]
     },
     "build": {
       "dependsOn": ["^build"],
