@@ -95,7 +95,7 @@ cp .env.example .env
 
 - For Linux
   <Col>
-  <CodeGroup title="For Linux">
+   <CodeGroup title="For Linux">
 
 ```bash
 sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
@@ -108,7 +108,7 @@ sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
 
 - For Mac
   <Col>
-  <CodeGroup title="For Mac">
+   <CodeGroup title="For Mac">
 
 ```bash
 sed -i '' '/^ENCRYPTION_KEY=/s|.*|ENCRYPTION_KEY='$(openssl rand -hex 32)'|' .env
