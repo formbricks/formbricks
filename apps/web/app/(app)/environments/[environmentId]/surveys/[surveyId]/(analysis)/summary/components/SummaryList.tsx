@@ -263,7 +263,6 @@ export const SummaryList = ({
               <RankingSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
-                environmentId={environment.id}
                 surveyType={survey.type}
                 survey={survey}
                 attributeClasses={attributeClasses}

@@ -1,16 +1,10 @@
-import Link from "next/link";
-import { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RankingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRanking;
-  environmentId: string;
   surveyType: TSurveyType;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
@@ -18,29 +12,14 @@ interface RankingSummaryProps {
 
 export const RankingSummary = ({
   questionSummary,
-  environmentId,
   surveyType,
   survey,
   attributeClasses,
 }: RankingSummaryProps) => {
-  const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
-
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     return a.avgRanking - b.avgRanking; // Sort by count
   });
-
-  const handleLoadMore = () => {
-    const lastChoice = results[results.length - 1];
-    const hasOthers = lastChoice.others && lastChoice.others.length > 0;
-
-    if (!hasOthers) return; // If there are no 'others' to show, don't increase the visible options
-
-    // Increase the number of visible responses by 10, not exceeding the total number of responses
-    setVisibleOtherResponses((prevVisibleOptions) =>
-      Math.min(prevVisibleOptions + 10, lastChoice.others?.length || 0)
-    );
-  };
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -73,45 +52,6 @@ export const RankingSummary = ({
                   <div className="col-span-1 pl-6">Other values found</div>
                   <div className="col-span-1 pl-6">{surveyType === "app" && "User"}</div>
                 </div>
-                {result.others
-                  .filter((otherValue) => otherValue.value !== "")
-                  .slice(0, visibleOtherResponses)
-                  .map((otherValue, idx) => (
-                    <div key={idx} dir="auto">
-                      {surveyType === "link" && (
-                        <div
-                          key={idx}
-                          className="ph-no-capture col-span-1 m-2 flex h-10 items-center rounded-lg pl-4 text-sm font-medium text-slate-900">
-                          <span>{otherValue.value}</span>
-                        </div>
-                      )}
-                      {surveyType === "app" && otherValue.person && (
-                        <Link
-                          href={
-                            otherValue.person.id
-                              ? `/environments/${environmentId}/people/${otherValue.person.id}`
-                              : { pathname: null }
-                          }
-                          key={idx}
-                          className="m-2 grid h-16 grid-cols-2 items-center rounded-lg text-sm hover:bg-slate-100">
-                          <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
-                            <span>{otherValue.value}</span>
-                          </div>
-                          <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
-                            {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{getPersonIdentifier(otherValue.person, otherValue.personAttributes)}</span>
-                          </div>
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                {visibleOtherResponses < result.others.length && (
-                  <div className="flex justify-center py-4">
-                    <Button onClick={handleLoadMore} variant="secondary" size="sm">
-                      Load more
-                    </Button>
-                  </div>
-                )}
               </div>
             )}
           </div>
