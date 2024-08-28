@@ -3,15 +3,15 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { createHmac } from "crypto";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { sendResponseFinishedEmail } from "@formbricks/email";
+// import { sendResponseFinishedEmail } from "@formbricks/email";
 import { CRON_SECRET, WEBHOOK_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+// import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
-import { TUserNotificationSettings } from "@formbricks/types/user";
+// import { TUserNotificationSettings } from "@formbricks/types/user";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
@@ -84,25 +84,25 @@ export const POST = async (request: Request) => {
   if (event === "responseFinished") {
     // check for email notifications
     // get all users that have a membership of this environment's organization
-    const users = await prisma.user.findMany({
-      where: {
-        memberships: {
-          some: {
-            organization: {
-              products: {
-                some: {
-                  environments: {
-                    some: {
-                      id: environmentId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    // const users = await prisma.user.findMany({
+    //   where: {
+    //     memberships: {
+    //       some: {
+    //         organization: {
+    //           products: {
+    //             some: {
+    //               environments: {
+    //                 some: {
+    //                   id: environmentId,
+    //                 },
+    //               },
+    //             },
+    //           },
+    //         },
+    //       },
+    //     },
+    //   },
+    // });
 
     const [integrations, surveyData] = await Promise.all([
       getIntegrations(environmentId),
@@ -115,31 +115,31 @@ export const POST = async (request: Request) => {
     }
 
     // filter all users that have email notifications enabled for this survey
-    const usersWithNotifications = users.filter((user) => {
-      const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;
-      if (notificationSettings?.alert && notificationSettings.alert[surveyId]) {
-        return true;
-      }
-      return false;
-    });
+    // const usersWithNotifications = users.filter((user) => {
+    //   const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;
+    //   if (notificationSettings?.alert && notificationSettings.alert[surveyId]) {
+    //     return true;
+    //   }
+    //   return false;
+    // });
 
     // Exclude current response
-    const responseCount = await getResponseCountBySurveyId(surveyId);
+    // const responseCount = await getResponseCountBySurveyId(surveyId);
 
-    if (usersWithNotifications.length > 0) {
-      if (!survey) {
-        console.error(`Pipeline: Survey with id ${surveyId} not found`);
-        return new Response("Survey not found", {
-          status: 404,
-        });
-      }
-      // send email to all users
-      await Promise.all(
-        usersWithNotifications.map(async (user) => {
-          await sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount);
-        })
-      );
-    }
+    // if (usersWithNotifications.length > 0) {
+    //   if (!survey) {
+    //     console.error(`Pipeline: Survey with id ${surveyId} not found`);
+    //     return new Response("Survey not found", {
+    //       status: 404,
+    //     });
+    //   }
+    //   // send email to all users
+    //   await Promise.all(
+    //     usersWithNotifications.map(async (user) => {
+    //       await sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount);
+    //     })
+    //   );
+    // }
     const updateSurveyStatus = async (surveyId: string) => {
       // Get the survey instance by surveyId
       const survey = await getSurvey(surveyId);
