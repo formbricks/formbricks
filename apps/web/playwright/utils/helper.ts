@@ -247,7 +247,6 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("button", { name: "File Upload" }).click();
   await page.getByLabel("Question*").fill(params.fileUploadQuestion.question);
 
-  // Fill Matrix question in german
   // File Upload Question
   await page
     .locator("div")
@@ -272,7 +271,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.locator("#column-3").click();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
-  // File Address Question
+  // Fill Address Question
   await page
     .locator("div")
     .filter({ hasText: new RegExp(`^${addQuestion}$`) })
@@ -280,6 +279,14 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Address" }).click();
   await page.getByLabel("Question*").fill(params.address.question);
+
+  // Fill Ranking question
+  await page
+    .locator("div")
+    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .nth(1)
+    .click();
+  await page.getByRole("button", { name: "Ranking" }).click();
 
   // Thank You Card
   await page
