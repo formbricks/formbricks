@@ -12,10 +12,15 @@ import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
 import { RankingQuestion } from "@/components/questions/RankingQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -54,6 +59,14 @@ export const QuestionConditional = ({
   autoFocusEnabled,
   currentQuestionId,
 }: QuestionConditionalProps) => {
+  const getResponseValueForRankingQuestion = (
+    value: string[],
+    choices: TSurveyQuestionChoice[]
+  ): string[] => {
+    return value
+      .map((label) => choices.find((choice) => getLocalizedValue(choice.label, languageCode) === label)?.id)
+      .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
+  };
   if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
     if (skipPrefilled) {
       onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
@@ -67,21 +80,6 @@ export const QuestionConditional = ({
       key={question.id}
       question={question}
       value={typeof value === "string" ? value : ""}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      onBack={onBack}
-      isFirstQuestion={isFirstQuestion}
-      isLastQuestion={isLastQuestion}
-      languageCode={languageCode}
-      ttc={ttc}
-      setTtc={setTtc}
-      autoFocusEnabled={autoFocusEnabled}
-      currentQuestionId={currentQuestionId}
-    />
-  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
-    <RankingQuestion
-      question={question}
-      value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -273,6 +271,21 @@ export const QuestionConditional = ({
     <AddressQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
+    <RankingQuestion
+      question={question}
+      value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, question.choices) : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}

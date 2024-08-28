@@ -6,7 +6,7 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyQuestionChoice, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
@@ -41,8 +41,15 @@ export const RankingQuestion = ({
   currentQuestionId,
 }: RankingQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-  const [sortedItems, setSortedItems] = useState<TSurveyQuestionChoice[]>([]);
-  const [unsortedItems, setUnsortedItems] = useState<TSurveyQuestionChoice[]>([]);
+  const [sortedItems, setSortedItems] = useState<TSurveyQuestionChoice[]>(
+    value
+      .map((id) => question.choices.find((c) => c.id === id))
+      .filter((item): item is TSurveyQuestionChoice => item !== undefined)
+  );
+
+  const [unsortedItems, setUnsortedItems] = useState<TSurveyQuestionChoice[]>(
+    question.choices.filter((c) => !value.includes(c.id))
+  );
   const [error, setError] = useState<string | null>(null);
 
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -53,18 +60,6 @@ export const RankingQuestion = ({
     () => question.choices.map((c) => ({ id: c.id, label: c.label })),
     [question.choices, languageCode]
   );
-
-  useEffect(() => {
-    if (value.length > 0) {
-      const selectedItems = value.map((id) => questionChoices.find((c) => c.id === id)!);
-      const unselectedItems = questionChoices.filter((c) => !value.includes(c.id));
-      setSortedItems(selectedItems);
-      setUnsortedItems(unselectedItems);
-    } else {
-      setSortedItems([]);
-      setUnsortedItems(questionChoices);
-    }
-  }, [value, questionChoices]);
 
   const handleItemClick = useCallback(
     (item: TSurveyQuestionChoice) => {
@@ -124,7 +119,10 @@ export const RankingQuestion = ({
 
     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
-    onSubmit({ [question.id]: sortedItems.map((item) => item.id) }, updatedTtcObj);
+    onSubmit(
+      { [question.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)) },
+      updatedTtcObj
+    );
   };
 
   return (
