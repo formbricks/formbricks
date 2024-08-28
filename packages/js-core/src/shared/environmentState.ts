@@ -29,7 +29,7 @@ export const fetchEnvironmentState = async (
     logger.debug("No cache option set for sync");
   }
 
-  const url = `${apiHost}/api/v1/client/${environmentId}/${sdkType}/sync`;
+  const url = `${apiHost}/api/v1/client/${environmentId}/${sdkType}/environment`;
 
   const response = await fetch(url, fetchOptions);
 
