@@ -1,6 +1,9 @@
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
@@ -42,6 +45,15 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
 
   if (!environment) {
     throw new Error("Environment not found");
+  }
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(
+    session?.user.id,
+    product.organizationId
+  );
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+
+  if (isViewer) {
+    return redirect(`/environments/${environment.id}/surveys`);
   }
 
   const prefilledFilters = [product.config.channel, product.config.industry, searchParams.role ?? null];
