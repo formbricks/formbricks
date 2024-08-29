@@ -15,7 +15,7 @@ import {
 } from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import useIntervalWhenFocused from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
+import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -121,14 +121,15 @@ export const SummaryPage = ({
 
   useEffect(() => {
     handleInitialData();
-  }, [filters, isSharingPage, sharingKey, surveyId]);
+  }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
 
   useIntervalWhenFocused(
     () => {
       handleInitialData();
     },
     10000,
-    !isShareEmbedModalOpen
+    !isShareEmbedModalOpen,
+    false
   );
 
   const surveyMemoized = useMemo(() => {

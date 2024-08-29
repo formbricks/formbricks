@@ -1,12 +1,19 @@
 import { useEffect, useRef } from "react";
 
-export const useIntervalWhenFocused = (callback: () => void, intervalDuration: number, isActive: boolean) => {
+export const useIntervalWhenFocused = (
+  callback: () => void,
+  intervalDuration: number,
+  isActive: boolean,
+  shouldExecuteImmediately = true
+) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleFocus = () => {
     if (isActive) {
-      // Execute the callback immediately when the tab comes into focus
-      callback();
+      if (shouldExecuteImmediately) {
+        // Execute the callback immediately when the tab comes into focus
+        callback();
+      }
 
       // Set the interval to execute the callback every `intervalDuration` milliseconds
       intervalRef.current = setInterval(() => {

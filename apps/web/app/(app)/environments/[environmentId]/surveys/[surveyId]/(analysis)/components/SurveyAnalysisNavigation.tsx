@@ -84,7 +84,8 @@ export const SurveyAnalysisNavigation = ({
       fetchFilteredResponseCount();
     },
     10000,
-    !isShareEmbedModalOpen
+    !isShareEmbedModalOpen,
+    false
   );
 
   const getResponseCountString = () => {
