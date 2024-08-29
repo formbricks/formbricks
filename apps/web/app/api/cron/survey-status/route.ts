@@ -66,19 +66,13 @@ export const POST = async () => {
     });
   }
 
-  const surveysToCloseEnvironmentIds = surveysToClose.map((survey) => survey.environmentId);
-  const scheduledSurveysEnvironmentIds = scheduledSurveys.map((survey) => survey.environmentId);
+  const updatedSurveys = [...surveysToClose, ...scheduledSurveys];
 
-  const environmentIds = Array.from(
-    new Set([...surveysToCloseEnvironmentIds, ...scheduledSurveysEnvironmentIds])
-  );
-
-  if (environmentIds.length) {
-    for (const environmentId of environmentIds) {
-      surveyCache.revalidate({
-        environmentId,
-      });
-    }
+  for (const survey of updatedSurveys) {
+    surveyCache.revalidate({
+      id: survey.id,
+      environmentId: survey.environmentId,
+    });
   }
 
   return responses.successResponse({
