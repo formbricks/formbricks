@@ -1,7 +1,9 @@
+"use client";
+
 export const SurveyLoading = ({ orientation }: { orientation: string }) => {
   return (
     <>
-      {orientation === "list" ? (
+      {orientation === "list" && (
         <div className="flex w-full flex-col">
           <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 text-sm text-slate-800">
             <div className="col-span-4 place-self-start">Name</div>
@@ -36,7 +38,8 @@ export const SurveyLoading = ({ orientation }: { orientation: string }) => {
             })}
           </div>
         </div>
-      ) : (
+      )}
+      {orientation === "grid" && (
         <div className="grid h-full w-full animate-pulse grid-cols-5 gap-5">
           {[1, 2, 3, 4, 5].map((i) => {
             return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
@@ -48,13 +48,13 @@ export const SurveysList = ({
 
   const [orientation, setOrientation] = useState("");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Initialize orientation state with a function that checks if window is defined
     const orientationFromLocalStorage = localStorage.getItem("surveyOrientation");
     if (orientationFromLocalStorage) {
       setOrientation(orientationFromLocalStorage);
     } else {
-      setOrientation("grid");
+      setOrientation("list");
       localStorage.setItem("surveyOrientation", "list");
     }
   }, []);
