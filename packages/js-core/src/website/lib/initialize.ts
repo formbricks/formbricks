@@ -57,7 +57,8 @@ const migrateLocalStorage = () => {
 
       const displays = displaysState.map((display) => display.surveyId);
       const lastDisplayAt = displaysState
-        ? displaysState.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
+        ? displaysState.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+            .createdAt
         : null;
 
       console.log({ displays, responses, lastDisplayAt });
@@ -164,6 +165,8 @@ export const initialize = async (
 
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
+
+  console.log({ existingConfig, configInput });
 
   if (
     existingConfig &&
