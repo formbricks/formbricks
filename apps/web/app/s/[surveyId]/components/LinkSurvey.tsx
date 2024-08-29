@@ -10,6 +10,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -274,7 +275,7 @@ export const LinkSurvey = ({
               ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
             });
         }}
-        onFileUpload={async (file: File, params: TUploadFileConfig) => {
+        onFileUpload={async (file: TJsFileUploadParams["file"], params: TUploadFileConfig) => {
           const api = new FormbricksAPI({
             apiHost: webAppUrl,
             environmentId: survey.environmentId,

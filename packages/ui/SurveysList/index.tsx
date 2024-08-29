@@ -5,6 +5,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { Button } from "../Button";
+import { LoadingSpinner } from "../LoadingSpinner";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
@@ -176,10 +177,11 @@ export const SurveysList = ({
           )}
         </div>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center">
-          <span className="mb-4 h-24 w-24 rounded-full bg-slate-100 p-6 text-5xl">🕵️</span>
-
-          <div className="text-slate-600">{isFetching ? "Fetching surveys..." : "No surveys found"}</div>
+        <div className="flex h-full flex-col items-center justify-center py-12">
+          <LoadingSpinner />
+          <div className="text-sm text-slate-500">
+            {isFetching ? "Fetching surveys..." : "No surveys found"}
+          </div>
         </div>
       )}
     </div>
