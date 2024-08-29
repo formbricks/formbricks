@@ -19,9 +19,52 @@ import { validateInputs } from "../utils/validate";
 import { documentCache } from "./cache";
 import { handleInsightAssignments } from "./utils";
 
+const DOCUMENTS_PER_PAGE = 10;
+
 export type TPrismaDocument = Omit<TDocument, "vector"> & {
   vector: string;
 };
+
+export const getDocumentsByInsightId = reactCache(
+  (insightId: string, limit?: number, offset?: number): Promise<TDocument[]> =>
+    cache(
+      async () => {
+        validateInputs([insightId, ZId]);
+
+        limit = limit ?? DOCUMENTS_PER_PAGE;
+        try {
+          const documents = await prisma.document.findMany({
+            where: {
+              documentInsights: {
+                some: {
+                  insightId,
+                },
+              },
+            },
+            orderBy: [
+              {
+                createdAt: "desc",
+              },
+            ],
+            take: limit ? limit : undefined,
+            skip: offset ? offset : undefined,
+          });
+
+          return documents;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getDocumentsByInsightId-${insightId}-${limit}-${offset}`],
+      {
+        tags: [documentCache.tag.byInsightId(insightId)],
+      }
+    )()
+);
 
 export const createDocument = async (documentInput: TDocumentCreateInput): Promise<TDocument> => {
   validateInputs([documentInput, ZDocumentCreateInput]);

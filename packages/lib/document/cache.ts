@@ -2,10 +2,11 @@ import { revalidateTag } from "next/cache";
 
 interface RevalidateProps {
   id?: string;
-  environmentId: string;
+  environmentId?: string | null;
   surveyId?: string | null;
   responseId?: string | null;
   questionId?: string | null;
+  insightId?: string | null;
 }
 
 export const documentCache = {
@@ -25,8 +26,11 @@ export const documentCache = {
     bySurveyIdQuestionId(surveyId: string, questionId: string) {
       return `surveys-${surveyId}-questions-${questionId}-documents`;
     },
+    byInsightId(insightId: string) {
+      return `insights-${insightId}-documents`;
+    },
   },
-  revalidate({ id, environmentId, surveyId, responseId, questionId }: RevalidateProps): void {
+  revalidate({ id, environmentId, surveyId, responseId, questionId, insightId }: RevalidateProps): void {
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
@@ -41,6 +45,9 @@ export const documentCache = {
     }
     if (surveyId && questionId) {
       revalidateTag(this.tag.bySurveyIdQuestionId(surveyId, questionId));
+    }
+    if (insightId) {
+      revalidateTag(this.tag.byInsightId(insightId));
     }
   },
 };

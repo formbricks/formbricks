@@ -176,12 +176,10 @@ export const POST = async (request: Request) => {
           for (const question of survey.questions) {
             if (question.type === "openText") {
               const isQuestionAnswered = response.data[question.id] !== undefined;
-              console.log("isQuestionAnswered", isQuestionAnswered);
               if (!isQuestionAnswered) {
                 continue;
               }
               const text = `**${question.headline.default}**\n${response.data[question.id]}`;
-              console.log("creating embedding for question response", question.id);
               await createDocument({
                 environmentId,
                 surveyId,

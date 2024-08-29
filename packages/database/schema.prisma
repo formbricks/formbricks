@@ -703,20 +703,20 @@ enum Sentiment {
 }
 
 model Document {
-  id            String                      @id @default(cuid())
-  createdAt     DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
-  environmentId String
-  environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  surveyId      String?
-  survey        Survey?                     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  responseId    String?
-  response      Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  questionId    String?
-  sentiment     Sentiment
-  text          String
-  vector        Unsupported("vector(512)")?
-  insights      DocumentInsight[]
+  id               String                      @id @default(cuid())
+  createdAt        DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
+  environmentId    String
+  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  surveyId         String?
+  survey           Survey?                     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  responseId       String?
+  response         Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId       String?
+  sentiment        Sentiment
+  text             String
+  vector           Unsupported("vector(512)")?
+  documentInsights DocumentInsight[]
 
   @@unique([responseId, questionId])
 }

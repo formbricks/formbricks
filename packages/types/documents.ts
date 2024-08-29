@@ -14,7 +14,6 @@ export const ZDocument = z.object({
   questionId: ZId.nullable(),
   sentiment: ZDocumentSentiment,
   text: z.string(),
-  vector: z.array(z.number()).length(512),
 });
 
 export type TDocument = z.infer<typeof ZDocument>;

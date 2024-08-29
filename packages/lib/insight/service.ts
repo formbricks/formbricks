@@ -12,6 +12,42 @@ import { insightCache } from "./cache";
 
 const INSIGHTS_PER_PAGE = 10;
 
+export const getInsight = reactCache(
+  (id: string): Promise<TInsight | null> =>
+    cache(
+      async () => {
+        validateInputs([id, ZId]);
+
+        try {
+          const insight = await prisma.insight.findUnique({
+            where: {
+              id,
+            },
+            include: {
+              _count: {
+                select: {
+                  documentInsights: true,
+                },
+              },
+            },
+          });
+
+          return insight;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getInsight-${id}`],
+      {
+        tags: [insightCache.tag.byId(id)],
+      }
+    )()
+);
+
 export const getInsights = reactCache(
   (environmentId: string, limit?: number, offset?: number): Promise<TInsight[]> =>
     cache(

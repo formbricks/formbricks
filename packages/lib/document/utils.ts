@@ -5,6 +5,7 @@ import { TInsightCategory } from "@formbricks/types/insights";
 import { embeddingsModel } from "../ai";
 import { createInsight, findNearestInsights } from "../insight/service";
 import { getInsightVectorText } from "../insight/utils";
+import { documentCache } from "./cache";
 
 export const getQuestionResponseReferenceId = (surveyId: string, questionId: string) => {
   return `${surveyId}-${questionId}`;
@@ -35,6 +36,9 @@ export const handleInsightAssignments = async (
         insightId: nearestInsights[0].id,
       },
     });
+    documentCache.revalidate({
+      insightId: nearestInsights[0].id,
+    });
   } else {
     // create new insight and documentInsight
     const newInsight = await createInsight({
@@ -50,6 +54,9 @@ export const handleInsightAssignments = async (
         documentId,
         insightId: newInsight.id,
       },
+    });
+    documentCache.revalidate({
+      insightId: newInsight.id,
     });
   }
 };

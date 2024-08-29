@@ -4,10 +4,12 @@ import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TInsight } from "@formbricks/types/insights";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
+import { InsightSheet } from "@formbricks/ui/InsightSheet";
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@formbricks/ui/Table";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -31,6 +33,8 @@ export const OpenTextSummary = ({
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
     isAiEnabled ? "insights" : "responses"
   );
+  const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
+  const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
 
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
@@ -59,13 +63,20 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
+      <InsightSheet isOpen={isInsightSheetOpen} setIsOpen={setIsInsightSheetOpen} insight={currentInsight} />
       {isAiEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
       <div className="max-h-[40vh] overflow-y-auto">
         {activeTab === "insights" ? (
           <Table className="border-t border-slate-200">
             <TableBody>
               {questionSummary.insights.map((insight) => (
-                <TableRow className="cursor-pointer hover:bg-slate-50">
+                <TableRow
+                  key={insight.id}
+                  className="cursor-pointer hover:bg-slate-50"
+                  onClick={() => {
+                    setCurrentInsight(insight);
+                    setIsInsightSheetOpen(true);
+                  }}>
                   <TableCell className="flex font-medium">
                     {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
                   </TableCell>

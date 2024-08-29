@@ -115,7 +115,6 @@ export const SummaryPage = ({
 
       setResponseCount(responseCount);
       setSurveySummary(surveySummary);
-      console.log(JSON.stringify(surveySummary, null, 2));
     } catch (error) {
       console.error(error);
     }
