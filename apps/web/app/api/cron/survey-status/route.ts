@@ -2,6 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 
 export const POST = async () => {
   const headersList = headers();
@@ -21,6 +22,7 @@ export const POST = async () => {
     },
     select: {
       id: true,
+      environmentId: true,
     },
   });
 
@@ -47,6 +49,7 @@ export const POST = async () => {
     },
     select: {
       id: true,
+      environmentId: true,
     },
   });
 
@@ -61,6 +64,21 @@ export const POST = async () => {
         status: "inProgress",
       },
     });
+  }
+
+  const surveysToCloseEnvironmentIds = surveysToClose.map((survey) => survey.environmentId);
+  const scheduledSurveysEnvironmentIds = scheduledSurveys.map((survey) => survey.environmentId);
+
+  const environmentIds = Array.from(
+    new Set([...surveysToCloseEnvironmentIds, ...scheduledSurveysEnvironmentIds])
+  );
+
+  if (environmentIds.length) {
+    for (const environmentId of environmentIds) {
+      surveyCache.revalidate({
+        environmentId,
+      });
+    }
   }
 
   return responses.successResponse({
