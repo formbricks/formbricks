@@ -12,6 +12,7 @@ import {
   OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
+  WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ const Page = async () => {
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
             isMultiOrgEnabled={isMultiOrgEnabled}
+            webappUrl={WEBAPP_URL}
           />
         </FormWrapper>
       </div>
