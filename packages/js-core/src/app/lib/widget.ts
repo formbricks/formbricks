@@ -6,7 +6,6 @@ import { TJsFileUploadParams, TJsPersonState, TJsTrackProperties } from "@formbr
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import {
   filterSurveys,
@@ -16,13 +15,11 @@ import {
   shouldDisplayBasedOnPercentage,
 } from "../../shared/utils";
 import { AppConfig } from "./config";
-import { putFormbricksInErrorState } from "./initialize";
 
 const containerId = "formbricks-app-container";
 
 const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
-const errorHandler = ErrorHandler.getInstance();
 let isSurveyRunning = false;
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
@@ -247,22 +244,17 @@ export const closeSurvey = async (): Promise<void> => {
   removeWidgetContainer();
   addWidgetContainer();
 
-  try {
-    const { environmentState, personState } = appConfig.get();
-    const filteredSurveys = filterSurveys(environmentState, personState);
+  const { environmentState, personState } = appConfig.get();
+  const filteredSurveys = filterSurveys(environmentState, personState);
 
-    appConfig.update({
-      ...appConfig.get(),
-      environmentState,
-      personState,
-      filteredSurveys,
-    });
+  appConfig.update({
+    ...appConfig.get(),
+    environmentState,
+    personState,
+    filteredSurveys,
+  });
 
-    setIsSurveyRunning(false);
-  } catch (e: any) {
-    errorHandler.handle(e);
-    putFormbricksInErrorState();
-  }
+  setIsSurveyRunning(false);
 };
 
 export const addWidgetContainer = (): void => {
