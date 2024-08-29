@@ -10,6 +10,7 @@ import { getResponseCountBySurveySharingKeyAction } from "@/app/share/[sharingKe
 import { InboxIcon, PresentationIcon } from "lucide-react";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
 
@@ -77,16 +78,14 @@ export const SurveyAnalysisNavigation = ({
     fetchFilteredResponseCount();
   }, [filters, isSharingPage, sharingKey, survey.id]);
 
-  useEffect(() => {
-    if (!isShareEmbedModalOpen) {
-      const interval = setInterval(() => {
-        fetchResponseCount();
-        fetchFilteredResponseCount();
-      }, 10000);
-
-      return () => clearInterval(interval);
-    }
-  }, [isShareEmbedModalOpen]);
+  useIntervalWhenFocused(
+    () => {
+      fetchResponseCount();
+      fetchFilteredResponseCount();
+    },
+    10000,
+    !isShareEmbedModalOpen
+  );
 
   const getResponseCountString = () => {
     if (totalResponseCount === null) return "";
