@@ -40,29 +40,3 @@ export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes)
 
   return surveyTemp;
 };
-
-export const replaceAttributeRecallInLegacySurveys = (survey: any, attributes: TAttributes): any => {
-  const surveyTemp = structuredClone(survey);
-  surveyTemp.questions.forEach((question) => {
-    if (question.headline.includes("recall:")) {
-      question.headline = parseRecallInfo(question.headline, attributes);
-    }
-    if (question.subheader && question.subheader.includes("recall:")) {
-      question.subheader = parseRecallInfo(question.subheader, attributes);
-    }
-  });
-  if (surveyTemp.welcomeCard.enabled && surveyTemp.welcomeCard.headline) {
-    if (surveyTemp.welcomeCard.headline && surveyTemp.welcomeCard.headline.includes("recall:")) {
-      surveyTemp.welcomeCard.headline = parseRecallInfo(surveyTemp.welcomeCard.headline, attributes);
-    }
-  }
-  if (surveyTemp.thankYouCard.enabled && surveyTemp.thankYouCard.headline) {
-    if (surveyTemp.thankYouCard.headline && surveyTemp.thankYouCard.headline.includes("recall:")) {
-      surveyTemp.thankYouCard.headline = parseRecallInfo(surveyTemp.thankYouCard.headline, attributes);
-      if (surveyTemp.thankYouCard.subheader && surveyTemp.thankYouCard.subheader.includes("recall:")) {
-        surveyTemp.thankYouCard.subheader = parseRecallInfo(surveyTemp.thankYouCard.subheader, attributes);
-      }
-    }
-  }
-  return surveyTemp;
-};

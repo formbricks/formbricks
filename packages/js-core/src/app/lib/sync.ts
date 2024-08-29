@@ -21,7 +21,7 @@ const syncWithBackend = async (
       logger.debug("No cache option set for sync");
     }
     logger.debug("syncing with backend");
-    const url = `${apiHost}/api/v1/client/${environmentId}/app/sync/${userId}?version=2.0.0`;
+    const url = `${apiHost}/api/v1/client/${environmentId}/app/sync/${userId}`;
 
     const response = await fetch(url, fetchOptions);
 

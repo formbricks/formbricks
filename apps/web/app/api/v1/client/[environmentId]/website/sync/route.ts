@@ -15,8 +15,6 @@ import {
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { transformToLegacySurvey } from "@formbricks/lib/survey/utils";
-import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TJsWebsiteStateSync, ZJsWebsiteSyncInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -25,15 +23,10 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const GET = async (
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { environmentId: string } }
 ): Promise<Response> => {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const version =
-      searchParams.get("version") === "undefined" || searchParams.get("version") === null
-        ? undefined
-        : searchParams.get("version");
     const syncInputValidation = ZJsWebsiteSyncInput.safeParse({
       environmentId: params.environmentId,
     });
@@ -129,8 +122,6 @@ export const GET = async (
       }),
     };
 
-    const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
-
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TSurvey[] = filteredSurveys;
     let state: TJsWebsiteStateSync = {
@@ -138,30 +129,6 @@ export const GET = async (
       actionClasses,
       product: updatedProduct,
     };
-
-    // Backwards compatibility for versions less than 2.0.0 (no multi-language support and updated trigger action classes).
-    if (!isVersionGreaterThanOrEqualTo(version ?? "", "2.0.0")) {
-      // Scenario 2: Multi language and updated trigger action classes not supported
-      // Convert to legacy surveys with default language
-      // convert triggers to array of actionClasses Names
-      transformedSurveys = await Promise.all(
-        filteredSurveys.map((survey) => {
-          const languageCode = "default";
-          return transformToLegacySurvey(survey, languageCode);
-        })
-      );
-
-      const legacyState: any = {
-        surveys: isWebsiteSurveyResponseLimitReached ? [] : transformedSurveys,
-        noCodeActionClasses,
-        product: updatedProduct,
-      };
-      return responses.successResponse(
-        { ...legacyState },
-        true,
-        "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
-      );
-    }
 
     return responses.successResponse(
       { ...state },

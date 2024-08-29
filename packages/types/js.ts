@@ -66,7 +66,6 @@ export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
 
 export const ZJsWebsiteSyncInput = z.object({
   environmentId: z.string().cuid(),
-  version: z.string().optional(),
 });
 
 export type TJsWebsiteSyncInput = z.infer<typeof ZJsWebsiteSyncInput>;
@@ -135,7 +134,6 @@ export type TJsAppConfigInput = z.infer<typeof ZJsAppConfigInput>;
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().min(1).max(255),
-  version: z.string().optional(),
 });
 
 export const ZJsPeopleUpdateAttributeInput = z.object({

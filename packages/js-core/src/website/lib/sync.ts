@@ -17,7 +17,6 @@ const syncWithBackend = async (
 ): Promise<Result<TJsWebsiteState, NetworkError>> => {
   try {
     const baseUrl = `${apiHost}/api/v1/client/${environmentId}/website/sync`;
-    const urlSuffix = `?version=${import.meta.env.VERSION}`;
 
     let fetchOptions: RequestInit = {};
 
@@ -27,7 +26,7 @@ const syncWithBackend = async (
     }
 
     // if user id is not available
-    const url = baseUrl + urlSuffix;
+    const url = baseUrl;
     // public survey
     const response = await fetch(url, fetchOptions);
 
