@@ -56,6 +56,7 @@ export class WebsiteConfig {
 
         // TODO: Figure out the expiration logic
         if (
+          parsedConfig.environmentState &&
           parsedConfig.environmentState.expiresAt &&
           new Date(parsedConfig.environmentState.expiresAt) <= new Date()
         ) {

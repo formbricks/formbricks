@@ -32,6 +32,7 @@ export const setIsInitialized = (value: boolean) => {
 };
 
 const migrateLocalStorage = () => {
+  console.log("trynna migrate local storage");
   const oldConfig = localStorage.getItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
 
   let newWebsiteConfig: TJsConfig;
@@ -39,18 +40,27 @@ const migrateLocalStorage = () => {
     const parsedOldConfig = JSON.parse(oldConfig);
     // if the old config follows the older structure, we need to migrate it
     if (parsedOldConfig.state || parsedOldConfig.expiresAt) {
-      const { apiHost, environmentId, state } = parsedOldConfig as {
+      console.log("oldConfig follows the older structure, migrating");
+      console.log({ parsedOldConfig });
+
+      const { apiHost, environmentId, state, expiresAt } = parsedOldConfig as {
         apiHost: string;
         environmentId: string;
         state: TJsWebsiteState;
+        expiresAt: Date;
       };
-      const { displays: displaysState, actionClasses, product, surveys } = state;
+      const { displays: displaysState, actionClasses, product, surveys, attributes } = state;
 
       const responses = displaysState
         .filter((display) => display.responded)
         .map((display) => display.surveyId);
 
       const displays = displaysState.map((display) => display.surveyId);
+      const lastDisplayAt = displaysState
+        ? displaysState.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
+        : null;
+
+      console.log({ displays, responses });
 
       newWebsiteConfig = {
         apiHost,
@@ -61,17 +71,17 @@ const migrateLocalStorage = () => {
             actionClasses,
             product,
           },
-          expiresAt: new Date(),
+          expiresAt,
         },
         personState: {
-          expiresAt: new Date(),
+          expiresAt,
           data: {
             userId: null,
             segments: [],
             displays,
             responses,
-            attributes: {},
-            lastDisplayAt: new Date(),
+            attributes: attributes ?? {},
+            lastDisplayAt,
           },
         },
         filteredSurveys: surveys,
@@ -80,6 +90,8 @@ const migrateLocalStorage = () => {
           expiresAt: null,
         },
       };
+
+      console.log({ newWebsiteConfig });
 
       localStorage.removeItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
       localStorage.setItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(newWebsiteConfig));
