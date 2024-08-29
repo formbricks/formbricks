@@ -23,7 +23,7 @@ import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } 
 import { checkPageUrl } from "./noCodeActions";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const appConfig = AppConfig.getInstance();
+const appConfigGlobal = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
@@ -32,9 +32,35 @@ export const setIsInitialized = (value: boolean) => {
   isInitialized = value;
 };
 
+const checkForOlderLocalConfig = (): boolean => {
+  const oldConfig = localStorage.getItem(APP_SURVEYS_LOCAL_STORAGE_KEY);
+
+  if (oldConfig) {
+    const parsedOldConfig = JSON.parse(oldConfig);
+    if (parsedOldConfig.state || parsedOldConfig.expiresAt) {
+      // local config follows old structure
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export const initialize = async (
   configInput: TJsAppConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  const isLocalStorageOld = checkForOlderLocalConfig();
+
+  let appConfig = appConfigGlobal;
+
+  if (isLocalStorageOld) {
+    logger.debug("Local config is of an older version");
+    logger.debug("Resetting config");
+
+    appConfig.resetConfig();
+    appConfig = AppConfig.getInstance();
+  }
+
   const isDebug = getIsDebug();
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
@@ -47,7 +73,7 @@ export const initialize = async (
 
   let existingConfig: TJsConfig | undefined;
   try {
-    existingConfig = appConfig.get();
+    existingConfig = appConfigGlobal.get();
     logger.debug("Found existing configuration.");
   } catch (e) {
     logger.debug("No existing configuration found.");
@@ -59,7 +85,7 @@ export const initialize = async (
       logger.debug(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
       );
-      appConfig.resetConfig();
+      appConfigGlobal.resetConfig();
       return okVoid();
     }
 
@@ -115,7 +141,7 @@ export const initialize = async (
       configInput.environmentId,
       configInput.userId,
       configInput.attributes,
-      appConfig
+      appConfigGlobal
     );
     if (res.ok !== true) {
       return err(res.error);
@@ -169,7 +195,7 @@ export const initialize = async (
       const filteredSurveys = filterSurveys(environmentState, personState);
 
       // update the appConfig with the new filtered surveys
-      appConfig.update({
+      appConfigGlobal.update({
         ...existingConfig,
         environmentState,
         personState,
@@ -179,13 +205,13 @@ export const initialize = async (
       const surveyNames = filteredSurveys.map((s) => s.name);
       logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
     } catch (e) {
-      putFormbricksInErrorState();
+      putFormbricksInErrorState(appConfig);
     }
   } else {
     logger.debug(
       "No valid configuration found or it has been expired. Resetting config and creating new one."
     );
-    appConfig.resetConfig();
+    appConfigGlobal.resetConfig();
     logger.debug("Syncing.");
 
     try {
@@ -208,7 +234,7 @@ export const initialize = async (
 
       const filteredSurveys = filterSurveys(environmentState, personState);
 
-      appConfig.update({
+      appConfigGlobal.update({
         apiHost: configInput.apiHost,
         environmentId: configInput.environmentId,
         personState,
@@ -225,14 +251,14 @@ export const initialize = async (
 
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
-    appConfig.update({
-      ...appConfig.get(),
+    appConfigGlobal.update({
+      ...appConfigGlobal.get(),
       personState: {
-        ...appConfig.get().personState,
+        ...appConfigGlobal.get().personState,
         data: {
-          ...appConfig.get().personState.data,
+          ...appConfigGlobal.get().personState.data,
           attributes: {
-            ...appConfig.get().personState.data.attributes,
+            ...appConfigGlobal.get().personState.data.attributes,
             ...updatedAttributes,
           },
         },
@@ -241,7 +267,7 @@ export const initialize = async (
   }
 
   logger.debug("Adding event listeners");
-  addEventListeners(appConfig);
+  addEventListeners(appConfigGlobal);
   addCleanupEventListeners();
 
   setIsInitialized(true);
@@ -292,7 +318,7 @@ export const deinitalize = (): void => {
   setIsInitialized(false);
 };
 
-export const putFormbricksInErrorState = (): void => {
+export const putFormbricksInErrorState = (appConfig: AppConfig): void => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
@@ -301,7 +327,7 @@ export const putFormbricksInErrorState = (): void => {
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
   appConfig.update({
-    ...appConfig.get(),
+    ...appConfigGlobal.get(),
     status: {
       value: "error",
       expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future

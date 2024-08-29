@@ -31,7 +31,6 @@ export const setIsInitialized = (value: boolean) => {
 };
 
 const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
-  logger.debug("Migrating local storage");
   const oldConfig = localStorage.getItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
 
   let newWebsiteConfig: TJsConfig;
@@ -39,6 +38,7 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
     const parsedOldConfig = JSON.parse(oldConfig);
     // if the old config follows the older structure, we need to migrate it
     if (parsedOldConfig.state || parsedOldConfig.expiresAt) {
+      logger.debug("Migrating local storage");
       const { apiHost, environmentId, state, expiresAt } = parsedOldConfig as {
         apiHost: string;
         environmentId: string;
@@ -177,8 +177,6 @@ export const initialize = async (
 
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
-
-  console.log({ existingConfig, configInput });
 
   if (
     existingConfig &&
