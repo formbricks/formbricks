@@ -1,8 +1,10 @@
+import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { processResponseData } from "@formbricks/lib/responses";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import {
   TSurvey,
   TSurveyMatrixQuestion,
@@ -102,12 +104,42 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         return <AddressResponse value={responseData} />;
       }
       break;
+    case TSurveyQuestionTypeEnum.Cal:
+      if (typeof responseData === "string" || typeof responseData === "number") {
+        return (
+          <ResponseBadges
+            items={[capitalizeFirstLetter(responseData.toString())]}
+            isExpanded={true}
+            icon={<PhoneIcon className="h-4 w-4 text-slate-500" />}
+          />
+        );
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Consent:
+      if (typeof responseData === "string" || typeof responseData === "number") {
+        return (
+          <ResponseBadges
+            items={[capitalizeFirstLetter(responseData.toString())]}
+            isExpanded={true}
+            icon={<CheckCheckIcon className="h-4 w-4 text-slate-500" />}
+          />
+        );
+      }
+      break;
     case TSurveyQuestionTypeEnum.CTA:
+      if (typeof responseData === "string" || typeof responseData === "number") {
+        return (
+          <ResponseBadges
+            items={[capitalizeFirstLetter(responseData.toString())]}
+            isExpanded={true}
+            icon={<MousePointerClickIcon className="h-4 w-4 text-slate-500" />}
+          />
+        );
+      }
+      break;
     case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
     case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
     case TSurveyQuestionTypeEnum.NPS:
-    case TSurveyQuestionTypeEnum.Consent:
-    case TSurveyQuestionTypeEnum.Cal:
       if (typeof responseData === "string" || typeof responseData === "number") {
         return <ResponseBadges items={[responseData.toString()]} isExpanded={true} />;
       } else if (Array.isArray(responseData)) {

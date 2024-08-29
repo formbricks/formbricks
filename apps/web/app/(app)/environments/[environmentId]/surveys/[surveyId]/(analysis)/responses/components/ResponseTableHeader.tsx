@@ -3,7 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Column, Header, flexRender } from "@tanstack/react-table";
 import { GripVerticalIcon } from "lucide-react";
-import React, { CSSProperties } from "react";
+import { CSSProperties } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TableHead } from "@formbricks/ui/Table";
@@ -15,7 +15,6 @@ interface ResponseTableHeaderProps {
 
 export const getCommonPinningStyles = (column: Column<TResponseTableData>): CSSProperties => {
   return {
-    boxShadow: "-4px 0 4px -4px gray inset",
     left: `${column.getStart("left") - 1}px`,
     right: `${column.getAfter("right")}px`,
     position: "sticky",

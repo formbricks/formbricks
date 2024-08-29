@@ -2,8 +2,9 @@
 
 import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
 import { ColumnDef } from "@tanstack/react-table";
-import { EyeOffIcon, MailIcon } from "lucide-react";
+import { EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { processResponseData } from "@formbricks/lib/responses";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
@@ -153,24 +154,22 @@ export const generateColumns = (
   };
 
   const dateColumn: ColumnDef<TResponseTableData> = {
-    accessorKey: "createdAt", // Use the correct key where the date is stored in your response data
+    accessorKey: "createdAt",
     header: () => <span>Date</span>,
     cell: ({ row }) => {
-      const isoDateString = row.original.createdAt; // Get the ISO date string
-      const date = new Date(isoDateString); // Convert string to Date object
+      const isoDateString = row.original.createdAt;
+      const date = new Date(isoDateString);
 
-      // Format the date as 'YYYY/MM/DD' (you can adjust the format as needed)
-      const formattedDate = date.toLocaleDateString(undefined, {
+      const formattedDate = date.toLocaleString(undefined, {
         year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+        month: "long",
+        day: "numeric",
       });
 
-      // Format the time as 'HH:MM AM/PM' (12-hour clock format)
-      const formattedTime = date.toLocaleTimeString(undefined, {
+      const formattedTime = date.toLocaleString(undefined, {
         hour: "2-digit",
         minute: "2-digit",
-        hour12: true,
+        hour12: false,
       });
 
       return (
@@ -198,7 +197,13 @@ export const generateColumns = (
       const tags = getValue(); // Get the ISO date string
       if (Array.isArray(tags)) {
         const tagsArray = tags.map((tag) => tag.name);
-        return <ResponseBadges items={tagsArray} isExpanded={isExpanded} />;
+        return (
+          <ResponseBadges
+            items={tagsArray}
+            isExpanded={isExpanded}
+            icon={<TagIcon className="h-4 w-4 text-slate-500" />}
+          />
+        );
       }
     },
   };
@@ -210,7 +215,7 @@ export const generateColumns = (
       const notes = getValue();
       if (Array.isArray(notes)) {
         const notesArray = notes.map((note) => note.text);
-        return <ResponseBadges items={notesArray} isExpanded={isExpanded} />;
+        return processResponseData(notesArray);
       }
     },
   };

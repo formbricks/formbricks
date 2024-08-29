@@ -1,7 +1,6 @@
 import { getCommonPinningStyles } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableHeader";
 import { Cell, Row, flexRender } from "@tanstack/react-table";
 import { Maximize2Icon } from "lucide-react";
-import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TableCell } from "@formbricks/ui/Table";
@@ -37,7 +36,7 @@ export const ResponseTableCell = ({
   // Conditional rendering of maximize icon
   const renderMaximizeIcon = cell.column.id === "createdAt" && (
     <div
-      className="hidden flex-shrink-0 cursor-pointer items-center group-hover:flex"
+      className="hidden flex-shrink-0 cursor-pointer items-center rounded-md border border-slate-200 bg-white p-2 hover:border-slate-300 group-hover:flex"
       onClick={handleCellClick}>
       <Maximize2Icon className="h-4 w-4" />
     </div>
@@ -47,7 +46,7 @@ export const ResponseTableCell = ({
     <TableCell
       key={cell.id}
       className={cn(
-        "border border-slate-300 bg-white group-hover:bg-slate-100",
+        "border border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
         row.getIsSelected() && "bg-slate-100"
       )}
       style={cellStyles}
