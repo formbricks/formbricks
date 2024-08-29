@@ -66,6 +66,54 @@ export const getDocumentsByInsightId = reactCache(
     )()
 );
 
+export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
+  (
+    insightId: string,
+    surveyId: string,
+    questionId: string,
+    limit?: number,
+    offset?: number
+  ): Promise<TDocument[]> =>
+    cache(
+      async () => {
+        validateInputs([insightId, ZId]);
+
+        limit = limit ?? DOCUMENTS_PER_PAGE;
+        try {
+          const documents = await prisma.document.findMany({
+            where: {
+              questionId,
+              documentInsights: {
+                some: {
+                  insightId,
+                },
+              },
+            },
+            orderBy: [
+              {
+                createdAt: "desc",
+              },
+            ],
+            take: limit ? limit : undefined,
+            skip: offset ? offset : undefined,
+          });
+
+          return documents;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getDocumentsByInsightIdQuestionId-${insightId}-${limit}-${offset}`],
+      {
+        tags: [documentCache.tag.bySurveyIdQuestionId(surveyId, questionId)],
+      }
+    )()
+);
+
 export const createDocument = async (documentInput: TDocumentCreateInput): Promise<TDocument> => {
   validateInputs([documentInput, ZDocumentCreateInput]);
 

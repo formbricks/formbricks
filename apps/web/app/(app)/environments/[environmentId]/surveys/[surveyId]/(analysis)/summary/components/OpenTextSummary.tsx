@@ -63,7 +63,13 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
-      <InsightSheet isOpen={isInsightSheetOpen} setIsOpen={setIsInsightSheetOpen} insight={currentInsight} />
+      <InsightSheet
+        isOpen={isInsightSheetOpen}
+        setIsOpen={setIsInsightSheetOpen}
+        insight={currentInsight}
+        surveyId={survey.id}
+        questionId={questionSummary.question.id}
+      />
       {isAiEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
       <div className="max-h-[40vh] overflow-y-auto">
         {activeTab === "insights" ? (

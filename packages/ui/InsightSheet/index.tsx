@@ -7,17 +7,19 @@ import { timeSince } from "@formbricks/lib/time";
 import { TDocument } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "../Badge";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../Card";
+import { Card, CardContent, CardFooter } from "../Card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "../Sheet";
-import { getDocumentsByInsightIdAction } from "./actions";
+import { getDocumentsByInsightIdSurveyIdQuestionIdAction } from "./actions";
 
 interface InsightSheetProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   insight: TInsight | null;
+  surveyId: string;
+  questionId: string;
 }
 
-export const InsightSheet = ({ isOpen, setIsOpen, insight }: InsightSheetProps) => {
+export const InsightSheet = ({ isOpen, setIsOpen, insight, surveyId, questionId }: InsightSheetProps) => {
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
   useEffect(() => {
@@ -29,7 +31,11 @@ export const InsightSheet = ({ isOpen, setIsOpen, insight }: InsightSheetProps) 
       if (!insight) {
         throw Error("Insight is required to fetch documents");
       }
-      const documentsResponse = await getDocumentsByInsightIdAction({ insightId: insight.id });
+      const documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
+        insightId: insight.id,
+        surveyId,
+        questionId,
+      });
       console.log(documentsResponse);
       if (!documentsResponse?.data) {
         const errorMessage = getFormattedErrorMessage(documentsResponse);
