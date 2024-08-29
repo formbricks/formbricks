@@ -91,7 +91,6 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
       return { changed: true, newState: newWebsiteConfig };
     }
 
-    logger.debug("Local storage already in new format");
     return { changed: false };
   }
 
