@@ -1,3 +1,4 @@
+import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { ResponseTableHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableHeader";
@@ -23,8 +24,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
-import { Modal } from "@formbricks/ui/Modal";
-import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
@@ -58,7 +57,7 @@ export const ResponseTable = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [selectedResponseCard, setSelectedResponseCard] = useState<TResponse | null>(null);
+  const [selectedResponse, setSelectedResponse] = useState<TResponse | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
@@ -170,7 +169,7 @@ export const ResponseTable = ({
                         cell={cell}
                         row={row}
                         isExpanded={isExpanded}
-                        setSelectedResponseCard={setSelectedResponseCard}
+                        setSelectedResponseCard={setSelectedResponse}
                         responses={responses}
                       />
                     ))}
@@ -204,26 +203,19 @@ export const ResponseTable = ({
           handleDragEnd={handleDragEnd}
         />
 
-        {selectedResponseCard && (
-          <Modal
-            open={!!selectedResponseCard}
-            setOpen={(isOpen) => !isOpen && setSelectedResponseCard(null)}
-            closeOnOutsideClick={true}
-            className="max-h-[80vh] overflow-auto rounded-lg bg-slate-50"
-            size="xxl">
-            <SingleResponseCard
-              survey={survey}
-              response={selectedResponseCard}
-              user={user}
-              pageType="response"
-              environment={environment}
-              environmentTags={environmentTags}
-              isViewer={isViewer}
-              updateResponse={updateResponse}
-              deleteResponses={deleteResponses}
-              setSelectedResponseCard={setSelectedResponseCard}
-            />
-          </Modal>
+        {responses && (
+          <ResponseCardModal
+            survey={survey}
+            responses={responses}
+            user={user}
+            environment={environment}
+            environmentTags={environmentTags}
+            isViewer={isViewer}
+            updateResponse={updateResponse}
+            deleteResponses={deleteResponses}
+            setSelectedResponse={setSelectedResponse}
+            selectedResponse={selectedResponse}
+          />
         )}
       </DndContext>
     </div>
