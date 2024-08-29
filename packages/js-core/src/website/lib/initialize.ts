@@ -22,7 +22,6 @@ import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } 
 import { checkPageUrl } from "./noCodeActions";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
@@ -104,6 +103,9 @@ export const initialize = async (
   configInput: TJsWebsiteConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   migrateLocalStorage();
+
+  const websiteConfig = WebsiteConfig.getInstance();
+
   const isDebug = getIsDebug();
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
@@ -201,7 +203,7 @@ export const initialize = async (
           filteredSurveys,
         });
       } catch (e) {
-        putFormbricksInErrorState();
+        putFormbricksInErrorState(websiteConfig);
       }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
@@ -308,7 +310,7 @@ export const deinitalize = (): void => {
   setIsInitialized(false);
 };
 
-export const putFormbricksInErrorState = (): void => {
+export const putFormbricksInErrorState = (websiteConfig: WebsiteConfig): void => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
