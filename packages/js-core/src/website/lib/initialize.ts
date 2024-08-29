@@ -30,8 +30,8 @@ export const setIsInitialized = (value: boolean) => {
   isInitialized = value;
 };
 
-const migrateLocalStorage = () => {
-  console.log("trynna migrate local storage");
+const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
+  logger.debug("Migrating local storage");
   const oldConfig = localStorage.getItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
 
   let newWebsiteConfig: TJsConfig;
@@ -39,9 +39,6 @@ const migrateLocalStorage = () => {
     const parsedOldConfig = JSON.parse(oldConfig);
     // if the old config follows the older structure, we need to migrate it
     if (parsedOldConfig.state || parsedOldConfig.expiresAt) {
-      console.log("oldConfig follows the older structure, migrating");
-      console.log({ parsedOldConfig });
-
       const { apiHost, environmentId, state, expiresAt } = parsedOldConfig as {
         apiHost: string;
         environmentId: string;
@@ -59,8 +56,6 @@ const migrateLocalStorage = () => {
         ? displaysState.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
             .createdAt
         : null;
-
-      console.log({ displays, responses, lastDisplayAt });
 
       newWebsiteConfig = {
         apiHost,
@@ -91,20 +86,35 @@ const migrateLocalStorage = () => {
         },
       };
 
-      console.log({ newWebsiteConfig });
+      logger.debug("Migrated local storage to new format");
 
-      localStorage.removeItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
-      localStorage.setItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(newWebsiteConfig));
+      return { changed: true, newState: newWebsiteConfig };
     }
+
+    logger.debug("Local storage already in new format");
+    return { changed: false };
   }
+
+  return { changed: false };
 };
 
 export const initialize = async (
   configInput: TJsWebsiteConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  migrateLocalStorage();
+  const { changed, newState } = migrateLocalStorage();
+  let websiteConfig = WebsiteConfig.getInstance();
 
-  const websiteConfig = WebsiteConfig.getInstance();
+  // If the state was changed due to migration, reset and reinitialize the configuration
+  if (changed && newState) {
+    // The state exists in the local storage, so this should not fail
+    websiteConfig.resetConfig(); // Reset the configuration
+
+    // Re-fetch a new instance of WebsiteConfig after resetting
+    websiteConfig = WebsiteConfig.getInstance();
+
+    // Update the new instance with the migrated state
+    websiteConfig.update(newState);
+  }
 
   const isDebug = getIsDebug();
   if (isDebug) {
