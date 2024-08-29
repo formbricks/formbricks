@@ -24,6 +24,7 @@ import {
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
+import { getInsightsBySurveyIdQuestionId } from "../insight/service";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
@@ -698,15 +699,15 @@ const checkForI18n = (response: TResponse, id: string, survey: TSurvey, language
   return getLocalizedValue(choice?.label, "default") || response.data[id];
 };
 
-export const getQuestionWiseSummary = (
+export const getQuestionWiseSummary = async (
   survey: TSurvey,
   responses: TResponse[],
   dropOff: TSurveySummary["dropOff"]
-): TSurveySummary["summary"] => {
+): Promise<TSurveySummary["summary"]> => {
   const VALUES_LIMIT = 50;
   let summary: TSurveySummary["summary"] = [];
 
-  survey.questions.forEach((question, idx) => {
+  for (const question of survey.questions) {
     switch (question.type) {
       case TSurveyQuestionTypeEnum.OpenText: {
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
@@ -722,15 +723,17 @@ export const getQuestionWiseSummary = (
             });
           }
         });
+        const insights = await getInsightsBySurveyIdQuestionId(survey.id, question.id);
 
         summary.push({
           type: question.type,
           question,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
+          insights,
         });
 
-        values = [];
+        values;
         break;
       }
       case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
@@ -976,6 +979,7 @@ export const getQuestionWiseSummary = (
         });
 
         const totalResponses = data.clicked + data.dismissed;
+        const idx = survey.questions.findIndex((q) => q.id === question.id);
         const impressions = dropOff[idx].impressions;
 
         summary.push({
@@ -1193,7 +1197,7 @@ export const getQuestionWiseSummary = (
         break;
       }
     }
-  });
+  }
 
   survey.hiddenFields?.fieldIds?.forEach((hiddenFieldId) => {
     let values: TSurveyQuestionSummaryHiddenFields["samples"] = [];

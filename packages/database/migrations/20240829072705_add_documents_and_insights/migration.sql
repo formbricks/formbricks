@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- CreateEnum
-CREATE TYPE "InsightCategory" AS ENUM ('enhancementRequest', 'complaint', 'praise');
+CREATE TYPE "InsightCategory" AS ENUM ('featureRequest', 'complaint', 'praise');
 
 -- CreateEnum
 CREATE TYPE "Sentiment" AS ENUM ('positive', 'negative', 'neutral');
@@ -35,6 +35,7 @@ CREATE TABLE "Document" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "environmentId" TEXT NOT NULL,
+    "surveyId" TEXT,
     "responseId" TEXT,
     "questionId" TEXT,
     "sentiment" "Sentiment" NOT NULL,
@@ -61,6 +62,9 @@ ALTER TABLE "DocumentInsight" ADD CONSTRAINT "DocumentInsight_insightId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "Document" ADD CONSTRAINT "Document_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Document" ADD CONSTRAINT "Document_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Document" ADD CONSTRAINT "Document_responseId_fkey" FOREIGN KEY ("responseId") REFERENCES "Response"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -3,9 +3,10 @@ import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
+import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_AI_ENABLED, IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -60,9 +61,13 @@ const Page = async ({ params }) => {
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+
   const isAiEnabled =
+    isEnterpriseEdition &&
     IS_FORMBRICKS_CLOUD &&
-    (organization.billing.plan === "scale" || organization.billing.plan === "enterprise");
+    (organization.billing.plan === "scale" || organization.billing.plan === "enterprise") &&
+    IS_AI_ENABLED;
 
   return (
     <PageContentWrapper>

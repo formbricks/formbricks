@@ -2,10 +2,10 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { createDocument } from "@formbricks/ee/ai-analysis/lib/document/service";
 import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { CRON_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { createDocument } from "@formbricks/lib/document/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -184,6 +184,7 @@ export const POST = async (request: Request) => {
               console.log("creating embedding for question response", question.id);
               await createDocument({
                 environmentId,
+                surveyId,
                 responseId: response.id,
                 questionId: question.id,
                 text,

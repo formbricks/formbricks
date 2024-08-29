@@ -323,6 +323,7 @@ model Survey {
   displayPercentage    Decimal?
   languages            SurveyLanguage[]
   showLanguageSwitch   Boolean?
+  documents            Document[]
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
@@ -664,22 +665,22 @@ model SurveyLanguage {
 }
 
 enum InsightCategory {
-  enhancementRequest
+  featureRequest
   complaint
   praise
 }
 
 model Insight {
-  id            String                      @id @default(cuid())
-  createdAt     DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
-  environmentId String
-  environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  category      InsightCategory
-  title         String
-  description   String
-  vector        Unsupported("vector(512)")?
-  documents     DocumentInsight[]
+  id               String                      @id @default(cuid())
+  createdAt        DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
+  environmentId    String
+  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  category         InsightCategory
+  title            String
+  description      String
+  vector           Unsupported("vector(512)")?
+  documentInsights DocumentInsight[]
 }
 
 model DocumentInsight {
@@ -704,6 +705,8 @@ model Document {
   updatedAt     DateTime                    @updatedAt @map(name: "updated_at")
   environmentId String
   environment   Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  surveyId      String?
+  survey        Survey?                     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   responseId    String?
   response      Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
   questionId    String?

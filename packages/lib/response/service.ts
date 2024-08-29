@@ -480,7 +480,7 @@ export const getSurveySummary = reactCache(
 
           const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
           const meta = getSurveySummaryMeta(responses, displayCount);
-          const questionWiseSummary = getQuestionWiseSummary(survey, responses, dropOff);
+          const questionWiseSummary = await getQuestionWiseSummary(survey, responses, dropOff);
 
           return { meta, dropOff, summary: questionWiseSummary };
         } catch (error) {

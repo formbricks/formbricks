@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "./environment";
 
-export const ZInsightCategory = z.enum(["enhancementRequest", "complaint", "praise"]);
+export const ZInsightCategory = z.enum(["featureRequest", "complaint", "praise"]);
 
 export type TInsightCategory = z.infer<typeof ZInsightCategory>;
 
@@ -13,6 +13,9 @@ export const ZInsight = z.object({
   title: z.string(),
   description: z.string(),
   category: ZInsightCategory,
+  _count: z.object({
+    documentInsights: z.number(),
+  }),
 });
 
 export type TInsight = z.infer<typeof ZInsight>;

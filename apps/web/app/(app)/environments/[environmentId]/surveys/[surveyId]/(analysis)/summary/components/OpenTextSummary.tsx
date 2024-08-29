@@ -1,3 +1,4 @@
+import { UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
@@ -5,7 +6,10 @@ import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
+import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@formbricks/ui/Table";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {
@@ -24,8 +28,9 @@ export const OpenTextSummary = ({
   isAiEnabled,
 }: OpenTextSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
-  const [isLoadingAiSummary, setIsLoadingAiSummary] = useState(false);
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"insights" | "responses">(
+    isAiEnabled ? "insights" : "responses"
+  );
 
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
@@ -34,6 +39,19 @@ export const OpenTextSummary = ({
     );
   };
 
+  const tabNavigation = [
+    {
+      id: "insights",
+      label: "Insights",
+      onClick: () => setActiveTab("insights"),
+    },
+    {
+      id: "responses",
+      label: "Responses",
+      onClick: () => setActiveTab("responses"),
+    },
+  ];
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -41,55 +59,80 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
-      <div className="p-4"></div>
-      <div className="">
-        <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
-          <div className="pl-4 md:pl-6">User</div>
-          <div className="col-span-2 pl-4 md:pl-6">Response</div>
-          <div className="px-4 md:px-6">Time</div>
-        </div>
-        <div className="max-h-[62vh] w-full overflow-y-auto">
-          {questionSummary.samples.slice(0, visibleResponses).map((response) => (
-            <div
-              key={response.id}
-              className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 last:border-transparent md:text-base">
-              <div className="pl-4 md:pl-6">
-                {response.person ? (
-                  <Link
-                    className="ph-no-capture group flex items-center"
-                    href={`/environments/${environmentId}/people/${response.person.id}`}>
-                    <div className="hidden md:flex">
-                      <PersonAvatar personId={response.person.id} />
-                    </div>
-                    <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                      {getPersonIdentifier(response.person, response.personAttributes)}
-                    </p>
-                  </Link>
-                ) : (
-                  <div className="group flex items-center">
-                    <div className="hidden md:flex">
-                      <PersonAvatar personId="anonymous" />
-                    </div>
-                    <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
-                  </div>
-                )}
+      <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />
+      <div className="max-h-[40vh] overflow-y-auto">
+        {activeTab === "insights" ? (
+          <Table className="border-t border-slate-200">
+            <TableBody>
+              {questionSummary.insights.map((insight) => (
+                <TableRow className="cursor-pointer hover:bg-slate-50">
+                  <TableCell className="flex font-medium">
+                    {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
+                  </TableCell>
+                  <TableCell className="font-medium">{insight.title}</TableCell>
+                  <TableCell>{insight.description}</TableCell>
+                  <TableCell>
+                    {insight.category === "complaint" ? (
+                      <Badge text="Complaint" type="error" size="tiny" />
+                    ) : insight.category === "featureRequest" ? (
+                      <Badge text="Feature Request" type="warning" size="tiny" />
+                    ) : insight.category === "praise" ? (
+                      <Badge text="Praise" type="success" size="tiny" />
+                    ) : null}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : activeTab === "responses" ? (
+          <>
+            <Table className="border-t border-slate-200">
+              <TableHeader className="bg-slate-100">
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Response</TableHead>
+                  <TableHead>Time</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {questionSummary.samples.slice(0, visibleResponses).map((response) => (
+                  <TableRow key={response.id}>
+                    <TableCell>
+                      {response.person ? (
+                        <Link
+                          className="ph-no-capture group flex items-center"
+                          href={`/environments/${environmentId}/people/${response.person.id}`}>
+                          <div className="hidden md:flex">
+                            <PersonAvatar personId={response.person.id} />
+                          </div>
+                          <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
+                            {getPersonIdentifier(response.person, response.personAttributes)}
+                          </p>
+                        </Link>
+                      ) : (
+                        <div className="group flex items-center">
+                          <div className="hidden md:flex">
+                            <PersonAvatar personId="anonymous" />
+                          </div>
+                          <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{response.value}</TableCell>
+                    <TableCell>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {visibleResponses < questionSummary.samples.length && (
+              <div className="flex justify-center py-4">
+                <Button onClick={handleLoadMore} variant="secondary" size="sm">
+                  Load more
+                </Button>
               </div>
-              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold" dir="auto">
-                {response.value}
-              </div>
-              <div className="px-4 text-slate-500 md:px-6">
-                {timeSince(new Date(response.updatedAt).toISOString())}
-              </div>
-            </div>
-          ))}
-        </div>
-        {visibleResponses < questionSummary.samples.length && (
-          <div className="flex justify-center py-4">
-            <Button onClick={handleLoadMore} variant="secondary" size="sm">
-              Load more
-            </Button>
-          </div>
-        )}
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );

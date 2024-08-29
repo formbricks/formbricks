@@ -2,7 +2,13 @@ import Link from "next/link";
 import { cn } from "@formbricks/lib/cn";
 
 interface SecondaryNavbarProps {
-  navigation: { id: string; label: string; href: string; icon?: React.ReactNode; hidden?: boolean }[];
+  navigation: {
+    id: string;
+    label: string;
+    href?: string;
+    onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+    hidden?: boolean;
+  }[];
   activeId: string;
   loading?: boolean;
 }
@@ -33,19 +39,38 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
           ) : (
             <>
               {navigation.map((navElem) => (
-                <Link
-                  key={navElem.id}
-                  href={navElem.href}
-                  className={cn(
-                    navElem.id === activeId
-                      ? "border-brand-dark border-b-2 font-semibold text-slate-900"
-                      : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
-                    "flex h-full items-center border-b-2 px-3 text-sm font-medium",
-                    navElem.hidden && "hidden"
+                <>
+                  {navElem.href ? (
+                    <Link
+                      key={navElem.id}
+                      href={navElem.href}
+                      {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
+                      className={cn(
+                        navElem.id === activeId
+                          ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                          : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
+                        "flex h-full items-center border-b-2 px-3 text-sm font-medium",
+                        navElem.hidden && "hidden"
+                      )}
+                      aria-current={navElem.id === activeId ? "page" : undefined}>
+                      {navElem.label}
+                    </Link>
+                  ) : (
+                    <button
+                      key={navElem.id}
+                      {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
+                      className={cn(
+                        navElem.id === activeId
+                          ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                          : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
+                        "flex h-full items-center border-b-2 px-3 text-sm font-medium",
+                        navElem.hidden && "hidden"
+                      )}
+                      aria-current={navElem.id === activeId ? "page" : undefined}>
+                      {navElem.label}
+                    </button>
                   )}
-                  aria-current={navElem.id === activeId ? "page" : undefined}>
-                  {navElem.label}
-                </Link>
+                </>
               ))}
             </>
           )}

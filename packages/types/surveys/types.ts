@@ -3,6 +3,7 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "../common";
 import { ZId } from "../environment";
+import { ZInsight } from "../insights";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
@@ -1063,6 +1064,7 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       personAttributes: ZAttributes.nullable(),
     })
   ),
+  insights: z.array(ZInsight),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;
@@ -1347,6 +1349,8 @@ export const ZSurveySummary = z.object({
   summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),
 });
 
+export type TSurveySummary = z.infer<typeof ZSurveySummary>;
+
 export const ZSurveyFilterCriteria = z.object({
   name: z.string().optional(),
   status: z.array(ZSurveyStatus).optional(),
@@ -1385,7 +1389,6 @@ const ZSortOption = z.object({
 });
 
 export type TSortOption = z.infer<typeof ZSortOption>;
-export type TSurveySummary = z.infer<typeof ZSurveySummary>;
 
 export const ZSurveyRecallItem = z.object({
   id: z.string(),

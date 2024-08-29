@@ -21,8 +21,9 @@ export type TDocument = z.infer<typeof ZDocument>;
 
 export const ZDocumentCreateInput = z.object({
   environmentId: ZId,
-  responseId: ZId.optional(),
-  questionId: ZId.optional(),
+  surveyId: ZId,
+  responseId: ZId,
+  questionId: ZId,
   text: z.string(),
 });
 

@@ -4,8 +4,6 @@ import { embed, generateObject } from "ai";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import {
   TDocument,
   TDocumentCreateInput,
@@ -15,10 +13,11 @@ import {
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZInsightCategory } from "@formbricks/types/insights";
-import { embeddingsModel, llmModel } from "../../../ai/lib/utils";
-import { createInsight, findNearestInsights } from "../insight/service";
-import { getInsightVectorText } from "../insight/utils";
+import { embeddingsModel, llmModel } from "../ai";
+import { cache } from "../cache";
+import { validateInputs } from "../utils/validate";
 import { documentCache } from "./cache";
+import { handleInsightAssignments } from "./utils";
 
 export type TPrismaDocument = Omit<TDocument, "vector"> & {
   vector: string;
@@ -51,8 +50,6 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
       prompt: `Analyze this feedback: "${documentInput.text}"`,
     });
 
-    console.log(JSON.stringify(object, null, 2));
-
     const sentiment = object.sentiment;
     const insights = object.insights;
 
@@ -78,48 +75,23 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
       `;
 
     // connect or create the insights
+    const insightPromises: Promise<void>[] = [];
     for (const insight of insights) {
       if (typeof insight.title !== "string" || typeof insight.description !== "string") {
         throw new Error("Insight title and description must be a string");
       }
-      // create embedding for insight
-      const { embedding } = await embed({
-        model: embeddingsModel,
-        value: getInsightVectorText(insight.title, insight.description),
-      });
-      // find close insight to merge it with
-      const nearestInsights = await findNearestInsights(documentInput.environmentId, embedding, 1, 0.2);
-      if (nearestInsights.length > 0) {
-        // create a documentInsight with this insight
-        console.log(`Merging ${insight.title} with existing insight: ${nearestInsights[0].id}`);
-        await prisma.documentInsight.create({
-          data: {
-            documentId: document.id,
-            insightId: nearestInsights[0].id,
-          },
-        });
-      } else {
-        console.log(`Creating new insight for ${insight.title}`);
-        // create new insight and documentInsight
-        const newInsight = await createInsight({
-          environmentId: documentInput.environmentId,
-          title: insight.title,
-          description: insight.description,
-          category: insight.category,
-          vector: embedding,
-        });
-        // create a documentInsight with this insight
-        await prisma.documentInsight.create({
-          data: {
-            documentId: document.id,
-            insightId: newInsight.id,
-          },
-        });
-      }
+
+      // create or connect the insight
+      insightPromises.push(handleInsightAssignments(documentInput.environmentId, document.id, insight));
     }
+    await Promise.all(insightPromises);
 
     documentCache.revalidate({
       id: document.id,
+      environmentId: document.environmentId,
+      surveyId: document.surveyId,
+      responseId: document.responseId,
+      questionId: document.questionId,
     });
 
     return document;
