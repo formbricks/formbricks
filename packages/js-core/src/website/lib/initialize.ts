@@ -60,7 +60,7 @@ const migrateLocalStorage = () => {
         ? displaysState.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
         : null;
 
-      console.log({ displays, responses });
+      console.log({ displays, responses, lastDisplayAt });
 
       newWebsiteConfig = {
         apiHost,
