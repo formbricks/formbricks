@@ -1,4 +1,4 @@
-import type { TJsConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+import type { TJsConfig, TJsWebsiteConfigInput, TJsWebsiteState } from "@formbricks/types/js";
 import { WEBSITE_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import { fetchEnvironmentState } from "../../shared/environmentState";
 import {
@@ -31,9 +31,66 @@ export const setIsInitialized = (value: boolean) => {
   isInitialized = value;
 };
 
+const migrateLocalStorage = () => {
+  const oldConfig = localStorage.getItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
+
+  let newWebsiteConfig: TJsConfig;
+  if (oldConfig) {
+    const parsedOldConfig = JSON.parse(oldConfig);
+    // if the old config follows the older structure, we need to migrate it
+    if (parsedOldConfig.state || parsedOldConfig.expiresAt) {
+      const { apiHost, environmentId, state } = parsedOldConfig as {
+        apiHost: string;
+        environmentId: string;
+        state: TJsWebsiteState;
+      };
+      const { displays: displaysState, actionClasses, product, surveys } = state;
+
+      const responses = displaysState
+        .filter((display) => display.responded)
+        .map((display) => display.surveyId);
+
+      const displays = displaysState.map((display) => display.surveyId);
+
+      newWebsiteConfig = {
+        apiHost,
+        environmentId,
+        environmentState: {
+          data: {
+            surveys,
+            actionClasses,
+            product,
+          },
+          expiresAt: new Date(),
+        },
+        personState: {
+          expiresAt: new Date(),
+          data: {
+            userId: null,
+            segments: [],
+            displays,
+            responses,
+            attributes: {},
+            lastDisplayAt: new Date(),
+          },
+        },
+        filteredSurveys: surveys,
+        status: {
+          value: "success",
+          expiresAt: null,
+        },
+      };
+
+      localStorage.removeItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
+      localStorage.setItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(newWebsiteConfig));
+    }
+  }
+};
+
 export const initialize = async (
   configInput: TJsWebsiteConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  migrateLocalStorage();
   const isDebug = getIsDebug();
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
