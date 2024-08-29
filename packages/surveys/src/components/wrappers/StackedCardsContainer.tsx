@@ -174,7 +174,7 @@ export const StackedCardsContainer = ({
       {cardArrangement === "simple" ? (
         <div
           id={`questionCard-${questionIdxTemp}`}
-          className={cn("fb-w-full", fullSizeCards ? "fb-h-full" : "")}
+          className={cn("fb-w-full fb-bg-survey-bg", fullSizeCards ? "fb-h-full" : "")}
           style={{
             ...borderStyles,
           }}>

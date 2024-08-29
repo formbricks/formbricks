@@ -72,10 +72,14 @@ export const generateQuestionAndFilterOptions = (
   questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
-      if (
-        q.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-        q.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
-      ) {
+      if (q.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: conditionOptions[q.type],
+          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
+          id: q.id,
+        });
+      } else if (q.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
