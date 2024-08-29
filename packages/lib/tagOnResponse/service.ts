@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 import { cache } from "../cache";

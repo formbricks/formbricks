@@ -1,9 +1,11 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
+import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@formbricks/ui/Button";
@@ -36,9 +38,26 @@ export const HiddenFieldsCard = ({
     }
   };
 
-  const updateSurvey = (data: TSurveyHiddenFields) => {
+  const updateSurvey = (data: TSurveyHiddenFields, currentFieldId?: string) => {
+    const questions = [...localSurvey.questions];
+
+    // Remove recall info from question headlines
+    if (currentFieldId) {
+      questions.forEach((question) => {
+        for (const [languageCode, headline] of Object.entries(question.headline)) {
+          if (headline.includes(`recall:${currentFieldId}`)) {
+            const recallInfo = extractRecallInfo(headline);
+            if (recallInfo) {
+              question.headline[languageCode] = headline.replace(recallInfo, "");
+            }
+          }
+        }
+      });
+    }
+
     setLocalSurvey({
       ...localSurvey,
+      questions,
       hiddenFields: {
         ...localSurvey.hiddenFields,
         ...data,
@@ -53,7 +72,7 @@ export const HiddenFieldsCard = ({
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
-        <p>🥷</p>
+        <EyeOff className="h-4 w-4" />
       </div>
       <Collapsible.Root
         open={open}
@@ -93,10 +112,13 @@ export const HiddenFieldsCard = ({
                   <Tag
                     key={fieldId}
                     onDelete={() => {
-                      updateSurvey({
-                        enabled: true,
-                        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
-                      });
+                      updateSurvey(
+                        {
+                          enabled: true,
+                          fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
+                        },
+                        fieldId
+                      );
                     }}
                     tagId={fieldId}
                     tagName={fieldId}

@@ -22,11 +22,17 @@ export const wrap =
   (result: Result<T>): Result<R> =>
     result.ok === true ? { ok: true, value: fn(result.value) } : result;
 
-export const match = <TSuccess, TError, TReturn>(
+export function match<TSuccess, TError, TReturn>(
   result: Result<TSuccess, TError>,
   onSuccess: (value: TSuccess) => TReturn,
   onError: (error: TError) => TReturn
-): TReturn => (result.ok === true ? onSuccess(result.value) : onError(result.error));
+) {
+  if (result.ok === true) {
+    return onSuccess(result.value);
+  }
+
+  return onError(result.error);
+}
 
 /* 
 Usage: 

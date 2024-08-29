@@ -16,7 +16,7 @@ import {
   updateSegment,
 } from "@formbricks/lib/segment/service";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 
 export const createSegmentAction = authenticatedActionClient

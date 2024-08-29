@@ -6,8 +6,8 @@ import { sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
 import { actionClient } from "@formbricks/lib/actionClient";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { ZId } from "@formbricks/types/common";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
-import { ZId } from "@formbricks/types/environment";
 
 export const sendLinkSurveyEmailAction = actionClient
   .schema(ZLinkSurveyEmailData)

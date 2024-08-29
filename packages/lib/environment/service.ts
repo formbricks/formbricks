@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/common";
 import type {
   TEnvironment,
   TEnvironmentCreateInput,
@@ -12,7 +13,6 @@ import {
   ZEnvironment,
   ZEnvironmentCreateInput,
   ZEnvironmentUpdateInput,
-  ZId,
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { cache } from "../cache";

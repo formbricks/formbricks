@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZId } from "./environment";
+import { ZId } from "./common";
 
 export const ZDocumentSentiment = z.enum(["positive", "negative", "neutral"]);
 

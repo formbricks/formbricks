@@ -4,6 +4,7 @@ import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -24,7 +25,7 @@ interface PreviewSurveyProps {
   product: TProduct;
   environment: TEnvironment;
   languageCode: string;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
 }
 
 let surveyNameTemp: string;
@@ -145,7 +146,13 @@ export const PreviewSurvey = ({
 
   const updateQuestionId = useCallback(
     (newQuestionId: string) => {
-      if (!newQuestionId || newQuestionId === "hidden" || newQuestionId === "multiLanguage") return;
+      if (
+        !newQuestionId ||
+        newQuestionId === "hidden" ||
+        newQuestionId === "multiLanguage" ||
+        newQuestionId.includes("fb-variables-")
+      )
+        return;
       if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
       setQuestionId(newQuestionId);
     },
@@ -198,8 +205,8 @@ export const PreviewSurvey = ({
   const handlePreviewModalClose = () => {
     setIsModalOpen(false);
     setTimeout(() => {
-      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
       setIsModalOpen(true);
+      resetQuestionProgress();
     }, 1000);
   };
 

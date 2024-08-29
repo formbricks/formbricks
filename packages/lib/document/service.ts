@@ -4,13 +4,13 @@ import { embed, generateObject } from "ai";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/common";
 import {
   TDocument,
   TDocumentCreateInput,
   ZDocumentCreateInput,
   ZDocumentSentiment,
 } from "@formbricks/types/documents";
-import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZInsightCategory } from "@formbricks/types/insights";
 import { embeddingsModel, llmModel } from "../ai";

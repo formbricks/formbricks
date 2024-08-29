@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
 import { cache } from "../cache";

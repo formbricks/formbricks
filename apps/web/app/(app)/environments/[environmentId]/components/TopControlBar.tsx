@@ -2,15 +2,22 @@ import { TopControlButtons } from "@/app/(app)/environments/[environmentId]/comp
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductConfigChannel } from "@formbricks/types/product";
 
 interface SideBarProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   currentProductChannel: TProductConfigChannel;
+  membershipRole?: TMembershipRole;
 }
 
-export const TopControlBar = ({ environment, environments, currentProductChannel }: SideBarProps) => {
+export const TopControlBar = ({
+  environment,
+  environments,
+  currentProductChannel,
+  membershipRole,
+}: SideBarProps) => {
   return (
     <div className="fixed inset-0 top-0 z-30 flex h-14 w-full items-center justify-end bg-slate-50 px-6">
       <div className="shadow-xs z-10">
@@ -28,6 +35,7 @@ export const TopControlBar = ({ environment, environments, currentProductChannel
             environment={environment}
             environments={environments}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            membershipRole={membershipRole}
           />
         </div>
       </div>

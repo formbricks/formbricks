@@ -104,6 +104,7 @@ export const PREVIEW_SURVEY = {
     enabled: true,
     fieldIds: [],
   },
+  variables: [],
   displayOption: "displayOnce",
   recontactDays: null,
   displayLimit: null,

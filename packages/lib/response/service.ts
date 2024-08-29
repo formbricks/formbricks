@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
@@ -114,7 +114,7 @@ export const getResponsesByPersonId = reactCache(
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
             orderBy: {
-              updatedAt: "asc",
+              createdAt: "desc",
             },
           });
 
@@ -403,11 +403,13 @@ export const getResponses = reactCache(
         );
 
         limit = limit ?? RESPONSES_PER_PAGE;
+        const survey = await getSurvey(surveyId);
+        if (!survey) return [];
         try {
           const responses = await prisma.response.findMany({
             where: {
               surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
             select: responseSelection,
             orderBy: [
@@ -737,10 +739,13 @@ export const getResponseCountBySurveyId = reactCache(
         validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
         try {
+          const survey = await getSurvey(surveyId);
+          if (!survey) return 0;
+
           const responseCount = await prisma.response.count({
             where: {
               surveyId: surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
           });
           return responseCount;

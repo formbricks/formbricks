@@ -8,7 +8,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZSendEmbedSurveyPreviewEmailAction = z.object({

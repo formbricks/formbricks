@@ -59,7 +59,7 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
-      <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />
+      {isAiEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
       <div className="max-h-[40vh] overflow-y-auto">
         {activeTab === "insights" ? (
           <Table className="border-t border-slate-200">

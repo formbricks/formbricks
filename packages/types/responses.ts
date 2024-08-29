@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZAttributes } from "./attributes";
-import { ZId } from "./environment";
+import { ZId } from "./common";
 import { ZSurvey, ZSurveyLogicCondition } from "./surveys/types";
 import { ZTag } from "./tags";
 
