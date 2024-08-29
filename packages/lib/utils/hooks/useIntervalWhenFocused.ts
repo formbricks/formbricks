@@ -35,10 +35,8 @@ export const useIntervalWhenFocused = (
     window.addEventListener("focus", handleFocus);
     window.addEventListener("blur", handleBlur);
 
-    if (!intervalRef.current) {
-      // Handle initial focus
-      handleFocus();
-    }
+    // Handle initial focus
+    handleFocus();
 
     // Cleanup interval and event listeners when the component unmounts or dependencies change
     return () => {
