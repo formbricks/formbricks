@@ -430,7 +430,7 @@ export const QuestionsView = ({
   };
 
   return (
-    <div className="mt-16 w-full px-5 py-4">
+    <div className="mt-12 w-full px-5 py-4">
       <div className="mb-5 flex w-full flex-col gap-5">
         <EditWelcomeCard
           localSurvey={localSurvey}

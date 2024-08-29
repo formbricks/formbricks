@@ -5,18 +5,21 @@ import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-reac
 import { useRouter } from "next/navigation";
 import formbricks from "@formbricks/js/app";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/Button";
 
 interface TopControlButtonsProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
+  membershipRole?: TMembershipRole;
 }
 
 export const TopControlButtons = ({
   environment,
   environments,
   isFormbricksCloud,
+  membershipRole,
 }: TopControlButtonsProps) => {
   const router = useRouter();
   return (
@@ -44,16 +47,18 @@ export const TopControlButtons = ({
         }}>
         <CircleUserIcon strokeWidth={1.5} className="h-5 w-5" />
       </Button>
-      <Button
-        variant="secondary"
-        size="icon"
-        tooltip="New survey"
-        className="h-fit w-fit p-1"
-        onClick={() => {
-          router.push(`/environments/${environment.id}/surveys/templates`);
-        }}>
-        <PlusIcon strokeWidth={1.5} className="h-5 w-5" />
-      </Button>
+      {membershipRole && membershipRole !== "viewer" ? (
+        <Button
+          variant="secondary"
+          size="icon"
+          tooltip="New survey"
+          className="h-fit w-fit p-1"
+          onClick={() => {
+            router.push(`/environments/${environment.id}/surveys/templates`);
+          }}>
+          <PlusIcon strokeWidth={1.5} className="h-5 w-5" />
+        </Button>
+      ) : null}
     </div>
   );
 };

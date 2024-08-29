@@ -37,7 +37,7 @@ export const calculateTtcTotal = (ttc: TResponseTtc) => {
   return result;
 };
 
-export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
+export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
   // For finished
@@ -197,6 +197,8 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
     const data: Prisma.ResponseWhereInput[] = [];
 
     Object.entries(filterCriteria.data).forEach(([key, val]) => {
+      const question = survey.questions.find((question) => question.id === key);
+
       switch (val.op) {
         case "submitted":
           data.push({
@@ -300,27 +302,86 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
           });
           break;
         case "includesOne":
-          data.push({
-            OR: val.value.map((value: string | number) => ({
-              OR: [
-                // for MultipleChoiceMulti
-                {
-                  data: {
-                    path: [key],
-                    array_contains: [value],
-                  },
+          // * If the question includes an 'other' choice and the user has selected it:
+          // *   - `predefinedLabels`: Collects labels from the question's choices that aren't selected by the user.
+          // *   - `subsets`: Generates all possible non-empty permutations of subsets of these predefined labels.
+          // *
+          // * Depending on the question type (multiple or single choice), the filter is constructed:
+          // *   - For "multipleChoiceMulti": Filters out any combinations of choices that match the subsets of predefined labels.
+          // *   - For "multipleChoiceSingle": Filters out any single predefined labels that match the user's selection.
+          const values: string[] = val.value.map((v) => v.toString());
+          const otherChoice =
+            question && (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle")
+              ? question.choices.find((choice) => choice.id === "other")
+              : null;
+
+          if (
+            question &&
+            (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") &&
+            question.choices.map((choice) => choice.id).includes("other") &&
+            otherChoice &&
+            values.includes(otherChoice.label.default)
+          ) {
+            const predefinedLabels: string[] = [];
+
+            question.choices.forEach((choice) => {
+              Object.values(choice.label).forEach((label) => {
+                if (!values.includes(label)) {
+                  predefinedLabels.push(label);
+                }
+              });
+            });
+
+            const subsets = generateAllPermutationsOfSubsets(predefinedLabels);
+            if (question.type === "multipleChoiceMulti") {
+              const subsetConditions = subsets.map((subset) => ({
+                data: { path: [key], equals: subset },
+              }));
+              data.push({
+                NOT: {
+                  OR: subsetConditions,
                 },
+              });
+            } else {
+              data.push(
                 // for MultipleChoiceSingle
                 {
-                  data: {
-                    path: [key],
-                    equals: value,
+                  AND: predefinedLabels.map((label) => ({
+                    NOT: {
+                      data: {
+                        path: [key],
+                        equals: label,
+                      },
+                    },
+                  })),
+                }
+              );
+            }
+          } else {
+            data.push({
+              OR: val.value.map((value: string | number) => ({
+                OR: [
+                  // for MultipleChoiceMulti
+                  {
+                    data: {
+                      path: [key],
+                      array_contains: [value],
+                    },
                   },
-                },
-              ],
-            })),
-          });
+                  // for MultipleChoiceSingle
+                  {
+                    data: {
+                      path: [key],
+                      equals: value,
+                    },
+                  },
+                ],
+              })),
+            });
+          }
+
           break;
+
         case "uploaded":
           data.push({
             data: {
@@ -389,7 +450,6 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
       AND: data,
     });
   }
-
   return { AND: whereClause };
 };
 
@@ -749,7 +809,6 @@ export const getQuestionWiseSummary = (
           questionChoices.pop();
         }
 
-        let totalResponseCount = 0;
         const choiceCountMap = questionChoices.reduce((acc: Record<string, number>, choice) => {
           acc[choice] = 0;
           return acc;
@@ -766,7 +825,6 @@ export const getQuestionWiseSummary = (
 
           if (Array.isArray(answer)) {
             answer.forEach((value) => {
-              totalResponseCount++;
               if (questionChoices.includes(value)) {
                 choiceCountMap[value]++;
               } else {
@@ -778,7 +836,6 @@ export const getQuestionWiseSummary = (
               }
             });
           } else if (typeof answer === "string") {
-            totalResponseCount++;
             if (questionChoices.includes(answer)) {
               choiceCountMap[answer]++;
             } else {
@@ -795,8 +852,7 @@ export const getQuestionWiseSummary = (
           values.push({
             value: label,
             count,
-            percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
+            percentage: responses.length > 0 ? convertFloatTo2Decimal((count / responses.length) * 100) : 0,
           });
         });
 
@@ -804,15 +860,14 @@ export const getQuestionWiseSummary = (
           values.push({
             value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
-            percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
+            percentage: convertFloatTo2Decimal((otherValues.length / responses.length) * 100),
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
-
         summary.push({
           type: question.type,
           question,
-          responseCount: totalResponseCount,
+          responseCount: responses.length,
           choices: values,
         });
 
@@ -1331,4 +1386,51 @@ export const getResponseHiddenFields = (
   } catch (error) {
     throw error;
   }
+};
+
+const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
+  const subsets: string[][] = [];
+
+  // Helper function to generate permutations of an array
+  const generatePermutations = (arr: string[]): string[][] => {
+    const permutations: string[][] = [];
+
+    // Recursive function to generate permutations
+    const permute = (current: string[], remaining: string[]): void => {
+      if (remaining.length === 0) {
+        permutations.push(current.slice()); // Make a copy of the current permutation
+        return;
+      }
+
+      for (let i = 0; i < remaining.length; i++) {
+        current.push(remaining[i]);
+        permute(current, remaining.slice(0, i).concat(remaining.slice(i + 1)));
+        current.pop();
+      }
+    };
+
+    permute([], arr);
+    return permutations;
+  };
+
+  // Recursive function to generate subsets
+  const findSubsets = (currentIndex: number, currentSubset: string[]): void => {
+    if (currentIndex === array.length) {
+      if (currentSubset.length > 0) {
+        // Skip empty subset if not needed
+        const allPermutations = generatePermutations(currentSubset);
+        subsets.push(...allPermutations); // Spread operator to add all permutations individually
+      }
+      return;
+    }
+
+    // Include the current element
+    findSubsets(currentIndex + 1, currentSubset.concat(array[currentIndex]));
+
+    // Exclude the current element
+    findSubsets(currentIndex + 1, currentSubset);
+  };
+
+  findSubsets(0, []);
+  return subsets;
 };
