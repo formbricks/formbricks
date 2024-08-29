@@ -92,9 +92,12 @@ export const SurveyAnalysisNavigation = ({
     if (totalResponseCount === null) return "";
     if (filteredResponseCount === null) return `(${totalResponseCount})`;
 
-    if (totalResponseCount === filteredResponseCount) return `(${totalResponseCount})`;
+    const filteredCount = filteredResponseCount;
+    const totalCount = Math.max(totalResponseCount, filteredResponseCount);
 
-    return `(${filteredResponseCount} of ${totalResponseCount})`;
+    if (totalCount === filteredCount) return `(${totalCount})`;
+
+    return `(${filteredCount} of ${totalCount})`;
   };
 
   const navigation = [
