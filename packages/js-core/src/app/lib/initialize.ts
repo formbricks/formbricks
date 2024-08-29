@@ -49,6 +49,11 @@ const checkForOlderLocalConfig = (): boolean => {
 export const initialize = async (
   configInput: TJsAppConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  const isDebug = getIsDebug();
+  if (isDebug) {
+    logger.configure({ logLevel: "debug" });
+  }
+
   const isLocalStorageOld = checkForOlderLocalConfig();
 
   let appConfig = appConfigGlobal;
@@ -59,11 +64,6 @@ export const initialize = async (
 
     appConfig.resetConfig();
     appConfig = AppConfig.getInstance();
-  }
-
-  const isDebug = getIsDebug();
-  if (isDebug) {
-    logger.configure({ logLevel: "debug" });
   }
 
   if (isInitialized) {

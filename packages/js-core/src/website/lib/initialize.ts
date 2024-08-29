@@ -101,6 +101,11 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
 export const initialize = async (
   configInput: TJsWebsiteConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  const isDebug = getIsDebug();
+  if (isDebug) {
+    logger.configure({ logLevel: "debug" });
+  }
+
   const { changed, newState } = migrateLocalStorage();
   let websiteConfig = WebsiteConfig.getInstance();
 
@@ -114,11 +119,6 @@ export const initialize = async (
 
     // Update the new instance with the migrated state
     websiteConfig.update(newState);
-  }
-
-  const isDebug = getIsDebug();
-  if (isDebug) {
-    logger.configure({ logLevel: "debug" });
   }
 
   if (isInitialized) {
