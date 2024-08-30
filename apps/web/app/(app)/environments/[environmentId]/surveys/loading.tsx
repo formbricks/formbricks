@@ -1,5 +1,6 @@
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
+import { SurveyLoading } from "@formbricks/ui/SurveysList/components/SurveyLoading";
 
 const Loading = () => {
   return (
@@ -18,6 +19,7 @@ const Loading = () => {
           <div className="w-36 rounded-md bg-slate-300"></div>
         </div>
       </div>
+      <SurveyLoading />
     </PageContentWrapper>
   );
 };

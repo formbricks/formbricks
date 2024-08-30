@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
@@ -48,14 +48,14 @@ export const SurveysList = ({
 
   const [orientation, setOrientation] = useState("");
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     // Initialize orientation state with a function that checks if window is defined
     const orientationFromLocalStorage = localStorage.getItem("surveyOrientation");
     if (orientationFromLocalStorage) {
       setOrientation(orientationFromLocalStorage);
     } else {
-      setOrientation("list");
-      localStorage.setItem("surveyOrientation", "list");
+      setOrientation("grid");
+      localStorage.setItem("surveyOrientation", "grid");
     }
   }, []);
 
@@ -179,7 +179,7 @@ export const SurveysList = ({
       ) : (
         <div className="flex h-full w-full">
           {isFetching ? (
-            <SurveyLoading orientation={orientation} />
+            <SurveyLoading />
           ) : (
             <div className="flex w-full flex-col items-center justify-center text-slate-600">
               <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
