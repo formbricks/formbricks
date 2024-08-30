@@ -1,5 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { values } from "lodash";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
@@ -14,12 +15,14 @@ import {
 } from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
+import { CustomValueInput } from "./CustomValueInput";
 
 interface ChoiceProps {
   choice: TSurveyQuestionChoice;
   choiceIdx: number;
   questionIdx: number;
   updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;
+  updateValue: (choiceIdx: number, updatedAttributes: { value: TI18nString }) => void;
   deleteChoice: (choiceIdx: number) => void;
   addChoice: (choiceIdx: number) => void;
   isInvalid: boolean;
@@ -48,6 +51,7 @@ export const QuestionOptionChoice = ({
   setSelectedLanguageCode,
   surveyLanguages,
   updateChoice,
+  updateValue,
   question,
   surveyLanguageCodes,
   updateQuestion,
@@ -85,6 +89,23 @@ export const QuestionOptionChoice = ({
           setSelectedLanguageCode={setSelectedLanguageCode}
           isInvalid={
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+          }
+          className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
+          attributeClasses={attributeClasses}
+        />
+        <CustomValueInput
+          key={`value-${choice.id}`}
+          id={`choice-${choiceIdx}`}
+          placeholder={choice.id === "other" ? "Other" : `value ${choiceIdx + 1}`}
+          label={""}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          value={choice.value}
+          updateValue={updateValue}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          isInvalid={
+            isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].value, surveyLanguages)
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
           attributeClasses={attributeClasses}

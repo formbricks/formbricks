@@ -28,6 +28,15 @@ export const getChoiceLabel = (
   return choiceQuestion.choices[choiceIdx]?.label || createI18nString("", surveyLanguageCodes);
 };
 
+export const getChoiceValue = (
+  question: TSurveyQuestion,
+  choiceIdx: number,
+  surveyLanguageCodes: string[]
+): TI18nString => {
+  const choiceQuestion = question as TSurveyMultipleChoiceQuestion;
+  return choiceQuestion.choices[choiceIdx]?.value || createI18nString("", surveyLanguageCodes);
+};
+
 export const getMatrixLabel = (
   question: TSurveyQuestion,
   idx: number,

@@ -67,9 +67,22 @@ export const MultipleChoiceQuestionForm = ({
     },
   };
 
+  const updateValue = (choiceIdx: number, updatedAttributes: { value: TI18nString }) => {
+    let newChoices: any[] = [];
+    if (question.choices) {
+      newChoices = question.choices.map((choice, idx) => {
+        if (idx !== choiceIdx) return choice;
+        return { ...choice, ...updatedAttributes };
+      });
+    }
+
+    updateQuestion(questionIdx, { choices: newChoices });
+  };
+
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
     const newLabel = updatedAttributes.label.en;
     const oldLabel = question.choices[choiceIdx].label;
+    question.choices[choiceIdx].value = updatedAttributes.label;
     let newChoices: any[] = [];
     if (question.choices) {
       newChoices = question.choices.map((choice, idx) => {
@@ -103,6 +116,7 @@ export const MultipleChoiceQuestionForm = ({
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
+      value: createI18nString("", surveyLanguageCodes),
     };
     if (choiceIdx !== undefined) {
       newChoices.splice(choiceIdx + 1, 0, newChoice);
@@ -121,6 +135,7 @@ export const MultipleChoiceQuestionForm = ({
       newChoices.push({
         id: "other",
         label: createI18nString("Other", surveyLanguageCodes),
+        value: createI18nString("Other", surveyLanguageCodes),
       });
       updateQuestion(questionIdx, {
         choices: newChoices,
@@ -250,6 +265,7 @@ export const MultipleChoiceQuestionForm = ({
                       choiceIdx={choiceIdx}
                       questionIdx={questionIdx}
                       updateChoice={updateChoice}
+                      updateValue={updateValue}
                       deleteChoice={deleteChoice}
                       addChoice={addChoice}
                       isInvalid={isInvalid}

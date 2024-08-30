@@ -218,6 +218,7 @@ export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
+  value: ZI18nString,
 });
 
 export const ZSurveyPictureChoice = z.object({
