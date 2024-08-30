@@ -1,3 +1,4 @@
+import { adminIframeMiddleware } from "@/app/middleware/adminIframeLoginMiddleware";
 import {
   clientSideApiEndpointsLimiter,
   loginLimiter,
@@ -19,6 +20,9 @@ import type { NextRequest } from "next/server";
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export const middleware = async (request: NextRequest) => {
+  const iframeResponse = adminIframeMiddleware(request);
+  if (iframeResponse) return iframeResponse;
+
   // issue with next auth types & Next 15; let's review when new fixes are available
   // @ts-expect-error
   const token = await getToken({ req: request });
@@ -80,5 +84,6 @@ export const config = {
     "/api/auth/signout",
     "/auth/login",
     "/api/packages/:path*",
+    "/admin-iframe/(.*)",
   ],
 };
