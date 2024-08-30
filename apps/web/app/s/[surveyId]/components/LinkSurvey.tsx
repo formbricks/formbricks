@@ -123,10 +123,6 @@ export const LinkSurvey = ({
     if (window.self === window.top) {
       setAutofocus(true);
     }
-    // For safari on mobile devices, scroll is a bit off due to dynamic height of address bar, so on inital load, we scroll to the bottom
-    // window.scrollTo({
-    //   top: document.body.scrollHeight,
-    // });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -203,12 +199,16 @@ export const LinkSurvey = ({
     return product.styling;
   };
 
+  const handleResetSurvey = () => {
+    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+  };
+
   return (
     <LinkSurveyWrapper
       product={product}
       survey={survey}
       isPreview={isPreview}
-      setQuestionId={setQuestionId}
+      handleResetSurvey={handleResetSurvey}
       determineStyling={determineStyling}
       isEmbed={isEmbed}
       webAppUrl={webAppUrl}
