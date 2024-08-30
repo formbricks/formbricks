@@ -163,6 +163,7 @@ export const POST = async (request: Request) => {
     await updateSurveyStatus(surveyId);
 
     // generate embeddings for all open text question responses for enterprise and scale plans
+    // TODO: check longer surveys if documents get created multiple times
     const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
     if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD) {
       const { active: isEnterpriseEdition } = await getEnterpriseLicense();
@@ -180,6 +181,7 @@ export const POST = async (request: Request) => {
                 continue;
               }
               const text = `**${question.headline.default}**\n${response.data[question.id]}`;
+              // TODO: check if subheadline gives more context and better embeddings
               await createDocument({
                 environmentId,
                 surveyId,
