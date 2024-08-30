@@ -355,10 +355,6 @@ export const ZRightOperand = z.discriminatedUnion("type", [
     value: z.union([z.string(), z.number(), z.array(z.string())]),
   }),
   z.object({
-    type: z.literal("choice"),
-    value: z.string().cuid2(),
-  }),
-  z.object({
     type: z.literal("question"),
     value: z.string().cuid2(),
   }),
@@ -391,14 +387,14 @@ export type TSingleCondition = z.infer<typeof ZSingleCondition>;
 
 export interface TConditionGroup {
   id: string;
-  connector: "and" | "or" | null;
+  connector: "and" | "or";
   conditions: (TSingleCondition | TConditionGroup)[];
 }
 
 const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
   z.object({
     id: z.string().cuid2(),
-    connector: z.enum(["and", "or"]).nullable(),
+    connector: z.enum(["and", "or"]),
     conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
   })
 );

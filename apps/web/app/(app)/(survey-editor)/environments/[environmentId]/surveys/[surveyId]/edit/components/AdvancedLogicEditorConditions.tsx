@@ -133,7 +133,7 @@ export function AdvancedLogicEditorConditions({
               {connector}
             </div>
           )}
-          <div className="mt-2 rounded-lg border border-slate-200 bg-slate-100 p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-100 p-4">
             <AdvancedLogicEditorConditions
               conditions={condition}
               updateQuestion={updateQuestion}
@@ -184,7 +184,7 @@ export function AdvancedLogicEditorConditions({
     const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey);
 
     return (
-      <div key={condition.id} className="mt-2 flex items-center justify-between gap-4">
+      <div key={condition.id} className="flex items-center justify-between gap-4">
         {index === 0 ? (
           <div className="text-sm">When</div>
         ) : (

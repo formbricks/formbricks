@@ -189,8 +189,6 @@ const getRightOperandValue = (
   switch (rightOperand.type) {
     case "question":
       return data[rightOperand.value];
-    case "choice":
-      return rightOperand.value;
     case "variable":
       const variables = localSurvey.variables || [];
       const variable = variables.find((v) => v.id === rightOperand.value);

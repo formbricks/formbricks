@@ -1,17 +1,20 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions  -- string interpolation is allowed in migration scripts */
+
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-// !@gupta-piyush19: WIP
-// Pending:
-// 1. Options assignment: text to id
-// 2. have to check and modify data storing in right operand based on the saving pattern of current logic
 import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
 import type {
   TAction,
+  TRightOperand,
   TSingleCondition,
   TSurveyAdvancedLogic,
   TSurveyLogicCondition,
 } from "@formbricks/types/surveys/logic";
-import type { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import {
+  type TSurveyMultipleChoiceQuestion,
+  type TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 
 const prisma = new PrismaClient();
 
@@ -20,6 +23,10 @@ interface TOldLogic {
   value?: string | string[];
   destination: string;
 }
+
+const isOldLogic = (logic: TOldLogic | TSurveyAdvancedLogic): logic is TOldLogic => {
+  return Object.keys(logic).some((key) => ["condition", "destination", "value"].includes(key));
+};
 
 const doesRightOperandExist = (operator: TSurveyLogicCondition): boolean => {
   return ![
@@ -33,27 +40,122 @@ const doesRightOperandExist = (operator: TSurveyLogicCondition): boolean => {
   ].includes(operator);
 };
 
-// Helper function to convert old logic condition to new format
-function convertLogicCondition(
+const getChoiceId = (question: TSurveyMultipleChoiceQuestion, choiceText: string): string | undefined => {
+  const choiceOption = question.choices.find((choice) => choice.label.default === choiceText);
+  if (choiceOption) {
+    return choiceOption.id;
+  }
+  if (question.choices.at(-1)?.id === "other") {
+    return "other";
+  }
+};
+
+const getRightOperandValue = (
+  surveyId: string,
   oldCondition: string,
   oldValue: string | string[] | undefined,
-  questionId: string
-): TSingleCondition {
+  question: TSurveyQuestion
+): TRightOperand | undefined => {
+  if (["lessThan", "lessEqual", "greaterThan", "greaterEqual"].includes(oldCondition)) {
+    return {
+      type: "static",
+      value: parseInt(oldValue as string),
+    };
+  }
+
+  if (["equals", "notEquals"].includes(oldCondition)) {
+    if (["string", "number"].includes(typeof oldValue)) {
+      if (question.type === TSurveyQuestionTypeEnum.Rating || question.type === TSurveyQuestionTypeEnum.NPS) {
+        return {
+          type: "static",
+          value: parseInt(oldValue as string),
+        };
+      } else if (
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+      ) {
+        const choiceId = getChoiceId(question, oldValue as string);
+        if (choiceId) {
+          return {
+            type: "static",
+            value: choiceId,
+          };
+        }
+        return undefined;
+      } else if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
+        return {
+          type: "static",
+          value: oldValue as string,
+        };
+      }
+    }
+
+    throw new Error(`Invalid value for 'equals' or 'notEquals' condition in survey ${surveyId}`);
+  }
+
+  if (["includesAll", "includesOne"].includes(oldCondition)) {
+    let choiceIds: string[] = [];
+
+    if (oldValue && Array.isArray(oldValue)) {
+      if (
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
+      ) {
+        oldValue.forEach((choiceText) => {
+          const choiceId = getChoiceId(question, choiceText);
+          if (choiceId) {
+            choiceIds.push(choiceId);
+          }
+        });
+
+        choiceIds = Array.from(new Set(choiceIds));
+
+        return {
+          type: "static",
+          value: choiceIds,
+        };
+      }
+
+      return {
+        type: "static",
+        value: oldValue,
+      };
+    }
+
+    throw new Error(`Invalid value for 'includesAll' or 'includesOne' condition in survey ${surveyId}`);
+  }
+
+  throw new Error(`Invalid condition ${oldCondition} in survey ${surveyId}`);
+};
+
+// Helper function to convert old logic condition to new format
+function convertLogicCondition(
+  surveyId: string,
+  oldCondition: string,
+  oldValue: string | string[] | undefined,
+  question: TSurveyQuestion
+): TSingleCondition | undefined {
   const operator = mapOldConditionToNew(oldCondition);
+
+  let rightOperandValue: TRightOperand | undefined;
+
+  const doesRightOperandExistResult = doesRightOperandExist(operator);
+  if (doesRightOperandExistResult) {
+    rightOperandValue = getRightOperandValue(surveyId, oldCondition, oldValue, question);
+
+    if (!rightOperandValue) {
+      return undefined;
+    }
+  }
 
   const newCondition: TSingleCondition = {
     id: createId(),
     leftOperand: {
       type: "question",
-      id: questionId,
+      id: question.id,
     },
     operator,
-    ...(doesRightOperandExist(operator) && {
-      rightOperand: {
-        type: "static",
-        value: oldValue ?? "",
-      },
-    }),
+    rightOperand: rightOperandValue,
   };
 
   return newCondition;
@@ -85,9 +187,16 @@ function mapOldConditionToNew(oldCondition: string): TSurveyLogicCondition {
 }
 
 // Helper function to convert old logic to new format
-function convertLogic(oldLogic: TOldLogic, questionId: string): TSurveyAdvancedLogic {
-  const condition: TSingleCondition = convertLogicCondition(oldLogic.condition, oldLogic.value, questionId);
-  condition.leftOperand.id = questionId;
+function convertLogic(
+  surveyId: string,
+  oldLogic: TOldLogic,
+  question: TSurveyQuestion
+): TSurveyAdvancedLogic | undefined {
+  const condition = convertLogicCondition(surveyId, oldLogic.condition, oldLogic.value, question);
+
+  if (!condition) {
+    return undefined;
+  }
 
   const action: TAction = {
     id: createId(),
@@ -99,7 +208,7 @@ function convertLogic(oldLogic: TOldLogic, questionId: string): TSurveyAdvancedL
     id: createId(),
     conditions: {
       id: createId(),
-      connector: null,
+      connector: "and",
       conditions: [condition],
     },
     actions: [action],
@@ -114,11 +223,6 @@ async function runMigration(): Promise<void> {
 
       // Get all surveys with questions containing old logic
       const relevantSurveys = await tx.survey.findMany({
-        where: {
-          questions: {
-            array_contains: [{ logic: { $exists: true } }],
-          },
-        },
         select: {
           id: true,
           questions: true,
@@ -126,22 +230,36 @@ async function runMigration(): Promise<void> {
       });
 
       // Process each survey
-      const migrationPromises = relevantSurveys.map(async (survey) => {
-        const updatedQuestions = survey.questions.map((question: TSurveyQuestion) => {
-          if (question.logic && Array.isArray(question.logic)) {
-            const newLogic = (question.logic as TOldLogic[]).map((oldLogic) =>
-              convertLogic(oldLogic, question.id)
-            );
-            return { ...question, logic: newLogic };
-          }
-          return question;
-        });
+      const migrationPromises = relevantSurveys
+        .map((survey) => {
+          let doesThisSurveyHasOldLogic = false;
+          const questions: TSurveyQuestion[] = [];
 
-        return tx.survey.update({
-          where: { id: survey.id },
-          data: { questions: updatedQuestions },
-        });
-      });
+          for (const question of survey.questions) {
+            if (question.logic && Array.isArray(question.logic) && question.logic.some(isOldLogic)) {
+              doesThisSurveyHasOldLogic = true;
+              const newLogic = (question.logic as unknown as TOldLogic[])
+                .map((oldLogic) => convertLogic(survey.id, oldLogic, question))
+                .filter((logic) => logic !== undefined);
+
+              questions.push({ ...question, logic: newLogic });
+            } else {
+              questions.push(question);
+            }
+          }
+
+          if (!doesThisSurveyHasOldLogic) {
+            return null;
+          }
+
+          return tx.survey.update({
+            where: { id: survey.id },
+            data: { questions },
+          });
+        })
+        .filter((promise) => promise !== null);
+
+      console.log(`Found ${migrationPromises.length} surveys with old logic`);
 
       await Promise.all(migrationPromises);
 

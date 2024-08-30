@@ -292,7 +292,7 @@ export const getMatchValueProps = (
           label: getLocalizedValue(choice.label, "default"),
           value: choice.id,
           meta: {
-            type: "choice",
+            type: "static",
           },
         };
       });
@@ -308,7 +308,7 @@ export const getMatchValueProps = (
           label: choice.imageUrl.split("/").pop() || `Image ${idx + 1}`,
           value: choice.id,
           meta: {
-            type: "choice",
+            type: "static",
           },
         };
       });
@@ -324,7 +324,7 @@ export const getMatchValueProps = (
           label: `${idx + 1}`,
           value: idx + 1,
           meta: {
-            type: "choice",
+            type: "static",
           },
         };
       });
@@ -371,7 +371,7 @@ export const getMatchValueProps = (
           label: `${idx}`,
           value: idx,
           meta: {
-            type: "choice",
+            type: "static",
           },
         };
       });
@@ -1007,7 +1007,7 @@ export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optio
 
   const isUsedInOperand = (condition: TSingleCondition): boolean => {
     if (condition.leftOperand.type === "question" && condition.leftOperand.id === questionId) {
-      if (condition.rightOperand && condition.rightOperand.type === "choice") {
+      if (condition.rightOperand && condition.rightOperand.type === "static") {
         if (Array.isArray(condition.rightOperand.value)) {
           return condition.rightOperand.value.includes(optionId);
         } else {
