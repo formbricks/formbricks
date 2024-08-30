@@ -12,7 +12,12 @@ import { SurveyState } from "@formbricks/lib/surveyState";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
+import {
+  TResponse,
+  TResponseData,
+  TResponseHiddenFieldValue,
+  TResponseUpdate,
+} from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -20,6 +25,7 @@ import { SurveyInline } from "@formbricks/ui/Survey";
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
 let setQuestionId = (_: string) => {};
+let setResponseData = (_: TResponseData) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -201,6 +207,7 @@ export const LinkSurvey = ({
 
   const handleResetSurvey = () => {
     setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    setResponseData({});
   };
 
   return (
@@ -289,6 +296,9 @@ export const LinkSurvey = ({
         responseCount={responseCount}
         getSetQuestionId={(f: (value: string) => void) => {
           setQuestionId = f;
+        }}
+        getSetResponseData={(f: (value: TResponseData) => void) => {
+          setResponseData = f;
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed ? true : false}
