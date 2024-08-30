@@ -133,6 +133,34 @@ export const questionTypes: TQuestion[] = [
     } as Partial<TSurveyNPSQuestion>,
   },
   {
+    id: QuestionId.Ranking,
+    label: "Ranking",
+    description: "Allow respondents to rank items",
+    icon: ListOrderedIcon,
+    preset: {
+      headline: { default: "What is most important for you in life?" },
+      choices: [
+        { id: createId(), label: { default: "Work" } },
+        { id: createId(), label: { default: "Money" } },
+        { id: createId(), label: { default: "Travel" } },
+        { id: createId(), label: { default: "Family" } },
+        { id: createId(), label: { default: "Friends" } },
+      ],
+    } as Partial<TSurveyRankingQuestion>,
+  },
+  {
+    id: QuestionId.Matrix,
+    label: "Matrix",
+    description: "This is a matrix question",
+    icon: Grid3X3Icon,
+    preset: {
+      headline: { default: "How much do you love these flowers?" },
+      subheader: { default: "0: Not at all, 3: Love it" },
+      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
+      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
+    } as Partial<TSurveyMatrixQuestion>,
+  },
+  {
     id: QuestionId.CTA,
     label: "Call-to-Action (Statement)",
     description: "Prompt respondents to perform an action",
@@ -160,16 +188,6 @@ export const questionTypes: TQuestion[] = [
     } as Partial<TSurveyConsentQuestion>,
   },
   {
-    id: QuestionId.Date,
-    label: "Date",
-    description: "Ask your users to select a date",
-    icon: CalendarDaysIcon,
-    preset: {
-      headline: { default: "When is your birthday?" },
-      format: "M-d-y",
-    } as Partial<TSurveyDateQuestion>,
-  },
-  {
     id: QuestionId.FileUpload,
     label: "File Upload",
     description: "Allow respondents to upload a file",
@@ -180,6 +198,16 @@ export const questionTypes: TQuestion[] = [
     } as Partial<TSurveyFileUploadQuestion>,
   },
   {
+    id: QuestionId.Date,
+    label: "Date",
+    description: "Ask your users to select a date",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: { default: "When is your birthday?" },
+      format: "M-d-y",
+    } as Partial<TSurveyDateQuestion>,
+  },
+  {
     id: QuestionId.Cal,
     label: "Schedule a meeting",
     description: "Allow respondents to schedule a meet",
@@ -188,18 +216,6 @@ export const questionTypes: TQuestion[] = [
       headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
     } as Partial<TSurveyCalQuestion>,
-  },
-  {
-    id: QuestionId.Matrix,
-    label: "Matrix",
-    description: "This is a matrix question",
-    icon: Grid3X3Icon,
-    preset: {
-      headline: { default: "How much do you love these flowers?" },
-      subheader: { default: "0: Not at all, 3: Love it" },
-      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
-      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
-    } as Partial<TSurveyMatrixQuestion>,
   },
   {
     id: QuestionId.Address,
@@ -215,22 +231,6 @@ export const questionTypes: TQuestion[] = [
       isZipRequired: false,
       isCountryRequired: false,
     } as Partial<TSurveyAddressQuestion>,
-  },
-  {
-    id: QuestionId.Ranking,
-    label: "Ranking",
-    description: "Allow respondents to rank items",
-    icon: ListOrderedIcon,
-    preset: {
-      headline: { default: "What is most important for you in life?" },
-      choices: [
-        { id: createId(), label: { default: "Work" } },
-        { id: createId(), label: { default: "Money" } },
-        { id: createId(), label: { default: "Travel" } },
-        { id: createId(), label: { default: "Family" } },
-        { id: createId(), label: { default: "Friends" } },
-      ],
-    } as Partial<TSurveyRankingQuestion>,
   },
 ];
 
