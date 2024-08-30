@@ -229,7 +229,7 @@ export const RankingQuestion = ({
               </div>
             </fieldset>
           </div>
-          {error && <div className="fb-text-red-500 fb-mt-2">{error}</div>}
+          {error && <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div>}
         </div>
       </ScrollableContainer>
 
