@@ -67,6 +67,7 @@ export const QuestionConditional = ({
       .map((label) => choices.find((choice) => getLocalizedValue(choice.label, languageCode) === label)?.id)
       .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
   };
+
   if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
     if (skipPrefilled) {
       onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });

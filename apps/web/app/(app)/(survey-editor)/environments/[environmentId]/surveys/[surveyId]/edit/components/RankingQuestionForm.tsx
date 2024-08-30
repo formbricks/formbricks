@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -17,7 +17,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { SelectQuestionChoice } from "./SelectQuestionChoice";
+import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface RankingQuestionFormProps {
   localSurvey: TSurvey;
@@ -48,65 +48,49 @@ export const RankingQuestionForm = ({
   const surveyLanguages = localSurvey.languages ?? [];
 
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
-    const newLabel = updatedAttributes.label.en;
-    const oldLabel = question.choices[choiceIdx].label;
-    let newChoices: any[] = [];
     if (question.choices) {
-      newChoices = question.choices.map((choice, idx) => {
+      const newChoices = question.choices.map((choice, idx) => {
         if (idx !== choiceIdx) return choice;
         return { ...choice, ...updatedAttributes };
       });
-    }
 
-    let newLogic: any[] = [];
-    question.logic?.forEach((logic) => {
-      let newL: string | string[] | undefined | number = logic.value;
-      if (Array.isArray(logic.value)) {
-        newL = logic.value.map((value) =>
-          value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : value
-        );
-      } else {
-        newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
-      }
-      newLogic.push({ ...logic, value: newL });
-    });
-    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+      updateQuestion(questionIdx, { choices: newChoices });
+    }
   };
 
-  const addChoice = (choiceIdx?: number) => {
+  const addChoice = (choiceIdx: number) => {
     let newChoices = !question.choices ? [] : question.choices;
 
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
     };
-    if (choiceIdx !== undefined) {
-      newChoices.splice(choiceIdx + 1, 0, newChoice);
-    } else {
-      newChoices.push(newChoice);
-    }
 
-    updateQuestion(questionIdx, { choices: newChoices });
+    updateQuestion(questionIdx, {
+      choices: [...newChoices.slice(0, choiceIdx + 1), newChoice, ...newChoices.slice(choiceIdx + 1)],
+    });
+  };
+
+  const addOption = () => {
+    const choices = !question.choices ? [] : question.choices;
+
+    const newChoice = {
+      id: createId(),
+      label: createI18nString("", surveyLanguageCodes),
+    };
+
+    updateQuestion(questionIdx, { choices: [...choices, newChoice] });
   };
 
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
     const choiceValue = question.choices[choiceIdx].label[selectedLanguageCode];
+
     if (isInvalidValue === choiceValue) {
       setIsInvalidValue(null);
     }
-    let newLogic: any[] = [];
-    question.logic?.forEach((logic) => {
-      let newL: string | string[] | undefined | number = logic.value;
-      if (Array.isArray(logic.value)) {
-        newL = logic.value.filter((value) => value !== choiceValue);
-      } else {
-        newL = logic.value !== choiceValue ? logic.value : undefined;
-      }
-      newLogic.push({ ...logic, value: newL });
-    });
 
-    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+    updateQuestion(questionIdx, { choices: newChoices });
   };
 
   const shuffleOptionsTypes = {
@@ -204,7 +188,7 @@ export const RankingQuestionForm = ({
               <div className="flex flex-col">
                 {question.choices &&
                   question.choices.map((choice, choiceIdx) => (
-                    <SelectQuestionChoice
+                    <QuestionOptionChoice
                       key={choice.id}
                       choice={choice}
                       choiceIdx={choiceIdx}
@@ -233,14 +217,14 @@ export const RankingQuestionForm = ({
               variant="secondary"
               EndIcon={PlusIcon}
               type="button"
-              onClick={() => addChoice()}>
+              onClick={() => addOption()}>
               Add option
             </Button>
             <Select
               defaultValue={question.shuffleOption}
               value={question.shuffleOption}
-              onValueChange={(e: TShuffleOption) => {
-                updateQuestion(questionIdx, { shuffleOption: e });
+              onValueChange={(option: TShuffleOption) => {
+                updateQuestion(questionIdx, { shuffleOption: option });
               }}>
               <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
                 <SelectValue placeholder="Select ordering" />

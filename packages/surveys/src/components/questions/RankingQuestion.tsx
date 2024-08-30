@@ -57,33 +57,30 @@ export const RankingQuestion = ({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const questionChoices = useMemo(
-    () => question.choices.map((c) => ({ id: c.id, label: c.label })),
-    [question.choices, languageCode]
+    () => question.choices.map((choice) => ({ id: choice.id, label: choice.label })),
+    [question.choices]
   );
 
   const handleItemClick = useCallback(
     (item: TSurveyQuestionChoice) => {
-      const isAlreadySorted = sortedItems.find((sortedItem) => sortedItem.id === item.id);
+      setSortedItems((prev) => {
+        const isAlreadySorted = prev.some((sortedItem) => sortedItem.id === item.id);
+        const newSortedItems = isAlreadySorted
+          ? prev.filter((sortedItem) => sortedItem.id !== item.id)
+          : [...prev, item];
 
-      let updatedSortedItems;
-      let updatedUnsortedItems;
+        onChange({ [question.id]: newSortedItems.map((item) => item.id) });
+        return newSortedItems;
+      });
 
-      if (isAlreadySorted) {
-        // Item is already sorted, remove it from sortedItems and add to unsortedItems
-        updatedSortedItems = sortedItems.filter((sortedItem) => sortedItem.id !== item.id);
-        updatedUnsortedItems = [...unsortedItems, item];
-      } else {
-        // Item is not sorted, add it to sortedItems and remove from unsortedItems
-        updatedSortedItems = [...sortedItems, item];
-        updatedUnsortedItems = unsortedItems.filter((unsortedItem) => unsortedItem.id !== item.id);
-      }
+      setUnsortedItems((prev) => {
+        const isAlreadySorted = sortedItems.some((sortedItem) => sortedItem.id === item.id);
+        return isAlreadySorted ? [...prev, item] : prev.filter((unsortedItem) => unsortedItem.id !== item.id);
+      });
 
-      setSortedItems(updatedSortedItems);
-      setUnsortedItems(updatedUnsortedItems);
-      onChange({ [question.id]: updatedSortedItems.map((i) => i.id) });
       setError(null);
     },
-    [sortedItems, unsortedItems, onChange, question.id]
+    [onChange, question.id, sortedItems]
   );
 
   const handleMove = useCallback(

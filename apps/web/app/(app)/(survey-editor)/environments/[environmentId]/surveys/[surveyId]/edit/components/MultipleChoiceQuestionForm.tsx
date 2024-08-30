@@ -18,7 +18,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { SelectQuestionChoice } from "./SelectQuestionChoice";
+import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -244,7 +244,7 @@ export const MultipleChoiceQuestionForm = ({
               <div className="flex flex-col">
                 {question.choices &&
                   question.choices.map((choice, choiceIdx) => (
-                    <SelectQuestionChoice
+                    <QuestionOptionChoice
                       key={choice.id}
                       choice={choice}
                       choiceIdx={choiceIdx}

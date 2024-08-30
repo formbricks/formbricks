@@ -36,7 +36,7 @@ interface ChoiceProps {
   attributeClasses: TAttributeClass[];
 }
 
-export const SelectQuestionChoice = ({
+export const QuestionOptionChoice = ({
   addChoice,
   choice,
   choiceIdx,
