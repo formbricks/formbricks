@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
@@ -101,6 +101,21 @@ export const SurveyMenuBar = ({
 
     if (localSurvey.status !== "draft" && containsEmptyTriggers) return true;
   }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
+
+  //handle set default values to label if values are not entered
+  const handleEmptyValues = () => {
+    const questions = localSurvey.questions;
+
+    questions.forEach((question) => {
+      if (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") {
+        question.choices.forEach((choice) => {
+          if (getLocalizedValue(choice.value, "default") === "") {
+            choice.value = choice.label;
+          }
+        });
+      }
+    });
+  };
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
@@ -196,6 +211,8 @@ export const SurveyMenuBar = ({
 
   const handleSurveySave = async (): Promise<boolean> => {
     setIsSurveySaving(true);
+
+    handleEmptyValues();
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 

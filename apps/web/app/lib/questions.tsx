@@ -1,5 +1,4 @@
 import { createId } from "@paralleldrive/cuid2";
-import { values } from "lodash";
 import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
@@ -145,7 +144,7 @@ export const questionTypes: TQuestion[] = [
         { id: createId(), label: { default: "Money" }, value: { default: "Money" } },
         { id: createId(), label: { default: "Travel" }, value: { default: "Travel" } },
         { id: createId(), label: { default: "Family" }, value: { default: "Family" } },
-        { id: createId(), label: { default: "Friends" }, value: { default: "Friends" } },
+        { id: createId(), label: { default: "Friends" }, val: { default: "Friends" } },
       ],
     } as Partial<TSurveyRankingQuestion>,
   },

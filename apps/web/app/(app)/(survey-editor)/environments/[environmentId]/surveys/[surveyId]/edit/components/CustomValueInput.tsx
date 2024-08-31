@@ -22,7 +22,6 @@ import {
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import {
-  getChoiceLabel,
   getChoiceValue,
   getIndex,
   getPlaceHolderById,
@@ -206,9 +205,6 @@ export const CustomValueInput = ({
     }
   };
 
-  // Adds a new recall question to the recallItems array, updates fallbacks, modifies the text with recall details.
-
-  // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
   const filterRecallItems = (remainingText: string) => {
     let includedRecallItems: TSurveyRecallItem[] = [];
     recallItems.forEach((recallItem) => {
@@ -227,12 +223,6 @@ export const CustomValueInput = ({
       }
     });
   };
-
-  // updation of questions, WelcomeCard, ThankYouCard and choices is done in a different manner,
-  // questions -> updateQuestion
-  // thankYouCard, welcomeCard-> updateSurvey
-  // choice -> updateChoice
-  // matrixLabel -> updateMatrixLabel
 
   const handleUpdate = (updatedText: string) => {
     const createUpdatedText = (updatedText: string): TI18nString => {
