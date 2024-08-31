@@ -5,10 +5,10 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { Button } from "../Button";
-import { LoadingSpinner } from "../LoadingSpinner";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
+import Loading from "./loading";
 import { getFormattedFilters } from "./utils";
 
 interface SurveysListProps {
@@ -176,13 +176,10 @@ export const SurveysList = ({
             </div>
           )}
         </div>
+      ) : isFetching ? (
+        <Loading />
       ) : (
-        <div className="flex h-full flex-col items-center justify-center py-12">
-          <LoadingSpinner />
-          <div className="text-sm text-slate-500">
-            {isFetching ? "Fetching surveys..." : "No surveys found"}
-          </div>
-        </div>
+        <div className="text-sm text-slate-500"> No surveys found </div>
       )}
     </div>
   );
