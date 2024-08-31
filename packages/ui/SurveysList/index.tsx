@@ -179,7 +179,7 @@ export const SurveysList = ({
       ) : isFetching ? (
         <Loading />
       ) : (
-        <div className="text-sm text-slate-500"> No surveys found </div>
+        <div className="w-full items-center justify-center text-sm text-slate-500"> No surveys found </div>
       )}
     </div>
   );
