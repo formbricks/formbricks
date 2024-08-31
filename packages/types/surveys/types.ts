@@ -1148,6 +1148,7 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
   choices: z.array(
     z.object({
       value: z.string(),
+      label: z.string(),
       count: z.number(),
       percentage: z.number(),
       others: z

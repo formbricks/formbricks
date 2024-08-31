@@ -82,7 +82,6 @@ export const MultipleChoiceQuestionForm = ({
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
     const newLabel = updatedAttributes.label.en;
     const oldLabel = question.choices[choiceIdx].label;
-    question.choices[choiceIdx].value = updatedAttributes.label;
     let newChoices: any[] = [];
     if (question.choices) {
       newChoices = question.choices.map((choice, idx) => {

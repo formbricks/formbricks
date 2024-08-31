@@ -84,11 +84,7 @@ export const CustomValueInput = ({
 
   const getElementTextBasedOnType = (): TI18nString => {
     if (isChoice && typeof index === "number") {
-      if (getChoiceValue(question, index, surveyLanguageCodes).default !== "") {
-        return getChoiceValue(question, index, surveyLanguageCodes);
-      } else {
-        return getChoiceLabel(question, index, surveyLanguageCodes);
-      }
+      return getChoiceValue(question, index, surveyLanguageCodes);
     }
 
     return (

@@ -80,13 +80,14 @@ export const MultipleChoiceSummary = ({
                 questionSummary.type === "multipleChoiceSingle" || otherValue === result.value
                   ? "Includes either"
                   : "Includes all",
-                [result.value]
+                [result.label]
               )
             }>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
               <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal">
                 <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
-                  {results.length - resultsIdx} - {result.value}
+                  {results.length - resultsIdx} - {result.label}
+                  <span className="mx-3 text-slate-500">(value :- {result.value})</span>
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
