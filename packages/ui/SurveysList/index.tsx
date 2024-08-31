@@ -8,7 +8,7 @@ import { Button } from "../Button";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
-import Loading from "./loading";
+import Loading from "./components/loading";
 import { getFormattedFilters } from "./utils";
 
 interface SurveysListProps {
