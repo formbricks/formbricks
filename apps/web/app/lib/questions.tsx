@@ -65,8 +65,8 @@ export const questionTypes: TQuestion[] = [
       headline: { default: "What do you do?" },
       subheader: { default: "Can't do both." },
       choices: [
-        { id: createId(), label: { default: "Eat the cake 🍰" }, value: { default: "Eat the cake 🍰" } },
-        { id: createId(), label: { default: "Have the cake 🎂" }, value: { default: "Have the cake 🎂" } },
+        { id: createId(), label: { default: "Eat the cake 🍰" }, value: { default: "" } },
+        { id: createId(), label: { default: "Have the cake 🎂" }, value: { default: "" } },
       ],
       shuffleOption: "none",
     } as Partial<TSurveyMultipleChoiceQuestion>,
@@ -79,9 +79,9 @@ export const questionTypes: TQuestion[] = [
     preset: {
       headline: { default: "What's important on vacay?" },
       choices: [
-        { id: createId(), label: { default: "Sun ☀️" }, value: { default: "Sun ☀️" } },
-        { id: createId(), label: { default: "Ocean 🌊" }, value: { default: "Ocean 🌊" } },
-        { id: createId(), label: { default: "Palms 🌴" }, value: { default: "Palms 🌴" } },
+        { id: createId(), label: { default: "Sun ☀️" }, value: { default: "" } },
+        { id: createId(), label: { default: "Ocean 🌊" }, value: { default: "" } },
+        { id: createId(), label: { default: "Palms 🌴" }, value: { default: "" } },
       ],
       shuffleOption: "none",
     } as Partial<TSurveyMultipleChoiceQuestion>,
@@ -140,11 +140,11 @@ export const questionTypes: TQuestion[] = [
     preset: {
       headline: { default: "What is most important for you in life?" },
       choices: [
-        { id: createId(), label: { default: "Work" }, value: { default: "Work" } },
-        { id: createId(), label: { default: "Money" }, value: { default: "Money" } },
-        { id: createId(), label: { default: "Travel" }, value: { default: "Travel" } },
-        { id: createId(), label: { default: "Family" }, value: { default: "Family" } },
-        { id: createId(), label: { default: "Friends" }, val: { default: "Friends" } },
+        { id: createId(), label: { default: "Work" }, value: { default: "" } },
+        { id: createId(), label: { default: "Money" }, value: { default: "" } },
+        { id: createId(), label: { default: "Travel" }, value: { default: "" } },
+        { id: createId(), label: { default: "Family" }, value: { default: "" } },
+        { id: createId(), label: { default: "Friends" }, val: { default: "" } },
       ],
     } as Partial<TSurveyRankingQuestion>,
   },

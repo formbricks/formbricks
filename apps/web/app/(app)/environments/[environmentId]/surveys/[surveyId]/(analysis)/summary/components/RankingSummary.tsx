@@ -36,7 +36,10 @@ export const RankingSummary = ({
                 <div className="flex w-full items-center">
                   <span className="mr-2 text-gray-400">#{resultsIdx + 1}</span>
                   <div className="rounded bg-gray-100 px-2 py-1">
-                    {result.label} <span className="my-8 text-slate-600">({result.value})</span>
+                    {result.label}
+                    {result.value !== result.label && (
+                      <span className="my-8 text-slate-600">({result.value})</span>
+                    )}
                   </div>
                   <span className="ml-auto flex items-center space-x-1">
                     <span className="font-bold text-slate-600">
