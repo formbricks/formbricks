@@ -1,6 +1,5 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { getLanguage } from "language/service";
 import {
   TResponse,
   TResponseFilterCriteria,

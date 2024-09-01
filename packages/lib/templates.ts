@@ -85,24 +85,29 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "High shipping costs" },
+              value: { default: "High shipping costs" },
             },
             {
               id: createId(),
               label: { default: "Found a better price elsewhere" },
+              value: { default: "Found a better price elsewhere" },
             },
             {
               id: createId(),
               label: { default: "Just browsing" },
+              value: { default: "Just browsing" },
             },
             {
               id: createId(),
               label: { default: "Decided not to buy" },
+              value: { default: "Decided not to buy" },
             },
             {
               id: createId(),
               label: { default: "Payment issues" },
+              value: { default: "Payment issues" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -137,24 +142,29 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Lower shipping costs" },
+              value: { default: "Lower shipping costs" },
             },
             {
               id: createId(),
               label: { default: "Discounts or promotions" },
+              value: { default: "Discounts or promotions" },
             },
             {
               id: createId(),
               label: { default: "More payment options" },
+              value: { default: "More payment options" },
             },
             {
               id: createId(),
               label: { default: "Better product descriptions" },
+              value: { default: "Better product descriptions" },
             },
             {
               id: createId(),
               label: { default: "Improved website navigation" },
+              value: { default: "Improved website navigation" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -219,24 +229,29 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Can't find what I am looking for" },
+              value: { default: "Can't find what I am looking for" },
             },
             {
               id: createId(),
               label: { default: "Site is too slow" },
+              value: { default: "Site is too slow" },
             },
             {
               id: createId(),
               label: { default: "Technical issues" },
+              value: { default: "Technical issues" },
             },
             {
               id: createId(),
               label: { default: "Just browsing" },
+              value: { default: "Just browsing" },
             },
             {
               id: createId(),
               label: { default: "Found a better site" },
+              value: { default: "Found a better site" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -271,24 +286,29 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Faster loading times" },
+              value: { default: "Faster loading times" },
             },
             {
               id: createId(),
               label: { default: "Better product search functionality" },
+              value: { default: "Better product search functionality" },
             },
             {
               id: createId(),
               label: { default: "More product variety" },
+              value: { default: "More product variety" },
             },
             {
               id: createId(),
               label: { default: "Improved site design" },
+              value: { default: "Improved site design" },
             },
             {
               id: createId(),
               label: { default: "More customer reviews" },
+              value: { default: "More customer reviews" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -353,14 +373,17 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Not at all disappointed" },
+              value: { default: "Not at all disappointed" },
             },
             {
               id: createId(),
               label: { default: "Somewhat disappointed" },
+              value: { default: "Somewhat disappointed" },
             },
             {
               id: createId(),
               label: { default: "Very disappointed" },
+              value: { default: "Very disappointed" },
             },
           ],
         },
@@ -375,22 +398,27 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Founder" },
+              value: { default: "Founder" },
             },
             {
               id: createId(),
               label: { default: "Executive" },
+              value: { default: "Executive" },
             },
             {
               id: createId(),
               label: { default: "Product Manager" },
+              value: { default: "Product Manager" },
             },
             {
               id: createId(),
               label: { default: "Product Owner" },
+              value: { default: "Product Owner" },
             },
             {
               id: createId(),
               label: { default: "Software Engineer" },
+              value: { default: "Software Engineer" },
             },
           ],
         },
@@ -440,22 +468,27 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Founder" },
+              value: { default: "Founder" },
             },
             {
               id: createId(),
               label: { default: "Executive" },
+              value: { default: "Executive" },
             },
             {
               id: createId(),
               label: { default: "Product Manager" },
+              value: { default: "Product Manager" },
             },
             {
               id: createId(),
               label: { default: "Product Owner" },
+              value: { default: "Product Owner" },
             },
             {
               id: createId(),
               label: { default: "Software Engineer" },
+              value: { default: "Software Engineer" },
             },
           ],
         },
@@ -470,22 +503,27 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "only me" },
+              value: { default: "only me" },
             },
             {
               id: createId(),
               label: { default: "1-5 employees" },
+              value: { default: "1-5 employees" },
             },
             {
               id: createId(),
               label: { default: "6-10 employees" },
+              value: { default: "6-10 employees" },
             },
             {
               id: createId(),
               label: { default: "11-100 employees" },
+              value: { default: "11-100 employees" },
             },
             {
               id: createId(),
               label: { default: "over 100 employees" },
+              value: { default: "over 100 employees" },
             },
           ],
         },
@@ -500,22 +538,27 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Recommendation" },
+              value: { default: "Recommendation" },
             },
             {
               id: createId(),
               label: { default: "Social Media" },
+              value: { default: "Social Media" },
             },
             {
               id: createId(),
               label: { default: "Ads" },
+              value: { default: "Ads" },
             },
             {
               id: createId(),
               label: { default: "Google Search" },
+              value: { default: "Google Search" },
             },
             {
               id: createId(),
               label: { default: "In a Podcast" },
+              value: { default: "In a Podcast" },
             },
           ],
         },
@@ -548,11 +591,33 @@ export const templates: TTemplate[] = [
             },
           ],
           choices: [
-            { id: createId(), label: { default: "Difficult to use" } },
-            { id: createId(), label: { default: "It's too expensive" } },
-            { id: createId(), label: { default: "I am missing features" } },
-            { id: createId(), label: { default: "Poor customer service" } },
-            { id: createId(), label: { default: "I just didn't need it anymore" } },
+            {
+              id: createId(),
+              label: { default: "Difficult to use" },
+              value: { default: "Difficult to use" },
+            },
+            {
+              id: createId(),
+              label: { default: "It's too expensive" },
+              value: { default: "It's too expensive" },
+            },
+            {
+              id: createId(),
+              label: { default: "I am missing features" },
+              value: { default: "I am missing features" },
+            },
+            {
+              id: createId(),
+              label: { default: "Poor customer service" },
+              value: {
+                default: "Poor customer service",
+              },
+            },
+            {
+              id: createId(),
+              label: { default: "I just didn't need it anymore" },
+              value: { default: "I just didn't need it anymore" },
+            },
           ],
           headline: { default: "Why did you cancel your subscription?" },
           required: true,
@@ -625,8 +690,8 @@ export const templates: TTemplate[] = [
           logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Yes" } },
-            { id: createId(), label: { default: "No" } },
+            { id: createId(), label: { default: "Yes" }, value: { default: "Yes" } },
+            { id: createId(), label: { default: "No" }, value: { default: "No" } },
           ],
           headline: { default: "Have you actively recommended {{productName}} to others?" },
           required: true,
@@ -654,8 +719,8 @@ export const templates: TTemplate[] = [
           logic: [{ value: "No", condition: "equals", destination: surveyDefault.endings[0].id }],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Yes" } },
-            { id: createId(), label: { default: "No" } },
+            { id: createId(), label: { default: "Yes" }, value: { default: "Yes" } },
+            { id: createId(), label: { default: "No" }, value: { default: "No" } },
           ],
           headline: { default: "Have you actively discouraged others from choosing {{productName}}?" },
           required: true,
@@ -713,11 +778,31 @@ export const templates: TTemplate[] = [
             },
           ],
           choices: [
-            { id: createId(), label: { default: "I didn't get much value out of it" } },
-            { id: createId(), label: { default: "I expected something else" } },
-            { id: createId(), label: { default: "It's too expensive for what it does" } },
-            { id: createId(), label: { default: "I am missing a feature" } },
-            { id: createId(), label: { default: "I was just looking around" } },
+            {
+              id: createId(),
+              label: { default: "I didn't get much value out of it" },
+              value: { default: "I didn't get much value out of it" },
+            },
+            {
+              id: createId(),
+              label: { default: "I expected something else" },
+              value: { default: "I expected something else" },
+            },
+            {
+              id: createId(),
+              label: { default: "It's too expensive for what it does" },
+              value: { default: "It's too expensive for what it does" },
+            },
+            {
+              id: createId(),
+              label: { default: "I am missing a feature" },
+              value: { default: "I am missing a feature" },
+            },
+            {
+              id: createId(),
+              label: { default: "I was just looking around" },
+              value: { default: "I was just looking around" },
+            },
           ],
           headline: { default: "Why did you stop your trial?" },
           required: true,
@@ -887,11 +972,28 @@ export const templates: TTemplate[] = [
             },
           ],
           choices: [
-            { id: createId(), label: { default: "Didn't seem useful to me" } },
-            { id: createId(), label: { default: "Difficult to set up or use" } },
-            { id: createId(), label: { default: "Lacked features/functionality" } },
-            { id: createId(), label: { default: "Just haven't had the time" } },
-            { id: createId(), label: { default: "Something else" } },
+            {
+              id: createId(),
+              label: { default: "Didn't seem useful to me" },
+              value: { default: "Didn't seem useful to me" },
+            },
+            {
+              id: createId(),
+              label: { default: "Difficult to set up or use" },
+              value: { default: "Difficult to set up or use" },
+            },
+            {
+              id: createId(),
+              label: { default: "Lacked features/functionality" },
+              value: { default: "Lacked features/functionality" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just haven't had the time" },
+              value: { default: "Just haven't had the time" },
+            },
+
+            { id: createId(), label: { default: "Something else" }, value: { default: "Something else" } },
           ],
           headline: {
             default: "What's the main reason why you haven't finished setting up {{productName}}?",
@@ -962,11 +1064,23 @@ export const templates: TTemplate[] = [
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Ease of use" } },
-            { id: createId(), label: { default: "Good value for money" } },
-            { id: createId(), label: { default: "It's open-source" } },
-            { id: createId(), label: { default: "The founders are cute" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Ease of use" }, value: { default: "Ease of use" } },
+            {
+              id: createId(),
+              label: { default: "Good value for money" },
+              value: { default: "Good value for money" },
+            },
+            {
+              id: createId(),
+              label: { default: "It's open-source" },
+              value: { default: "It's open-source" },
+            },
+            {
+              id: createId(),
+              label: { default: "The founders are cute" },
+              value: { default: "The founders are cute" },
+            },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "What do you value most about {{productName}}?" },
           required: true,
@@ -976,10 +1090,10 @@ export const templates: TTemplate[] = [
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Documentation" } },
-            { id: createId(), label: { default: "Customizability" } },
-            { id: createId(), label: { default: "Pricing" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Documentation" }, value: { default: "Documentation" } },
+            { id: createId(), label: { default: "Customizability" }, value: { default: "Customizability" } },
+            { id: createId(), label: { default: "Pricing" }, value: { default: "Pricing" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "What should we improve on?" },
           required: true,
@@ -1017,14 +1131,17 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Not at all disappointed" },
+              value: { default: "Not at all disappointed" },
             },
             {
               id: createId(),
               label: { default: "Somewhat disappointed" },
+              value: { default: "Somewhat disappointed" },
             },
             {
               id: createId(),
               label: { default: "Very disappointed" },
+              value: { default: "Very disappointed" },
             },
           ],
         },
@@ -1060,22 +1177,27 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Recommendation" },
+              value: { default: "Recommendation" },
             },
             {
               id: createId(),
               label: { default: "Social Media" },
+              value: { default: "Social Media" },
             },
             {
               id: createId(),
               label: { default: "Ads" },
+              value: { default: "Ads" },
             },
             {
               id: createId(),
               label: { default: "Google Search" },
+              value: { default: "Google Search" },
             },
             {
               id: createId(),
               label: { default: "In a Podcast" },
+              value: { default: "In a Podcast" },
             },
           ],
         },
@@ -1102,22 +1224,27 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Extremely difficult" },
+              value: { default: "Extremely difficult" },
             },
             {
               id: createId(),
               label: { default: "It took a while, but I got it" },
+              value: { default: "It took a while, but I got it" },
             },
             {
               id: createId(),
               label: { default: "It was alright" },
+              value: { default: "It was alright" },
             },
             {
               id: createId(),
               label: { default: "Quite easy" },
+              value: { default: "Quite easy" },
             },
             {
               id: createId(),
               label: { default: "Very easy, love it!" },
+              value: { default: "Very easy, love it!" },
             },
           ],
         },
@@ -1131,14 +1258,17 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Yes, very clear." },
+              value: { default: "Yes, very clear." },
             },
             {
               id: createId(),
               label: { default: "I was confused at first, but found what I needed." },
+              value: { default: "I was confused at first, but found what I needed." },
             },
             {
               id: createId(),
               label: { default: "Quite complicated." },
+              value: { default: "Quite complicated." },
             },
           ],
         },
@@ -1167,18 +1297,22 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Understand my user base deeply" },
+              value: { default: "Understand my user base deeply" },
             },
             {
               id: createId(),
               label: { default: "Identify upselling opportunities" },
+              value: { default: "Identify upselling opportunities" },
             },
             {
               id: createId(),
               label: { default: "Build the best possible product" },
+              value: { default: "Build the best possible product" },
             },
             {
               id: createId(),
               label: { default: "Rule the world to make everyone breakfast brussels sprouts." },
+              value: { default: "Rule the world to make everyone breakfast brussels sprouts." },
             },
           ],
         },
@@ -1212,10 +1346,10 @@ export const templates: TTemplate[] = [
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Aspect 1" } },
-            { id: createId(), label: { default: "Aspect 2" } },
-            { id: createId(), label: { default: "Aspect 3" } },
-            { id: createId(), label: { default: "Aspect 4" } },
+            { id: createId(), label: { default: "Aspect 1" }, value: { default: "Aspect 1" } },
+            { id: createId(), label: { default: "Aspect 2" }, value: { default: "Aspect 2" } },
+            { id: createId(), label: { default: "Aspect 3" }, value: { default: "Aspect 3" } },
+            { id: createId(), label: { default: "Aspect 4" }, value: { default: "Aspect 4" } },
           ],
           headline: { default: "Which aspect is most important?" },
           required: true,
@@ -1255,18 +1389,22 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Aspect 1" },
+              value: { default: "Aspect 1" },
             },
             {
               id: createId(),
               label: { default: "Aspect 2" },
+              value: { default: "Aspect 2" },
             },
             {
               id: createId(),
               label: { default: "Aspect 3" },
+              value: { default: "Aspect 3" },
             },
             {
               id: createId(),
               label: { default: "Aspect 4" },
+              value: { default: "Aspect 4" },
             },
           ],
         },
@@ -1293,8 +1431,12 @@ export const templates: TTemplate[] = [
             { value: "Feature Request 💡", condition: "equals", destination: "en9nuuevbf7g9oa9rzcs1l50" },
           ],
           choices: [
-            { id: createId(), label: { default: "Bug report 🐞" } },
-            { id: createId(), label: { default: "Feature Request 💡" } },
+            { id: createId(), label: { default: "Bug report 🐞" }, value: { default: "Bug report 🐞" } },
+            {
+              id: createId(),
+              label: { default: "Feature Request 💡" },
+              value: { default: "Feature Request 💡" },
+            },
           ],
           headline: { default: "What's on your mind, boss?" },
           required: true,
@@ -1402,22 +1544,27 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "PostHog" },
+              value: { default: "PostHog" },
             },
             {
               id: createId(),
               label: { default: "Segment" },
+              value: { default: "Segment" },
             },
             {
               id: createId(),
               label: { default: "Hubspot" },
+              value: { default: "Hubspot" },
             },
             {
               id: createId(),
               label: { default: "Twilio" },
+              value: { default: "Twilio" },
             },
             {
               id: "other",
               label: { default: "Other" },
+              value: { default: "Other" },
             },
           ],
         },
@@ -1445,10 +1592,12 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Yes 👍" },
+              value: { default: "Yes 👍" },
             },
             {
               id: createId(),
               label: { default: "No 👎" },
+              value: { default: "No 👎" },
             },
           ],
         },
@@ -1611,11 +1760,11 @@ export const templates: TTemplate[] = [
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           logic: [],
           choices: [
-            { id: createId(), label: { default: "Google" } },
-            { id: createId(), label: { default: "Social Media" } },
-            { id: createId(), label: { default: "Friends" } },
-            { id: createId(), label: { default: "Podcast" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Google" }, value: { default: "Google" } },
+            { id: createId(), label: { default: "Social Media" }, value: { default: "Social Media" } },
+            { id: createId(), label: { default: "Friends" }, value: { default: "Friends" } },
+            { id: createId(), label: { default: "Podcast" }, value: { default: "Podcast" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "How did you hear about us?" },
           required: true,
@@ -1654,18 +1803,22 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Less than 1 hour" },
+              value: { default: "Less than 1 hour" },
             },
             {
               id: createId(),
               label: { default: "1 to 2 hours" },
+              value: { default: "1 to 2 hours" },
             },
             {
               id: createId(),
               label: { default: "3 to 5 hours" },
+              value: { default: "3 to 5 hours" },
             },
             {
               id: createId(),
               label: { default: "5+ hours" },
+              value: { default: "5+ hours" },
             },
           ],
         },
@@ -1689,10 +1842,10 @@ export const templates: TTemplate[] = [
           logic: [],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Feature 1" } },
-            { id: createId(), label: { default: "Feature 2" } },
-            { id: createId(), label: { default: "Feature 3" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Feature 1" }, value: { default: "Feature 1" } },
+            { id: createId(), label: { default: "Feature 2" }, value: { default: "Feature 2" } },
+            { id: createId(), label: { default: "Feature 3" }, value: { default: "Feature 3" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "Which of these features would be MOST valuable to you?" },
           required: true,
@@ -1703,9 +1856,9 @@ export const templates: TTemplate[] = [
           logic: [],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Feature 1" } },
-            { id: createId(), label: { default: "Feature 2" } },
-            { id: createId(), label: { default: "Feature 3" } },
+            { id: createId(), label: { default: "Feature 1" }, value: { default: "Feature 1" } },
+            { id: createId(), label: { default: "Feature 2" }, value: { default: "Feature 2" } },
+            { id: createId(), label: { default: "Feature 3" }, value: { default: "Feature 3" } },
           ],
           headline: { default: "Which of these features would be LEAST valuable to you?" },
           required: true,
@@ -1776,14 +1929,17 @@ export const templates: TTemplate[] = [
             {
               id: createId(),
               label: { default: "Yes, totally" },
+              value: { default: "Yes, totally" },
             },
             {
               id: createId(),
               label: { default: "Kind of..." },
+              value: { default: "Kind of..." },
             },
             {
               id: createId(),
               label: { default: "No, not at all" },
+              value: { default: "No, not at all" },
             },
           ],
         },
@@ -1989,9 +2145,13 @@ export const templates: TTemplate[] = [
             { value: "No", condition: "equals", destination: "u83zhr66knyfozccoqojx7bc" },
           ],
           choices: [
-            { id: createId(), label: { default: "Yes" } },
-            { id: createId(), label: { default: "Working on it, boss" } },
-            { id: createId(), label: { default: "No" } },
+            { id: createId(), label: { default: "Yes" }, value: { default: "Yes" } },
+            {
+              id: createId(),
+              label: { default: "Working on it, boss" },
+              value: { default: "Working on it, boss" },
+            },
+            { id: createId(), label: { default: "No" }, value: { default: "No" } },
           ],
           headline: { default: "Were you able to accomplish what you came here to do today?" },
           required: true,
@@ -2101,11 +2261,27 @@ export const templates: TTemplate[] = [
             { value: "Something else", condition: "equals", destination: "v0pq1qcnm6ohiry5ywcd91qq" },
           ],
           choices: [
-            { id: createId(), label: { default: "May not have what I'm looking for" } },
-            { id: createId(), label: { default: "Still comparing options" } },
-            { id: createId(), label: { default: "Seems complicated" } },
-            { id: createId(), label: { default: "Pricing is a concern" } },
-            { id: createId(), label: { default: "Something else" } },
+            {
+              id: createId(),
+              label: { default: "May not have what I'm looking for" },
+              value: { default: "May not have what I'm looking for" },
+            },
+            {
+              id: createId(),
+              label: { default: "Still comparing options" },
+              value: { default: "Still comparing options" },
+            },
+            {
+              id: createId(),
+              label: { default: "Seems complicated" },
+              value: { default: "Seems complicated" },
+            },
+            {
+              id: createId(),
+              label: { default: "Pricing is a concern" },
+              value: { default: "Pricing is a concern" },
+            },
+            { id: createId(), label: { default: "Something else" }, value: { default: "Something else" } },
           ],
           headline: { default: "What is holding you back from trying {{productName}}?" },
           required: true,
@@ -2456,11 +2632,27 @@ export const templates: TTemplate[] = [
             { value: "Other", condition: "equals", destination: "c0exdyri3erugrv0ezkyseh6" },
           ],
           choices: [
-            { id: "xoqb0wjjsk4t0lx0i7jrhx26", label: { default: "Difficult to use" } },
-            { id: "p768nlw47ndehtgzx6m82dr6", label: { default: "Found a better alternative" } },
-            { id: "izt28ma5ep3s92531owxj1vg", label: { default: "Just haven't had the time" } },
-            { id: "dhkp2wb9e1tv7kfu8csjhzbh", label: { default: "Lacked features I need" } },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: "xoqb0wjjsk4t0lx0i7jrhx26",
+              label: { default: "Difficult to use" },
+              value: { default: "Difficult to use" },
+            },
+            {
+              id: "p768nlw47ndehtgzx6m82dr6",
+              label: { default: "Found a better alternative" },
+              value: { default: "Found a better alternative" },
+            },
+            {
+              id: "izt28ma5ep3s92531owxj1vg",
+              label: { default: "Just haven't had the time" },
+              value: { default: "Just haven't had the time" },
+            },
+            {
+              id: "dhkp2wb9e1tv7kfu8csjhzbh",
+              label: { default: "Lacked features I need" },
+              value: { default: "Lacked features I need" },
+            },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "What's the main reason you haven't been back to {{productName}} recently?" },
           required: true,
