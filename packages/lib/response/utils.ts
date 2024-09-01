@@ -1283,11 +1283,13 @@ export const getQuestionWiseSummary = (
           }
         });
 
-        questionChoices.forEach((choice) => {
+        questionChoices.forEach((choice, index) => {
           const count = choiceCountMap[choice];
           const avgRanking = count > 0 ? choiceRankSums[choice] / count : 0;
+          const value = question.choices[index].value;
           values.push({
-            value: choice,
+            label: choice,
+            value: getLocalizedValue(value, "default"),
             count,
             avgRanking: convertFloatTo2Decimal(avgRanking),
           });

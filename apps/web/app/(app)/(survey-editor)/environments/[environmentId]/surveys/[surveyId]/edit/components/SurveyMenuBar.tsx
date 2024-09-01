@@ -16,6 +16,7 @@ import {
   TSurvey,
   TSurveyEditorTabs,
   TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
   ZSurvey,
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
@@ -107,7 +108,11 @@ export const SurveyMenuBar = ({
     const questions = localSurvey.questions;
 
     questions.forEach((question) => {
-      if (question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle") {
+      if (
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+        question.type === TSurveyQuestionTypeEnum.Ranking
+      ) {
         question.choices.forEach((choice) => {
           if (getLocalizedValue(choice.value, "default") === "") {
             choice.value = choice.label;

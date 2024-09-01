@@ -1389,6 +1389,7 @@ export const ZSurveyQuestionSummaryRanking = z.object({
   choices: z.array(
     z.object({
       value: z.string(),
+      label: z.string(),
       count: z.number(),
       avgRanking: z.number(),
       others: z
