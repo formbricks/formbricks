@@ -155,7 +155,7 @@ function convertLogicCondition(
       id: question.id,
     },
     operator,
-    rightOperand: rightOperandValue,
+    ...(doesRightOperandExistResult ? { rightOperand: rightOperandValue } : {}),
   };
 
   return newCondition;
@@ -192,6 +192,10 @@ function convertLogic(
   oldLogic: TOldLogic,
   question: TSurveyQuestion
 ): TSurveyAdvancedLogic | undefined {
+  if (!oldLogic.condition || !oldLogic.destination) {
+    return undefined;
+  }
+
   const condition = convertLogicCondition(surveyId, oldLogic.condition, oldLogic.value, question);
 
   if (!condition) {
