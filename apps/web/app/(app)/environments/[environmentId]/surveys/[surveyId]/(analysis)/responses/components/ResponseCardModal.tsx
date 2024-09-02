@@ -66,7 +66,13 @@ export const ResponseCardModal = ({
   if (selectedResponse === null || currentIndex === null) return null;
 
   return (
-    <Modal hideCloseButton open={open} setOpen={setOpen} size="xxl" className="max-h-[80vh] overflow-auto">
+    <Modal
+      hideCloseButton
+      open={open}
+      setOpen={setOpen}
+      size="xxl"
+      className="max-h-[80vh] overflow-auto"
+      noPadding>
       <div className="h-full rounded-lg">
         <div className="relative h-full w-full overflow-auto p-4">
           <div className="mb-4 flex items-center justify-end space-x-2">

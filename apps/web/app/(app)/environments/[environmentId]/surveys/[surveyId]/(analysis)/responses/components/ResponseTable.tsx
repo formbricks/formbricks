@@ -111,7 +111,7 @@ export const ResponseTable = ({
       columnVisibility,
       rowSelection,
       columnPinning: {
-        left: ["select"],
+        left: ["select", "createdAt"],
       },
     },
   });
