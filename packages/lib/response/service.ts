@@ -783,11 +783,14 @@ export const getResponseCountBySurveyIdAndPanelistId = reactCache(
         validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
         try {
+          const survey = await getSurvey(surveyId);
+          if (!survey) return 0;
+
           const responseCount = await prisma.response.count({
             where: {
               surveyId: surveyId,
               panelistId: panelistId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
           });
           return responseCount;
