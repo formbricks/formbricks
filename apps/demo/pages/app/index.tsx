@@ -33,7 +33,8 @@ const AppPage = ({}) => {
     addFormbricksDebugParam();
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+      // const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+      const userId = "new-user-id-for-testing";
       const userInitAttributes = {
         language: "de",
         "Init Attribute 1": "eight",

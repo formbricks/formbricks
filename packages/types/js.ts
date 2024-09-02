@@ -181,7 +181,6 @@ export type TJsAppConfigInput = z.infer<typeof ZJsAppConfigInput>;
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().min(1).max(255),
-  version: z.string().optional(),
 });
 
 export const ZJsPeopleUpdateAttributeInput = z.object({
