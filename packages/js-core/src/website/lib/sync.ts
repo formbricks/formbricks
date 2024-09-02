@@ -16,7 +16,7 @@ const syncWithBackend = async (
   noCache: boolean
 ): Promise<Result<TJsWebsiteState, NetworkError>> => {
   try {
-    const baseUrl = `${apiHost}/api/v1/client/${environmentId}/website/sync`;
+    const url = `${apiHost}/api/v1/client/${environmentId}/website/sync`;
 
     let fetchOptions: RequestInit = {};
 
@@ -25,8 +25,6 @@ const syncWithBackend = async (
       logger.debug("No cache option set for sync");
     }
 
-    // if user id is not available
-    const url = baseUrl;
     // public survey
     const response = await fetch(url, fetchOptions);
 
