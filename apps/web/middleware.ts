@@ -17,6 +17,7 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
+import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
 export const middleware = async (request: NextRequest) => {
   // issue with next auth types & Next 15; let's review when new fixes are available
@@ -28,6 +29,9 @@ export const middleware = async (request: NextRequest) => {
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+  if (callbackUrl && !isValidCallbackUrl(callbackUrl, WEBAPP_URL)) {
+    return NextResponse.json({ error: "Invalid callback URL" });
+  }
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
