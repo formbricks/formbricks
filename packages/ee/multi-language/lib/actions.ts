@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import {
   createLanguage,
   deleteLanguage,
@@ -15,35 +14,30 @@ import {
   getOrganizationIdFromProductId,
 } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZLanguageInput } from "@formbricks/types/product";
 
 const ZCreateLanguageAction = z.object({
-  environmentId: ZId,
+  productId: ZId,
   languageInput: ZLanguageInput,
 });
 
 export const createLanguageAction = authenticatedActionClient
   .schema(ZCreateLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
-    const environment = await getEnvironment(parsedInput.environmentId);
-    if (!environment) {
-      throw new ResourceNotFoundError("Environment", parsedInput.environmentId);
-    }
     await checkAuthorization({
       data: parsedInput.languageInput,
       schema: ZLanguageInput,
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(environment.productId),
+      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
       rules: ["language", "create"],
     });
 
-    return await createLanguage(environment.productId, parsedInput.environmentId, parsedInput.languageInput);
+    return await createLanguage(parsedInput.productId, parsedInput.languageInput);
   });
 
 const ZDeleteLanguageAction = z.object({
-  environmentId: ZId,
   languageId: ZId,
+  productId: ZId,
 });
 
 export const deleteLanguageAction = authenticatedActionClient
@@ -55,7 +49,7 @@ export const deleteLanguageAction = authenticatedActionClient
       rules: ["language", "delete"],
     });
 
-    return await deleteLanguage(parsedInput.environmentId, parsedInput.languageId);
+    return await deleteLanguage(parsedInput.languageId, parsedInput.productId);
   });
 
 const ZGetSurveysUsingGivenLanguageAction = z.object({
@@ -75,7 +69,7 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   });
 
 const ZUpdateLanguageAction = z.object({
-  environmentId: ZId,
+  productId: ZId,
   languageId: ZId,
   languageInput: ZLanguageInput,
 });
@@ -91,5 +85,5 @@ export const updateLanguageAction = authenticatedActionClient
       rules: ["language", "update"],
     });
 
-    return await updateLanguage(parsedInput.environmentId, parsedInput.languageId, parsedInput.languageInput);
+    return await updateLanguage(parsedInput.productId, parsedInput.languageId, parsedInput.languageInput);
   });
