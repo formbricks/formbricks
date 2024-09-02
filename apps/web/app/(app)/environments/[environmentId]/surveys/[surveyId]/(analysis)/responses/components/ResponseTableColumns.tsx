@@ -32,7 +32,7 @@ const getAddressFieldLabel = (field: string) => {
   }
 };
 
-const getColumnHeaderForQuestion = (
+const getQuestionColumnsData = (
   question: TSurveyQuestion,
   survey: TSurvey,
   isExpanded: boolean
@@ -55,7 +55,7 @@ const getColumnHeaderForQuestion = (
           cell: ({ row }) => {
             const responseValue = row.original.responseData[matrixRow.default];
             if (typeof responseValue === "string") {
-              return <p>{responseValue}</p>;
+              return <p className="text-slate-900">{responseValue}</p>;
             }
           },
         };
@@ -79,7 +79,7 @@ const getColumnHeaderForQuestion = (
           cell: ({ row }) => {
             const responseValue = row.original.responseData[addressField];
             if (typeof responseValue === "string") {
-              return <p>{responseValue}</p>;
+              return <p className="text-slate-900">{responseValue}</p>;
             }
           },
         };
@@ -126,7 +126,7 @@ export const generateColumns = (
   isViewer: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
-    getColumnHeaderForQuestion(question, survey, isExpanded)
+    getQuestionColumnsData(question, survey, isExpanded)
   );
   const selectionColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "select",
@@ -135,7 +135,7 @@ export const generateColumns = (
     header: ({ table }) => (
       <div className="flex w-full items-center justify-center pr-4">
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
@@ -155,7 +155,7 @@ export const generateColumns = (
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
-    header: () => <span>Date</span>,
+    header: () => "Date",
     cell: ({ row }) => {
       const isoDateString = row.original.createdAt;
       const date = new Date(isoDateString);
@@ -174,8 +174,8 @@ export const generateColumns = (
 
       return (
         <div>
-          <p>{formattedDate}</p>
-          <p>{formattedTime}</p>
+          <p className="text-slate-900">{formattedDate}</p>
+          <p className="text-slate-900">{formattedTime}</p>
         </div>
       );
     },
@@ -183,7 +183,7 @@ export const generateColumns = (
 
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
-    header: () => <span>Status</span>,
+    header: "Status",
     cell: ({ row }) => {
       const status = row.original.status;
       return <ResponseBadges items={[status]} />;
@@ -192,7 +192,7 @@ export const generateColumns = (
 
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
-    header: () => <span>Tags</span>,
+    header: "Tags",
     cell: ({ getValue }) => {
       const tags = getValue(); // Get the ISO date string
       if (Array.isArray(tags)) {
@@ -210,7 +210,7 @@ export const generateColumns = (
 
   const notesColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "notes",
-    header: () => <span>Notes</span>,
+    header: "Notes",
     cell: ({ getValue }) => {
       const notes = getValue();
       if (Array.isArray(notes)) {
@@ -235,7 +235,7 @@ export const generateColumns = (
           cell: ({ getValue }) => {
             const hiddenFieldResponse = getValue();
             if (typeof hiddenFieldResponse === "string") {
-              return <div>{hiddenFieldResponse}</div>;
+              return <div className="text-slate-900">{hiddenFieldResponse}</div>;
             }
           },
         };

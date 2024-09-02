@@ -149,7 +149,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
     case TSurveyQuestionTypeEnum.Ranking:
       if (Array.isArray(responseData)) {
-        return <RankingRespone value={responseData} />;
+        return <RankingRespone value={responseData} isExpanded={isExpanded} />;
       }
     default:
       if (

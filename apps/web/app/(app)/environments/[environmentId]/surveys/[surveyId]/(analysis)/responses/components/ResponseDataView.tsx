@@ -8,7 +8,7 @@ import { TUser } from "@formbricks/types/user";
 
 interface ResponseDataViewProps {
   survey: TSurvey;
-  responses: TResponse[] | null;
+  responses: TResponse[];
   user?: TUser;
   environment: TEnvironment;
   environmentTags: TTag[];
@@ -17,6 +17,7 @@ interface ResponseDataViewProps {
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
+  isFetchingFirstPage: boolean;
 }
 
 const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
@@ -79,8 +80,9 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   hasMore,
   deleteResponses,
   updateResponse,
+  isFetchingFirstPage,
 }) => {
-  const data = responses ? mapResponsesToTableData(responses, survey) : null;
+  const data = mapResponsesToTableData(responses, survey);
 
   return (
     <div className="w-full">
@@ -96,6 +98,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         hasMore={hasMore}
         deleteResponses={deleteResponses}
         updateResponse={updateResponse}
+        isFetchingFirstPage={isFetchingFirstPage}
       />
     </div>
   );

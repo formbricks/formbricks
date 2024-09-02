@@ -28,7 +28,7 @@ interface SingleResponseCardProps {
   updateResponse?: (responseId: string, responses: TResponse) => void;
   deleteResponses?: (responseIds: string[]) => void;
   isViewer: boolean;
-  setSelectedResponseCard?: (response: TResponse | null) => void;
+  setSelectedResponse?: (response: TResponse | null) => void;
 }
 
 export const SingleResponseCard = ({
@@ -41,7 +41,7 @@ export const SingleResponseCard = ({
   updateResponse,
   deleteResponses,
   isViewer,
-  setSelectedResponseCard,
+  setSelectedResponse,
 }: SingleResponseCardProps) => {
   const environmentId = survey.environmentId;
   const router = useRouter();
@@ -95,7 +95,7 @@ export const SingleResponseCard = ({
       await deleteResponseAction({ responseId: response.id });
       deleteResponses?.([response.id]);
       router.refresh();
-      if (setSelectedResponseCard) setSelectedResponseCard(null);
+      if (setSelectedResponse) setSelectedResponse(null);
       toast.success("Response deleted successfully.");
       setDeleteDialogOpen(false);
     } catch (error) {

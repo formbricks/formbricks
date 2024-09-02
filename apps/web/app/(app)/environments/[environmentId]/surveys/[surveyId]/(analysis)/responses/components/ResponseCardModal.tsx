@@ -70,20 +70,17 @@ export const ResponseCardModal = ({
               onClick={handleBack}
               disabled={currentIndex === 0}
               variant="minimal"
-              className="border border-slate-100 bg-white p-2 text-gray-500 hover:text-gray-800">
+              className="border bg-white p-2">
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <Button
               onClick={handleNext}
               disabled={currentIndex === responses.length - 1}
               variant="minimal"
-              className="border border-slate-100 bg-white p-2 text-gray-500 hover:text-gray-800">
+              className="border bg-white p-2">
               <ChevronRight className="h-5 w-5" />
             </Button>
-            <Button
-              className="border border-slate-100 bg-white p-2 text-gray-500 hover:text-gray-800"
-              onClick={handleClose}
-              variant="minimal">
+            <Button className="border bg-white p-2" onClick={handleClose} variant="minimal">
               <XIcon className="h-5 w-5" />
             </Button>
           </div>
@@ -97,6 +94,7 @@ export const ResponseCardModal = ({
             isViewer={isViewer}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
+            setSelectedResponse={setSelectedResponse}
           />
         </div>
       </div>

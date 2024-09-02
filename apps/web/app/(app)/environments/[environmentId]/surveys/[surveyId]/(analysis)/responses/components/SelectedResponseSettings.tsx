@@ -43,7 +43,7 @@ export const SelectedResponseSettings = ({ table, deleteResponses }: SelectedRes
   };
 
   // Helper component for the separator
-  const Separator = () => <div className="">|</div>;
+  const Separator = () => <div>|</div>;
 
   // Helper component for selectable options
   const SelectableOption = ({ label, onClick }: { label: string; onClick: () => void }) => (
@@ -57,6 +57,7 @@ export const SelectedResponseSettings = ({ table, deleteResponses }: SelectedRes
       <div>{selectedRowCount} responses selected</div>
       <Separator />
       <SelectableOption label="Select all" onClick={() => handleToggleAllRowsSelection(true)} />
+      <Separator />
       <SelectableOption label="Clear selection" onClick={() => handleToggleAllRowsSelection(false)} />
       <Separator />
       <div

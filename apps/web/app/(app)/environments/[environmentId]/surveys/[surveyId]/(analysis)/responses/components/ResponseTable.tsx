@@ -28,7 +28,7 @@ import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
 interface ResponseTableProps {
-  data: TResponseTableData[] | null;
+  data: TResponseTableData[];
   survey: TSurvey;
   responses: TResponse[] | null;
   environment: TEnvironment;
@@ -39,6 +39,7 @@ interface ResponseTableProps {
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
+  isFetchingFirstPage: boolean;
 }
 
 export const ResponseTable = ({
@@ -53,6 +54,7 @@ export const ResponseTable = ({
   hasMore,
   deleteResponses,
   updateResponse,
+  isFetchingFirstPage,
 }: ResponseTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -72,10 +74,13 @@ export const ResponseTable = ({
   );
 
   // Memoize table data and columns
-  const tableData = useMemo(() => data ?? Array(10).fill({}), [data]);
+  const tableData: TResponseTableData[] = useMemo(
+    () => (isFetchingFirstPage ? Array(10).fill({}) : data),
+    [data]
+  );
   const tableColumns = useMemo(
     () =>
-      !data || data.length === 0
+      isFetchingFirstPage
         ? columns.map((column) => ({
             ...column,
             cell: () => (
@@ -101,7 +106,14 @@ export const ResponseTable = ({
     columnResizeDirection: "ltr",
     manualPagination: true,
     defaultColumn: { size: 300 },
-    state: { columnOrder, columnVisibility, rowSelection },
+    state: {
+      columnOrder,
+      columnVisibility,
+      rowSelection,
+      columnPinning: {
+        left: ["select"],
+      },
+    },
   });
 
   useEffect(() => {
@@ -157,25 +169,24 @@ export const ResponseTable = ({
             </TableHeader>
 
             <TableBody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={"group cursor-pointer"}>
-                    {row.getVisibleCells().map((cell) => (
-                      <ResponseTableCell
-                        key={cell.id}
-                        cell={cell}
-                        row={row}
-                        isExpanded={isExpanded}
-                        setSelectedResponseCard={setSelectedResponse}
-                        responses={responses}
-                      />
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
+              {table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={"group cursor-pointer"}>
+                  {row.getVisibleCells().map((cell) => (
+                    <ResponseTableCell
+                      key={cell.id}
+                      cell={cell}
+                      row={row}
+                      isExpanded={isExpanded}
+                      setSelectedResponseCard={setSelectedResponse}
+                      responses={responses}
+                    />
+                  ))}
+                </TableRow>
+              ))}
+              {table.getRowModel().rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
                     No results.

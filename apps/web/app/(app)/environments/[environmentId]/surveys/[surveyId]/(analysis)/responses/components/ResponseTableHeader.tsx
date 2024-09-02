@@ -16,7 +16,6 @@ interface ResponseTableHeaderProps {
 export const getCommonPinningStyles = (column: Column<TResponseTableData>): CSSProperties => {
   return {
     left: `${column.getStart("left") - 1}px`,
-    right: `${column.getAfter("right")}px`,
     position: "sticky",
     width: column.getSize(),
     zIndex: 1,

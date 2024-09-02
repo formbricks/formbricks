@@ -45,10 +45,10 @@ export const ResponsePage = ({
   const isSharingPage = !!sharingKey;
 
   const [responseCount, setResponseCount] = useState<number | null>(null);
-  const [responses, setResponses] = useState<TResponse[] | null>(null);
+  const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
-
+  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const filters = useMemo(
@@ -86,12 +86,12 @@ export const ResponsePage = ({
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
     }
-    setResponses([...(responses ?? []), ...newResponses]);
+    setResponses([...responses, ...newResponses]);
     setPage(newPage);
   }, [filters, isSharingPage, page, responses, responsesPerPage, sharingKey, surveyId]);
 
   const deleteResponses = (responseIds: string[]) => {
-    setResponses((responses ?? []).filter((response) => !responseIds.includes(response.id)));
+    setResponses(responses.filter((response) => !responseIds.includes(response.id)));
     if (responseCount) {
       setResponseCount(responseCount - responseIds.length);
     }
@@ -135,6 +135,7 @@ export const ResponsePage = ({
   useEffect(() => {
     const fetchInitialResponses = async () => {
       try {
+        setFetchingFirstPage(true);
         let responses: TResponse[] = [];
 
         if (isSharingPage) {
@@ -161,8 +162,8 @@ export const ResponsePage = ({
           setHasMore(false);
         }
         setResponses(responses);
-      } catch (error) {
-        console.error(error);
+      } finally {
+        setFetchingFirstPage(false);
       }
     };
     fetchInitialResponses();
@@ -191,6 +192,7 @@ export const ResponsePage = ({
         hasMore={hasMore}
         deleteResponses={deleteResponses}
         updateResponse={updateResponse}
+        isFetchingFirstPage={isFetchingFirstPage}
       />
     </>
   );
