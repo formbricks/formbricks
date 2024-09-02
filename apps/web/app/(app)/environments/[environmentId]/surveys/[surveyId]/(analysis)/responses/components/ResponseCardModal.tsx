@@ -6,6 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
+import { Modal } from "@formbricks/ui/Modal";
 import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 
 interface ResponseCardModalProps {
@@ -34,11 +35,14 @@ export const ResponseCardModal = ({
   isViewer,
 }: ResponseCardModalProps) => {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
-
+  const [open, setOpen] = useState(selectedResponse !== null);
   useEffect(() => {
     if (selectedResponse) {
+      setOpen(true);
       const index = responses.findIndex((response) => response.id === selectedResponse.id);
       setCurrentIndex(index);
+    } else {
+      setOpen(false);
     }
   }, [selectedResponse, responses]);
 
@@ -62,9 +66,9 @@ export const ResponseCardModal = ({
   if (selectedResponse === null || currentIndex === null) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md">
-      <div className="h-full max-h-[80vh] w-full max-w-5xl overflow-hidden rounded-lg">
-        <div className="relative h-full w-full overflow-auto bg-slate-50 p-4 shadow-lg">
+    <Modal hideCloseButton open={open} setOpen={setOpen} size="xxl" className="max-h-[80vh] overflow-auto">
+      <div className="h-full rounded-lg">
+        <div className="relative h-full w-full overflow-auto p-4">
           <div className="mb-4 flex items-center justify-end space-x-2">
             <Button
               onClick={handleBack}
@@ -98,6 +102,6 @@ export const ResponseCardModal = ({
           />
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
