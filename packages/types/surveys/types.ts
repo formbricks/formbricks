@@ -65,6 +65,7 @@ export enum TSurveyQuestionTypeEnum {
   Date = "date",
   Matrix = "matrix",
   Address = "address",
+  Ranking = "ranking",
 }
 
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
@@ -214,7 +215,7 @@ export const ZSurveySingleUse = z
 
 export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 
-export const ZSurveyChoice = z.object({
+export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
 });
@@ -224,7 +225,7 @@ export const ZSurveyPictureChoice = z.object({
   imageUrl: z.string(),
 });
 
-export type TSurveyChoice = z.infer<typeof ZSurveyChoice>;
+export type TSurveyQuestionChoice = z.infer<typeof ZSurveyQuestionChoice>;
 
 export const ZSurveyLogicCondition = z.enum([
   "accepted",
@@ -265,6 +266,11 @@ export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
 });
 
 export const ZSurveyAddressLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["submitted", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
+export const ZSurveyRankingLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["submitted", "skipped"]).optional(),
   value: z.undefined(),
 });
@@ -344,6 +350,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyCalLogic,
   ZSurveyMatrixLogic,
   ZSurveyAddressLogic,
+  ZSurveyRankingLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -399,7 +406,7 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
   ]),
   choices: z
-    .array(ZSurveyChoice)
+    .array(ZSurveyQuestionChoice)
     .min(2, { message: "Multiple Choice Question must have at least two choices" }),
   logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: ZShuffleOption.optional(),
@@ -514,6 +521,17 @@ export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
 });
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
+export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.Ranking),
+  choices: z
+    .array(ZSurveyQuestionChoice)
+    .min(2, { message: "Ranking Question must have at least two options" }),
+  otherOptionPlaceholder: ZI18nString.optional(),
+  shuffleOption: ZShuffleOption.optional(),
+});
+
+export type TSurveyRankingQuestion = z.infer<typeof ZSurveyRankingQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -527,6 +545,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCalQuestion,
   ZSurveyMatrixQuestion,
   ZSurveyAddressQuestion,
+  ZSurveyRankingQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -549,6 +568,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.PictureSelection,
   TSurveyQuestionTypeEnum.Rating,
   TSurveyQuestionTypeEnum.Cal,
+  TSurveyQuestionTypeEnum.Ranking,
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
@@ -783,7 +803,8 @@ export const ZSurvey = z
 
       if (
         question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        question.type === TSurveyQuestionTypeEnum.Ranking
       ) {
         question.choices.forEach((choice, choiceIndex) => {
           multiLangIssue = validateQuestionLabels(
@@ -1358,6 +1379,35 @@ export const ZSurveyQuestionSummaryAddress = z.object({
 
 export type TSurveyQuestionSummaryAddress = z.infer<typeof ZSurveyQuestionSummaryAddress>;
 
+export const ZSurveyQuestionSummaryRanking = z.object({
+  type: z.literal("ranking"),
+  question: ZSurveyRankingQuestion,
+  responseCount: z.number(),
+
+  choices: z.array(
+    z.object({
+      value: z.string(),
+      count: z.number(),
+      avgRanking: z.number(),
+      others: z
+        .array(
+          z.object({
+            value: z.string(),
+            person: z
+              .object({
+                id: ZId,
+                userId: z.string(),
+              })
+              .nullable(),
+            personAttributes: ZAttributes.nullable(),
+          })
+        )
+        .optional(),
+    })
+  ),
+});
+export type TSurveyQuestionSummaryRanking = z.infer<typeof ZSurveyQuestionSummaryRanking>;
+
 export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryOpenText,
   ZSurveyQuestionSummaryMultipleChoice,
@@ -1371,6 +1421,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryCal,
   ZSurveyQuestionSummaryMatrix,
   ZSurveyQuestionSummaryAddress,
+  ZSurveyQuestionSummaryRanking,
 ]);
 
 export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;

@@ -2,6 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 
 export const POST = async () => {
   const headersList = headers();
@@ -21,6 +22,7 @@ export const POST = async () => {
     },
     select: {
       id: true,
+      environmentId: true,
     },
   });
 
@@ -47,6 +49,7 @@ export const POST = async () => {
     },
     select: {
       id: true,
+      environmentId: true,
     },
   });
 
@@ -60,6 +63,15 @@ export const POST = async () => {
       data: {
         status: "inProgress",
       },
+    });
+  }
+
+  const updatedSurveys = [...surveysToClose, ...scheduledSurveys];
+
+  for (const survey of updatedSurveys) {
+    surveyCache.revalidate({
+      id: survey.id,
+      environmentId: survey.environmentId,
     });
   }
 

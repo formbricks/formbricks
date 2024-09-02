@@ -70,13 +70,14 @@ export const SurveyAnalysisCTA = ({
           onClick={() => {
             setOpenShareSurveyModal(true);
           }}>
-          <ShareIcon className="h-5 w-5" />
+          Share
+          <ShareIcon className="ml-1 h-4" />
         </Button>
       )}
       {!isViewer && (
         <Button
           size="sm"
-          className="h-full w-full px-3"
+          className="h-full"
           href={`/environments/${environment.id}/surveys/${survey.id}/edit`}>
           Edit
           <SquarePenIcon className="ml-1 h-4" />

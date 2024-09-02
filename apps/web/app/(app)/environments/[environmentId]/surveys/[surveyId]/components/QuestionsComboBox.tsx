@@ -14,6 +14,7 @@ import {
   ImageIcon,
   LanguagesIcon,
   ListIcon,
+  ListOrderedIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
   Rows3Icon,
@@ -86,6 +87,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <ImageIcon width={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.Matrix:
             return <GridIcon width={18} className="text-white" />;
+          case TSurveyQuestionTypeEnum.Ranking:
+            return <ListOrderedIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
         return <User width={18} height={18} className="text-white" />;

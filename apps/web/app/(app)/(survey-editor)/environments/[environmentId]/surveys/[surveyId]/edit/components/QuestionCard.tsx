@@ -1,5 +1,6 @@
 "use client";
 
+import { RankingQuestionForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RankingQuestionForm";
 import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
@@ -357,6 +358,18 @@ export const QuestionCard = ({
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
+              localSurvey={localSurvey}
+              question={question}
+              questionIdx={questionIdx}
+              updateQuestion={updateQuestion}
+              lastQuestion={lastQuestion}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+              isInvalid={isInvalid}
+              attributeClasses={attributeClasses}
+            />
+          ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
+            <RankingQuestionForm
               localSurvey={localSurvey}
               question={question}
               questionIdx={questionIdx}
