@@ -157,6 +157,10 @@ export const surveys = {
       question: "Where do you live?",
       placeholder: "Address Line 1",
     },
+    ranking: {
+      question: "What is most important for you in life?",
+      choices: ["Work", "Money", "Travel", "Family", "Friends"],
+    },
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
@@ -222,6 +226,10 @@ export const surveys = {
     },
     addressQuestion: {
       question: "Wo wohnst du ?",
+    },
+    ranking: {
+      question: "Was ist für Sie im Leben am wichtigsten?",
+      choices: ["Arbeit", "Geld", "Reisen", "Familie", "Freunde"],
     },
     thankYouCard: {
       headline: "Dies ist meine Dankeskarte Überschrift!", // German translation

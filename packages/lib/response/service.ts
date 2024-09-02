@@ -462,11 +462,13 @@ export const getResponses = reactCache(
         );
 
         limit = limit ?? RESPONSES_PER_PAGE;
+        const survey = await getSurvey(surveyId);
+        if (!survey) return [];
         try {
           const responses = await prisma.response.findMany({
             where: {
               surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
             select: responseSelection,
             orderBy: [
@@ -796,10 +798,13 @@ export const getResponseCountBySurveyId = reactCache(
         validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
         try {
+          const survey = await getSurvey(surveyId);
+          if (!survey) return 0;
+
           const responseCount = await prisma.response.count({
             where: {
               surveyId: surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
           });
           return responseCount;

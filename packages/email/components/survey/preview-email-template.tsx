@@ -276,6 +276,27 @@ export function PreviewEmailTemplate({
           <EmailFooter />
         </EmailTemplateWrapper>
       );
+    case TSurveyQuestionTypeEnum.Ranking:
+      return (
+        <EmailTemplateWrapper styling={styling} surveyUrl={url}>
+          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+          </Text>
+          <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+          </Text>
+          <Container className="mx-0 max-w-none">
+            {firstQuestion.choices.map((choice) => (
+              <Section
+                className="border-input-border-color bg-input-color text-question-color rounded-custom mt-2 block w-full border border-solid p-4"
+                key={choice.id}>
+                {getLocalizedValue(choice.label, defaultLanguageCode)}
+              </Section>
+            ))}
+          </Container>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
     case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
