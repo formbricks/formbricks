@@ -2,7 +2,7 @@
 
 export const SurveyLoading = () => {
   return (
-    <div className="grid h-full w-full animate-pulse grid-cols-5 gap-5">
+    <div className="grid h-full w-full animate-pulse grid-cols-2 place-content-stretch gap-4 lg:grid-cols-3 2xl:grid-cols-5">
       {[1, 2, 3, 4, 5].map((i) => {
         return (
           <div
