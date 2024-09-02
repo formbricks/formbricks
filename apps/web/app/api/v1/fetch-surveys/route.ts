@@ -2,7 +2,6 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getResponseCountBySurveyIdAndPanelistId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -96,13 +95,6 @@ export async function GET(request: Request) {
           });
         })
         .map(async (survey) => {
-          const responseCount = await getResponseCountBySurveyIdAndPanelistId(
-            survey.id,
-            searchParams.get("panelist_id") || ""
-          );
-          if (responseCount !== 0) {
-            return null;
-          }
           let url = WEBAPP_URL + "/s/" + survey.id;
           if (survey.singleUse?.enabled) {
             const singleUseId = generateSurveySingleUseId(survey.singleUse.isEncrypted);

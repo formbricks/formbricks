@@ -775,31 +775,3 @@ export const getResponseCountBySurveyId = reactCache(
       }
     )()
 );
-
-export const getResponseCountBySurveyIdAndPanelistId = async (
-  surveyId: string,
-  panelistId: string,
-  filterCriteria?: TResponseFilterCriteria
-): Promise<number> => {
-  validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
-
-  try {
-    const survey = await getSurvey(surveyId);
-    if (!survey) return 0;
-
-    const responseCount = await prisma.response.count({
-      where: {
-        surveyId: surveyId,
-        panelistId: panelistId,
-        ...buildWhereClause(survey, filterCriteria),
-      },
-    });
-    return responseCount;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
