@@ -214,7 +214,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .filter({ hasText: new RegExp(`^${addQuestion}$`) })
     .nth(1)
     .click();
-  await page.getByRole("button", { name: "Call-to-Action (Statement)" }).click();
+  await page.getByRole("button", { name: "Statement (Call to Action)" }).click();
   await page.getByPlaceholder("Your question here. Recall").fill(params.ctaQuestion.question);
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
 
