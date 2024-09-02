@@ -9,7 +9,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
-import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 import { Button } from "@formbricks/ui/Button";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
 import { AzureButton } from "@formbricks/ui/SignupOptions/components/AzureButton";
@@ -34,7 +33,6 @@ interface SignInFormProps {
   oidcOAuthEnabled: boolean;
   oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
-  webappUrl: string;
 }
 
 export const SigninForm = ({
@@ -47,16 +45,12 @@ export const SigninForm = ({
   oidcOAuthEnabled,
   oidcDisplayName,
   isMultiOrgEnabled,
-  webappUrl,
 }: SignInFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   const formMethods = useForm<TSigninFormState>();
   const callbackUrl = searchParams?.get("callbackUrl");
-  if (callbackUrl && !isValidCallbackUrl(callbackUrl, webappUrl)) {
-    throw new Error("Invalid Callback url");
-  }
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
 
