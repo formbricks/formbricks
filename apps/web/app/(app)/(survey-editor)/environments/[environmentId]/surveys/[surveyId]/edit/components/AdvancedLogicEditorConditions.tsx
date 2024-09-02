@@ -4,7 +4,7 @@ import {
   getMatchValueProps,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { createId } from "@paralleldrive/cuid2";
-import { CopyIcon, MoreVerticalIcon, PlusIcon, Trash2Icon, WorkflowIcon } from "lucide-react";
+import { CopyIcon, MoreVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import {
   addConditionBelow,
@@ -133,7 +133,7 @@ export function AdvancedLogicEditorConditions({
               {connector}
             </div>
           )}
-          <div className="rounded-lg border border-slate-200 bg-slate-100 p-4">
+          <div className="rounded-lg border border-slate-400 p-3">
             <AdvancedLogicEditorConditions
               conditions={condition}
               updateQuestion={updateQuestion}
@@ -169,7 +169,7 @@ export function AdvancedLogicEditorConditions({
                   className="flex items-center gap-2"
                   disabled={depth === 0 && conditions.conditions.length === 1}
                   onClick={() => handleRemoveCondition(condition.id)}>
-                  <Trash2Icon className="h-4 w-4" />
+                  <TrashIcon className="h-4 w-4" />
                   Remove
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -184,19 +184,21 @@ export function AdvancedLogicEditorConditions({
     const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey);
 
     return (
-      <div key={condition.id} className="flex items-center justify-between gap-4">
-        {index === 0 ? (
-          <div className="text-sm">When</div>
-        ) : (
-          <div
-            className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
-            onClick={() => {
-              if (index !== 1) return;
-              handleConnectorChange(parentConditionGroup.id);
-            }}>
-            {connector}
-          </div>
-        )}
+      <div key={condition.id} className="flex items-center justify-between gap-x-2 text-sm">
+        <div className="w-10 shrink-0">
+          {index === 0 ? (
+            "When"
+          ) : (
+            <div
+              className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
+              onClick={() => {
+                if (index !== 1) return;
+                handleConnectorChange(parentConditionGroup.id);
+              }}>
+              {connector}
+            </div>
+          )}
+        </div>
         <InputCombobox
           key="conditionValue"
           showSearch={false}
@@ -281,7 +283,7 @@ export function AdvancedLogicEditorConditions({
               className="flex items-center gap-2"
               disabled={depth === 0 && conditions.conditions.length === 1}
               onClick={() => handleRemoveCondition(condition.id)}>
-              <Trash2Icon className="h-4 w-4" />
+              <TrashIcon className="h-4 w-4" />
               Remove
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -303,7 +305,7 @@ export function AdvancedLogicEditorConditions({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-y-2">
       {conditions.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
     </div>
   );

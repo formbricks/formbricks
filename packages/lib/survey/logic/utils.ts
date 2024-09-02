@@ -1,10 +1,52 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TAction, TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import {
+  TAction,
+  TConditionGroup,
+  TSingleCondition,
+  TSurveyAdvancedLogic,
+} from "@formbricks/types/surveys/logic";
 
 type TCondition = TSingleCondition | TConditionGroup;
 
 export const isConditionsGroup = (condition: TCondition): condition is TConditionGroup => {
   return (condition as TConditionGroup).connector !== undefined;
+};
+
+export const duplicateLogicItem = (logicItem: TSurveyAdvancedLogic): TSurveyAdvancedLogic => {
+  const duplicateConditionGroup = (group: TConditionGroup): TConditionGroup => {
+    return {
+      ...group,
+      id: createId(),
+      conditions: group.conditions.map((condition) => {
+        if (isConditionsGroup(condition)) {
+          return duplicateConditionGroup(condition);
+        } else {
+          return duplicateCondition(condition);
+        }
+      }),
+    };
+  };
+
+  const duplicateCondition = (condition: TSingleCondition): TSingleCondition => {
+    return {
+      ...condition,
+      id: createId(),
+    };
+  };
+
+  const duplicateAction = (action: TAction): TAction => {
+    return {
+      ...action,
+      id: createId(),
+    };
+  };
+
+  return {
+    ...logicItem,
+    id: createId(),
+    conditions: duplicateConditionGroup(logicItem.conditions),
+    actions: logicItem.actions.map(duplicateAction),
+  };
 };
 
 export const addConditionBelow = (

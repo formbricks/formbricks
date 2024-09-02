@@ -6,7 +6,7 @@ import {
   getActionVariableOptions,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { createId } from "@paralleldrive/cuid2";
-import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { getUpdatedActionBody } from "@formbricks/lib/survey/logic/utils";
 import {
   TAction,
@@ -81,134 +81,135 @@ export function AdvancedLogicEditorActions({
   }
 
   return (
-    <div className="">
-      <div className="flex gap-2">
-        <CornerDownRightIcon className="mt-2 h-5 w-5" />
-        <div className="flex w-full flex-col gap-y-2">
-          {actions.map((action, idx) => (
-            <div className="flex w-full items-center justify-between gap-4">
-              <span className="text-sm">{idx === 0 ? "Then" : "and"}</span>
-              <div className="flex grow items-center gap-1">
-                <InputCombobox
-                  key="objective"
-                  showSearch={false}
-                  options={actionObjectiveOptions}
-                  selected={action.objective}
-                  onChangeValue={(val: TActionObjective) => {
-                    updateAction(idx, {
-                      objective: val,
-                    });
-                  }}
-                  comboboxClasses="max-w-[200px]"
-                />
-                <InputCombobox
-                  key="target"
-                  showSearch={false}
-                  options={
-                    action.objective === "calculate"
-                      ? getActionVariableOptions(localSurvey)
-                      : getActionTargetOptions(action, localSurvey, questionIdx)
-                  }
-                  selected={action.objective === "calculate" ? action.variableId : action.target}
-                  onChangeValue={(val: string) => {
-                    updateAction(idx, {
-                      ...(action.objective === "calculate" ? { variableId: val } : { target: val }),
-                    });
-                  }}
-                  comboboxClasses="grow min-w-[100px]  max-w-[200px]"
-                />
-                {action.objective === "calculate" && (
-                  <>
-                    <InputCombobox
-                      key="attribute"
-                      showSearch={false}
-                      options={getActionOpeartorOptions(
-                        localSurvey.variables.find((v) => v.id === action.variableId)?.type
-                      )}
-                      selected={action.operator}
-                      onChangeValue={(val: TActionVariableCalculateOperator) => {
-                        updateAction(idx, {
-                          operator: val,
-                        });
-                      }}
-                      comboboxClasses="min-w-[100px] max-w-[200px]"
-                    />
-                    <InputCombobox
-                      key="value"
-                      withInput={true}
-                      clearable={true}
-                      inputProps={{
-                        placeholder: "Value",
-                        value: action.value?.value ?? "",
-                        type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
-                        onChange: (e) => {
-                          let val: string | number = e.target.value;
+    <div className="flex w-full gap-2">
+      <CornerDownRightIcon className="mt-3 h-4 w-4 shrink-0" />
+      <div className="flex grow flex-col gap-y-2">
+        {actions.map((action, idx) => (
+          <div className="flex w-full items-center justify-between gap-x-2">
+            <div className="block w-9 shrink-0 text-sm">{idx === 0 ? "Then" : "and"}</div>
+            <div className="flex grow items-center gap-x-2 text-sm">
+              <InputCombobox
+                key="objective"
+                showSearch={false}
+                options={actionObjectiveOptions}
+                selected={action.objective}
+                onChangeValue={(val: TActionObjective) => {
+                  updateAction(idx, {
+                    objective: val,
+                  });
+                }}
+                // comboboxClasses="max-w-[200px]"
+                comboboxClasses="grow"
+              />
+              <InputCombobox
+                key="target"
+                showSearch={false}
+                options={
+                  action.objective === "calculate"
+                    ? getActionVariableOptions(localSurvey)
+                    : getActionTargetOptions(action, localSurvey, questionIdx)
+                }
+                selected={action.objective === "calculate" ? action.variableId : action.target}
+                onChangeValue={(val: string) => {
+                  updateAction(idx, {
+                    ...(action.objective === "calculate" ? { variableId: val } : { target: val }),
+                  });
+                }}
+                // comboboxClasses="grow min-w-[100px]  max-w-[200px]"
+                comboboxClasses="grow"
+              />
+              {action.objective === "calculate" && (
+                <>
+                  <InputCombobox
+                    key="attribute"
+                    showSearch={false}
+                    options={getActionOpeartorOptions(
+                      localSurvey.variables.find((v) => v.id === action.variableId)?.type
+                    )}
+                    selected={action.operator}
+                    onChangeValue={(val: TActionVariableCalculateOperator) => {
+                      updateAction(idx, {
+                        operator: val,
+                      });
+                    }}
+                    // comboboxClasses="min-w-[100px] max-w-[200px]"
+                    comboboxClasses="grow"
+                  />
+                  <InputCombobox
+                    key="value"
+                    withInput={true}
+                    clearable={true}
+                    inputProps={{
+                      placeholder: "Value",
+                      value: action.value?.value ?? "",
+                      type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
+                      onChange: (e) => {
+                        let val: string | number = e.target.value;
 
-                          const variable = localSurvey.variables.find((v) => v.id === action.variableId);
-                          if (variable?.type === "number") {
-                            val = Number(val);
-                          }
-                          updateAction(idx, {
-                            value: {
-                              type: "static",
-                              value: val,
-                            },
-                          });
-                        },
-                      }}
-                      groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx)}
-                      onChangeValue={(val: string, option) => {
+                        const variable = localSurvey.variables.find((v) => v.id === action.variableId);
+                        if (variable?.type === "number") {
+                          val = Number(val);
+                        }
                         updateAction(idx, {
                           value: {
-                            type: option?.meta?.type as TActionVariableValueType,
+                            type: "static",
                             value: val,
                           },
                         });
-                      }}
-                      comboboxClasses="flex min-w-[100px] max-w-[200px]"
-                    />
-                  </>
-                )}
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <MoreVerticalIcon className="h-4 w-4" />
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    className="flex items-center gap-2"
-                    onClick={() => {
-                      handleActionsChange("addBelow", idx);
-                    }}>
-                    <PlusIcon className="h-4 w-4" />
-                    Add action below
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    className="flex items-center gap-2"
-                    disabled={actions.length === 1}
-                    onClick={() => {
-                      handleActionsChange("delete", idx);
-                    }}>
-                    <Trash2Icon className="h-4 w-4" />
-                    Remove
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    className="flex items-center gap-2"
-                    onClick={() => {
-                      handleActionsChange("duplicate", idx);
-                    }}>
-                    <CopyIcon className="h-4 w-4" />
-                    Duplicate
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      },
+                    }}
+                    groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx)}
+                    onChangeValue={(val: string, option) => {
+                      updateAction(idx, {
+                        value: {
+                          type: option?.meta?.type as TActionVariableValueType,
+                          value: val,
+                        },
+                      });
+                    }}
+                    // comboboxClasses="flex min-w-[100px] max-w-[200px]"
+                    comboboxClasses="grow"
+                  />
+                </>
+              )}
             </div>
-          ))}
-        </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <MoreVerticalIcon className="h-4 w-4" />
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    handleActionsChange("addBelow", idx);
+                  }}>
+                  <PlusIcon className="h-4 w-4" />
+                  Add action below
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  disabled={actions.length === 1}
+                  onClick={() => {
+                    handleActionsChange("delete", idx);
+                  }}>
+                  <TrashIcon className="h-4 w-4" />
+                  Remove
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    handleActionsChange("duplicate", idx);
+                  }}>
+                  <CopyIcon className="h-4 w-4" />
+                  Duplicate
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ))}
       </div>
     </div>
   );

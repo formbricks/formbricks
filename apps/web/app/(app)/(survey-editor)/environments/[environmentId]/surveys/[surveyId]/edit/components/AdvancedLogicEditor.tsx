@@ -1,5 +1,6 @@
 import { AdvancedLogicEditorActions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorActions";
 import { AdvancedLogicEditorConditions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorConditions";
+import { cn } from "@formbricks/lib/cn";
 import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
@@ -21,7 +22,7 @@ export function AdvancedLogicEditor({
   logicIdx,
 }: AdvancedLogicEditorProps) {
   return (
-    <div className="flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-100 p-4">
+    <div className={cn("flex w-full flex-col gap-4")}>
       <AdvancedLogicEditorConditions
         conditions={logicItem.conditions}
         updateQuestion={updateQuestion}

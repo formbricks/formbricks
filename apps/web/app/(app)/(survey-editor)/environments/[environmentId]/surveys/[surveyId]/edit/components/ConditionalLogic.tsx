@@ -1,13 +1,27 @@
 import { AdvancedLogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditor";
 import { createId } from "@paralleldrive/cuid2";
-import { ArrowRightIcon, SplitIcon, Trash2Icon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  CopyIcon,
+  MoreVerticalIcon,
+  SplitIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useMemo } from "react";
-import { cn } from "@formbricks/lib/cn";
+import { duplicateLogicItem } from "@formbricks/lib/survey/logic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@formbricks/ui/DropdownMenu";
 import { Label } from "@formbricks/ui/Label";
 
 interface ConditionalLogicProps {
@@ -68,6 +82,27 @@ export function ConditionalLogic({
     });
   };
 
+  const moveLogic = (from: number, to: number) => {
+    const logicCopy = structuredClone(question.logic || []);
+    const [movedItem] = logicCopy.splice(from, 1);
+    logicCopy.splice(to, 0, movedItem);
+    updateQuestion(questionIdx, {
+      logic: logicCopy,
+    });
+  };
+
+  const duplicateLogic = (logicItemIdx: number) => {
+    const logicCopy = structuredClone(question.logic || []);
+    const lc = logicCopy[logicItemIdx];
+    console.log(lc);
+    const newLogicItem = duplicateLogicItem(lc);
+    logicCopy.splice(logicItemIdx + 1, 0, newLogicItem);
+
+    updateQuestion(questionIdx, {
+      logic: logicCopy,
+    });
+  };
+
   return (
     <div className="mt-10">
       <Label className="flex gap-2">
@@ -76,9 +111,11 @@ export function ConditionalLogic({
       </Label>
 
       {question.logic && question.logic?.length > 0 && (
-        <div className="logic-scrollbar mt-2 flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="logic-scrollbar mt-2 flex w-full flex-col gap-4">
           {question.logic.map((logicItem, logicItemIdx) => (
-            <div key={logicItem.id} className="flex items-start gap-2">
+            <div
+              key={logicItem.id}
+              className="flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <AdvancedLogicEditor
                 localSurvey={transformedSurvey}
                 logicItem={logicItem}
@@ -87,14 +124,47 @@ export function ConditionalLogic({
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
               />
-              <Button
-                className="mt-1 p-0"
-                onClick={() => {
-                  handleDeleteLogic(logicItemIdx);
-                }}
-                variant="minimal">
-                <Trash2Icon className={cn("h-4 w-4 cursor-pointer")} />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <MoreVerticalIcon className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      duplicateLogic(logicItemIdx);
+                    }}>
+                    <CopyIcon className="h-4 w-4" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    disabled={logicItemIdx === 0}
+                    onClick={() => {
+                      moveLogic(logicItemIdx, logicItemIdx - 1);
+                    }}>
+                    <ArrowUpIcon className="h-4 w-4" />
+                    Move up
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    disabled={logicItemIdx === (question.logic?.length || 1) - 1}
+                    onClick={() => {
+                      moveLogic(logicItemIdx, logicItemIdx + 1);
+                    }}>
+                    <ArrowDownIcon className="h-4 w-4" />
+                    Move down
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      handleDeleteLogic(logicItemIdx);
+                    }}>
+                    <TrashIcon className="h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ))}
         </div>

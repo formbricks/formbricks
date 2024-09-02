@@ -811,7 +811,7 @@ export const getActionValueOptions = (
   currQuestionIdx: number
 ): ComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
-  const variables = localSurvey.variables || [];
+  let variables = localSurvey.variables || [];
   const questions = localSurvey.questions;
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
@@ -826,6 +826,8 @@ export const getActionValueOptions = (
   });
 
   const selectedVariable = variables.find((variable) => variable.id === variableId);
+
+  variables = variables.filter((variable) => variable.id !== variableId);
 
   if (!selectedVariable) return [];
 

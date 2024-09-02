@@ -135,7 +135,7 @@ function convertLogicCondition(
   oldValue: string | string[] | undefined,
   question: TSurveyQuestion
 ): TSingleCondition | undefined {
-  const operator = mapOldConditionToNew(oldCondition);
+  const operator = mapOldOperatorToNew(oldCondition, question.type);
 
   let rightOperandValue: TRightOperand | undefined;
 
@@ -162,7 +162,10 @@ function convertLogicCondition(
 }
 
 // Helper function to map old conditions to new ones
-function mapOldConditionToNew(oldCondition: string): TSurveyLogicCondition {
+function mapOldOperatorToNew(
+  oldCondition: string,
+  questionType: TSurveyQuestionTypeEnum
+): TSurveyLogicCondition {
   const conditionMap: Record<string, TSurveyLogicCondition> = {
     accepted: "isAccepted",
     clicked: "isClicked",
@@ -183,7 +186,13 @@ function mapOldConditionToNew(oldCondition: string): TSurveyLogicCondition {
     isPartiallySubmitted: "isPartiallySubmitted",
   };
 
-  return conditionMap[oldCondition];
+  const newOpeator = conditionMap[oldCondition];
+
+  if (questionType === TSurveyQuestionTypeEnum.MultipleChoiceSingle && newOpeator === "includesOneOf") {
+    return "equalsOneOf";
+  }
+
+  return newOpeator;
 }
 
 // Helper function to convert old logic to new format

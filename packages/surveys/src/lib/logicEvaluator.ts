@@ -7,7 +7,12 @@ import {
   TConditionGroup,
   TSingleCondition,
 } from "@formbricks/types/surveys/logic";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+  TSurveyVariable,
+} from "@formbricks/types/surveys/types";
 
 export const evaluateAdvancedLogic = (
   localSurvey: TSurvey,
@@ -41,6 +46,22 @@ const evaluateSingleCondition = (
     ? getRightOperandValue(localSurvey, condition.rightOperand, data)
     : undefined;
 
+  let leftField: TSurveyQuestion | TSurveyVariable | string;
+
+  switch (condition.leftOperand.type) {
+    case "question":
+      leftField = localSurvey.questions.find((q) => q.id === condition.leftOperand.id) as TSurveyQuestion;
+      break;
+    case "variable":
+      leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand.id) as TSurveyVariable;
+      break;
+    case "hiddenField":
+      leftField = condition.leftOperand.id as string;
+      break;
+    default:
+      leftField = "";
+  }
+
   switch (condition.operator) {
     case "equals":
       return (
@@ -66,6 +87,12 @@ const evaluateSingleCondition = (
       return !String(leftValue).endsWith(String(rightValue));
     case "isSubmitted":
       if (typeof leftValue === "string") {
+        if (
+          condition.leftOperand.type === "question" &&
+          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.FileUpload
+        ) {
+          return leftValue !== "skipped" && leftValue !== "" && leftValue !== null;
+        }
         return leftValue !== "" && leftValue !== null;
       } else if (Array.isArray(leftValue)) {
         return leftValue.length > 0;
@@ -79,7 +106,10 @@ const evaluateSingleCondition = (
         leftValue === "" ||
         leftValue === null ||
         leftValue === undefined ||
-        (typeof leftValue === "object" && Object.entries(leftValue).length === 0)
+        (typeof leftValue === "object" && Object.entries(leftValue).length === 0) ||
+        (condition.leftOperand.type === "question" &&
+          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.FileUpload &&
+          leftValue === "skipped")
       );
     case "isGreaterThan":
       return Number(leftValue) > Number(rightValue);

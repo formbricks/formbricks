@@ -102,12 +102,9 @@ export const InputCombobox = ({
   };
 
   return (
-    <div className={cn("flex", comboboxClasses)}>
+    <div className={cn("flex overflow-hidden rounded-md border border-slate-300", comboboxClasses)}>
       {withInput && !hideInput && (
-        <Input
-          className="w-[400px] min-w-0 rounded-r-none border border-slate-300 bg-white"
-          {...inputProps}
-        />
+        <Input className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white" {...inputProps} />
       )}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -115,15 +112,9 @@ export const InputCombobox = ({
             role="combobox"
             aria-controls="options"
             aria-expanded={open}
-            className={cn(
-              "flex h-10 w-full cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white",
-              {
-                "rounded-l-none": withInput,
-                // "w-10": comboboxSize === "sm",
-                // "w-full grow justify-between gap-2 p-2": comboboxSize === "lg",
-              }
-            )}>
-            {/* {comboboxSize === "lg" && ( */}
+            className={cn("flex h-10 w-full cursor-pointer items-center justify-center rounded-md bg-white", {
+              "rounded-l-none": withInput,
+            })}>
             <div className="ellipsis flex w-full gap-2 truncate px-2">
               {Array.isArray(value) ? (
                 value.map((item, idx) => (
@@ -142,7 +133,6 @@ export const InputCombobox = ({
                 </div>
               )}
             </div>
-            {/* )} */}
             {clearable && selected ? (
               <XIcon
                 className="shrink-0 text-slate-300"
@@ -153,11 +143,7 @@ export const InputCombobox = ({
                 }}
               />
             ) : (
-              <ChevronDownIcon
-                className="shrink-0 text-slate-300"
-                // height={comboboxSize === "sm" ? 20 : 16}
-                // width={comboboxSize === "sm" ? 20 : 16}
-              />
+              <ChevronDownIcon className="shrink-0 text-slate-300" />
             )}
           </div>
         </PopoverTrigger>
@@ -177,28 +163,36 @@ export const InputCombobox = ({
             )}
             <CommandList>
               <CommandEmpty>No option found.</CommandEmpty>
-              <CommandGroup>
-                {options?.map((option) => (
-                  <CommandItem key={option.value} onSelect={() => handleSelect(option)}>
-                    {showCheckIcon &&
-                      ((allowMultiSelect &&
-                        Array.isArray(value) &&
-                        value.find((item) => item.value === option.value)) ||
-                        (!allowMultiSelect && typeof value === "string" && value === option.value)) && (
-                        <CheckIcon className="mr-2 h-4 w-4 text-slate-300" />
-                      )}
-                    {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
-                    {option.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              {options && options.length > 0 ? (
+                <CommandGroup>
+                  {options.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      onSelect={() => handleSelect(option)}
+                      className="cursor-pointer truncate">
+                      {showCheckIcon &&
+                        ((allowMultiSelect &&
+                          Array.isArray(value) &&
+                          value.find((item) => item.value === option.value)) ||
+                          (!allowMultiSelect && typeof value === "string" && value === option.value)) && (
+                          <CheckIcon className="mr-2 h-4 w-4 text-slate-300" />
+                        )}
+                      {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
+                      {option.label}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ) : null}
 
               {groupedOptions?.map((group, idx) => (
                 <>
                   {idx !== 0 && <CommandSeparator key={idx} className="bg-slate-300" />}
                   <CommandGroup heading={group.label}>
                     {group.options.map((option) => (
-                      <CommandItem key={option.value} onSelect={() => handleSelect(option)}>
+                      <CommandItem
+                        key={option.value}
+                        onSelect={() => handleSelect(option)}
+                        className="cursor-pointer truncate">
                         {showCheckIcon &&
                           ((allowMultiSelect &&
                             Array.isArray(value) &&

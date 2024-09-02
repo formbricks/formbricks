@@ -338,15 +338,15 @@ export type TActionVariableCalculateOperator = z.infer<typeof ZActionVariableCal
 // Conditions
 const ZLeftOperandBase = z.object({
   type: ZDyanmicLogicField,
-  id: z.string().cuid2(),
-});
-
-const ZLeftOperandHiddenField = ZLeftOperandBase.extend({
-  type: z.literal("hiddenField"),
   id: z.string(),
 });
 
-export const ZLeftOperand = z.union([ZLeftOperandBase, ZLeftOperandHiddenField]);
+const ZLeftOperandVariable = ZLeftOperandBase.extend({
+  type: z.literal("variable"),
+  id: z.string().cuid2(),
+});
+
+export const ZLeftOperand = z.union([ZLeftOperandBase, ZLeftOperandVariable]);
 export type TLeftOperand = z.infer<typeof ZLeftOperand>;
 
 export const ZRightOperand = z.discriminatedUnion("type", [
