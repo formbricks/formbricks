@@ -102,6 +102,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
             environment={environment}
             environments={environments}
             currentProductChannel={currentProductChannel}
+            membershipRole={currentUserMembership?.role}
           />
           <div className="mt-14">{children}</div>
         </div>

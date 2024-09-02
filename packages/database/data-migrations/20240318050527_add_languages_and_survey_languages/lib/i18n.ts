@@ -3,12 +3,12 @@ import { type TLanguage } from "@formbricks/types/product";
 import {
   type TI18nString,
   type TSurveyCTAQuestion,
-  type TSurveyChoice,
   type TSurveyConsentQuestion,
   type TSurveyMultipleChoiceQuestion,
   type TSurveyNPSQuestion,
   type TSurveyOpenTextQuestion,
   type TSurveyQuestion,
+  type TSurveyQuestionChoice,
   type TSurveyQuestions,
   type TSurveyRatingQuestion,
   type TSurveyWelcomeCard,
@@ -63,7 +63,7 @@ export const createI18nString = (text: string | TI18nString, languages: string[]
 };
 
 // Function to translate a choice label
-const translateChoice = (choice: TSurveyChoice, languages: string[]): TSurveyChoice => {
+const translateChoice = (choice: TSurveyQuestionChoice, languages: string[]): TSurveyQuestionChoice => {
   if (typeof choice.label !== "undefined") {
     return {
       ...choice,
