@@ -18,7 +18,7 @@ export const renderEmailResponseValue = (
     case TSurveyQuestionTypeEnum.FileUpload:
       return (
         <Container>
-          {typeof response !== "string" &&
+          {Array.isArray(response) &&
             response.map((responseItem) => (
               <Link
                 className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm"
@@ -30,21 +30,35 @@ export const renderEmailResponseValue = (
             ))}
         </Container>
       );
+
     case TSurveyQuestionTypeEnum.PictureSelection:
       return (
-        <Container className="flex">
+        <Container>
           <Row>
-            {typeof response !== "string" &&
+            {Array.isArray(response) &&
               response.map((responseItem) => (
                 <Column key={responseItem}>
-                  <Img
-                    alt={responseItem.split("/").pop()}
-                    className="m-2 h-28"
-                    id={responseItem}
-                    src={responseItem}
-                  />
+                  <Img alt={responseItem.split("/").pop()} className="m-2 h-28" src={responseItem} />
                 </Column>
               ))}
+          </Row>
+        </Container>
+      );
+
+    case TSurveyQuestionTypeEnum.Ranking:
+      return (
+        <Container>
+          <Row className="my-1 font-semibold text-slate-700" dir="auto">
+            {Array.isArray(response) &&
+              response.map(
+                (item, index) =>
+                  item && (
+                    <Row key={index} className="mb-1 flex items-center">
+                      <Column className="w-6 text-gray-400">#{index + 1}</Column>
+                      <Column className="rounded bg-gray-100 px-2 py-1">{item}</Column>
+                    </Row>
+                  )
+              )}
           </Row>
         </Container>
       );

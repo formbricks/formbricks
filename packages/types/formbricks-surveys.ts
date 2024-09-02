@@ -11,6 +11,7 @@ export interface SurveyBaseProps {
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
   getSetQuestionId?: (getSetQuestionId: (value: string) => void) => void;
+  getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;

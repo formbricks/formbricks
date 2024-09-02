@@ -32,6 +32,7 @@ const conditionOptions = {
   consent: ["is"],
   matrix: [""],
   address: ["is"],
+  ranking: ["is"],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -41,6 +42,7 @@ const filterOptions = {
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
   address: ["Filled out", "Skipped"],
+  ranking: ["Filled out", "Skipped"],
 };
 
 // creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
@@ -72,10 +74,14 @@ export const generateQuestionAndFilterOptions = (
   questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
-      if (
-        q.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-        q.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
-      ) {
+      if (q.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: conditionOptions[q.type],
+          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
+          id: q.id,
+        });
+      } else if (q.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
@@ -268,6 +274,18 @@ export const getFormattedFilters = (
       switch (questionType.questionType) {
         case TSurveyQuestionTypeEnum.OpenText:
         case TSurveyQuestionTypeEnum.Address: {
+          if (filterType.filterComboBoxValue === "Filled out") {
+            filters.data[questionType.id ?? ""] = {
+              op: "submitted",
+            };
+          } else if (filterType.filterComboBoxValue === "Skipped") {
+            filters.data[questionType.id ?? ""] = {
+              op: "skipped",
+            };
+          }
+          break;
+        }
+        case TSurveyQuestionTypeEnum.Ranking: {
           if (filterType.filterComboBoxValue === "Filled out") {
             filters.data[questionType.id ?? ""] = {
               op: "submitted",

@@ -20,9 +20,9 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
-  TSurveyChoice,
   TSurveyEndScreenCard,
   TSurveyQuestion,
+  TSurveyQuestionChoice,
   TSurveyRecallItem,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
@@ -51,7 +51,7 @@ interface QuestionFormInputProps {
   questionIdx: number;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
   updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
-  updateChoice?: (choiceIdx: number, data: Partial<TSurveyChoice>) => void;
+  updateChoice?: (choiceIdx: number, data: Partial<TSurveyQuestionChoice>) => void;
   updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyQuestion>) => void;
   isInvalid: boolean;
   selectedLanguageCode: string;
