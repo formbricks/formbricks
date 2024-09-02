@@ -776,35 +776,30 @@ export const getResponseCountBySurveyId = reactCache(
     )()
 );
 
-export const getResponseCountBySurveyIdAndPanelistId = reactCache(
-  (surveyId: string, panelistId: string, filterCriteria?: TResponseFilterCriteria): Promise<number> =>
-    cache(
-      async () => {
-        validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
+export const getResponseCountBySurveyIdAndPanelistId = async (
+  surveyId: string,
+  panelistId: string,
+  filterCriteria?: TResponseFilterCriteria
+): Promise<number> => {
+  validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
-        try {
-          const survey = await getSurvey(surveyId);
-          if (!survey) return 0;
+  try {
+    const survey = await getSurvey(surveyId);
+    if (!survey) return 0;
 
-          const responseCount = await prisma.response.count({
-            where: {
-              surveyId: surveyId,
-              panelistId: panelistId,
-              ...buildWhereClause(survey, filterCriteria),
-            },
-          });
-          return responseCount;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
+    const responseCount = await prisma.response.count({
+      where: {
+        surveyId: surveyId,
+        panelistId: panelistId,
+        ...buildWhereClause(survey, filterCriteria),
       },
-      [`getResponseCountBySurveyIdAndPanelistId-${surveyId}-${panelistId}-${JSON.stringify(filterCriteria)}`],
-      {
-        tags: [responseCache.tag.bySurveyId(surveyId)],
-      }
-    )()
-);
+    });
+    return responseCount;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
