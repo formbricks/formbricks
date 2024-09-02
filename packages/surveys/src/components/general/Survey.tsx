@@ -33,6 +33,7 @@ export const Survey = ({
   getSetIsError,
   getSetIsResponseSendingFinished,
   getSetQuestionId,
+  getSetResponseData,
   onFileUpload,
   responseCount,
   startAtQuestionId,
@@ -121,6 +122,14 @@ export const Survey = ({
       });
     }
   }, [getSetQuestionId]);
+
+  useEffect(() => {
+    if (getSetResponseData) {
+      getSetResponseData((value: TResponseData) => {
+        setResponseData(value);
+      });
+    }
+  }, [getSetResponseData]);
 
   useEffect(() => {
     if (getSetIsResponseSendingFinished) {

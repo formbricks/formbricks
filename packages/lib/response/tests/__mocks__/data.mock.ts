@@ -1,8 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { isAfter, isBefore, isSameDay } from "date-fns";
+import { mockWelcomeCard } from "i18n/i18n.mock";
 import { TDisplay } from "@formbricks/types/displays";
 import { TResponse, TResponseFilterCriteria, TResponseUpdateInput } from "@formbricks/types/responses";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
@@ -400,3 +401,120 @@ export const mockSurveySummaryOutput = {
     },
   ],
 };
+
+export const mockSurvey: TSurvey = {
+  id: mockSurveyId,
+  createdAt: new Date("2024-02-06T20:12:03.521Z"),
+  updatedAt: new Date("2024-02-06T20:12:03.521Z"),
+  name: "New Survey",
+  type: "link",
+  environmentId: "envId",
+  createdBy: "creatorId",
+  status: "draft",
+  welcomeCard: mockWelcomeCard,
+  questions: [
+    {
+      id: "hagrboqlnynmxh3obl1wvmtl",
+      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+      choices: [
+        {
+          id: "r52sul8ag19upaicit0fyqzo",
+          label: { default: "Recommendation" },
+        },
+        {
+          id: "es0gc12hrpk12x13rlqm59rg",
+          label: { default: "Social Media" },
+        },
+        {
+          id: "qzfbmf9nr5erqpew2urqzaow",
+          label: { default: "Google Search" },
+        },
+        {
+          id: "skpp7zubv6s1qi8ychw3oa5h",
+          label: { default: "In a Podcast" },
+        },
+      ],
+      isDraft: true,
+      headline: {
+        default: "What do you do?",
+      },
+      required: true,
+      subheader: {
+        default: "Can't do both.",
+      },
+      shuffleOption: "none",
+    },
+    {
+      id: "uvy0fa96e1xpd10nrj1je662",
+      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+      required: true,
+      headline: {
+        default: "What's important on vacay?",
+      },
+      choices: [
+        {
+          id: "mgjk3i967ject4mezs4cjadj",
+          label: {
+            default: "Sun ☀️",
+          },
+        },
+        {
+          id: "m1wmzagcle4bzmkmgru4ol0w",
+          label: {
+            default: "Ocean 🌊",
+          },
+        },
+        {
+          id: "h12xs1v3w7s579p4upb5vnzp",
+          label: {
+            default: "Palms 🌴",
+          },
+        },
+      ],
+      shuffleOption: "none",
+      isDraft: true,
+    },
+  ],
+  endings: [
+    {
+      type: "endScreen",
+      id: "umyknohldc7w26ocjdhaa62c",
+      enabled: true,
+      headline: {
+        default: "Thank you!",
+      },
+      subheader: {
+        default: "We appreciate your feedback.",
+      },
+      buttonLink: "https://formbricks.com/signup",
+      buttonLabel: { default: "Create your own Survey" },
+    },
+  ],
+  hiddenFields: {
+    enabled: true,
+    fieldIds: [],
+  },
+  displayOption: "displayOnce",
+  recontactDays: null,
+  displayLimit: null,
+  autoClose: null,
+  runOnDate: null,
+  closeOnDate: null,
+  delay: 0,
+  displayPercentage: null,
+  autoComplete: null,
+  isVerifyEmailEnabled: false,
+  productOverwrites: null,
+  styling: null,
+  surveyClosedMessage: null,
+  singleUse: {
+    enabled: false,
+    isEncrypted: true,
+  },
+  pin: null,
+  resultShareKey: null,
+  triggers: [],
+  languages: [],
+  segment: [],
+  showLanguageSwitch: null,
+} as unknown as TSurvey;

@@ -18,7 +18,7 @@ const tabs: Tab[] = [
   {
     id: "styling",
     label: "Styling",
-    icon: <PaintbrushIcon />,
+    icon: <PaintbrushIcon className="h-5 w-5" />,
   },
   {
     id: "settings",
@@ -46,7 +46,7 @@ export const QuestionsAudienceTabs = ({
   }, [isStylingTabVisible]);
 
   return (
-    <div className="fixed z-30 flex h-14 w-full items-center justify-center border bg-white md:w-1/2">
+    <div className="fixed z-30 flex h-12 w-full items-center justify-center border-b bg-white md:w-1/2">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabsComputed.map((tab) => (
           <button
@@ -55,9 +55,9 @@ export const QuestionsAudienceTabs = ({
             onClick={() => setActiveId(tab.id)}
             className={cn(
               tab.id === activeId
-                ? "border-brand-dark border-b-2 font-semibold text-slate-900"
-                : "text-slate-500 hover:text-slate-700",
-              "flex h-full items-center px-3 text-sm font-medium"
+                ? "border-brand-dark font-semibold text-slate-900"
+                : "border-transparent text-slate-500 hover:text-slate-700",
+              "flex h-full items-center border-b-2 px-3 text-sm font-medium"
             )}
             aria-current={tab.id === activeId ? "page" : undefined}>
             {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}

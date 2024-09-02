@@ -57,7 +57,7 @@ export const SurveyStatusDropdown = ({
           <TooltipProvider delayDuration={50}>
             <Tooltip open={isStatusChangeDisabled ? undefined : false}>
               <TooltipTrigger asChild>
-                <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
+                <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
                   <SelectValue>
                     <div className="flex items-center">
                       {(survey.type === "link" ||
