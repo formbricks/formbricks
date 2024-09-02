@@ -80,6 +80,7 @@ const conditions = {
   cal: ["skipped", "booked"],
   matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
   address: ["submitted", "skipped"],
+  ranking: ["submitted", "skipped"],
 };
 
 export const LogicEditor = ({
@@ -452,14 +453,13 @@ export const LogicEditor = ({
       <div className="mt-2 flex items-center space-x-2">
         <Button
           id="logicJumps"
-          className="bg-slate-100 hover:bg-slate-50"
           type="button"
           name="logicJumps"
           size="sm"
           variant="secondary"
           StartIcon={SplitIcon}
           onClick={() => addLogic()}>
-          Add Logic
+          Add logic
         </Button>
         <TooltipProvider delayDuration={50}>
           <Tooltip>

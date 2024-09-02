@@ -90,6 +90,15 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
             currentProductChannel={currentProductChannel}
           />
         </>
+      ) : isViewer ? (
+        <>
+          <h1 className="px-6 text-3xl font-extrabold text-slate-700">No surveys created yet.</h1>
+
+          <h2 className="px-6 text-lg font-medium text-slate-500">
+            As a Viewer you are not allowed to create surveys. Please ask an Editor to create a survey or an
+            Admin to upgrade your role.
+          </h2>
+        </>
       ) : (
         <>
           <h1 className="px-6 text-3xl font-extrabold text-slate-700">

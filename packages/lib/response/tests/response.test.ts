@@ -11,6 +11,7 @@ import {
   mockResponseNote,
   mockResponseWithMockPerson,
   mockSingleUseId,
+  mockSurvey,
   mockSurveyId,
   mockSurveySummaryOutput,
   mockTags,
@@ -302,6 +303,8 @@ describe("Tests for getResponse service", () => {
 describe("Tests for getResponses service", () => {
   describe("Happy Path", () => {
     it("Fetches first 10 responses for a given survey ID", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+
       const response = await getResponses(mockSurveyId, 1, 10);
       expect(response).toEqual([expectedResponseWithoutPerson]);
     });
@@ -310,7 +313,7 @@ describe("Tests for getResponses service", () => {
   describe("Tests for getResponses service with filters", () => {
     describe("Happy Path", () => {
       it("Fetches all responses for a given survey ID with basic filters", async () => {
-        const whereClause = buildWhereClause({ finished: true });
+        const whereClause = buildWhereClause(mockSurvey, { finished: true });
         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
 
         // @ts-expect-error
@@ -318,7 +321,7 @@ describe("Tests for getResponses service", () => {
           expectedWhereClause = args?.where;
           return getFilteredMockResponses({ finished: true }, false);
         });
-
+        prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
         const response = await getResponses(mockSurveyId, 1, undefined, { finished: true });
 
         expect(expectedWhereClause).toEqual({ surveyId: mockSurveyId, ...whereClause });
@@ -349,7 +352,7 @@ describe("Tests for getResponses service", () => {
             },
           },
         };
-        const whereClause = buildWhereClause(criteria);
+        const whereClause = buildWhereClause(mockSurvey, criteria);
         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
 
         // @ts-expect-error
@@ -357,7 +360,7 @@ describe("Tests for getResponses service", () => {
           expectedWhereClause = args?.where;
           return getFilteredMockResponses(criteria, false);
         });
-
+        prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
         const response = await getResponses(mockSurveyId, 1, undefined, criteria);
 
         expect(expectedWhereClause).toEqual({ surveyId: mockSurveyId, ...whereClause });
@@ -367,7 +370,7 @@ describe("Tests for getResponses service", () => {
 
     describe("Sad Path", () => {
       it("Throws an error when the where clause is different and the data is matched when filters are different.", async () => {
-        const whereClause = buildWhereClause({ finished: true });
+        const whereClause = buildWhereClause(mockSurvey, { finished: true });
         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
 
         // @ts-expect-error
@@ -376,7 +379,7 @@ describe("Tests for getResponses service", () => {
 
           return getFilteredMockResponses({ finished: true });
         });
-
+        prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
         const response = await getResponses(mockSurveyId, 1, undefined, { finished: true });
 
         expect(expectedWhereClause).not.toEqual(whereClause);
@@ -396,6 +399,7 @@ describe("Tests for getResponses service", () => {
       });
 
       prisma.response.findMany.mockRejectedValue(errToThrow);
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
 
       await expect(getResponses(mockSurveyId)).rejects.toThrow(DatabaseError);
     });
@@ -403,6 +407,7 @@ describe("Tests for getResponses service", () => {
     it("Throws a generic Error for unexpected problems", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
 
       await expect(getResponses(mockSurveyId)).rejects.toThrow(Error);
     });
@@ -644,6 +649,8 @@ describe("Tests for deleteResponse service", () => {
 describe("Tests for getResponseCountBySurveyId service", () => {
   describe("Happy Path", () => {
     it("Counts the total number of responses for a given survey ID", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+
       const count = await getResponseCountBySurveyId(mockSurveyId);
       expect(count).toEqual(1);
     });
@@ -661,6 +668,7 @@ describe("Tests for getResponseCountBySurveyId service", () => {
     it("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.response.count.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
 
       await expect(getResponseCountBySurveyId(mockSurveyId)).rejects.toThrow(Error);
     });
