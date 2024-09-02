@@ -128,14 +128,6 @@ export const deleteLanguage = async (languageId: string, productId: string): Pro
         id: prismaLanguage.productId,
         environmentId: environment.id,
       });
-
-      // revalidate cache of all connected surveys
-      prismaLanguage.surveyLanguages.forEach((surveyLanguage) => {
-        surveyCache.revalidate({
-          id: surveyLanguage.surveyId,
-          environmentId: environment.id,
-        });
-      });
     });
 
     // delete unused surveyLanguages
@@ -171,13 +163,15 @@ export const updateLanguage = async (
         id: prismaLanguage.productId,
         environmentId: environment.id,
       });
+      surveyCache.revalidate({
+        environmentId: environment.id,
+      });
+    });
 
-      // revalidate cache of all connected surveys
-      prismaLanguage.surveyLanguages.forEach((surveyLanguage) => {
-        surveyCache.revalidate({
-          id: surveyLanguage.surveyId,
-          environmentId: environment.id,
-        });
+    // revalidate cache of all connected surveys
+    prismaLanguage.surveyLanguages.forEach((surveyLanguage) => {
+      surveyCache.revalidate({
+        id: surveyLanguage.surveyId,
       });
     });
 
