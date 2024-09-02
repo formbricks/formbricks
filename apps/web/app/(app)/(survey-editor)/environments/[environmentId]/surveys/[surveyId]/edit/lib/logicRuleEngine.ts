@@ -301,6 +301,18 @@ export const ruleEngine = {
         },
       ],
     },
+    [TSurveyQuestionTypeEnum.Ranking]: {
+      options: [
+        {
+          label: "is submitted",
+          value: ZSurveyLogicCondition.Enum.isSubmitted,
+        },
+        {
+          label: "is skipped",
+          value: ZSurveyLogicCondition.Enum.isSkipped,
+        },
+      ],
+    },
     [TSurveyQuestionTypeEnum.Cal]: {
       options: [
         {

@@ -86,8 +86,8 @@ export function AdvancedLogicEditorActions({
       <div className="flex grow flex-col gap-y-2">
         {actions.map((action, idx) => (
           <div className="flex w-full items-center justify-between gap-x-2">
-            <div className="block w-9 shrink-0 text-sm">{idx === 0 ? "Then" : "and"}</div>
-            <div className="flex grow items-center gap-x-2 text-sm">
+            <div className="block w-9 shrink-0">{idx === 0 ? "Then" : "and"}</div>
+            <div className="flex grow items-center gap-x-2">
               <InputCombobox
                 key="objective"
                 showSearch={false}

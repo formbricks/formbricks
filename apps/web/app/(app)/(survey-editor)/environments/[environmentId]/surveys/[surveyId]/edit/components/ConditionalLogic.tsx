@@ -1,14 +1,6 @@
 import { AdvancedLogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditor";
 import { createId } from "@paralleldrive/cuid2";
-import {
-  ArrowDownIcon,
-  ArrowRightIcon,
-  ArrowUpIcon,
-  CopyIcon,
-  MoreVerticalIcon,
-  SplitIcon,
-  TrashIcon,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, CopyIcon, MoreVerticalIcon, SplitIcon, TrashIcon } from "lucide-react";
 import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/survey/logic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -110,8 +102,8 @@ export function ConditionalLogic({
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
-      {question.logic && question.logic?.length > 0 && (
-        <div className="logic-scrollbar mt-2 flex w-full flex-col gap-4">
+      {question.logic && question.logic.length > 0 && (
+        <div className="mt-2 flex w-full flex-col gap-4">
           {question.logic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
@@ -123,7 +115,9 @@ export function ConditionalLogic({
                 question={question}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
+                isLast={logicItemIdx === (question.logic || []).length - 1}
               />
+
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <MoreVerticalIcon className="h-4 w-4" />
@@ -148,7 +142,7 @@ export function ConditionalLogic({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex items-center gap-2"
-                    disabled={logicItemIdx === (question.logic?.length || 1) - 1}
+                    disabled={logicItemIdx === (question.logic || []).length - 1}
                     onClick={() => {
                       moveLogic(logicItemIdx, logicItemIdx + 1);
                     }}>
@@ -169,11 +163,6 @@ export function ConditionalLogic({
           ))}
         </div>
       )}
-
-      <div className="flex flex-wrap items-center space-x-2 py-1 text-sm">
-        <ArrowRightIcon className="h-4 w-4" />
-        <p className="text-slate-700">All other answers will continue to the next question</p>
-      </div>
 
       <div className="mt-2 flex items-center space-x-2">
         <Button

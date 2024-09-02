@@ -1,5 +1,5 @@
 import { TAction, TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestion, TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -12,7 +12,7 @@ const shuffle = (array: any[]) => {
   }
 };
 
-export const getShuffledChoicesIds = (choices: TSurveyChoice[], shuffleOption: string): string[] => {
+export const getShuffledChoicesIds = (choices: TSurveyQuestionChoice[], shuffleOption: string): string[] => {
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });

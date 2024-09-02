@@ -122,10 +122,10 @@ export function AdvancedLogicEditorConditions({
       return (
         <div key={condition.id} className="flex items-start justify-between gap-4">
           {index === 0 ? (
-            <div className="text-sm">When</div>
+            <div>When</div>
           ) : (
             <div
-              className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
+              className={cn("w-14", { "cursor-pointer underline": index === 1 })}
               onClick={() => {
                 if (index !== 1) return;
                 handleConnectorChange(parentConditionGroup.id);
@@ -184,13 +184,13 @@ export function AdvancedLogicEditorConditions({
     const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey);
 
     return (
-      <div key={condition.id} className="flex items-center justify-between gap-x-2 text-sm">
+      <div key={condition.id} className="flex items-center justify-between gap-x-2">
         <div className="w-10 shrink-0">
           {index === 0 ? (
             "When"
           ) : (
             <div
-              className={cn("w-14 text-sm", { "cursor-pointer underline": index === 1 })}
+              className={cn("w-14", { "cursor-pointer underline": index === 1 })}
               onClick={() => {
                 if (index !== 1) return;
                 handleConnectorChange(parentConditionGroup.id);

@@ -10,6 +10,7 @@ import {
   HomeIcon,
   ImageIcon,
   ListIcon,
+  ListOrderedIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
   PhoneIcon,
@@ -65,6 +66,7 @@ const questionIconMapping = {
   fileUpload: ArrowUpFromLineIcon,
   cal: PhoneIcon,
   matrix: Grid3X3Icon,
+  ranking: ListOrderedIcon,
   address: HomeIcon,
 };
 

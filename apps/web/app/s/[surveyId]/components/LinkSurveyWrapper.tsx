@@ -15,7 +15,7 @@ interface LinkSurveyWrapperProps {
   isPreview: boolean;
   isEmbed: boolean;
   determineStyling: () => TSurveyStyling | TProductStyling;
-  setQuestionId: (_: string) => void;
+  handleResetSurvey: () => void;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
@@ -29,7 +29,7 @@ export const LinkSurveyWrapper = ({
   isPreview,
   isEmbed,
   determineStyling,
-  setQuestionId,
+  handleResetSurvey,
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
@@ -68,11 +68,7 @@ export const LinkSurveyWrapper = ({
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
                   Survey Preview 👀
-                  <ResetProgressButton
-                    onClick={() =>
-                      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
-                    }
-                  />
+                  <ResetProgressButton onClick={handleResetSurvey} />
                 </div>
               )}
               {children}
