@@ -802,7 +802,7 @@ export const getResponseCountBySurveyIdAndPanelistId = reactCache(
           throw error;
         }
       },
-      [`getResponseCountBySurveyId-${surveyId}-${JSON.stringify(filterCriteria)}`],
+      [`getResponseCountBySurveyIdAndPanelistId-${surveyId}-${panelistId}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }
