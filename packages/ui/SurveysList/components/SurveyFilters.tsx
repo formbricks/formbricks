@@ -1,6 +1,7 @@
 import { ChevronDownIcon, Equal, Grid2X2, Search, X } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "react-use";
+import { FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS } from "@formbricks/lib/localStorage";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { initialFilters } from "..";
@@ -128,7 +129,7 @@ export const SurveyFilters = ({
 
   const handleOrientationChange = (value: string) => {
     setOrientation(value);
-    localStorage.setItem("surveyOrientation", value);
+    localStorage.setItem(FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS, value);
   };
 
   return (

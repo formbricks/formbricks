@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FORMBRICKS_SURVEYS_FILTERS_KEY_LS,
+  FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS,
+} from "@formbricks/lib/localStorage";
 import { TEnvironment } from "@formbricks/types/environment";
+import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { Button } from "../Button";
@@ -51,17 +56,24 @@ export const SurveysList = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const orientationFromLocalStorage = localStorage.getItem("surveyOrientation");
+      const orientationFromLocalStorage = localStorage.getItem(FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS);
       if (orientationFromLocalStorage) {
         setOrientation(orientationFromLocalStorage);
       } else {
         setOrientation("grid");
-        localStorage.setItem("surveyOrientation", "grid");
+        localStorage.setItem(FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS, "grid");
       }
 
-      const savedFilters = localStorage.getItem("surveyFilters");
+      const savedFilters = localStorage.getItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
       if (savedFilters) {
-        setSurveyFilters(JSON.parse(savedFilters));
+        const surveyParseResult = wrapThrows(() => JSON.parse(savedFilters))();
+
+        if (!surveyParseResult.ok) {
+          localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
+          setSurveyFilters(initialFilters);
+        } else {
+          setSurveyFilters(surveyParseResult.data);
+        }
       }
       setIsFilterInitialized(true);
     }
@@ -69,7 +81,7 @@ export const SurveysList = ({
 
   useEffect(() => {
     if (isFilterInitialized) {
-      localStorage.setItem("surveyFilters", JSON.stringify(surveyFilters));
+      localStorage.setItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS, JSON.stringify(surveyFilters));
     }
   }, [surveyFilters, isFilterInitialized]);
 
