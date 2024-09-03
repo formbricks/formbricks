@@ -357,28 +357,24 @@ export const getSurveys = reactCache(
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
         try {
-          let surveys: TSurvey[] = [];
-
           if (filterCriteria?.sortBy === "relevance") {
             // Call the sortByRelevance function
-            surveys = await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
-          } else {
-            // Fetch surveys normally with pagination
-            const surveysPrisma = await prisma.survey.findMany({
-              where: {
-                environmentId,
-                ...buildWhereClause(filterCriteria),
-              },
-              select: selectSurvey,
-              orderBy: buildOrderByClause(filterCriteria?.sortBy),
-              take: limit,
-              skip: offset,
-            });
-
-            surveys = surveysPrisma.map(transformPrismaSurvey);
+            return await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
           }
 
-          return surveys;
+          // Fetch surveys normally with pagination
+          const surveysPrisma = await prisma.survey.findMany({
+            where: {
+              environmentId,
+              ...buildWhereClause(filterCriteria),
+            },
+            select: selectSurvey,
+            orderBy: buildOrderByClause(filterCriteria?.sortBy),
+            take: limit,
+            skip: offset,
+          });
+
+          return surveysPrisma.map(transformPrismaSurvey);
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             console.error(error);
