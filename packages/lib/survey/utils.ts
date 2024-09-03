@@ -70,15 +70,13 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
 export const buildOrderByClause = (
   sortBy?: TSurveyFilterCriteria["sortBy"]
 ): Prisma.SurveyOrderByWithRelationInput[] | undefined => {
-  if (!sortBy) {
-    return undefined;
-  }
+  const orderMapping: { [key: string]: Prisma.SurveyOrderByWithRelationInput } = {
+    name: { name: "asc" },
+    createdAt: { createdAt: "desc" },
+    updatedAt: { updatedAt: "desc" },
+  };
 
-  if (sortBy === "name") {
-    return [{ name: "asc" }];
-  }
-
-  return [{ [sortBy]: "desc" }];
+  return sortBy ? [orderMapping[sortBy] || { updatedAt: "desc" }] : undefined;
 };
 
 export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
