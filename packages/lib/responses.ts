@@ -11,6 +11,7 @@ export const convertResponseValue = (
   if (!answer) return "";
   else {
     switch (question.type) {
+      case "ranking":
       case "fileUpload":
         if (typeof answer === "string") {
           return [answer];
