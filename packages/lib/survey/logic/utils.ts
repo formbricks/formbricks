@@ -57,7 +57,7 @@ export const addConditionBelow = (
   for (let i = 0; i < group.conditions.length; i++) {
     const item = group.conditions[i];
 
-    if (item.connector) {
+    if (isConditionsGroup(item)) {
       if (item.id === resourceId) {
         group.conditions.splice(i + 1, 0, condition);
         break;
@@ -95,7 +95,7 @@ export const removeCondition = (group: TConditionGroup, resourceId: string) => {
       return;
     }
 
-    if (item.connector) {
+    if (isConditionsGroup(item)) {
       removeCondition(item, resourceId);
     }
   }
@@ -149,7 +149,7 @@ export const createGroupFromResource = (group: TConditionGroup, resourceId: stri
       return;
     }
 
-    if (item.connector) {
+    if (isConditionsGroup(item)) {
       createGroupFromResource(item, resourceId);
     }
   }
@@ -168,7 +168,7 @@ export const updateCondition = (
       return;
     }
 
-    if (item.connector) {
+    if (isConditionsGroup(item)) {
       updateCondition(item, resourceId, condition);
     }
   }

@@ -75,6 +75,11 @@ export function AdvancedLogicEditorConditions({
     const logicItem = logicCopy[logicIdx];
     removeCondition(logicItem.conditions, resourceId);
 
+    // Remove the logic item if there are no conditions left
+    if (logicItem.conditions.conditions.length === 0) {
+      logicCopy.splice(logicIdx, 1);
+    }
+
     updateQuestion(questionIdx, {
       logic: logicCopy,
     });
@@ -109,8 +114,6 @@ export function AdvancedLogicEditorConditions({
       logic: logicCopy,
     });
   };
-
-  console.log("conditions", conditions);
 
   const renderCondition = (
     condition: TSingleCondition | TConditionGroup,
@@ -203,7 +206,7 @@ export function AdvancedLogicEditorConditions({
           key="conditionValue"
           showSearch={false}
           groupedOptions={conditionValueOptions}
-          selected={condition.leftOperand.id}
+          value={condition.leftOperand.id}
           onChangeValue={(val: string, option) => {
             handleUpdateCondition(condition.id, {
               leftOperand: {
@@ -218,7 +221,7 @@ export function AdvancedLogicEditorConditions({
           key="conditionOperator"
           showSearch={false}
           options={conditionOperatorOptions}
-          selected={condition.operator}
+          value={condition.operator}
           onChangeValue={(val: TSurveyLogicCondition) => {
             handleUpdateCondition(condition.id, {
               operator: val,
@@ -232,22 +235,13 @@ export function AdvancedLogicEditorConditions({
             inputProps={{
               type: inputType,
               placeholder: "Value",
-              value: condition.rightOperand?.value,
-              onChange: (e) => {
-                handleUpdateCondition(condition.id, {
-                  rightOperand: {
-                    type: "static",
-                    value: e.target.value,
-                  },
-                });
-              },
             }}
             key="conditionMatchValue"
             showSearch={false}
             groupedOptions={options}
             allowMultiSelect={["equalsOneOf", "includesAllOf", "includesOneOf"].includes(condition.operator)}
             comboboxClasses="grow min-w-[100px] max-w-[300px]"
-            selected={condition.rightOperand?.value}
+            value={condition.rightOperand?.value}
             clearable={true}
             onChangeValue={(val: TRightOperand["value"], option) => {
               handleUpdateCondition(condition.id, {

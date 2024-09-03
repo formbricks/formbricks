@@ -25,31 +25,29 @@ export function AdvancedLogicEditor({
   isLast,
 }: AdvancedLogicEditorProps) {
   return (
-    <>
-      <div className={cn("flex w-full flex-col gap-4 text-sm")}>
-        <AdvancedLogicEditorConditions
-          conditions={logicItem.conditions}
-          updateQuestion={updateQuestion}
-          question={question}
-          questionIdx={questionIdx}
-          localSurvey={localSurvey}
-          logicIdx={logicIdx}
-        />
-        <AdvancedLogicEditorActions
-          logicItem={logicItem}
-          logicIdx={logicIdx}
-          question={question}
-          updateQuestion={updateQuestion}
-          localSurvey={localSurvey}
-          questionIdx={questionIdx}
-        />
-        {isLast && (
-          <div className="flex flex-wrap items-center space-x-2">
-            <ArrowRightIcon className="h-4 w-4" />
-            <p className="text-slate-700">All other answers will continue to the next question</p>
-          </div>
-        )}
-      </div>
-    </>
+    <div className={cn("flex w-full flex-col gap-4 text-sm")}>
+      <AdvancedLogicEditorConditions
+        conditions={logicItem.conditions}
+        updateQuestion={updateQuestion}
+        question={question}
+        questionIdx={questionIdx}
+        localSurvey={localSurvey}
+        logicIdx={logicIdx}
+      />
+      <AdvancedLogicEditorActions
+        logicItem={logicItem}
+        logicIdx={logicIdx}
+        question={question}
+        updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+      />
+      {isLast && (
+        <div className="flex flex-wrap items-center space-x-2">
+          <ArrowRightIcon className="h-4 w-4" />
+          <p className="text-slate-700">All other answers will continue to the next question</p>
+        </div>
+      )}
+    </div>
   );
 }

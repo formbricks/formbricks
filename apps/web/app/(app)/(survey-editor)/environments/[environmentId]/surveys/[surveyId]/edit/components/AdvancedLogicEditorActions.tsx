@@ -92,7 +92,7 @@ export function AdvancedLogicEditorActions({
                 key="objective"
                 showSearch={false}
                 options={actionObjectiveOptions}
-                selected={action.objective}
+                value={action.objective}
                 onChangeValue={(val: TActionObjective) => {
                   updateAction(idx, {
                     objective: val,
@@ -109,7 +109,7 @@ export function AdvancedLogicEditorActions({
                     ? getActionVariableOptions(localSurvey)
                     : getActionTargetOptions(action, localSurvey, questionIdx)
                 }
-                selected={action.objective === "calculate" ? action.variableId : action.target}
+                value={action.objective === "calculate" ? action.variableId : action.target}
                 onChangeValue={(val: string) => {
                   updateAction(idx, {
                     ...(action.objective === "calculate" ? { variableId: val } : { target: val }),
@@ -126,7 +126,7 @@ export function AdvancedLogicEditorActions({
                     options={getActionOpeartorOptions(
                       localSurvey.variables.find((v) => v.id === action.variableId)?.type
                     )}
-                    selected={action.operator}
+                    value={action.operator}
                     onChangeValue={(val: TActionVariableCalculateOperator) => {
                       updateAction(idx, {
                         operator: val,
@@ -139,24 +139,25 @@ export function AdvancedLogicEditorActions({
                     key="value"
                     withInput={true}
                     clearable={true}
+                    value={action.value?.value ?? ""}
                     inputProps={{
                       placeholder: "Value",
-                      value: action.value?.value ?? "",
                       type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
-                      onChange: (e) => {
-                        let val: string | number = e.target.value;
+                      // value: action.value?.value ?? "",
+                      // onChange: (e) => {
+                      //   let val: string | number = e.target.value;
 
-                        const variable = localSurvey.variables.find((v) => v.id === action.variableId);
-                        if (variable?.type === "number") {
-                          val = Number(val);
-                        }
-                        updateAction(idx, {
-                          value: {
-                            type: "static",
-                            value: val,
-                          },
-                        });
-                      },
+                      //   const variable = localSurvey.variables.find((v) => v.id === action.variableId);
+                      //   if (variable?.type === "number") {
+                      //     val = Number(val);
+                      //   }
+                      //   updateAction(idx, {
+                      //     value: {
+                      //       type: "static",
+                      //       value: val,
+                      //     },
+                      //   });
+                      // },
                     }}
                     groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx)}
                     onChangeValue={(val: string, option) => {

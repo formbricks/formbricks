@@ -35,7 +35,7 @@ export const Default: Story = {
       { label: "Option 2", value: "option2" },
       { label: "Option 3", value: "option3" },
     ],
-    selected: null,
+    value: null,
     onChangeValue: (option) => console.log(option),
     withInput: false,
     allowMultiSelect: false,
@@ -80,7 +80,7 @@ export const MultiSelect: Story = {
   args: {
     ...Default.args,
     allowMultiSelect: true,
-    selected: ["option1", "option3"],
+    value: ["option1", "option3"],
   },
 };
 

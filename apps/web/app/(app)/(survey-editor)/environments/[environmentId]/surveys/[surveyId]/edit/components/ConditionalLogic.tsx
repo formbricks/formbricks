@@ -85,9 +85,8 @@ export function ConditionalLogic({
 
   const duplicateLogic = (logicItemIdx: number) => {
     const logicCopy = structuredClone(question.logic || []);
-    const lc = logicCopy[logicItemIdx];
-    console.log(lc);
-    const newLogicItem = duplicateLogicItem(lc);
+    const logicItem = logicCopy[logicItemIdx];
+    const newLogicItem = duplicateLogicItem(logicItem);
     logicCopy.splice(logicItemIdx + 1, 0, newLogicItem);
 
     updateQuestion(questionIdx, {
