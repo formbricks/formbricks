@@ -625,7 +625,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       id: modifiedSurvey.id,
       environmentId: modifiedSurvey.environmentId,
       segmentId: modifiedSurvey.segment?.id,
-      resultShareKey: modifiedSurvey.resultShareKey ?? undefined,
+      resultShareKey: currentSurvey.resultShareKey ?? undefined,
     });
 
     return modifiedSurvey;
