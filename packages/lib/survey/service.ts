@@ -447,7 +447,7 @@ export const getInProgressSurveyCount = reactCache(
           throw error;
         }
       },
-      [`getSurveyCount-${environmentId}-${JSON.stringify(filterCriteria)}`],
+      [`getInProgressSurveyCount-${environmentId}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }
