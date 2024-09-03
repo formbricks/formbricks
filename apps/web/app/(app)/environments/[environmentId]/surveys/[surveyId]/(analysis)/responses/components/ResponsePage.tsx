@@ -130,7 +130,7 @@ export const ResponsePage = ({
       setResponseCount(responseCount);
     };
     handleResponsesCount();
-  }, [filters, isSharingPage, sharingKey, surveyId]);
+  }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
@@ -167,13 +167,13 @@ export const ResponsePage = ({
       }
     };
     fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage, sharingKey, isSharingPage]);
+  }, [surveyId, JSON.stringify(filters), responsesPerPage, sharingKey, isSharingPage]);
 
   useEffect(() => {
     setPage(1);
     setHasMore(true);
     setResponses([]);
-  }, [filters]);
+  }, [JSON.stringify(filters)]);
 
   return (
     <>
