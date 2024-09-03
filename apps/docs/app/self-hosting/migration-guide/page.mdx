@@ -94,7 +94,7 @@ docker pull ghcr.io/formbricks/data-migrations:latest && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
-  -e UPGRADE_TO_VERSION="v2.4" \
+  -e UPGRADE_TO_VERSION="v2.5" \
   ghcr.io/formbricks/data-migrations:latest
 ```
 

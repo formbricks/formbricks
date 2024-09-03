@@ -35,6 +35,14 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   language,
   isExpanded = true,
 }) => {
+  if (
+    (typeof responseData === "string" && responseData === "") ||
+    (Array.isArray(responseData) && responseData.length === 0) ||
+    (typeof responseData === "object" && Object.keys(responseData).length === 0)
+  ) {
+    return <p className="ph-no-capture my-1 font-normal text-slate-700">-</p>;
+  }
+
   const handleArray = (data: string | number | string[]): string => {
     if (Array.isArray(data)) {
       return data.join(", ");
