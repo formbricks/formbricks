@@ -1,6 +1,7 @@
-import { type TProductStyling } from "./product";
-import { type TResponseData, type TResponseUpdate } from "./responses";
-import { type TUploadFileConfig } from "./storage";
+import type { TJsFileUploadParams } from "./js";
+import type { TProductStyling } from "./product";
+import type { TResponseData, TResponseUpdate } from "./responses";
+import type { TUploadFileConfig } from "./storage";
 import type { TSurvey, TSurveyStyling } from "./surveys/types";
 
 export interface SurveyBaseProps {
@@ -10,6 +11,7 @@ export interface SurveyBaseProps {
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
   getSetQuestionId?: (getSetQuestionId: (value: string) => void) => void;
+  getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
@@ -20,7 +22,7 @@ export interface SurveyBaseProps {
   prefillResponseData?: TResponseData;
   skipPrefilled?: boolean;
   languageCode: string;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;

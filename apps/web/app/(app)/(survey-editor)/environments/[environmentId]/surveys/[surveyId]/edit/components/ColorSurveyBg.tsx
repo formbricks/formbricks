@@ -8,7 +8,7 @@ interface ColorSurveyBgProps {
 }
 
 export const ColorSurveyBg = ({ handleBgChange, colors, background }: ColorSurveyBgProps) => {
-  const [color, setColor] = useState(background || "#ffff");
+  const [color, setColor] = useState(background || "#FFFFFF");
 
   const handleBg = (x: string) => {
     setColor(x);
@@ -23,7 +23,7 @@ export const ColorSurveyBg = ({ handleBgChange, colors, background }: ColorSurve
         {colors.map((x) => {
           return (
             <div
-              className={`h-16 w-16 cursor-pointer rounded-lg ${
+              className={`h-16 w-16 cursor-pointer rounded-lg border border-slate-300 ${
                 color === x ? "border-4 border-slate-500" : ""
               }`}
               key={x}

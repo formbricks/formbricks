@@ -6,7 +6,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -109,11 +109,8 @@ export const getActionClass = reactCache(
     )()
 );
 
-export const deleteActionClass = async (
-  environmentId: string,
-  actionClassId: string
-): Promise<TActionClass> => {
-  validateInputs([environmentId, ZId], [actionClassId, ZId]);
+export const deleteActionClass = async (actionClassId: string): Promise<TActionClass> => {
+  validateInputs([actionClassId, ZId]);
 
   try {
     const actionClass = await prisma.actionClass.delete({
@@ -125,16 +122,17 @@ export const deleteActionClass = async (
     if (actionClass === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     actionClassCache.revalidate({
-      environmentId,
+      environmentId: actionClass.environmentId,
       id: actionClassId,
       name: actionClass.name,
     });
 
     return actionClass;
   } catch (error) {
-    throw new DatabaseError(
-      `Database error when deleting an action with id ${actionClassId} for environment ${environmentId}`
-    );
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };
 

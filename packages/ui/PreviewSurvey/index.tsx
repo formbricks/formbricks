@@ -4,6 +4,7 @@ import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -24,7 +25,7 @@ interface PreviewSurveyProps {
   product: TProduct;
   environment: TEnvironment;
   languageCode: string;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
 }
 
 let surveyNameTemp: string;
@@ -108,7 +109,7 @@ export const PreviewSurvey = ({
     },
     shrink: {
       display: "relative",
-      width: ["83.33%"],
+      width: ["95%"],
       height: ["95%"],
     },
   };
@@ -145,7 +146,13 @@ export const PreviewSurvey = ({
 
   const updateQuestionId = useCallback(
     (newQuestionId: string) => {
-      if (!newQuestionId || newQuestionId === "hidden" || newQuestionId === "multiLanguage") return;
+      if (
+        !newQuestionId ||
+        newQuestionId === "hidden" ||
+        newQuestionId === "multiLanguage" ||
+        newQuestionId.includes("fb-variables-")
+      )
+        return;
       if (newQuestionId === "start" && !survey.welcomeCard.enabled) return;
       setQuestionId(newQuestionId);
     },
@@ -198,8 +205,8 @@ export const PreviewSurvey = ({
   const handlePreviewModalClose = () => {
     setIsModalOpen(false);
     setTimeout(() => {
-      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
       setIsModalOpen(true);
+      resetQuestionProgress();
     }, 1000);
   };
 
@@ -212,10 +219,9 @@ export const PreviewSurvey = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center" id="survey-preview">
+    <div className="flex h-full w-full flex-col items-center justify-items-center py-4" id="survey-preview">
       <motion.div
         variants={previewParentContainerVariant}
-        className="fixed hidden h-[95%] w-5/6"
         animate={isFullScreenPreview ? "expanded" : "shrink"}
       />
       <motion.div
@@ -228,7 +234,7 @@ export const PreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -288,7 +294,7 @@ export const PreviewSurvey = ({
           </>
         )}
         {previewMode === "desktop" && (
-          <div className="flex h-full w-5/6 flex-1 flex-col">
+          <div className="flex h-full flex-1 flex-col">
             <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
               <div className="ml-6 flex space-x-2">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>

@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { organizationCache } from "../organization/cache";

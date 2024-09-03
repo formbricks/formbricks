@@ -169,8 +169,8 @@ export const MultipleChoiceMultiQuestion = ({
                       className={cn(
                         value.includes(getLocalizedValue(choice.label, languageCode))
                           ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                          : "fb-border-border",
-                        "fb-text-heading fb-bg-input-bg focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                          : "fb-border-border fb-bg-input-bg",
+                        "fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                       )}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input

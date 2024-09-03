@@ -4,7 +4,8 @@ import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surve
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { ShareIcon, SquarePenIcon } from "lucide-react";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -24,10 +25,36 @@ export const SurveyAnalysisCTA = ({
   webAppUrl: string;
   user: TUser;
 }) => {
-  const [showShareSurveyModal, setShowShareSurveyModal] = useState(false);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const [showShareSurveyModal, setShowShareSurveyModal] = useState(searchParams.get("share") === "true");
+
   const widgetSetupCompleted =
     survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
 
+  useEffect(() => {
+    if (searchParams.get("share") === "true") {
+      setShowShareSurveyModal(true);
+    } else {
+      setShowShareSurveyModal(false);
+    }
+  }, [searchParams]);
+
+  const setOpenShareSurveyModal = (open: boolean) => {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    if (open) {
+      searchParams.set("share", "true");
+      setShowShareSurveyModal(true);
+    } else {
+      searchParams.delete("share");
+      setShowShareSurveyModal(false);
+    }
+
+    router.push(`${pathname}?${searchParams.toString()}`);
+  };
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
@@ -41,15 +68,16 @@ export const SurveyAnalysisCTA = ({
           variant="secondary"
           size="sm"
           onClick={() => {
-            setShowShareSurveyModal(true);
+            setOpenShareSurveyModal(true);
           }}>
-          <ShareIcon className="h-5 w-5" />
+          Share
+          <ShareIcon className="ml-1 h-4" />
         </Button>
       )}
       {!isViewer && (
         <Button
           size="sm"
-          className="h-full w-full px-3"
+          className="h-full"
           href={`/environments/${environment.id}/surveys/${survey.id}/edit`}>
           Edit
           <SquarePenIcon className="ml-1 h-4" />
@@ -59,13 +87,13 @@ export const SurveyAnalysisCTA = ({
         <ShareEmbedSurvey
           survey={survey}
           open={showShareSurveyModal}
-          setOpen={setShowShareSurveyModal}
+          setOpen={setOpenShareSurveyModal}
           webAppUrl={webAppUrl}
           user={user}
         />
       )}
 
-      {user && <SuccessMessage environment={environment} survey={survey} webAppUrl={webAppUrl} user={user} />}
+      {user && <SuccessMessage environment={environment} survey={survey} />}
     </div>
   );
 };

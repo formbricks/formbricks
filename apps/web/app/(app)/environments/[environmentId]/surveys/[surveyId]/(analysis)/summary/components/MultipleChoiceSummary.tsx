@@ -39,7 +39,7 @@ export const MultipleChoiceSummary = ({
   setFilter,
 }: MultipleChoiceSummaryProps) => {
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
-
+  const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     if (a.others) return 1; // Always put a after b if a has 'others'
@@ -77,7 +77,9 @@ export const MultipleChoiceSummary = ({
                 questionSummary.question.id,
                 questionSummary.question.headline,
                 questionSummary.question.type,
-                questionSummary.type === "multipleChoiceSingle" ? "Includes either" : "Includes all",
+                questionSummary.type === "multipleChoiceSingle" || otherValue === result.value
+                  ? "Includes either"
+                  : "Includes all",
                 [result.value]
               )
             }>

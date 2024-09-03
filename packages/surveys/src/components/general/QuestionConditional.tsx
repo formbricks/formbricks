@@ -10,10 +10,17 @@ import { MultipleChoiceSingleQuestion } from "@/components/questions/MultipleCho
 import { NPSQuestion } from "@/components/questions/NPSQuestion";
 import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
+import { RankingQuestion } from "@/components/questions/RankingQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -21,7 +28,7 @@ interface QuestionConditionalProps {
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   languageCode: string;
@@ -52,7 +59,16 @@ export const QuestionConditional = ({
   autoFocusEnabled,
   currentQuestionId,
 }: QuestionConditionalProps) => {
-  if (!value && prefilledQuestionValue) {
+  const getResponseValueForRankingQuestion = (
+    value: string[],
+    choices: TSurveyQuestionChoice[]
+  ): string[] => {
+    return value
+      .map((label) => choices.find((choice) => getLocalizedValue(choice.label, languageCode) === label)?.id)
+      .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
+  };
+
+  if (!value && (prefilledQuestionValue || prefilledQuestionValue === "")) {
     if (skipPrefilled) {
       onSubmit({ [question.id]: prefilledQuestionValue }, { [question.id]: 0 });
     } else {
@@ -256,6 +272,21 @@ export const QuestionConditional = ({
     <AddressQuestion
       question={question}
       value={Array.isArray(value) ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
+    <RankingQuestion
+      question={question}
+      value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, question.choices) : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}

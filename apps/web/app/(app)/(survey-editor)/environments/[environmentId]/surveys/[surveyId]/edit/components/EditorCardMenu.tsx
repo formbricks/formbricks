@@ -213,8 +213,6 @@ export const EditorCardMenu = ({
 
                 <DropdownMenuSubContent className="ml-4 border border-slate-200">
                   {Object.entries(QUESTIONS_NAME_MAP).map(([type, name]) => {
-                    if (type === card.type) return null;
-
                     return (
                       <DropdownMenuItem
                         key={type}

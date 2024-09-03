@@ -1,22 +1,26 @@
 "use server";
 
 import "server-only";
-import { getServerSession } from "next-auth";
-import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { authOptions } from "../../authOptions";
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { authenticatedActionClient } from "../../actionClient";
+import { checkAuthorization } from "../../actionClient/utils";
 import { getOrganization } from "../service";
 
-export const getOrganizationBillingInfoAction = async (organizationId: string) => {
-  const session = await getServerSession(authOptions);
-  const organization = await getOrganization(organizationId);
+const ZGetOrganizationBillingInfoAction = z.object({
+  organizationId: ZId,
+});
 
-  if (!session) {
-    throw new AuthenticationError("Not authenticated");
-  }
+export const getOrganizationBillingInfoAction = authenticatedActionClient
+  .schema(ZGetOrganizationBillingInfoAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["organization", "read"],
+    });
 
-  if (!organization) {
-    throw new ResourceNotFoundError("Organization", organizationId);
-  }
+    const organization = await getOrganization(parsedInput.organizationId);
 
-  return organization.billing;
-};
+    return organization?.billing;
+  });

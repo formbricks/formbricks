@@ -69,19 +69,21 @@ export const ResponsePage = ({
     let newResponses: TResponse[] = [];
 
     if (isSharingPage) {
-      newResponses = await getResponsesBySurveySharingKeyAction(
-        sharingKey,
-        responsesPerPage,
-        (newPage - 1) * responsesPerPage,
-        filters
-      );
+      const getResponsesActionResponse = await getResponsesBySurveySharingKeyAction({
+        sharingKey: sharingKey,
+        limit: responsesPerPage,
+        offset: (newPage - 1) * responsesPerPage,
+        filterCriteria: filters,
+      });
+      newResponses = getResponsesActionResponse?.data || [];
     } else {
-      newResponses = await getResponsesAction(
+      const getResponsesActionResponse = await getResponsesAction({
         surveyId,
-        responsesPerPage,
-        (newPage - 1) * responsesPerPage,
-        filters
-      );
+        limit: responsesPerPage,
+        offset: (newPage - 1) * responsesPerPage,
+        filterCriteria: filters,
+      });
+      newResponses = getResponsesActionResponse?.data || [];
     }
 
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
@@ -113,9 +115,17 @@ export const ResponsePage = ({
       let responseCount = 0;
 
       if (isSharingPage) {
-        responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+        const responseCountActionResponse = await getResponseCountBySurveySharingKeyAction({
+          sharingKey,
+          filterCriteria: filters,
+        });
+        responseCount = responseCountActionResponse?.data || 0;
       } else {
-        responseCount = await getResponseCountAction(surveyId, filters);
+        const responseCountActionResponse = await getResponseCountAction({
+          surveyId,
+          filterCriteria: filters,
+        });
+        responseCount = responseCountActionResponse?.data || 0;
       }
 
       setResponseCount(responseCount);
@@ -131,9 +141,23 @@ export const ResponsePage = ({
         let responses: TResponse[] = [];
 
         if (isSharingPage) {
-          responses = await getResponsesBySurveySharingKeyAction(sharingKey, responsesPerPage, 0, filters);
+          const getResponsesActionResponse = await getResponsesBySurveySharingKeyAction({
+            sharingKey,
+            limit: responsesPerPage,
+            offset: 0,
+            filterCriteria: filters,
+          });
+
+          responses = getResponsesActionResponse?.data || [];
         } else {
-          responses = await getResponsesAction(surveyId, responsesPerPage, 0, filters);
+          const getResponsesActionResponse = await getResponsesAction({
+            surveyId,
+            limit: responsesPerPage,
+            offset: 0,
+            filterCriteria: filters,
+          });
+
+          responses = getResponsesActionResponse?.data || [];
         }
 
         if (responses.length < responsesPerPage) {
@@ -157,7 +181,7 @@ export const ResponsePage = ({
     <>
       <div className="flex gap-1.5">
         <CustomFilter survey={survey} />
-        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
+        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
       </div>
       <ResponseTimeline
         environment={environment}

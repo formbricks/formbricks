@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -132,7 +133,7 @@ export const SurveyMenuBar = ({
         title: localSurvey.id,
       });
 
-      return newSegment;
+      return newSegment?.data;
     }
   };
 
@@ -224,12 +225,16 @@ export const SurveyMenuBar = ({
       });
 
       const segment = await handleSegmentUpdate();
-      const updatedSurvey = await updateSurveyAction({ ...localSurvey, segment });
+      const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
 
       setIsSurveySaving(false);
-      setLocalSurvey(updatedSurvey);
-
-      toast.success("Changes saved.");
+      if (updatedSurveyResponse?.data) {
+        setLocalSurvey(updatedSurveyResponse.data);
+        toast.success("Changes saved.");
+      } else {
+        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
+        toast.error(errorMessage);
+      }
 
       return true;
     } catch (e) {
@@ -281,10 +286,12 @@ export const SurveyMenuBar = ({
 
   return (
     <>
-      <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
-        <div className="flex items-center space-x-2 whitespace-nowrap">
+      <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
+        <div className="flex h-full items-center space-x-2 whitespace-nowrap">
           <Button
+            size="sm"
             variant="secondary"
+            className="h-full"
             StartIcon={ArrowLeftIcon}
             onClick={() => {
               handleBack();
@@ -298,11 +305,11 @@ export const SurveyMenuBar = ({
               const updatedSurvey = { ...localSurvey, name: e.target.value };
               setLocalSurvey(updatedSurvey);
             }}
-            className="w-72 border-white hover:border-slate-200"
+            className="h-8 w-72 border-white py-0 hover:border-slate-200"
           />
         </div>
         {responseCount > 0 && (
-          <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm lg:mx-auto">
+          <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
@@ -313,7 +320,9 @@ export const SurveyMenuBar = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <p className="hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
+            <p className="hidden text-ellipsis whitespace-nowrap pl-1.5 text-xs md:text-sm lg:block">
+              {cautionText}
+            </p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
@@ -327,6 +336,7 @@ export const SurveyMenuBar = ({
           <Button
             disabled={disableSave}
             variant="secondary"
+            size="sm"
             className="mr-3"
             loading={isSurveySaving}
             onClick={() => handleSurveySave()}
@@ -337,6 +347,7 @@ export const SurveyMenuBar = ({
             <Button
               disabled={disableSave}
               className="mr-3"
+              size="sm"
               loading={isSurveySaving}
               onClick={() => handleSaveAndGoBack()}>
               Save & Close
@@ -344,6 +355,7 @@ export const SurveyMenuBar = ({
           )}
           {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
             <Button
+              size="sm"
               onClick={() => {
                 setAudiencePrompt(false);
                 setActiveId("settings");
@@ -355,6 +367,7 @@ export const SurveyMenuBar = ({
           {/* Always display Publish button for link surveys for better CR */}
           {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
             <Button
+              size="sm"
               disabled={isSurveySaving || containsEmptyTriggers}
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>

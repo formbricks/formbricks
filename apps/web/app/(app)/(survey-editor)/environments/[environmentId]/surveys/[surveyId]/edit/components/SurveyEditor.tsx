@@ -68,9 +68,9 @@ export const SurveyEditor = ({
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const fetchLatestProduct = useCallback(async () => {
-    const latestProduct = await refetchProductAction(localProduct.id);
-    if (latestProduct) {
-      setLocalProduct(latestProduct);
+    const refetchProductResponse = await refetchProductAction({ productId: localProduct.id });
+    if (refetchProductResponse?.data) {
+      setLocalProduct(refetchProductResponse.data);
     }
   }, [localProduct.id]);
 
@@ -95,9 +95,9 @@ export const SurveyEditor = ({
     const listener = () => {
       if (document.visibilityState === "visible") {
         const fetchLatestProduct = async () => {
-          const latestProduct = await refetchProductAction(localProduct.id);
-          if (latestProduct) {
-            setLocalProduct(latestProduct);
+          const refetchProductResponse = await refetchProductAction({ productId: localProduct.id });
+          if (refetchProductResponse?.data) {
+            setLocalProduct(refetchProductResponse.data);
           }
         };
         fetchLatestProduct();
@@ -206,7 +206,7 @@ export const SurveyEditor = ({
             )}
           </main>
 
-          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 py-6 shadow-inner md:flex md:flex-col">
+          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
             <PreviewSurvey
               survey={localSurvey}
               questionId={activeQuestionId}

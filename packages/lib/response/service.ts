@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
@@ -114,7 +114,7 @@ export const getResponsesByPersonId = reactCache(
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
             orderBy: {
-              updatedAt: "asc",
+              createdAt: "desc",
             },
           });
 
@@ -403,11 +403,13 @@ export const getResponses = reactCache(
         );
 
         limit = limit ?? RESPONSES_PER_PAGE;
+        const survey = await getSurvey(surveyId);
+        if (!survey) return [];
         try {
           const responses = await prisma.response.findMany({
             where: {
               surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
             select: responseSelection,
             orderBy: [
@@ -457,8 +459,12 @@ export const getSurveySummary = reactCache(
           }
 
           const batchSize = 3000;
-          const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-          const pages = Math.ceil(responseCount / batchSize);
+          const totalResponseCount = await getResponseCountBySurveyId(surveyId);
+          const filteredResponseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
+
+          const hasFilter = totalResponseCount !== filteredResponseCount;
+
+          const pages = Math.ceil(filteredResponseCount / batchSize);
 
           const responsesArray = await Promise.all(
             Array.from({ length: pages }, (_, i) => {
@@ -467,8 +473,11 @@ export const getSurveySummary = reactCache(
           );
           const responses = responsesArray.flat();
 
+          const responseIds = hasFilter ? responses.map((response) => response.id) : [];
+
           const displayCount = await getDisplayCountBySurveyId(surveyId, {
             createdAt: filterCriteria?.createdAt,
+            ...(hasFilter && { responseIds }),
           });
 
           const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
@@ -730,10 +739,13 @@ export const getResponseCountBySurveyId = reactCache(
         validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
         try {
+          const survey = await getSurvey(surveyId);
+          if (!survey) return 0;
+
           const responseCount = await prisma.response.count({
             where: {
               surveyId: surveyId,
-              ...buildWhereClause(filterCriteria),
+              ...buildWhereClause(survey, filterCriteria),
             },
           });
           return responseCount;

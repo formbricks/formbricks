@@ -6,14 +6,13 @@ import { TWebhook } from "@formbricks/types/webhooks";
 import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 
 interface WebhookModalProps {
-  environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
   webhook: TWebhook;
   surveys: TSurvey[];
 }
 
-export const WebhookModal = ({ environmentId, open, setOpen, webhook, surveys }: WebhookModalProps) => {
+export const WebhookModal = ({ open, setOpen, webhook, surveys }: WebhookModalProps) => {
   const tabs = [
     {
       title: "Overview",
@@ -21,14 +20,7 @@ export const WebhookModal = ({ environmentId, open, setOpen, webhook, surveys }:
     },
     {
       title: "Settings",
-      children: (
-        <WebhookSettingsTab
-          environmentId={environmentId}
-          webhook={webhook}
-          surveys={surveys}
-          setOpen={setOpen}
-        />
-      ),
+      children: <WebhookSettingsTab webhook={webhook} surveys={surveys} setOpen={setOpen} />,
     },
   ];
 

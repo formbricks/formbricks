@@ -14,7 +14,7 @@ import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
-import { addMultiLanguageLabels, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
@@ -209,15 +209,14 @@ export const QuestionsView = ({
     const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
     let updatedSurvey: TSurvey = { ...localSurvey };
 
-    // check if we are recalling from this question
+    // check if we are recalling from this question for every language
     updatedSurvey.questions.forEach((question) => {
-      if (question.headline[selectedLanguageCode].includes(`recall:${questionId}`)) {
-        const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguageCode));
-        if (recallInfo) {
-          question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replace(
-            recallInfo,
-            ""
-          );
+      for (const [languageCode, headline] of Object.entries(question.headline)) {
+        if (headline.includes(`recall:${questionId}`)) {
+          const recallInfo = extractRecallInfo(headline);
+          if (recallInfo) {
+            question.headline[languageCode] = headline.replace(recallInfo, "");
+          }
         }
       }
     });
@@ -359,7 +358,7 @@ export const QuestionsView = ({
   };
 
   return (
-    <div className="mt-16 w-full px-5 py-4">
+    <div className="mt-12 w-full px-5 py-4">
       <div className="mb-5 flex w-full flex-col gap-5">
         <EditWelcomeCard
           localSurvey={localSurvey}
@@ -433,6 +432,13 @@ export const QuestionsView = ({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
         />
+
+        {/* <SurveyVariablesCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          activeQuestionId={activeQuestionId}
+          setActiveQuestionId={setActiveQuestionId}
+        /> */}
 
         <MultiLanguageCard
           localSurvey={localSurvey}

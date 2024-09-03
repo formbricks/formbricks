@@ -1,26 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access --
- * Required for dynamic function calls
- */
-
-/* eslint-disable @typescript-eslint/no-unsafe-call --
- * Required for dynamic function calls
- */
-
 /*
-  eslint-disable no-console -- 
+  eslint-disable no-console --
   * Required for logging errors
 */
-import { type Result, wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import { MethodQueue } from "../method-queue";
+import { type Result } from "@formbricks/types/error-handlers";
 
 let isInitializing = false;
 let isInitialized = false;
-const methodQueue = new MethodQueue();
 
 // Load the SDK, return the result
-const loadFormbricksSDK = async (apiHost: string, sdkType: "app" | "website"): Promise<Result<void>> => {
+const loadFormbricksSDK = async (apiHostParam: string, sdkType: "app" | "website"): Promise<Result<void>> => {
   if (!window.formbricks) {
-    const res = await fetch(`${apiHost}/api/packages/${sdkType}`);
+    const res = await fetch(`${apiHostParam}/api/packages/${sdkType}`);
 
     // Failed to fetch the app package
     if (!res.ok) {
@@ -63,81 +53,62 @@ const loadFormbricksSDK = async (apiHost: string, sdkType: "app" | "website"): P
   return { ok: true, data: undefined };
 };
 
-// TODO: @pandeymangg - Fix these types
-// type FormbricksAppMethods = {
-//   [K in keyof TFormbricksApp]: TFormbricksApp[K] extends Function ? K : never;
-// }[keyof TFormbricksApp];
-
-// type FormbricksWebsiteMethods = {
-//   [K in keyof TFormbricksWebsite]: TFormbricksWebsite[K] extends Function ? K : never;
-// }[keyof TFormbricksWebsite];
+const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
 export const loadFormbricksToProxy = async (
   prop: string,
   sdkType: "app" | "website",
   ...args: unknown[]
-  // eslint-disable-next-line @typescript-eslint/require-await -- Required for dynamic function calls
 ): Promise<void> => {
-  const executeMethod = async (): Promise<unknown> => {
-    try {
-      if (window.formbricks) {
-        // @ts-expect-error -- window.formbricks is a dynamic function
-        return (await window.formbricks[prop](...args)) as unknown;
-      }
-    } catch (error: unknown) {
-      console.error("🧱 Formbricks - Global error: ", error);
-      throw error;
-    }
-  };
-
+  // all of this should happen when not initialized:
   if (!isInitialized) {
-    if (isInitializing) {
-      methodQueue.add(executeMethod);
-    } else if (prop === "init") {
+    if (prop === "init") {
+      if (isInitializing) {
+        console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
+        return;
+      }
+
+      // reset the initialization state
       isInitializing = true;
 
-      const initialize = async (): Promise<unknown> => {
-        const { apiHost } = args[0] as { apiHost: string };
-        const loadSDKResult = (await wrapThrowsAsync(loadFormbricksSDK)(apiHost, sdkType)) as unknown as {
-          ok: boolean;
-          error: Error;
-        };
+      const apiHost = (args[0] as { apiHost: string }).apiHost;
+      const loadSDKResult = await loadFormbricksSDK(apiHost, sdkType);
 
-        if (!loadSDKResult.ok) {
+      if (loadSDKResult.ok) {
+        if (window.formbricks) {
+          // @ts-expect-error -- Required for dynamic function calls
+          void window.formbricks.init(...args);
+
           isInitializing = false;
-          console.error(`🧱 Formbricks - Global error: ${loadSDKResult.error.message}`);
-          return;
-        }
+          isInitialized = true;
 
-        try {
-          if (window.formbricks) {
-            // @ts-expect-error -- args is an array
-            await window.formbricks[prop](...args);
-            isInitialized = true;
-            isInitializing = false;
+          // process the queued functions
+          for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
+            type FormbricksProp = keyof typeof window.formbricks;
+
+            if (typeof window.formbricks[functionProp as FormbricksProp] !== "function") {
+              console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
+              continue;
+            }
+
+            // @ts-expect-error -- Required for dynamic function calls
+            (window.formbricks[functionProp] as unknown)(...functionArgs);
           }
-        } catch (error) {
-          isInitializing = false;
-          console.error("🧱 Formbricks - Global error: ", error);
-          throw error;
         }
-      };
-
-      methodQueue.add(initialize);
+      }
     } else {
-      console.error(
-        "🧱 Formbricks - Global error: You need to call formbricks.init before calling any other method"
+      console.warn(
+        "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
       );
-    }
-  } else {
-    // @ts-expect-error -- window.formbricks is a dynamic function
-    if (window.formbricks && typeof window.formbricks[prop] !== "function") {
-      console.error(
-        `🧱 Formbricks - Global error: Formbricks ${sdkType} SDK does not support method ${String(prop)}`
-      );
-      return;
-    }
 
-    methodQueue.add(executeMethod);
+      functionsToProcess.push({ prop, args });
+    }
+  } else if (window.formbricks) {
+    type Formbricks = typeof window.formbricks;
+    type FunctionProp = keyof Formbricks;
+    const functionPropTyped = prop as FunctionProp;
+
+    // @ts-expect-error -- Required for dynamic function calls
+    await window.formbricks[functionPropTyped](...args);
   }
 };

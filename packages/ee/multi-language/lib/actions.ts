@@ -1,78 +1,95 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import {
   createLanguage,
   deleteLanguage,
   getSurveysUsingGivenLanguage,
   updateLanguage,
 } from "@formbricks/lib/language/service";
-import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
-import { getProduct } from "@formbricks/lib/product/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import type { TLanguageInput } from "@formbricks/types/product";
+import {
+  getOrganizationIdFromLanguageId,
+  getOrganizationIdFromProductId,
+} from "@formbricks/lib/organization/utils";
+import { ZId } from "@formbricks/types/common";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZLanguageInput } from "@formbricks/types/product";
 
-export const createLanguageAction = async (
-  productId: string,
-  environmentId: string,
-  languageInput: TLanguageInput
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZCreateLanguageAction = z.object({
+  environmentId: ZId,
+  languageInput: ZLanguageInput,
+});
 
-  const isAuthorized = await canUserAccessProduct(session.user?.id, productId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+export const createLanguageAction = authenticatedActionClient
+  .schema(ZCreateLanguageAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const environment = await getEnvironment(parsedInput.environmentId);
+    if (!environment) {
+      throw new ResourceNotFoundError("Environment", parsedInput.environmentId);
+    }
+    await checkAuthorization({
+      data: parsedInput.languageInput,
+      schema: ZLanguageInput,
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromProductId(environment.productId),
+      rules: ["language", "create"],
+    });
 
-  const product = await getProduct(productId);
+    return await createLanguage(environment.productId, parsedInput.environmentId, parsedInput.languageInput);
+  });
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.organizationId, session.user?.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
+const ZDeleteLanguageAction = z.object({
+  environmentId: ZId,
+  languageId: ZId,
+});
 
-  return await createLanguage(productId, environmentId, languageInput);
-};
+export const deleteLanguageAction = authenticatedActionClient
+  .schema(ZDeleteLanguageAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
+      rules: ["language", "delete"],
+    });
 
-export const deleteLanguageAction = async (productId: string, environmentId: string, languageId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    return await deleteLanguage(parsedInput.environmentId, parsedInput.languageId);
+  });
 
-  const isAuthorized = await canUserAccessProduct(session.user?.id, productId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+const ZGetSurveysUsingGivenLanguageAction = z.object({
+  languageId: ZId,
+});
 
-  const product = await getProduct(productId);
+export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
+  .schema(ZGetSurveysUsingGivenLanguageAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
+      rules: ["survey", "read"],
+    });
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.organizationId, session.user?.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
+    return await getSurveysUsingGivenLanguage(parsedInput.languageId);
+  });
 
-  return await deleteLanguage(environmentId, languageId);
-};
+const ZUpdateLanguageAction = z.object({
+  environmentId: ZId,
+  languageId: ZId,
+  languageInput: ZLanguageInput,
+});
 
-export const getSurveysUsingGivenLanguageAction = async (productId: string, languageId: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+export const updateLanguageAction = authenticatedActionClient
+  .schema(ZUpdateLanguageAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      data: parsedInput.languageInput,
+      schema: ZLanguageInput,
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
+      rules: ["language", "update"],
+    });
 
-  const isAuthorized = await canUserAccessProduct(session.user?.id, productId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  return await getSurveysUsingGivenLanguage(languageId);
-};
-
-export const updateLanguageAction = async (
-  productId: string,
-  environmentId: string,
-  languageId: string,
-  languageInput: TLanguageInput
-) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await canUserAccessProduct(session.user?.id, productId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const product = await getProduct(productId);
-
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.organizationId, session.user?.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
-  return await updateLanguage(environmentId, languageId, languageInput);
-};
+    return await updateLanguage(parsedInput.environmentId, parsedInput.languageId, parsedInput.languageInput);
+  });

@@ -9,15 +9,14 @@ import {
   TSurvey,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
+  TSurveyQuestionChoice,
+  TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
-  choice: {
-    id: string;
-    label: Record<string, string>;
-  };
+  choice: TSurveyQuestionChoice;
   choiceIdx: number;
   questionIdx: number;
   updateChoice: (choiceIdx: number, updatedAttributes: { label: TI18nString }) => void;
@@ -28,13 +27,16 @@ interface ChoiceProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
-  question: TSurveyMultipleChoiceQuestion;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
+  question: TSurveyMultipleChoiceQuestion | TSurveyRankingQuestion;
+  updateQuestion: (
+    questionIdx: number,
+    updatedAttributes: Partial<TSurveyMultipleChoiceQuestion> | Partial<TSurveyRankingQuestion>
+  ) => void;
   surveyLanguageCodes: string[];
   attributeClasses: TAttributeClass[];
 }
 
-export const SelectQuestionChoice = ({
+export const QuestionOptionChoice = ({
   addChoice,
   choice,
   choiceIdx,
