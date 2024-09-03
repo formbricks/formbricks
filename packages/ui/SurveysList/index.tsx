@@ -5,10 +5,10 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { Button } from "../Button";
-import { LoadingSpinner } from "../LoadingSpinner";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
 import { SurveyFilters } from "./components/SurveyFilters";
+import { SurveyLoading } from "./components/SurveyLoading";
 import { getFormattedFilters } from "./utils";
 
 interface SurveysListProps {
@@ -55,7 +55,7 @@ export const SurveysList = ({
       setOrientation(orientationFromLocalStorage);
     } else {
       setOrientation("grid");
-      localStorage.setItem("surveyOrientation", "list");
+      localStorage.setItem("surveyOrientation", "grid");
     }
   }, []);
 
@@ -177,11 +177,15 @@ export const SurveysList = ({
           )}
         </div>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center py-12">
-          <LoadingSpinner />
-          <div className="text-sm text-slate-500">
-            {isFetching ? "Fetching surveys..." : "No surveys found"}
-          </div>
+        <div className="flex h-full w-full">
+          {isFetching ? (
+            <SurveyLoading />
+          ) : (
+            <div className="flex w-full flex-col items-center justify-center text-slate-600">
+              <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
+              No surveys found
+            </div>
+          )}
         </div>
       )}
     </div>
