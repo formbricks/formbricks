@@ -20,7 +20,6 @@ import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
   product: TProduct;
-  environmentId: string;
 }
 
 const checkIfDuplicateExists = (arr: string[]) => {
@@ -67,7 +66,7 @@ const validateLanguages = (languages: TLanguage[]) => {
   return true;
 };
 
-export function EditLanguage({ product, environmentId }: EditLanguageProps) {
+export function EditLanguage({ product }: EditLanguageProps) {
   const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -123,7 +122,7 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
 
   const performLanguageDeletion = async (languageId: string) => {
     try {
-      await deleteLanguageAction({ environmentId, languageId });
+      await deleteLanguageAction({ languageId, productId: product.id });
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
       toast.success("Language deleted successfully.");
       // Close the modal after deletion
@@ -145,11 +144,11 @@ export function EditLanguage({ product, environmentId }: EditLanguageProps) {
       languages.map((lang) => {
         return lang.id === "new"
           ? createLanguageAction({
-              environmentId,
+              productId: product.id,
               languageInput: { code: lang.code, alias: lang.alias },
             })
           : updateLanguageAction({
-              environmentId,
+              productId: product.id,
               languageId: lang.id,
               languageInput: { code: lang.code, alias: lang.alias },
             });

@@ -81,7 +81,6 @@ const Page = async ({ params }) => {
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
-        totalResponseCount={totalResponseCount}
       />
     </PageContentWrapper>
   );
