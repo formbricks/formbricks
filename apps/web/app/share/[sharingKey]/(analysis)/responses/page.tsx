@@ -54,7 +54,6 @@ const Page = async ({ params }) => {
           webAppUrl={WEBAPP_URL}
           environmentTags={tags}
           responsesPerPage={RESPONSES_PER_PAGE}
-          totalResponseCount={totalResponseCount}
         />
       </PageContentWrapper>
     </div>
