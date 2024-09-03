@@ -290,23 +290,26 @@ export const getSurveysSortedByRelevance = reactCache(
 
         try {
           let surveys: TSurvey[] = [];
+          const inProgressSurveyCount = await getInProgressSurveyCount(environmentId, filterCriteria);
 
           // Fetch surveys that are in progress first
-          const inProgressSurveys = await prisma.survey.findMany({
-            where: {
-              environmentId,
-              status: "inProgress",
-              ...buildWhereClause(filterCriteria),
-            },
-            select: selectSurvey,
-            orderBy: buildOrderByClause("updatedAt"),
-            take: limit,
-            skip: offset,
-          });
+          const inProgressSurveys =
+            offset && offset > inProgressSurveyCount
+              ? []
+              : await prisma.survey.findMany({
+                  where: {
+                    environmentId,
+                    status: "inProgress",
+                    ...buildWhereClause(filterCriteria),
+                  },
+                  select: selectSurvey,
+                  orderBy: buildOrderByClause("updatedAt"),
+                  take: limit,
+                  skip: offset,
+                });
 
           surveys = inProgressSurveys.map(transformPrismaSurvey);
 
-          const inProgressSurveyCount = await getInProgressSurveyCount(environmentId, filterCriteria);
           // Determine if additional surveys are needed
           if (offset !== undefined && limit && inProgressSurveys.length < limit) {
             const remainingLimit = limit - inProgressSurveys.length;
