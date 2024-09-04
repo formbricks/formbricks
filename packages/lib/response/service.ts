@@ -771,7 +771,7 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
         validateInputs([surveyId, ZId], [email, ZString]);
 
         try {
-          const responseExists = await prisma.response.findFirst({
+          const response = await prisma.response.findFirst({
             where: {
               surveyId,
               data: {
@@ -782,7 +782,7 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
             select: { id: true },
           });
 
-          return !!responseExists;
+          return !!response;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
