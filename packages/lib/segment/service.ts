@@ -10,13 +10,11 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import {
-  TActionMetric,
   TAllOperators,
   TBaseFilters,
   TEvaluateSegmentUserAttributeData,
   TEvaluateSegmentUserData,
   TSegment,
-  TSegmentActionFilter,
   TSegmentAttributeFilter,
   TSegmentConnector,
   TSegmentCreateInput,
@@ -28,14 +26,6 @@ import {
   ZSegmentFilters,
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
-import {
-  getActionCountInLastMonth,
-  getActionCountInLastQuarter,
-  getActionCountInLastWeek,
-  getFirstOccurrenceDaysAgo,
-  getLastOccurrenceDaysAgo,
-  getTotalOccurrencesForAction,
-} from "../action/service";
 import { cache } from "../cache";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { surveyCache } from "../survey/cache";
@@ -466,68 +456,6 @@ const evaluatePersonFilter = (userId: string, filter: TSegmentPersonFilter): boo
   return false;
 };
 
-const getResolvedActionValue = async (actionClassId: string, personId: string, metric: TActionMetric) => {
-  if (metric === "lastQuarterCount") {
-    const lastQuarterCount = await getActionCountInLastQuarter(actionClassId, personId);
-    return lastQuarterCount;
-  }
-
-  if (metric === "lastMonthCount") {
-    const lastMonthCount = await getActionCountInLastMonth(actionClassId, personId);
-    return lastMonthCount;
-  }
-
-  if (metric === "lastWeekCount") {
-    const lastWeekCount = await getActionCountInLastWeek(actionClassId, personId);
-    return lastWeekCount;
-  }
-
-  if (metric === "lastOccurranceDaysAgo") {
-    const lastOccurranceDaysAgo = await getLastOccurrenceDaysAgo(actionClassId, personId);
-    return lastOccurranceDaysAgo;
-  }
-
-  if (metric === "firstOccurranceDaysAgo") {
-    const firstOccurranceDaysAgo = await getFirstOccurrenceDaysAgo(actionClassId, personId);
-    return firstOccurranceDaysAgo;
-  }
-
-  if (metric === "occuranceCount") {
-    const occuranceCount = await getTotalOccurrencesForAction(actionClassId, personId);
-    return occuranceCount;
-  }
-};
-
-const evaluateActionFilter = async (
-  actionClassIds: string[],
-  filter: TSegmentActionFilter,
-  personId: string
-): Promise<boolean> => {
-  const { value, qualifier, root } = filter;
-  const { actionClassId } = root;
-  const { metric } = qualifier;
-
-  // there could be a case when the actionIds do not have the actionClassId
-  // in such a case, we return false
-
-  const actionClassIdIndex = actionClassIds.findIndex((actionId) => actionId === actionClassId);
-  if (actionClassIdIndex === -1) {
-    return false;
-  }
-
-  try {
-    // we have the action metric and we'll need to find out the values for those metrics from the db
-    const actionValue = await getResolvedActionValue(actionClassId, personId, metric);
-
-    const actionResult =
-      actionValue !== undefined && compareValues(actionValue ?? 0, value, qualifier.operator);
-
-    return actionResult;
-  } catch (error) {
-    throw error;
-  }
-};
-
 const evaluateSegmentFilter = async (
   userData: TEvaluateSegmentUserData,
   filter: TSegmentSegmentFilter
@@ -637,19 +565,6 @@ export const evaluateSegment = async (
           });
         }
 
-        if (type === "action") {
-          result = await evaluateActionFilter(
-            userData.actionIds,
-            resource as TSegmentActionFilter,
-            userData.personId
-          );
-
-          resultPairs.push({
-            result,
-            connector: filterItem.connector,
-          });
-        }
-
         if (type === "segment") {
           result = await evaluateSegmentFilter(userData, resource as TSegmentSegmentFilter);
           resultPairs.push({
@@ -711,34 +626,3 @@ export const evaluateSegment = async (
     throw error;
   }
 };
-
-// This function is used to check if the environment has a segment that uses actions
-export const getHasEnvironmentActionSegment = reactCache(
-  (environmentId: string): Promise<boolean> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId]);
-        const segments = await getSegments(environmentId);
-
-        if (!segments || !segments.length) {
-          return false;
-        }
-
-        let hasEnvironmentActionSegment = false;
-
-        for (let segment of segments) {
-          const hasActionFilter = JSON.stringify(segment.filters).includes(`"type":"action"`);
-          if (hasActionFilter) {
-            hasEnvironmentActionSegment = true;
-            break;
-          }
-        }
-
-        return hasEnvironmentActionSegment;
-      },
-      [`getHasActionSegment-${environmentId}`],
-      {
-        tags: [segmentCache.tag.byEnvironmentId(environmentId)],
-      }
-    )()
-);

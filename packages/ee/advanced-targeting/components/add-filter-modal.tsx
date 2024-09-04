@@ -1,10 +1,9 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { FingerprintIcon, MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
+import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
   TBaseFilter,
@@ -20,12 +19,11 @@ interface TAddFilterModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onAddFilter: (filter: TBaseFilter) => void;
-  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
 }
 
-type TFilterType = "action" | "attribute" | "segment" | "device" | "person";
+type TFilterType = "attribute" | "segment" | "device" | "person";
 
 const handleAddFilter = ({
   type,
@@ -33,41 +31,15 @@ const handleAddFilter = ({
   setOpen,
   attributeClassName,
   deviceType,
-  actionClassId,
   segmentId,
 }: {
   type: TFilterType;
   onAddFilter: (filter: TBaseFilter) => void;
   setOpen: (open: boolean) => void;
-  actionClassId?: string;
   attributeClassName?: string;
   segmentId?: string;
   deviceType?: string;
 }): void => {
-  if (type === "action") {
-    if (!actionClassId) return;
-
-    const newFilter: TBaseFilter = {
-      id: createId(),
-      connector: "and",
-      resource: {
-        id: createId(),
-        root: {
-          type,
-          actionClassId,
-        },
-        qualifier: {
-          metric: "occuranceCount",
-          operator: "greaterThan",
-        },
-        value: "",
-      },
-    };
-
-    onAddFilter(newFilter);
-    setOpen(false);
-  }
-
   if (type === "attribute") {
     if (!attributeClassName) return;
 
@@ -232,7 +204,6 @@ export function AddFilterModal({
   onAddFilter,
   open,
   setOpen,
-  actionClasses,
   attributeClasses,
   segments,
 }: TAddFilterModalProps) {
@@ -257,14 +228,6 @@ export function AddFilterModal({
     ],
     []
   );
-
-  const actionClassesFiltered = useMemo(() => {
-    if (!searchValue) return actionClasses;
-
-    return actionClasses.filter((actionClass) =>
-      actionClass.name.toLowerCase().includes(searchValue.toLowerCase())
-    );
-  }, [actionClasses, searchValue]);
 
   const attributeClassesFiltered = useMemo(() => {
     if (!attributeClasses) return [];
@@ -305,18 +268,11 @@ export function AddFilterModal({
       {
         attributes: attributeClassesFiltered,
         personAttributes: personAttributesFiltered,
-        actions: actionClassesFiltered,
         segments: segmentsFiltered,
         devices: deviceTypesFiltered,
       },
     ],
-    [
-      actionClassesFiltered,
-      attributeClassesFiltered,
-      deviceTypesFiltered,
-      personAttributesFiltered,
-      segmentsFiltered,
-    ]
+    [attributeClassesFiltered, deviceTypesFiltered, personAttributesFiltered, segmentsFiltered]
   );
 
   const getAllTabContent = () => {
@@ -414,35 +370,6 @@ export function AddFilterModal({
     );
   };
 
-  const getActionsTabContent = () => {
-    return (
-      <>
-        {actionClassesFiltered.length === 0 && (
-          <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>There are no actions yet!</p>
-          </div>
-        )}
-        {actionClassesFiltered.map((actionClass) => {
-          return (
-            <div
-              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-              onClick={() => {
-                handleAddFilter({
-                  type: "action",
-                  onAddFilter,
-                  setOpen,
-                  actionClassId: actionClass.id,
-                });
-              }}>
-              <MousePointerClick className="h-4 w-4" />
-              <p>{actionClass.name}</p>
-            </div>
-          );
-        })}
-      </>
-    );
-  };
-
   const getAttributesTabContent = () => {
     return (
       <AttributeTabContent
@@ -511,9 +438,6 @@ export function AddFilterModal({
     switch (activeTabId) {
       case "all": {
         return getAllTabContent();
-      }
-      case "actions": {
-        return getActionsTabContent();
       }
       case "attributes": {
         return getAttributesTabContent();

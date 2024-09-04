@@ -1,13 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
-  TActionMetric,
   TAllOperators,
   TAttributeOperator,
   TBaseFilter,
   TBaseFilters,
   TDeviceOperator,
   TSegment,
-  TSegmentActionFilter,
   TSegmentAttributeFilter,
   TSegmentConnector,
   TSegmentDeviceFilter,
@@ -89,25 +87,6 @@ export const convertOperatorToTitle = (operator: TAllOperators) => {
       return "User is not in";
     default:
       return operator;
-  }
-};
-
-export const convertMetricToText = (metric: TActionMetric) => {
-  switch (metric) {
-    case "lastQuarterCount":
-      return "Last quarter (Count)";
-    case "lastMonthCount":
-      return "Last month (Count)";
-    case "lastWeekCount":
-      return "Last week (Count)";
-    case "occuranceCount":
-      return "Occurance (Count)";
-    case "lastOccurranceDaysAgo":
-      return "Last occurrance (Days ago)";
-    case "firstOccurranceDaysAgo":
-      return "First occurrance (Days ago)";
-    default:
-      return metric;
   }
 };
 
@@ -406,40 +385,6 @@ export const updatePersonIdentifierInFilter = (
       }
     } else {
       updatePersonIdentifierInFilter(resource, filterId, newPersonIdentifier);
-    }
-  }
-};
-
-export const updateActionClassIdInFilter = (
-  group: TBaseFilters,
-  filterId: string,
-  newActionClassId: string
-) => {
-  for (let i = 0; i < group.length; i++) {
-    const { resource } = group[i];
-
-    if (isResourceFilter(resource)) {
-      if (resource.id === filterId) {
-        (resource as TSegmentActionFilter).root.actionClassId = newActionClassId;
-        break;
-      }
-    } else {
-      updateActionClassIdInFilter(resource, filterId, newActionClassId);
-    }
-  }
-};
-
-export const updateMetricInFilter = (group: TBaseFilters, filterId: string, newMetric: TActionMetric) => {
-  for (let i = 0; i < group.length; i++) {
-    const { resource } = group[i];
-
-    if (isResourceFilter(resource)) {
-      if (resource.id === filterId) {
-        (resource as TSegmentActionFilter).qualifier.metric = newMetric;
-        break;
-      }
-    } else {
-      updateMetricInFilter(resource, filterId, newMetric);
     }
   }
 };
