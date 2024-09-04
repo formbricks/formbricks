@@ -193,8 +193,8 @@ export const generateColumns = (
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
     header: "Tags",
-    cell: ({ getValue }) => {
-      const tags = getValue(); // Get the ISO date string
+    cell: ({ row }) => {
+      const tags = row.original.tags;
       if (Array.isArray(tags)) {
         const tagsArray = tags.map((tag) => tag.name);
         return (
@@ -211,8 +211,8 @@ export const generateColumns = (
   const notesColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "notes",
     header: "Notes",
-    cell: ({ getValue }) => {
-      const notes = getValue();
+    cell: ({ row }) => {
+      const notes = row.original.notes;
       if (Array.isArray(notes)) {
         const notesArray = notes.map((note) => note.text);
         return processResponseData(notesArray);
@@ -232,8 +232,8 @@ export const generateColumns = (
               <span className="truncate">{hiddenFieldId}</span>
             </div>
           ),
-          cell: ({ getValue }) => {
-            const hiddenFieldResponse = getValue();
+          cell: ({ row }) => {
+            const hiddenFieldResponse = row.original.responseData[hiddenFieldId];
             if (typeof hiddenFieldResponse === "string") {
               return <div className="text-slate-900">{hiddenFieldResponse}</div>;
             }

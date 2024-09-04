@@ -20,6 +20,8 @@ interface ResponseCardModalProps {
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   deleteResponses: (responseIds: string[]) => void;
   isViewer: boolean;
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const ResponseCardModal = ({
@@ -33,9 +35,11 @@ export const ResponseCardModal = ({
   updateResponse,
   deleteResponses,
   isViewer,
+  open,
+  setOpen,
 }: ResponseCardModalProps) => {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
-  const [open, setOpen] = useState(selectedResponse !== null);
+
   useEffect(() => {
     if (selectedResponse) {
       setOpen(true);
@@ -44,7 +48,7 @@ export const ResponseCardModal = ({
     } else {
       setOpen(false);
     }
-  }, [selectedResponse, responses]);
+  }, [selectedResponse, responses, setOpen]);
 
   const handleNext = () => {
     if (currentIndex !== null && currentIndex < responses.length - 1) {

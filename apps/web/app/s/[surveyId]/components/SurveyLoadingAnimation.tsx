@@ -59,7 +59,7 @@ export const SurveyLoadingAnimation = ({
     if (isMediaLoaded && minTimePassed) {
       const hideTimer = setTimeout(() => {
         setIsHidden(true);
-      }, 1500);
+      }, 500);
 
       return () => clearTimeout(hideTimer);
     } else {
@@ -71,7 +71,7 @@ export const SurveyLoadingAnimation = ({
     // Ensure the animation is shown for at least 1.5 seconds
     const minTimeTimer = setTimeout(() => {
       setMinTimePassed(true);
-    }, 1500);
+    }, 500);
 
     // Observe the DOM for when the survey package (child elements) is added to the target node
     const observer = new MutationObserver((mutations) => {

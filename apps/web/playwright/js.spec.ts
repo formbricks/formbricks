@@ -105,6 +105,7 @@ test.describe("JS Package Test", async () => {
       (await page.waitForSelector("text=Responses")).isVisible();
 
       await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(2000);
 
       const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
       expect(impressionsCount).toEqual("Impressions\n\n1");
