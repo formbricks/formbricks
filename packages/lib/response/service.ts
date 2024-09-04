@@ -548,6 +548,9 @@ export const getResponseDownloadUrl = async (
       ...userAttributes,
     ];
 
+    if (survey.isVerifyEmailEnabled) {
+      headers.push("Verified Email");
+    }
     const jsonData = getResponsesJson(survey, responses, questions, userAttributes, hiddenFields);
 
     const fileName = getResponsesFileName(survey?.name || "", format);
