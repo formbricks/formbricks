@@ -58,7 +58,7 @@ export const VerifyEmail = ({
   const [emailSent, setEmailSent] = useState<boolean>(false);
 
   const submitEmail = async (emailInput: TVerifyEmailInput) => {
-    const email = emailInput.email;
+    const email = emailInput.email.toLowerCase();
     if (survey.isSingleResponsePerEmailEnabled) {
       const actionResult = await getIfResponseWithSurveyIdAndEmailExistAction({
         surveyId: survey.id,
