@@ -213,7 +213,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   };
   await sendEmail({
     to: data.email,
-    subject: "Your survey is ready to be filled out.",
+    subject: "Your Formbricks Survey",
     html: render(EmailTemplate({ content: LinkSurveyEmail({ surveyName, getSurveyLink }) })),
   });
 };

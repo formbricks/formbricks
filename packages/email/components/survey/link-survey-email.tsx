@@ -12,10 +12,9 @@ export function LinkSurveyEmail({ surveyName, getSurveyLink }: LinkSurveyEmailPr
   return (
     <Container>
       <Heading>Hey 👋</Heading>
-      <Text>Thanks for validating your email!</Text>
-      <Text>To fill out the survey please click on the button below:</Text>
+      <Text>Thanks for validating your email. Here is your Survey.</Text>
+      <Text className="font-bold">{surveyName}</Text>
       <EmailButton href={getSurveyLink()} label="Take survey" />
-      <Text className="text-xs text-slate-400">Survey name: {surveyName}</Text>
       <EmailFooter />
     </Container>
   );
