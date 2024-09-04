@@ -1,17 +1,20 @@
 "use client";
 
-import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
+import { getResponseBySurveyIdAndEmailAction, sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { MailIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
+import { z } from "zod";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { isValidEmail } from "@formbricks/lib/utils/email";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
+import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/Form";
 import { Input } from "@formbricks/ui/Input";
 import { StackedCardsContainer } from "@formbricks/ui/StackedCardsContainer";
 
@@ -24,6 +27,11 @@ interface VerifyEmailProps {
   attributeClasses: TAttributeClass[];
 }
 
+const ZVerifyEmailInput = z.object({
+  email: z.string().email(),
+});
+type TVerifyEmailInput = z.infer<typeof ZVerifyEmailInput>;
+
 export const VerifyEmail = ({
   survey,
   isErrorComponent,
@@ -32,21 +40,31 @@ export const VerifyEmail = ({
   styling,
   attributeClasses,
 }: VerifyEmailProps) => {
+  const form = useForm<TVerifyEmailInput>({
+    defaultValues: {
+      email: "",
+    },
+    resolver: zodResolver(ZVerifyEmailInput),
+  });
   survey = useMemo(() => {
     return replaceHeadlineRecall(survey, "default", attributeClasses);
   }, [survey, attributeClasses]);
 
+  const { isSubmitting } = form.formState;
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const submitEmail = async (email) => {
-    setIsLoading(true);
-    if (!isValidEmail(email)) {
-      toast.error("Please enter a valid email");
-      setIsLoading(false);
-      return;
+  const submitEmail = async (emailInput: TVerifyEmailInput) => {
+    const email = emailInput.email;
+    if (survey.isSingleResponsePerEmailEnabled) {
+      const getResponseActionResult = await getResponseBySurveyIdAndEmailAction({
+        surveyId: survey.id,
+        email,
+      });
+      if (getResponseActionResult?.data) {
+        form.setError("email", { type: "custom", message: "Response with this email already exist" });
+        return;
+      }
     }
     const data = {
       surveyId: survey.id,
@@ -60,7 +78,6 @@ export const VerifyEmail = ({
     } catch (error) {
       toast.error(error.message);
     }
-    setIsLoading(false);
   };
 
   const handlePreviewClick = () => {
@@ -70,12 +87,6 @@ export const VerifyEmail = ({
   const handleGoBackClick = () => {
     setShowPreviewQuestions(false);
     setEmailSent(false);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      submitEmail(email);
-    }
   };
 
   if (isErrorComponent) {
@@ -97,33 +108,49 @@ export const VerifyEmail = ({
         cardArrangement={
           survey.styling?.cardArrangement?.linkSurveys ?? styling.cardArrangement?.linkSurveys ?? "straight"
         }>
-        {!emailSent && !showPreviewQuestions && (
-          <div className="flex flex-col">
-            <div className="mx-auto rounded-full border bg-slate-200 p-6">
-              <MailIcon className="mx-auto h-12 w-12 text-white" />
-            </div>
-            <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond.</p>
-            <p className="mt-4 text-sm text-slate-500 lg:text-base">
-              To respond to this survey, please verify your email.
-            </p>
-            <div className="mt-6 flex w-full space-x-2">
-              <Input
-                type="string"
-                placeholder="user@gmail.com"
-                className="h-12"
-                value={email || ""}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-              <Button onClick={() => submitEmail(email)} loading={isLoading}>
-                Verify
-              </Button>
-            </div>
-            <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
-              Just curious? <span className="underline">Preview survey questions.</span>
-            </p>
-          </div>
-        )}
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(submitEmail)}>
+            {!emailSent && !showPreviewQuestions && (
+              <div className="flex flex-col">
+                <div className="mx-auto rounded-full border bg-slate-200 p-6">
+                  <MailIcon className="mx-auto h-12 w-12 text-white" />
+                </div>
+                <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond.</p>
+                <p className="mt-4 text-sm text-slate-500 lg:text-base">
+                  To respond to this survey, please verify your email.
+                </p>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field, fieldState: { error } }) => (
+                    <FormItem className="my-4 w-full space-y-4">
+                      <FormControl>
+                        <div>
+                          <div className="flex space-x-2">
+                            <Input
+                              value={field.value}
+                              onChange={(email) => field.onChange(email)}
+                              type="email"
+                              placeholder="engineering@acme.com"
+                              className="h-10 bg-white"
+                            />
+                            <Button type="submit" loading={isSubmitting}>
+                              Verify
+                            </Button>
+                          </div>
+                          {error?.message && <FormError className="text-center">{error.message}</FormError>}
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
+                  Just curious? <span className="underline">Preview survey questions.</span>
+                </p>
+              </div>
+            )}
+          </form>
+        </FormProvider>
         {!emailSent && showPreviewQuestions && (
           <div>
             <p className="text-4xl font-bold">Question Preview</p>
@@ -143,8 +170,8 @@ export const VerifyEmail = ({
           <div>
             <h1 className="mt-8 text-2xl font-bold lg:text-4xl">Check your email.</h1>
             <p className="mt-4 text-center text-sm text-slate-400 lg:text-base">
-              We sent an email to <span className="font-semibold italic">{email}</span>. Please click the link
-              in the email to take your survey.
+              We sent an email to <span className="font-semibold italic">{form.getValues().email}</span>.
+              Please click the link in the email to take your survey.
             </p>
             <Button variant="secondary" className="mt-6" onClick={handleGoBackClick} StartIcon={ArrowLeft}>
               Back

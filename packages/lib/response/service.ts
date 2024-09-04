@@ -763,3 +763,46 @@ export const getResponseCountBySurveyId = reactCache(
       }
     )()
 );
+
+export const getResponseBySurveyIdAndEmail = reactCache(
+  (surveyId: string, email: string): Promise<TResponse | null> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId], [email, ZString]);
+
+        try {
+          const responsePrisma = await prisma.response.findFirst({
+            where: {
+              surveyId,
+              data: {
+                path: ["verifiedEmail"],
+                equals: email,
+              },
+            },
+            select: responseSelection,
+          });
+
+          if (!responsePrisma) {
+            return null;
+          }
+
+          const response: TResponse = {
+            ...responsePrisma,
+            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+          };
+
+          return response;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getResponseBySurveyIdAndEmail-${surveyId}-${email}`],
+      {
+        tags: [responseCache.tag.bySurveyId(surveyId)],
+      }
+    )()
+);
