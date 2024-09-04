@@ -150,8 +150,7 @@ export const isExistingAttribute = (key: string, value: string): boolean => {
 
 export const setAttributeInApp = async (
   key: string,
-  value: any,
-  appConfig: AppConfig
+  value: any
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   if (key === "userId") {
     logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");
