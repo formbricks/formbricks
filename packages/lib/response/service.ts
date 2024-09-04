@@ -764,14 +764,14 @@ export const getResponseCountBySurveyId = reactCache(
     )()
 );
 
-export const getResponseBySurveyIdAndEmail = reactCache(
-  (surveyId: string, email: string): Promise<TResponse | null> =>
+export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
+  (surveyId: string, email: string): Promise<boolean> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [email, ZString]);
 
         try {
-          const responsePrisma = await prisma.response.findFirst({
+          const responseExists = await prisma.response.findFirst({
             where: {
               surveyId,
               data: {
@@ -779,19 +779,10 @@ export const getResponseBySurveyIdAndEmail = reactCache(
                 equals: email,
               },
             },
-            select: responseSelection,
+            select: { id: true },
           });
 
-          if (!responsePrisma) {
-            return null;
-          }
-
-          const response: TResponse = {
-            ...responsePrisma,
-            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          };
-
-          return response;
+          return !!responseExists;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
@@ -800,7 +791,7 @@ export const getResponseBySurveyIdAndEmail = reactCache(
           throw error;
         }
       },
-      [`getResponseBySurveyIdAndEmail-${surveyId}-${email}`],
+      [`getIfResponseWithSurveyIdAndEmailExist-${surveyId}-${email}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }

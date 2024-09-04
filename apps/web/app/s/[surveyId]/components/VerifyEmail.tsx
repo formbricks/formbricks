@@ -1,6 +1,9 @@
 "use client";
 
-import { getResponseBySurveyIdAndEmailAction, sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
+import {
+  getIfResponseWithSurveyIdAndEmailExistAction,
+  sendLinkSurveyEmailAction,
+} from "@/app/s/[surveyId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MailIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
@@ -57,11 +60,11 @@ export const VerifyEmail = ({
   const submitEmail = async (emailInput: TVerifyEmailInput) => {
     const email = emailInput.email;
     if (survey.isSingleResponsePerEmailEnabled) {
-      const getResponseActionResult = await getResponseBySurveyIdAndEmailAction({
+      const actionResult = await getIfResponseWithSurveyIdAndEmailExistAction({
         surveyId: survey.id,
         email,
       });
-      if (getResponseActionResult?.data) {
+      if (actionResult?.data) {
         form.setError("email", { type: "custom", message: "Response with this email already exist" });
         return;
       }
