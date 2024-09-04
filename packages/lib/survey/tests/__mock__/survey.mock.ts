@@ -192,7 +192,8 @@ const baseSurveyProperties = {
   surveyClosedMessage: {
     enabled: false,
   },
-  isVerifyEmailEnabled: true,
+  isVerifyEmailEnabled: false,
+  isSingleResponsePerEmailEnabled: false,
   attributeFilters: [],
   ...commonMockProperties,
 };

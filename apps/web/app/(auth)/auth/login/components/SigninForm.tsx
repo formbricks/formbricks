@@ -50,13 +50,13 @@ export const SigninForm = ({
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   const formMethods = useForm<TSigninFormState>();
-
+  const callbackUrl = searchParams?.get("callbackUrl");
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
 
     try {
       const signInResponse = await signIn("credentials", {
-        callbackUrl: searchParams?.get("callbackUrl") || "/",
+        callbackUrl: callbackUrl ?? "/",
         email: data.email.toLowerCase(),
         password: data.password,
         ...(totpLogin && { totpCode: data.totpCode }),
@@ -103,7 +103,6 @@ export const SigninForm = ({
   const [signInError, setSignInError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const error = searchParams?.get("error");
-  const callbackUrl = searchParams?.get("callbackUrl");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
 
   useEffect(() => {

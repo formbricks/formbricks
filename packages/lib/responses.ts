@@ -8,28 +8,25 @@ export const convertResponseValue = (
   answer: string | number | string[] | Record<string, string>,
   question: TSurveyQuestion
 ): string | string[] => {
-  if (!answer) return "";
-  else {
-    switch (question.type) {
-      case "ranking":
-      case "fileUpload":
-        if (typeof answer === "string") {
-          return [answer];
-        } else return answer as string[];
+  switch (question.type) {
+    case "ranking":
+    case "fileUpload":
+      if (typeof answer === "string") {
+        return [answer];
+      } else return answer as string[];
 
-      case "pictureSelection":
-        if (typeof answer === "string") {
-          const imageUrl = question.choices.find((choice) => choice.id === answer)?.imageUrl;
-          return imageUrl ? [imageUrl] : [];
-        } else if (Array.isArray(answer)) {
-          return answer
-            .map((answerId) => question.choices.find((choice) => choice.id === answerId)?.imageUrl)
-            .filter((url): url is string => url !== undefined);
-        } else return [];
+    case "pictureSelection":
+      if (typeof answer === "string") {
+        const imageUrl = question.choices.find((choice) => choice.id === answer)?.imageUrl;
+        return imageUrl ? [imageUrl] : [];
+      } else if (Array.isArray(answer)) {
+        return answer
+          .map((answerId) => question.choices.find((choice) => choice.id === answerId)?.imageUrl)
+          .filter((url): url is string => url !== undefined);
+      } else return [];
 
-      default:
-        return processResponseData(answer);
-    }
+    default:
+      return processResponseData(answer);
   }
 };
 
@@ -58,8 +55,6 @@ export const getQuestionResponseMapping = (
 export const processResponseData = (
   responseData: string | number | string[] | Record<string, string>
 ): string => {
-  if (!responseData) return "";
-
   switch (typeof responseData) {
     case "string":
       return responseData;

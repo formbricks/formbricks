@@ -28,8 +28,10 @@ interface DialogContentProps
   > {}
 
 const sizeClassName = {
-  md: "sm:w-full sm:max-w-xl",
-  lg: "sm:w-[820px] sm:max-w-full",
+  md: "sm:max-w-xl",
+  lg: "sm:max-w-[820px]",
+  xl: "sm:max-w-[960px]",
+  xxl: "sm:max-w-[1240px]",
 };
 
 const DialogContent = React.forwardRef<
@@ -94,7 +96,7 @@ interface ModalProps {
   blur?: boolean;
   closeOnOutsideClick?: boolean;
   className?: string;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl" | "xxl";
   hideCloseButton?: boolean;
   restrictOverflow?: boolean;
 }

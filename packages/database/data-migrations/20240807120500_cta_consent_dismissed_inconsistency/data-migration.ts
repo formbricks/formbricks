@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions  -- using template strings for logging */
+
 /* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
 import { type TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -68,6 +70,8 @@ async function runMigration(): Promise<void> {
       });
 
       await Promise.all(migrationPromises);
+
+      console.log(`Updated ${migrationPromises.length} questions in  ${relevantSurveys.length} surveys`);
 
       const endTime = Date.now();
       console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toString()}s`);
