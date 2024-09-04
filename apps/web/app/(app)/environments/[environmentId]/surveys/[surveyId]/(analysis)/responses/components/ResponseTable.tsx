@@ -226,6 +226,12 @@ export const ResponseTable = ({
             deleteResponses={deleteResponses}
             setSelectedResponse={setSelectedResponse}
             selectedResponse={selectedResponse}
+            open={selectedResponse !== null}
+            setOpen={(open) => {
+              if (!open) {
+                setSelectedResponse(null);
+              }
+            }}
           />
         )}
       </DndContext>
