@@ -87,8 +87,7 @@ export const updateAttributes = async (
   apiHost: string,
   environmentId: string,
   userId: string,
-  attributes: TAttributes,
-  appConfig: AppConfig
+  attributes: TAttributes
 ): Promise<Result<TAttributes, NetworkError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
