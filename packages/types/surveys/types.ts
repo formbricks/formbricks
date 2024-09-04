@@ -1322,7 +1322,7 @@ export const ZSurveyFilterCriteria = z.object({
       value: z.array(z.enum(["you", "others"])),
     })
     .optional(),
-  sortBy: z.enum(["createdAt", "updatedAt", "name"]).optional(),
+  sortBy: z.enum(["createdAt", "updatedAt", "name", "relevance"]).optional(),
 });
 
 export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;
@@ -1332,7 +1332,7 @@ const ZSurveyFilters = z.object({
   createdBy: z.array(z.enum(["you", "others"])),
   status: z.array(ZSurveyStatus),
   type: z.array(ZSurveyType),
-  sortBy: z.enum(["createdAt", "updatedAt", "name"]),
+  sortBy: z.enum(["createdAt", "updatedAt", "name", "relevance"]),
 });
 
 export type TSurveyFilters = z.infer<typeof ZSurveyFilters>;
@@ -1346,7 +1346,7 @@ export type TFilterOption = z.infer<typeof ZFilterOption>;
 
 const ZSortOption = z.object({
   label: z.string(),
-  value: z.enum(["createdAt", "updatedAt", "name"]),
+  value: z.enum(["createdAt", "updatedAt", "name", "relevance"]),
 });
 
 export type TSortOption = z.infer<typeof ZSortOption>;
