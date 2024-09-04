@@ -5,8 +5,7 @@ import {
   sendLinkSurveyEmailAction,
 } from "@/app/s/[surveyId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MailIcon } from "lucide-react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MailIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
@@ -65,7 +64,10 @@ export const VerifyEmail = ({
         email,
       });
       if (actionResult?.data) {
-        form.setError("email", { type: "custom", message: "Response with this email already exist" });
+        form.setError("email", {
+          type: "custom",
+          message: "We already received a response for this email address.",
+        });
         return;
       }
     }
@@ -116,11 +118,11 @@ export const VerifyEmail = ({
             {!emailSent && !showPreviewQuestions && (
               <div className="flex flex-col">
                 <div className="mx-auto rounded-full border bg-slate-200 p-6">
-                  <MailIcon className="mx-auto h-12 w-12 text-white" />
+                  <MailIcon strokeWidth={1.5} className="mx-auto h-12 w-12 text-white" />
                 </div>
-                <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond.</p>
+                <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond</p>
                 <p className="mt-4 text-sm text-slate-500 lg:text-base">
-                  To respond to this survey, please verify your email.
+                  To respond to this survey, please enter your email address below:
                 </p>
                 <FormField
                   control={form.control}
@@ -137,11 +139,11 @@ export const VerifyEmail = ({
                               placeholder="engineering@acme.com"
                               className="h-10 bg-white"
                             />
-                            <Button type="submit" loading={isSubmitting}>
+                            <Button type="submit" size="sm" loading={isSubmitting}>
                               Verify
                             </Button>
                           </div>
-                          {error?.message && <FormError className="text-center">{error.message}</FormError>}
+                          {error?.message && <FormError className="mt-2">{error.message}</FormError>}
                         </div>
                       </FormControl>
                     </FormItem>
@@ -171,12 +173,16 @@ export const VerifyEmail = ({
         )}
         {emailSent && (
           <div>
-            <h1 className="mt-8 text-2xl font-bold lg:text-4xl">Check your email.</h1>
-            <p className="mt-4 text-center text-sm text-slate-400 lg:text-base">
-              We sent an email to <span className="font-semibold italic">{form.getValues().email}</span>.
-              Please click the link in the email to take your survey.
+            <h1 className="mt-8 text-2xl font-bold lg:text-4xl">Survey sent to {form.getValues().email}</h1>
+            <p className="mt-4 text-center text-sm text-slate-500 lg:text-base">
+              Please also check your spam folder if you don&apos;t see the email in your inbox.
             </p>
-            <Button variant="secondary" className="mt-6" onClick={handleGoBackClick} StartIcon={ArrowLeft}>
+            <Button
+              variant="secondary"
+              className="mt-6"
+              size="sm"
+              onClick={handleGoBackClick}
+              StartIcon={ArrowLeft}>
               Back
             </Button>
           </div>
