@@ -156,6 +156,7 @@ export const generateColumns = (
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
     header: () => "Date",
+    size: 200,
     cell: ({ row }) => {
       const isoDateString = row.original.createdAt;
       const date = new Date(isoDateString);
@@ -183,6 +184,7 @@ export const generateColumns = (
 
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
+    size: 200,
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.status;
