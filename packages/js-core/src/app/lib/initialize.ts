@@ -140,8 +140,7 @@ export const initialize = async (
       configInput.apiHost,
       configInput.environmentId,
       configInput.userId,
-      configInput.attributes,
-      appConfigGlobal
+      configInput.attributes
     );
     if (res.ok !== true) {
       return err(res.error);
