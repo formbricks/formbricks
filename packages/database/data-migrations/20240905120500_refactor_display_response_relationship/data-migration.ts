@@ -33,7 +33,7 @@ async function runMigration(): Promise<void> {
       let totalResponseTransformed = 0;
       let totalDisplaysDeleted = 0;
 
-      const results = await Promise.all(
+      await Promise.all(
         displays.map(async (display) => {
           if (!display.responseId) return;
 
@@ -61,8 +61,6 @@ async function runMigration(): Promise<void> {
           });
         })
       );
-
-      await Promise.all(results);
 
       console.log(`${totalResponseTransformed.toString()} responses transformed`);
       console.log(`${totalDisplaysDeleted.toString()} displays deleted`);
