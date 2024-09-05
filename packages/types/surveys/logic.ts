@@ -356,7 +356,7 @@ export const ZRightOperand = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("question"),
-    value: z.string().cuid2(),
+    value: z.string(),
   }),
   z.object({
     type: z.literal("variable"),

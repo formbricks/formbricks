@@ -23,8 +23,6 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
 import {
   TAction,
-  TActionObjective,
-  TActionVariableCalculateOperator,
   TConditionGroup,
   TLeftOperand,
   TRightOperand,
@@ -32,7 +30,7 @@ import {
   TSurveyAdvancedLogic,
 } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { ComboboxGroupedOption, ComboboxOption } from "@formbricks/ui/InputCombobox";
+import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/InputCombobox";
 
 // formats the text to highlight specific parts of the text with slashes
 export const formatTextWithSlashes = (text: string) => {
@@ -73,12 +71,12 @@ const questionIconMapping = {
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   currQuestionIdx: number
-): ComboboxGroupedOption[] => {
+): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
   const variables = localSurvey.variables || [];
   const questions = localSurvey.questions;
 
-  const groupedOptions: ComboboxGroupedOption[] = [];
+  const groupedOptions: TComboboxGroupedOption[] = [];
   const questionOptions = questions
     .filter((_, idx) => idx <= currQuestionIdx)
     .map((question) => {
@@ -141,7 +139,7 @@ export const getConditionValueOptions = (
   return groupedOptions;
 };
 
-export const actionObjectiveOptions: ComboboxOption<TActionObjective>[] = [
+export const actionObjectiveOptions: TComboboxOption[] = [
   { label: "Calculate", value: "calculate" },
   { label: "Require Answer", value: "requireAnswer" },
   { label: "Jump to question", value: "jumpToQuestion" },
@@ -150,7 +148,7 @@ export const actionObjectiveOptions: ComboboxOption<TActionObjective>[] = [
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey
-): ComboboxOption[] => {
+): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables || [];
     const variableType =
@@ -177,7 +175,7 @@ export const getMatchValueProps = (
   show?: boolean;
   showInput?: boolean;
   inputType?: HTMLInputTypeAttribute;
-  options: ComboboxGroupedOption[];
+  options: TComboboxGroupedOption[];
 } => {
   if (
     [
@@ -254,7 +252,7 @@ export const getMatchValueProps = (
         };
       });
 
-      const groupedOptions: ComboboxGroupedOption[] = [];
+      const groupedOptions: TComboboxGroupedOption[] = [];
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
@@ -344,7 +342,7 @@ export const getMatchValueProps = (
         };
       });
 
-      const groupedOptions: ComboboxGroupedOption[] = [];
+      const groupedOptions: TComboboxGroupedOption[] = [];
 
       if (choices.length > 0) {
         groupedOptions.push({
@@ -391,7 +389,7 @@ export const getMatchValueProps = (
         };
       });
 
-      const groupedOptions: ComboboxGroupedOption[] = [];
+      const groupedOptions: TComboboxGroupedOption[] = [];
 
       if (choices.length > 0) {
         groupedOptions.push({
@@ -454,7 +452,7 @@ export const getMatchValueProps = (
         };
       });
 
-      const groupedOptions: ComboboxGroupedOption[] = [];
+      const groupedOptions: TComboboxGroupedOption[] = [];
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
@@ -534,7 +532,7 @@ export const getMatchValueProps = (
         };
       });
 
-      const groupedOptions: ComboboxGroupedOption[] = [];
+      const groupedOptions: TComboboxGroupedOption[] = [];
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
@@ -606,7 +604,7 @@ export const getMatchValueProps = (
         };
       });
 
-      const groupedOptions: ComboboxGroupedOption[] = [];
+      const groupedOptions: TComboboxGroupedOption[] = [];
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
@@ -684,7 +682,7 @@ export const getMatchValueProps = (
       };
     });
 
-    const groupedOptions: ComboboxGroupedOption[] = [];
+    const groupedOptions: TComboboxGroupedOption[] = [];
 
     if (questionOptions.length > 0) {
       groupedOptions.push({
@@ -725,7 +723,7 @@ export const getActionTargetOptions = (
   action: TAction,
   localSurvey: TSurvey,
   currQuestionIdx: number
-): ComboboxOption[] => {
+): TComboboxOption[] => {
   const questionOptions = localSurvey.questions
     .filter((_, idx) => idx !== currQuestionIdx)
     .map((question) => {
@@ -751,7 +749,7 @@ export const getActionTargetOptions = (
   return [...questionOptions, ...endingCardOptions];
 };
 
-export const getActionVariableOptions = (localSurvey: TSurvey): ComboboxOption[] => {
+export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] => {
   const variables = localSurvey.variables || [];
 
   return variables.map((variable) => {
@@ -766,9 +764,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): ComboboxOption[]
   });
 };
 
-export const getActionOpeartorOptions = (
-  variableType?: TSurveyVariable["type"]
-): ComboboxOption<TActionVariableCalculateOperator>[] => {
+export const getActionOpeartorOptions = (variableType?: TSurveyVariable["type"]): TComboboxOption[] => {
   if (variableType === "number") {
     return [
       {
@@ -811,7 +807,7 @@ export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
   currQuestionIdx: number
-): ComboboxGroupedOption[] => {
+): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
   let variables = localSurvey.variables || [];
   const questions = localSurvey.questions;
@@ -870,7 +866,7 @@ export const getActionValueOptions = (
       };
     });
 
-    const groupedOptions: ComboboxGroupedOption[] = [];
+    const groupedOptions: TComboboxGroupedOption[] = [];
 
     if (questionOptions.length > 0) {
       groupedOptions.push({
@@ -928,7 +924,7 @@ export const getActionValueOptions = (
       };
     });
 
-    const groupedOptions: ComboboxGroupedOption[] = [];
+    const groupedOptions: TComboboxGroupedOption[] = [];
 
     if (questionOptions.length > 0) {
       groupedOptions.push({

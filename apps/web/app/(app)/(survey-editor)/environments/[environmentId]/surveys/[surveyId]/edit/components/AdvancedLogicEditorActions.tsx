@@ -81,11 +81,11 @@ export function AdvancedLogicEditorActions({
   }
 
   return (
-    <div className="flex w-full gap-2">
+    <div className="flex grow gap-2">
       <CornerDownRightIcon className="mt-3 h-4 w-4 shrink-0" />
       <div className="flex grow flex-col gap-y-2">
         {actions.map((action, idx) => (
-          <div className="flex w-full items-center justify-between gap-x-2">
+          <div className="flex grow items-center justify-between gap-x-2">
             <div className="block w-9 shrink-0">{idx === 0 ? "Then" : "and"}</div>
             <div className="flex grow items-center gap-x-2">
               <InputCombobox

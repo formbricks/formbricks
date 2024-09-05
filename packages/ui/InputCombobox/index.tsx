@@ -14,26 +14,26 @@ import {
 import { Input } from "../Input";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
-export interface ComboboxOption<T = string | number> {
+export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
   label: string;
-  value: T;
+  value: string | number;
   meta?: Record<string, string>;
 }
 
-export interface ComboboxGroupedOption {
+export interface TComboboxGroupedOption {
   label: string;
   value: string | number;
-  options: ComboboxOption[];
+  options: TComboboxOption[];
 }
 
-interface InputComboboxProps<T> {
+interface InputComboboxProps {
   showSearch?: boolean;
   searchPlaceholder?: string;
-  options?: ComboboxOption<T>[];
-  groupedOptions?: ComboboxGroupedOption[];
+  options?: TComboboxOption[];
+  groupedOptions?: TComboboxGroupedOption[];
   value?: string | number | string[] | null;
-  onChangeValue: (value: T | T[], option?: ComboboxOption) => void;
+  onChangeValue: (value: string | number | string[], option?: TComboboxOption) => void;
   inputProps?: Omit<React.ComponentProps<typeof Input>, "value" | "onChange">;
   clearable?: boolean;
   withInput?: boolean;
@@ -56,10 +56,10 @@ export const InputCombobox = ({
   allowMultiSelect = false,
   showCheckIcon = false,
   comboboxClasses,
-}: InputComboboxProps<string | number>) => {
+}: InputComboboxProps) => {
   const [open, setOpen] = React.useState(false);
   const [localValue, setLocalValue] = React.useState<
-    ComboboxOption | ComboboxOption[] | string | number | null
+    TComboboxOption | TComboboxOption[] | string | number | null
   >(null);
   const [inputType, setInputType] = React.useState<"dropdown" | "input" | null>(null);
 
@@ -70,6 +70,7 @@ export const InputCombobox = ({
 
     if (value === null || value === undefined) {
       setLocalValue(null);
+      setInputType(null);
     } else {
       if (Array.isArray(value)) {
         if (value.length > 0) {
@@ -97,7 +98,7 @@ export const InputCombobox = ({
     }
   }, [value, options, groupedOptions, inputType, withInput]);
 
-  const handleSelect = (option: ComboboxOption) => {
+  const handleSelect = (option: TComboboxOption) => {
     if (inputType !== "dropdown") {
       setInputType("dropdown");
     }
@@ -110,13 +111,13 @@ export const InputCombobox = ({
           : [...localValue, option];
 
         if (!newValue.length) {
-          onChangeValue("");
+          onChangeValue([]);
           setInputType(null);
         }
-        onChangeValue(newValue.map((item) => item.value));
+        onChangeValue(newValue.map((item) => item.value) as string[], option);
         setLocalValue(newValue);
       } else {
-        onChangeValue([option.value], option);
+        onChangeValue([option.value] as string[], option);
         setLocalValue([option]);
       }
     } else {
@@ -184,22 +185,21 @@ export const InputCombobox = ({
             role="combobox"
             aria-controls="options"
             aria-expanded={open}
-            className={cn("flex h-10 w-full cursor-pointer items-center justify-center rounded-md bg-white")}>
+            className={cn(
+              "flex h-10 w-full cursor-pointer items-center justify-center rounded-md bg-white pr-2"
+            )}>
             <div className="ellipsis flex w-full gap-2 truncate px-2">{getDisplayValue}</div>
             {clearable && inputType === "dropdown" ? (
-              <XIcon className="shrink-0 text-slate-300" onClick={handleClear} />
+              <XIcon className="h-5 w-5 shrink-0 text-slate-300" onClick={handleClear} />
             ) : (
-              <ChevronDownIcon className="shrink-0 text-slate-300" />
+              <ChevronDownIcon className="h-5 w-5 shrink-0 text-slate-300" />
             )}
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className={cn(
-            "max-h-[400px] w-[200px] overflow-y-auto border border-slate-400 bg-slate-50 p-0 shadow-none",
-            {
-              "pt-2": showSearch,
-            }
-          )}>
+          className={cn("w-auto overflow-y-auto border border-slate-400 bg-slate-50 p-0 shadow-none", {
+            "pt-2": showSearch,
+          })}>
           <Command>
             {showSearch && (
               <CommandInput

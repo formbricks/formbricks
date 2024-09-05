@@ -29,7 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { InputCombobox } from "@formbricks/ui/InputCombobox";
+import { InputCombobox, TComboboxOption } from "@formbricks/ui/InputCombobox";
 
 interface AdvancedLogicEditorConditions {
   conditions: TConditionGroup;
@@ -115,6 +115,53 @@ export function AdvancedLogicEditorConditions({
     });
   };
 
+  const handleQuestionChange = (condition: TSingleCondition, value: string, option?: TComboboxOption) => {
+    handleUpdateCondition(condition.id, {
+      leftOperand: {
+        id: value,
+        type: option?.meta?.type as TDyanmicLogicField,
+      },
+      operator: "isSkipped",
+      rightOperand: undefined,
+    });
+  };
+
+  const handleOperatorChange = (condition: TSingleCondition, value: TSurveyLogicCondition) => {
+    handleUpdateCondition(condition.id, {
+      operator: value,
+      rightOperand: undefined,
+    });
+  };
+
+  const handleRightOperandChange = (
+    condition: TSingleCondition,
+    value: string | number | string[],
+    option?: TComboboxOption
+  ) => {
+    const type = (option?.meta?.type as TRightOperand["type"]) || "static";
+
+    switch (type) {
+      case "question":
+      case "hiddenField":
+      case "variable":
+        handleUpdateCondition(condition.id, {
+          rightOperand: {
+            value: value as string,
+            type,
+          },
+        });
+        break;
+      case "static":
+        handleUpdateCondition(condition.id, {
+          rightOperand: {
+            value,
+            type,
+          },
+        });
+        break;
+    }
+  };
+  console.log(conditions);
   const renderCondition = (
     condition: TSingleCondition | TConditionGroup,
     index: number,
@@ -187,7 +234,7 @@ export function AdvancedLogicEditorConditions({
     const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey);
 
     return (
-      <div key={condition.id} className="flex items-center justify-between gap-x-2">
+      <div key={condition.id} className="flex items-center gap-x-2">
         <div className="w-10 shrink-0">
           {index === 0 ? (
             "When"
@@ -208,14 +255,9 @@ export function AdvancedLogicEditorConditions({
           groupedOptions={conditionValueOptions}
           value={condition.leftOperand.id}
           onChangeValue={(val: string, option) => {
-            handleUpdateCondition(condition.id, {
-              leftOperand: {
-                id: val,
-                type: option?.meta?.type as TDyanmicLogicField,
-              },
-            });
+            handleQuestionChange(condition, val, option);
           }}
-          comboboxClasses="grow min-w-[100px] max-w-[200px]"
+          comboboxClasses="grow"
         />
         <InputCombobox
           key="conditionOperator"
@@ -223,11 +265,9 @@ export function AdvancedLogicEditorConditions({
           options={conditionOperatorOptions}
           value={condition.operator}
           onChangeValue={(val: TSurveyLogicCondition) => {
-            handleUpdateCondition(condition.id, {
-              operator: val,
-            });
+            handleOperatorChange(condition, val);
           }}
-          comboboxClasses="grow min-w-[100px] max-w-[200px]"
+          comboboxClasses="grow"
         />
         {show && (
           <InputCombobox
@@ -243,13 +283,8 @@ export function AdvancedLogicEditorConditions({
             comboboxClasses="grow min-w-[100px] max-w-[300px]"
             value={condition.rightOperand?.value}
             clearable={true}
-            onChangeValue={(val: TRightOperand["value"], option) => {
-              handleUpdateCondition(condition.id, {
-                rightOperand: {
-                  value: val,
-                  type: (option?.meta?.type as TRightOperand["type"]) ?? "static",
-                },
-              });
+            onChangeValue={(val, option) => {
+              handleRightOperandChange(condition, val, option);
             }}
           />
         )}
