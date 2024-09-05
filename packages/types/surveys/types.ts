@@ -5,11 +5,21 @@ import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
-import { ZSurveyAdvancedLogic } from "./logic";
+import {
+  type TAction,
+  type TConditionGroup,
+  type TSingleCondition,
+  type TSurveyAdvancedLogic,
+  type TSurveyLogicCondition,
+  ZActionCalculateNumber,
+  ZActionCalculateText,
+  ZSurveyAdvancedLogic,
+} from "./logic";
 import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
+  isConditionsGroup,
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
@@ -280,22 +290,6 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
 });
-// .refine(
-//   (question) => {
-//     const { logic, type } = question;
-
-//     if (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
-//       // The single choice question should not have 'includesAll' logic
-//       return !logic?.some((l) => l.condition === "includesAll");
-//     }
-//     // The multi choice question should not have 'notEquals' logic
-//     return !logic?.some((l) => l.condition === "notEquals");
-//   },
-//   {
-//     message:
-//       "MultipleChoiceSingle question should not have 'includesAll' logic and MultipleChoiceMulti question should not have 'notEquals' logic",
-//   }
-// );
 
 export type TSurveyMultipleChoiceQuestion = z.infer<typeof ZSurveyMultipleChoiceQuestion>;
 
@@ -827,32 +821,13 @@ export const ZSurvey = z
         }
       }
 
-      //   if (question.logic) {
-      //     question.logic.forEach((logic, logicIndex) => {
-      //       // validate condition
-      //       // validate actions
+      if (question.logic) {
+        const logicIssues = validateLogic(survey, questionIndex, question.logic);
 
-      //       // if (
-      //       //   [
-      //       //     "isSubmitted",
-      //       //     "isSkipped",
-      //       //     "isClicked",
-      //       //     "isAccepted",
-      //       //     "isBooked",
-      //       //     "isPartiallySubmitted",
-      //       //     "isCompletelySubmitted",
-      //       //   ].includes(condition.operator) &&
-      //       //   condition.rightOperand !== undefined
-      //       // ) {
-      //       //   ctx.addIssue({
-      //       //     code: z.ZodIssueCode.custom,
-      //       //     message: `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`,
-      //       //     path: ["questions", questionIndex, field],
-      //       //     params: isDefaultOnly ? undefined : { invalidLanguageCodes },
-      //       //   })
-      //       // }
-      //     });
-      //   }
+        logicIssues.forEach((issue) => {
+          ctx.addIssue(issue);
+        });
+      }
     });
 
     const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(questions);
@@ -921,9 +896,391 @@ export const ZSurvey = z
     });
   });
 
-// const validateActions = (actions: TAction[], ctx: z.RefinementCtx) => {
-//     // check if
-//  };
+const isInvalidOperatorsForQuestionType = (
+  question: TSurveyQuestion,
+  operator: TSurveyLogicCondition
+): boolean => {
+  let isInvalidOperator = false;
+
+  const questionType = question.type;
+
+  switch (questionType) {
+    case TSurveyQuestionTypeEnum.OpenText:
+      switch (question.inputType) {
+        case "email":
+        case "phone":
+        case "text":
+        case "url":
+          if (
+            ![
+              "equals",
+              "doesNotEqual",
+              "contains",
+              "doesNotContain",
+              "startsWith",
+              "doesNotStartWith",
+              "endsWith",
+              "doesNotEndWith",
+              "isSubmitted",
+              "isSkipped",
+            ].includes(operator)
+          ) {
+            isInvalidOperator = true;
+          }
+          break;
+        case "number":
+          if (
+            ![
+              "equals",
+              "doesNotEqual",
+              "isGreaterThan",
+              "isLessThan",
+              "isGreaterThanOrEqual",
+              "isLessThanOrEqual",
+              "isSubmitted",
+              "isSkipped",
+            ].includes(operator)
+          ) {
+            isInvalidOperator = true;
+          }
+      }
+      break;
+    case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+      if (!["equals", "doesNotEqual", "equalsOneOf", "isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
+    case TSurveyQuestionTypeEnum.PictureSelection:
+      if (
+        !["equals", "doesNotEqual", "includesAllOf", "includesOneOf", "isSubmitted", "isSkipped"].includes(
+          operator
+        )
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.NPS:
+    case TSurveyQuestionTypeEnum.Rating:
+      if (
+        ![
+          "equals",
+          "doesNotEqual",
+          "isGreaterThan",
+          "isLessThan",
+          "isGreaterThanOrEqual",
+          "isLessThanOrEqual",
+          "isSubmitted",
+          "isSkipped",
+        ].includes(operator)
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.CTA:
+      if (!["isClicked", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Consent:
+      if (!["isAccepted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Date:
+      if (!["equals", "doesNotEqual", "isBefore", "isAfter", "isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.FileUpload:
+    case TSurveyQuestionTypeEnum.Address:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Cal:
+      if (!["isBooked", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Matrix:
+      if (!["isPartiallySubmitted", "isCompletelySubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    default:
+      isInvalidOperator = true;
+  }
+
+  return isInvalidOperator;
+};
+
+const isInvalidOperatorsForVariableType = (
+  variableType: "text" | "number",
+  operator: TSurveyLogicCondition
+): boolean => {
+  let isInvalidOperator = false;
+
+  switch (variableType) {
+    case "text":
+      if (
+        ![
+          "equals",
+          "doesNotEqual",
+          "contains",
+          "doesNotContain",
+          "startsWith",
+          "doesNotStartWith",
+          "endsWith",
+          "doesNotEndWith",
+        ].includes(operator)
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+    case "number":
+      if (
+        ![
+          "equals",
+          "doesNotEqual",
+          "isGreaterThan",
+          "isLessThan",
+          "isGreaterThanOrEqual",
+          "isLessThanOrEqual",
+        ].includes(operator)
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+  }
+
+  return isInvalidOperator;
+};
+
+const isInvalidOperatorsForHiddenFieldType = (operator: TSurveyLogicCondition): boolean => {
+  let isInvalidOperator = false;
+
+  if (
+    ![
+      "equals",
+      "doesNotEqual",
+      "contains",
+      "doesNotContain",
+      "startsWith",
+      "doesNotStartWith",
+      "endsWith",
+      "doesNotEndWith",
+    ].includes(operator)
+  ) {
+    isInvalidOperator = true;
+  }
+
+  return isInvalidOperator;
+};
+
+const validateConditions = (
+  survey: TSurvey,
+  questionIndex: number,
+  logicIndex: number,
+  conditions: TConditionGroup
+): z.ZodIssue[] => {
+  const issues: z.ZodIssue[] = [];
+
+  const validateSingleCondition = (condition: TSingleCondition): void => {
+    const { leftOperand, operator, rightOperand } = condition;
+
+    // Validate left operand
+    if (leftOperand.type === "question") {
+      const questionId = leftOperand.value;
+      const question = survey.questions.find((q) => q.id === questionId);
+      if (!question) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+        return;
+      }
+
+      // Validate operator based on question type
+      const isInvalidOperator = isInvalidOperatorsForQuestionType(question, operator);
+      if (isInvalidOperator) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid operator "${operator}" for question type "${question.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+
+      // Validate right operand
+      if (
+        [
+          "isSubmitted",
+          "isSkipped",
+          "isClicked",
+          "isAccepted",
+          "isBooked",
+          "isPartiallySubmitted",
+          "isCompletelySubmitted",
+        ].includes(operator) &&
+        rightOperand !== undefined
+      ) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+    } else if (leftOperand.type === "variable") {
+      const variableId = leftOperand.value;
+      const variable = survey.variables.find((v) => v.id === variableId);
+      if (!variable) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+        return;
+      }
+
+      // Validate operator based on variable type
+      const isInvalidOperator = isInvalidOperatorsForVariableType(variable.type, operator);
+      if (isInvalidOperator) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid operator "${operator}" for variable ${variable.name} of type "${variable.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+    } else {
+      const hiddenFieldId = leftOperand.value;
+      const hiddenField = survey.hiddenFields.fieldIds?.find((fieldId) => fieldId === hiddenFieldId);
+
+      if (!hiddenField) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Hidden field ID ${hiddenFieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+
+      // Validate operator based on hidden field type
+      const isInvalidOperator = isInvalidOperatorsForHiddenFieldType(operator);
+      if (isInvalidOperator) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Invalid operator "${operator}" for hidden field in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+    }
+  };
+
+  const validateConditionGroup = (group: TConditionGroup): void => {
+    group.conditions.forEach((condition) => {
+      if (isConditionsGroup(condition)) {
+        validateConditionGroup(condition);
+      } else {
+        validateSingleCondition(condition);
+      }
+    });
+  };
+
+  validateConditionGroup(conditions);
+
+  return issues;
+};
+
+const validateActions = (
+  survey: TSurvey,
+  questionIndex: number,
+  logicIndex: number,
+  actions: TAction[]
+): z.ZodIssue[] => {
+  const questionIds = survey.questions.map((q) => q.id);
+
+  const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
+    if (action.objective === "calculate") {
+      const variable = survey.variables.find((v) => v.id === action.variableId);
+
+      if (!variable) {
+        return {
+          code: z.ZodIssueCode.custom,
+          message: `Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex],
+        };
+      }
+
+      if (variable.type === "text") {
+        const textVariableParseData = ZActionCalculateText.safeParse(action);
+        if (!textVariableParseData.success) {
+          return {
+            code: z.ZodIssueCode.custom,
+            message: textVariableParseData.error.errors[0].message,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
+      }
+
+      const numberVariableParseData = ZActionCalculateNumber.safeParse(action);
+      if (!numberVariableParseData.success) {
+        return {
+          code: z.ZodIssueCode.custom,
+          message: numberVariableParseData.error.errors[0].message,
+          path: ["questions", questionIndex, "logic", logicIndex],
+        };
+      }
+    } else {
+      const endingIds = survey.endings.map((ending) => ending.id);
+
+      const possibleQuestionIds =
+        action.objective === "jumpToQuestion" ? [...questionIds, ...endingIds] : questionIds;
+
+      if (!possibleQuestionIds.includes(action.target)) {
+        return {
+          code: z.ZodIssueCode.custom,
+          message: `Question ID ${action.target} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic"],
+        };
+      }
+
+      if (action.objective === "requireAnswer") {
+        const requiredQuestionIds = survey.questions
+          .filter((question) => question.required)
+          .map((question) => question.id);
+
+        if (!requiredQuestionIds.includes(action.target)) {
+          const quesIdx = survey.questions.findIndex((q) => q.id === action.target);
+
+          return {
+            code: z.ZodIssueCode.custom,
+            message: `Question ${String(quesIdx + 1)} is already required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
+      }
+    }
+
+    return undefined;
+  });
+
+  return actionIssues.filter((issue) => issue !== undefined);
+};
+
+const validateLogic = (
+  survey: TSurvey,
+  questionIndex: number,
+  logic: TSurveyAdvancedLogic[]
+): z.ZodIssue[] => {
+  const logicIssues = logic.map((logicItem, logicIndex) => {
+    return [
+      ...validateConditions(survey, questionIndex, logicIndex, logicItem.conditions),
+      ...validateActions(survey, questionIndex, logicIndex, logicItem.actions),
+    ];
+  });
+
+  return logicIssues.flat();
+};
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
 export const ZSurveyUpdateInput = ZSurvey.innerType()

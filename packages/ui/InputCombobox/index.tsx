@@ -33,7 +33,7 @@ interface InputComboboxProps {
   options?: TComboboxOption[];
   groupedOptions?: TComboboxGroupedOption[];
   value?: string | number | string[] | null;
-  onChangeValue: (value: string | number | string[], option?: TComboboxOption) => void;
+  onChangeValue: (value: string | number | string[], option?: TComboboxOption, fromInput?: boolean) => void;
   inputProps?: Omit<React.ComponentProps<typeof Input>, "value" | "onChange">;
   clearable?: boolean;
   withInput?: boolean;
@@ -92,6 +92,9 @@ export const InputCombobox = ({
             if (inputType !== "input") {
               setInputType("input");
             }
+          } else {
+            setLocalValue(null);
+            setInputType(null);
           }
         }
       }
@@ -128,7 +131,9 @@ export const InputCombobox = ({
   };
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputType = e.target.type;
     const value = e.target.value;
+
     if (value === "") {
       setLocalValue(null);
       onChangeValue("");
@@ -138,8 +143,10 @@ export const InputCombobox = ({
       setInputType("input");
     }
 
-    setLocalValue(value);
-    onChangeValue(value);
+    const val = inputType === "number" ? Number(value) : value;
+
+    setLocalValue(val);
+    onChangeValue(val, undefined, true);
   };
 
   const getDisplayValue = useMemo(() => {

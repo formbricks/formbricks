@@ -15,7 +15,6 @@ import {
   TActionTextVariableCalculateOperator,
   TActionVariableValueType,
   TSurveyAdvancedLogic,
-  ZAction,
 } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
@@ -70,17 +69,19 @@ export function AdvancedLogicEditorActions({
     });
   };
 
-  function updateAction(actionIdx: number, updateActionBody: Partial<TAction>) {
+  const handleObjectiveChange = (actionIdx: number, objective: TActionObjective) => {
     const action = actions[actionIdx];
-    const actionBody = getUpdatedActionBody(action, updateActionBody);
-    const parsedActionBodyResult = ZAction.safeParse(actionBody);
-    if (!parsedActionBodyResult.success) {
-      console.error("Failed to update action", parsedActionBodyResult.error.errors);
-      return;
-    }
-    handleActionsChange("update", actionIdx, parsedActionBodyResult.data);
-  }
+    const actionBody = getUpdatedActionBody(action, objective);
+    handleActionsChange("update", actionIdx, actionBody);
+  };
 
+  const handleValuesChange = (actionIdx: number, values: Partial<TAction>) => {
+    const action = actions[actionIdx];
+    const actionBody = { ...action, ...values } as TAction;
+    handleActionsChange("update", actionIdx, actionBody);
+  };
+
+  console.log("actions", actions);
   return (
     <div className="flex grow gap-2">
       <CornerDownRightIcon className="mt-3 h-4 w-4 shrink-0" />
@@ -95,29 +96,42 @@ export function AdvancedLogicEditorActions({
                 options={actionObjectiveOptions}
                 value={action.objective}
                 onChangeValue={(val: TActionObjective) => {
-                  updateAction(idx, {
-                    objective: val,
-                  });
+                  handleObjectiveChange(idx, val);
                 }}
                 comboboxClasses="grow"
               />
-              <InputCombobox
-                key="target"
-                showSearch={false}
-                options={
-                  action.objective === "calculate"
-                    ? getActionVariableOptions(localSurvey)
-                    : getActionTargetOptions(action, localSurvey, questionIdx)
-                }
-                value={action.objective === "calculate" ? action.variableId : action.target}
-                onChangeValue={(val: string) => {
-                  updateAction(idx, {
-                    ...(action.objective === "calculate" ? { variableId: val } : { target: val }),
-                  });
-                }}
-              />
+              {action.objective !== "calculate" && (
+                <InputCombobox
+                  key="target"
+                  showSearch={false}
+                  options={getActionTargetOptions(action, localSurvey, questionIdx)}
+                  value={action.target}
+                  onChangeValue={(val: string) => {
+                    handleValuesChange(idx, {
+                      target: val,
+                    });
+                  }}
+                  comboboxClasses="w-40"
+                />
+              )}
               {action.objective === "calculate" && (
                 <>
+                  <InputCombobox
+                    key="variableId"
+                    showSearch={false}
+                    options={getActionVariableOptions(localSurvey)}
+                    value={action.variableId}
+                    onChangeValue={(val: string) => {
+                      handleValuesChange(idx, {
+                        variableId: val,
+                        value: {
+                          type: "static",
+                          value: "",
+                        },
+                      });
+                    }}
+                    comboboxClasses="w-40"
+                  />
                   <InputCombobox
                     key="attribute"
                     showSearch={false}
@@ -128,10 +142,11 @@ export function AdvancedLogicEditorActions({
                     onChangeValue={(
                       val: TActionTextVariableCalculateOperator | TActionNumberVariableCalculateOperator
                     ) => {
-                      updateAction(idx, {
+                      handleValuesChange(idx, {
                         operator: val,
                       });
                     }}
+                    comboboxClasses="w-20"
                   />
                   <InputCombobox
                     key="value"
@@ -143,20 +158,20 @@ export function AdvancedLogicEditorActions({
                       type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
                     }}
                     groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx)}
-                    onChangeValue={(val: string | number, option) => {
+                    onChangeValue={(val, option, fromInput) => {
                       const fieldType = option?.meta?.type as TActionVariableValueType;
 
-                      if (fieldType !== "static") {
-                        updateAction(idx, {
+                      if (!fromInput && fieldType !== "static") {
+                        handleValuesChange(idx, {
                           value: {
                             type: fieldType,
                             value: val as string,
                           },
                         });
-                      } else if (fieldType === "static") {
-                        updateAction(idx, {
+                      } else if (fromInput) {
+                        handleValuesChange(idx, {
                           value: {
-                            type: fieldType,
+                            type: "static",
                             value: val as string,
                           },
                         });

@@ -725,15 +725,19 @@ export const getActionTargetOptions = (
   localSurvey: TSurvey,
   currQuestionIdx: number
 ): TComboboxOption[] => {
-  const questionOptions = localSurvey.questions
-    .filter((_, idx) => idx !== currQuestionIdx)
-    .map((question) => {
-      return {
-        icon: questionIconMapping[question.type],
-        label: getLocalizedValue(question.headline, "default"),
-        value: question.id,
-      };
-    });
+  let questions = localSurvey.questions.filter((_, idx) => idx !== currQuestionIdx);
+
+  if (action.objective === "requireAnswer") {
+    questions = questions.filter((question) => !question.required);
+  }
+
+  const questionOptions = questions.map((question) => {
+    return {
+      icon: questionIconMapping[question.type],
+      label: getLocalizedValue(question.headline, "default"),
+      value: question.id,
+    };
+  });
 
   if (action.objective === "requireAnswer") return questionOptions;
 

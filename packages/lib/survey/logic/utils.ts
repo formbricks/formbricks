@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
   TAction,
+  TActionObjective,
   TConditionGroup,
   TSingleCondition,
   TSurveyAdvancedLogic,
@@ -174,37 +175,28 @@ export const updateCondition = (
   }
 };
 
-export const getUpdatedActionBody = (action: TAction, update: Partial<TAction>) => {
-  if (update.objective) {
-    if (update.objective === action.objective) return action;
-    switch (update.objective) {
-      case "calculate":
-        return {
-          ...action,
-          ...update,
-          objective: "calculate",
-          variableId: "",
-          operator: "assign",
-          value: update.value ? { ...update.value } : { type: "static", value: "" },
-        };
-      case "requireAnswer":
-        return {
-          ...action,
-          ...update,
-          objective: "requireAnswer",
-          target: "",
-        };
-      case "jumpToQuestion":
-        return {
-          ...action,
-          ...update,
-          objective: "jumpToQuestion",
-          target: "",
-        };
-    }
+export const getUpdatedActionBody = (action: TAction, objective: TActionObjective): TAction => {
+  if (objective === action.objective) return action;
+  switch (objective) {
+    case "calculate":
+      return {
+        id: action.id,
+        objective: "calculate",
+        variableId: "",
+        operator: "assign",
+        value: { type: "static", value: "" },
+      };
+    case "requireAnswer":
+      return {
+        id: action.id,
+        objective: "requireAnswer",
+        target: "",
+      };
+    case "jumpToQuestion":
+      return {
+        id: action.id,
+        objective: "jumpToQuestion",
+        target: "",
+      };
   }
-  return {
-    ...action,
-    ...update,
-  };
 };

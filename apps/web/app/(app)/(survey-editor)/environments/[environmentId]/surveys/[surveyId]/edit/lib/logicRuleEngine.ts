@@ -365,6 +365,30 @@ export const ruleEngine = {
           label: "does not equal",
           value: ZSurveyLogicCondition.Enum.doesNotEqual,
         },
+        {
+          label: "contains",
+          value: ZSurveyLogicCondition.Enum.contains,
+        },
+        {
+          label: "does not contain",
+          value: ZSurveyLogicCondition.Enum.doesNotContain,
+        },
+        {
+          label: "starts with",
+          value: ZSurveyLogicCondition.Enum.startsWith,
+        },
+        {
+          label: "does not start with",
+          value: ZSurveyLogicCondition.Enum.doesNotStartWith,
+        },
+        {
+          label: "ends with",
+          value: ZSurveyLogicCondition.Enum.endsWith,
+        },
+        {
+          label: "does not end with",
+          value: ZSurveyLogicCondition.Enum.doesNotEndWith,
+        },
       ],
     },
     number: {
@@ -405,6 +429,30 @@ export const ruleEngine = {
       {
         label: "does not equal",
         value: ZSurveyLogicCondition.Enum.doesNotEqual,
+      },
+      {
+        label: "contains",
+        value: ZSurveyLogicCondition.Enum.contains,
+      },
+      {
+        label: "does not contain",
+        value: ZSurveyLogicCondition.Enum.doesNotContain,
+      },
+      {
+        label: "starts with",
+        value: ZSurveyLogicCondition.Enum.startsWith,
+      },
+      {
+        label: "does not start with",
+        value: ZSurveyLogicCondition.Enum.doesNotStartWith,
+      },
+      {
+        label: "ends with",
+        value: ZSurveyLogicCondition.Enum.endsWith,
+      },
+      {
+        label: "does not end with",
+        value: ZSurveyLogicCondition.Enum.doesNotEndWith,
       },
     ],
   },

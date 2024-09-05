@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { TAction, TActionJumpToQuestion } from "./logic";
+import type { TAction, TActionJumpToQuestion, TConditionGroup, TSingleCondition } from "./logic";
 import type { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
 
 export const FORBIDDEN_IDS = [
@@ -218,4 +218,10 @@ export const validateId = (
   }
 
   return null;
+};
+
+type TCondition = TSingleCondition | TConditionGroup;
+
+export const isConditionsGroup = (condition: TCondition): condition is TConditionGroup => {
+  return "conditions" in condition;
 };
