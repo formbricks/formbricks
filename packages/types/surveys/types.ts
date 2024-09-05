@@ -549,6 +549,7 @@ export const ZSurvey = z
     segment: ZSegment.nullable(),
     singleUse: ZSurveySingleUse.nullable(),
     isVerifyEmailEnabled: z.boolean(),
+    isSingleResponsePerEmailEnabled: z.boolean(),
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
     resultShareKey: z.string().nullable(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),

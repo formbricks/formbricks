@@ -547,6 +547,11 @@ export const getResponsesJson = (
         jsonData[idx][field] = processResponseData(value);
       }
     });
+
+    if (survey.isVerifyEmailEnabled) {
+      const verifiedEmail = response.data["verifiedEmail"];
+      jsonData[idx]["Verified Email"] = processResponseData(verifiedEmail);
+    }
   });
 
   return jsonData;

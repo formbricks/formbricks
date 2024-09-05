@@ -118,7 +118,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         return (
           <ResponseBadges
             items={[capitalizeFirstLetter(responseData.toString())]}
-            isExpanded={true}
+            isExpanded={isExpanded}
             icon={<PhoneIcon className="h-4 w-4 text-slate-500" />}
           />
         );
@@ -129,7 +129,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         return (
           <ResponseBadges
             items={[capitalizeFirstLetter(responseData.toString())]}
-            isExpanded={true}
+            isExpanded={isExpanded}
             icon={<CheckCheckIcon className="h-4 w-4 text-slate-500" />}
           />
         );
@@ -140,7 +140,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         return (
           <ResponseBadges
             items={[capitalizeFirstLetter(responseData.toString())]}
-            isExpanded={true}
+            isExpanded={isExpanded}
             icon={<MousePointerClickIcon className="h-4 w-4 text-slate-500" />}
           />
         );
@@ -150,9 +150,9 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
     case TSurveyQuestionTypeEnum.NPS:
       if (typeof responseData === "string" || typeof responseData === "number") {
-        return <ResponseBadges items={[responseData.toString()]} isExpanded={true} />;
+        return <ResponseBadges items={[responseData.toString()]} isExpanded={isExpanded} />;
       } else if (Array.isArray(responseData)) {
-        return <ResponseBadges items={responseData} isExpanded={true} />;
+        return <ResponseBadges items={responseData} isExpanded={isExpanded} />;
       }
       break;
     case TSurveyQuestionTypeEnum.Ranking:
