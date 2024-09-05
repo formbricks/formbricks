@@ -96,6 +96,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
       finished: responseUpdate.finished,
       language:
         responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
+      displayId: surveyState.displayId,
     });
   };
 

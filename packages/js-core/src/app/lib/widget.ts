@@ -161,6 +161,7 @@ const renderWidget = async (
             action,
           },
           hiddenFields,
+          displayId: surveyState.displayId,
         });
       },
       onClose: closeSurvey,

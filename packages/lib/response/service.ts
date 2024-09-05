@@ -22,7 +22,7 @@ import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
-import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
+import { deleteDisplay, getDisplayCountBySurveyId } from "../display/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
@@ -62,6 +62,7 @@ export const responseSelection = {
   personAttributes: true,
   singleUseId: true,
   language: true,
+  displayId: true,
   person: {
     select: {
       id: true,
@@ -199,6 +200,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     language,
     userId,
     surveyId,
+    displayId,
     finished,
     data,
     meta,
@@ -235,6 +237,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           id: surveyId,
         },
       },
+      display: displayId ? { connect: { id: displayId } } : undefined,
       finished: finished,
       data: data,
       language: language,
@@ -248,6 +251,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       }),
       ...(meta && ({ meta } as Prisma.JsonObject)),
       singleUseId,
+
       ttc: ttc,
     };
 
@@ -710,7 +714,9 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    deleteDisplayByResponseId(responseId, response.surveyId);
+    if (response.displayId) {
+      deleteDisplay(response.displayId);
+    }
 
     const survey = await getSurvey(response.surveyId);
 

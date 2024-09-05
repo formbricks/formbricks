@@ -6,7 +6,6 @@ export const ZDisplay = z.object({
   updatedAt: z.date(),
   personId: z.string().cuid().nullable(),
   surveyId: z.string().cuid(),
-  responseId: z.string().cuid().nullable(),
   status: z.enum(["seen", "responded"]).nullable(),
 });
 
@@ -20,14 +19,6 @@ export const ZDisplayCreateInput = z.object({
 });
 
 export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
-
-export const ZDisplayUpdateInput = z.object({
-  environmentId: z.string().cuid(),
-  userId: z.string().optional(),
-  responseId: z.string().cuid().optional(),
-});
-
-export type TDisplayUpdateInput = z.infer<typeof ZDisplayUpdateInput>;
 
 export const ZDisplaysWithSurveyName = ZDisplay.extend({
   surveyName: z.string(),
