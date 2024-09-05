@@ -323,51 +323,40 @@ export const ZActionNumberVariableCalculateOperator = z.enum([
   "divide",
   "assign",
 ]);
-export const ZActionVariableCalculateOperator = z.union([
-  ZActionTextVariableCalculateOperator,
-  ZActionNumberVariableCalculateOperator,
-]);
+
+const ZDynamicQuestion = z.object({
+  type: z.literal("question"),
+  value: z.string(),
+});
+
+const ZDynamicVariable = z.object({
+  type: z.literal("variable"),
+  value: z.string().cuid2(),
+});
+
+const ZDynamicHiddenField = z.object({
+  type: z.literal("hiddenField"),
+  value: z.string(),
+});
+
+const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDynamicHiddenField]);
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
 export type TDyanmicLogicField = z.infer<typeof ZDyanmicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
 export type TActionNumberVariableCalculateOperator = z.infer<typeof ZActionNumberVariableCalculateOperator>;
-export type TActionVariableCalculateOperator = z.infer<typeof ZActionVariableCalculateOperator>;
 
 // Conditions
-const ZLeftOperandBase = z.object({
-  type: ZDyanmicLogicField,
-  id: z.string(),
-});
-
-const ZLeftOperandVariable = ZLeftOperandBase.extend({
-  type: z.literal("variable"),
-  id: z.string().cuid2(),
-});
-
-export const ZLeftOperand = z.union([ZLeftOperandBase, ZLeftOperandVariable]);
+const ZLeftOperand = ZDynamicLogicFieldValue;
 export type TLeftOperand = z.infer<typeof ZLeftOperand>;
 
-export const ZRightOperand = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("static"),
-    value: z.union([z.string(), z.number(), z.array(z.string())]),
-  }),
-  z.object({
-    type: z.literal("question"),
-    value: z.string(),
-  }),
-  z.object({
-    type: z.literal("variable"),
-    value: z.string().cuid2(),
-  }),
-  z.object({
-    type: z.literal("hiddenField"),
-    value: z.string(),
-  }),
-]);
+export const ZRightOperandStatic = z.object({
+  type: z.literal("static"),
+  value: z.union([z.string(), z.number(), z.array(z.string())]),
+});
 
+export const ZRightOperand = z.union([ZRightOperandStatic, ZDynamicLogicFieldValue]);
 export type TRightOperand = z.infer<typeof ZRightOperand>;
 
 export const ZSingleCondition = z
@@ -410,27 +399,46 @@ const ZActionBase = z.object({
 
 export type TActionBase = z.infer<typeof ZActionBase>;
 
-const ZActionCalculate = ZActionBase.extend({
+const ZActionCalculateBase = ZActionBase.extend({
   objective: z.literal("calculate"),
   variableId: z.string(),
-  operator: ZActionVariableCalculateOperator,
-  value: z.object({
-    type: z.union([z.literal("static"), ZDyanmicLogicField]),
-    value: z.union([z.string(), z.number()]),
-  }),
 });
+
+const ZActionCalculateText = ZActionCalculateBase.extend({
+  operator: ZActionTextVariableCalculateOperator,
+  value: z.union([
+    z.object({
+      type: z.literal("static"),
+      value: z.string(),
+    }),
+    ZDynamicLogicFieldValue,
+  ]),
+});
+
+const ZActionCalculateNumber = ZActionCalculateBase.extend({
+  operator: ZActionNumberVariableCalculateOperator,
+  value: z.union([
+    z.object({
+      type: z.literal("static"),
+      value: z.number(),
+    }),
+    ZDynamicLogicFieldValue,
+  ]),
+});
+
+const ZActionCalculate = z.union([ZActionCalculateText, ZActionCalculateNumber]);
 
 export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
 const ZActionRequireAnswer = ZActionBase.extend({
   objective: z.literal("requireAnswer"),
-  target: z.string(),
+  target: z.string().min(1, "Target question id cannot be empty"),
 });
 export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
 
 const ZActionJumpToQuestion = ZActionBase.extend({
   objective: z.literal("jumpToQuestion"),
-  target: z.string(),
+  target: z.string().min(1, "Target question id cannot be empty"),
 });
 
 export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;

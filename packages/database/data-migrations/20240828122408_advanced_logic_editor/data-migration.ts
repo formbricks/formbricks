@@ -152,7 +152,7 @@ function convertLogicCondition(
     id: createId(),
     leftOperand: {
       type: "question",
-      id: question.id,
+      value: question.id,
     },
     operator,
     ...(doesRightOperandExistResult ? { rightOperand: rightOperandValue } : {}),

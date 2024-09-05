@@ -827,40 +827,32 @@ export const ZSurvey = z
         }
       }
 
-      // if (question.logic) {
-      //   question.logic.forEach((logic, logicIndex) => {
-      //     const logicConditions = ["condition", "value", "destination"] as const;
-      //     const validFields = logicConditions.filter((field) => logic[field] !== undefined).length;
+      //   if (question.logic) {
+      //     question.logic.forEach((logic, logicIndex) => {
+      //       // validate condition
+      //       // validate actions
 
-      //     if (validFields < 2) {
-      //       ctx.addIssue({
-      //         code: z.ZodIssueCode.custom,
-      //         message: `Logic for question ${String(questionIndex + 1)} is missing required fields`,
-      //         path: ["questions", questionIndex, "logic"],
-      //       });
-      //     }
-
-      //     if (question.required && logic.condition === "skipped") {
-      //       ctx.addIssue({
-      //         code: z.ZodIssueCode.custom,
-      //         message: `Logic for question ${String(questionIndex + 1)} is invalid. Required questions cannot be skipped.`,
-      //         path: ["questions", questionIndex, "logic"],
-      //       });
-      //     }
-
-      //     // logic condition and value mapping should not be repeated
-      //     const thisLogic = `${logic.condition ?? ""}-${Array.isArray(logic.value) ? logic.value.sort().join(",") : String(logic.value)}`;
-      //     if (existingLogicConditions.has(thisLogic)) {
-      //       ctx.addIssue({
-      //         code: z.ZodIssueCode.custom,
-      //         message:
-      //           "There are two competing logic conditions: Please update or delete one in the Questions tab.",
-      //         path: ["questions", questionIndex, "logic", logicIndex],
-      //       });
-      //     }
-      //     existingLogicConditions.add(thisLogic);
-      //   });
-      // }
+      //       // if (
+      //       //   [
+      //       //     "isSubmitted",
+      //       //     "isSkipped",
+      //       //     "isClicked",
+      //       //     "isAccepted",
+      //       //     "isBooked",
+      //       //     "isPartiallySubmitted",
+      //       //     "isCompletelySubmitted",
+      //       //   ].includes(condition.operator) &&
+      //       //   condition.rightOperand !== undefined
+      //       // ) {
+      //       //   ctx.addIssue({
+      //       //     code: z.ZodIssueCode.custom,
+      //       //     message: `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`,
+      //       //     path: ["questions", questionIndex, field],
+      //       //     params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+      //       //   })
+      //       // }
+      //     });
+      //   }
     });
 
     const questionsWithCyclicLogic = findQuestionsWithCyclicLogic(questions);
@@ -874,6 +866,7 @@ export const ZSurvey = z
         });
       });
     }
+
     endings.forEach((ending, index) => {
       // thank you card validations
       if (ending.type === "endScreen") {
@@ -927,6 +920,10 @@ export const ZSurvey = z
       }
     });
   });
+
+// const validateActions = (actions: TAction[], ctx: z.RefinementCtx) => {
+//     // check if
+//  };
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
 export const ZSurveyUpdateInput = ZSurvey.innerType()

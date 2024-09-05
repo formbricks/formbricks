@@ -222,7 +222,7 @@ export const Survey = ({
 
     if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
       for (const logic of currQuesTemp.logic) {
-        if (evaluateAdvancedLogic(localSurvey, data, logic.conditions, selectedLanguage)) {
+        if (evaluateAdvancedLogic(localSurvey, data, currentVariables, logic.conditions, selectedLanguage)) {
           const { jumpTarget, requiredQuestionIds, calculations } = performActions(
             localSurvey,
             logic.actions,

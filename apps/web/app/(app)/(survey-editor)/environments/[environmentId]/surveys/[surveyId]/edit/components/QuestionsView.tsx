@@ -102,8 +102,8 @@ export const QuestionsView = ({
     const updateSingleCondition = (condition: TSingleCondition): TSingleCondition => {
       let updatedCondition = { ...condition };
 
-      if (condition.leftOperand.id === compareId) {
-        updatedCondition.leftOperand = { ...condition.leftOperand, id: updatedId };
+      if (condition.leftOperand.value === compareId) {
+        updatedCondition.leftOperand = { ...condition.leftOperand, value: updatedId };
       }
 
       if (condition.rightOperand?.type === "question" && condition.rightOperand.value === compareId) {

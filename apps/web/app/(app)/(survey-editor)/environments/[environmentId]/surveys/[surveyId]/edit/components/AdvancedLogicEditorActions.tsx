@@ -10,8 +10,9 @@ import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, TrashIcon } 
 import { getUpdatedActionBody } from "@formbricks/lib/survey/logic/utils";
 import {
   TAction,
+  TActionNumberVariableCalculateOperator,
   TActionObjective,
-  TActionVariableCalculateOperator,
+  TActionTextVariableCalculateOperator,
   TActionVariableValueType,
   TSurveyAdvancedLogic,
   ZAction,
@@ -98,7 +99,6 @@ export function AdvancedLogicEditorActions({
                     objective: val,
                   });
                 }}
-                // comboboxClasses="max-w-[200px]"
                 comboboxClasses="grow"
               />
               <InputCombobox
@@ -115,8 +115,6 @@ export function AdvancedLogicEditorActions({
                     ...(action.objective === "calculate" ? { variableId: val } : { target: val }),
                   });
                 }}
-                // comboboxClasses="grow min-w-[100px]  max-w-[200px]"
-                comboboxClasses="grow"
               />
               {action.objective === "calculate" && (
                 <>
@@ -127,13 +125,13 @@ export function AdvancedLogicEditorActions({
                       localSurvey.variables.find((v) => v.id === action.variableId)?.type
                     )}
                     value={action.operator}
-                    onChangeValue={(val: TActionVariableCalculateOperator) => {
+                    onChangeValue={(
+                      val: TActionTextVariableCalculateOperator | TActionNumberVariableCalculateOperator
+                    ) => {
                       updateAction(idx, {
                         operator: val,
                       });
                     }}
-                    // comboboxClasses="min-w-[100px] max-w-[200px]"
-                    comboboxClasses="grow"
                   />
                   <InputCombobox
                     key="value"
@@ -143,33 +141,27 @@ export function AdvancedLogicEditorActions({
                     inputProps={{
                       placeholder: "Value",
                       type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
-                      // value: action.value?.value ?? "",
-                      // onChange: (e) => {
-                      //   let val: string | number = e.target.value;
-
-                      //   const variable = localSurvey.variables.find((v) => v.id === action.variableId);
-                      //   if (variable?.type === "number") {
-                      //     val = Number(val);
-                      //   }
-                      //   updateAction(idx, {
-                      //     value: {
-                      //       type: "static",
-                      //       value: val,
-                      //     },
-                      //   });
-                      // },
                     }}
                     groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx)}
-                    onChangeValue={(val: string, option) => {
-                      updateAction(idx, {
-                        value: {
-                          type: option?.meta?.type as TActionVariableValueType,
-                          value: val,
-                        },
-                      });
+                    onChangeValue={(val: string | number, option) => {
+                      const fieldType = option?.meta?.type as TActionVariableValueType;
+
+                      if (fieldType !== "static") {
+                        updateAction(idx, {
+                          value: {
+                            type: fieldType,
+                            value: val as string,
+                          },
+                        });
+                      } else if (fieldType === "static") {
+                        updateAction(idx, {
+                          value: {
+                            type: fieldType,
+                            value: val as string,
+                          },
+                        });
+                      }
                     }}
-                    // comboboxClasses="flex min-w-[100px] max-w-[200px]"
-                    comboboxClasses="grow"
                   />
                 </>
               )}

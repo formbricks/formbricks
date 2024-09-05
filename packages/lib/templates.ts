@@ -79,7 +79,7 @@ const cartAbandonmentSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -196,7 +196,7 @@ const cartAbandonmentSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -268,7 +268,7 @@ const siteAbandonmentSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -385,7 +385,7 @@ const siteAbandonmentSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -457,7 +457,7 @@ const productMarketFitSuperhuman = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -692,7 +692,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -720,7 +720,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -748,7 +748,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -776,7 +776,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -804,7 +804,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -848,7 +848,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -886,7 +886,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "isClicked",
@@ -922,7 +922,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[3],
+                      value: reusableQuestionIds[3],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -959,7 +959,7 @@ const churnSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[4],
+                      value: reusableQuestionIds[4],
                       type: "question",
                     },
                     operator: "isClicked",
@@ -1015,7 +1015,7 @@ const earnedAdvocacyScore = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1056,8 +1056,8 @@ const earnedAdvocacyScore = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
+                      value: reusableQuestionIds[1],
                       type: "question",
-                      id: reusableQuestionIds[1],
                     },
                     operator: "isSubmitted",
                   },
@@ -1098,8 +1098,8 @@ const earnedAdvocacyScore = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
+                      value: reusableQuestionIds[3],
                       type: "question",
-                      id: reusableQuestionIds[3],
                     },
                     operator: "equals",
                     rightOperand: {
@@ -1175,7 +1175,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1203,7 +1203,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1231,7 +1231,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1259,7 +1259,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1287,7 +1287,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1331,7 +1331,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -1365,7 +1365,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -1403,7 +1403,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[3],
+                      value: reusableQuestionIds[3],
                       type: "question",
                     },
                     operator: "isClicked",
@@ -1439,7 +1439,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[4],
+                      value: reusableQuestionIds[4],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -1474,7 +1474,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[5],
+                      value: reusableQuestionIds[5],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -1498,7 +1498,7 @@ const improveTrialConversion = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[5],
+                      value: reusableQuestionIds[5],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -1550,7 +1550,7 @@ const reviewPrompt = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isLessThanOrEqual",
@@ -1592,7 +1592,7 @@ const reviewPrompt = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isClicked",
@@ -1683,7 +1683,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1711,7 +1711,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1739,7 +1739,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1767,7 +1767,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -1812,7 +1812,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -1846,7 +1846,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -1880,7 +1880,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[3],
+                      value: reusableQuestionIds[3],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -1914,7 +1914,7 @@ const improveActivationRate = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[4],
+                      value: reusableQuestionIds[4],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -2323,7 +2323,7 @@ const feedbackBox = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -2351,7 +2351,7 @@ const feedbackBox = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -2392,7 +2392,7 @@ const feedbackBox = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -2430,7 +2430,7 @@ const feedbackBox = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "isClicked",
@@ -2454,7 +2454,7 @@ const feedbackBox = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -2517,7 +2517,7 @@ const integrationSetupSurvey = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -2716,7 +2716,7 @@ const customerSatisfactionScore = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isLessThanOrEqual",
@@ -2757,7 +2757,7 @@ const customerSatisfactionScore = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -2824,7 +2824,7 @@ const collectFeedback = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isLessThanOrEqual",
@@ -2866,7 +2866,7 @@ const collectFeedback = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -3187,7 +3187,7 @@ const rateCheckoutExperience = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -3228,7 +3228,7 @@ const rateCheckoutExperience = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -3288,7 +3288,7 @@ const measureSearchExperience = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -3329,7 +3329,7 @@ const measureSearchExperience = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -3389,7 +3389,7 @@ const evaluateContentQuality = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -3430,7 +3430,7 @@ const evaluateContentQuality = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -3492,7 +3492,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -3520,7 +3520,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -3548,7 +3548,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -3589,7 +3589,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -3630,7 +3630,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -3638,7 +3638,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -3672,7 +3672,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[3],
+                      value: reusableQuestionIds[3],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -3680,7 +3680,7 @@ const measureTaskAccomplishment = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -3757,7 +3757,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -3792,7 +3792,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "equals",
@@ -3834,7 +3834,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "equals",
@@ -3862,7 +3862,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "equals",
@@ -3890,7 +3890,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "equals",
@@ -3918,7 +3918,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "equals",
@@ -3946,7 +3946,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "equals",
@@ -3989,7 +3989,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[3],
+                      value: reusableQuestionIds[3],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4023,7 +4023,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[4],
+                      value: reusableQuestionIds[4],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4057,7 +4057,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[5],
+                      value: reusableQuestionIds[5],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4091,7 +4091,7 @@ const identifySignUpBarriers = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[6],
+                      value: reusableQuestionIds[6],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4203,7 +4203,7 @@ const understandPurchaseIntention = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isLessThanOrEqual",
@@ -4231,7 +4231,7 @@ const understandPurchaseIntention = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4259,7 +4259,7 @@ const understandPurchaseIntention = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4287,7 +4287,7 @@ const understandPurchaseIntention = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4328,7 +4328,7 @@ const understandPurchaseIntention = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4336,7 +4336,7 @@ const understandPurchaseIntention = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -4396,7 +4396,7 @@ const improveNewsletterContent = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4424,7 +4424,7 @@ const improveNewsletterContent = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "isLessThan",
@@ -4465,7 +4465,7 @@ const improveNewsletterContent = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4473,7 +4473,7 @@ const improveNewsletterContent = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSkipped",
@@ -4563,7 +4563,7 @@ const evaluateAProductIdea = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isLessThanOrEqual",
@@ -4591,7 +4591,7 @@ const evaluateAProductIdea = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -4654,7 +4654,7 @@ const evaluateAProductIdea = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[4],
+                      value: reusableQuestionIds[4],
                       type: "question",
                     },
                     operator: "isLessThanOrEqual",
@@ -4682,7 +4682,7 @@ const evaluateAProductIdea = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[4],
+                      value: reusableQuestionIds[4],
                       type: "question",
                     },
                     operator: "isGreaterThanOrEqual",
@@ -4723,7 +4723,7 @@ const evaluateAProductIdea = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[5],
+                      value: reusableQuestionIds[5],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4794,7 +4794,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4822,7 +4822,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4850,7 +4850,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4878,7 +4878,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4906,7 +4906,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[0],
+                      value: reusableQuestionIds[0],
                       type: "question",
                     },
                     operator: "equals",
@@ -4949,7 +4949,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[1],
+                      value: reusableQuestionIds[1],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -4983,7 +4983,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[2],
+                      value: reusableQuestionIds[2],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -5017,7 +5017,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[3],
+                      value: reusableQuestionIds[3],
                       type: "question",
                     },
                     operator: "isSubmitted",
@@ -5051,7 +5051,7 @@ const understandLowEngagement = (): TTemplate => {
                   {
                     id: createId(),
                     leftOperand: {
-                      id: reusableQuestionIds[4],
+                      value: reusableQuestionIds[4],
                       type: "question",
                     },
                     operator: "isSubmitted",

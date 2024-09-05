@@ -17,6 +17,7 @@ import {
 export const evaluateAdvancedLogic = (
   localSurvey: TSurvey,
   data: TResponseData,
+  variablesData: TResponseVariables,
   conditions: TConditionGroup,
   selectedLanguage: string
 ): boolean => {
@@ -25,7 +26,7 @@ export const evaluateAdvancedLogic = (
       if (isConditionsGroup(condition)) {
         return evaluateConditionGroup(condition);
       } else {
-        return evaluateSingleCondition(localSurvey, data, condition, selectedLanguage);
+        return evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage);
       }
     });
 
@@ -38,25 +39,32 @@ export const evaluateAdvancedLogic = (
 const evaluateSingleCondition = (
   localSurvey: TSurvey,
   data: TResponseData,
+  variablesData: TResponseVariables,
   condition: TSingleCondition,
   selectedLanguage: string
 ): boolean => {
-  const leftValue = getLeftOperandValue(localSurvey, data, condition.leftOperand, selectedLanguage);
+  const leftValue = getLeftOperandValue(
+    localSurvey,
+    data,
+    variablesData,
+    condition.leftOperand,
+    selectedLanguage
+  );
   const rightValue = condition.rightOperand
-    ? getRightOperandValue(localSurvey, condition.rightOperand, data)
+    ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
     : undefined;
 
   let leftField: TSurveyQuestion | TSurveyVariable | string;
 
   switch (condition.leftOperand.type) {
     case "question":
-      leftField = localSurvey.questions.find((q) => q.id === condition.leftOperand.id) as TSurveyQuestion;
+      leftField = localSurvey.questions.find((q) => q.id === condition.leftOperand.value) as TSurveyQuestion;
       break;
     case "variable":
-      leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand.id) as TSurveyVariable;
+      leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand.value) as TSurveyVariable;
       break;
     case "hiddenField":
-      leftField = condition.leftOperand.id as string;
+      leftField = condition.leftOperand.value as string;
       break;
     default:
       leftField = "";
@@ -158,15 +166,16 @@ const evaluateSingleCondition = (
 const getLeftOperandValue = (
   localSurvey: TSurvey,
   data: TResponseData,
+  variablesData: TResponseVariables,
   leftOperand: TSingleCondition["leftOperand"],
   selectedLanguage: string
 ) => {
   switch (leftOperand.type) {
     case "question":
-      const currentQuestion = localSurvey.questions.find((q) => q.id === leftOperand.id);
+      const currentQuestion = localSurvey.questions.find((q) => q.id === leftOperand.value);
       if (!currentQuestion) return undefined;
 
-      const responseValue = data[leftOperand.id];
+      const responseValue = data[leftOperand.value];
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
         let choice;
@@ -191,19 +200,19 @@ const getLeftOperandValue = (
           return choice;
         }
       }
-      return data[leftOperand.id];
+      return data[leftOperand.value];
     case "variable":
       const variables = localSurvey.variables || [];
-      const variable = variables.find((v) => v.id === leftOperand.id);
+      const variable = variables.find((v) => v.id === leftOperand.value);
 
       if (!variable) return undefined;
 
-      const variableValue = data[leftOperand.id];
+      const variableValue = variablesData[leftOperand.value];
 
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
     case "hiddenField":
-      return data[leftOperand.id];
+      return data[leftOperand.value];
     default:
       return undefined;
   }
@@ -211,8 +220,9 @@ const getLeftOperandValue = (
 
 const getRightOperandValue = (
   localSurvey: TSurvey,
-  rightOperand: TSingleCondition["rightOperand"],
-  data: TResponseData
+  data: TResponseData,
+  variablesData: TResponseVariables,
+  rightOperand: TSingleCondition["rightOperand"]
 ) => {
   if (!rightOperand) return undefined;
 
@@ -225,7 +235,7 @@ const getRightOperandValue = (
 
       if (!variable) return undefined;
 
-      const variableValue = data[rightOperand.value];
+      const variableValue = variablesData[rightOperand.value];
 
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";

@@ -118,7 +118,7 @@ export function AdvancedLogicEditorConditions({
   const handleQuestionChange = (condition: TSingleCondition, value: string, option?: TComboboxOption) => {
     handleUpdateCondition(condition.id, {
       leftOperand: {
-        id: value,
+        value,
         type: option?.meta?.type as TDyanmicLogicField,
       },
       operator: "isSkipped",
@@ -206,7 +206,7 @@ export function AdvancedLogicEditorConditions({
                     handleAddConditionBelow(condition.id, {
                       id: createId(),
                       leftOperand: {
-                        id: localSurvey.questions[questionIdx].id,
+                        value: localSurvey.questions[questionIdx].id,
                         type: "question",
                       },
                       operator: "equals",
@@ -253,7 +253,7 @@ export function AdvancedLogicEditorConditions({
           key="conditionValue"
           showSearch={false}
           groupedOptions={conditionValueOptions}
-          value={condition.leftOperand.id}
+          value={condition.leftOperand.value}
           onChangeValue={(val: string, option) => {
             handleQuestionChange(condition, val, option);
           }}
@@ -299,7 +299,7 @@ export function AdvancedLogicEditorConditions({
                 handleAddConditionBelow(condition.id, {
                   id: createId(),
                   leftOperand: {
-                    id: localSurvey.questions[questionIdx].id,
+                    value: localSurvey.questions[questionIdx].id,
                     type: "question",
                   },
                   operator: "equals",

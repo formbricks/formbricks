@@ -152,13 +152,14 @@ export const getConditionOperatorOptions = (
   if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables || [];
     const variableType =
-      variables.find((variable) => variable.id === condition.leftOperand.id)?.type || "text";
+      variables.find((variable) => variable.id === condition.leftOperand.value)?.type || "text";
     return ruleEngine.variable[variableType].options;
   } else if (condition.leftOperand.type === "hiddenField") {
     return ruleEngine.hiddenField.options;
   } else if (condition.leftOperand.type === "question") {
     const questions = localSurvey.questions || [];
-    const question = questions.find((question) => question.id === condition.leftOperand.id) || questions[0];
+    const question =
+      questions.find((question) => question.id === condition.leftOperand.value) || questions[0];
     if (question.type === "openText") {
       const inputType = question.inputType === "number" ? "number" : "text";
       return ruleEngine.question.openText[inputType].options;
@@ -195,15 +196,15 @@ export const getMatchValueProps = (
   let variables = localSurvey.variables || [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
 
-  const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.id);
-  const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.id);
+  const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.value);
+  const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
 
   if (condition.leftOperand.type === "question") {
-    questions = questions.filter((question) => question.id !== condition.leftOperand.id);
+    questions = questions.filter((question) => question.id !== condition.leftOperand.value);
   } else if (condition.leftOperand.type === "variable") {
-    variables = variables.filter((variable) => variable.id !== condition.leftOperand.id);
+    variables = variables.filter((variable) => variable.id !== condition.leftOperand.value);
   } else if (condition.leftOperand.type === "hiddenField") {
-    hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.id);
+    hiddenFields = hiddenFields.filter((field) => field !== condition.leftOperand.value);
   }
 
   if (condition.leftOperand.type === "question") {
@@ -971,7 +972,7 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): nu
   };
 
   const isUsedInLeftOperand = (leftOperand: TLeftOperand, id: string): boolean => {
-    return leftOperand.type === "question" && leftOperand.id === id;
+    return leftOperand.type === "question" && leftOperand.value === id;
   };
 
   const isUsedInRightOperand = (rightOperand: TRightOperand, id: string): boolean => {
@@ -1006,7 +1007,7 @@ export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optio
   };
 
   const isUsedInOperand = (condition: TSingleCondition): boolean => {
-    if (condition.leftOperand.type === "question" && condition.leftOperand.id === questionId) {
+    if (condition.leftOperand.type === "question" && condition.leftOperand.value === questionId) {
       if (condition.rightOperand && condition.rightOperand.type === "static") {
         if (Array.isArray(condition.rightOperand.value)) {
           return condition.rightOperand.value.includes(optionId);
@@ -1040,7 +1041,7 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
   };
 
   const isUsedInLeftOperand = (leftOperand: TLeftOperand): boolean => {
-    return leftOperand.type === "variable" && leftOperand.id === variableId;
+    return leftOperand.type === "variable" && leftOperand.value === variableId;
   };
 
   const isUsedInRightOperand = (rightOperand: TRightOperand): boolean => {
@@ -1073,7 +1074,7 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   };
 
   const isUsedInLeftOperand = (leftOperand: TLeftOperand): boolean => {
-    return leftOperand.type === "hiddenField" && leftOperand.id === hiddenFieldId;
+    return leftOperand.type === "hiddenField" && leftOperand.value === hiddenFieldId;
   };
 
   const isUsedInRightOperand = (rightOperand: TRightOperand): boolean => {

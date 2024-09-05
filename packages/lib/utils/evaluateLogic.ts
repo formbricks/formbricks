@@ -128,10 +128,10 @@ const getLeftOperandValue = (
 ) => {
   switch (leftOperand.type) {
     case "question":
-      const currentQuestion = localSurvey.questions.find((q) => q.id === leftOperand.id);
+      const currentQuestion = localSurvey.questions.find((q) => q.id === leftOperand.value);
       if (!currentQuestion) return undefined;
 
-      const responseValue = data[leftOperand.id];
+      const responseValue = data[leftOperand.value];
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
         let choice;
@@ -156,19 +156,19 @@ const getLeftOperandValue = (
           return choice;
         }
       }
-      return data[leftOperand.id];
+      return data[leftOperand.value];
     case "variable":
       const variables = localSurvey.variables || [];
-      const variable = variables.find((v) => v.id === leftOperand.id);
+      const variable = variables.find((v) => v.id === leftOperand.value);
 
       if (!variable) return undefined;
 
-      const variableValue = data[leftOperand.id];
+      const variableValue = data[leftOperand.value];
 
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
     case "hiddenField":
-      return data[leftOperand.id];
+      return data[leftOperand.value];
     default:
       return undefined;
   }
