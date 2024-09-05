@@ -1,15 +1,19 @@
 "use client";
 
+import { translateText } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { LanguagesIcon } from "lucide-react";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { FileInput } from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -59,8 +63,64 @@ export const EditWelcomeCard = ({
     });
   };
 
+  const isTranslateDisabled = localSurvey.languages.length <= 1;
+
+  const [loading, setLoading] = useState(false);
+
+  const translateWelcomeCard = async () => {
+    setLoading(true);
+    const updatedSurvey = { ...localSurvey };
+    const welcomeCard = updatedSurvey.welcomeCard;
+
+    const textsToTranslate = extractTextsToTranslateFromWelcomeCard(welcomeCard);
+
+    for (const language of localSurvey.languages) {
+      const languageCode = language.language.code;
+      if (languageCode !== "en" && languageCode !== "default") {
+        const translatedTexts = await translateText(languageCode, textsToTranslate);
+        updateEndingCardWithTranslatedTexts(welcomeCard, translatedTexts, languageCode);
+      }
+    }
+
+    updatedSurvey.welcomeCard = welcomeCard;
+    setLocalSurvey(updatedSurvey);
+    setLoading(false);
+    toast.success("Ending card translated.");
+  };
+
+  const extractTextsToTranslateFromWelcomeCard = (welcomeCard) => {
+    const textsToTranslate = {};
+    if (welcomeCard.headline) {
+      textsToTranslate["headline"] = welcomeCard.headline["default"];
+    }
+    if (welcomeCard.html) {
+      textsToTranslate["html"] = welcomeCard.html["default"];
+    }
+    if (welcomeCard.buttonLabel) {
+      textsToTranslate["buttonLabel"] = welcomeCard.buttonLabel["default"];
+    }
+    return textsToTranslate;
+  };
+
+  const updateEndingCardWithTranslatedTexts = (welcomeCard, translatedTexts, languageCode: string) => {
+    if (welcomeCard.headline) {
+      welcomeCard.headline[languageCode] = translatedTexts["headline"];
+    }
+    if (welcomeCard.html) {
+      welcomeCard.html[languageCode] = translatedTexts["html"];
+    }
+    if (welcomeCard.buttonLabel) {
+      welcomeCard.buttonLabel[languageCode] = translatedTexts["buttonLabel"];
+    }
+  };
+
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group flex flex-row rounded-lg bg-white")}>
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
+          <LoadingSpinner />
+        </div>
+      )}
       <div
         className={cn(
           open ? "bg-slate-50" : "",
@@ -89,6 +149,20 @@ export const EditWelcomeCard = ({
             </div>
 
             <div className="flex items-center space-x-2">
+              <LanguagesIcon
+                className={cn(
+                  "h-4 cursor-pointer text-slate-500",
+                  isTranslateDisabled && !localSurvey?.welcomeCard?.enabled
+                    ? "cursor-not-allowed opacity-50"
+                    : "hover:text-slate-600"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isTranslateDisabled && !localSurvey?.welcomeCard?.enabled) return;
+                  translateWelcomeCard();
+                }}
+              />
+
               <Label htmlFor="welcome-toggle">{localSurvey?.welcomeCard?.enabled ? "On" : "Off"}</Label>
 
               <Switch

@@ -46,6 +46,7 @@ interface QuestionCardProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
   duplicateQuestion: (questionIdx: number) => void;
+  translateQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
@@ -66,6 +67,7 @@ export const QuestionCard = ({
   updateQuestion,
   duplicateQuestion,
   deleteQuestion,
+  translateQuestion,
   activeQuestionId,
   setActiveQuestionId,
   lastQuestion,
@@ -201,6 +203,7 @@ export const QuestionCard = ({
                 lastCard={lastQuestion}
                 duplicateCard={duplicateQuestion}
                 deleteCard={deleteQuestion}
+                translateCard={translateQuestion}
                 moveCard={moveQuestion}
                 card={question}
                 product={product}

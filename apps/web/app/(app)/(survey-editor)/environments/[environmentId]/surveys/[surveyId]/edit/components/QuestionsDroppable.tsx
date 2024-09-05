@@ -11,6 +11,7 @@ interface QuestionsDraggableProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
   duplicateQuestion: (questionIdx: number) => void;
+  translateQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   selectedLanguageCode: string;
@@ -26,6 +27,7 @@ export const QuestionsDroppable = ({
   activeQuestionId,
   deleteQuestion,
   duplicateQuestion,
+  translateQuestion,
   invalidQuestions,
   localSurvey,
   moveQuestion,
@@ -52,6 +54,7 @@ export const QuestionsDroppable = ({
             moveQuestion={moveQuestion}
             updateQuestion={updateQuestion}
             duplicateQuestion={duplicateQuestion}
+            translateQuestion={translateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             deleteQuestion={deleteQuestion}

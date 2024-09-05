@@ -1,5 +1,6 @@
 "use client";
 
+import { translateText } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import {
   DndContext,
@@ -23,6 +24,7 @@ import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -235,6 +237,130 @@ export const QuestionsView = ({
     toast.success("Question deleted.");
   };
 
+  const [loading, setLoading] = useState(false);
+
+  const translateQuestion = async (questionIdx: number) => {
+    setLoading(true);
+    const updatedSurvey = { ...localSurvey };
+    const questionToTranslate = updatedSurvey.questions[questionIdx];
+
+    const textsToTranslate = extractTextsToTranslate(questionToTranslate);
+
+    for (const language of localSurvey.languages) {
+      const languageCode = language.language.code;
+      if (languageCode !== "en" && languageCode !== "default") {
+        const translatedTexts = await translateText(languageCode, textsToTranslate);
+        updateQuestionWithTranslatedTexts(questionToTranslate, translatedTexts, languageCode);
+      }
+    }
+
+    updatedSurvey.questions[questionIdx] = questionToTranslate;
+    setLocalSurvey(updatedSurvey);
+    setLoading(false);
+    toast.success("Question translated.");
+  };
+
+  const extractTextsToTranslate = (question) => {
+    const textsToTranslate = { headline: question.headline["default"] };
+    if (question.subheader) {
+      textsToTranslate["subheader"] = question.subheader["default"];
+    }
+    switch (question.type) {
+      case "openText":
+        if (question.placeholder) {
+          textsToTranslate["placeholder"] = question.placeholder["default"];
+        }
+        break;
+      case "multipleChoiceSingle":
+      case "multipleChoiceMulti":
+        question.choices.forEach((choice, index) => {
+          textsToTranslate[`choice_${index}`] = choice.label["default"];
+        });
+        if (question.otherOptionPlaceholder) {
+          textsToTranslate["otherOptionPlaceholder"] = question.otherOptionPlaceholder["default"];
+        }
+        break;
+      case "cta":
+        if (question.dismissButtonLabel) {
+          textsToTranslate["dismissButtonLabel"] = question.dismissButtonLabel["default"];
+        }
+        if (question.html) {
+          textsToTranslate["html"] = question.html["default"];
+        }
+        break;
+      case "consent":
+        if (question.html) {
+          textsToTranslate["html"] = question.html["default"];
+        }
+        if (question.label) {
+          textsToTranslate["label"] = question.label["default"];
+        }
+        break;
+      case "nps":
+      case "rating":
+        if (question.lowerLabel) {
+          textsToTranslate["lowerLabel"] = question.lowerLabel["default"];
+        }
+        if (question.upperLabel) {
+          textsToTranslate["upperLabel"] = question.upperLabel["default"];
+        }
+        break;
+      default:
+        break;
+    }
+    return textsToTranslate;
+  };
+
+  const updateQuestionWithTranslatedTexts = (question, translatedTexts, languageCode) => {
+    question.headline[languageCode] = translatedTexts["headline"];
+    if (question.subheader) {
+      question.subheader[languageCode] = translatedTexts["subheader"];
+    }
+    switch (question.type) {
+      case "openText":
+        if (question.placeholder) {
+          question.placeholder[languageCode] = translatedTexts["placeholder"];
+        }
+        break;
+      case "multipleChoiceSingle":
+      case "multipleChoiceMulti":
+        question.choices.forEach((choice, index) => {
+          choice.label[languageCode] = translatedTexts[`choice_${index}`];
+        });
+        if (question.otherOptionPlaceholder) {
+          question.otherOptionPlaceholder[languageCode] = translatedTexts["otherOptionPlaceholder"];
+        }
+        break;
+      case "cta":
+        if (question.dismissButtonLabel) {
+          question.dismissButtonLabel[languageCode] = translatedTexts["dismissButtonLabel"];
+        }
+        if (question.html) {
+          question.html[languageCode] = translatedTexts["html"];
+        }
+        break;
+      case "consent":
+        if (question.html) {
+          question.html[languageCode] = translatedTexts["html"];
+        }
+        if (question.label) {
+          question.label[languageCode] = translatedTexts["label"];
+        }
+        break;
+      case "nps":
+      case "rating":
+        if (question.lowerLabel) {
+          question.lowerLabel[languageCode] = translatedTexts["lowerLabel"];
+        }
+        if (question.upperLabel) {
+          question.upperLabel[languageCode] = translatedTexts["upperLabel"];
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
   const duplicateQuestion = (questionIdx: number) => {
     const questionToDuplicate = structuredClone(localSurvey.questions[questionIdx]);
 
@@ -359,6 +485,11 @@ export const QuestionsView = ({
 
   return (
     <div className="mt-12 w-full px-5 py-4">
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
+          <LoadingSpinner />
+        </div>
+      )}
       <div className="mb-5 flex w-full flex-col gap-5">
         <EditWelcomeCard
           localSurvey={localSurvey}
@@ -379,6 +510,7 @@ export const QuestionsView = ({
           moveQuestion={moveQuestion}
           updateQuestion={updateQuestion}
           duplicateQuestion={duplicateQuestion}
+          translateQuestion={translateQuestion}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           deleteQuestion={deleteQuestion}
