@@ -1,10 +1,13 @@
+import { cn } from "@formbricks/lib/cn";
+
 interface RankingResponseProps {
   value: string[];
+  isExpanded: boolean;
 }
 
-export const RankingRespone = ({ value }: RankingResponseProps) => {
+export const RankingRespone = ({ value, isExpanded }: RankingResponseProps) => {
   return (
-    <div className="my-1 font-semibold text-slate-700" dir="auto">
+    <div className={cn("my-1 font-semibold text-slate-700", isExpanded ? "" : "flex space-x-2")} dir="auto">
       {value.map(
         (item, index) =>
           item && (

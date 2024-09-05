@@ -26,8 +26,9 @@ interface SingleResponseCardProps {
   environmentTags: TTag[];
   environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
-  deleteResponse?: (responseId: string) => void;
+  deleteResponses?: (responseIds: string[]) => void;
   isViewer: boolean;
+  setSelectedResponse?: (response: TResponse | null) => void;
 }
 
 export const SingleResponseCard = ({
@@ -38,8 +39,9 @@ export const SingleResponseCard = ({
   environmentTags,
   environment,
   updateResponse,
-  deleteResponse,
+  deleteResponses,
   isViewer,
+  setSelectedResponse,
 }: SingleResponseCardProps) => {
   const environmentId = survey.environmentId;
   const router = useRouter();
@@ -91,9 +93,9 @@ export const SingleResponseCard = ({
         throw new Error("You are not authorized to perform this action.");
       }
       await deleteResponseAction({ responseId: response.id });
-      deleteResponse?.(response.id);
-
+      deleteResponses?.([response.id]);
       router.refresh();
+      if (setSelectedResponse) setSelectedResponse(null);
       toast.success("Response deleted successfully.");
       setDeleteDialogOpen(false);
     } catch (error) {
