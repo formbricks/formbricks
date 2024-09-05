@@ -40,7 +40,7 @@ export const EnvironmentSwitch = ({ environment, environments }: EnvironmentSwit
       <Label
         htmlFor="development-mode"
         className={cn("hover:cursor-pointer", isEnvSwitchChecked && "text-orange-800")}>
-        Test mode
+        Dev Env
       </Label>
       <Switch
         className="focus:ring-orange-800 data-[state=checked]:bg-orange-800"
