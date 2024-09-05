@@ -72,7 +72,7 @@ export const EndScreenForm = ({
               } else {
                 updateSurvey({
                   buttonLabel: { default: "Create your own Survey" },
-                  buttonLink: "https://formbricks.com/signup",
+                  buttonLink: "https://formbricks.com",
                 });
               }
               setshowEndingCardCTA(!showEndingCardCTA);
@@ -111,7 +111,7 @@ export const EndScreenForm = ({
                 id="buttonLink"
                 name="buttonLink"
                 className="bg-white"
-                placeholder="https://formbricks.com/signup"
+                placeholder="https://formbricks.com"
                 value={endingCard.buttonLink}
                 onChange={(e) => updateSurvey({ buttonLink: e.target.value })}
               />
