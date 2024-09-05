@@ -60,7 +60,7 @@ export const addEnvironmentStateExpiryCheckListener = (
   sdkType: "app" | "website",
   config: AppConfig | WebsiteConfig
 ): void => {
-  let updateInterval = 1000 * 30; // every 30 seconds
+  let updateInterval = 1000 * 60; // every minute
   if (typeof window !== "undefined" && environmentStateSyncIntervalId === null) {
     environmentStateSyncIntervalId = window.setInterval(async () => {
       const expiresAt = config.get().environmentState.expiresAt;

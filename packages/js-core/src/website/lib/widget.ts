@@ -173,27 +173,7 @@ const renderWidget = async (
           throw new Error("No lastDisplay found");
         }
 
-        const responses = websiteConfig.get().personState.data.responses;
-        const newPersonState: TJsPersonState = {
-          ...websiteConfig.get().personState,
-          data: {
-            ...websiteConfig.get().personState.data,
-            responses: [...responses, surveyState.surveyId],
-          },
-        };
-
-        const filteredSurveys = filterPublicSurveys(
-          websiteConfig.get().environmentState,
-          newPersonState,
-          "website"
-        );
-
-        websiteConfig.update({
-          ...websiteConfig.get(),
-          environmentState: websiteConfig.get().environmentState,
-          personState: newPersonState,
-          filteredSurveys,
-        });
+        const isNewResponse = surveyState.responseId === null;
 
         responseQueue.updateSurveyState(surveyState);
 
@@ -209,6 +189,30 @@ const renderWidget = async (
           },
           hiddenFields,
         });
+
+        if (isNewResponse) {
+          const responses = websiteConfig.get().personState.data.responses;
+          const newPersonState: TJsPersonState = {
+            ...websiteConfig.get().personState,
+            data: {
+              ...websiteConfig.get().personState.data,
+              responses: [...responses, surveyState.surveyId],
+            },
+          };
+
+          const filteredSurveys = filterPublicSurveys(
+            websiteConfig.get().environmentState,
+            newPersonState,
+            "website"
+          );
+
+          websiteConfig.update({
+            ...websiteConfig.get(),
+            environmentState: websiteConfig.get().environmentState,
+            personState: newPersonState,
+            filteredSurveys,
+          });
+        }
       },
       onClose: closeSurvey,
       onFileUpload: async (

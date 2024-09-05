@@ -30,12 +30,19 @@ import { TJsEnvironmentState } from "@formbricks/types/js";
 export const getEnvironmentState = async (environmentId: string): Promise<TJsEnvironmentState["data"]> =>
   cache(
     async () => {
-      const environment = await getEnvironment(environmentId);
-      if (!environment) {
-        throw new Error("Environment does not exist");
+      const [environment, organization, product] = await Promise.all([
+        getEnvironment(environmentId),
+        getOrganizationByEnvironmentId(environmentId),
+        getProductByEnvironmentId(environmentId),
+      ]);
+
+      if (!organization) {
+        throw new ResourceNotFoundError("organization", environmentId);
       }
 
-      const product = await getProductByEnvironmentId(environmentId);
+      if (!environment) {
+        throw new ResourceNotFoundError("environment", environmentId);
+      }
 
       if (!product) {
         throw new ResourceNotFoundError("product", environmentId);
@@ -50,13 +57,6 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
           updateEnvironment(environment.id, { appSetupCompleted: true }),
           capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
         ]);
-      }
-
-      // check organization subscriptions
-      const organization = await getOrganizationByEnvironmentId(environmentId);
-
-      if (!organization) {
-        throw new ResourceNotFoundError("Organization", environmentId);
       }
 
       // check if MAU limit is reached
