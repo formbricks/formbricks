@@ -34,7 +34,11 @@ export const GET = async (
 
     try {
       const environmentState = await getEnvironmentState(params.environmentId);
-      return responses.successResponse(environmentState, true);
+      return responses.successResponse(
+        environmentState,
+        true,
+        "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+      );
     } catch (err) {
       return responses.internalServerErrorResponse(err.message, true);
     }

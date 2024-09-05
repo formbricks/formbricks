@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
+import { ZId } from "./common";
 import { ZProduct } from "./product";
 import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZUploadFileConfig } from "./storage";
@@ -117,9 +118,15 @@ export const ZJsPersonState = z.object({
   expiresAt: z.date().nullable(),
   data: z.object({
     userId: z.string().nullable(),
-    segments: z.array(z.string()), // segment ids the person belongs to
-    displays: z.array(z.string()), // displayed survey ids
-    responses: z.array(z.string()), // responded survey ids
+    segments: z.array(ZId), // segment ids the person belongs to
+    // displays: z.array(z.string()), // displayed survey ids
+    displays: z.array(
+      z.object({
+        surveyId: ZId,
+        createdAt: z.date(),
+      })
+    ),
+    responses: z.array(ZId), // responded survey ids
     attributes: ZAttributes,
     lastDisplayAt: z.date().nullable(),
   }),

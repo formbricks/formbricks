@@ -51,7 +51,10 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
         .filter((display) => display.responded)
         .map((display) => display.surveyId);
 
-      const displays = displaysState.map((display) => display.surveyId);
+      const displays = displaysState.map((display) => ({
+        surveyId: display.surveyId,
+        createdAt: display.createdAt,
+      }));
       const lastDisplayAt = displaysState
         ? displaysState.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
             .createdAt
@@ -200,7 +203,11 @@ export const initialize = async (
 
         // filter the surveys with the default person state
 
-        const filteredSurveys = filterPublicSurveys(environmentState, DEFAULT_PERSON_STATE_WEBSITE);
+        const filteredSurveys = filterPublicSurveys(
+          environmentState,
+          DEFAULT_PERSON_STATE_WEBSITE,
+          "website"
+        );
 
         websiteConfig.update({
           apiHost: configInput.apiHost,
@@ -232,7 +239,7 @@ export const initialize = async (
         "website"
       );
 
-      const filteredSurveys = filterPublicSurveys(environmentState, DEFAULT_PERSON_STATE_WEBSITE);
+      const filteredSurveys = filterPublicSurveys(environmentState, DEFAULT_PERSON_STATE_WEBSITE, "website");
 
       websiteConfig.update({
         apiHost: configInput.apiHost,

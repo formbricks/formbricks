@@ -97,7 +97,7 @@ export const responseSelection = {
       isEdited: true,
     },
   },
-};
+} satisfies Prisma.ResponseSelect;
 
 export const getResponsesByPersonId = reactCache(
   (personId: string, page?: number): Promise<TResponse[] | null> =>
@@ -180,19 +180,16 @@ export const getResponsesByUserId = reactCache(
             throw new ResourceNotFoundError("Response from PersonId", person.id);
           }
 
-          let responses: TResponse[] = [];
+          const responsePromises = responsePrisma.map(async (response) => {
+            const tags = response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag);
 
-          await Promise.all(
-            responsePrisma.map(async (response) => {
-              const responseNotes = await getResponseNotes(response.id);
-              responses.push({
-                ...response,
-                notes: responseNotes,
-                tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-              });
-            })
-          );
+            return {
+              ...response,
+              tags,
+            };
+          });
 
+          const responses = await Promise.all(responsePromises);
           return responses;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {

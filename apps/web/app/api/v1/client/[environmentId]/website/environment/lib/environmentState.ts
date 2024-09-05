@@ -15,7 +15,6 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { productCache } from "@formbricks/lib/product/cache";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -90,18 +89,10 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
         (survey) => survey.status === "inProgress" && survey.type === "website"
       );
 
-      const updatedProduct: any = {
-        ...product,
-        brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
-        ...(product.styling.highlightBorderColor?.light && {
-          highlightBorderColor: product.styling.highlightBorderColor.light,
-        }),
-      };
-
       const state: TJsEnvironmentState["data"] = {
         surveys: filteredSurveys,
         actionClasses,
-        product: updatedProduct,
+        product,
       };
 
       return state;

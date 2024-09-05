@@ -137,7 +137,8 @@ const renderWidget = async (
         const { id } = res.data;
 
         const existingDisplays = websiteConfig.get().personState.data.displays;
-        const displays = existingDisplays ? [...existingDisplays, survey.id] : [survey.id];
+        const newDisplay = { surveyId: survey.id, createdAt: new Date() };
+        const displays = existingDisplays ? [...existingDisplays, newDisplay] : [newDisplay];
         const previousConfig = websiteConfig.get();
 
         const updatedPersonState: TJsPersonState = {
@@ -149,7 +150,11 @@ const renderWidget = async (
           },
         };
 
-        const filteredSurveys = filterPublicSurveys(previousConfig.environmentState, updatedPersonState);
+        const filteredSurveys = filterPublicSurveys(
+          previousConfig.environmentState,
+          updatedPersonState,
+          "website"
+        );
 
         websiteConfig.update({
           ...previousConfig,
@@ -177,7 +182,11 @@ const renderWidget = async (
           },
         };
 
-        const filteredSurveys = filterPublicSurveys(websiteConfig.get().environmentState, newPersonState);
+        const filteredSurveys = filterPublicSurveys(
+          websiteConfig.get().environmentState,
+          newPersonState,
+          "website"
+        );
 
         websiteConfig.update({
           ...websiteConfig.get(),
@@ -235,7 +244,7 @@ export const closeSurvey = async (): Promise<void> => {
   addWidgetContainer();
 
   const { environmentState, personState } = websiteConfig.get();
-  const filteredSurveys = filterPublicSurveys(environmentState, personState);
+  const filteredSurveys = filterPublicSurveys(environmentState, personState, "website");
   websiteConfig.update({
     ...websiteConfig.get(),
     environmentState,

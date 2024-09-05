@@ -152,13 +152,14 @@ export const getIsDebug = () => window.location.search.includes("formbricksDebug
  * Filters surveys based on the displayOption, recontactDays, and segments
  * @param environmentSate The environment state
  * @param personState The person state
- * @returns
+ * @returns The filtered surveys
  */
 
 // takes the environment and person state and returns the filtered surveys
 export const filterSurveys = (
   environmentState: TJsEnvironmentState,
-  personState: TJsPersonState
+  personState: TJsPersonState,
+  sdkType: "app" | "website" = "app"
 ): TSurvey[] => {
   const { product, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments } = personState.data;
@@ -173,7 +174,7 @@ export const filterSurveys = (
       case "respondMultiple":
         return true;
       case "displayOnce":
-        return displays.filter((surveyId) => surveyId === survey.id).length === 0;
+        return displays.filter((display) => display.surveyId === survey.id).length === 0;
       case "displayMultiple":
         return responses.filter((surveyId) => surveyId === survey.id).length === 0;
 
@@ -188,7 +189,7 @@ export const filterSurveys = (
         }
 
         // Otherwise, check if displays length is less than displayLimit
-        return displays.filter((surveyId) => surveyId === survey.id).length < survey.displayLimit;
+        return displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit;
 
       default:
         throw Error("Invalid displayOption");
@@ -203,7 +204,11 @@ export const filterSurveys = (
     }
     // if survey has recontactDays, check if the last display was more than recontactDays ago
     else if (survey.recontactDays !== null) {
-      return diffInDays(new Date(), new Date(lastDisplayAt)) >= survey.recontactDays;
+      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+      if (!lastDisplaySurvey) {
+        return true;
+      }
+      return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
     }
     // use recontactDays of the product if survey does not have recontactDays
     else if (product.recontactDays !== null) {
@@ -215,17 +220,16 @@ export const filterSurveys = (
     }
   });
 
-  // filter surveys based on segments
-  if (segments?.length) {
-    filteredSurveys = filteredSurveys.filter((survey) => {
-      if (survey.segment?.id) {
-        // if the segments array includes the survey segment id, show the survey
-        return segments.includes(survey.segment.id);
-      }
-
-      return false;
-    });
+  if (sdkType === "website") {
+    return filteredSurveys;
   }
 
-  return filteredSurveys;
+  if (!segments.length) {
+    return [];
+  }
+
+  // filter surveys based on segments
+  return filteredSurveys.filter((survey) => {
+    return survey.segment?.id && segments.includes(survey.segment.id);
+  });
 };
