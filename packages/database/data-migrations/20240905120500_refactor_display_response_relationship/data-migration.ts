@@ -23,7 +23,7 @@ async function runMigration(): Promise<void> {
       });
 
       if (displays.length === 0) {
-        // Stop the migration if there are no surveys
+        // Stop the migration if there are no Displays
         console.log("No Displays found");
         return;
       }
