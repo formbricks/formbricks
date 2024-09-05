@@ -267,7 +267,7 @@ export function AdvancedLogicEditorConditions({
           onChangeValue={(val: TSurveyLogicCondition) => {
             handleOperatorChange(condition, val);
           }}
-          comboboxClasses="grow"
+          comboboxClasses="grow min-w-[150px]"
         />
         {show && (
           <InputCombobox

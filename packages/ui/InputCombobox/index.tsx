@@ -170,7 +170,11 @@ export const InputCombobox = ({
   };
 
   return (
-    <div className={cn("flex overflow-hidden rounded-md border border-slate-300", comboboxClasses)}>
+    <div
+      className={cn(
+        "flex max-w-[450px] overflow-hidden rounded-md border border-slate-300",
+        comboboxClasses
+      )}>
       {withInput && inputType !== "dropdown" && (
         <Input
           className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-300"
@@ -186,9 +190,12 @@ export const InputCombobox = ({
             aria-controls="options"
             aria-expanded={open}
             className={cn(
-              "flex h-10 w-full cursor-pointer items-center justify-center rounded-md bg-white pr-2"
+              "flex h-10 w-full shrink-0 cursor-pointer items-center justify-end rounded-md bg-white pr-2",
+              { "w-10 justify-center pr-0": withInput && inputType !== "dropdown" }
             )}>
-            <div className="ellipsis flex w-full gap-2 truncate px-2">{getDisplayValue}</div>
+            {inputType === "dropdown" && (
+              <div className="ellipsis flex w-full gap-2 truncate px-2">{getDisplayValue}</div>
+            )}
             {clearable && inputType === "dropdown" ? (
               <XIcon className="h-5 w-5 shrink-0 text-slate-300" onClick={handleClear} />
             ) : (
@@ -197,9 +204,12 @@ export const InputCombobox = ({
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className={cn("w-auto overflow-y-auto border border-slate-400 bg-slate-50 p-0 shadow-none", {
-            "pt-2": showSearch,
-          })}>
+          className={cn(
+            "w-auto max-w-[400px] overflow-y-auto truncate border border-slate-400 bg-slate-50 p-0 shadow-none",
+            {
+              "pt-2": showSearch,
+            }
+          )}>
           <Command>
             {showSearch && (
               <CommandInput
@@ -215,18 +225,20 @@ export const InputCombobox = ({
                     <CommandItem
                       key={option.value}
                       onSelect={() => handleSelect(option)}
-                      className="cursor-pointer truncate">
+                      title={option.label}
+                      className="cursor-pointer">
                       {showCheckIcon &&
                         ((allowMultiSelect &&
                           Array.isArray(localValue) &&
                           localValue.find((item) => item.value === option.value)) ||
                           (!allowMultiSelect &&
-                            typeof localValue === "string" &&
-                            localValue === option.value)) && (
+                            typeof localValue === "object" &&
+                            !Array.isArray(localValue) &&
+                            localValue?.value === option.value)) && (
                           <CheckIcon className="mr-2 h-4 w-4 text-slate-300" />
                         )}
                       {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
-                      {option.label}
+                      <span className="truncate">{option.label}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -246,12 +258,13 @@ export const InputCombobox = ({
                             Array.isArray(localValue) &&
                             localValue.find((item) => item.value === option.value)) ||
                             (!allowMultiSelect &&
-                              typeof localValue === "string" &&
-                              localValue === option.value)) && (
+                              typeof localValue === "object" &&
+                              !Array.isArray(localValue) &&
+                              localValue?.value === option.value)) && (
                             <CheckIcon className="mr-2 h-4 w-4 shrink-0 text-slate-300" />
                           )}
                         {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
-                        {option.label}
+                        <span className="truncate">{option.label}</span>
                       </CommandItem>
                     ))}
                   </CommandGroup>

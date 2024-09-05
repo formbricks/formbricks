@@ -102,7 +102,7 @@ export function ConditionalLogic({
       </Label>
 
       {question.logic && question.logic.length > 0 && (
-        <div className="mt-2 flex flex-col gap-4 overflow-x-auto">
+        <div className="mt-2 flex flex-col gap-4">
           {question.logic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
