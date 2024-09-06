@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 function removeActionFilters(filters: TBaseFilters): TBaseFilters {
   return filters.reduce((acc: TBaseFilters, filter: TBaseFilter) => {
     if (Array.isArray(filter.resource)) {
-      // If the resource is an array, it's a nested group of filters
+      // If the resource is an array, it's a nested group of filters, recurse over the array
       const cleanedGroup = removeActionFilters(filter.resource);
       if (cleanedGroup.length > 0) {
         acc.push({
@@ -22,6 +22,7 @@ function removeActionFilters(filters: TBaseFilters): TBaseFilters {
       // If it's not an action filter, keep it
       acc.push(filter);
     }
+
     // Action filters are implicitly removed by not being added to acc
     return acc;
   }, []);
