@@ -118,6 +118,12 @@ export const AddIntegrationModal = ({
         }))
       : [];
 
+    const variables = selectedSurvey?.variables.map((variable) => ({
+      id: variable.id,
+      name: variable.name,
+      type: TSurveyQuestionTypeEnum.OpenText,
+    }));
+
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
           id: fId,
@@ -133,7 +139,7 @@ export const AddIntegrationModal = ({
       },
     ];
 
-    return [...questions, ...hiddenFields, ...Metadata];
+    return [...questions, ...variables, ...hiddenFields, ...Metadata];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 

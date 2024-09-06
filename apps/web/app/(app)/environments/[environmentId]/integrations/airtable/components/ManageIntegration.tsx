@@ -108,6 +108,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
                   questions: data.questionIds,
                   survey: data.surveyId,
                   table: data.tableId,
+                  includeVariables: !!data.includeVariables,
                   includeHiddenFields: !!data.includeHiddenFields,
                   includeMetadata: !!data.includeMetadata,
                   index,

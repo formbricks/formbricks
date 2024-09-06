@@ -47,6 +47,7 @@ export type IntegrationModalInputs = {
   table: string;
   survey: string;
   questions: string[];
+  includeVariables: boolean;
   includeHiddenFields: boolean;
   includeMetadata: boolean;
 };
@@ -75,6 +76,7 @@ export const AddIntegrationModal = ({
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
+  const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const airtableIntegrationData: TIntegrationAirtableInput = {
@@ -91,8 +93,9 @@ export const AddIntegrationModal = ({
       const { index: _index, ...rest } = defaultData;
       reset(rest);
       fetchTable(defaultData.base);
-      setIncludeHiddenFields(defaultData.includeHiddenFields);
-      setIncludeMetadata(defaultData.includeMetadata);
+      setIncludeVariables(!!defaultData.includeVariables);
+      setIncludeHiddenFields(!!defaultData.includeHiddenFields);
+      setIncludeMetadata(!!defaultData.includeMetadata);
     } else {
       reset();
     }
@@ -130,6 +133,7 @@ export const AddIntegrationModal = ({
         baseId: data.base,
         tableId: data.table,
         tableName: currentTable?.name ?? "",
+        includeVariables,
         includeHiddenFields,
         includeMetadata,
       };
@@ -329,6 +333,8 @@ export const AddIntegrationModal = ({
                   </div>
                 </div>
                 <AdditionalIntegrationSettings
+                  includeVariables={includeVariables}
+                  setIncludeVariables={setIncludeVariables}
                   includeHiddenFields={includeHiddenFields}
                   includeMetadata={includeMetadata}
                   setIncludeHiddenFields={setIncludeHiddenFields}
