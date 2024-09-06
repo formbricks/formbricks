@@ -118,11 +118,12 @@ export const AddIntegrationModal = ({
         }))
       : [];
 
-    const variables = selectedSurvey?.variables.map((variable) => ({
-      id: variable.id,
-      name: variable.name,
-      type: TSurveyQuestionTypeEnum.OpenText,
-    }));
+    const variables =
+      selectedSurvey?.variables.map((variable) => ({
+        id: variable.id,
+        name: variable.name,
+        type: TSurveyQuestionTypeEnum.OpenText,
+      })) || [];
 
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
