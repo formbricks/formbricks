@@ -24,7 +24,7 @@ export const getDefaultEndingCard = (languages: TSurveyLanguage[]): TSurveyEndSc
     headline: createI18nString("Thank you!", languageCodes),
     subheader: createI18nString("We appreciate your feedback.", languageCodes),
     buttonLabel: createI18nString("Create your own Survey", languageCodes),
-    buttonLink: "https://formbricks.com/signup",
+    buttonLink: "https://formbricks.com",
   };
 };
 

@@ -206,6 +206,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     singleUseId,
     variables,
     ttc: initialTtc,
+    createdAt,
+    updatedAt,
   } = responseInput;
 
   try {
@@ -252,6 +254,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       singleUseId,
       ...(variables && { variables }),
       ttc: ttc,
+      createdAt,
+      updatedAt,
     };
 
     const responsePrisma = await prisma.response.create({
