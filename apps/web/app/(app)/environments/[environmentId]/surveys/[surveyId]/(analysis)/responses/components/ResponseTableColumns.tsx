@@ -1,6 +1,6 @@
 "use client";
 
-import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
+import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@/app/lib/questions";
 import { ColumnDef } from "@tanstack/react-table";
 import { EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -222,6 +222,24 @@ export const generateColumns = (
     },
   };
 
+  const variableColumns: ColumnDef<TResponseTableData>[] = survey.variables.map((variable) => {
+    return {
+      accessorKey: variable.id,
+      header: () => (
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
+          <span className="truncate">{variable.name}</span>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const variableResponse = row.original.responseData[variable.id];
+        if (typeof variableResponse === "string" || typeof variableResponse === "number") {
+          return <div className="text-slate-900">{variableResponse}</div>;
+        }
+      },
+    };
+  });
+
   const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
     ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
         return {
@@ -263,6 +281,7 @@ export const generateColumns = (
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...questionColumns,
+    ...variableColumns,
     ...hiddenFieldColumns,
     tagsColumn,
     notesColumn,

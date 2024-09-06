@@ -3,6 +3,8 @@ import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
   CheckIcon,
+  FileDigitIcon,
+  FileType2Icon,
   Grid3X3Icon,
   HomeIcon,
   ImageIcon,
@@ -249,6 +251,11 @@ export const QUESTIONS_NAME_MAP = questionTypes.reduce(
   }),
   {}
 ) as Record<TSurveyQuestionTypeEnum, string>;
+
+export const VARIABLES_ICON_MAP = {
+  text: <FileType2Icon className="h-4 w-4" />,
+  number: <FileDigitIcon className="h-4 w-4" />,
+};
 
 export const universalQuestionPresets = {
   required: true,

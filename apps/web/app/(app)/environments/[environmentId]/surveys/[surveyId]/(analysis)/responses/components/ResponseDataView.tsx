@@ -53,6 +53,10 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
     responseData[fieldId] = response.data[fieldId];
   });
 
+  survey.variables.forEach((variable) => {
+    responseData[variable.id] = response.variables[variable.id];
+  });
+
   return responseData;
 };
 
@@ -82,8 +86,9 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   updateResponse,
   isFetchingFirstPage,
 }) => {
+  console.log({ responses, survey });
   const data = mapResponsesToTableData(responses, survey);
-
+  console.log({ data });
   return (
     <div className="w-full">
       <ResponseTable

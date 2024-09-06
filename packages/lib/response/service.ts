@@ -534,7 +534,7 @@ export const getResponseDownloadUrl = async (
     );
     const responses = responsesArray.flat();
 
-    const { metaDataFields, questions, hiddenFields, userAttributes } = extractSurveyDetails(
+    const { metaDataFields, questions, hiddenFields, variables, userAttributes } = extractSurveyDetails(
       survey,
       responses
     );
@@ -551,6 +551,7 @@ export const getResponseDownloadUrl = async (
       "Tags",
       ...metaDataFields,
       ...questions,
+      ...variables,
       ...hiddenFields,
       ...userAttributes,
     ];

@@ -1,4 +1,4 @@
-import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
+import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Column } from "@tanstack/react-table";
@@ -41,6 +41,7 @@ export const TableSettingsModalItem = ({ column, survey }: TableSettingsModalIte
   };
 
   const question = survey.questions.find((question) => question.id === column.id);
+  const variable = survey.variables.find((variable) => variable.id === column.id);
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -61,6 +62,11 @@ export const TableSettingsModalItem = ({ column, survey }: TableSettingsModalIte
               <div className="flex items-center space-x-2">
                 <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
                 <span className="max-w-xs truncate">{getLocalizedValue(question.headline, "default")}</span>
+              </div>
+            ) : variable ? (
+              <div className="flex items-center space-x-2">
+                <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
+                <span className="max-w-xs truncate">{variable.name}</span>
               </div>
             ) : (
               <span className="max-w-xs truncate">{getLabelFromColumnId()}</span>
