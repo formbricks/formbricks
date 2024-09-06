@@ -11,6 +11,7 @@ import type {
   TSurveyLogicCondition,
 } from "@formbricks/types/surveys/logic";
 import {
+  type TSurveyEndings,
   type TSurveyMultipleChoiceQuestion,
   type TSurveyQuestion,
   TSurveyQuestionTypeEnum,
@@ -198,6 +199,7 @@ function mapOldOperatorToNew(
 // Helper function to convert old logic to new format
 function convertLogic(
   surveyId: string,
+  surveyEndings: TSurveyEndings,
   oldLogic: TOldLogic,
   question: TSurveyQuestion
 ): TSurveyAdvancedLogic | undefined {
@@ -211,10 +213,12 @@ function convertLogic(
     return undefined;
   }
 
+  const actionTarget = oldLogic.destination === "end" ? surveyEndings[0].id : oldLogic.destination;
+
   const action: TAction = {
     id: createId(),
     objective: "jumpToQuestion",
-    target: oldLogic.destination,
+    target: actionTarget,
   };
 
   return {
@@ -239,6 +243,7 @@ async function runMigration(): Promise<void> {
         select: {
           id: true,
           questions: true,
+          endings: true,
         },
       });
 
@@ -252,7 +257,7 @@ async function runMigration(): Promise<void> {
             if (question.logic && Array.isArray(question.logic) && question.logic.some(isOldLogic)) {
               doesThisSurveyHasOldLogic = true;
               const newLogic = (question.logic as unknown as TOldLogic[])
-                .map((oldLogic) => convertLogic(survey.id, oldLogic, question))
+                .map((oldLogic) => convertLogic(survey.id, survey.endings, oldLogic, question))
                 .filter((logic) => logic !== undefined);
 
               questions.push({ ...question, logic: newLogic });
