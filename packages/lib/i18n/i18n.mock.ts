@@ -246,7 +246,7 @@ export const mockEndings = [
     subheader: {
       default: "We appreciate your feedback.",
     },
-    buttonLink: "https://formbricks.com/signup",
+    buttonLink: "https://formbricks.com",
     buttonLabel: { default: "Create your own Survey" },
   } as TSurveyEndScreenCard,
 ];
@@ -285,7 +285,7 @@ export const mockSurvey: TSurvey = {
       subheader: {
         default: "We appreciate your feedback.",
       },
-      buttonLink: "https://formbricks.com/signup",
+      buttonLink: "https://formbricks.com",
       buttonLabel: { default: "Create your own Survey" },
     },
   ],
@@ -508,7 +508,7 @@ export const mockTranslatedEndings = [
 ];
 
 export const mockLegacyThankYouCard = {
-  buttonLink: "https://formbricks.com/signup",
+  buttonLink: "https://formbricks.com",
   enabled: true,
   headline: "Thank you!",
   subheader: "We appreciate your feedback.",

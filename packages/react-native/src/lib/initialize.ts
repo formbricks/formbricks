@@ -58,7 +58,7 @@ export const initialize = async (
     const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
 
     if (!res.ok) {
-      return err(res.error);
+      return err(res.error) as unknown as Result<void, MissingFieldError | NetworkError | MissingPersonError>;
     }
     updatedAttributes = res.data;
   }

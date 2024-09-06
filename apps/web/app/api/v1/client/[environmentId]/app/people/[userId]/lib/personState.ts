@@ -108,7 +108,9 @@ export const getPersonState = async ({
       const userState: TJsPersonState["data"] = {
         userId: person.userId,
         segments,
-        displays: personDisplays?.map((display) => display.surveyId) ?? [],
+        displays:
+          personDisplays?.map((display) => ({ surveyId: display.surveyId, createdAt: display.createdAt })) ??
+          [],
         responses: personResponses?.map((response) => response.surveyId) ?? [],
         attributes,
         lastDisplayAt:
@@ -119,7 +121,7 @@ export const getPersonState = async ({
 
       return userState;
     },
-    [`personState-${environmentId}-${userId}`],
+    [`personState-${environmentId}-${userId}-${device}`],
     {
       ...(IS_FORMBRICKS_CLOUD && { revalidate: 24 * 60 * 60 }),
       tags: [

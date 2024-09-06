@@ -44,11 +44,7 @@ export const GET = async (
         "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
       );
     } catch (err) {
-      return responses.internalServerErrorResponse(
-        err.message ?? "Unable to fetch person state",
-        true,
-        "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
-      );
+      return responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true);
     }
   } catch (error) {
     console.error(error);

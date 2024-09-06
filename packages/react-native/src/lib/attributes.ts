@@ -2,7 +2,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import type { TAttributes } from "@formbricks/types/attributes";
 import { type Result, err, ok } from "@formbricks/types/error-handlers";
-import type { NetworkError } from "../../../js-core/src/shared/errors";
+import type { NetworkError } from "@formbricks/types/errors";
 import { Logger } from "../../../js-core/src/shared/logger";
 import { appConfig } from "./config";
 
@@ -62,7 +62,7 @@ export const updateAttributes = async (
     code: "network_error",
     status: 500,
     message: `Error updating person with userId ${userId}`,
-    url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+    url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
     responseMessage: res.error.message,
   });
 };

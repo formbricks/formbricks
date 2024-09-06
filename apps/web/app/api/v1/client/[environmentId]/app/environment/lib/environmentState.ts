@@ -15,7 +15,6 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { productCache } from "@formbricks/lib/product/cache";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -31,12 +30,19 @@ import { TJsEnvironmentState } from "@formbricks/types/js";
 export const getEnvironmentState = async (environmentId: string): Promise<TJsEnvironmentState["data"]> =>
   cache(
     async () => {
-      const environment = await getEnvironment(environmentId);
-      if (!environment) {
-        throw new Error("Environment does not exist");
+      const [environment, organization, product] = await Promise.all([
+        getEnvironment(environmentId),
+        getOrganizationByEnvironmentId(environmentId),
+        getProductByEnvironmentId(environmentId),
+      ]);
+
+      if (!organization) {
+        throw new ResourceNotFoundError("organization", environmentId);
       }
 
-      const product = await getProductByEnvironmentId(environmentId);
+      if (!environment) {
+        throw new ResourceNotFoundError("environment", environmentId);
+      }
 
       if (!product) {
         throw new ResourceNotFoundError("product", environmentId);
@@ -51,13 +57,6 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
           updateEnvironment(environment.id, { appSetupCompleted: true }),
           capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
         ]);
-      }
-
-      // check organization subscriptions
-      const organization = await getOrganizationByEnvironmentId(environmentId);
-
-      if (!organization) {
-        throw new ResourceNotFoundError("Organization", environmentId);
       }
 
       // check if MAU limit is reached
@@ -96,18 +95,10 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
         (survey) => survey.type === "app" && survey.status === "inProgress"
       );
 
-      const updatedProduct: any = {
-        ...product,
-        brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
-        ...(product.styling.highlightBorderColor?.light && {
-          highlightBorderColor: product.styling.highlightBorderColor.light,
-        }),
-      };
-
       const state: TJsEnvironmentState["data"] = {
         surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
         actionClasses,
-        product: updatedProduct,
+        product,
       };
 
       return state;

@@ -148,7 +148,8 @@ const renderWidget = async (
         responseQueue.updateSurveyState(surveyState);
 
         const existingDisplays = appConfig.get().personState.data.displays;
-        const displays = existingDisplays ? [...existingDisplays, survey.id] : [survey.id];
+        const newDisplay = { surveyId: survey.id, createdAt: new Date() };
+        const displays = existingDisplays ? [...existingDisplays, newDisplay] : [newDisplay];
         const previousConfig = appConfig.get();
 
         const updatedPersonState: TJsPersonState = {

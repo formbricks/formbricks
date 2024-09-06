@@ -137,7 +137,8 @@ const renderWidget = async (
         const { id } = res.data;
 
         const existingDisplays = websiteConfig.get().personState.data.displays;
-        const displays = existingDisplays ? [...existingDisplays, survey.id] : [survey.id];
+        const newDisplay = { surveyId: survey.id, createdAt: new Date() };
+        const displays = existingDisplays ? [...existingDisplays, newDisplay] : [newDisplay];
         const previousConfig = websiteConfig.get();
 
         const updatedPersonState: TJsPersonState = {
@@ -149,7 +150,11 @@ const renderWidget = async (
           },
         };
 
-        const filteredSurveys = filterPublicSurveys(previousConfig.environmentState, updatedPersonState);
+        const filteredSurveys = filterPublicSurveys(
+          previousConfig.environmentState,
+          updatedPersonState,
+          "website"
+        );
 
         websiteConfig.update({
           ...previousConfig,
@@ -168,23 +173,7 @@ const renderWidget = async (
           throw new Error("No lastDisplay found");
         }
 
-        const responses = websiteConfig.get().personState.data.responses;
-        const newPersonState: TJsPersonState = {
-          ...websiteConfig.get().personState,
-          data: {
-            ...websiteConfig.get().personState.data,
-            responses: [...responses, surveyState.surveyId],
-          },
-        };
-
-        const filteredSurveys = filterPublicSurveys(websiteConfig.get().environmentState, newPersonState);
-
-        websiteConfig.update({
-          ...websiteConfig.get(),
-          environmentState: websiteConfig.get().environmentState,
-          personState: newPersonState,
-          filteredSurveys,
-        });
+        const isNewResponse = surveyState.responseId === null;
 
         responseQueue.updateSurveyState(surveyState);
 
@@ -200,6 +189,30 @@ const renderWidget = async (
           },
           hiddenFields,
         });
+
+        if (isNewResponse) {
+          const responses = websiteConfig.get().personState.data.responses;
+          const newPersonState: TJsPersonState = {
+            ...websiteConfig.get().personState,
+            data: {
+              ...websiteConfig.get().personState.data,
+              responses: [...responses, surveyState.surveyId],
+            },
+          };
+
+          const filteredSurveys = filterPublicSurveys(
+            websiteConfig.get().environmentState,
+            newPersonState,
+            "website"
+          );
+
+          websiteConfig.update({
+            ...websiteConfig.get(),
+            environmentState: websiteConfig.get().environmentState,
+            personState: newPersonState,
+            filteredSurveys,
+          });
+        }
       },
       onClose: closeSurvey,
       onFileUpload: async (
@@ -235,7 +248,7 @@ export const closeSurvey = async (): Promise<void> => {
   addWidgetContainer();
 
   const { environmentState, personState } = websiteConfig.get();
-  const filteredSurveys = filterPublicSurveys(environmentState, personState);
+  const filteredSurveys = filterPublicSurveys(environmentState, personState, "website");
   websiteConfig.update({
     ...websiteConfig.get(),
     environmentState,

@@ -1,4 +1,3 @@
-import React from "react";
 import { TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -17,7 +16,7 @@ export const RedirectUrlForm = ({ endingCard, updateSurvey }: RedirectUrlFormPro
           id="redirectUrl"
           name="redirectUrl"
           className="bg-white"
-          placeholder="https://formbricks.com/signup"
+          placeholder="https://formbricks.com"
           value={endingCard.url}
           onChange={(e) => updateSurvey({ url: e.target.value })}
         />

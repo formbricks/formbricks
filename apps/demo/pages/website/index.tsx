@@ -129,13 +129,6 @@ const AppPage = ({}) => {
               Reset
             </button>
 
-            <button
-              onClick={() => {
-                formbricks.track("triggeraction");
-              }}>
-              Clickme
-            </button>
-
             <p className="text-xs text-slate-700 dark:text-slate-300">
               If you made a change in Formbricks app and it does not seem to work, hit &apos;Reset&apos; and
               try again.
