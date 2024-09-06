@@ -1,6 +1,5 @@
 import { type TAttributes } from "@formbricks/types/attributes";
 import { type TJSAppConfig, type TJsAppConfigInput } from "@formbricks/types/js";
-import { updateAttributes } from "../../../js-core/src/app/lib/attributes";
 import { sync } from "../../../js-core/src/app/lib/sync";
 import {
   ErrorHandler,
@@ -14,6 +13,7 @@ import {
 } from "../../../js-core/src/shared/errors";
 import { Logger } from "../../../js-core/src/shared/logger";
 import { trackAction } from "./actions";
+import { updateAttributes } from "./attributes";
 import { appConfig } from "./config";
 
 let isInitialized = false;
@@ -55,12 +55,13 @@ export const initialize = async (
   // if userId and attributes are available, set them in backend
   let updatedAttributes: TAttributes | null = null;
   if (c.userId && c.attributes) {
-    const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes, appConfig);
+    const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
 
     if (!res.ok) {
-      return err(res.error);
+      return err(res.error) as unknown as Result<void, MissingFieldError | NetworkError | MissingPersonError>;
     }
-    updatedAttributes = res.value;
+
+    updatedAttributes = res.data;
   }
 
   let existingConfig: TJSAppConfig | undefined;

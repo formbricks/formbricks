@@ -4,13 +4,10 @@ import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "../..
 import { Logger } from "../../shared/logger";
 import { AppConfig } from "./config";
 
+const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
-export const updateAttribute = async (
-  key: string,
-  value: string,
-  appConfig: AppConfig
-): Promise<Result<void, NetworkError>> => {
+export const updateAttribute = async (key: string, value: string): Promise<Result<void, NetworkError>> => {
   const { apiHost, environmentId, userId } = appConfig.get();
 
   const api = new FormbricksAPI({
@@ -109,8 +106,7 @@ export const isExistingAttribute = (key: string, value: string, appConfig: AppCo
 
 export const setAttributeInApp = async (
   key: string,
-  value: any,
-  appConfig: AppConfig
+  value: any
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   if (key === "userId") {
     logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");
@@ -124,7 +120,7 @@ export const setAttributeInApp = async (
     return okVoid();
   }
 
-  const result = await updateAttribute(key, value.toString(), appConfig);
+  const result = await updateAttribute(key, value.toString());
 
   if (result.ok) {
     // udpdate attribute in config

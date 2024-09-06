@@ -204,6 +204,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     meta,
     singleUseId,
     ttc: initialTtc,
+    createdAt,
+    updatedAt,
   } = responseInput;
 
   try {
@@ -249,6 +251,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       ...(meta && ({ meta } as Prisma.JsonObject)),
       singleUseId,
       ttc: ttc,
+      createdAt,
+      updatedAt,
     };
 
     const responsePrisma = await prisma.response.create({
@@ -548,6 +552,9 @@ export const getResponseDownloadUrl = async (
       ...userAttributes,
     ];
 
+    if (survey.isVerifyEmailEnabled) {
+      headers.push("Verified Email");
+    }
     const jsonData = getResponsesJson(survey, responses, questions, userAttributes, hiddenFields);
 
     const fileName = getResponsesFileName(survey?.name || "", format);
@@ -758,6 +765,40 @@ export const getResponseCountBySurveyId = reactCache(
         }
       },
       [`getResponseCountBySurveyId-${surveyId}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [responseCache.tag.bySurveyId(surveyId)],
+      }
+    )()
+);
+
+export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
+  (surveyId: string, email: string): Promise<boolean> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId], [email, ZString]);
+
+        try {
+          const response = await prisma.response.findFirst({
+            where: {
+              surveyId,
+              data: {
+                path: ["verifiedEmail"],
+                equals: email,
+              },
+            },
+            select: { id: true },
+          });
+
+          return !!response;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getIfResponseWithSurveyIdAndEmailExist-${surveyId}-${email}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }

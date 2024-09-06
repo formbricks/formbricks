@@ -76,6 +76,7 @@ export const selectSurvey = {
   displayPercentage: true,
   autoComplete: true,
   isVerifyEmailEnabled: true,
+  isSingleResponsePerEmailEnabled: true,
   redirectUrl: true,
   productOverwrites: true,
   styling: true,
