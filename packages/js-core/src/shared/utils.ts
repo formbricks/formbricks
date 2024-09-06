@@ -184,7 +184,7 @@ export const filterSurveys = (
         }
 
         // Check if survey response exists, if so, stop here
-        if (responses.filter((surveyId) => surveyId === survey.id)) {
+        if (responses.filter((surveyId) => surveyId === survey.id).length) {
           return false;
         }
 
