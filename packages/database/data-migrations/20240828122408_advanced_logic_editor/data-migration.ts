@@ -213,7 +213,15 @@ function convertLogic(
     return undefined;
   }
 
-  const actionTarget = oldLogic.destination === "end" ? surveyEndings[0].id : oldLogic.destination;
+  let actionTarget = oldLogic.destination;
+
+  if (actionTarget === "end") {
+    if (surveyEndings.length > 0) {
+      actionTarget = surveyEndings[0].id;
+    } else {
+      return undefined;
+    }
+  }
 
   const action: TAction = {
     id: createId(),

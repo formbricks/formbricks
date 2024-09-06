@@ -232,7 +232,7 @@ export const generateColumns = (
         </div>
       ),
       cell: ({ row }) => {
-        const variableResponse = row.original.responseData[variable.id];
+        const variableResponse = row.original.variables[variable.id];
         if (typeof variableResponse === "string" || typeof variableResponse === "number") {
           return <div className="text-slate-900">{variableResponse}</div>;
         }

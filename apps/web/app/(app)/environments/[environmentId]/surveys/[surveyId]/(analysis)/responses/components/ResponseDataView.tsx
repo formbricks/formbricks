@@ -53,10 +53,6 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
     responseData[fieldId] = response.data[fieldId];
   });
 
-  survey.variables.forEach((variable) => {
-    responseData[variable.id] = response.variables[variable.id];
-  });
-
   return responseData;
 };
 
@@ -68,6 +64,9 @@ const mapResponsesToTableData = (responses: TResponse[], survey: TSurvey): TResp
     responseId: response.id,
     tags: response.tags,
     notes: response.notes,
+    variables: survey.variables.reduce((acc, curr) => {
+      return Object.assign(acc, { [curr.id]: response.variables[curr.id] });
+    }, {}),
     verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
     language: response.language,
   }));
@@ -86,9 +85,8 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   updateResponse,
   isFetchingFirstPage,
 }) => {
-  console.log({ responses, survey });
   const data = mapResponsesToTableData(responses, survey);
-  console.log({ data });
+
   return (
     <div className="w-full">
       <ResponseTable
