@@ -227,13 +227,27 @@ export const getImagesFromUnsplashAction = actionClient
     });
   });
 
+const isValidUnsplashUrl = (url: string): boolean => {
+  const ALLOWED_DOMAINS: string[] = ["api.unsplash.com"];
+  try {
+    const parsedUrl = new URL(url);
+    return ["http:", "https:"].includes(parsedUrl.protocol) && ALLOWED_DOMAINS.includes(parsedUrl.hostname);
+  } catch {
+    return false;
+  }
+};
+
 const ZTriggerDownloadUnsplashImageAction = z.object({
-  downloadUrl: z.string(),
+  downloadUrl: z.string().url(),
 });
 
 export const triggerDownloadUnsplashImageAction = actionClient
   .schema(ZTriggerDownloadUnsplashImageAction)
   .action(async ({ parsedInput }) => {
+    if (!isValidUnsplashUrl(parsedInput.downloadUrl)) {
+      throw new Error("Invalid Unsplash URL");
+    }
+
     const response = await fetch(`${parsedInput.downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
