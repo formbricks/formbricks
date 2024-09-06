@@ -4,6 +4,7 @@ import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
 import { ColumnDef } from "@tanstack/react-table";
 import { EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { processResponseData } from "@formbricks/lib/responses";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
@@ -182,6 +183,17 @@ export const generateColumns = (
     },
   };
 
+  const personColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "personId",
+    header: "Person",
+    cell: ({ row }) => {
+      const personId = row.original.person
+        ? getPersonIdentifier(row.original.person, row.original.personAttributes)
+        : "Anonymous";
+      return <p className="truncate text-slate-900">{personId}</p>;
+    },
+  };
+
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
     size: 200,
@@ -259,6 +271,7 @@ export const generateColumns = (
   // Combine the selection column with the dynamic question columns
   return [
     ...(isViewer ? [] : [selectionColumn]),
+    personColumn,
     dateColumn,
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
