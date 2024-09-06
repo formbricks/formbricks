@@ -335,7 +335,7 @@ export function AdvancedLogicEditorConditions({
 
   return (
     <div className="flex flex-col gap-y-2">
-      {conditions.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
+      {conditions?.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
     </div>
   );
 }

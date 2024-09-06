@@ -89,7 +89,7 @@ export const QuestionsView = ({
     const updateConditions = (conditions: TConditionGroup): TConditionGroup => {
       return {
         ...conditions,
-        conditions: conditions.conditions.map((condition) => {
+        conditions: conditions?.conditions.map((condition) => {
           if (isConditionsGroup(condition)) {
             return updateConditions(condition);
           } else {

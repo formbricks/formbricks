@@ -1278,7 +1278,6 @@ const validateLogic = (
       ...validateActions(survey, questionIndex, logicIndex, logicItem.actions),
     ];
   });
-
   return logicIssues.flat();
 };
 
