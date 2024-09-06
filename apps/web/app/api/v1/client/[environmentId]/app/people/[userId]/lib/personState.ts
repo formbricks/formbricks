@@ -121,7 +121,7 @@ export const getPersonState = async ({
 
       return userState;
     },
-    [`personState-${environmentId}-${userId}`],
+    [`personState-${environmentId}-${userId}-${device}`],
     {
       ...(IS_FORMBRICKS_CLOUD && { revalidate: 24 * 60 * 60 }),
       tags: [
