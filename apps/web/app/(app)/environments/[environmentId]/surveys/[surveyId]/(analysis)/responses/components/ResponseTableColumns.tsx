@@ -2,7 +2,8 @@
 
 import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
 import { ColumnDef } from "@tanstack/react-table";
-import { EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
+import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
+import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { processResponseData } from "@formbricks/lib/responses";
@@ -12,6 +13,7 @@ import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { ResponseBadges } from "@formbricks/ui/ResponseBadges";
 import { RenderResponse } from "@formbricks/ui/SingleResponseCard/components/RenderResponse";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 const getAddressFieldLabel = (field: string) => {
   switch (field) {
@@ -185,7 +187,35 @@ export const generateColumns = (
 
   const personColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "personId",
-    header: "Person",
+    header: () => (
+      <div className="flex items-center gap-x-1.5">
+        Person
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger>
+              <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="font-normal">
+              How to identify users for{" "}
+              <Link
+                className="underline underline-offset-2 hover:text-slate-900"
+                href="https://formbricks.com/docs/link-surveys/user-identification"
+                target="_blank">
+                link surveys
+              </Link>{" "}
+              or{" "}
+              <Link
+                className="underline underline-offset-2 hover:text-slate-900"
+                href="https://formbricks.com/docs/app-surveys/user-identification"
+                target="_blank">
+                in-app surveys.
+              </Link>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    ),
+    size: 275,
     cell: ({ row }) => {
       const personId = row.original.person
         ? getPersonIdentifier(row.original.person, row.original.personAttributes)
