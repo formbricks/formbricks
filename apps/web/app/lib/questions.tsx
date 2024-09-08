@@ -50,7 +50,6 @@ export const questionTypes: TQuestion[] = [
     icon: MessageSquareTextIcon,
     preset: {
       headline: { default: "Who let the dogs out?" },
-      subheader: { default: "Who? Who? Who?" },
       placeholder: { default: "Type your answer here..." },
       longAnswer: true,
       inputType: "text",
@@ -63,7 +62,6 @@ export const questionTypes: TQuestion[] = [
     icon: Rows3Icon,
     preset: {
       headline: { default: "What do you do?" },
-      subheader: { default: "Can't do both." },
       choices: [
         { id: createId(), label: { default: "Eat the cake 🍰" } },
         { id: createId(), label: { default: "Have the cake 🎂" } },
@@ -93,7 +91,6 @@ export const questionTypes: TQuestion[] = [
     icon: ImageIcon,
     preset: {
       headline: { default: "Which is the cutest puppy?" },
-      subheader: { default: "You can also pick both." },
       allowMulti: true,
       choices: [
         {
@@ -114,7 +111,6 @@ export const questionTypes: TQuestion[] = [
     icon: StarIcon,
     preset: {
       headline: { default: "How would you rate {{productName}}" },
-      subheader: { default: "Don't worry, be honest." },
       scale: "star",
       range: 5,
       lowerLabel: { default: "Not good" },
@@ -155,8 +151,7 @@ export const questionTypes: TQuestion[] = [
     icon: Grid3X3Icon,
     preset: {
       headline: { default: "How much do you love these flowers?" },
-      subheader: { default: "0: Not at all, 3: Love it" },
-      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
+      rows: [{ default: "Roses" }, { default: "Trees" }, { default: "Ocean" }],
       columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
     } as Partial<TSurveyMatrixQuestion>,
   },
