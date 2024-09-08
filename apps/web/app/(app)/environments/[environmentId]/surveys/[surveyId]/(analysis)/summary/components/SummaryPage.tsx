@@ -67,6 +67,7 @@ export const SummaryPage = ({
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -104,28 +105,39 @@ export const SummaryPage = ({
     });
   };
 
-  const handleInitialData = async () => {
+  const handleInitialData = async (isInitialLoad = false) => {
+    if (isInitialLoad) {
+      setIsLoading(true);
+    }
+
     try {
-      const updatedResponseCountData = await getResponseCount();
-      const updatedSurveySummary = await getSummary();
+      const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
+        getResponseCount(),
+        getSummary(),
+      ]);
 
       const responseCount = updatedResponseCountData?.data ?? 0;
       const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
 
+      // Update the state with new data
       setResponseCount(responseCount);
       setSurveySummary(surveySummary);
     } catch (error) {
       console.error(error);
+    } finally {
+      if (isInitialLoad) {
+        setIsLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    handleInitialData();
+    handleInitialData(true);
   }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
 
   useIntervalWhenFocused(
     () => {
-      handleInitialData();
+      handleInitialData(false);
     },
     10000,
     !isShareEmbedModalOpen,
@@ -148,6 +160,7 @@ export const SummaryPage = ({
         surveySummary={surveySummary.meta}
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
+        isLoading={isLoading}
       />
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <div className="flex gap-1.5">
