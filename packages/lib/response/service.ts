@@ -699,7 +699,9 @@ export const updateResponse = async (
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
   const fileUploadQuestions = new Set(
-    survey.questions.filter((q) => q.type === TSurveyQuestionTypeEnum.FileUpload).map((q) => q.id)
+    survey.questions
+      .filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload)
+      .map((q) => q.id)
   );
 
   const fileUrls = Object.entries(response.data)
