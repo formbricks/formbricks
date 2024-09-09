@@ -16,7 +16,7 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
@@ -28,7 +28,7 @@ import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
-import { putFile } from "../storage/service";
+import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
@@ -697,6 +697,35 @@ export const updateResponse = async (
   }
 };
 
+const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
+  const fileUploadQuestions = new Set(
+    survey.questions
+      .filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload)
+      .map((q) => q.id)
+  );
+
+  const fileUrls = Object.entries(response.data)
+    .filter(([questionId]) => fileUploadQuestions.has(questionId))
+    .flatMap(([, questionResponse]) => questionResponse as string[]);
+
+  const deletionPromises = fileUrls.map(async (fileUrl) => {
+    try {
+      const { pathname } = new URL(fileUrl);
+      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+
+      if (!environmentId || !accessType || !fileName) {
+        throw new Error(`Invalid file path: ${pathname}`);
+      }
+
+      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+    } catch (error) {
+      console.error(`Failed to delete file ${fileUrl}:`, error);
+    }
+  });
+
+  await Promise.all(deletionPromises);
+};
+
 export const deleteResponse = async (responseId: string): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
@@ -717,6 +746,16 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     deleteDisplayByResponseId(responseId, response.surveyId);
 
     const survey = await getSurvey(response.surveyId);
+
+    if (survey) {
+      await findAndDeleteUploadedFilesInResponse(
+        {
+          ...responsePrisma,
+          tags: responsePrisma.tags.map((tag) => tag.tag),
+        },
+        survey
+      );
+    }
 
     responseCache.revalidate({
       environmentId: survey?.environmentId,
