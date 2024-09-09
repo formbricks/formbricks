@@ -309,10 +309,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.openTextQuestion.question);
-    await page.getByPlaceholder("Your question here. Recall").press("Tab");
-    await page
-      .getByPlaceholder("Your description here. Recall")
-      .fill(surveys.germanCreate.openTextQuestion.description);
     await page.getByLabel("Placeholder").click();
     await page.getByLabel("Placeholder").fill(surveys.germanCreate.openTextQuestion.placeholder);
 
@@ -322,10 +318,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.singleSelectQuestion.question);
-    await page.getByPlaceholder("Your description here. Recall").click();
-    await page
-      .getByPlaceholder("Your description here. Recall")
-      .fill(surveys.germanCreate.singleSelectQuestion.description);
     await page.getByPlaceholder("Option 1").click();
     await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.singleSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").click();
@@ -351,10 +343,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.pictureSelectQuestion.question);
-    await page.getByPlaceholder("Your description here. Recall").click();
-    await page
-      .getByPlaceholder("Your description here. Recall")
-      .fill(surveys.germanCreate.pictureSelectQuestion.description);
 
     // Fill Rating question in german
     await page.getByRole("main").getByText("Rating").click();
@@ -362,10 +350,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.ratingQuestion.question);
-    await page.getByPlaceholder("Your description here. Recall").click();
-    await page
-      .getByPlaceholder("Your description here. Recall")
-      .fill(surveys.germanCreate.ratingQuestion.description);
     await page.getByPlaceholder("Not good").click();
     await page.getByPlaceholder("Not good").fill(surveys.germanCreate.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").click();
@@ -398,10 +382,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("main").getByText("Matrix").click();
     await page.getByPlaceholder("Your question here. Recall").click();
     await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.matrix.question);
-    await page.getByPlaceholder("Your description here. Recall").click();
-    await page
-      .getByPlaceholder("Your description here. Recall")
-      .fill(surveys.germanCreate.matrix.description);
     await page.locator("#row-0").click();
     await page.locator("#row-0").fill(surveys.germanCreate.matrix.rows[0]);
     await page.locator("#row-1").click();
