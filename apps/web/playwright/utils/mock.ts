@@ -150,7 +150,7 @@ export const surveys = {
     matrix: {
       question: "How much do you love these flowers?",
       description: "0: Not at all, 3: Love it",
-      rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
+      rows: ["Roses", "Trees", "Ocean"],
       columns: ["0", "1", "2", "3"],
     },
     address: {
