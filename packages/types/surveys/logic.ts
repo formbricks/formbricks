@@ -129,7 +129,7 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
       type: z.literal("static"),
       value: z
         .string({ message: "Value must be a string for text variable" })
-        .min(1, "please enter a value in logic field"),
+        .min(1, "Please enter a value in logic field"),
     }),
     ZDynamicLogicFieldValue,
   ]),

@@ -1,6 +1,14 @@
 import { AdvancedLogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditor";
 import { createId } from "@paralleldrive/cuid2";
-import { ArrowDownIcon, ArrowUpIcon, CopyIcon, MoreVerticalIcon, SplitIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CopyIcon,
+  MoreVerticalIcon,
+  PlusIcon,
+  SplitIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/survey/logic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -171,10 +179,9 @@ export function ConditionalLogic({
           name="logicJumps"
           size="sm"
           variant="secondary"
-          StartIcon={SplitIcon}
-          startIconClassName="rotate-90"
+          EndIcon={PlusIcon}
           onClick={() => addLogic()}>
-          Add Logic
+          Add logic
         </Button>
       </div>
     </div>
