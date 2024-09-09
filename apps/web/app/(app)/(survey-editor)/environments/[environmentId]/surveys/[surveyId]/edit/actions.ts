@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
+import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromProductId,
@@ -228,10 +228,9 @@ export const getImagesFromUnsplashAction = actionClient
   });
 
 const isValidUnsplashUrl = (url: string): boolean => {
-  const ALLOWED_DOMAINS: string[] = ["api.unsplash.com"];
   try {
     const parsedUrl = new URL(url);
-    return ["http:", "https:"].includes(parsedUrl.protocol) && ALLOWED_DOMAINS.includes(parsedUrl.hostname);
+    return parsedUrl.protocol === "https:" && UNSPLASH_ALLOWED_DOMAINS.includes(parsedUrl.hostname);
   } catch {
     return false;
   }
