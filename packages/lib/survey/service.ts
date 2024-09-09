@@ -571,7 +571,57 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         id: segment.id,
         environmentId: segment.environmentId,
       });
+    } else if (type === "app") {
+      if (!currentSurvey.segment) {
+        const existingPrivateSegment = await prisma.segment.findFirst({
+          where: {
+            title: surveyId,
+            isPrivate: true,
+            environmentId,
+          },
+        });
+
+        if (existingPrivateSegment) {
+          await prisma.survey.update({
+            where: {
+              id: surveyId,
+            },
+            data: {
+              segment: {
+                connect: {
+                  id: existingPrivateSegment.id,
+                },
+              },
+            },
+          });
+        } else {
+          await prisma.survey.update({
+            where: {
+              id: surveyId,
+            },
+            data: {
+              segment: {
+                create: {
+                  title: surveyId,
+                  isPrivate: true,
+                  filters: [],
+                  environment: {
+                    connect: {
+                      id: environmentId,
+                    },
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        segmentCache.revalidate({
+          environmentId,
+        });
+      }
     }
+
     data.questions = questions.map((question) => {
       const { isDraft, ...rest } = question;
       return rest;
