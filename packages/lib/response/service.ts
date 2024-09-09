@@ -715,7 +715,7 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
         throw new Error(`Invalid file path: ${pathname}`);
       }
 
-      await deleteFile(environmentId, accessType as "private" | "public", fileName);
+      return deleteFile(environmentId, accessType as "private" | "public", fileName);
     } catch (error) {
       console.error(`Failed to delete file ${fileUrl}:`, error);
     }
