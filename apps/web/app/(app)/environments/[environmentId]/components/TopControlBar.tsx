@@ -36,6 +36,7 @@ export const TopControlBar = ({
             environments={environments}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             membershipRole={membershipRole}
+            currentProductChannel={currentProductChannel}
           />
         </div>
       </div>

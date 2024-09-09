@@ -319,14 +319,15 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail          Json? // deprecated
-  isVerifyEmailEnabled Boolean          @default(false)
-  pin                  String?
-  resultShareKey       String?          @unique
-  displayPercentage    Decimal?
-  languages            SurveyLanguage[]
-  showLanguageSwitch   Boolean?
-  documents            Document[]
+  verifyEmail                     Json? // deprecated
+  isVerifyEmailEnabled            Boolean          @default(false)
+  isSingleResponsePerEmailEnabled Boolean          @default(false)
+  pin                             String?
+  resultShareKey                  String?          @unique
+  displayPercentage               Decimal?
+  languages                       SurveyLanguage[]
+  showLanguageSwitch              Boolean?
+  documents                       Document[]
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

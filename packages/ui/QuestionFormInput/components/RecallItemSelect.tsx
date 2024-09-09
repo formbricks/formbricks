@@ -6,6 +6,7 @@ import {
   FileTextIcon,
   HomeIcon,
   ListIcon,
+  ListOrderedIcon,
   MessageSquareTextIcon,
   PhoneIcon,
   PresentationIcon,
@@ -34,6 +35,7 @@ const questionIconMapping = {
   date: CalendarDaysIcon,
   cal: PhoneIcon,
   address: HomeIcon,
+  ranking: ListOrderedIcon,
 };
 
 interface RecallItemSelectProps {

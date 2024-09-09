@@ -7,6 +7,7 @@ import {
   HomeIcon,
   ImageIcon,
   ListIcon,
+  ListOrderedIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
   PhoneIcon,
@@ -28,6 +29,7 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionTypeEnum,
+  TSurveyRankingQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -48,7 +50,6 @@ export const questionTypes: TQuestion[] = [
     icon: MessageSquareTextIcon,
     preset: {
       headline: { default: "Who let the dogs out?" },
-      subheader: { default: "Who? Who? Who?" },
       placeholder: { default: "Type your answer here..." },
       longAnswer: true,
       inputType: "text",
@@ -61,7 +62,6 @@ export const questionTypes: TQuestion[] = [
     icon: Rows3Icon,
     preset: {
       headline: { default: "What do you do?" },
-      subheader: { default: "Can't do both." },
       choices: [
         { id: createId(), label: { default: "Eat the cake 🍰" } },
         { id: createId(), label: { default: "Have the cake 🎂" } },
@@ -91,7 +91,6 @@ export const questionTypes: TQuestion[] = [
     icon: ImageIcon,
     preset: {
       headline: { default: "Which is the cutest puppy?" },
-      subheader: { default: "You can also pick both." },
       allowMulti: true,
       choices: [
         {
@@ -112,7 +111,6 @@ export const questionTypes: TQuestion[] = [
     icon: StarIcon,
     preset: {
       headline: { default: "How would you rate {{productName}}" },
-      subheader: { default: "Don't worry, be honest." },
       scale: "star",
       range: 5,
       lowerLabel: { default: "Not good" },
@@ -131,8 +129,35 @@ export const questionTypes: TQuestion[] = [
     } as Partial<TSurveyNPSQuestion>,
   },
   {
+    id: QuestionId.Ranking,
+    label: "Ranking",
+    description: "Allow respondents to rank items",
+    icon: ListOrderedIcon,
+    preset: {
+      headline: { default: "What is most important for you in life?" },
+      choices: [
+        { id: createId(), label: { default: "Work" } },
+        { id: createId(), label: { default: "Money" } },
+        { id: createId(), label: { default: "Travel" } },
+        { id: createId(), label: { default: "Family" } },
+        { id: createId(), label: { default: "Friends" } },
+      ],
+    } as Partial<TSurveyRankingQuestion>,
+  },
+  {
+    id: QuestionId.Matrix,
+    label: "Matrix",
+    description: "This is a matrix question",
+    icon: Grid3X3Icon,
+    preset: {
+      headline: { default: "How much do you love these flowers?" },
+      rows: [{ default: "Roses" }, { default: "Trees" }, { default: "Ocean" }],
+      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
+    } as Partial<TSurveyMatrixQuestion>,
+  },
+  {
     id: QuestionId.CTA,
-    label: "Call-to-Action (Statement)",
+    label: "Statement (Call to Action)",
     description: "Prompt respondents to perform an action",
     icon: MousePointerClickIcon,
     preset: {
@@ -158,16 +183,6 @@ export const questionTypes: TQuestion[] = [
     } as Partial<TSurveyConsentQuestion>,
   },
   {
-    id: QuestionId.Date,
-    label: "Date",
-    description: "Ask your users to select a date",
-    icon: CalendarDaysIcon,
-    preset: {
-      headline: { default: "When is your birthday?" },
-      format: "M-d-y",
-    } as Partial<TSurveyDateQuestion>,
-  },
-  {
     id: QuestionId.FileUpload,
     label: "File Upload",
     description: "Allow respondents to upload a file",
@@ -178,6 +193,16 @@ export const questionTypes: TQuestion[] = [
     } as Partial<TSurveyFileUploadQuestion>,
   },
   {
+    id: QuestionId.Date,
+    label: "Date",
+    description: "Ask your users to select a date",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: { default: "When is your birthday?" },
+      format: "M-d-y",
+    } as Partial<TSurveyDateQuestion>,
+  },
+  {
     id: QuestionId.Cal,
     label: "Schedule a meeting",
     description: "Allow respondents to schedule a meet",
@@ -186,18 +211,6 @@ export const questionTypes: TQuestion[] = [
       headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
     } as Partial<TSurveyCalQuestion>,
-  },
-  {
-    id: QuestionId.Matrix,
-    label: "Matrix",
-    description: "This is a matrix question",
-    icon: Grid3X3Icon,
-    preset: {
-      headline: { default: "How much do you love these flowers?" },
-      subheader: { default: "0: Not at all, 3: Love it" },
-      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
-      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
-    } as Partial<TSurveyMatrixQuestion>,
   },
   {
     id: QuestionId.Address,

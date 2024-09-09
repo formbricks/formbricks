@@ -109,7 +109,7 @@ export const PreviewSurvey = ({
     },
     shrink: {
       display: "relative",
-      width: ["83.33%"],
+      width: ["95%"],
       height: ["95%"],
     },
   };
@@ -219,10 +219,9 @@ export const PreviewSurvey = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-items-center" id="survey-preview">
+    <div className="flex h-full w-full flex-col items-center justify-items-center py-4" id="survey-preview">
       <motion.div
         variants={previewParentContainerVariant}
-        className="fixed hidden h-[95%] w-5/6"
         animate={isFullScreenPreview ? "expanded" : "shrink"}
       />
       <motion.div
@@ -235,7 +234,7 @@ export const PreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -295,12 +294,25 @@ export const PreviewSurvey = ({
           </>
         )}
         {previewMode === "desktop" && (
-          <div className="flex h-full w-5/6 flex-1 flex-col">
+          <div className="flex h-full flex-1 flex-col">
             <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
               <div className="ml-6 flex space-x-2">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>
                 <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+                <button
+                  className="h-3 w-3 cursor-pointer rounded-full bg-emerald-500"
+                  onClick={() => {
+                    if (isFullScreenPreview) {
+                      setShrink(true);
+                      setPreviewPosition("relative");
+                      setTimeout(() => setIsFullScreenPreview(false), 300);
+                    } else {
+                      setShrink(false);
+                      setIsFullScreenPreview(true);
+                      setTimeout(() => setPreviewPosition("fixed"), 300);
+                    }
+                  }}
+                  aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
@@ -308,7 +320,7 @@ export const PreviewSurvey = ({
                 <div className="flex items-center">
                   {isFullScreenPreview ? (
                     <ShrinkIcon
-                      className="mr-2 h-4 w-4 cursor-pointer"
+                      className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                       onClick={() => {
                         setShrink(true);
                         setPreviewPosition("relative");
@@ -317,7 +329,7 @@ export const PreviewSurvey = ({
                     />
                   ) : (
                     <ExpandIcon
-                      className="mr-2 h-4 w-4 cursor-pointer"
+                      className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                       onClick={() => {
                         setShrink(false);
                         setIsFullScreenPreview(true);

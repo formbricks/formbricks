@@ -55,11 +55,11 @@ export const surveyCache = {
     }
 
     if (segmentId) {
-      revalidateTag(this.tag.byResultShareKey(resultShareKey));
+      revalidateTag(this.tag.bySegmentId(segmentId));
     }
 
     if (resultShareKey) {
-      revalidateTag(this.tag.bySegmentId(segmentId));
+      revalidateTag(this.tag.byResultShareKey(resultShareKey));
     }
   },
 };

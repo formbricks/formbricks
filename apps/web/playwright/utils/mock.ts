@@ -150,12 +150,16 @@ export const surveys = {
     matrix: {
       question: "How much do you love these flowers?",
       description: "0: Not at all, 3: Love it",
-      rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
+      rows: ["Roses", "Trees", "Ocean"],
       columns: ["0", "1", "2", "3"],
     },
     address: {
       question: "Where do you live?",
       placeholder: "Address Line 1",
+    },
+    ranking: {
+      question: "What is most important for you in life?",
+      choices: ["Work", "Money", "Travel", "Family", "Friends"],
     },
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
@@ -222,6 +226,10 @@ export const surveys = {
     },
     addressQuestion: {
       question: "Wo wohnst du ?",
+    },
+    ranking: {
+      question: "Was ist für Sie im Leben am wichtigsten?",
+      choices: ["Arbeit", "Geld", "Reisen", "Familie", "Freunde"],
     },
     thankYouCard: {
       headline: "Dies ist meine Dankeskarte Überschrift!", // German translation

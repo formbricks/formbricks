@@ -16,7 +16,7 @@ export const SurveyLoadingAnimation = ({
 }: SurveyLoadingAnimationProps) => {
   const [isHidden, setIsHidden] = useState(false);
   const [minTimePassed, setMinTimePassed] = useState(false);
-  const [isMediaLoaded, setIsMediaLoaded] = useState(false); // Tracks if all media (images, iframes) are fully loaded
+  const [isMediaLoaded, setIsMediaLoaded] = useState(false); // Tracks if all media are fully loaded
   const [isSurveyPackageLoaded, setIsSurveyPackageLoaded] = useState(false); // Tracks if the survey package has been loaded into the DOM
   const isReadyToTransition = isMediaLoaded && minTimePassed && isBackgroundLoaded;
   const cardId = survey.welcomeCard.enabled ? `questionCard--1` : `questionCard-0`;
@@ -25,32 +25,42 @@ export const SurveyLoadingAnimation = ({
   const checkMediaLoaded = useCallback(() => {
     const cardElement = document.getElementById(cardId);
     const images = cardElement ? Array.from(cardElement.getElementsByTagName("img")) : [];
-    const iframes = cardElement ? Array.from(cardElement.getElementsByTagName("iframe")) : [];
 
     const allImagesLoaded = images.every((img) => img.complete && img.naturalHeight !== 0);
-    const allIframesLoaded = iframes.every((iframe) => {
-      const contentWindow = iframe.contentWindow;
-      return contentWindow && contentWindow.document.readyState === "complete";
-    });
 
-    if (allImagesLoaded && allIframesLoaded) {
+    if (allImagesLoaded) {
       setIsMediaLoaded(true);
     }
   }, [cardId]);
 
-  // Effect to monitor when the survey package is loaded and media elements are fully loaded
   useEffect(() => {
-    if (!isSurveyPackageLoaded) return; // Exit early if the survey package is not yet loaded
+    if (!isSurveyPackageLoaded) return;
 
-    checkMediaLoaded(); // Initial check when the survey package is loaded
+    checkMediaLoaded();
 
-    // Add event listeners to detect when individual media elements finish loading
     const mediaElements = document.querySelectorAll(`#${cardId} img, #${cardId} iframe`);
-    mediaElements.forEach((element) => element.addEventListener("load", checkMediaLoaded));
+    const handleLoad = () => checkMediaLoaded();
+    const handleError = () => {
+      console.error("Media failed to load");
+      setIsMediaLoaded(true);
+    };
+
+    mediaElements.forEach((element) => {
+      element.addEventListener("load", handleLoad);
+      element.addEventListener("error", handleError);
+    });
+
+    // Set a 3-second timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setIsMediaLoaded(true);
+    }, 3000);
 
     return () => {
-      // Cleanup event listeners when the component unmounts or dependencies change
-      mediaElements.forEach((element) => element.removeEventListener("load", checkMediaLoaded));
+      mediaElements.forEach((element) => {
+        element.removeEventListener("load", handleLoad);
+        element.removeEventListener("error", handleError);
+      });
+      clearTimeout(timeoutId);
     };
   }, [isSurveyPackageLoaded, checkMediaLoaded, cardId]);
 
@@ -59,7 +69,7 @@ export const SurveyLoadingAnimation = ({
     if (isMediaLoaded && minTimePassed) {
       const hideTimer = setTimeout(() => {
         setIsHidden(true);
-      }, 1500);
+      }, 500);
 
       return () => clearTimeout(hideTimer);
     } else {
@@ -71,7 +81,7 @@ export const SurveyLoadingAnimation = ({
     // Ensure the animation is shown for at least 1.5 seconds
     const minTimeTimer = setTimeout(() => {
       setMinTimePassed(true);
-    }, 1500);
+    }, 500);
 
     // Observe the DOM for when the survey package (child elements) is added to the target node
     const observer = new MutationObserver((mutations) => {

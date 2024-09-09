@@ -16,6 +16,7 @@ import { MultipleChoiceSummary } from "@/app/(app)/environments/[environmentId]/
 import { NPSSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/NPSSummary";
 import { OpenTextSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/OpenTextSummary";
 import { PictureChoiceSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
+import { RankingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RankingSummary";
 import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
 import { constructToastMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
@@ -255,6 +256,17 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
+              />
+            );
+          }
+          if (questionSummary.type === TSurveyQuestionTypeEnum.Ranking) {
+            return (
+              <RankingSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                surveyType={survey.type}
                 survey={survey}
                 attributeClasses={attributeClasses}
               />

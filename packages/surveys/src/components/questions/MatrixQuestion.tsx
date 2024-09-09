@@ -120,7 +120,7 @@ export const MatrixQuestion = ({
                   // Table rows
                   <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
                     <td
-                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-px-4 fb-py-2"
+                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
                       dir="auto">
                       {getLocalizedValue(row, languageCode)}
                     </td>

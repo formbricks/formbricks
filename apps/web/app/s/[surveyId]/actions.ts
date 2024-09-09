@@ -5,6 +5,7 @@ import { z } from "zod";
 import { sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
 import { actionClient } from "@formbricks/lib/actionClient";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
+import { getIfResponseWithSurveyIdAndEmailExist } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
@@ -41,4 +42,15 @@ export const validateSurveyPinAction = actionClient
     if (originalPin !== parsedInput.pin) return { error: TSurveyPinValidationResponseError.INCORRECT_PIN };
 
     return { survey };
+  });
+
+const ZGetIfResponseWithSurveyIdAndEmailExistAction = z.object({
+  surveyId: ZId,
+  email: z.string(),
+});
+
+export const getIfResponseWithSurveyIdAndEmailExistAction = actionClient
+  .schema(ZGetIfResponseWithSurveyIdAndEmailExistAction)
+  .action(async ({ parsedInput }) => {
+    return await getIfResponseWithSurveyIdAndEmailExist(parsedInput.surveyId, parsedInput.email);
   });
