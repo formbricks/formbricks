@@ -573,34 +573,19 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       });
     } else if (type === "app") {
       if (!currentSurvey.segment) {
-        const existingPrivateSegment = await prisma.segment.findFirst({
+        await prisma.survey.update({
           where: {
-            title: surveyId,
-            isPrivate: true,
-            environmentId,
+            id: surveyId,
           },
-        });
-
-        if (existingPrivateSegment) {
-          await prisma.survey.update({
-            where: {
-              id: surveyId,
-            },
-            data: {
-              segment: {
-                connect: {
-                  id: existingPrivateSegment.id,
+          data: {
+            segment: {
+              connectOrCreate: {
+                where: {
+                  environmentId_title: {
+                    environmentId,
+                    title: surveyId,
+                  },
                 },
-              },
-            },
-          });
-        } else {
-          await prisma.survey.update({
-            where: {
-              id: surveyId,
-            },
-            data: {
-              segment: {
                 create: {
                   title: surveyId,
                   isPrivate: true,
@@ -613,8 +598,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
                 },
               },
             },
-          });
-        }
+          },
+        });
 
         segmentCache.revalidate({
           environmentId,
