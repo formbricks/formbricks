@@ -209,16 +209,24 @@ export const getMatchValueProps = (
 
   if (condition.leftOperand.type === "question") {
     if (selectedQuestion?.type === TSurveyQuestionTypeEnum.OpenText) {
-      const allowedQuestions = questions.filter((question) =>
-        [
+      const allowedQuestions = questions.filter((question) => {
+        const allowedQuestionTypes = [
           TSurveyQuestionTypeEnum.OpenText,
           TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          TSurveyQuestionTypeEnum.MultipleChoiceMulti,
           TSurveyQuestionTypeEnum.Rating,
           TSurveyQuestionTypeEnum.NPS,
-          TSurveyQuestionTypeEnum.Date,
-        ].includes(question.type)
-      );
+        ];
+
+        if (selectedQuestion.inputType !== "number") {
+          allowedQuestionTypes.push(TSurveyQuestionTypeEnum.Date);
+        }
+
+        if (["equals", "doesNotEqual"].includes(condition.operator)) {
+          allowedQuestionTypes.push(TSurveyQuestionTypeEnum.MultipleChoiceMulti);
+        }
+
+        return allowedQuestionTypes.includes(question.type);
+      });
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
@@ -231,16 +239,20 @@ export const getMatchValueProps = (
         };
       });
 
-      const variableOptions = variables.map((variable) => {
-        return {
-          icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-          label: variable.name,
-          value: variable.id,
-          meta: {
-            type: "variable",
-          },
-        };
-      });
+      const variableOptions = variables
+        .filter((variable) =>
+          selectedQuestion.inputType !== "number" ? variable.type === "text" : variable.type === "number"
+        )
+        .map((variable) => {
+          return {
+            icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
+            label: variable.name,
+            value: variable.id,
+            meta: {
+              type: "variable",
+            },
+          };
+        });
 
       const hiddenFieldsOptions = hiddenFields.map((field) => {
         return {
@@ -414,8 +426,8 @@ export const getMatchValueProps = (
         options: groupedOptions,
       };
     } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.Date) {
-      const openTextQuestions = questions.filter(
-        (question) => question.type === TSurveyQuestionTypeEnum.OpenText
+      const openTextQuestions = questions.filter((question) =>
+        [TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.Date].includes(question.type)
       );
 
       const questionOptions = openTextQuestions.map((question) => {

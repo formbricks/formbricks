@@ -43,123 +43,216 @@ const evaluateSingleCondition = (
   condition: TSingleCondition,
   selectedLanguage: string
 ): boolean => {
-  const leftValue = getLeftOperandValue(
-    localSurvey,
-    data,
-    variablesData,
-    condition.leftOperand,
-    selectedLanguage
-  );
-  const rightValue = condition.rightOperand
-    ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
-    : undefined;
+  try {
+    const leftValue = getLeftOperandValue(
+      localSurvey,
+      data,
+      variablesData,
+      condition.leftOperand,
+      selectedLanguage
+    );
+    const rightValue = condition.rightOperand
+      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
+      : undefined;
 
-  let leftField: TSurveyQuestion | TSurveyVariable | string;
+    let leftField: TSurveyQuestion | TSurveyVariable | string;
 
-  switch (condition.leftOperand.type) {
-    case "question":
-      leftField = localSurvey.questions.find((q) => q.id === condition.leftOperand.value) as TSurveyQuestion;
-      break;
-    case "variable":
-      leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand.value) as TSurveyVariable;
-      break;
-    case "hiddenField":
+    if (condition.leftOperand?.type === "question") {
+      leftField = localSurvey.questions.find((q) => q.id === condition.leftOperand?.value) as TSurveyQuestion;
+    } else if (condition.leftOperand?.type === "variable") {
+      leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand?.value) as TSurveyVariable;
+    } else if (condition.leftOperand?.type === "hiddenField") {
       leftField = condition.leftOperand.value as string;
-      break;
-    default:
+    } else {
       leftField = "";
-  }
+    }
 
-  switch (condition.operator) {
-    case "equals":
-      return (
-        (Array.isArray(leftValue) &&
-          leftValue.length === 1 &&
-          typeof rightValue === "string" &&
-          leftValue.includes(rightValue)) ||
-        leftValue?.toString() === rightValue
-      );
-    case "doesNotEqual":
-      return leftValue !== rightValue;
-    case "contains":
-      return String(leftValue).includes(String(rightValue));
-    case "doesNotContain":
-      return !String(leftValue).includes(String(rightValue));
-    case "startsWith":
-      return String(leftValue).startsWith(String(rightValue));
-    case "doesNotStartWith":
-      return !String(leftValue).startsWith(String(rightValue));
-    case "endsWith":
-      return String(leftValue).endsWith(String(rightValue));
-    case "doesNotEndWith":
-      return !String(leftValue).endsWith(String(rightValue));
-    case "isSubmitted":
-      if (typeof leftValue === "string") {
+    let rightField: TSurveyQuestion | TSurveyVariable | string;
+
+    if (condition.rightOperand?.type === "question") {
+      rightField = localSurvey.questions.find(
+        (q) => q.id === condition.rightOperand?.value
+      ) as TSurveyQuestion;
+    } else if (condition.rightOperand?.type === "variable") {
+      rightField = localSurvey.variables.find(
+        (v) => v.id === condition.rightOperand?.value
+      ) as TSurveyVariable;
+    } else if (condition.rightOperand?.type === "hiddenField") {
+      rightField = condition.rightOperand.value as string;
+    } else {
+      rightField = "";
+    }
+
+    switch (condition.operator) {
+      case "equals":
+        // when left value is of multi choice, picture selection question and right value is its option
+        if (Array.isArray(leftValue) && leftValue.length > 0 && typeof rightValue === "string") {
+          return leftValue.includes(rightValue);
+        }
+
+        // when left value is of date question and right value is string
+        if (
+          condition.leftOperand.type === "question" &&
+          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+          typeof leftValue === "string" &&
+          typeof rightValue === "string"
+        ) {
+          return new Date(leftValue).getTime() === new Date(rightValue).getTime();
+        }
+
+        // when left value is of openText, hiddenField, variable and right value is of multichoice
+        if (condition.rightOperand?.type === "question") {
+          if (
+            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+          ) {
+            if (Array.isArray(condition.rightOperand.value)) {
+              return condition.rightOperand.value.includes(leftValue);
+            } else {
+              return leftValue === condition.rightOperand.value;
+            }
+          } else if (
+            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+            typeof leftValue === "string" &&
+            typeof rightValue === "string"
+          ) {
+            return new Date(leftValue).getTime() === new Date(rightValue).getTime();
+          }
+        }
+
+        return (
+          (Array.isArray(leftValue) &&
+            leftValue.length === 1 &&
+            typeof rightValue === "string" &&
+            leftValue.includes(rightValue)) ||
+          leftValue?.toString() === rightValue
+        );
+      case "doesNotEqual":
+        // when left value is of multi choice, picture selection question and right value is its option
+        if (Array.isArray(leftValue) && leftValue.length > 0 && typeof rightValue === "string") {
+          return !leftValue.includes(rightValue);
+        }
+
+        // when left value is of date question and right value is string
+        if (
+          condition.leftOperand.type === "question" &&
+          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+          typeof leftValue === "string" &&
+          typeof rightValue === "string"
+        ) {
+          return new Date(leftValue).getTime() !== new Date(rightValue).getTime();
+        }
+
+        // when left value is of openText, hiddenField, variable and right value is of multichoice
+        if (condition.rightOperand?.type === "question") {
+          if (
+            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+          ) {
+            if (Array.isArray(condition.rightOperand.value)) {
+              return !condition.rightOperand.value.includes(leftValue);
+            } else {
+              return leftValue !== condition.rightOperand.value;
+            }
+          } else if (
+            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+            typeof leftValue === "string" &&
+            typeof rightValue === "string"
+          ) {
+            return new Date(leftValue).getTime() !== new Date(rightValue).getTime();
+          }
+        }
+
+        return leftValue?.toString() !== rightValue;
+      case "contains":
+        return String(leftValue).includes(String(rightValue));
+      case "doesNotContain":
+        return !String(leftValue).includes(String(rightValue));
+      case "startsWith":
+        return String(leftValue).startsWith(String(rightValue));
+      case "doesNotStartWith":
+        return !String(leftValue).startsWith(String(rightValue));
+      case "endsWith":
+        return String(leftValue).endsWith(String(rightValue));
+      case "doesNotEndWith":
+        return !String(leftValue).endsWith(String(rightValue));
+      case "isSubmitted":
+        if (typeof leftValue === "string") {
+          if (
+            condition.leftOperand.type === "question" &&
+            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.FileUpload &&
+            leftValue
+          ) {
+            return leftValue !== "skipped";
+          }
+          return leftValue !== "" && leftValue !== null;
+        } else if (Array.isArray(leftValue)) {
+          return leftValue.length > 0;
+        } else if (typeof leftValue === "number") {
+          return leftValue !== null;
+        }
+        return false;
+      case "isSkipped":
         if (
           condition.leftOperand.type === "question" &&
           (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.FileUpload
         ) {
-          return leftValue !== "skipped" && leftValue !== "" && leftValue !== null;
+          return leftValue === "skipped";
         }
-        return leftValue !== "" && leftValue !== null;
-      } else if (Array.isArray(leftValue)) {
-        return leftValue.length > 0;
-      } else if (typeof leftValue === "number") {
-        return leftValue !== null;
-      }
-      return false;
-    case "isSkipped":
-      return (
-        (Array.isArray(leftValue) && leftValue.length === 0) ||
-        leftValue === "" ||
-        leftValue === null ||
-        leftValue === undefined ||
-        (typeof leftValue === "object" && Object.entries(leftValue).length === 0) ||
-        (condition.leftOperand.type === "question" &&
-          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.FileUpload &&
-          leftValue === "skipped")
-      );
-    case "isGreaterThan":
-      return Number(leftValue) > Number(rightValue);
-    case "isLessThan":
-      return Number(leftValue) < Number(rightValue);
-    case "isGreaterThanOrEqual":
-      return Number(leftValue) >= Number(rightValue);
-    case "isLessThanOrEqual":
-      return Number(leftValue) <= Number(rightValue);
-    case "equalsOneOf":
-      return Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue);
-    case "includesAllOf":
-      return (
-        Array.isArray(leftValue) &&
-        Array.isArray(rightValue) &&
-        rightValue.every((v) => leftValue.includes(v))
-      );
-    case "includesOneOf":
-      return (
-        Array.isArray(leftValue) && Array.isArray(rightValue) && rightValue.some((v) => leftValue.includes(v))
-      );
-    case "isAccepted":
-      return leftValue === "accepted";
-    case "isClicked":
-      return leftValue === "clicked";
-    case "isAfter":
-      return new Date(String(leftValue)) > new Date(String(rightValue));
-    case "isBefore":
-      return new Date(String(leftValue)) < new Date(String(rightValue));
-    case "isBooked":
-      return leftValue === "booked" || !!(leftValue && leftValue !== "");
-    case "isPartiallySubmitted":
-      if (typeof leftValue === "object") {
-        return Object.values(leftValue).includes("");
-      } else return false;
-    case "isCompletelySubmitted":
-      if (typeof leftValue === "object") {
-        const values = Object.values(leftValue);
-        return values.length > 0 && !values.includes("");
-      } else return false;
-    default:
-      return false;
+
+        return (
+          (Array.isArray(leftValue) && leftValue.length === 0) ||
+          leftValue === "" ||
+          leftValue === null ||
+          leftValue === undefined ||
+          (typeof leftValue === "object" && Object.entries(leftValue).length === 0)
+        );
+      case "isGreaterThan":
+        return Number(leftValue) > Number(rightValue);
+      case "isLessThan":
+        return Number(leftValue) < Number(rightValue);
+      case "isGreaterThanOrEqual":
+        return Number(leftValue) >= Number(rightValue);
+      case "isLessThanOrEqual":
+        return Number(leftValue) <= Number(rightValue);
+      case "equalsOneOf":
+        return Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue);
+      case "includesAllOf":
+        return (
+          Array.isArray(leftValue) &&
+          Array.isArray(rightValue) &&
+          rightValue.every((v) => leftValue.includes(v))
+        );
+      case "includesOneOf":
+        return (
+          Array.isArray(leftValue) &&
+          Array.isArray(rightValue) &&
+          rightValue.some((v) => leftValue.includes(v))
+        );
+      case "isAccepted":
+        return leftValue === "accepted";
+      case "isClicked":
+        return leftValue === "clicked";
+      case "isAfter":
+        return new Date(String(leftValue)) > new Date(String(rightValue));
+      case "isBefore":
+        return new Date(String(leftValue)) < new Date(String(rightValue));
+      case "isBooked":
+        return leftValue === "booked" || !!(leftValue && leftValue !== "");
+      case "isPartiallySubmitted":
+        if (typeof leftValue === "object") {
+          return Object.values(leftValue).includes("");
+        } else return false;
+      case "isCompletelySubmitted":
+        if (typeof leftValue === "object") {
+          const values = Object.values(leftValue);
+          return values.length > 0 && !values.includes("");
+        } else return false;
+      default:
+        return false;
+    }
+  } catch (e) {
+    return false;
   }
 };
 

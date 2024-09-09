@@ -2,9 +2,11 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import {
   TResponse,
+  TResponseData,
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
   TResponseTtc,
+  TResponseVariables,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
@@ -28,7 +30,7 @@ import {
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
-import { evaluateAdvancedLogic } from "../utils/evaluateLogic";
+import { evaluateAdvancedLogic, performActions } from "../utils/evaluateLogic";
 import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
@@ -618,6 +620,11 @@ export const getSurveySummaryDropOff = (
   let impressionsArr = new Array(survey.questions.length).fill(0) as number[];
   let dropOffPercentageArr = new Array(survey.questions.length).fill(0) as number[];
 
+  const surveyVariablesData = survey.variables?.reduce((acc, variable) => {
+    acc[variable.id] = variable.value;
+    return acc;
+  }, {});
+
   responses.forEach((response) => {
     // Calculate total time-to-completion
     Object.keys(totalTtc).forEach((questionId) => {
@@ -627,43 +634,40 @@ export const getSurveySummaryDropOff = (
       }
     });
 
+    let localSurvey = JSON.parse(JSON.stringify(survey)) as TSurvey;
+    let localResponseData: TResponseData = { ...response.data };
+    let localVariables: TResponseVariables = {
+      ...surveyVariablesData,
+    };
+
     let currQuesIdx = 0;
 
-    while (currQuesIdx < survey.questions.length) {
-      const currQues = survey.questions[currQuesIdx];
+    while (currQuesIdx < localSurvey.questions.length) {
+      const currQues = localSurvey.questions[currQuesIdx];
       if (!currQues) break;
 
-      if (!currQues.required) {
-        if (!response.data[currQues.id]) {
-          impressionsArr[currQuesIdx]++;
-
-          if (currQuesIdx === survey.questions.length - 1 && !response.finished) {
-            dropOffArr[currQuesIdx]++;
-            break;
-          }
-
-          const nextQuestionId = getNextQuestionId(survey, currQues, response.data);
-          if (nextQuestionId) {
-            currQuesIdx = survey.questions.findIndex((q) => q.id === nextQuestionId);
-          } else {
-            currQuesIdx++;
-          }
-          continue;
-        }
-      }
-
-      if (
-        (response.data[currQues.id] === undefined && !response.finished) ||
-        (currQues.required && !response.data[currQues.id])
-      ) {
+      // question is not answered and required
+      if (response.data[currQues.id] === undefined && currQues.required) {
         dropOffArr[currQuesIdx]++;
         impressionsArr[currQuesIdx]++;
         break;
       }
 
+      localResponseData[currQues.id] = response.data[currQues.id];
       impressionsArr[currQuesIdx]++;
 
-      const nextQuestionId = getNextQuestionId(survey, currQues, response.data);
+      const { nextQuestionId, updatedSurvey, updatedVariables } = evaluateLogicAndGetNextQuestionId(
+        localSurvey,
+        localResponseData,
+        localVariables,
+        currQuesIdx,
+        currQues,
+        response.language
+      );
+
+      localSurvey = updatedSurvey;
+      localVariables = updatedVariables;
+
       if (nextQuestionId) {
         const nextQuesIdx = survey.questions.findIndex((q) => q.id === nextQuestionId);
         if (!response.data[nextQuestionId] && !response.finished) {
@@ -718,23 +722,57 @@ export const getSurveySummaryDropOff = (
   return dropOff;
 };
 
-const getNextQuestionId = (
-  survey: TSurvey,
-  question: TSurveyQuestion,
-  responseData: Record<string, any>
-): string | undefined => {
-  if (!question.logic) return undefined;
+const evaluateLogicAndGetNextQuestionId = (
+  localSurvey: TSurvey,
+  data: TResponseData,
+  localVariables: TResponseVariables,
+  currentQuestionIndex: number,
+  currQuesTemp: TSurveyQuestion,
+  selectedLanguage: string | null
+): { nextQuestionId: string | undefined; updatedSurvey: TSurvey; updatedVariables: TResponseVariables } => {
+  const questions = localSurvey.questions;
 
-  for (const logic of question.logic) {
-    if (evaluateAdvancedLogic(survey, responseData, logic.conditions, "default")) {
-      const jumpAction = logic.actions.find((action) => action.objective === "jumpToQuestion");
-      if (jumpAction) {
-        return jumpAction.target;
+  let updatedSurvey = { ...localSurvey };
+  let updatedVariables = { ...localVariables };
+
+  let firstJumpTarget: string | undefined;
+
+  if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
+    for (const logic of currQuesTemp.logic) {
+      if (
+        evaluateAdvancedLogic(
+          localSurvey,
+          data,
+          localVariables,
+          logic.conditions,
+          selectedLanguage ?? "default"
+        )
+      ) {
+        const { jumpTarget, requiredQuestionIds, calculations } = performActions(
+          updatedSurvey,
+          logic.actions,
+          data,
+          updatedVariables
+        );
+
+        if (requiredQuestionIds.length > 0) {
+          updatedSurvey.questions = updatedSurvey.questions.map((q) =>
+            requiredQuestionIds.includes(q.id) ? { ...q, required: true } : q
+          );
+        }
+        updatedVariables = { ...updatedVariables, ...calculations };
+
+        if (jumpTarget && !firstJumpTarget) {
+          firstJumpTarget = jumpTarget;
+        }
       }
     }
   }
 
-  return undefined;
+  // Return the first jump target if found, otherwise go to the next question
+  const nextQuestionId = firstJumpTarget || questions[currentQuestionIndex + 1]?.id || undefined;
+
+  return { nextQuestionId, updatedSurvey, updatedVariables };
 };
 
 const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
