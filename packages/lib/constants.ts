@@ -168,6 +168,7 @@ export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
 export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
+export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
 export const STRIPE_API_VERSION = "2024-06-20";
 
