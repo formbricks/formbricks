@@ -75,30 +75,38 @@ export const OpenTextSummary = ({
         {activeTab === "insights" ? (
           <Table className="border-t border-slate-200">
             <TableBody>
-              {questionSummary.insights.map((insight) => (
-                <TableRow
-                  key={insight.id}
-                  className="cursor-pointer hover:bg-slate-50"
-                  onClick={() => {
-                    setCurrentInsight(insight);
-                    setIsInsightSheetOpen(true);
-                  }}>
-                  <TableCell className="flex font-medium">
-                    {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
-                  </TableCell>
-                  <TableCell className="font-medium">{insight.title}</TableCell>
-                  <TableCell>{insight.description}</TableCell>
-                  <TableCell>
-                    {insight.category === "complaint" ? (
-                      <Badge text="Complaint" type="error" size="tiny" />
-                    ) : insight.category === "featureRequest" ? (
-                      <Badge text="Feature Request" type="warning" size="tiny" />
-                    ) : insight.category === "praise" ? (
-                      <Badge text="Praise" type="success" size="tiny" />
-                    ) : null}
+              {questionSummary.insights.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="py-8 text-center">
+                    <p className="text-slate-500">No insights found for this question.</p>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                questionSummary.insights.map((insight) => (
+                  <TableRow
+                    key={insight.id}
+                    className="cursor-pointer hover:bg-slate-50"
+                    onClick={() => {
+                      setCurrentInsight(insight);
+                      setIsInsightSheetOpen(true);
+                    }}>
+                    <TableCell className="flex font-medium">
+                      {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
+                    </TableCell>
+                    <TableCell className="font-medium">{insight.title}</TableCell>
+                    <TableCell>{insight.description}</TableCell>
+                    <TableCell>
+                      {insight.category === "complaint" ? (
+                        <Badge text="Complaint" type="error" size="tiny" />
+                      ) : insight.category === "featureRequest" ? (
+                        <Badge text="Request" type="warning" size="tiny" />
+                      ) : insight.category === "praise" ? (
+                        <Badge text="Praise" type="success" size="tiny" />
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         ) : activeTab === "responses" ? (

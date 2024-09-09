@@ -65,11 +65,11 @@ export const InsightSheet = ({ isOpen, setIsOpen, insight, surveyId, questionId 
                   <p>
                     Sentiment:{" "}
                     {document.sentiment === "positive" ? (
-                      <Badge text="positive" size="tiny" type="success" />
+                      <Badge text="Positive" size="tiny" type="success" />
                     ) : document.sentiment === "neutral" ? (
-                      <Badge text="neutral" size="tiny" type="gray" />
+                      <Badge text="Neutral" size="tiny" type="gray" />
                     ) : document.sentiment === "negative" ? (
-                      <Badge text="negative" size="tiny" type="error" />
+                      <Badge text="Negative" size="tiny" type="error" />
                     ) : null}
                   </p>
                   <p>{timeSince(new Date(document.createdAt).toISOString())}</p>

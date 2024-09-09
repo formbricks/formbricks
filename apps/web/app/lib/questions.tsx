@@ -45,7 +45,7 @@ export type TQuestion = {
 export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.OpenText,
-    label: "Free text",
+    label: "Free Text",
     description: "Ask for a text-based answer",
     icon: MessageSquareTextIcon,
     preset: {
@@ -204,7 +204,7 @@ export const questionTypes: TQuestion[] = [
   },
   {
     id: QuestionId.Cal,
-    label: "Schedule a meeting",
+    label: "Schedule a Meeting",
     description: "Allow respondents to schedule a meet",
     icon: PhoneIcon,
     preset: {

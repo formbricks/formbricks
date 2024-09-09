@@ -26,7 +26,7 @@ export const handleInsightAssignments = async (
     value: getInsightVectorText(insight.title, insight.description),
   });
   // find close insight to merge it with
-  const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.2);
+  const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.35);
 
   if (nearestInsights.length > 0) {
     // create a documentInsight with this insight
