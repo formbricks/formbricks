@@ -22,7 +22,12 @@ import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/u
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyMatrixQuestion,
+  TSurveyQuestion,
+  TSurveyRankingQuestion,
+} from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
 import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
 import {
@@ -260,10 +265,16 @@ export const QuestionsView = ({
     toast.success("Question translated.");
   };
 
-  const extractTextsToTranslate = (question) => {
+  const extractTextsToTranslate = (question: TSurveyQuestion) => {
     const textsToTranslate = { headline: question.headline["default"] };
     if (question.subheader) {
       textsToTranslate["subheader"] = question.subheader["default"];
+    }
+    if (question.buttonLabel) {
+      textsToTranslate["buttonLabel"] = question.buttonLabel["default"];
+    }
+    if (question.backButtonLabel) {
+      textsToTranslate["backButtonLabel"] = question.backButtonLabel["default"];
     }
     switch (question.type) {
       case "openText":
@@ -305,16 +316,39 @@ export const QuestionsView = ({
           textsToTranslate["upperLabel"] = question.upperLabel["default"];
         }
         break;
+      case "matrix":
+        question.rows.forEach((row, index) => {
+          textsToTranslate[`row_${index}`] = row["default"];
+        });
+        question.columns.forEach((column, index) => {
+          textsToTranslate[`column_${index}`] = column["default"];
+        });
+        break;
+      case "ranking":
+        question.choices.forEach((choice, index) => {
+          textsToTranslate[`rankingChoice_${index}`] = choice.label["default"];
+        });
+        break;
       default:
         break;
     }
     return textsToTranslate;
   };
 
-  const updateQuestionWithTranslatedTexts = (question, translatedTexts, languageCode) => {
+  const updateQuestionWithTranslatedTexts = (
+    question: TSurveyQuestion,
+    translatedTexts: { [key: string]: string },
+    languageCode: string
+  ) => {
     question.headline[languageCode] = translatedTexts["headline"];
     if (question.subheader) {
       question.subheader[languageCode] = translatedTexts["subheader"];
+    }
+    if (question.buttonLabel) {
+      question.buttonLabel[languageCode] = translatedTexts["buttonLabel"];
+    }
+    if (question.backButtonLabel) {
+      question.backButtonLabel[languageCode] = translatedTexts["backButtonLabel"];
     }
     switch (question.type) {
       case "openText":
@@ -355,6 +389,21 @@ export const QuestionsView = ({
         if (question.upperLabel) {
           question.upperLabel[languageCode] = translatedTexts["upperLabel"];
         }
+        break;
+      case "matrix":
+        const matrixQuestion = question as TSurveyMatrixQuestion;
+        matrixQuestion.rows.forEach((row, index) => {
+          row[languageCode] = translatedTexts[`row_${index}`];
+        });
+        matrixQuestion.columns.forEach((column, index) => {
+          column[languageCode] = translatedTexts[`column_${index}`];
+        });
+        break;
+      case "ranking":
+        const rankingQuestion = question as TSurveyRankingQuestion;
+        rankingQuestion.choices.forEach((choice, index) => {
+          choice.label[languageCode] = translatedTexts[`rankingChoice_${index}`];
+        });
         break;
       default:
         break;
