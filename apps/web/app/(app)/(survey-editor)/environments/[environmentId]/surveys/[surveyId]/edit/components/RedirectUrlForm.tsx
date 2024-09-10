@@ -10,7 +10,7 @@ interface RedirectUrlFormProps {
 }
 
 export const RedirectUrlForm = ({ endingCard, updateSurvey, defaultRedirect }: RedirectUrlFormProps) => {
-  // Ensure url is always included in the form state
+
   useEffect(() => {
     if (!endingCard.url) {
       updateSurvey({ url: defaultRedirect });

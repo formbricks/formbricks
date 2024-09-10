@@ -299,7 +299,20 @@ export const PreviewSurvey = ({
               <div className="ml-6 flex space-x-2">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>
                 <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+                <button
+                  className="h-3 w-3 cursor-pointer rounded-full bg-emerald-500"
+                  onClick={() => {
+                    if (isFullScreenPreview) {
+                      setShrink(true);
+                      setPreviewPosition("relative");
+                      setTimeout(() => setIsFullScreenPreview(false), 300);
+                    } else {
+                      setShrink(false);
+                      setIsFullScreenPreview(true);
+                      setTimeout(() => setPreviewPosition("fixed"), 300);
+                    }
+                  }}
+                  aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
@@ -307,7 +320,7 @@ export const PreviewSurvey = ({
                 <div className="flex items-center">
                   {isFullScreenPreview ? (
                     <ShrinkIcon
-                      className="mr-2 h-4 w-4 cursor-pointer"
+                      className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                       onClick={() => {
                         setShrink(true);
                         setPreviewPosition("relative");
@@ -316,7 +329,7 @@ export const PreviewSurvey = ({
                     />
                   ) : (
                     <ExpandIcon
-                      className="mr-2 h-4 w-4 cursor-pointer"
+                      className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                       onClick={() => {
                         setShrink(false);
                         setIsFullScreenPreview(true);

@@ -1,24 +1,12 @@
 import { CheckCircle2Icon } from "lucide-react";
-import { getLanguageCode, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponse } from "@formbricks/types/responses";
-import {
-  TSurvey,
-  TSurveyMatrixQuestion,
-  TSurveyPictureSelectionQuestion,
-  TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-  TSurveyRatingQuestion,
-} from "@formbricks/types/surveys/types";
-import { AddressResponse } from "../../AddressResponse";
-import { FileUploadResponse } from "../../FileUploadResponse";
-import { PictureSelectionResponse } from "../../PictureSelectionResponse";
-import { RankingRespone } from "../../RankingResponse";
-import { RatingResponse } from "../../RatingResponse";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
 import { QuestionSkip } from "./QuestionSkip";
+import { RenderResponse } from "./RenderResponse";
 import { VerifiedEmail } from "./VerifiedEmail";
 
 interface SingleResponseCardBodyProps {
@@ -33,14 +21,6 @@ export const SingleResponseCardBody = ({
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
-
-  const handleArray = (data: string | number | string[]): string => {
-    if (Array.isArray(data)) {
-      return data.join(", ");
-    } else {
-      return String(data);
-    }
-  };
 
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
@@ -61,75 +41,6 @@ export const SingleResponseCardBody = ({
         return part;
       }
     });
-  };
-
-  const renderResponse = (
-    questionType: TSurveyQuestionTypeEnum,
-    responseData: string | number | string[] | Record<string, string>,
-    question: TSurveyQuestion
-  ) => {
-    switch (questionType) {
-      case TSurveyQuestionTypeEnum.Rating:
-        if (typeof responseData === "number")
-          return (
-            <RatingResponse
-              scale={question.scale}
-              answer={responseData}
-              range={question.range}
-              addColors={(question as TSurveyRatingQuestion).isColorCodingEnabled}
-            />
-          );
-      case TSurveyQuestionTypeEnum.Date:
-        if (typeof responseData === "string") {
-          const formattedDateString = formatDateWithOrdinal(new Date(responseData));
-          return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
-        }
-      case TSurveyQuestionTypeEnum.Cal:
-        if (typeof responseData === "string")
-          return <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">{responseData}</p>;
-      case TSurveyQuestionTypeEnum.PictureSelection:
-        if (Array.isArray(responseData))
-          return (
-            <PictureSelectionResponse
-              choices={(question as TSurveyPictureSelectionQuestion).choices}
-              selected={responseData}
-            />
-          );
-      case TSurveyQuestionTypeEnum.FileUpload:
-        if (Array.isArray(responseData)) return <FileUploadResponse selected={responseData} />;
-      case TSurveyQuestionTypeEnum.Matrix:
-        if (typeof responseData === "object" && !Array.isArray(responseData)) {
-          return (question as TSurveyMatrixQuestion).rows.map((row) => {
-            const languagCode = getLanguageCode(survey.languages, response.language);
-            const rowValueInSelectedLanguage = getLocalizedValue(row, languagCode);
-            if (!responseData[rowValueInSelectedLanguage]) return;
-            return (
-              <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
-                {rowValueInSelectedLanguage}: {responseData[rowValueInSelectedLanguage]}
-              </p>
-            );
-          });
-        }
-      case TSurveyQuestionTypeEnum.Address:
-        if (Array.isArray(responseData)) {
-          return <AddressResponse value={responseData} />;
-        }
-      case TSurveyQuestionTypeEnum.Ranking:
-        if (Array.isArray(responseData)) {
-          return <RankingRespone value={responseData} />;
-        }
-      default:
-        if (
-          typeof responseData === "string" ||
-          typeof responseData === "number" ||
-          Array.isArray(responseData)
-        )
-          return (
-            <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
-              {Array.isArray(responseData) ? handleArray(responseData) : responseData}
-            </p>
-          );
-    }
   };
 
   return (
@@ -172,7 +83,14 @@ export const SingleResponseCardBody = ({
                       )
                     )}
                   </p>
-                  <div dir="auto">{renderResponse(question.type, response.data[question.id], question)}</div>
+                  <div dir="auto">
+                    <RenderResponse
+                      question={question}
+                      survey={survey}
+                      responseData={response.data[question.id]}
+                      language={response.language}
+                    />
+                  </div>
                 </div>
               ) : (
                 <QuestionSkip

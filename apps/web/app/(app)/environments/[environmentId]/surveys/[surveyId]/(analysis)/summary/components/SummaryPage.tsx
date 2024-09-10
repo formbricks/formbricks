@@ -15,6 +15,7 @@ import {
 } from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -66,6 +67,7 @@ export const SummaryPage = ({
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -103,34 +105,44 @@ export const SummaryPage = ({
     });
   };
 
-  const handleInitialData = async () => {
+  const handleInitialData = async (isInitialLoad = false) => {
+    if (isInitialLoad) {
+      setIsLoading(true);
+    }
+
     try {
-      const updatedResponseCountData = await getResponseCount();
-      const updatedSurveySummary = await getSummary();
+      const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
+        getResponseCount(),
+        getSummary(),
+      ]);
 
       const responseCount = updatedResponseCountData?.data ?? 0;
       const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
 
+      // Update the state with new data
       setResponseCount(responseCount);
       setSurveySummary(surveySummary);
     } catch (error) {
       console.error(error);
+    } finally {
+      if (isInitialLoad) {
+        setIsLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    handleInitialData();
-  }, [filters, isSharingPage, sharingKey, surveyId]);
+    handleInitialData(true);
+  }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
 
-  useEffect(() => {
-    if (!isShareEmbedModalOpen) {
-      const interval = setInterval(() => {
-        handleInitialData();
-      }, 10000);
-
-      return () => clearInterval(interval);
-    }
-  }, [isShareEmbedModalOpen]);
+  useIntervalWhenFocused(
+    () => {
+      handleInitialData(false);
+    },
+    10000,
+    !isShareEmbedModalOpen,
+    false
+  );
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default", attributeClasses);
@@ -148,6 +160,7 @@ export const SummaryPage = ({
         surveySummary={surveySummary.meta}
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
+        isLoading={isLoading}
       />
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <div className="flex gap-1.5">

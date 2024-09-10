@@ -486,7 +486,7 @@ export const mockSurvey: TSurvey = {
       subheader: {
         default: "We appreciate your feedback.",
       },
-      buttonLink: "https://formbricks.com/signup",
+      buttonLink: "https://formbricks.com",
       buttonLabel: { default: "Create your own Survey" },
     },
   ],
