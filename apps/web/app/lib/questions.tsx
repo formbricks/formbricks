@@ -3,6 +3,7 @@ import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
   CheckIcon,
+  ContactIcon,
   Grid3X3Icon,
   HomeIcon,
   ImageIcon,
@@ -21,6 +22,7 @@ import {
   TSurveyCTAQuestion,
   TSurveyCalQuestion,
   TSurveyConsentQuestion,
+  TSurveyContactInfoQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
   TSurveyMatrixQuestion,
@@ -226,6 +228,20 @@ export const questionTypes: TQuestion[] = [
       isZipRequired: false,
       isCountryRequired: false,
     } as Partial<TSurveyAddressQuestion>,
+  },
+  {
+    id: QuestionId.ContactInfo,
+    label: "Contact Info",
+    description: "Allow respondents to provide their contact info",
+    icon: ContactIcon,
+    preset: {
+      headline: { default: "Where do you live?" },
+      firstName: { show: true, required: true },
+      lastName: { show: true, required: true },
+      email: { show: true, required: true },
+      phone: { show: true, required: true },
+      company: { show: true, required: true },
+    } as Partial<TSurveyContactInfoQuestion>,
   },
 ];
 

@@ -66,6 +66,7 @@ export enum TSurveyQuestionTypeEnum {
   Matrix = "matrix",
   Address = "address",
   Ranking = "ranking",
+  ContactInfo = "contactInfo",
 }
 
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
@@ -270,6 +271,11 @@ export const ZSurveyAddressLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+export const ZSurveyContactInfoLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["submitted", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyRankingLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["submitted", "skipped"]).optional(),
   value: z.undefined(),
@@ -351,6 +357,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyMatrixLogic,
   ZSurveyAddressLogic,
   ZSurveyRankingLogic,
+  ZSurveyContactInfoLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -521,6 +528,21 @@ export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
 });
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
+const ZSurveyContactInfoQuestionField = z.object({
+  show: z.boolean(),
+  required: z.boolean(),
+});
+
+export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
+  firstName: ZSurveyContactInfoQuestionField,
+  lastName: ZSurveyContactInfoQuestionField,
+  email: ZSurveyContactInfoQuestionField,
+  phone: ZSurveyContactInfoQuestionField,
+  company: ZSurveyContactInfoQuestionField,
+});
+export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
+
 export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
   choices: z
@@ -546,6 +568,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyMatrixQuestion,
   ZSurveyAddressQuestion,
   ZSurveyRankingQuestion,
+  ZSurveyContactInfoQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
