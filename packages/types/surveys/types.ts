@@ -592,6 +592,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Rating,
   TSurveyQuestionTypeEnum.Cal,
   TSurveyQuestionTypeEnum.Ranking,
+  TSurveyQuestionTypeEnum.ContactInfo,
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;

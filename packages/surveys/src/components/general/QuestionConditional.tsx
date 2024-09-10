@@ -2,6 +2,7 @@ import { AddressQuestion } from "@/components/questions/AddressQuestion";
 import { CTAQuestion } from "@/components/questions/CTAQuestion";
 import { CalQuestion } from "@/components/questions/CalQuestion";
 import { ConsentQuestion } from "@/components/questions/ConsentQuestion";
+import { ContactInfoQuestion } from "@/components/questions/ContactInfoQuestion";
 import { DateQuestion } from "@/components/questions/DateQuestion";
 import { FileUploadQuestion } from "@/components/questions/FileUploadQuestion";
 import { MatrixQuestion } from "@/components/questions/MatrixQuestion";
@@ -287,6 +288,21 @@ export const QuestionConditional = ({
     <RankingQuestion
       question={question}
       value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, question.choices) : []}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
+    <ContactInfoQuestion
+      question={question}
+      value={Array.isArray(value) ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
