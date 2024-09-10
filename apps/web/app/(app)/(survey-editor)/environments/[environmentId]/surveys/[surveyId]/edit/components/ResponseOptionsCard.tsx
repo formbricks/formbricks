@@ -29,7 +29,10 @@ export const ResponseOptionsCard = ({
   useState;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [surveyLinkUsedMessageToggle, setSurveyLinkUsedMessageToggle] = useState(false);
-  const [verifyEmailToggle, setVerifyEmailToggle] = useState(false);
+  const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
+  const [isSingleResponsePerEmailEnabledToggle, setIsSingleResponsePerEmailToggle] = useState(
+    localSurvey.isSingleResponsePerEmailEnabled
+  );
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: "Survey Completed",
@@ -119,6 +122,14 @@ export const ResponseOptionsCard = ({
     setLocalSurvey({ ...localSurvey, isVerifyEmailEnabled: !localSurvey.isVerifyEmailEnabled });
   };
 
+  const handleSingleResponsePerEmailToggle = () => {
+    setIsSingleResponsePerEmailToggle(!isSingleResponsePerEmailEnabledToggle);
+    setLocalSurvey({
+      ...localSurvey,
+      isSingleResponsePerEmailEnabled: !localSurvey.isSingleResponsePerEmailEnabled,
+    });
+  };
+
   const handleRunOnDateChange = (date: Date) => {
     const equivalentDate = date?.getDate();
     date?.setUTCHours(0, 0, 0, 0);
@@ -189,10 +200,6 @@ export const ResponseOptionsCard = ({
         subheading: localSurvey.singleUse.subheading ?? singleUseMessage.subheading,
       });
       setSingleUseEncryption(localSurvey.singleUse.isEncrypted);
-    }
-
-    if (localSurvey.isVerifyEmailEnabled) {
-      setVerifyEmailToggle(true);
     }
 
     if (localSurvey.runOnDate) {
@@ -392,8 +399,17 @@ export const ResponseOptionsCard = ({
                 onToggle={handleVerifyEmailToogle}
                 title="Verify email before submission"
                 description="Only let people with a real email respond."
-                childBorder={true}
-              />
+                childBorder={true}>
+                <div className="m-1">
+                  <AdvancedOptionToggle
+                    htmlId="preventDoubleSubmission"
+                    isChecked={isSingleResponsePerEmailEnabledToggle}
+                    onToggle={handleSingleResponsePerEmailToggle}
+                    title="Prevent double submission"
+                    description={"Only allow 1 response per email address"}
+                  />
+                </div>
+              </AdvancedOptionToggle>
               <AdvancedOptionToggle
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}

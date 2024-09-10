@@ -311,3 +311,18 @@ export const ZResponseUpdate = z.object({
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
+
+export const ZResponseTableData = z.object({
+  responseId: z.string(),
+  createdAt: z.date(),
+  status: z.string(),
+  verifiedEmail: z.string(),
+  tags: z.array(ZTag),
+  notes: z.array(ZResponseNote),
+  language: z.string().nullable(),
+  responseData: ZResponseData,
+  person: ZResponsePerson.nullable(),
+  personAttributes: ZResponsePersonAttributes,
+});
+
+export type TResponseTableData = z.infer<typeof ZResponseTableData>;

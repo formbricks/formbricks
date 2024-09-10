@@ -4,7 +4,7 @@ import { Control, FieldArrayWithId, UseFieldArrayRemove, useFieldArray } from "r
 import { UseFormReturn } from "react-hook-form";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
-import { testURLmatch } from "@formbricks/lib/utils/testUrlMatch";
+import { testURLmatch } from "@formbricks/lib/utils/url";
 import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 import { Alert, AlertDescription, AlertTitle } from "../../../Alert";
 import { Button } from "../../../Button";

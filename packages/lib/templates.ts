@@ -2527,7 +2527,6 @@ export const customSurvey = {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: "What would you like to know?" },
-        subheader: { default: "This is an example survey." },
         placeholder: { default: "Type your answer here..." },
         required: true,
         inputType: "text",
