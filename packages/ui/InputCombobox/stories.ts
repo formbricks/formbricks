@@ -1,4 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react";
+import { FileIcon, FolderIcon, ImageIcon } from "lucide-react";
 import { InputCombobox } from "./index";
 
 const meta = {
@@ -9,13 +10,15 @@ const meta = {
     docs: {
       description: {
         component: `
-            The \`InputCombobox\` component is a combination of an input field and a dropdown menu.
-            It supports various features such as:
-            - Searchable options
-            - Grouped options
-            - Multi-select
-            - Customizable size
-            - Custom input props
+          The \`InputCombobox\` component is a versatile combination of an input field and a dropdown menu.
+          It supports various features such as:
+          - Searchable options
+          - Grouped options
+          - Multi-select
+          - Icons for options
+          - Clearable selection
+          - Custom input props
+          - Handling both dropdown and input modes
         `,
       },
     },
@@ -23,22 +26,25 @@ const meta = {
 } satisfies Meta<typeof InputCombobox>;
 
 export default meta;
-
 type Story = StoryObj<typeof meta>;
+
+const commonOptions = [
+  { label: "File", value: "file", icon: FileIcon },
+  { label: "Folder", value: "folder", icon: FolderIcon },
+  { label: "Image", value: "image", icon: ImageIcon },
+];
 
 export const Default: Story = {
   args: {
     showSearch: true,
     searchPlaceholder: "Search...",
-    options: [
-      { label: "Option 1", value: "option1" },
-      { label: "Option 2", value: "option2" },
-      { label: "Option 3", value: "option3" },
-    ],
+    options: commonOptions,
     value: null,
-    onChangeValue: (option) => console.log(option),
+    onChangeValue: (value, option) => console.log("Selected:", value, option),
+    clearable: true,
     withInput: false,
     allowMultiSelect: false,
+    showCheckIcon: true,
   },
 };
 
@@ -47,29 +53,26 @@ export const WithInput: Story = {
     ...Default.args,
     withInput: true,
     inputProps: {
-      placeholder: "Enter text",
+      placeholder: "Type or select an option",
     },
   },
 };
 
-export const Grouped: Story = {
+export const GroupedOptions: Story = {
   args: {
     ...Default.args,
     groupedOptions: [
       {
-        label: "Group 1",
-        value: "group1",
-        options: [
-          { label: "Option 1", value: "option1" },
-          { label: "Option 2", value: "option2" },
-        ],
+        label: "Common",
+        value: "common",
+        options: commonOptions,
       },
       {
-        label: "Group 2",
-        value: "group2",
+        label: "Advanced",
+        value: "advanced",
         options: [
-          { label: "Option 3", value: "option3" },
-          { label: "Option 4", value: "option4" },
+          { label: "Database", value: "database" },
+          { label: "Network", value: "network" },
         ],
       },
     ],
@@ -80,12 +83,21 @@ export const MultiSelect: Story = {
   args: {
     ...Default.args,
     allowMultiSelect: true,
-    value: ["option1", "option3"],
+    value: ["file", "image"],
   },
 };
 
-export const SmallSize: Story = {
+export const Clearable: Story = {
   args: {
     ...Default.args,
+    value: "folder",
+    clearable: true,
+  },
+};
+
+export const WithoutSearch: Story = {
+  args: {
+    ...Default.args,
+    showSearch: false,
   },
 };

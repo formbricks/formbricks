@@ -27,7 +27,7 @@ export interface TComboboxGroupedOption {
   options: TComboboxOption[];
 }
 
-interface InputComboboxProps {
+export interface InputComboboxProps {
   showSearch?: boolean;
   searchPlaceholder?: string;
   options?: TComboboxOption[];
@@ -37,7 +37,6 @@ interface InputComboboxProps {
   inputProps?: Omit<React.ComponentProps<typeof Input>, "value" | "onChange">;
   clearable?: boolean;
   withInput?: boolean;
-  comboboxSize?: "sm" | "lg";
   allowMultiSelect?: boolean;
   showCheckIcon?: boolean;
   comboboxClasses?: string;
