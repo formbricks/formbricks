@@ -1130,6 +1130,279 @@ const validateConditions = (
           message: `Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
+        return;
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+        // Validate right operand
+        if (rightOperand?.type === "question") {
+          const quesId = rightOperand.value;
+          const ques = survey.questions.find((q) => q.id === quesId);
+
+          if (!ques) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const validQuestionTypes = [
+              TSurveyQuestionTypeEnum.OpenText,
+              TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+              TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+              TSurveyQuestionTypeEnum.Rating,
+              TSurveyQuestionTypeEnum.NPS,
+              TSurveyQuestionTypeEnum.Date,
+            ];
+            if (!validQuestionTypes.includes(question.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "hiddenField") {
+          const fieldId = rightOperand.value;
+          const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
+
+          if (!field) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          if (!rightOperand.value) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Static value is required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
+      } else if (question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
+        if (rightOperand?.type !== "static") {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
+          if (typeof rightOperand.value !== "string") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (condition.operator === "equalsOneOf") {
+          if (!Array.isArray(rightOperand.value)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            rightOperand.value.forEach((value) => {
+              if (typeof value !== "string") {
+                issues.push({
+                  code: z.ZodIssueCode.custom,
+                  message: `Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                  path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                });
+              }
+            });
+
+            const choices = question.choices.map((c) => c.id);
+
+            if (rightOperand.value.some((value) => !choices.includes(value))) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        }
+      } else if (
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        question.type === TSurveyQuestionTypeEnum.PictureSelection
+      ) {
+        if (rightOperand?.type !== "static") {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Right operand should be amongst the choice values for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
+          if (typeof rightOperand.value !== "string") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const choice = question.choices.find((c) => c.id === rightOperand.value);
+            if (!choice) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (condition.operator === "includesAllOf" || condition.operator === "includesOneOf") {
+          if (!Array.isArray(rightOperand.value)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            rightOperand.value.forEach((value) => {
+              if (typeof value !== "string") {
+                issues.push({
+                  code: z.ZodIssueCode.custom,
+                  message: `Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                  path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                });
+              }
+            });
+
+            const choices = question.choices.map((c) => c.id);
+
+            if (rightOperand.value.some((value) => !choices.includes(value))) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        }
+      } else if (
+        question.type === TSurveyQuestionTypeEnum.NPS ||
+        question.type === TSurveyQuestionTypeEnum.Rating
+      ) {
+        if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== "number") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Variable type should be number in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          if (typeof rightOperand.value !== "number") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
+            if (rightOperand.value < 0 || rightOperand.value > 10) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          } else if (rightOperand.value < 1 || rightOperand.value > question.range) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Rating score should be between 1 and ${String(question.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+      } else if (question.type === TSurveyQuestionTypeEnum.Date) {
+        if (rightOperand?.type === "question") {
+          const quesId = rightOperand.value;
+          const ques = survey.questions.find((q) => q.id === quesId);
+
+          if (!ques) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const validQuestionTypes = [TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.Date];
+            if (!validQuestionTypes.includes(question.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== "text") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "hiddenField") {
+          const fieldId = rightOperand.value;
+          const doesFieldExists = survey.hiddenFields.fieldIds?.includes(fieldId);
+
+          if (!doesFieldExists) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          const date = rightOperand.value as string;
+
+          if (isNaN(new Date(date).getTime())) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
       }
     } else if (leftOperand.type === "variable") {
       const variableId = leftOperand.value;
@@ -1140,17 +1413,83 @@ const validateConditions = (
           message: `Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
-        return;
-      }
+      } else {
+        // Validate operator based on variable type
+        const isInvalidOperator = isInvalidOperatorsForVariableType(variable.type, operator);
+        if (isInvalidOperator) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Invalid operator "${operator}" for variable ${variable.name} of type "${variable.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
 
-      // Validate operator based on variable type
-      const isInvalidOperator = isInvalidOperatorsForVariableType(variable.type, operator);
-      if (isInvalidOperator) {
-        issues.push({
-          code: z.ZodIssueCode.custom,
-          message: `Invalid operator "${operator}" for variable ${variable.name} of type "${variable.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
-          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
-        });
+        // Validate right operand
+        if (rightOperand?.type === "question") {
+          const questionId = rightOperand.value;
+          const question = survey.questions.find((q) => q.id === questionId);
+
+          if (!question) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type === "number") {
+            const validQuestionTypes = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
+            if (!validQuestionTypes.includes(question.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          } else {
+            const validQuestionTypes = [
+              TSurveyQuestionTypeEnum.OpenText,
+              TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+              TSurveyQuestionTypeEnum.Rating,
+              TSurveyQuestionTypeEnum.NPS,
+              TSurveyQuestionTypeEnum.Date,
+            ];
+
+            if (!validQuestionTypes.includes(question.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (rightOperand?.type === "variable") {
+          const id = rightOperand.value;
+          const foundVariable = survey.variables.find((v) => v.id === id);
+
+          if (!foundVariable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== foundVariable.type) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Variable type mismatch in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "hiddenField") {
+          const fieldId = rightOperand.value;
+          const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
+
+          if (!field) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
       }
     } else {
       const hiddenFieldId = leftOperand.value;
@@ -1172,6 +1511,59 @@ const validateConditions = (
           message: `Invalid operator "${operator}" for hidden field in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
+      }
+
+      // Validate right operand
+      if (rightOperand?.type === "question") {
+        const questionId = rightOperand.value;
+        const question = survey.questions.find((q) => q.id === questionId);
+
+        if (!question) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else {
+          const validQuestionTypes = [
+            TSurveyQuestionTypeEnum.OpenText,
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+            TSurveyQuestionTypeEnum.Rating,
+            TSurveyQuestionTypeEnum.NPS,
+            TSurveyQuestionTypeEnum.Date,
+          ];
+
+          if (!validQuestionTypes.includes(question.type)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
+      } else if (rightOperand?.type === "variable") {
+        const variableId = rightOperand.value;
+        const variable = survey.variables.find((v) => v.id === variableId);
+
+        if (!variable) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+      } else if (rightOperand?.type === "hiddenField") {
+        const fieldId = rightOperand.value;
+        const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
+
+        if (!field) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
       }
     }
   };

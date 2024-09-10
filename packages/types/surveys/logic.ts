@@ -27,6 +27,16 @@ export const ZSurveyLogicCondition = z.enum([
   "isCompletelySubmitted",
 ]);
 
+const operatorsWithoutRightOperand = [
+  ZSurveyLogicCondition.Enum.isSubmitted,
+  ZSurveyLogicCondition.Enum.isSkipped,
+  ZSurveyLogicCondition.Enum.isClicked,
+  ZSurveyLogicCondition.Enum.isAccepted,
+  ZSurveyLogicCondition.Enum.isBooked,
+  ZSurveyLogicCondition.Enum.isPartiallySubmitted,
+  ZSurveyLogicCondition.Enum.isCompletelySubmitted,
+] as const;
+
 export const ZDyanmicLogicField = z.enum(["question", "variable", "hiddenField"]);
 export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQuestion"]);
 export const ZActionTextVariableCalculateOperator = z.enum(["assign", "concat"], {
@@ -88,7 +98,26 @@ export const ZSingleCondition = z
     z.object({
       connector: z.undefined(),
     })
-  );
+  )
+  .superRefine((val, ctx) => {
+    if (
+      !operatorsWithoutRightOperand.includes(val.operator as (typeof operatorsWithoutRightOperand)[number])
+    ) {
+      if (val.rightOperand === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `rightOperand is required for operator "${val.operator}"`,
+          path: ["rightOperand"],
+        });
+      }
+    } else if (val.rightOperand !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `rightOperand should not be present for operator "${val.operator}"`,
+        path: ["rightOperand"],
+      });
+    }
+  });
 
 export type TSingleCondition = z.infer<typeof ZSingleCondition>;
 
@@ -144,6 +173,14 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
     }),
     ZDynamicLogicFieldValue,
   ]),
+}).superRefine((val, ctx) => {
+  if (val.operator === "divide" && val.value.type === "static" && val.value.value === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Cannot divide by zero",
+      path: ["value", "value"],
+    });
+  }
 });
 
 const ZActionCalculate = z.union([ZActionCalculateText, ZActionCalculateNumber]);
