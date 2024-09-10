@@ -85,9 +85,28 @@ const evaluateSingleCondition = (
 
     switch (condition.operator) {
       case "equals":
-        // when left value is of multi choice, picture selection question and right value is its option
-        if (Array.isArray(leftValue) && leftValue.length > 0 && typeof rightValue === "string") {
+        // when left value is of picture selection question and right value is its option
+        if (
+          condition.leftOperand.type === "question" &&
+          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.PictureSelection &&
+          Array.isArray(leftValue) &&
+          leftValue.length > 0 &&
+          typeof rightValue === "string"
+        ) {
           return leftValue.includes(rightValue);
+        }
+
+        // when left value is of multi choicequestion and right value is its option
+        if (
+          condition.leftOperand.type === "question" &&
+          ((leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
+        ) {
+          if (Array.isArray(leftValue) && typeof rightValue === "string") {
+            return leftValue.includes(rightValue);
+          } else {
+            return leftValue === rightValue;
+          }
         }
 
         // when left value is of date question and right value is string
@@ -128,9 +147,28 @@ const evaluateSingleCondition = (
           leftValue?.toString() === rightValue
         );
       case "doesNotEqual":
-        // when left value is of multi choice, picture selection question and right value is its option
-        if (Array.isArray(leftValue) && leftValue.length > 0 && typeof rightValue === "string") {
+        // when left value is of picture selection question and right value is its option
+        if (
+          condition.leftOperand.type === "question" &&
+          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.PictureSelection &&
+          Array.isArray(leftValue) &&
+          leftValue.length > 0 &&
+          typeof rightValue === "string"
+        ) {
           return !leftValue.includes(rightValue);
+        }
+
+        // when left value is of multi choicequestion and right value is its option
+        if (
+          condition.leftOperand.type === "question" &&
+          ((leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
+        ) {
+          if (Array.isArray(leftValue) && typeof rightValue === "string") {
+            return !leftValue.includes(rightValue);
+          } else {
+            return leftValue !== rightValue;
+          }
         }
 
         // when left value is of date question and right value is string
@@ -273,26 +311,41 @@ const getLeftOperandValue = (
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
         let choice;
 
+        const isOthersEnabled = currentQuestion.choices.at(-1)?.id === "other";
+
         if (typeof responseValue === "string") {
           choice = currentQuestion.choices.find((choice) => {
             return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
           });
 
-          if (!choice) return undefined;
+          if (!choice) {
+            if (isOthersEnabled) {
+              return "other";
+            }
+
+            return undefined;
+          }
 
           return choice.id;
         } else if (Array.isArray(responseValue)) {
-          choice = currentQuestion.choices
-            .filter((choice) => {
-              return responseValue.includes(getLocalizedValue(choice.label, selectedLanguage));
-            })
-            .map((choice) => choice.id);
-        }
+          responseValue.forEach((value) => {
+            const foundChoice = currentQuestion.choices.find((choice) => {
+              return getLocalizedValue(choice.label, selectedLanguage) === value;
+            });
 
-        if (choice) {
-          return choice;
+            if (foundChoice) {
+              choice.push(foundChoice.id);
+            } else if (isOthersEnabled) {
+              choice.push("other");
+            }
+          });
+
+          if (choice) {
+            return Array.from(new Set(choice));
+          }
         }
       }
+
       return data[leftOperand.value];
     case "variable":
       const variables = localSurvey.variables || [];
