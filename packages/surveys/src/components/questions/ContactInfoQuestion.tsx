@@ -6,7 +6,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
@@ -30,7 +30,7 @@ interface ContactInfoQuestionProps {
 export const ContactInfoQuestion = ({
   question,
   value,
-  onChange,
+  // onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
@@ -38,7 +38,7 @@ export const ContactInfoQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  autoFocusEnabled,
+  // autoFocusEnabled,
   currentQuestionId,
 }: ContactInfoQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
