@@ -81,7 +81,6 @@ export function AdvancedLogicEditorActions({
     handleActionsChange("update", actionIdx, actionBody);
   };
 
-  console.log("actions", actions);
   return (
     <div className="flex grow gap-2">
       <CornerDownRightIcon className="mt-3 h-4 w-4 shrink-0" />

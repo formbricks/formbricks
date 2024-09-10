@@ -160,6 +160,10 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
         .string({ message: "Value must be a string for text variable" })
         .min(1, "Please enter a value in logic field"),
     }),
+    z.object({
+      type: z.literal("static"),
+      value: z.number({ message: "Value must be a number for number variable" }),
+    }),
     ZDynamicLogicFieldValue,
   ]),
 });
@@ -167,6 +171,12 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
 export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   operator: ZActionNumberVariableCalculateOperator,
   value: z.union([
+    z.object({
+      type: z.literal("static"),
+      value: z
+        .string({ message: "Value must be a string for text variable" })
+        .min(1, "Please enter a value in logic field"),
+    }),
     z.object({
       type: z.literal("static"),
       value: z.number({ message: "Value must be a number for number variable" }),

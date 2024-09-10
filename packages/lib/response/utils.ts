@@ -653,7 +653,6 @@ export const getSurveySummaryDropOff = (
         break;
       }
 
-      localResponseData[currQues.id] = response.data[currQues.id];
       impressionsArr[currQuesIdx]++;
 
       const { nextQuestionId, updatedSurvey, updatedVariables } = evaluateLogicAndGetNextQuestionId(

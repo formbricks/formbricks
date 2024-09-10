@@ -994,6 +994,7 @@ const isInvalidOperatorsForQuestionType = (
       break;
     case TSurveyQuestionTypeEnum.FileUpload:
     case TSurveyQuestionTypeEnum.Address:
+    case TSurveyQuestionTypeEnum.Ranking:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
@@ -1122,14 +1123,15 @@ const validateConditions = (
           "isBooked",
           "isPartiallySubmitted",
           "isCompletelySubmitted",
-        ].includes(operator) &&
-        rightOperand !== undefined
+        ].includes(operator)
       ) {
-        issues.push({
-          code: z.ZodIssueCode.custom,
-          message: `Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
-          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
-        });
+        if (rightOperand !== undefined) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
         return;
       }
 
@@ -1637,11 +1639,11 @@ const validateActions = (
       }
 
       if (action.objective === "requireAnswer") {
-        const requiredQuestionIds = survey.questions
-          .filter((question) => question.required)
+        const optionalQuestionIds = survey.questions
+          .filter((question) => !question.required)
           .map((question) => question.id);
 
-        if (!requiredQuestionIds.includes(action.target)) {
+        if (!optionalQuestionIds.includes(action.target)) {
           const quesIdx = survey.questions.findIndex((q) => q.id === action.target);
 
           return {

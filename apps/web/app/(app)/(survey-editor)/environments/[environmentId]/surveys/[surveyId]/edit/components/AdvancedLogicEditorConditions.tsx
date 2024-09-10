@@ -161,7 +161,6 @@ export function AdvancedLogicEditorConditions({
         break;
     }
   };
-  console.log(conditions);
   const renderCondition = (
     condition: TSingleCondition | TConditionGroup,
     index: number,

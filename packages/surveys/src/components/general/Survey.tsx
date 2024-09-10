@@ -219,14 +219,23 @@ export const Survey = ({
     const allRequiredQuestionIds: string[] = [];
 
     let calculationResults = { ...currentVariables };
+    const localResponseData = { ...responseData, ...data };
 
     if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
       for (const logic of currQuesTemp.logic) {
-        if (evaluateAdvancedLogic(localSurvey, data, currentVariables, logic.conditions, selectedLanguage)) {
+        if (
+          evaluateAdvancedLogic(
+            localSurvey,
+            localResponseData,
+            currentVariables,
+            logic.conditions,
+            selectedLanguage
+          )
+        ) {
           const { jumpTarget, requiredQuestionIds, calculations } = performActions(
             localSurvey,
             logic.actions,
-            data,
+            localResponseData,
             calculationResults
           );
 

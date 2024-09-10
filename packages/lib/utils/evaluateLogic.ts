@@ -96,19 +96,6 @@ const evaluateSingleCondition = (
           return leftValue.includes(rightValue);
         }
 
-        // when left value is of multi choicequestion and right value is its option
-        if (
-          condition.leftOperand.type === "question" &&
-          ((leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
-        ) {
-          if (Array.isArray(leftValue) && typeof rightValue === "string") {
-            return leftValue.includes(rightValue);
-          } else {
-            return leftValue === rightValue;
-          }
-        }
-
         // when left value is of date question and right value is string
         if (
           condition.leftOperand.type === "question" &&
@@ -144,7 +131,7 @@ const evaluateSingleCondition = (
             leftValue.length === 1 &&
             typeof rightValue === "string" &&
             leftValue.includes(rightValue)) ||
-          leftValue?.toString() === rightValue
+          leftValue === rightValue
         );
       case "doesNotEqual":
         // when left value is of picture selection question and right value is its option
@@ -156,19 +143,6 @@ const evaluateSingleCondition = (
           typeof rightValue === "string"
         ) {
           return !leftValue.includes(rightValue);
-        }
-
-        // when left value is of multi choicequestion and right value is its option
-        if (
-          condition.leftOperand.type === "question" &&
-          ((leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
-            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
-        ) {
-          if (Array.isArray(leftValue) && typeof rightValue === "string") {
-            return !leftValue.includes(rightValue);
-          } else {
-            return leftValue !== rightValue;
-          }
         }
 
         // when left value is of date question and right value is string
@@ -201,7 +175,13 @@ const evaluateSingleCondition = (
           }
         }
 
-        return leftValue?.toString() !== rightValue;
+        return (
+          (Array.isArray(leftValue) &&
+            leftValue.length === 1 &&
+            typeof rightValue === "string" &&
+            !leftValue.includes(rightValue)) ||
+          leftValue !== rightValue
+        );
       case "contains":
         return String(leftValue).includes(String(rightValue));
       case "doesNotContain":
@@ -231,13 +211,6 @@ const evaluateSingleCondition = (
         }
         return false;
       case "isSkipped":
-        if (
-          condition.leftOperand.type === "question" &&
-          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.FileUpload
-        ) {
-          return leftValue === "skipped";
-        }
-
         return (
           (Array.isArray(leftValue) && leftValue.length === 0) ||
           leftValue === "" ||
@@ -309,12 +282,10 @@ const getLeftOperandValue = (
       const responseValue = data[leftOperand.value];
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
-        let choice;
-
         const isOthersEnabled = currentQuestion.choices.at(-1)?.id === "other";
 
         if (typeof responseValue === "string") {
-          choice = currentQuestion.choices.find((choice) => {
+          const choice = currentQuestion.choices.find((choice) => {
             return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
           });
 
@@ -328,6 +299,7 @@ const getLeftOperandValue = (
 
           return choice.id;
         } else if (Array.isArray(responseValue)) {
+          let choice: string[] = [];
           responseValue.forEach((value) => {
             const foundChoice = currentQuestion.choices.find((choice) => {
               return getLocalizedValue(choice.label, selectedLanguage) === value;
@@ -339,7 +311,6 @@ const getLeftOperandValue = (
               choice.push("other");
             }
           });
-
           if (choice) {
             return Array.from(new Set(choice));
           }
