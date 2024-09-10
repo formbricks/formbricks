@@ -4,7 +4,14 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes): TSurvey => {
   const surveyTemp = structuredClone(survey);
-  const languages = Object.keys(survey.questions[0].headline);
+  const languages = surveyTemp.languages.map((surveyLanguage) => {
+    if (surveyLanguage.default) {
+      return "default";
+    }
+
+    return surveyLanguage.language.code;
+  });
+
   surveyTemp.questions.forEach((question) => {
     languages.forEach((language) => {
       if (question.headline[language].includes("recall:")) {
