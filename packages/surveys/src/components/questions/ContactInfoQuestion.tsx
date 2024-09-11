@@ -30,7 +30,7 @@ interface ContactInfoQuestionProps {
 export const ContactInfoQuestion = ({
   question,
   value,
-  // onChange,
+  onChange,
   onSubmit,
   onBack,
   isFirstQuestion,
@@ -38,11 +38,10 @@ export const ContactInfoQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  // autoFocusEnabled,
+  autoFocusEnabled,
   currentQuestionId,
 }: ContactInfoQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-  // const [, setHasFilled] = useState(false);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -75,26 +74,28 @@ export const ContactInfoQuestion = ({
     },
   ];
 
-  // const safeValue = useMemo(() => {
-  //   return Array.isArray(value) ? value : ["", "", "", "", "", ""];
-  // }, [value]);
+  const handleChange = (fieldId: string, fieldValue: string) => {
+    const newValue = fields.map((field) => {
+      if (field.id === fieldId) {
+        return fieldValue;
+      }
+      const existingValue = value?.[fields.findIndex((f) => f.id === field.id)] || "";
+      return field.show ? existingValue : "";
+    });
+    onChange({ [question.id]: newValue });
+  };
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = value?.length === 6 && value.every((item) => item.trim() === "");
+    const containsAllEmptyStrings = value?.length === 5 && value.every((item) => item.trim() === "");
     if (containsAllEmptyStrings) {
       onSubmit({ [question.id]: [] }, updatedTtc);
     } else {
       onSubmit({ [question.id]: value ?? [] }, updatedTtc);
     }
   };
-
-  // useEffect(() => {
-  //   const filled = safeValue.some((val) => val.trim().length > 0);
-  //   setHasFilled(filled);
-  // }, [value, safeValue]);
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
@@ -114,8 +115,18 @@ export const ContactInfoQuestion = ({
       </ScrollableContainer>
       <div className={`fb-flex fb-flex-col fb-space-y-4 fb-w-full fb-px-4`}>
         {fields.map(
-          (field) =>
-            field.show && <Input key={field.id} placeholder={field.placeholder} required={field.required} />
+          (field, index) =>
+            field.show && (
+              <Input
+                key={field.id}
+                placeholder={field.placeholder}
+                required={field.required}
+                className="fb-py-4"
+                value={value?.[index] || ""}
+                // @ts-expect-error
+                onChange={(e) => handleChange(field.id, e?.target?.value ?? "")}
+              />
+            )
         )}
       </div>
       <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
