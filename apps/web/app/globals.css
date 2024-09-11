@@ -133,3 +133,50 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   -webkit-appearance: none;
 }
+
+@import '@radix-ui/colors/black-alpha.css';
+@import '@radix-ui/colors/violet.css';
+
+.SliderRoot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    user-select: none;
+    touch-action: none;
+}
+
+.SliderTrack {
+    background-color: rgb(203 213 225 / var(--tw-bg-opacity));
+    position: relative;
+    flex-grow: 1;
+    border-radius: 9999px;
+    height: 3px;
+}
+
+.SliderRange {
+    position: absolute;
+    /*background-color: white;*/
+    border-radius: 9999px;
+    height: 100%;
+    background-color: rgb(203 213 225 / var(--tw-bg-opacity));
+}
+
+.SliderThumb {
+    display: block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: white;
+    color: #000;
+    text-align: center;
+    box-shadow: 0 2px 10px #000;
+    border-radius: 10px;
+}
+.SliderThumb:hover {
+    background-color: #000;
+    color: #fff;
+}
+.SliderThumb:focus {
+    outline: none;
+    box-shadow: 0 0 0 5px #000;
+}

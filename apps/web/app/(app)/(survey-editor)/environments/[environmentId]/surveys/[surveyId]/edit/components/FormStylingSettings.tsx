@@ -1,6 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
+import * as Slider from "@radix-ui/react-slider";
 import { CheckIcon, SparklesIcon } from "lucide-react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
@@ -12,7 +13,6 @@ import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
-import { Slider } from "@formbricks/ui/Slider";
 
 type FormStylingSettingsProps = {
   open: boolean;
@@ -120,13 +120,23 @@ export const FormStylingSettings = ({
                   </div>
 
                   <FormControl>
-                    <Slider
-                      value={[field.value as number]}
-                      max={60}
-                      onValueChange={(value) => {
-                        field.onChange(value[0]);
-                      }}
-                    />
+                    <div className="rounded-lg border bg-slate-50 p-6">
+                      <Slider.Root
+                        className="SliderRoot"
+                        value={[field.value as number]}
+                        max={60}
+                        step={1}
+                        onValueChange={(value) => {
+                          field.onChange(value[0]);
+                        }}>
+                        <Slider.Track className="SliderTrack">
+                          <Slider.Range className="SliderRange" />
+                        </Slider.Track>
+                        <Slider.Thumb className="SliderThumb" aria-label="Volume">
+                          {field.value}
+                        </Slider.Thumb>
+                      </Slider.Root>
+                    </div>
                   </FormControl>
                 </FormItem>
               )}

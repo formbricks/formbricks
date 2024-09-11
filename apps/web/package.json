@@ -33,6 +33,7 @@
     "@radix-ui/react-collapsible": "^1.1.0",
     "@react-email/components": "^0.0.22",
     "@sentry/nextjs": "^8.26.0",
+    "@stitches/react": "^1.2.8",
     "@tanstack/react-table": "^8.20.1",
     "@vercel/og": "^0.6.2",
     "@vercel/speed-insights": "^1.0.12",
@@ -60,6 +61,7 @@
     "react-hot-toast": "^2.4.1",
     "redis": "^4.7.0",
     "sharp": "^0.33.4",
+    "styled-components": "^6.1.13",
     "ua-parser-js": "^1.0.38",
     "webpack": "^5.93.0",
     "xlsx": "^0.18.5"
