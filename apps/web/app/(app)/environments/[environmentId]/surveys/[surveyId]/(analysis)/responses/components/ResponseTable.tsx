@@ -59,7 +59,8 @@ export const ResponseTable = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [selectedResponse, setSelectedResponse] = useState<TResponse | null>(null);
+  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
+  const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
   const [isExpanded, setIsExpanded] = useState(false);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
@@ -180,7 +181,7 @@ export const ResponseTable = ({
                       cell={cell}
                       row={row}
                       isExpanded={isExpanded}
-                      setSelectedResponseCard={setSelectedResponse}
+                      setSelectedResponseId={setSelectedResponseId}
                       responses={responses}
                     />
                   ))}
@@ -224,12 +225,12 @@ export const ResponseTable = ({
             isViewer={isViewer}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
-            setSelectedResponse={setSelectedResponse}
+            setSelectedResponseId={setSelectedResponseId}
             selectedResponse={selectedResponse}
             open={selectedResponse !== null}
             setOpen={(open) => {
               if (!open) {
-                setSelectedResponse(null);
+                setSelectedResponseId(null);
               }
             }}
           />

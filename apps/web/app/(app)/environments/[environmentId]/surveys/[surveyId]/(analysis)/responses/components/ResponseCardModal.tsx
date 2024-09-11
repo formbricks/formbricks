@@ -12,7 +12,7 @@ import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 interface ResponseCardModalProps {
   responses: TResponse[];
   selectedResponse: TResponse | null;
-  setSelectedResponse: (response: TResponse | null) => void;
+  setSelectedResponseId: (id: string | null) => void;
   survey: TSurvey;
   environment: TEnvironment;
   user?: TUser;
@@ -27,7 +27,7 @@ interface ResponseCardModalProps {
 export const ResponseCardModal = ({
   responses,
   selectedResponse,
-  setSelectedResponse,
+  setSelectedResponseId,
   survey,
   environment,
   user,
@@ -52,18 +52,22 @@ export const ResponseCardModal = ({
 
   const handleNext = () => {
     if (currentIndex !== null && currentIndex < responses.length - 1) {
-      setSelectedResponse(responses[currentIndex + 1]);
+      setSelectedResponseId(responses[currentIndex + 1].id);
     }
   };
 
   const handleBack = () => {
     if (currentIndex !== null && currentIndex > 0) {
-      setSelectedResponse(responses[currentIndex - 1]);
+      setSelectedResponseId(responses[currentIndex - 1].id);
     }
   };
 
   const handleClose = () => {
-    setSelectedResponse(null);
+    setSelectedResponseId(null);
+  };
+
+  const setSelectedResponseForSingleResponseCard = (response: TResponse | null) => {
+    setSelectedResponseId(response ? response.id : null);
   };
 
   // If no response is selected or currentIndex is null, do not render the modal
@@ -108,7 +112,7 @@ export const ResponseCardModal = ({
             isViewer={isViewer}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
-            setSelectedResponse={setSelectedResponse}
+            setSelectedResponse={setSelectedResponseForSingleResponseCard}
           />
         </div>
       </div>
