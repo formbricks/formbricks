@@ -110,7 +110,7 @@ export const EditWelcomeCard = ({
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
                 id="welcome-card-image"
-                allowedFileExtensions={["png", "jpeg", "jpg"]}
+                allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
                 environmentId={environmentId}
                 onFileUpload={(url: string[]) => {
                   updateSurvey({ fileUrl: url[0] });
