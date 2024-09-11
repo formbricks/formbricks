@@ -272,9 +272,9 @@ export const MainNavigation = ({
 
         if (computedReleasesBehind >= 0) {
           setReleasesBehind(computedReleasesBehind);
-          setLatestVersion(releases[0]?.tag_name); // Set the latest version from the first release
+          setLatestVersion(releases[0]?.tag_name);
         } else {
-          setReleasesBehind(0); // Handle no new release case
+          setReleasesBehind(0);
         }
       }
     }
