@@ -20,6 +20,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
+  RocketIcon,
   UserCircleIcon,
   UserIcon,
   UsersIcon,
@@ -30,6 +31,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { FORMBRICKS_PRODUCT_ID_LS, FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -340,11 +342,17 @@ export const MainNavigation = ({
 
           {/* Product Switch */}
           <div>
-            {/* New Update */}
-            {!isCollapsed && isOwnerOrAdmin && releasesBehind > 0 && (
-              <div className="flex w-full max-w-sm items-center space-x-4 border p-4">
-                <p className="text-center text-sm">New version ({latestVersion}) now available</p>
-              </div>
+            {/* New Version Available */}
+            {!isCollapsed && isOwnerOrAdmin && releasesBehind > 0 && !IS_FORMBRICKS_CLOUD && (
+              <Link
+                href="https://github.com/formbricks/formbricks/releases"
+                target="_blank"
+                className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
+                <p className="flex items-center justify-center gap-x-2 text-xs">
+                  <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
+                  Formbricks {latestVersion} is here. Upgrade now!
+                </p>
+              </Link>
             )}
 
             <DropdownMenu>
