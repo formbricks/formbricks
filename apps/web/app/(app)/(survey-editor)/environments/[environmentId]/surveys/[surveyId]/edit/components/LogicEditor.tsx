@@ -81,6 +81,7 @@ const conditions = {
   matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
   address: ["submitted", "skipped"],
   ranking: ["submitted", "skipped"],
+  contactInfo: ["submitted", "skipped"],
 };
 
 export const LogicEditor = ({

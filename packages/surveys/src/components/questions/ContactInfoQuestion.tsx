@@ -131,6 +131,7 @@ export const ContactInfoQuestion = ({
                 required={question.required || (isAnyRequiredFieldFilled && field.required)}
                 value={safeValue?.[index] || ""}
                 className="fb-py-3"
+                type={field.id === "email" ? "email" : "text"}
                 // @ts-expect-error
                 onChange={(e) => handleChange(field.id, e?.target?.value ?? "")}
               />
