@@ -195,6 +195,7 @@ export const StackedCardsContainer = ({
                 id={`questionCard-${questionIdxTemp}`}
                 key={questionIdxTemp}
                 style={{
+                  fontSize: `${styling?.fontSize}px`,
                   zIndex: 1000 - questionIdxTemp,
                   transform: `${calculateCardTransform(offset)}`,
                   opacity: isHidden ? 0 : (100 - 0 * offset) / 100,

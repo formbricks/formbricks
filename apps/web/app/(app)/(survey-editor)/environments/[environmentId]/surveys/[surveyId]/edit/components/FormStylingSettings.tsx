@@ -12,6 +12,7 @@ import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
+import { Slider } from "@formbricks/ui/Slider";
 
 type FormStylingSettingsProps = {
   open: boolean;
@@ -115,11 +116,17 @@ export const FormStylingSettings = ({
                 <FormItem className="space-y-4">
                   <div>
                     <FormLabel>Font size</FormLabel>
-                    <FormDescription>Change the brand color of the survey.</FormDescription>
+                    <FormDescription>Change the font size.</FormDescription>
                   </div>
 
                   <FormControl>
-                    <div>{field.value}</div>
+                    <Slider
+                      value={[field.value as number]}
+                      max={60}
+                      onValueChange={(value) => {
+                        field.onChange(value[0]);
+                      }}
+                    />
                   </FormControl>
                 </FormItem>
               )}

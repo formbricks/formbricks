@@ -37,7 +37,7 @@ export const SurveyModal = ({
   const highlightBorderColor = styling?.highlightBorderColor?.light || null;
 
   return (
-    <div id="fbjs" className="fb-formbricks-form">
+    <div id="fbjs" className="fb-formbricks-form abc">
       <Modal
         placement={placement}
         clickOutside={clickOutside}

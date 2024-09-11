@@ -19,6 +19,7 @@ export const addStylesToDom = () => {
 };
 
 export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TSurveyStyling }) => {
+  console.log("addCustomThemeToDom-------------1");
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom");
 
@@ -31,7 +32,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
 
   // Start the innerHTML string with :root
   let cssVariables = ":root {\n";
-
+  console.log("cssVariables = ", cssVariables);
   // Helper function to append the variable if it's not undefined
   const appendCssVariable = (variableName: string, value: string | undefined) => {
     if (value !== undefined) {
@@ -45,6 +46,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
   appendCssVariable("focus-color", styling.brandColor?.light);
+  // appendCssVariable("font-size", styling?.fontSize);
+
   if (!!styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
     appendCssVariable("brand-text-color", isLight(styling.brandColor?.light) ? "black" : "white");
@@ -117,9 +120,12 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
     appendCssVariable("accent-background-color-selected", accentColorSelected);
   }
 
-  // Close the :root block
-  cssVariables += "}";
+  console.log("styling.fontSize = ", styling?.fontSize);
 
+  // Close the :root block
+  cssVariables += "" + `#fbjs { font-size: ${styling?.fontSize || 30}px !important }` + "}";
+
+  console.log("cssVariables = ", cssVariables);
   // Set the innerHTML of the style element
   styleElement.innerHTML = cssVariables;
 };

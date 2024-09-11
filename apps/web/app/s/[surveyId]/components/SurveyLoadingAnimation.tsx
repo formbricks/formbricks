@@ -96,6 +96,7 @@ export const SurveyLoadingAnimation = ({
     });
 
     const targetNode = document.getElementById("formbricks-survey-container");
+    console.log("targetNode = ", targetNode);
     if (targetNode) {
       observer.observe(targetNode, { childList: true });
     }

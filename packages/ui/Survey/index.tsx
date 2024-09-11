@@ -13,6 +13,8 @@ declare global {
 
 export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
+  // console.log("containerId = ", containerId);
+
   const renderInline = useCallback(
     () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId }),
     [containerId, props]
@@ -61,5 +63,13 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
     }
   }, [isScriptLoaded, renderInline]);
 
-  return <div id={containerId} className="h-full w-full" />;
+  return (
+    <div
+      style={{
+        fontSize: `${props?.styling?.fontSize}px !important`,
+      }}
+      id={containerId}
+      className="h-full w-full"
+    />
+  );
 };

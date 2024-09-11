@@ -12,11 +12,11 @@
   },
   "sideEffects": false,
   "source": "src/index.ts",
-  "main": "dist/index.umd.cjs",
-  "module": "dist/index.js",
+  "main": "dist1/index.umd.cjs",
+  "module": "dist1/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist1"
   ],
   "exports": {
     ".": {
@@ -27,13 +27,13 @@
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
-    "serve": "serve dist -p 3003",
+    "serve": "serve dist1 -p 3003",
     "build": "tsc && vite build",
     "build:dev": "tsc && vite build --mode dev",
     "go": "vite build --watch --mode dev",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
-    "clean": "rimraf .turbo node_modules dist"
+    "clean": "rimraf .turbo node_modules dist1"
   },
   "devDependencies": {
     "@calcom/embed-snippet": "1.3.0",

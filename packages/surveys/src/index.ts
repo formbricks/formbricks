@@ -5,6 +5,7 @@ import { h, render } from "preact";
 import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 
 export const renderSurveyInline = (props: SurveyInlineProps) => {
+  console.log("renderSurveyInline=======");
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
 
@@ -16,6 +17,7 @@ export const renderSurveyInline = (props: SurveyInlineProps) => {
 };
 
 export const renderSurveyModal = (props: SurveyModalProps) => {
+  console.log("renderSurveyModal=======");
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
 
