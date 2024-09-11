@@ -1,6 +1,7 @@
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
+  getDefaultOperatorForQuestion,
   getMatchValueProps,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { createId } from "@paralleldrive/cuid2";
@@ -20,7 +21,7 @@ import {
   TDyanmicLogicField,
   TRightOperand,
   TSingleCondition,
-  TSurveyLogicCondition,
+  TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
@@ -50,7 +51,18 @@ export function AdvancedLogicEditorConditions({
   updateQuestion,
   depth = 0,
 }: AdvancedLogicEditorConditions) {
-  const handleAddConditionBelow = (resourceId: string, condition: TSingleCondition) => {
+  const handleAddConditionBelow = (resourceId: string) => {
+    const operator = getDefaultOperatorForQuestion(question);
+
+    const condition: TSingleCondition = {
+      id: createId(),
+      leftOperand: {
+        value: question.id,
+        type: "question",
+      },
+      operator,
+    };
+
     const logicCopy = structuredClone(question.logic) || [];
     const logicItem = logicCopy[logicIdx];
     addConditionBelow(logicItem.conditions, resourceId, condition);
@@ -126,7 +138,7 @@ export function AdvancedLogicEditorConditions({
     });
   };
 
-  const handleOperatorChange = (condition: TSingleCondition, value: TSurveyLogicCondition) => {
+  const handleOperatorChange = (condition: TSingleCondition, value: TSurveyLogicConditionsOperator) => {
     if (value !== condition.operator) {
       handleUpdateCondition(condition.id, {
         operator: value,
@@ -204,14 +216,7 @@ export function AdvancedLogicEditorConditions({
                 <DropdownMenuItem
                   className="flex items-center gap-2"
                   onClick={() => {
-                    handleAddConditionBelow(condition.id, {
-                      id: createId(),
-                      leftOperand: {
-                        value: localSurvey.questions[questionIdx].id,
-                        type: "question",
-                      },
-                      operator: "equals",
-                    });
+                    handleAddConditionBelow(condition.id);
                   }}>
                   <PlusIcon className="h-4 w-4" />
                   Add condition below
@@ -265,7 +270,7 @@ export function AdvancedLogicEditorConditions({
           showSearch={false}
           options={conditionOperatorOptions}
           value={condition.operator}
-          onChangeValue={(val: TSurveyLogicCondition) => {
+          onChangeValue={(val: TSurveyLogicConditionsOperator) => {
             handleOperatorChange(condition, val);
           }}
           comboboxClasses="grow min-w-[150px]"
@@ -297,14 +302,7 @@ export function AdvancedLogicEditorConditions({
             <DropdownMenuItem
               className="flex items-center gap-2"
               onClick={() => {
-                handleAddConditionBelow(condition.id, {
-                  id: createId(),
-                  leftOperand: {
-                    value: localSurvey.questions[questionIdx].id,
-                    type: "question",
-                  },
-                  operator: "equals",
-                });
+                handleAddConditionBelow(condition.id);
               }}>
               <PlusIcon className="h-4 w-4" />
               Add condition below

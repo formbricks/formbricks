@@ -8,7 +8,7 @@ import type {
   TRightOperand,
   TSingleCondition,
   TSurveyAdvancedLogic,
-  TSurveyLogicCondition,
+  TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
 import {
   type TSurveyEndings,
@@ -29,7 +29,7 @@ const isOldLogic = (logic: TOldLogic | TSurveyAdvancedLogic): logic is TOldLogic
   return Object.keys(logic).some((key) => ["condition", "destination", "value"].includes(key));
 };
 
-const doesRightOperandExist = (operator: TSurveyLogicCondition): boolean => {
+const doesRightOperandExist = (operator: TSurveyLogicConditionsOperator): boolean => {
   return ![
     "isAccepted",
     "isBooked",
@@ -166,8 +166,8 @@ function convertLogicCondition(
 function mapOldOperatorToNew(
   oldCondition: string,
   questionType: TSurveyQuestionTypeEnum
-): TSurveyLogicCondition {
-  const conditionMap: Record<string, TSurveyLogicCondition> = {
+): TSurveyLogicConditionsOperator {
+  const conditionMap: Record<string, TSurveyLogicConditionsOperator> = {
     accepted: "isAccepted",
     clicked: "isClicked",
     submitted: "isSubmitted",

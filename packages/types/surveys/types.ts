@@ -10,7 +10,7 @@ import {
   type TConditionGroup,
   type TSingleCondition,
   type TSurveyAdvancedLogic,
-  type TSurveyLogicCondition,
+  type TSurveyLogicConditionsOperator,
   ZActionCalculateNumber,
   ZActionCalculateText,
   ZSurveyAdvancedLogic,
@@ -898,11 +898,13 @@ export const ZSurvey = z
 
 const isInvalidOperatorsForQuestionType = (
   question: TSurveyQuestion,
-  operator: TSurveyLogicCondition
+  operator: TSurveyLogicConditionsOperator
 ): boolean => {
   let isInvalidOperator = false;
 
   const questionType = question.type;
+
+  if (question.required && operator === "isSkipped") return true;
 
   switch (questionType) {
     case TSurveyQuestionTypeEnum.OpenText:
@@ -1018,7 +1020,7 @@ const isInvalidOperatorsForQuestionType = (
 
 const isInvalidOperatorsForVariableType = (
   variableType: "text" | "number",
-  operator: TSurveyLogicCondition
+  operator: TSurveyLogicConditionsOperator
 ): boolean => {
   let isInvalidOperator = false;
 
@@ -1058,7 +1060,7 @@ const isInvalidOperatorsForVariableType = (
   return isInvalidOperator;
 };
 
-const isInvalidOperatorsForHiddenFieldType = (operator: TSurveyLogicCondition): boolean => {
+const isInvalidOperatorsForHiddenFieldType = (operator: TSurveyLogicConditionsOperator): boolean => {
   let isInvalidOperator = false;
 
   if (

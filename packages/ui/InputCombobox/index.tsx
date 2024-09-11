@@ -1,4 +1,5 @@
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
+import Image from "next/image";
 import React, { useEffect, useMemo } from "react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -16,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
+  imgSrc?: string;
   label: string;
   value: string | number;
   meta?: Record<string, string>;
@@ -157,6 +159,7 @@ export const InputCombobox = ({
           {idx !== 0 && <span>,</span>}
           <div className="flex items-center gap-2">
             {item.icon && <item.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+            {item.imgSrc && <Image src={item.imgSrc} alt={item.label} width={24} height={24} />}
             <span>{item.label}</span>
           </div>
         </>
@@ -165,6 +168,9 @@ export const InputCombobox = ({
       return (
         <div className="flex items-center gap-2 truncate">
           {localValue.icon && <localValue.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+          {localValue.imgSrc && (
+            <Image src={localValue.imgSrc} alt={localValue.label} width={24} height={24} />
+          )}
           <span className="truncate">{localValue.label}</span>
         </div>
       );
@@ -246,6 +252,15 @@ export const InputCombobox = ({
                           <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                         )}
                       {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
+                      {option.imgSrc && (
+                        <Image
+                          src={option.imgSrc}
+                          alt={option.label}
+                          width={24}
+                          height={24}
+                          className="mr-2 shrink-0"
+                        />
+                      )}
                       <span className="truncate">{option.label}</span>
                     </CommandItem>
                   ))}
@@ -272,6 +287,15 @@ export const InputCombobox = ({
                             <CheckIcon className="mr-2 h-4 w-4 shrink-0 text-slate-300 hover:text-slate-400" />
                           )}
                         {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
+                        {option.imgSrc && (
+                          <Image
+                            src={option.imgSrc}
+                            alt={option.label}
+                            width={24}
+                            height={24}
+                            className="mr-2 shrink-0"
+                          />
+                        )}
                         <span className="truncate">{option.label}</span>
                       </CommandItem>
                     ))}

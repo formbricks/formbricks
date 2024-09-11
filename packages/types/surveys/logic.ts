@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ZSurveyLogicCondition = z.enum([
+export const ZSurveyLogicConditionsOperator = z.enum([
   "equals",
   "doesNotEqual",
   "contains",
@@ -28,13 +28,13 @@ export const ZSurveyLogicCondition = z.enum([
 ]);
 
 const operatorsWithoutRightOperand = [
-  ZSurveyLogicCondition.Enum.isSubmitted,
-  ZSurveyLogicCondition.Enum.isSkipped,
-  ZSurveyLogicCondition.Enum.isClicked,
-  ZSurveyLogicCondition.Enum.isAccepted,
-  ZSurveyLogicCondition.Enum.isBooked,
-  ZSurveyLogicCondition.Enum.isPartiallySubmitted,
-  ZSurveyLogicCondition.Enum.isCompletelySubmitted,
+  ZSurveyLogicConditionsOperator.Enum.isSubmitted,
+  ZSurveyLogicConditionsOperator.Enum.isSkipped,
+  ZSurveyLogicConditionsOperator.Enum.isClicked,
+  ZSurveyLogicConditionsOperator.Enum.isAccepted,
+  ZSurveyLogicConditionsOperator.Enum.isBooked,
+  ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
+  ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
 ] as const;
 
 export const ZDyanmicLogicField = z.enum(["question", "variable", "hiddenField"]);
@@ -69,7 +69,7 @@ const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDy
   message: "Conditional Logic: Invalid dynamic field value",
 });
 
-export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
+export type TSurveyLogicConditionsOperator = z.infer<typeof ZSurveyLogicConditionsOperator>;
 export type TDyanmicLogicField = z.infer<typeof ZDyanmicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
@@ -91,7 +91,7 @@ export const ZSingleCondition = z
   .object({
     id: z.string().cuid2(),
     leftOperand: ZLeftOperand,
-    operator: ZSurveyLogicCondition,
+    operator: ZSurveyLogicConditionsOperator,
     rightOperand: ZRightOperand.optional(),
   })
   .and(

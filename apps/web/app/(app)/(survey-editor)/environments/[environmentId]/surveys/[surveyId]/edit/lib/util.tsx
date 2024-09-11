@@ -28,8 +28,14 @@ import {
   TRightOperand,
   TSingleCondition,
   TSurveyAdvancedLogic,
+  TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestionTypeEnum, TSurveyVariable } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+  TSurveyVariable,
+} from "@formbricks/types/surveys/types";
 import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/InputCombobox";
 
 // formats the text to highlight specific parts of the text with slashes
@@ -145,6 +151,29 @@ export const actionObjectiveOptions: TComboboxOption[] = [
   { label: "Jump to question", value: "jumpToQuestion" },
 ];
 
+const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {
+  let options;
+
+  if (question.type === "openText") {
+    const inputType = question.inputType === "number" ? "number" : "text";
+    options = ruleEngine.question.openText[inputType].options;
+  } else {
+    options = ruleEngine.question[question.type].options;
+  }
+
+  if (question.required) {
+    options = options.filter((option) => option.value !== "isSkipped");
+  }
+
+  return options;
+};
+
+export const getDefaultOperatorForQuestion = (question: TSurveyQuestion): TSurveyLogicConditionsOperator => {
+  const options = getQuestionOperatorOptions(question);
+
+  return options[0].value.toString() as TSurveyLogicConditionsOperator;
+};
+
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey
@@ -158,13 +187,11 @@ export const getConditionOperatorOptions = (
     return ruleEngine.hiddenField.options;
   } else if (condition.leftOperand.type === "question") {
     const questions = localSurvey.questions || [];
-    const question =
-      questions.find((question) => question.id === condition.leftOperand.value) || questions[0];
-    if (question.type === "openText") {
-      const inputType = question.inputType === "number" ? "number" : "text";
-      return ruleEngine.question.openText[inputType].options;
-    }
-    return ruleEngine.question[question.type].options;
+    const question = questions.find((question) => question.id === condition.leftOperand.value);
+
+    if (!question) return [];
+
+    return getQuestionOperatorOptions(question);
   }
   return [];
 };
@@ -318,7 +345,8 @@ export const getMatchValueProps = (
     } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.PictureSelection) {
       const choices = selectedQuestion.choices.map((choice, idx) => {
         return {
-          label: choice.imageUrl.split("/").pop() || `Image ${idx + 1}`,
+          imgSrc: choice.imageUrl,
+          label: `Picture ${idx + 1}`,
           value: choice.id,
           meta: {
             type: "static",
@@ -1006,9 +1034,9 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): nu
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  return survey.questions
-    .filter((question) => question.id !== questionId)
-    .findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
+  return survey.questions.findIndex(
+    (question) => question.logic && question.id !== questionId && question.logic.some(isUsedInLogicRule)
+  );
 };
 
 export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optionId: string): number => {

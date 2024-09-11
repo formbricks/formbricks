@@ -1,4 +1,4 @@
-import { ZSurveyLogicCondition } from "@formbricks/types/surveys/logic";
+import { ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const ruleEngine = {
@@ -8,43 +8,43 @@ export const ruleEngine = {
         options: [
           {
             label: "equals",
-            value: ZSurveyLogicCondition.Enum.equals,
+            value: ZSurveyLogicConditionsOperator.Enum.equals,
           },
           {
             label: "does not equal",
-            value: ZSurveyLogicCondition.Enum.doesNotEqual,
+            value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
           },
           {
             label: "contains",
-            value: ZSurveyLogicCondition.Enum.contains,
+            value: ZSurveyLogicConditionsOperator.Enum.contains,
           },
           {
             label: "does not contain",
-            value: ZSurveyLogicCondition.Enum.doesNotContain,
+            value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
           },
           {
             label: "starts with",
-            value: ZSurveyLogicCondition.Enum.startsWith,
+            value: ZSurveyLogicConditionsOperator.Enum.startsWith,
           },
           {
             label: "does not start with",
-            value: ZSurveyLogicCondition.Enum.doesNotStartWith,
+            value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
           },
           {
             label: "ends with",
-            value: ZSurveyLogicCondition.Enum.endsWith,
+            value: ZSurveyLogicConditionsOperator.Enum.endsWith,
           },
           {
             label: "does not end with",
-            value: ZSurveyLogicCondition.Enum.doesNotEndWith,
+            value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
           },
           {
             label: "is submitted",
-            value: ZSurveyLogicCondition.Enum.isSubmitted,
+            value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
           },
           {
             label: "is skipped",
-            value: ZSurveyLogicCondition.Enum.isSkipped,
+            value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
           },
         ],
       },
@@ -52,35 +52,35 @@ export const ruleEngine = {
         options: [
           {
             label: "=",
-            value: ZSurveyLogicCondition.Enum.equals,
+            value: ZSurveyLogicConditionsOperator.Enum.equals,
           },
           {
             label: "!=",
-            value: ZSurveyLogicCondition.Enum.doesNotEqual,
+            value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
           },
           {
             label: ">",
-            value: ZSurveyLogicCondition.Enum.isGreaterThan,
+            value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
           },
           {
             label: "<",
-            value: ZSurveyLogicCondition.Enum.isLessThan,
+            value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
           },
           {
             label: ">=",
-            value: ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
+            value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
           },
           {
             label: "<=",
-            value: ZSurveyLogicCondition.Enum.isLessThanOrEqual,
+            value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
           },
           {
             label: "is submitted",
-            value: ZSurveyLogicCondition.Enum.isSubmitted,
+            value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
           },
           {
             label: "is skipped",
-            value: ZSurveyLogicCondition.Enum.isSkipped,
+            value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
           },
         ],
       },
@@ -89,23 +89,23 @@ export const ruleEngine = {
       options: [
         {
           label: "equals",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "does not equal",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: "equals one of",
-          value: ZSurveyLogicCondition.Enum.equalsOneOf,
+          value: ZSurveyLogicConditionsOperator.Enum.equalsOneOf,
         },
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -113,27 +113,27 @@ export const ruleEngine = {
       options: [
         {
           label: "equals",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "does not equal",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: "includes all of",
-          value: ZSurveyLogicCondition.Enum.includesAllOf,
+          value: ZSurveyLogicConditionsOperator.Enum.includesAllOf,
         },
         {
           label: "includes one of",
-          value: ZSurveyLogicCondition.Enum.includesOneOf,
+          value: ZSurveyLogicConditionsOperator.Enum.includesOneOf,
         },
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -141,27 +141,27 @@ export const ruleEngine = {
       options: [
         {
           label: "equals",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "does not equal",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: "includes all of",
-          value: ZSurveyLogicCondition.Enum.includesAllOf,
+          value: ZSurveyLogicConditionsOperator.Enum.includesAllOf,
         },
         {
           label: "includes one of",
-          value: ZSurveyLogicCondition.Enum.includesOneOf,
+          value: ZSurveyLogicConditionsOperator.Enum.includesOneOf,
         },
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -169,35 +169,35 @@ export const ruleEngine = {
       options: [
         {
           label: "=",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "!=",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: ">",
-          value: ZSurveyLogicCondition.Enum.isGreaterThan,
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
         },
         {
           label: "<",
-          value: ZSurveyLogicCondition.Enum.isLessThan,
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
         },
         {
           label: ">=",
-          value: ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
         },
         {
           label: "<=",
-          value: ZSurveyLogicCondition.Enum.isLessThanOrEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
         },
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -205,35 +205,35 @@ export const ruleEngine = {
       options: [
         {
           label: "=",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "!=",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: ">",
-          value: ZSurveyLogicCondition.Enum.isGreaterThan,
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
         },
         {
           label: "<",
-          value: ZSurveyLogicCondition.Enum.isLessThan,
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
         },
         {
           label: ">=",
-          value: ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
         },
         {
           label: "<=",
-          value: ZSurveyLogicCondition.Enum.isLessThanOrEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
         },
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -241,11 +241,11 @@ export const ruleEngine = {
       options: [
         {
           label: "is clicked",
-          value: ZSurveyLogicCondition.Enum.isClicked,
+          value: ZSurveyLogicConditionsOperator.Enum.isClicked,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -253,11 +253,11 @@ export const ruleEngine = {
       options: [
         {
           label: "is accepted",
-          value: ZSurveyLogicCondition.Enum.isAccepted,
+          value: ZSurveyLogicConditionsOperator.Enum.isAccepted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -265,27 +265,27 @@ export const ruleEngine = {
       options: [
         {
           label: "equals",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "does not equal",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: "is before",
-          value: ZSurveyLogicCondition.Enum.isBefore,
+          value: ZSurveyLogicConditionsOperator.Enum.isBefore,
         },
         {
           label: "is after",
-          value: ZSurveyLogicCondition.Enum.isAfter,
+          value: ZSurveyLogicConditionsOperator.Enum.isAfter,
         },
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -293,11 +293,11 @@ export const ruleEngine = {
       options: [
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -305,11 +305,11 @@ export const ruleEngine = {
       options: [
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -317,11 +317,11 @@ export const ruleEngine = {
       options: [
         {
           label: "is booked",
-          value: ZSurveyLogicCondition.Enum.isBooked,
+          value: ZSurveyLogicConditionsOperator.Enum.isBooked,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -329,15 +329,15 @@ export const ruleEngine = {
       options: [
         {
           label: "is partially submitted",
-          value: ZSurveyLogicCondition.Enum.isPartiallySubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
         },
         {
           label: "is completely submitted",
-          value: ZSurveyLogicCondition.Enum.isCompletelySubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -345,11 +345,11 @@ export const ruleEngine = {
       options: [
         {
           label: "is submitted",
-          value: ZSurveyLogicCondition.Enum.isSubmitted,
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
           label: "is skipped",
-          value: ZSurveyLogicCondition.Enum.isSkipped,
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
     },
@@ -359,35 +359,35 @@ export const ruleEngine = {
       options: [
         {
           label: "equals",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "does not equal",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: "contains",
-          value: ZSurveyLogicCondition.Enum.contains,
+          value: ZSurveyLogicConditionsOperator.Enum.contains,
         },
         {
           label: "does not contain",
-          value: ZSurveyLogicCondition.Enum.doesNotContain,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
         },
         {
           label: "starts with",
-          value: ZSurveyLogicCondition.Enum.startsWith,
+          value: ZSurveyLogicConditionsOperator.Enum.startsWith,
         },
         {
           label: "does not start with",
-          value: ZSurveyLogicCondition.Enum.doesNotStartWith,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
         },
         {
           label: "ends with",
-          value: ZSurveyLogicCondition.Enum.endsWith,
+          value: ZSurveyLogicConditionsOperator.Enum.endsWith,
         },
         {
           label: "does not end with",
-          value: ZSurveyLogicCondition.Enum.doesNotEndWith,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
         },
       ],
     },
@@ -395,27 +395,27 @@ export const ruleEngine = {
       options: [
         {
           label: "=",
-          value: ZSurveyLogicCondition.Enum.equals,
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
           label: "!=",
-          value: ZSurveyLogicCondition.Enum.doesNotEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
           label: ">",
-          value: ZSurveyLogicCondition.Enum.isGreaterThan,
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
         },
         {
           label: "<",
-          value: ZSurveyLogicCondition.Enum.isLessThan,
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
         },
         {
           label: ">=",
-          value: ZSurveyLogicCondition.Enum.isGreaterThanOrEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
         },
         {
           label: "<=",
-          value: ZSurveyLogicCondition.Enum.isLessThanOrEqual,
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
         },
       ],
     },
@@ -424,35 +424,35 @@ export const ruleEngine = {
     options: [
       {
         label: "equals",
-        value: ZSurveyLogicCondition.Enum.equals,
+        value: ZSurveyLogicConditionsOperator.Enum.equals,
       },
       {
         label: "does not equal",
-        value: ZSurveyLogicCondition.Enum.doesNotEqual,
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
       },
       {
         label: "contains",
-        value: ZSurveyLogicCondition.Enum.contains,
+        value: ZSurveyLogicConditionsOperator.Enum.contains,
       },
       {
         label: "does not contain",
-        value: ZSurveyLogicCondition.Enum.doesNotContain,
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
       },
       {
         label: "starts with",
-        value: ZSurveyLogicCondition.Enum.startsWith,
+        value: ZSurveyLogicConditionsOperator.Enum.startsWith,
       },
       {
         label: "does not start with",
-        value: ZSurveyLogicCondition.Enum.doesNotStartWith,
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
       },
       {
         label: "ends with",
-        value: ZSurveyLogicCondition.Enum.endsWith,
+        value: ZSurveyLogicConditionsOperator.Enum.endsWith,
       },
       {
         label: "does not end with",
-        value: ZSurveyLogicCondition.Enum.doesNotEndWith,
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
       },
     ],
   },

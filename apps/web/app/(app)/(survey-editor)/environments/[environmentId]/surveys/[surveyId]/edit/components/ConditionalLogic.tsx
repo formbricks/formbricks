@@ -1,4 +1,5 @@
 import { AdvancedLogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditor";
+import { getDefaultOperatorForQuestion } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
 import { createId } from "@paralleldrive/cuid2";
 import {
   ArrowDownIcon,
@@ -44,6 +45,8 @@ export function ConditionalLogic({
   }, [localSurvey, attributeClasses]);
 
   const addLogic = () => {
+    const operator = getDefaultOperatorForQuestion(question);
+
     const initialCondition: TSurveyAdvancedLogic = {
       id: createId(),
       conditions: {
@@ -53,10 +56,10 @@ export function ConditionalLogic({
           {
             id: createId(),
             leftOperand: {
-              value: localSurvey.questions[questionIdx].id,
+              value: question.id,
               type: "question",
             },
-            operator: "isSkipped",
+            operator,
           },
         ],
       },
