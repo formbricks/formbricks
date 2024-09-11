@@ -224,6 +224,12 @@ export const SurveyMenuBar = ({
         }
       });
 
+      if (localSurvey.type !== "link" && !localSurvey.triggers?.length) {
+        toast.error("Please set a survey trigger");
+        setIsSurveySaving(false);
+        return false;
+      }
+
       const segment = await handleSegmentUpdate();
       const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
 
