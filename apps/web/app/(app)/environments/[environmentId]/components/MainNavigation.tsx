@@ -20,6 +20,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
+  RocketIcon,
   UserCircleIcon,
   UserIcon,
   UsersIcon,
@@ -270,9 +271,9 @@ export const MainNavigation = ({
 
         if (computedReleasesBehind >= 0) {
           setReleasesBehind(computedReleasesBehind);
-          setLatestVersion(releases[0]?.tag_name); // Set the latest version from the first release
+          setLatestVersion(releases[0]?.tag_name);
         } else {
-          setReleasesBehind(0); // Handle no new release case
+          setReleasesBehind(0);
         }
       }
     }
@@ -340,11 +341,17 @@ export const MainNavigation = ({
 
           {/* Product Switch */}
           <div>
-            {/* New Update */}
+            {/* New Version Available */}
             {!isCollapsed && isOwnerOrAdmin && releasesBehind > 0 && (
-              <div className="flex w-full max-w-sm items-center space-x-4 border p-4">
-                <p className="text-center text-sm">New version ({latestVersion}) now available</p>
-              </div>
+              <Link
+                href="https://github.com/formbricks/formbricks/releases"
+                target="_blank"
+                className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
+                <p className="flex items-center justify-center gap-x-2 text-xs">
+                  <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
+                  Formbricks {latestVersion} is here. Upgrade now!
+                </p>
+              </Link>
             )}
 
             <DropdownMenu>
