@@ -6,7 +6,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useRef, useState } from "preact/hooks";
+import { useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
@@ -38,13 +38,17 @@ export const ContactInfoQuestion = ({
   languageCode,
   ttc,
   setTtc,
-  autoFocusEnabled,
+  // autoFocusEnabled,
   currentQuestionId,
 }: ContactInfoQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+
+  const safeValue = useMemo(() => {
+    return Array.isArray(value) ? value : ["", "", "", "", "", ""];
+  }, [value]);
 
   const fields = [
     {
@@ -79,21 +83,25 @@ export const ContactInfoQuestion = ({
       if (field.id === fieldId) {
         return fieldValue;
       }
-      const existingValue = value?.[fields.findIndex((f) => f.id === field.id)] || "";
+      const existingValue = safeValue?.[fields.findIndex((f) => f.id === field.id)] || "";
       return field.show ? existingValue : "";
     });
     onChange({ [question.id]: newValue });
   };
 
+  const isAnyRequiredFieldFilled = fields.some(
+    (field, index) => field.required && field.show && safeValue?.length && safeValue?.[index]?.trim() !== ""
+  );
+
   const handleSubmit = (e: Event) => {
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = value?.length === 5 && value.every((item) => item.trim() === "");
+    const containsAllEmptyStrings = safeValue?.length === 5 && safeValue.every((item) => item.trim() === "");
     if (containsAllEmptyStrings) {
       onSubmit({ [question.id]: [] }, updatedTtc);
     } else {
-      onSubmit({ [question.id]: value ?? [] }, updatedTtc);
+      onSubmit({ [question.id]: safeValue ?? [] }, updatedTtc);
     }
   };
 
@@ -119,10 +127,10 @@ export const ContactInfoQuestion = ({
             field.show && (
               <Input
                 key={field.id}
-                placeholder={field.placeholder}
-                required={field.required}
-                className="fb-py-4"
-                value={value?.[index] || ""}
+                placeholder={field.required ? `${field.placeholder}*` : field.placeholder}
+                required={question.required || (isAnyRequiredFieldFilled && field.required)}
+                value={safeValue?.[index] || ""}
+                className="fb-py-3"
                 // @ts-expect-error
                 onChange={(e) => handleChange(field.id, e?.target?.value ?? "")}
               />
