@@ -45,7 +45,7 @@ export function AdvancedLogicEditorActions({
   const actions = logicItem.actions;
 
   const handleActionsChange = (
-    operation: "delete" | "addBelow" | "duplicate" | "update",
+    operation: "remove" | "addBelow" | "duplicate" | "update",
     actionIdx: number,
     action?: TAction
   ) => {
@@ -53,7 +53,7 @@ export function AdvancedLogicEditorActions({
     const logicItem = logicCopy[logicIdx];
     const actionsClone = logicItem.actions;
 
-    if (operation === "delete") {
+    if (operation === "remove") {
       actionsClone.splice(actionIdx, 1);
     } else if (operation === "addBelow") {
       actionsClone.splice(actionIdx + 1, 0, { id: createId(), objective: "jumpToQuestion", target: "" });
@@ -110,7 +110,7 @@ export function AdvancedLogicEditorActions({
                       target: val,
                     });
                   }}
-                  comboboxClasses="w-40"
+                  comboboxClasses="grow"
                 />
               )}
               {action.objective === "calculate" && (
@@ -129,10 +129,11 @@ export function AdvancedLogicEditorActions({
                         },
                       });
                     }}
-                    comboboxClasses="w-40"
+                    comboboxClasses="grow"
+                    emptyDropdownText="Add a variable to calculate"
                   />
                   <InputCombobox
-                    key="attribute"
+                    key="operator"
                     showSearch={false}
                     options={getActionOpeartorOptions(
                       localSurvey.variables.find((v) => v.id === action.variableId)?.type
@@ -145,7 +146,7 @@ export function AdvancedLogicEditorActions({
                         operator: val,
                       });
                     }}
-                    comboboxClasses="w-20"
+                    comboboxClasses="grow"
                   />
                   <InputCombobox
                     key="value"
@@ -176,6 +177,7 @@ export function AdvancedLogicEditorActions({
                         });
                       }
                     }}
+                    comboboxClasses="grow shrink-0"
                   />
                 </>
               )}
@@ -199,7 +201,7 @@ export function AdvancedLogicEditorActions({
                   className="flex items-center gap-2"
                   disabled={actions.length === 1}
                   onClick={() => {
-                    handleActionsChange("delete", idx);
+                    handleActionsChange("remove", idx);
                   }}>
                   <TrashIcon className="h-4 w-4" />
                   Remove

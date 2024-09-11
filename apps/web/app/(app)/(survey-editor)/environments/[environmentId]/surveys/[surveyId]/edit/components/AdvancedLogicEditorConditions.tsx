@@ -127,10 +127,12 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleOperatorChange = (condition: TSingleCondition, value: TSurveyLogicCondition) => {
-    handleUpdateCondition(condition.id, {
-      operator: value,
-      rightOperand: undefined,
-    });
+    if (value !== condition.operator) {
+      handleUpdateCondition(condition.id, {
+        operator: value,
+        rightOperand: undefined,
+      });
+    }
   };
 
   const handleRightOperandChange = (
@@ -279,7 +281,7 @@ export function AdvancedLogicEditorConditions({
             showSearch={false}
             groupedOptions={options}
             allowMultiSelect={["equalsOneOf", "includesAllOf", "includesOneOf"].includes(condition.operator)}
-            comboboxClasses="grow min-w-[100px] max-w-[300px]"
+            comboboxClasses="grow min-w-[180px] max-w-[300px]"
             value={condition.rightOperand?.value}
             clearable={true}
             onChangeValue={(val, option) => {

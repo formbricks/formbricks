@@ -40,33 +40,33 @@ const operatorsWithoutRightOperand = [
 export const ZDyanmicLogicField = z.enum(["question", "variable", "hiddenField"]);
 export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQuestion"]);
 export const ZActionTextVariableCalculateOperator = z.enum(["assign", "concat"], {
-  message: "Invalid operator for a text variable",
+  message: "Conditional Logic: Invalid operator for a text variable",
 });
 export const ZActionNumberVariableCalculateOperator = z.enum(
   ["add", "subtract", "multiply", "divide", "assign"],
-  { message: "Invalid operator for a number variable" }
+  { message: "Conditional Logic: Invalid operator for a number variable" }
 );
 
 const ZDynamicQuestion = z.object({
   type: z.literal("question"),
-  value: z.string().min(1, "Question id cannot be empty"),
+  value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
 });
 
 const ZDynamicVariable = z.object({
   type: z.literal("variable"),
   value: z
     .string()
-    .cuid2({ message: "Variable id must be a valid cuid" })
-    .min(1, "Variable id cannot be empty"),
+    .cuid2({ message: "Conditional Logic: Variable id must be a valid cuid" })
+    .min(1, "Conditional Logic: Variable id cannot be empty"),
 });
 
 const ZDynamicHiddenField = z.object({
   type: z.literal("hiddenField"),
-  value: z.string().min(1, "Hidden field id cannot be empty"),
+  value: z.string().min(1, "Conditional Logic: Hidden field id cannot be empty"),
 });
 
 const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDynamicHiddenField], {
-  message: "Invalid dynamic field value",
+  message: "Conditional Logic: Invalid dynamic field value",
 });
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
@@ -106,14 +106,14 @@ export const ZSingleCondition = z
       if (val.rightOperand === undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `rightOperand is required for operator "${val.operator}"`,
+          message: `Conditional Logic: rightOperand is required for operator "${val.operator}"`,
           path: ["rightOperand"],
         });
       }
     } else if (val.rightOperand !== undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `rightOperand should not be present for operator "${val.operator}"`,
+        message: `Conditional Logic: rightOperand should not be present for operator "${val.operator}"`,
         path: ["rightOperand"],
       });
     }
@@ -157,12 +157,8 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
     z.object({
       type: z.literal("static"),
       value: z
-        .string({ message: "Value must be a string for text variable" })
-        .min(1, "Please enter a value in logic field"),
-    }),
-    z.object({
-      type: z.literal("static"),
-      value: z.number({ message: "Value must be a number for number variable" }),
+        .string({ message: "Conditional Logic: Value must be a string for text variable" })
+        .min(1, "Conditional Logic: Please enter a value in logic field"),
     }),
     ZDynamicLogicFieldValue,
   ]),
@@ -173,13 +169,7 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   value: z.union([
     z.object({
       type: z.literal("static"),
-      value: z
-        .string({ message: "Value must be a string for text variable" })
-        .min(1, "Please enter a value in logic field"),
-    }),
-    z.object({
-      type: z.literal("static"),
-      value: z.number({ message: "Value must be a number for number variable" }),
+      value: z.number({ message: "Conditional Logic: Value must be a number for number variable" }),
     }),
     ZDynamicLogicFieldValue,
   ]),
@@ -187,7 +177,7 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   if (val.operator === "divide" && val.value.type === "static" && val.value.value === 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Cannot divide by zero",
+      message: "Conditional Logic: Cannot divide by zero",
       path: ["value", "value"],
     });
   }
@@ -199,13 +189,13 @@ export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
 const ZActionRequireAnswer = ZActionBase.extend({
   objective: z.literal("requireAnswer"),
-  target: z.string().min(1, "Target question id cannot be empty"),
+  target: z.string().min(1, "Conditional Logic: Target question id cannot be empty"),
 });
 export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
 
 const ZActionJumpToQuestion = ZActionBase.extend({
   objective: z.literal("jumpToQuestion"),
-  target: z.string().min(1, "Target question id cannot be empty"),
+  target: z.string().min(1, "Conditional Logic: Target question id cannot be empty"),
 });
 
 export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;

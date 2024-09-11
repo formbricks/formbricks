@@ -757,8 +757,8 @@ export const getActionTargetOptions = (
     return {
       label:
         ending.type === "endScreen"
-          ? `🙏 ${getLocalizedValue(ending.headline, "default")}`
-          : `🙏 ${ending.label || "Redirect Thank you card"}`,
+          ? getLocalizedValue(ending.headline, "default")
+          : ending.label || "Redirect Thank you card",
       value: ending.id,
     };
   });

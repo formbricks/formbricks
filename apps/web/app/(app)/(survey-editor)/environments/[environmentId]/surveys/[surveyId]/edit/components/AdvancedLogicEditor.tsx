@@ -25,7 +25,7 @@ export function AdvancedLogicEditor({
   isLast,
 }: AdvancedLogicEditorProps) {
   return (
-    <div className={cn("no-scrollbar flex w-full grow flex-col gap-4 overflow-x-auto text-sm")}>
+    <div className={cn("flex w-full grow flex-col gap-4 overflow-x-auto text-sm")}>
       <AdvancedLogicEditorConditions
         conditions={logicItem.conditions}
         updateQuestion={updateQuestion}

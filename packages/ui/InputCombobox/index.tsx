@@ -40,6 +40,7 @@ export interface InputComboboxProps {
   allowMultiSelect?: boolean;
   showCheckIcon?: boolean;
   comboboxClasses?: string;
+  emptyDropdownText?: string;
 }
 
 export const InputCombobox = ({
@@ -55,6 +56,7 @@ export const InputCombobox = ({
   allowMultiSelect = false,
   showCheckIcon = false,
   comboboxClasses,
+  emptyDropdownText = "No option found.",
 }: InputComboboxProps) => {
   const [open, setOpen] = React.useState(false);
   const [localValue, setLocalValue] = React.useState<
@@ -68,7 +70,7 @@ export const InputCombobox = ({
     const validOptions = options?.length ? options : groupedOptions?.flatMap((group) => group.options);
 
     if (value === null || value === undefined) {
-      setLocalValue(null);
+      setLocalValue("");
       setInputType(null);
     } else {
       if (Array.isArray(value)) {
@@ -161,9 +163,9 @@ export const InputCombobox = ({
       ));
     } else if (localValue && typeof localValue === "object") {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 truncate">
           {localValue.icon && <localValue.icon className="h-5 w-5 shrink-0 text-slate-400" />}
-          <span>{localValue.label}</span>
+          <span className="truncate">{localValue.label}</span>
         </div>
       );
     }
@@ -178,14 +180,14 @@ export const InputCombobox = ({
   return (
     <div
       className={cn(
-        "flex max-w-[450px] overflow-hidden rounded-md border border-slate-300",
+        "flex max-w-[440px] overflow-hidden rounded-md border border-slate-300",
         comboboxClasses
       )}>
       {withInput && inputType !== "dropdown" && (
         <Input
           className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-300"
           {...inputProps}
-          value={value as string | number}
+          value={localValue as string | number}
           onChange={onInputChange}
         />
       )}
@@ -203,9 +205,9 @@ export const InputCombobox = ({
               <div className="ellipsis flex w-full gap-2 truncate px-2">{getDisplayValue}</div>
             )}
             {clearable && inputType === "dropdown" ? (
-              <XIcon className="h-5 w-5 shrink-0 text-slate-300" onClick={handleClear} />
+              <XIcon className="h-5 w-5 shrink-0 text-slate-300 hover:text-slate-400" onClick={handleClear} />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 shrink-0 text-slate-300" />
+              <ChevronDownIcon className="h-5 w-5 shrink-0 text-slate-300 hover:text-slate-400" />
             )}
           </div>
         </PopoverTrigger>
@@ -213,7 +215,7 @@ export const InputCombobox = ({
           className={cn(
             "w-auto max-w-[400px] overflow-y-auto truncate border border-slate-400 bg-slate-50 p-0 shadow-none",
             {
-              "pt-2": showSearch,
+              "px-2 pt-2": showSearch,
             }
           )}>
           <Command>
@@ -223,8 +225,8 @@ export const InputCombobox = ({
                 className="h-8 border-slate-400 bg-white placeholder-slate-300"
               />
             )}
-            <CommandList>
-              <CommandEmpty>No option found.</CommandEmpty>
+            <CommandList className="mx-1 my-2">
+              <CommandEmpty className="mx-2 my-0">{emptyDropdownText}</CommandEmpty>
               {options && options.length > 0 ? (
                 <CommandGroup>
                   {options.map((option) => (
@@ -232,7 +234,7 @@ export const InputCombobox = ({
                       key={option.value}
                       onSelect={() => handleSelect(option)}
                       title={option.label}
-                      className="cursor-pointer">
+                      className="cursor-pointer truncate hover:text-slate-500">
                       {showCheckIcon &&
                         ((allowMultiSelect &&
                           Array.isArray(localValue) &&
@@ -241,7 +243,7 @@ export const InputCombobox = ({
                             typeof localValue === "object" &&
                             !Array.isArray(localValue) &&
                             localValue?.value === option.value)) && (
-                          <CheckIcon className="mr-2 h-4 w-4 text-slate-300" />
+                          <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                         )}
                       {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
                       <span className="truncate">{option.label}</span>
@@ -258,7 +260,7 @@ export const InputCombobox = ({
                       <CommandItem
                         key={option.value}
                         onSelect={() => handleSelect(option)}
-                        className="cursor-pointer truncate">
+                        className="cursor-pointer truncate hover:text-slate-500">
                         {showCheckIcon &&
                           ((allowMultiSelect &&
                             Array.isArray(localValue) &&
@@ -267,7 +269,7 @@ export const InputCombobox = ({
                               typeof localValue === "object" &&
                               !Array.isArray(localValue) &&
                               localValue?.value === option.value)) && (
-                            <CheckIcon className="mr-2 h-4 w-4 shrink-0 text-slate-300" />
+                            <CheckIcon className="mr-2 h-4 w-4 shrink-0 text-slate-300 hover:text-slate-400" />
                           )}
                         {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
                         <span className="truncate">{option.label}</span>

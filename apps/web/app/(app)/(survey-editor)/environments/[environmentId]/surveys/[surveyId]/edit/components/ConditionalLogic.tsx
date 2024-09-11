@@ -74,7 +74,7 @@ export function ConditionalLogic({
     });
   };
 
-  const handleDeleteLogic = (logicItemIdx: number) => {
+  const handleRemoveLogic = (logicItemIdx: number) => {
     const logicCopy = structuredClone(question.logic || []);
     logicCopy.splice(logicItemIdx, 1);
     updateQuestion(questionIdx, {
@@ -159,10 +159,10 @@ export function ConditionalLogic({
                   <DropdownMenuItem
                     className="flex items-center gap-2"
                     onClick={() => {
-                      handleDeleteLogic(logicItemIdx);
+                      handleRemoveLogic(logicItemIdx);
                     }}>
                     <TrashIcon className="h-4 w-4" />
-                    Delete
+                    Remove
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
