@@ -235,7 +235,7 @@ export const questionTypes: TQuestion[] = [
     description: "Allow respondents to provide their contact info",
     icon: ContactIcon,
     preset: {
-      headline: { default: "Where do you live?" },
+      headline: { default: "Contact Info" },
       firstName: { show: true, required: true },
       lastName: { show: true, required: true },
       email: { show: true, required: true },

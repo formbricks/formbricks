@@ -1,8 +1,8 @@
-interface AddressResponseProps {
+interface ArrayResponseProps {
   value: string[];
 }
 
-export const AddressResponse = ({ value }: AddressResponseProps) => {
+export const ArrayResponse = ({ value }: ArrayResponseProps) => {
   return (
     <div className="my-1 font-normal text-slate-700" dir="auto">
       {value.map(

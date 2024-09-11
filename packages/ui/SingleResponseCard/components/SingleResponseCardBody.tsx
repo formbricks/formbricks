@@ -63,8 +63,6 @@ export const SingleResponseCardBody = ({
             skippedQuestionElement.includes(question.id)
           );
 
-          console.log("skippedQuestions", skippedQuestions);
-
           // If found, remove it from the list
           if (skipped) {
             skippedQuestions = skippedQuestions.filter((item) => item !== skipped);

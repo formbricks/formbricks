@@ -1404,11 +1404,32 @@ export const ZSurveyQuestionSummaryAddress = z.object({
 
 export type TSurveyQuestionSummaryAddress = z.infer<typeof ZSurveyQuestionSummaryAddress>;
 
+export const ZSurveyQuestionSummaryContactInfo = z.object({
+  type: z.literal("contactInfo"),
+  question: ZSurveyContactInfoQuestion,
+  responseCount: z.number(),
+  samples: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.array(z.string()),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyQuestionSummaryContactInfo = z.infer<typeof ZSurveyQuestionSummaryContactInfo>;
+
 export const ZSurveyQuestionSummaryRanking = z.object({
   type: z.literal("ranking"),
   question: ZSurveyRankingQuestion,
   responseCount: z.number(),
-
   choices: z.array(
     z.object({
       value: z.string(),
@@ -1447,6 +1468,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryMatrix,
   ZSurveyQuestionSummaryAddress,
   ZSurveyQuestionSummaryRanking,
+  ZSurveyQuestionSummaryContactInfo,
 ]);
 
 export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;
