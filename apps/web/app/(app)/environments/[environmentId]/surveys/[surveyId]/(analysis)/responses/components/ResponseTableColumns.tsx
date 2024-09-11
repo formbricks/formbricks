@@ -35,6 +35,23 @@ const getAddressFieldLabel = (field: string) => {
   }
 };
 
+const getContactInfoFieldLabel = (field: string) => {
+  switch (field) {
+    case "firstName":
+      return "First Name";
+    case "lastName":
+      return "Last Name";
+    case "email":
+      return "Email";
+    case "phone":
+      return "Phone";
+    case "company":
+      return "Company";
+    default:
+      break;
+  }
+};
+
 const getQuestionColumnsData = (
   question: TSurveyQuestion,
   survey: TSurvey,
@@ -81,6 +98,30 @@ const getQuestionColumnsData = (
           },
           cell: ({ row }) => {
             const responseValue = row.original.responseData[addressField];
+            if (typeof responseValue === "string") {
+              return <p className="text-slate-900">{responseValue}</p>;
+            }
+          },
+        };
+      });
+
+    case "contactInfo":
+      const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
+      return contactInfoFields.map((contactInfoField) => {
+        return {
+          accessorKey: contactInfoField,
+          header: () => {
+            return (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 overflow-hidden">
+                  <span className="h-4 w-4">{QUESTIONS_ICON_MAP["contactInfo"]}</span>
+                  <span className="truncate">{getContactInfoFieldLabel(contactInfoField)}</span>
+                </div>
+              </div>
+            );
+          },
+          cell: ({ row }) => {
+            const responseValue = row.original.responseData[contactInfoField];
             if (typeof responseValue === "string") {
               return <p className="text-slate-900">{responseValue}</p>;
             }

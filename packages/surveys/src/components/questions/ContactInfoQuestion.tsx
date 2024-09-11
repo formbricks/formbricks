@@ -47,7 +47,7 @@ export const ContactInfoQuestion = ({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const safeValue = useMemo(() => {
-    return Array.isArray(value) ? value : ["", "", "", "", "", ""];
+    return Array.isArray(value) ? value : ["", "", "", "", ""];
   }, [value]);
 
   const fields = [
