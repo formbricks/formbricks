@@ -110,6 +110,23 @@ export const FormStylingSettings = ({
           <div className="flex flex-col gap-2">
             <FormField
               control={form.control}
+              name="fontSize"
+              render={({ field }) => (
+                <FormItem className="space-y-4">
+                  <div>
+                    <FormLabel>Font size</FormLabel>
+                    <FormDescription>Change the brand color of the survey.</FormDescription>
+                  </div>
+
+                  <FormControl>
+                    <div>{field.value}</div>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="brandColor.light"
               render={({ field }) => (
                 <FormItem className="space-y-4">

@@ -68,6 +68,8 @@ export const PreviewSurvey = ({
   languageCode,
   onFileUpload,
 }: PreviewSurveyProps) => {
+  console.log("survey = 123:", survey);
+
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
 
@@ -75,6 +77,7 @@ export const PreviewSurvey = ({
   const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
+  console.log("previewMode = 123:", previewMode);
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink, setShrink] = useState(false);

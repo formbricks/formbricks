@@ -45,6 +45,7 @@ export const ZBaseStyling = z.object({
   highlightBorderColor: ZStylingColor.nullish(),
   isDarkModeEnabled: z.boolean().nullish(),
   roundness: z.number().nullish(),
+  fontSize: z.number().nullish(),
   cardArrangement: ZCardArrangement.nullish(),
   background: ZSurveyStylingBackground.nullish(),
   hideProgressBar: z.boolean().nullish(),

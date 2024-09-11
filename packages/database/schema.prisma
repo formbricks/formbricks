@@ -2,8 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -274,7 +275,7 @@ model Survey {
   /// @zod.custom(imports.ZSurveyEnding)
   /// [SurveyEnding]
   endings             Json[]                  @default([])
-  thankYouCard        Json? //deprecated            
+  thankYouCard        Json? //deprecated
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")

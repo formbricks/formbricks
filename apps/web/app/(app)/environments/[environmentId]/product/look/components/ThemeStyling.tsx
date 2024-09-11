@@ -59,6 +59,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
         : undefined,
       isDarkModeEnabled: product.styling.isDarkModeEnabled ?? false,
       roundness: product.styling.roundness ?? 8,
+      fontSize: product.styling.fontSize ?? 16,
       cardArrangement: product.styling.cardArrangement ?? {
         linkSurveys: "simple",
         appSurveys: "simple",
@@ -106,6 +107,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
         bgType: "color",
       },
       roundness: 8,
+      fontSize: 16,
       cardArrangement: {
         linkSurveys: "simple",
         appSurveys: "simple",
