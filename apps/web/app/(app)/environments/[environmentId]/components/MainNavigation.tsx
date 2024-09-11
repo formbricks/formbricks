@@ -54,6 +54,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
+import { version } from "../../../../../package.json";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -84,6 +85,8 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
+  const [releasesBehind, setReleasesBehind] = useState(-1);
+  const [latestVersion, setLatestVersion] = useState("");
 
   const product = products.find((product) => product.id === environment.productId);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
@@ -248,6 +251,35 @@ export const MainNavigation = ({
     },
   ];
 
+  useEffect(() => {
+    async function loadReleases() {
+      const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases");
+      const releases = await res.json();
+
+      if (Array.isArray(releases)) {
+        const everyNewRelease = releases
+          .map((release) => release.tag_name)
+          .findIndex((tagName) => tagName === `v${version}`);
+
+        const onlyFullNewRelease = releases
+          .filter((release) => !release.prerelease)
+          .map((release) => release.tag_name)
+          .findIndex((tagName) => tagName === `v${version}`);
+
+        const computedReleasesBehind = version.includes("pre") ? everyNewRelease : onlyFullNewRelease;
+
+        if (computedReleasesBehind >= 0) {
+          setReleasesBehind(computedReleasesBehind);
+          setLatestVersion(releases[0]?.tag_name); // Set the latest version from the first release
+        } else {
+          setReleasesBehind(0); // Handle no new release case
+        }
+      }
+    }
+
+    void loadReleases();
+  }, []);
+
   return (
     <>
       {product && (
@@ -305,8 +337,16 @@ export const MainNavigation = ({
               )}
             </ul>
           </div>
+
           {/* Product Switch */}
           <div>
+            {/* New Update */}
+            {!isCollapsed && isOwnerOrAdmin && releasesBehind > 0 && (
+              <div className="flex w-full max-w-sm items-center space-x-4 border p-4">
+                <p className="text-center text-sm">New version ({latestVersion}) now available</p>
+              </div>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger
                 asChild
