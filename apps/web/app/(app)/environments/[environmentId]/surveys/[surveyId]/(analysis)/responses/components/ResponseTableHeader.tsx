@@ -46,7 +46,7 @@ export const ResponseTableHeader = ({ header, setIsTableSettingsModalOpen }: Res
       key={header.id}
       className="group relative h-10 border border-slate-300 bg-slate-200 px-2 text-center">
       <div className="flex items-center justify-between">
-        <div className="truncate text-left font-semibold">
+        <div className="w-full truncate text-left font-semibold">
           {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
         </div>
 
