@@ -62,6 +62,23 @@ export const validateQuestionLabels = (
   questionIndex: number,
   skipArticle = false
 ): z.IssueData | null => {
+  // fieldLabel should contain all the keys present in languages
+  // even if one of the keys is an empty string, its okay but it shouldn't be undefined
+
+  for (const language of languages) {
+    if (
+      !language.default &&
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- could be undefined
+      fieldLabel[language.language.code] === undefined
+    ) {
+      return {
+        code: z.ZodIssueCode.custom,
+        message: `The ${field} in question ${String(questionIndex + 1)} is not present for the following languages: ${language.language.code}`,
+        path: ["questions", questionIndex, field],
+      };
+    }
+  }
+
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
   const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -89,6 +106,27 @@ export const validateCardFieldsForAllLanguages = (
   endingCardIndex?: number,
   skipArticle = false
 ): z.IssueData | null => {
+  // fieldLabel should contain all the keys present in languages
+  // even if one of the keys is an empty string, its okay but it shouldn't be undefined
+
+  const cardTypeLabel =
+    cardType === "welcome" ? "Welcome card" : `Redirect to Url ${((endingCardIndex ?? -1) + 1).toString()}`;
+  const path = cardType === "welcome" ? ["welcomeCard", field] : ["endings", endingCardIndex ?? -1, field];
+
+  for (const language of languages) {
+    if (
+      !language.default &&
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- could be undefined
+      fieldLabel[language.language.code] === undefined
+    ) {
+      return {
+        code: z.ZodIssueCode.custom,
+        message: `The ${field} in ${cardTypeLabel} is not present for the following languages: ${language.language.code}`,
+        path,
+      };
+    }
+  }
+
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
   const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -99,12 +137,8 @@ export const validateCardFieldsForAllLanguages = (
   if (invalidLanguageCodes.length) {
     return {
       code: z.ZodIssueCode.custom,
-      message: `${messagePrefix}${messageField} on the ${
-        cardType === "welcome"
-          ? "Welcome card"
-          : `Redirect to Url ${((endingCardIndex ?? -1) + 1).toString()}`
-      } ${messageSuffix}`,
-      path: cardType === "welcome" ? ["welcomeCard", field] : ["endings", endingCardIndex ?? -1, field],
+      message: `${messagePrefix}${messageField} on the ${cardTypeLabel} ${messageSuffix}`,
+      path,
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
   }
