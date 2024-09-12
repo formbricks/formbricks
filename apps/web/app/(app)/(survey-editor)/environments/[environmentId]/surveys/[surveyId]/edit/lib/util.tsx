@@ -236,24 +236,23 @@ export const getMatchValueProps = (
 
   if (condition.leftOperand.type === "question") {
     if (selectedQuestion?.type === TSurveyQuestionTypeEnum.OpenText) {
-      const allowedQuestions = questions.filter((question) => {
-        const allowedQuestionTypes = [
-          TSurveyQuestionTypeEnum.OpenText,
-          TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          TSurveyQuestionTypeEnum.Rating,
-          TSurveyQuestionTypeEnum.NPS,
-        ];
+      const allowedQuestionTypes = [TSurveyQuestionTypeEnum.OpenText];
 
+      if (selectedQuestion.inputType === "number") {
+        allowedQuestionTypes.push(TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS);
+      }
+
+      if (["equals", "doesNotEqual"].includes(condition.operator)) {
         if (selectedQuestion.inputType !== "number") {
-          allowedQuestionTypes.push(TSurveyQuestionTypeEnum.Date);
+          allowedQuestionTypes.push(
+            TSurveyQuestionTypeEnum.Date,
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            TSurveyQuestionTypeEnum.MultipleChoiceMulti
+          );
         }
+      }
 
-        if (["equals", "doesNotEqual"].includes(condition.operator)) {
-          allowedQuestionTypes.push(TSurveyQuestionTypeEnum.MultipleChoiceMulti);
-        }
-
-        return allowedQuestionTypes.includes(question.type);
-      });
+      const allowedQuestions = questions.filter((question) => allowedQuestionTypes.includes(question.type));
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
@@ -528,15 +527,16 @@ export const getMatchValueProps = (
     }
   } else if (condition.leftOperand.type === "variable") {
     if (selectedVariable?.type === "text") {
-      const allowedQuestions = questions.filter((question) =>
-        [
-          TSurveyQuestionTypeEnum.OpenText,
-          TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          TSurveyQuestionTypeEnum.Rating,
-          TSurveyQuestionTypeEnum.NPS,
-          TSurveyQuestionTypeEnum.Date,
-        ].includes(question.type)
-      );
+      const allowedQuestionTypes = [
+        TSurveyQuestionTypeEnum.OpenText,
+        TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+      ];
+
+      if (["equals", "doesNotEqual"].includes(condition.operator)) {
+        allowedQuestionTypes.push(TSurveyQuestionTypeEnum.MultipleChoiceMulti, TSurveyQuestionTypeEnum.Date);
+      }
+
+      const allowedQuestions = questions.filter((question) => allowedQuestionTypes.includes(question.type));
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
@@ -679,16 +679,16 @@ export const getMatchValueProps = (
       };
     }
   } else if (condition.leftOperand.type === "hiddenField") {
-    const allowedQuestions = questions.filter((question) =>
-      [
-        TSurveyQuestionTypeEnum.OpenText,
-        TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-        TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-        TSurveyQuestionTypeEnum.Rating,
-        TSurveyQuestionTypeEnum.NPS,
-        TSurveyQuestionTypeEnum.Date,
-      ].includes(question.type)
-    );
+    const allowedQuestionTypes = [
+      TSurveyQuestionTypeEnum.OpenText,
+      TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+    ];
+
+    if (["equals", "doesNotEqual"].includes(condition.operator)) {
+      allowedQuestionTypes.push(TSurveyQuestionTypeEnum.MultipleChoiceMulti, TSurveyQuestionTypeEnum.Date);
+    }
+
+    const allowedQuestions = questions.filter((question) => allowedQuestionTypes.includes(question.type));
 
     const questionOptions = allowedQuestions.map((question) => {
       return {
@@ -701,16 +701,18 @@ export const getMatchValueProps = (
       };
     });
 
-    const variableOptions = variables.map((variable) => {
-      return {
-        icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
-        label: variable.name,
-        value: variable.id,
-        meta: {
-          type: "variable",
-        },
-      };
-    });
+    const variableOptions = variables
+      .filter((variable) => variable.type === "text")
+      .map((variable) => {
+        return {
+          icon: FileType2Icon,
+          label: variable.name,
+          value: variable.id,
+          meta: {
+            type: "variable",
+          },
+        };
+      });
 
     const hiddenFieldsOptions = hiddenFields.map((field) => {
       return {
@@ -848,11 +850,7 @@ export const getActionOpeartorOptions = (variableType?: TSurveyVariable["type"])
   return [];
 };
 
-export const getActionValueOptions = (
-  variableId: string,
-  localSurvey: TSurvey,
-  currQuestionIdx: number
-): TComboboxGroupedOption[] => {
+export const getActionValueOptions = (variableId: string, localSurvey: TSurvey): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
   let variables = localSurvey.variables || [];
   const questions = localSurvey.questions;
@@ -875,16 +873,14 @@ export const getActionValueOptions = (
   if (!selectedVariable) return [];
 
   if (selectedVariable.type === "text") {
-    const allowedQuestions = questions.filter(
-      (question, idx) =>
-        idx !== currQuestionIdx &&
-        [
-          TSurveyQuestionTypeEnum.OpenText,
-          TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          TSurveyQuestionTypeEnum.Rating,
-          TSurveyQuestionTypeEnum.NPS,
-          TSurveyQuestionTypeEnum.Date,
-        ].includes(question.type)
+    const allowedQuestions = questions.filter((question) =>
+      [
+        TSurveyQuestionTypeEnum.OpenText,
+        TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        TSurveyQuestionTypeEnum.Rating,
+        TSurveyQuestionTypeEnum.NPS,
+        TSurveyQuestionTypeEnum.Date,
+      ].includes(question.type)
     );
 
     const questionOptions = allowedQuestions.map((question) => {
@@ -939,10 +935,8 @@ export const getActionValueOptions = (
 
     return groupedOptions;
   } else if (selectedVariable.type === "number") {
-    const allowedQuestions = questions.filter(
-      (question, idx) =>
-        idx !== currQuestionIdx &&
-        [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+    const allowedQuestions = questions.filter((question) =>
+      [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
     );
 
     const questionOptions = allowedQuestions.map((question) => {

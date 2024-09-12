@@ -1159,18 +1159,28 @@ const validateConditions = (
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else {
-            const validQuestionTypes = [
-              TSurveyQuestionTypeEnum.OpenText,
-              TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-              TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-              TSurveyQuestionTypeEnum.Rating,
-              TSurveyQuestionTypeEnum.NPS,
-              TSurveyQuestionTypeEnum.Date,
-            ];
-            if (!validQuestionTypes.includes(question.type)) {
+            const validQuestionTypes = [TSurveyQuestionTypeEnum.OpenText];
+
+            if (question.inputType === "number") {
+              validQuestionTypes.push(...[TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS]);
+            }
+
+            if (["equals", "doesNotEqual"].includes(condition.operator)) {
+              if (question.inputType !== "number") {
+                validQuestionTypes.push(
+                  ...[
+                    TSurveyQuestionTypeEnum.Date,
+                    TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+                    TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+                  ]
+                );
+              }
+            }
+
+            if (!validQuestionTypes.includes(ques.type)) {
               issues.push({
                 code: z.ZodIssueCode.custom,
-                message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message: `Conditional Logic: Invalid question type "${ques.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -1467,10 +1477,14 @@ const validateConditions = (
             const validQuestionTypes = [
               TSurveyQuestionTypeEnum.OpenText,
               TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-              TSurveyQuestionTypeEnum.Rating,
-              TSurveyQuestionTypeEnum.NPS,
-              TSurveyQuestionTypeEnum.Date,
             ];
+
+            if (["equals", "doesNotEqual"].includes(operator)) {
+              validQuestionTypes.push(
+                TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+                TSurveyQuestionTypeEnum.Date
+              );
+            }
 
             if (!validQuestionTypes.includes(question.type)) {
               issues.push({
@@ -1547,11 +1561,14 @@ const validateConditions = (
           const validQuestionTypes = [
             TSurveyQuestionTypeEnum.OpenText,
             TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-            TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-            TSurveyQuestionTypeEnum.Rating,
-            TSurveyQuestionTypeEnum.NPS,
-            TSurveyQuestionTypeEnum.Date,
           ];
+
+          if (["equals", "doesNotEqual"].includes(condition.operator)) {
+            validQuestionTypes.push(
+              TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+              TSurveyQuestionTypeEnum.Date
+            );
+          }
 
           if (!validQuestionTypes.includes(question.type)) {
             issues.push({
@@ -1569,6 +1586,12 @@ const validateConditions = (
           issues.push({
             code: z.ZodIssueCode.custom,
             message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else if (variable.type !== "text") {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         }

@@ -146,7 +146,7 @@ export const createGroupFromResource = (group: TConditionGroup, resourceId: stri
         conditions: [item],
       };
       group.conditions[i] = newGroup;
-      group.connector = "and";
+      group.connector = group.connector ?? "and";
       return;
     }
 

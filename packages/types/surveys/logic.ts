@@ -106,14 +106,19 @@ export const ZSingleCondition = z
       if (val.rightOperand === undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Conditional Logic: rightOperand is required for operator "${val.operator}"`,
+          message: `Conditional Logic: right operand is required for operator "${val.operator}"`,
           path: ["rightOperand"],
+        });
+      } else if (val.rightOperand.type === "static" && val.rightOperand.value === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: right operand value cannot be empty for operator "${val.operator}"`,
         });
       }
     } else if (val.rightOperand !== undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Conditional Logic: rightOperand should not be present for operator "${val.operator}"`,
+        message: `Conditional Logic: right operand should not be present for operator "${val.operator}"`,
         path: ["rightOperand"],
       });
     }

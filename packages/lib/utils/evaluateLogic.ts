@@ -85,38 +85,23 @@ const evaluateSingleCondition = (
 
     switch (condition.operator) {
       case "equals":
-        // when left value is of picture selection question and right value is its option
-        if (
-          condition.leftOperand.type === "question" &&
-          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.PictureSelection &&
-          Array.isArray(leftValue) &&
-          leftValue.length > 0 &&
-          typeof rightValue === "string"
-        ) {
-          return leftValue.includes(rightValue);
-        }
-
-        // when left value is of date question and right value is string
-        if (
-          condition.leftOperand.type === "question" &&
-          (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
-          typeof leftValue === "string" &&
-          typeof rightValue === "string"
-        ) {
-          return new Date(leftValue).getTime() === new Date(rightValue).getTime();
+        if (condition.leftOperand.type === "question") {
+          if (
+            (leftField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
+            typeof leftValue === "string" &&
+            typeof rightValue === "string"
+          ) {
+            // when left value is of date question and right value is string
+            return new Date(leftValue).getTime() === new Date(rightValue).getTime();
+          }
         }
 
         // when left value is of openText, hiddenField, variable and right value is of multichoice
         if (condition.rightOperand?.type === "question") {
-          if (
-            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
-          ) {
-            if (Array.isArray(condition.rightOperand.value)) {
-              return condition.rightOperand.value.includes(leftValue);
-            } else {
-              return leftValue === condition.rightOperand.value;
-            }
+          if ((rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
+            if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
+              return rightValue.includes(leftValue as string);
+            } else return false;
           } else if (
             (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
             typeof leftValue === "string" &&
@@ -157,15 +142,10 @@ const evaluateSingleCondition = (
 
         // when left value is of openText, hiddenField, variable and right value is of multichoice
         if (condition.rightOperand?.type === "question") {
-          if (
-            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-            (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
-          ) {
-            if (Array.isArray(condition.rightOperand.value)) {
-              return !condition.rightOperand.value.includes(leftValue);
-            } else {
-              return leftValue !== condition.rightOperand.value;
-            }
+          if ((rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
+            if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
+              return !rightValue.includes(leftValue as string);
+            } else return false;
           } else if (
             (rightField as TSurveyQuestion).type === TSurveyQuestionTypeEnum.Date &&
             typeof leftValue === "string" &&
@@ -281,6 +261,10 @@ const getLeftOperandValue = (
 
       const responseValue = data[leftOperand.value];
 
+      if (currentQuestion.type === "openText" && currentQuestion.inputType === "number") {
+        return Number(responseValue) || 0;
+      }
+
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {
         const isOthersEnabled = currentQuestion.choices.at(-1)?.id === "other";
 
@@ -357,7 +341,9 @@ const getRightOperandValue = (
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
     case "hiddenField":
-      return data[rightOperand.value];
+      return !isNaN(data[rightOperand.value] as number)
+        ? Number(data[rightOperand.value])
+        : data[rightOperand.value];
     case "static":
       return rightOperand.value;
     default:

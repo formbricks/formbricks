@@ -9,7 +9,7 @@ import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { evaluateAdvancedLogic, performActions } from "@/lib/logicEvaluator";
-import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
+import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
@@ -341,9 +341,9 @@ export const Survey = ({
             languageCode={selectedLanguage}
             responseCount={responseCount}
             autoFocusEnabled={autoFocusEnabled}
-            replaceRecallInfo={replaceRecallInfo}
             isCurrent={offset === 0}
             responseData={responseData}
+            variablesData={currentVariables}
           />
         );
       } else if (questionIdx >= localSurvey.questions.length) {
@@ -361,6 +361,7 @@ export const Survey = ({
               languageCode={selectedLanguage}
               isResponseSendingFinished={isResponseSendingFinished}
               responseData={responseData}
+              variablesData={currentVariables}
             />
           );
         }
@@ -371,12 +372,7 @@ export const Survey = ({
             <QuestionConditional
               key={question.id}
               surveyId={localSurvey.id}
-              question={parseRecallInformation(
-                question,
-                selectedLanguage,
-                responseData,
-                localSurvey.variables
-              )}
+              question={parseRecallInformation(question, selectedLanguage, responseData, currentVariables)}
               value={responseData[question.id]}
               onChange={onChange}
               onSubmit={onSubmit}
