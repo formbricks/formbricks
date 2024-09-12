@@ -86,10 +86,14 @@ export const validateQuestionLabels = (
   const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
   const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
 
+  const message = isDefaultOnly
+    ? `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`
+    : `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+
   if (invalidLanguageCodes.length) {
     return {
       code: z.ZodIssueCode.custom,
-      message: `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix} ${invalidLanguageCodes.join()}`,
+      message,
       path: ["questions", questionIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
@@ -134,10 +138,14 @@ export const validateCardFieldsForAllLanguages = (
   const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
   const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
 
+  const message = isDefaultOnly
+    ? `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix}`
+    : `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+
   if (invalidLanguageCodes.length) {
     return {
       code: z.ZodIssueCode.custom,
-      message: `${messagePrefix}${messageField} on the ${cardTypeLabel} ${messageSuffix} ${invalidLanguageCodes.join()}`,
+      message,
       path,
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
