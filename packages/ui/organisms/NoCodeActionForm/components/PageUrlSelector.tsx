@@ -1,12 +1,16 @@
-import { Globe, PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-import { Control, FieldArrayWithId, UseFieldArrayRemove, useFieldArray } from "react-hook-form";
-import { UseFormReturn } from "react-hook-form";
+import {
+  Control,
+  FieldArrayWithId,
+  UseFieldArrayRemove,
+  UseFormReturn,
+  useFieldArray,
+} from "react-hook-form";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { testURLmatch } from "@formbricks/lib/utils/url";
 import { TActionClassInput, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
-import { Alert, AlertDescription, AlertTitle } from "../../../Alert";
 import { Button } from "../../../Button";
 import { FormControl, FormField, FormItem } from "../../../Form";
 import { Input } from "../../../Input";
@@ -64,7 +68,7 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
           name="noCodeConfig.urlFilters"
           render={() => (
             <div>
-              <Label className="font-semibold">Filter</Label>
+              <Label className="font-semibold">Page Filter</Label>
               <p className="text-sm font-normal text-slate-500">
                 Limit the pages on which this action gets captured
               </p>
@@ -83,7 +87,7 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
           )}
         />
       </div>
-      {filterType === "specific" ? (
+      {filterType === "specific" && (
         <div className="mb-2 mt-4 w-full space-y-3 pe-2">
           <Label>URL</Label>
           <UrlInput control={form.control} fields={fields} removeUrlRule={removeUrlRule} />
@@ -129,14 +133,6 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="mr-2">
-          <Alert className="my-2">
-            <Globe className="h-4 w-4" />
-            <AlertTitle>Visible on all pages</AlertTitle>
-            <AlertDescription>This action will be captured on all pages of your website</AlertDescription>
-          </Alert>
         </div>
       )}
     </>

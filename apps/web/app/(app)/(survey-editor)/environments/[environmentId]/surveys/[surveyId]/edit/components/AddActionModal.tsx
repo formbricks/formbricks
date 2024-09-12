@@ -56,6 +56,7 @@ export const AddActionModal = ({
   return (
     <ModalWithTabs
       label="Add action"
+      description="Capture a new action to trigger a survey on."
       open={open}
       setOpen={setOpen}
       tabs={tabs}
