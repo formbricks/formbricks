@@ -34,9 +34,9 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
           .refine((files) => files.length === 1, "You must select a file.")
           .refine((files) => {
             const file = files[0];
-            const allowedTypes = ["image/jpeg", "image/png"];
+            const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
             return allowedTypes.includes(file.type);
-          }, "Invalid file type. Only JPEG and PNG are allowed.")
+          }, "Invalid file type. Only JPEG, PNG, and WEBP files are allowed.")
           .refine((files) => {
             const file = files[0];
             const maxSize = 10 * 1024 * 1024;
@@ -145,7 +145,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                         inputRef.current = e;
                       }}
                       className="hidden"
-                      accept="image/jpeg, image/png"
+                      accept="image/jpeg, image/png, image/webp"
                       onChange={(e) => {
                         field.onChange(e.target.files);
                         form.handleSubmit(onSubmit)();
