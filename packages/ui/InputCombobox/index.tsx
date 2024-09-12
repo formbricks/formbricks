@@ -30,6 +30,7 @@ export interface TComboboxGroupedOption {
 }
 
 export interface InputComboboxProps {
+  id: string;
   showSearch?: boolean;
   searchPlaceholder?: string;
   options?: TComboboxOption[];
@@ -46,6 +47,7 @@ export interface InputComboboxProps {
 }
 
 export const InputCombobox = ({
+  id = "temp",
   showSearch = true,
   searchPlaceholder = "Search...",
   options,
@@ -193,6 +195,7 @@ export const InputCombobox = ({
         <Input
           className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-300"
           {...inputProps}
+          id={`${id}-input`}
           value={localValue as string | number}
           onChange={onInputChange}
         />
@@ -200,6 +203,7 @@ export const InputCombobox = ({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div
+            id={id}
             role="combobox"
             aria-controls="options"
             aria-expanded={open}

@@ -256,6 +256,7 @@ export function AdvancedLogicEditorConditions({
           )}
         </div>
         <InputCombobox
+          id={`condition-${depth}-${index}-conditionValue`}
           key="conditionValue"
           showSearch={false}
           groupedOptions={conditionValueOptions}
@@ -266,6 +267,7 @@ export function AdvancedLogicEditorConditions({
           comboboxClasses="grow"
         />
         <InputCombobox
+          id={`condition-${depth}-${index}-conditionOperator`}
           key="conditionOperator"
           showSearch={false}
           options={conditionOperatorOptions}
@@ -277,6 +279,7 @@ export function AdvancedLogicEditorConditions({
         />
         {show && (
           <InputCombobox
+            id={`condition-${depth}-${index}-conditionMatchValue`}
             withInput={showInput}
             inputProps={{
               type: inputType,
@@ -295,7 +298,7 @@ export function AdvancedLogicEditorConditions({
           />
         )}
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`}>
             <MoreVerticalIcon className="h-4 w-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent>

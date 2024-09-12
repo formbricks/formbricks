@@ -90,6 +90,7 @@ export function AdvancedLogicEditorActions({
             <div className="block w-9 shrink-0">{idx === 0 ? "Then" : "and"}</div>
             <div className="flex grow items-center gap-x-2">
               <InputCombobox
+                id={`action-${idx}-objective`}
                 key="objective"
                 showSearch={false}
                 options={actionObjectiveOptions}
@@ -101,6 +102,7 @@ export function AdvancedLogicEditorActions({
               />
               {action.objective !== "calculate" && (
                 <InputCombobox
+                  id={`action-${idx}-target`}
                   key="target"
                   showSearch={false}
                   options={getActionTargetOptions(action, localSurvey, questionIdx)}
@@ -116,6 +118,7 @@ export function AdvancedLogicEditorActions({
               {action.objective === "calculate" && (
                 <>
                   <InputCombobox
+                    id={`action-${idx}-variableId`}
                     key="variableId"
                     showSearch={false}
                     options={getActionVariableOptions(localSurvey)}
@@ -133,6 +136,7 @@ export function AdvancedLogicEditorActions({
                     emptyDropdownText="Add a variable to calculate"
                   />
                   <InputCombobox
+                    id={`action-${idx}-operator`}
                     key="operator"
                     showSearch={false}
                     options={getActionOpeartorOptions(
@@ -149,6 +153,7 @@ export function AdvancedLogicEditorActions({
                     comboboxClasses="grow"
                   />
                   <InputCombobox
+                    id={`action-${idx}-value`}
                     key="value"
                     withInput={true}
                     clearable={true}
@@ -183,7 +188,7 @@ export function AdvancedLogicEditorActions({
               )}
             </div>
             <DropdownMenu>
-              <DropdownMenuTrigger>
+              <DropdownMenuTrigger id={`actions-${idx}-dropdown`}>
                 <MoreVerticalIcon className="h-4 w-4" />
               </DropdownMenuTrigger>
 

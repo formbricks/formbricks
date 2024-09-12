@@ -262,7 +262,7 @@ describe("Tests for duplicateSurvey", () => {
       prisma.actionClass.findFirst.mockResolvedValueOnce(mockActionClass);
       prisma.actionClass.create.mockResolvedValueOnce(mockActionClass);
 
-      const createdSurvey = await copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId);
+      const createdSurvey = await copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId);
       expect(createdSurvey).toEqual(mockSurveyOutput);
     });
   });
@@ -272,7 +272,7 @@ describe("Tests for duplicateSurvey", () => {
 
     it("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prisma.survey.findUnique.mockRejectedValueOnce(new ResourceNotFoundError("Survey", mockId));
-      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId)).rejects.toThrow(
+      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(
         ResourceNotFoundError
       );
     });
@@ -280,9 +280,7 @@ describe("Tests for duplicateSurvey", () => {
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId)).rejects.toThrow(
-        Error
-      );
+      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(Error);
     });
   });
 });
