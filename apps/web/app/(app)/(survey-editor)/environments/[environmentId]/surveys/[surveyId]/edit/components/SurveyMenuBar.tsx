@@ -179,7 +179,9 @@ export const SurveyMenuBar = ({
             (invalidLanguage: string) => getLanguageLabel(invalidLanguage) ?? invalidLanguage
           );
 
-          toast.error(`${currentError.message} ${invalidLanguageLabels.join(", ")}`);
+          const messageSplit = currentError.message.split("-fLang-")[0];
+
+          toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
           toast.error(currentError.message);
         }
