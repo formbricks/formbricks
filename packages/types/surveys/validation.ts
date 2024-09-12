@@ -89,7 +89,7 @@ export const validateQuestionLabels = (
   if (invalidLanguageCodes.length) {
     return {
       code: z.ZodIssueCode.custom,
-      message: `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`,
+      message: `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix} ${invalidLanguageCodes.join()}`,
       path: ["questions", questionIndex, field],
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
@@ -137,7 +137,7 @@ export const validateCardFieldsForAllLanguages = (
   if (invalidLanguageCodes.length) {
     return {
       code: z.ZodIssueCode.custom,
-      message: `${messagePrefix}${messageField} on the ${cardTypeLabel} ${messageSuffix}`,
+      message: `${messagePrefix}${messageField} on the ${cardTypeLabel} ${messageSuffix} ${invalidLanguageCodes.join()}`,
       path,
       params: isDefaultOnly ? undefined : { invalidLanguageCodes },
     };
