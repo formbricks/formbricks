@@ -55,7 +55,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="People" cta={renderCreateSegmentButton()}>
+      <PageHeader pageTitle="common.people" cta={renderCreateSegmentButton()}>
         <PeopleSecondaryNavigation activeId="segments" environmentId={params.environmentId} />
       </PageHeader>
       <SegmentTable

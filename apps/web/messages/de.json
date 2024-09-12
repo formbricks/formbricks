@@ -1,0 +1,38 @@
+{
+  "common": {
+    "surveys": "Umfragen",
+    "people": "Menschen",
+    "integrations": "Integrationen",
+    "configuration": "Konfiguration",
+    "new_survey": "Neue Umfrage",
+    "full_name": "Vollständiger Name",
+    "email": "E-Mail",
+    "language": "Sprache",
+    "update": "Aktualisieren",
+    "avatar": "Avatar",
+    "account_settings": "Kontoeinstellungen",
+    "invite_them": "Laden Sie sie ein"
+  },
+  "settings": {
+    "profile": {
+      "personal_information": "Persönliche Informationen",
+      "update_your_personal_information": "Aktualisieren Sie Ihre persönlichen Daten",
+      "assist_your_organization_in_identifying_you_on_Formbricks": "Helfen Sie Ihrer Organisation, Sie auf Formbricks zu identifizieren",
+      "upload_image": "Bild hochladen",
+      "remove_image": "Bild entfernen",
+      "change_image": "Bild ändern",
+      "delete_account": "Konto löschen",
+      "delete_your_account_with_all_of_your_personal_information_and_data": "Löschen Sie Ihr Konto mit allen persönlichen Informationen und Daten",
+      "this_cannot_be_undone!": "Dies kann nicht rückgängig gemacht werden!",
+      "delete_my_account": "Mein Konto löschen"
+    },
+    "notifications": {
+      "email_alerts_surveys": "E-Mail-Benachrichtigungen (Umfragen)",
+      "weekly_summary_products": "Wöchentliche Zusammenfassung (Produkte)",
+      "set_up_an_alert_to_get_an_email_on_new_responses": "Richten Sie eine Benachrichtigung ein, um bei neuen Antworten eine E-Mail zu erhalten",
+      "stay_up_to_date_with_a_Weekly_every_Monday": "Bleiben Sie mit einem wöchentlichen Bericht jeden Montag auf dem Laufenden",
+      "auto_subscribe_to_new_surveys": "Automatisch für neue Umfragen anmelden",
+      "want_to_loop_in_organization_mates?": "Möchten Sie Organisationskollegen einbinden?"
+    }
+  }
+}

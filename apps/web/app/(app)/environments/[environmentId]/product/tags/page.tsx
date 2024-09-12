@@ -49,7 +49,7 @@ const Page = async ({ params }) => {
 
   return !isTagSettingDisabled ? (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle="common.configuration">
         <ProductConfigNavigation
           environmentId={params.environmentId}
           activeId="tags"

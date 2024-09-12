@@ -7,6 +7,7 @@ import {
 import { handleFileUpload } from "@/app/lib/fileUpload";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Session } from "next-auth";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -26,7 +27,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
+  const t = useTranslations("settings.profile");
   const fileSchema =
     typeof window !== "undefined"
       ? z
@@ -135,7 +136,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                     onClick={() => {
                       inputRef.current?.click();
                     }}>
-                    {imageUrl ? "Change Image" : "Upload Image"}
+                    {imageUrl ? t("change_image") : t("upload_image")}
                     <input
                       type="file"
                       id="hiddenFileInput"
@@ -155,7 +156,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
 
                   {imageUrl && (
                     <Button type="button" className="mr-2" variant="warn" size="sm" onClick={handleRemove}>
-                      Remove Image
+                      {t("remove_image")}
                     </Button>
                   )}
                 </div>

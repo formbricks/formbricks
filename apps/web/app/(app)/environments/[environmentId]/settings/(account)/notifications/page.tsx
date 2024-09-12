@@ -96,12 +96,12 @@ const Page = async ({ params, searchParams }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Account Settings">
+      <PageHeader pageTitle="common.account_settings">
         <AccountSettingsNavbar environmentId={params.environmentId} activeId="notifications" />
       </PageHeader>
       <SettingsCard
-        title="Email alerts (Surveys)"
-        description="Set up an alert to get an email on new responses.">
+        title="settings.notifications.email_alerts_surveys"
+        description="settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses">
         <EditAlerts
           memberships={memberships}
           user={user}
@@ -112,8 +112,8 @@ const Page = async ({ params, searchParams }) => {
       </SettingsCard>
       <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard
-        title="Weekly summary (Products)"
-        description="Stay up-to-date with a Weekly every Monday.">
+        title="settings.notifications.weekly_summary_products"
+        description="settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday">
         <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
     </PageContentWrapper>

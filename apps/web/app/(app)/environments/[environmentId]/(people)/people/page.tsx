@@ -51,7 +51,7 @@ const Page = async ({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="People" cta={HowToAddPeopleButton}>
+      <PageHeader pageTitle="common.people" cta={HowToAddPeopleButton}>
         <PeopleSecondaryNavigation activeId="people" environmentId={params.environmentId} />
       </PageHeader>
       {people.length === 0 ? (

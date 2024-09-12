@@ -106,7 +106,7 @@ const Loading = () => {
   return (
     <div>
       <PageContentWrapper>
-        <PageHeader pageTitle="Configuration">
+        <PageHeader pageTitle="common.configuration">
           <div className="grid h-10 w-full grid-cols-[auto,1fr]">
             <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
               {navigation.map((navElem) => (

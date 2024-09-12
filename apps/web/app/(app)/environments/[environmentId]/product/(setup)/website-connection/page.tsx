@@ -37,7 +37,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle="common.configuration">
         <ProductConfigNavigation
           environmentId={params.environmentId}
           activeId="website-connection"

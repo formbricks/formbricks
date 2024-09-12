@@ -41,7 +41,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="People" cta={HowToAddAttributesButton}>
+      <PageHeader pageTitle="common.people" cta={HowToAddAttributesButton}>
         <PeopleSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
       </PageHeader>
       <AttributeClassesTable attributeClasses={attributeClasses} />

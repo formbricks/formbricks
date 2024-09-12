@@ -1,4 +1,5 @@
 import { UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TUser } from "@formbricks/types/user";
 import { Membership } from "../types";
@@ -11,6 +12,7 @@ interface EditAlertsProps {
 }
 
 export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAlertsProps) => {
+  const t = useTranslations();
   return (
     <>
       {memberships.map((membership) => (
@@ -42,9 +44,9 @@ export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAler
               ))}
             </div>
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              Want to loop in organization mates?{" "}
+              {t("settings.notifications.want_to_loop_in_organization_mates?")}
               <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
-                Invite them.
+                {t("common.invite_them")}
               </Link>
             </p>
           </div>

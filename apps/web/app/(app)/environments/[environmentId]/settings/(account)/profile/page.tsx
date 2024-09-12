@@ -23,17 +23,19 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Account Settings">
+      <PageHeader pageTitle="common.account_settings">
         <AccountSettingsNavbar environmentId={environmentId} activeId="profile" />
       </PageHeader>
       {user && (
         <div>
-          <SettingsCard title="Personal information" description="Update your personal information.">
+          <SettingsCard
+            title="settings.profile.personal_information"
+            description="settings.profile.update_your_personal_information">
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
           <SettingsCard
-            title="Avatar"
-            description="Assist your organization in identifying you on Formbricks.">
+            title="common.avatar"
+            description="settings.profile.assist_your_organization_in_identifying_you_on_Formbricks">
             {user && (
               <EditProfileAvatarForm
                 session={session}
@@ -49,8 +51,8 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           )}
 
           <SettingsCard
-            title="Delete account"
-            description="Delete your account with all of your personal information and data.">
+            title="settings.profile.delete_account"
+            description="settings.profile.delete_your_account_with_all_of_your_personal_information_and_data">
             <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
           </SettingsCard>
           <SettingsId title="Profile" id={user.id}></SettingsId>
