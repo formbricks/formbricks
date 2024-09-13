@@ -60,9 +60,11 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   });
 
   const [defaultLanguage, setDefaultLanguage] = useState(
-    localSurvey.languages.find((language) => {
-      return language.default;
-    })?.language
+    localSurvey.languages.length > 1
+      ? localSurvey.languages.find((language) => {
+          return language.default;
+        })?.language
+      : null
   );
 
   const setOpen = (open: boolean) => {
