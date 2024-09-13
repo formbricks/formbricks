@@ -88,9 +88,10 @@ export const CopySurveyForm = ({
                   </TooltipRenderer>
 
                   <div className="flex flex-col gap-4">
-                    {product?.environments.map((environment) => {
+                    {product?.environments.map((environment, idx) => {
                       return (
                         <FormField
+                          key={idx}
                           control={form.control}
                           name={`products.${productIndex}.environments`}
                           render={({ field }) => {
