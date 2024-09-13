@@ -1,5 +1,6 @@
 "use client";
 
+import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
@@ -31,7 +32,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { FORMBRICKS_PRODUCT_ID_LS, FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -64,9 +64,9 @@ interface NavigationProps {
   user: TUser;
   organization: TOrganization;
   products: TProduct[];
-  isFormbricksCloud: boolean;
-  membershipRole?: TMembershipRole;
   isMultiOrgEnabled: boolean;
+  isFormbricksCloud?: boolean;
+  membershipRole?: TMembershipRole;
 }
 
 export const MainNavigation = ({
@@ -75,9 +75,9 @@ export const MainNavigation = ({
   organization,
   user,
   products,
-  isFormbricksCloud,
-  membershipRole,
   isMultiOrgEnabled,
+  isFormbricksCloud = true,
+  membershipRole,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -87,7 +87,6 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  const [releasesBehind, setReleasesBehind] = useState(-1);
   const [latestVersion, setLatestVersion] = useState("");
 
   const product = products.find((product) => product.id === environment.productId);
@@ -255,26 +254,13 @@ export const MainNavigation = ({
 
   useEffect(() => {
     async function loadReleases() {
-      const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases");
-      const releases = await res.json();
+      const res = await getLatestStableFbReleaseAction();
+      if (res?.data) {
+        const latestVersionTag = res.data;
+        const currentVersionTag = `v${version}`;
 
-      if (Array.isArray(releases)) {
-        const everyNewRelease = releases
-          .map((release) => release.tag_name)
-          .findIndex((tagName) => tagName === `v${version}`);
-
-        const onlyFullNewRelease = releases
-          .filter((release) => !release.prerelease)
-          .map((release) => release.tag_name)
-          .findIndex((tagName) => tagName === `v${version}`);
-
-        const computedReleasesBehind = version.includes("pre") ? everyNewRelease : onlyFullNewRelease;
-
-        if (computedReleasesBehind >= 0) {
-          setReleasesBehind(computedReleasesBehind);
-          setLatestVersion(releases[0]?.tag_name);
-        } else {
-          setReleasesBehind(0);
+        if (currentVersionTag !== latestVersionTag) {
+          setLatestVersion(latestVersionTag);
         }
       }
     }
@@ -343,7 +329,7 @@ export const MainNavigation = ({
           {/* Product Switch */}
           <div>
             {/* New Version Available */}
-            {!isCollapsed && isOwnerOrAdmin && releasesBehind > 0 && !IS_FORMBRICKS_CLOUD && (
+            {!isCollapsed && isOwnerOrAdmin && latestVersion && !isFormbricksCloud && (
               <Link
                 href="https://github.com/formbricks/formbricks/releases"
                 target="_blank"
