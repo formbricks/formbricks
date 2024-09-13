@@ -298,6 +298,7 @@ export const mockSurveyWithLogic: TSurvey = {
   segment: null,
   type: "link",
   endings: [],
+  hiddenFields: { enabled: true, fieldIds: ["name"] },
   questions: [
     {
       id: "q1",
@@ -440,6 +441,75 @@ export const mockSurveyWithLogic: TSurvey = {
                 leftOperand: { type: "variable", value: "km1srr55owtn2r7lkoh5ny1u" },
                 operator: "isLessThan",
                 rightOperand: { type: "question", value: "q5" },
+              },
+            ],
+          },
+          actions: [],
+        },
+      ],
+    },
+    {
+      id: "q6",
+      type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+      headline: { default: "Select your age group:" },
+      required: true,
+      choices: [
+        { id: "mvedaklp0gxxycprpyhhwen7", label: { default: "lol" } },
+        { id: "i7ws8uqyj66q5x086vbqtm8n", label: { default: "lmao" } },
+        { id: "cy8hbbr9e2q6ywbfjbzwdsqn", label: { default: "XD" } },
+        { id: "sojc5wwxc5gxrnuib30w7t6s", label: { default: "hehe" } },
+      ],
+      logic: [
+        {
+          id: "o6n73uq9rysih9mpcbzlehfs",
+          conditions: {
+            id: "szdkmtz17j9008n4i2d1t040",
+            connector: "and",
+            conditions: [
+              {
+                id: "rb223vmzuuzo3ag1bp2m3i69",
+                leftOperand: { type: "question", value: "q6" },
+                operator: "includesOneOf",
+                rightOperand: {
+                  type: "static",
+                  value: ["i7ws8uqyj66q5x086vbqtm8n", "cy8hbbr9e2q6ywbfjbzwdsqn"],
+                },
+              },
+              {
+                id: "ot894j7nwna24i6jo2zpk59o",
+                leftOperand: { type: "question", value: "q1" },
+                operator: "doesNotEqual",
+                rightOperand: { type: "static", value: "teal" },
+              },
+              {
+                id: "j1appouxk700of7u8m15z625",
+                connector: "or",
+                conditions: [
+                  {
+                    id: "gy6xowchkv8bp1qj7ur79jvc",
+                    leftOperand: { type: "question", value: "q2" },
+                    operator: "doesNotEqual",
+                    rightOperand: { type: "static", value: "pizza" },
+                  },
+                  {
+                    id: "vxyccgwsbq34s3l0syom7y2w",
+                    leftOperand: { type: "hiddenField", value: "name" },
+                    operator: "contains",
+                    rightOperand: { type: "question", value: "q2" },
+                  },
+                ],
+              },
+              {
+                id: "yunz0k9w0xwparogz2n1twoy",
+                leftOperand: { type: "question", value: "q3" },
+                operator: "doesNotEqual",
+                rightOperand: { type: "static", value: "Inception" },
+              },
+              {
+                id: "x2j6qz3z7x9m3q5jz9x7c7v4",
+                leftOperand: { type: "variable", value: "siog1dabtpo3l0a3xoxw2922" },
+                operator: "endsWith",
+                rightOperand: { type: "static", value: "yo" },
               },
             ],
           },

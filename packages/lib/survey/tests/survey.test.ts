@@ -164,6 +164,20 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     );
     expect(result).toBe(false);
   });
+
+  it("should return for complex condition", () => {
+    const data = { q6: ["lmao", "XD"], q1: "green", q2: "pizza", q3: "inspection", name: "pizza" };
+    const variablesData = { siog1dabtpo3l0a3xoxw2922: "tokyo" };
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[5].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
 });
 
 describe("Tests for getSurvey", () => {
