@@ -1,5 +1,6 @@
 import { prisma } from "../../__mocks__/database";
 import { Prisma } from "@prisma/client";
+import { evaluateAdvancedLogic } from "utils/evaluateLogic";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -25,6 +26,7 @@ import {
   mockPrismaPerson,
   mockProduct,
   mockSurveyOutput,
+  mockSurveyWithLogic,
   mockSyncSurveyOutput,
   mockTransformedSurveyOutput,
   mockTransformedSyncSurveyOutput,
@@ -34,6 +36,134 @@ import {
 
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
+});
+
+describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
+  it("should return true when q1 answer is blue", () => {
+    const data = { q1: "blue" };
+    const variablesData = {};
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when q1 answer is not blue", () => {
+    const data = { q1: "red" };
+    const variablesData = {};
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
+
+  it("should return true when q1 is blue and q2 is pizza", () => {
+    const data = { q1: "blue", q2: "pizza" };
+    const variablesData = {};
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when q1 is blue but q2 is not pizza", () => {
+    const data = { q1: "blue", q2: "burger" };
+    const variablesData = {};
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
+
+  it("should return true when q2 is pizza or q3 is Inception", () => {
+    const data = { q2: "pizza", q3: "Inception" };
+    const variablesData = {};
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[2].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return true when var1 is equal to single select question value", () => {
+    const data = { q4: "lmao" };
+    const variablesData = { siog1dabtpo3l0a3xoxw2922: "lmao" };
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when var1 is not equal to single select question value", () => {
+    const data = { q4: "lol" };
+    const variablesData = { siog1dabtpo3l0a3xoxw2922: "damn" };
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
+
+  it("should return true when var2 is greater than 30 and less than open text number value", () => {
+    const data = { q5: "40" };
+    const variablesData = { km1srr55owtn2r7lkoh5ny1u: 35 };
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when var2 is not greater than 30 or greater than open text number value", () => {
+    const data = { q5: "40" };
+    const variablesData = { km1srr55owtn2r7lkoh5ny1u: 25 };
+
+    const result = evaluateAdvancedLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
 });
 
 describe("Tests for getSurvey", () => {
