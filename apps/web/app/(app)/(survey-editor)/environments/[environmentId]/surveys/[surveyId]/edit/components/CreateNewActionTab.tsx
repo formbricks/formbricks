@@ -171,14 +171,14 @@ export const CreateNewActionTab = ({
     <div>
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(submitHandler)}>
-          <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
+          <div className="max-h-[500px] w-full space-y-4 overflow-y-auto pr-4">
             <div className="w-3/5">
               <FormField
                 name={`type`}
                 control={control}
                 render={({ field }) => (
                   <div>
-                    <Label className="font-semibold">Type</Label>
+                    <Label className="font-semibold">Action Type</Label>
                     <TabToggle
                       id="type"
                       options={[
