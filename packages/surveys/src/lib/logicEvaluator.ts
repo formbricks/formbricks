@@ -44,14 +44,14 @@ const evaluateSingleCondition = (
   selectedLanguage: string
 ): boolean => {
   try {
-    const leftValue = getLeftOperandValue(
+    let leftValue = getLeftOperandValue(
       localSurvey,
       data,
       variablesData,
       condition.leftOperand,
       selectedLanguage
     );
-    const rightValue = condition.rightOperand
+    let rightValue = condition.rightOperand
       ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
       : undefined;
 
@@ -81,6 +81,14 @@ const evaluateSingleCondition = (
       rightField = condition.rightOperand.value as string;
     } else {
       rightField = "";
+    }
+
+    if (
+      condition.leftOperand.type === "variable" &&
+      (leftField as TSurveyVariable).type === "number" &&
+      condition.rightOperand?.type === "hiddenField"
+    ) {
+      rightValue = Number(rightValue as string);
     }
 
     switch (condition.operator) {
@@ -341,9 +349,7 @@ const getRightOperandValue = (
       if (variable.type === "number") return Number(variableValue) || 0;
       return variableValue || "";
     case "hiddenField":
-      return !isNaN(data[rightOperand.value] as number)
-        ? Number(data[rightOperand.value])
-        : data[rightOperand.value];
+      return data[rightOperand.value];
     case "static":
       return rightOperand.value;
     default:
