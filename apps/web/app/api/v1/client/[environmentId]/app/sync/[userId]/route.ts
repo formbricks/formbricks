@@ -63,7 +63,7 @@ export const GET = async (
 
     const environment = await getEnvironment(environmentId);
     if (!environment) {
-      throw new Error("Environment does not exist");
+      return responses.notFoundResponse("Environment", environmentId);
     }
 
     const product = await getProductByEnvironmentId(environmentId);
