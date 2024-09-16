@@ -1,4 +1,5 @@
 import { getPersonSegmentIds } from "@/app/api/v1/client/[environmentId]/app/people/[userId]/lib/segments";
+import { prisma } from "@formbricks/database";
 import { attributeCache } from "@formbricks/lib/attribute/cache";
 import { getAttributesByUserId } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
@@ -13,7 +14,7 @@ import {
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
 import { personCache } from "@formbricks/lib/person/cache";
-import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
+import { getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { getResponsesByUserId } from "@formbricks/lib/response/service";
@@ -39,9 +40,10 @@ export const getPersonState = async ({
   environmentId: string;
   userId: string;
   device: "phone" | "desktop";
-}): Promise<TJsPersonState["data"]> =>
+}): Promise<{ state: TJsPersonState["data"]; revalidateProps?: { personId: string; revalidate: boolean } }> =>
   cache(
     async () => {
+      let revalidatePerson = false;
       const environment = await getEnvironment(environmentId);
 
       if (!environment) {
@@ -95,7 +97,18 @@ export const getPersonState = async ({
       } else {
         // MAU limit not reached: create person if not exists
         if (!person) {
-          person = await createPerson(environmentId, userId);
+          person = await prisma.person.create({
+            data: {
+              environment: {
+                connect: {
+                  id: environmentId,
+                },
+              },
+              userId,
+            },
+          });
+
+          revalidatePerson = true;
         }
       }
 
@@ -119,7 +132,10 @@ export const getPersonState = async ({
             : null,
       };
 
-      return userState;
+      return {
+        state: userState,
+        revalidateProps: revalidatePerson ? { personId: person.id, revalidate: true } : undefined,
+      };
     },
     [`personState-${environmentId}-${userId}-${device}`],
     {

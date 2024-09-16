@@ -2,6 +2,7 @@ import { getEnvironmentState } from "@/app/api/v1/client/[environmentId]/app/env
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
+import { environmentCache } from "@formbricks/lib/environment/cache";
 import { ZJsSyncInput } from "@formbricks/types/js";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -34,12 +35,21 @@ export const GET = async (
 
     try {
       const environmentState = await getEnvironmentState(params.environmentId);
+
+      if (environmentState.revalidateEnvironment) {
+        environmentCache.revalidate({
+          id: inputValidation.data.environmentId,
+          productId: environmentState.state.product.id,
+        });
+      }
+
       return responses.successResponse(
-        environmentState,
+        environmentState.state,
         true,
         "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
       );
     } catch (err) {
+      console.error(err);
       return responses.internalServerErrorResponse(err.message, true);
     }
   } catch (error) {

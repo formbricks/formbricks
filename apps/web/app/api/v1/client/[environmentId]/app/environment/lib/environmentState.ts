@@ -1,9 +1,10 @@
+import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { cache } from "@formbricks/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { environmentCache } from "@formbricks/lib/environment/cache";
-import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import {
   getMonthlyOrganizationResponseCount,
@@ -27,9 +28,12 @@ import { TJsEnvironmentState } from "@formbricks/types/js";
  * @throws ResourceNotFoundError if the environment or organization does not exist
  * @throws InvalidInputError if the channel is not "app"
  */
-export const getEnvironmentState = async (environmentId: string): Promise<TJsEnvironmentState["data"]> =>
+export const getEnvironmentState = async (
+  environmentId: string
+): Promise<{ state: TJsEnvironmentState["data"]; revalidateEnvironment?: boolean }> =>
   cache(
     async () => {
+      let revalidateEnvironment = false;
       const [environment, organization, product] = await Promise.all([
         getEnvironment(environmentId),
         getOrganizationByEnvironmentId(environmentId),
@@ -54,9 +58,16 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
 
       if (!environment.appSetupCompleted) {
         await Promise.all([
-          updateEnvironment(environment.id, { appSetupCompleted: true }),
+          prisma.environment.update({
+            where: {
+              id: environmentId,
+            },
+            data: { appSetupCompleted: true },
+          }),
           capturePosthogEnvironmentEvent(environmentId, "app setup completed"),
         ]);
+
+        revalidateEnvironment = true;
       }
 
       // check if MAU limit is reached
@@ -101,7 +112,10 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
         product,
       };
 
-      return state;
+      return {
+        state,
+        revalidateEnvironment,
+      };
     },
     [`environmentState-app-${environmentId}`],
     {

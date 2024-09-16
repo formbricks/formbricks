@@ -1,9 +1,10 @@
+import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { cache } from "@formbricks/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { environmentCache } from "@formbricks/lib/environment/cache";
-import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import {
   getMonthlyOrganizationResponseCount,
@@ -27,9 +28,12 @@ import { TJsEnvironmentState } from "@formbricks/types/js";
  * @throws ResourceNotFoundError if the organization, environment or product is not found
  * @throws InvalidInputError if the product channel is not website
  */
-export const getEnvironmentState = async (environmentId: string): Promise<TJsEnvironmentState["data"]> =>
+export const getEnvironmentState = async (
+  environmentId: string
+): Promise<{ state: TJsEnvironmentState["data"]; revalidateEnvironment?: boolean }> =>
   cache(
     async () => {
+      let revalidateEnvironment = false;
       const [environment, organization, product] = await Promise.all([
         getEnvironment(environmentId),
         getOrganizationByEnvironmentId(environmentId),
@@ -72,11 +76,19 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
           }
         }
       }
+
       if (!environment?.websiteSetupCompleted) {
         await Promise.all([
-          updateEnvironment(environment.id, { websiteSetupCompleted: true }),
+          await prisma.environment.update({
+            where: {
+              id: environmentId,
+            },
+            data: { websiteSetupCompleted: true },
+          }),
           capturePosthogEnvironmentEvent(environmentId, "website setup completed"),
         ]);
+
+        revalidateEnvironment = true;
       }
 
       const [surveys, actionClasses] = await Promise.all([
@@ -95,7 +107,10 @@ export const getEnvironmentState = async (environmentId: string): Promise<TJsEnv
         product,
       };
 
-      return state;
+      return {
+        state,
+        revalidateEnvironment,
+      };
     },
     [`environmentState-website-${environmentId}`],
     {
