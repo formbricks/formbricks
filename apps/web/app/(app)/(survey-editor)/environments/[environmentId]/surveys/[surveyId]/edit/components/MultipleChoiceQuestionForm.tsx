@@ -219,6 +219,7 @@ export const MultipleChoiceQuestionForm = ({
         <Label htmlFor="choices">Options*</Label>
         <div className="mt-2" id="choices">
           <DndContext
+            id="multi-choice-choices"
             onDragEnd={(event) => {
               const { active, over } = event;
 

@@ -6,7 +6,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -98,8 +97,6 @@ export const DateQuestion = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
   const [hideInvalid, setHideInvalid] = useState(!selectedDate);
 
-  const [parent] = useAutoAnimate();
-
   useEffect(() => {
     if (datePickerOpen) {
       if (!selectedDate) setSelectedDate(new Date());
@@ -184,76 +181,74 @@ export const DateQuestion = ({
                 </div>
               )}
 
-              <div className="" ref={parent}>
-                <DatePicker
-                  key={datePickerOpen}
-                  value={selectedDate}
-                  isOpen={datePickerOpen}
-                  onChange={(value) => {
-                    const date = value as Date;
-                    setSelectedDate(date);
+              <DatePicker
+                key={datePickerOpen}
+                value={selectedDate}
+                isOpen={datePickerOpen}
+                onChange={(value) => {
+                  const date = value as Date;
+                  setSelectedDate(date);
 
-                    // Get the timezone offset in minutes and convert it to milliseconds
-                    const timezoneOffset = date.getTimezoneOffset() * 60000;
+                  // Get the timezone offset in minutes and convert it to milliseconds
+                  const timezoneOffset = date.getTimezoneOffset() * 60000;
 
-                    // Adjust the date by subtracting the timezone offset
-                    const adjustedDate = new Date(date.getTime() - timezoneOffset);
+                  // Adjust the date by subtracting the timezone offset
+                  const adjustedDate = new Date(date.getTime() - timezoneOffset);
 
-                    // Format the date as YYYY-MM-DD
-                    const dateString = adjustedDate.toISOString().split("T")[0];
+                  // Format the date as YYYY-MM-DD
+                  const dateString = adjustedDate.toISOString().split("T")[0];
 
-                    onChange({ [question.id]: dateString });
-                  }}
-                  minDate={
-                    new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())
+                  onChange({ [question.id]: dateString });
+                }}
+                minDate={
+                  new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())
+                }
+                maxDate={new Date("3000-12-31")}
+                dayPlaceholder="DD"
+                monthPlaceholder="MM"
+                yearPlaceholder="YYYY"
+                format={question.format ?? "M-d-y"}
+                className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
+                calendarClassName="calendar-root !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto"
+                clearIcon={null}
+                onCalendarOpen={() => {
+                  setDatePickerOpen(true);
+                }}
+                onCalendarClose={() => {
+                  // reset state
+                  setDatePickerOpen(false);
+                  setSelectedDate(selectedDate);
+                }}
+                // @ts-expect-error
+                calendarIcon={<CalendarIcon />}
+                tileClassName={({ date }: { date: Date }) => {
+                  const baseClass =
+                    "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
+                  // today's date class
+                  if (
+                    date.getDate() === new Date().getDate() &&
+                    date.getMonth() === new Date().getMonth() &&
+                    date.getFullYear() === new Date().getFullYear()
+                  ) {
+                    return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
                   }
-                  maxDate={new Date("3000-12-31")}
-                  dayPlaceholder="DD"
-                  monthPlaceholder="MM"
-                  yearPlaceholder="YYYY"
-                  format={question.format ?? "M-d-y"}
-                  className={`dp-input-root fb-rounded-custom wrapper-hide ${!datePickerOpen ? "" : "fb-h-[46dvh] sm:fb-h-[34dvh]"} ${hideInvalid ? "hide-invalid" : ""} `}
-                  calendarClassName="calendar-root !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto"
-                  clearIcon={null}
-                  onCalendarOpen={() => {
-                    setDatePickerOpen(true);
-                  }}
-                  onCalendarClose={() => {
-                    // reset state
-                    setDatePickerOpen(false);
-                    setSelectedDate(selectedDate);
-                  }}
-                  // @ts-expect-error
-                  calendarIcon={<CalendarIcon />}
-                  tileClassName={({ date }: { date: Date }) => {
-                    const baseClass =
-                      "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
-                    // today's date class
-                    if (
-                      date.getDate() === new Date().getDate() &&
-                      date.getMonth() === new Date().getMonth() &&
-                      date.getFullYear() === new Date().getFullYear()
-                    ) {
-                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
-                    }
-                    // active date class
-                    if (
-                      date.getDate() === selectedDate?.getDate() &&
-                      date.getMonth() === selectedDate?.getMonth() &&
-                      date.getFullYear() === selectedDate?.getFullYear()
-                    ) {
-                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
-                    }
+                  // active date class
+                  if (
+                    date.getDate() === selectedDate?.getDate() &&
+                    date.getMonth() === selectedDate?.getMonth() &&
+                    date.getFullYear() === selectedDate?.getFullYear()
+                  ) {
+                    return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
+                  }
 
-                    return baseClass;
-                  }}
-                  formatShortWeekday={(_: any, date: Date) => {
-                    return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
-                  }}
-                  showNeighboringMonth={false}
-                  showLeadingZeros={false}
-                />
-              </div>
+                  return baseClass;
+                }}
+                formatShortWeekday={(_: any, date: Date) => {
+                  return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
+                }}
+                showNeighboringMonth={false}
+                showLeadingZeros={false}
+              />
             </div>
           </div>
         </div>
