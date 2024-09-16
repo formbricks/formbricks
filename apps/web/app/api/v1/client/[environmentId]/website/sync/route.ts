@@ -54,12 +54,12 @@ export const GET = async (
       getProductByEnvironmentId(environmentId),
     ]);
 
-    if (!organization) {
-      throw new Error("Organization does not exist");
+    if (!environment) {
+      return responses.notFoundResponse("Environment", environmentId);
     }
 
-    if (!environment) {
-      throw new Error("Environment does not exist");
+    if (!organization) {
+      throw new Error("Organization does not exist");
     }
 
     if (!product) {
