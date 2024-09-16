@@ -22,7 +22,7 @@ import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
-import { deleteDisplay, getDisplayCountBySurveyId } from "../display/service";
+import { getDisplayCountBySurveyId } from "../display/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
@@ -240,6 +240,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
       },
       display: displayId ? { connect: { id: displayId } } : undefined,
+      displayId: displayId,
       finished: finished,
       data: data,
       language: language,
@@ -717,10 +718,6 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       notes: responseNotes,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
-
-    if (response.displayId) {
-      deleteDisplay(response.displayId);
-    }
 
     const survey = await getSurvey(response.surveyId);
 

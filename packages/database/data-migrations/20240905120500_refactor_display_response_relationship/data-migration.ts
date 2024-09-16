@@ -34,31 +34,29 @@ async function runMigration(): Promise<void> {
       let totalDisplaysDeleted = 0;
 
       await Promise.all(
-        displays.map(async (display) => {
+        displays.map((display) => {
           if (!display.responseId) return;
 
-          const response = await tx.response.findUnique({
-            where: { id: display.responseId },
-            select: { id: true },
-          });
+          return tx.response
+            .findUnique({
+              where: { id: display.responseId },
+              select: { id: true },
+            })
+            .then(async (response) => {
+              if (response) {
+                totalResponseTransformed++;
+                await tx.response.update({
+                  where: { id: response.id },
+                  data: { displayId: display.id },
+                });
+                return;
+              }
 
-          if (response) {
-            totalResponseTransformed++;
-            await tx.response.update({
-              where: { id: response.id },
-              data: { display: { connect: { id: display.id } } },
+              totalDisplaysDeleted++;
+              await tx.display.delete({
+                where: { id: display.id },
+              });
             });
-
-            await tx.display.update({
-              where: { id: display.id },
-              data: { responseId: null },
-            });
-            return;
-          }
-          totalDisplaysDeleted++;
-          await tx.display.delete({
-            where: { id: display.id },
-          });
         })
       );
 
