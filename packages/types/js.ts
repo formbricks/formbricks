@@ -109,7 +109,6 @@ export type TJsEnvironmentState = z.infer<typeof ZJsEnvironmentState>;
 
 export const ZJsSyncInput = z.object({
   environmentId: z.string().cuid(),
-  version: z.string().optional(),
 });
 
 export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
