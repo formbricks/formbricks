@@ -25,7 +25,7 @@ export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
 export const ZJSWebsiteStateDisplay = z.object({
   createdAt: z.date(),
-  surveyId: z.string().cuid(),
+  surveyId: z.string().cuid2(),
   responded: z.boolean(),
 });
 
@@ -52,7 +52,7 @@ export const ZJsAppState = z.object({
 export type TJsAppState = z.infer<typeof ZJsAppState>;
 
 export const ZJsAppConfigUpdateInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   userId: z.string(),
   state: ZJsAppState,
@@ -167,7 +167,7 @@ export const ZJsConfigUpdateInput = ZJsConfig.omit({ status: true }).extend({
 export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
 
 export const ZJsWebsiteConfigInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   attributes: z.record(z.string()).optional(),
@@ -176,7 +176,7 @@ export const ZJsWebsiteConfigInput = z.object({
 export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;
 
 export const ZJsAppConfigInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string(),
@@ -186,7 +186,7 @@ export const ZJsAppConfigInput = z.object({
 export type TJsAppConfigInput = z.infer<typeof ZJsAppConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   userId: z.string().min(1).max(255),
 });
 
@@ -206,7 +206,7 @@ export const ZJsPeopleAttributeInput = z.object({
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
 
 export const ZJsActionInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   userId: z.string().optional(),
   name: z.string(),
 });

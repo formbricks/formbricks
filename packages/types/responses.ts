@@ -314,6 +314,8 @@ export const ZResponseTableData = z.object({
   notes: z.array(ZResponseNote),
   language: z.string().nullable(),
   responseData: ZResponseData,
+  person: ZResponsePerson.nullable(),
+  personAttributes: ZResponsePersonAttributes,
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;
