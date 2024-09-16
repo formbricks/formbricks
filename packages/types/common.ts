@@ -16,6 +16,7 @@ export const ZAllowedFileExtension = z.enum([
   "png",
   "jpeg",
   "jpg",
+  "webp",
   "pdf",
   "doc",
   "docx",

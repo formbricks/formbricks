@@ -24,7 +24,7 @@ export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
 export const ZJSWebsiteStateDisplay = z.object({
   createdAt: z.date(),
-  surveyId: z.string().cuid(),
+  surveyId: z.string().cuid2(),
   responded: z.boolean(),
 });
 
@@ -65,14 +65,14 @@ export const ZJsWebsiteState = z.object({
 export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
 
 export const ZJsWebsiteSyncInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   version: z.string().optional(),
 });
 
 export type TJsWebsiteSyncInput = z.infer<typeof ZJsWebsiteSyncInput>;
 
 export const ZJsWebsiteConfig = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   state: ZJsWebsiteState,
   expiresAt: z.date(),
@@ -82,7 +82,7 @@ export const ZJsWebsiteConfig = z.object({
 export type TJsWebsiteConfig = z.infer<typeof ZJsWebsiteConfig>;
 
 export const ZJSAppConfig = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   userId: z.string(),
   state: ZJsAppState,
@@ -93,7 +93,7 @@ export const ZJSAppConfig = z.object({
 export type TJSAppConfig = z.infer<typeof ZJSAppConfig>;
 
 export const ZJsWebsiteConfigUpdateInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   state: ZJsWebsiteState,
   expiresAt: z.date(),
@@ -103,7 +103,7 @@ export const ZJsWebsiteConfigUpdateInput = z.object({
 export type TJsWebsiteConfigUpdateInput = z.infer<typeof ZJsWebsiteConfigUpdateInput>;
 
 export const ZJsAppConfigUpdateInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   userId: z.string(),
   state: ZJsAppState,
@@ -114,7 +114,7 @@ export const ZJsAppConfigUpdateInput = z.object({
 export type TJsAppConfigUpdateInput = z.infer<typeof ZJsAppConfigUpdateInput>;
 
 export const ZJsWebsiteConfigInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   attributes: z.record(z.string()).optional(),
@@ -123,7 +123,7 @@ export const ZJsWebsiteConfigInput = z.object({
 export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;
 
 export const ZJsAppConfigInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string(),
@@ -133,7 +133,7 @@ export const ZJsAppConfigInput = z.object({
 export type TJsAppConfigInput = z.infer<typeof ZJsAppConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   userId: z.string().min(1).max(255),
   version: z.string().optional(),
 });
@@ -154,7 +154,7 @@ export const ZJsPeopleAttributeInput = z.object({
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
 
 export const ZJsActionInput = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   userId: z.string().optional(),
   name: z.string(),
 });
@@ -166,7 +166,7 @@ export const ZJsWesbiteActionInput = ZJsActionInput.omit({ userId: true });
 export type TJsWesbiteActionInput = z.infer<typeof ZJsWesbiteActionInput>;
 
 export const ZJsAppSyncParams = z.object({
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   apiHost: z.string(),
   userId: z.string(),
   attributes: ZAttributes.optional(),
