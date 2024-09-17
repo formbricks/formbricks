@@ -10,7 +10,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
@@ -65,6 +65,15 @@ export const EditEndingCard = ({
     id: endingCard.id,
   });
   let open = activeQuestionId === endingCard.id;
+
+  useEffect(() => {
+    if (endingCard.type === "redirectToUrl" && !endingCard.url) {
+      updateSurvey({ url: defaultRedirect });
+    }
+    if (endingCard.type === "endScreen" && !endingCard.buttonLink) {
+      updateSurvey({ buttonLink: defaultRedirect });
+    }
+  }, [endingCard, defaultRedirect]);
 
   const setOpen = (e) => {
     if (e) {
