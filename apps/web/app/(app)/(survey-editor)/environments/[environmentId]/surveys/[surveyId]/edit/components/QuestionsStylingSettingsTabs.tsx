@@ -48,7 +48,7 @@ export const QuestionsAudienceTabs = ({
   }, [isStylingTabVisible]);
 
   // Hide settings tab in CX mode
-  let tabsToDisplay = tabsComputed.filter((tab) => isCxMode && tab.id !== "settings");
+  let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;
 
   return (
     <div className="fixed z-30 flex h-12 w-full items-center justify-center border-b bg-white md:w-1/2">

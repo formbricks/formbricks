@@ -5,7 +5,7 @@ import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
-import { WebpageTab } from "./WebpageTab";
+import { WebsiteTab } from "./WebpageTab";
 
 interface EmbedViewProps {
   handleInitialPageButton: () => void;
@@ -67,7 +67,7 @@ export const EmbedView = ({
             {activeId === "email" ? (
               <EmailTab surveyId={survey.id} email={email} />
             ) : activeId === "webpage" ? (
-              <WebpageTab surveyUrl={surveyUrl} />
+              <WebsiteTab surveyUrl={surveyUrl} />
             ) : activeId === "link" ? (
               <LinkTab
                 survey={survey}
@@ -75,6 +75,22 @@ export const EmbedView = ({
                 surveyUrl={surveyUrl}
                 setSurveyUrl={setSurveyUrl}
               />
+            ) : activeId === "app" ? (
+              <div>
+                <p>
+                  Use formbricks in your app by embedding the survey using the formbricks React Native SDK.
+                </p>
+                <p>
+                  Read the documentation,
+                  <a
+                    href="https://formbricks.com/docs/developer-docs/react-native-in-app-surveys"
+                    target="_blank"
+                    rel="noreferrer">
+                    here
+                  </a>
+                  .
+                </p>
+              </div>
             ) : null}
           </div>
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">

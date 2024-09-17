@@ -6,8 +6,35 @@ import toast from "react-hot-toast";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
+import { Tabs } from "@formbricks/ui/Tabs";
 
-export const WebpageTab = ({ surveyUrl }) => {
+export const WebsiteTab = ({ surveyUrl }) => {
+  const [selectedTab, setSelectedTab] = useState("static");
+
+  return (
+    <div className="flex h-full grow flex-col">
+      <Tabs
+        id="embed-in-website"
+        onChange={(value) => {
+          setSelectedTab(value);
+        }}
+        options={[
+          { value: "static", label: "Static (iframe)" },
+          { value: "popup", label: "Pop-up" },
+        ]}
+        defaultSelected={"static"}
+        className="w-full"
+        tabsContainerClassName="p-1 gap-2"
+      />
+
+      <div className="mt-4">
+        {selectedTab === "static" ? <StaticTab surveyUrl={surveyUrl} /> : <div>connect to website here</div>}
+      </div>
+    </div>
+  );
+};
+
+const StaticTab = ({ surveyUrl }) => {
   const [embedModeEnabled, setEmbedModeEnabled] = useState(false);
   const iframeCode = `<div style="position: relative; height:80dvh; overflow:auto;"> 
   <iframe 
