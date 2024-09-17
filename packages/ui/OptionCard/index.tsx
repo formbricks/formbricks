@@ -35,7 +35,7 @@ export const OptionCard: React.FC<PathwayOptionProps> = ({
       tabIndex={0}>
       <div className="space-y-4">
         {children}
-        <div className="space-y-2">
+        <div className="space-y-2 text-center">
           <p className="text-xl font-medium text-slate-800">{title}</p>
           <p className="text-sm text-slate-500">{description}</p>
         </div>

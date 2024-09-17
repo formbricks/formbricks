@@ -41,7 +41,7 @@ export const welcomeCardDefault: TSurveyWelcomeCard = {
   showResponseCount: false,
 };
 
-const surveyDefault: TTemplate["preset"] = {
+export const surveyDefault: TTemplate["preset"] = {
   name: "New Survey",
   welcomeCard: welcomeCardDefault,
   endings: [getDefaultEndingCard([])],
@@ -1472,7 +1472,6 @@ export const templates: TTemplate[] = [
 
   {
     name: "Net Promoter Score (NPS)",
-
     role: "customerSuccess",
     industries: ["saas", "eCommerce", "other"],
     channels: ["app", "link", "website"],

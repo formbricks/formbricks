@@ -25,6 +25,14 @@ export const ZTemplate = z.object({
 
 export type TTemplate = z.infer<typeof ZTemplate>;
 
+export const ZXMTemplate = z.object({
+  name: z.string(),
+  questions: ZSurveyQuestions,
+  endings: ZSurveyEndings,
+});
+
+export type TXMTemplate = z.infer<typeof ZXMTemplate>;
+
 export const ZTemplateFilter = z.union([
   ZProductConfigChannel,
   ZProductConfigIndustry,

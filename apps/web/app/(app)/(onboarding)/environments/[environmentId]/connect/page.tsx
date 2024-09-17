@@ -1,7 +1,6 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { XIcon } from "lucide-react";
-import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -26,12 +25,9 @@ const Page = async ({ params }: ConnectPageProps) => {
     throw new Error("Product not found");
   }
 
-  const channel = product.config.channel;
-  const industry = product.config.industry;
+  const channel = product.config.channel || null;
+  const industry = product.config.industry || null;
 
-  if (!channel || !industry) {
-    return notFound();
-  }
   const customHeadline = getCustomHeadline(channel, industry);
 
   return (
