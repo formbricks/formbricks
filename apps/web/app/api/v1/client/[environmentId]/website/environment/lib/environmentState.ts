@@ -40,12 +40,12 @@ export const getEnvironmentState = async (
         getProductByEnvironmentId(environmentId),
       ]);
 
-      if (!organization) {
-        throw new ResourceNotFoundError("organization", environmentId);
-      }
-
       if (!environment) {
         throw new ResourceNotFoundError("environment", environmentId);
+      }
+
+      if (!organization) {
+        throw new ResourceNotFoundError("organization", environmentId);
       }
 
       if (!product) {

@@ -2,9 +2,14 @@ import { z } from "zod";
 
 class ResourceNotFoundError extends Error {
   statusCode = 404;
+  resourceId: string;
+  resourceType: string;
+
   constructor(resource: string, id: string) {
     super(`${resource} with ID ${id} not found`);
     this.name = "ResourceNotFoundError";
+    this.resourceType = resource;
+    this.resourceId = id;
   }
 }
 
