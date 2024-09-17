@@ -34,7 +34,7 @@ export const ShareSurveyResults = ({
                 <CheckCircle2Icon className="h-20 w-20 text-slate-300" />
               </DialogTitle>
             </DialogHeader>
-            <DialogDescription></DialogDescription>
+            <DialogDescription className="hidden" />
             <div>
               <p className="text-lg font-medium text-slate-600">Your survey results are public!</p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
@@ -84,7 +84,7 @@ export const ShareSurveyResults = ({
                 <AlertCircleIcon className="h-20 w-20 text-slate-300" />
               </DialogTitle>
             </DialogHeader>
-            <DialogDescription></DialogDescription>
+            <DialogDescription className="hidden" />
             <div>
               <p className="text-lg font-medium text-slate-600">
                 You are about to release these survey results to the public.
