@@ -264,9 +264,8 @@ export const MainNavigation = ({
         }
       }
     }
-
-    void loadReleases();
-  }, []);
+    if (isOwnerOrAdmin) loadReleases();
+  }, [isOwnerOrAdmin]);
 
   return (
     <>
