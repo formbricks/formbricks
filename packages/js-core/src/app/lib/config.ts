@@ -1,89 +1,67 @@
-import { TJSAppConfig, TJsAppConfigUpdateInput } from "@formbricks/types/js";
+import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { APP_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
-export interface StorageHandler {
-  getItem(key: string): Promise<string | null>;
-  setItem(key: string, value: string): Promise<void>;
-  removeItem(key: string): Promise<void>;
-}
-
-// LocalStorage implementation - default
-class LocalStorage implements StorageHandler {
-  async getItem(key: string): Promise<string | null> {
-    return localStorage.getItem(key);
-  }
-
-  async setItem(key: string, value: string): Promise<void> {
-    localStorage.setItem(key, value);
-  }
-
-  async removeItem(key: string): Promise<void> {
-    localStorage.removeItem(key);
-  }
-}
-
 export class AppConfig {
   private static instance: AppConfig | undefined;
-  private config: TJSAppConfig | null = null;
-  private storageHandler: StorageHandler;
-  private storageKey: string;
+  private config: TJsConfig | null = null;
 
-  private constructor(
-    storageHandler: StorageHandler = new LocalStorage(),
-    storageKey: string = APP_SURVEYS_LOCAL_STORAGE_KEY
-  ) {
-    this.storageHandler = storageHandler;
-    this.storageKey = storageKey;
+  private constructor() {
+    const savedConfig = this.loadFromLocalStorage();
 
-    this.loadFromStorage().then((res) => {
-      if (res.ok) {
-        this.config = res.value;
-      }
-    });
+    if (savedConfig.ok) {
+      this.config = savedConfig.value;
+    }
   }
 
-  static getInstance(storageHandler?: StorageHandler, storageKey?: string): AppConfig {
+  static getInstance(): AppConfig {
     if (!AppConfig.instance) {
-      AppConfig.instance = new AppConfig(storageHandler, storageKey);
+      AppConfig.instance = new AppConfig();
     }
     return AppConfig.instance;
   }
 
-  public update(newConfig: TJsAppConfigUpdateInput): void {
+  public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
       this.config = {
         ...this.config,
         ...newConfig,
-        status: newConfig.status || "success",
+        status: {
+          value: newConfig.status?.value || "success",
+          expiresAt: newConfig.status?.expiresAt || null,
+        },
       };
 
       this.saveToStorage();
     }
   }
 
-  public get(): TJSAppConfig {
+  public get(): TJsConfig {
     if (!this.config) {
       throw new Error("config is null, maybe the init function was not called?");
     }
     return this.config;
   }
 
-  public async loadFromStorage(): Promise<Result<TJSAppConfig, Error>> {
-    try {
-      const savedConfig = await this.storageHandler.getItem(this.storageKey);
+  public loadFromLocalStorage(): Result<TJsConfig, Error> {
+    if (typeof window !== "undefined") {
+      const savedConfig = localStorage.getItem(APP_SURVEYS_LOCAL_STORAGE_KEY);
       if (savedConfig) {
-        const parsedConfig = JSON.parse(savedConfig) as TJSAppConfig;
+        // TODO: validate config
+        // This is a hack to get around the fact that we don't have a proper
+        // way to validate the config yet.
+        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
 
         // check if the config has expired
-        if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
+        if (
+          parsedConfig.environmentState?.expiresAt &&
+          new Date(parsedConfig.environmentState.expiresAt) <= new Date()
+        ) {
           return err(new Error("Config in local storage has expired"));
         }
 
         return ok(parsedConfig);
       }
-    } catch (e) {
-      return err(new Error("No or invalid config in local storage"));
     }
 
     return err(new Error("No or invalid config in local storage"));
@@ -91,7 +69,7 @@ export class AppConfig {
 
   private async saveToStorage(): Promise<Result<Promise<void>, Error>> {
     return wrapThrows(async () => {
-      await this.storageHandler.setItem(this.storageKey, JSON.stringify(this.config));
+      await localStorage.setItem(APP_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(this.config));
     })();
   }
 
@@ -100,9 +78,8 @@ export class AppConfig {
   public async resetConfig(): Promise<Result<Promise<void>, Error>> {
     this.config = null;
 
-    // return wrapThrows(() => localStorage.removeItem(IN_APP_LOCAL_STORAGE_KEY))();
     return wrapThrows(async () => {
-      await this.storageHandler.removeItem(this.storageKey);
+      localStorage.removeItem(APP_SURVEYS_LOCAL_STORAGE_KEY);
     })();
   }
 }

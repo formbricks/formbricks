@@ -136,7 +136,7 @@ export const generateColumns = (
     size: 75,
     enableResizing: false,
     header: ({ table }) => (
-      <div className="flex w-full items-center justify-center pr-4">
+      <div className="flex w-full items-center justify-center pr-2">
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}

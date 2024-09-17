@@ -2,7 +2,6 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
-import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
 
 export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
   let segment: TSegment | null = null;
@@ -86,18 +85,4 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
     }
     return false;
   });
-};
-
-export const transformToLegacySurvey = async (survey: TSurvey, languageCode?: string): Promise<any> => {
-  const targetLanguage = languageCode ?? "default";
-
-  // workaround to handle triggers for legacy surveys
-  // because we dont wanna do this in the `reverseTranslateSurvey` function
-  const surveyToTransform: any = {
-    ...structuredClone(survey),
-    triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
-  };
-
-  const transformedSurvey = reverseTranslateSurvey(surveyToTransform as TSurvey, targetLanguage);
-  return transformedSurvey;
 };
