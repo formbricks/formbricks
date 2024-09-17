@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import {
   TDisplay,
@@ -10,7 +10,7 @@ import {
   TDisplayFilters,
   ZDisplayCreateInput,
 } from "@formbricks/types/displays";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
@@ -90,6 +90,8 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       id: display.id,
       personId: display.personId,
       surveyId: display.surveyId,
+      userId,
+      environmentId,
     });
     return display;
   } catch (error) {
@@ -132,6 +134,47 @@ export const getDisplaysByPersonId = reactCache(
       [`getDisplaysByPersonId-${personId}-${page}`],
       {
         tags: [displayCache.tag.byPersonId(personId)],
+      }
+    )()
+);
+
+export const getDisplaysByUserId = reactCache(
+  async (environmentId: string, userId: string, page?: number): Promise<TDisplay[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
+
+        const person = await getPersonByUserId(environmentId, userId);
+
+        if (!person) {
+          throw new ResourceNotFoundError("person", userId);
+        }
+
+        try {
+          const displays = await prisma.display.findMany({
+            where: {
+              personId: person.id,
+            },
+            select: selectDisplay,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+
+          return displays;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getDisplaysByUserId-${environmentId}-${userId}-${page}`],
+      {
+        tags: [displayCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       }
     )()
 );

@@ -16,7 +16,7 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
@@ -28,7 +28,7 @@ import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
-import { putFile } from "../storage/service";
+import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
@@ -98,7 +98,7 @@ export const responseSelection = {
       isEdited: true,
     },
   },
-};
+} satisfies Prisma.ResponseSelect;
 
 export const getResponsesByPersonId = reactCache(
   (personId: string, page?: number): Promise<TResponse[] | null> =>
@@ -148,6 +148,61 @@ export const getResponsesByPersonId = reactCache(
       [`getResponsesByPersonId-${personId}-${page}`],
       {
         tags: [responseCache.tag.byPersonId(personId)],
+      }
+    )()
+);
+
+export const getResponsesByUserId = reactCache(
+  (environmentId: string, userId: string, page?: number): Promise<TResponse[] | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
+
+        const person = await getPersonByUserId(environmentId, userId);
+
+        if (!person) {
+          throw new ResourceNotFoundError("Person", userId);
+        }
+
+        try {
+          const responsePrisma = await prisma.response.findMany({
+            where: {
+              personId: person.id,
+            },
+            select: responseSelection,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+
+          if (!responsePrisma) {
+            throw new ResourceNotFoundError("Response from PersonId", person.id);
+          }
+
+          const responsePromises = responsePrisma.map(async (response) => {
+            const tags = response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag);
+
+            return {
+              ...response,
+              tags,
+            };
+          });
+
+          const responses = await Promise.all(responsePromises);
+          return responses;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getResponsesByUserId-${environmentId}-${userId}-${page}`],
+      {
+        tags: [responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       }
     )()
 );
@@ -273,6 +328,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       environmentId: environmentId,
       id: response.id,
       personId: response.person?.id,
+      userId: userId ?? undefined,
       surveyId: response.surveyId,
       singleUseId: singleUseId ? singleUseId : undefined,
     });
@@ -701,6 +757,35 @@ export const updateResponse = async (
   }
 };
 
+const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
+  const fileUploadQuestions = new Set(
+    survey.questions
+      .filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload)
+      .map((q) => q.id)
+  );
+
+  const fileUrls = Object.entries(response.data)
+    .filter(([questionId]) => fileUploadQuestions.has(questionId))
+    .flatMap(([, questionResponse]) => questionResponse as string[]);
+
+  const deletionPromises = fileUrls.map(async (fileUrl) => {
+    try {
+      const { pathname } = new URL(fileUrl);
+      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+
+      if (!environmentId || !accessType || !fileName) {
+        throw new Error(`Invalid file path: ${pathname}`);
+      }
+
+      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+    } catch (error) {
+      console.error(`Failed to delete file ${fileUrl}:`, error);
+    }
+  });
+
+  await Promise.all(deletionPromises);
+};
+
 export const deleteResponse = async (responseId: string): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
@@ -722,6 +807,16 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       deleteDisplay(response.displayId);
     }
     const survey = await getSurvey(response.surveyId);
+
+    if (survey) {
+      await findAndDeleteUploadedFilesInResponse(
+        {
+          ...responsePrisma,
+          tags: responsePrisma.tags.map((tag) => tag.tag),
+        },
+        survey
+      );
+    }
 
     responseCache.revalidate({
       environmentId: survey?.environmentId,

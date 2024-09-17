@@ -117,7 +117,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       ) : (
         <FileInput
           id="logo-input"
-          allowedFileExtensions={["png", "jpeg", "jpg"]}
+          allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
           environmentId={environmentId}
           onFileUpload={(files: string[]) => {
             setLogoUrl(files[0]);
@@ -129,7 +129,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       <Input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg, image/png"
+        accept="image/jpeg, image/png, image/webp"
         className="hidden"
         onChange={handleFileChange}
       />

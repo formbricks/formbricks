@@ -14,11 +14,11 @@ import type { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { sync } from "../../js-core/src/app/lib/sync";
 import { Logger } from "../../js-core/src/shared/logger";
 import { getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/shared/utils";
 import { appConfig } from "./lib/config";
 import { SurveyStore } from "./lib/survey-store";
+import { sync } from "./lib/sync";
 
 const logger = Logger.getInstance();
 logger.configure({ logLevel: "debug" });
@@ -107,7 +107,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
         environmentId: appConfig.get().environmentId,
         userId: appConfig.get().userId,
       },
-      false,
       appConfig
     );
     surveyStore.resetSurvey();

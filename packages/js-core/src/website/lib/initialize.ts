@@ -1,5 +1,6 @@
-import type { TJSAppConfig, TJsWebsiteConfig, TJsWebsiteConfigInput } from "@formbricks/types/js";
+import type { TJsConfig, TJsWebsiteConfigInput, TJsWebsiteState } from "@formbricks/types/js";
 import { WEBSITE_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
+import { fetchEnvironmentState } from "../../shared/environmentState";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -12,21 +13,91 @@ import {
   wrapThrows,
 } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
+import { DEFAULT_PERSON_STATE_WEBSITE } from "../../shared/personState";
 import { getIsDebug } from "../../shared/utils";
+import { filterSurveys as filterPublicSurveys } from "../../shared/utils";
 import { trackNoCodeAction } from "./actions";
 import { WebsiteConfig } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { checkPageUrl } from "./noCodeActions";
-import { sync } from "./sync";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const websiteConfig = WebsiteConfig.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
 
 export const setIsInitialized = (value: boolean) => {
   isInitialized = value;
+};
+
+const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
+  const oldConfig = localStorage.getItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
+
+  let newWebsiteConfig: TJsConfig;
+  if (oldConfig) {
+    const parsedOldConfig = JSON.parse(oldConfig);
+    // if the old config follows the older structure, we need to migrate it
+    if (parsedOldConfig.state || parsedOldConfig.expiresAt) {
+      logger.debug("Migrating local storage");
+      const { apiHost, environmentId, state, expiresAt } = parsedOldConfig as {
+        apiHost: string;
+        environmentId: string;
+        state: TJsWebsiteState;
+        expiresAt: Date;
+      };
+      const { displays: displaysState, actionClasses, product, surveys, attributes } = state;
+
+      const responses = displaysState
+        .filter((display) => display.responded)
+        .map((display) => display.surveyId);
+
+      const displays = displaysState.map((display) => ({
+        surveyId: display.surveyId,
+        createdAt: display.createdAt,
+      }));
+      const lastDisplayAt = displaysState
+        ? displaysState.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+            .createdAt
+        : null;
+
+      newWebsiteConfig = {
+        apiHost,
+        environmentId,
+        environmentState: {
+          data: {
+            surveys,
+            actionClasses,
+            product,
+          },
+          expiresAt,
+        },
+        personState: {
+          expiresAt,
+          data: {
+            userId: null,
+            segments: [],
+            displays,
+            responses,
+            attributes: attributes ?? {},
+            lastDisplayAt,
+          },
+        },
+        filteredSurveys: surveys,
+        status: {
+          value: "success",
+          expiresAt: null,
+        },
+      };
+
+      logger.debug("Migrated local storage to new format");
+
+      return { changed: true, newState: newWebsiteConfig };
+    }
+
+    return { changed: false };
+  }
+
+  return { changed: false };
 };
 
 export const initialize = async (
@@ -37,12 +108,27 @@ export const initialize = async (
     logger.configure({ logLevel: "debug" });
   }
 
+  const { changed, newState } = migrateLocalStorage();
+  let websiteConfig = WebsiteConfig.getInstance();
+
+  // If the state was changed due to migration, reset and reinitialize the configuration
+  if (changed && newState) {
+    // The state exists in the local storage, so this should not fail
+    websiteConfig.resetConfig(); // Reset the configuration
+
+    // Re-fetch a new instance of WebsiteConfig after resetting
+    websiteConfig = WebsiteConfig.getInstance();
+
+    // Update the new instance with the migrated state
+    websiteConfig.update(newState);
+  }
+
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
     return okVoid();
   }
 
-  let existingConfig: TJsWebsiteConfig | undefined;
+  let existingConfig: TJsConfig | undefined;
   try {
     existingConfig = websiteConfig.get();
     logger.debug("Found existing configuration.");
@@ -51,7 +137,7 @@ export const initialize = async (
   }
 
   // formbricks is in error state, skip initialization
-  if (existingConfig?.status === "error") {
+  if (existingConfig?.status?.value === "error") {
     if (isDebug) {
       logger.debug(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
@@ -61,7 +147,8 @@ export const initialize = async (
     }
 
     logger.debug("Formbricks was set to an error state.");
-    if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
+
+    if (existingConfig?.status?.expiresAt && new Date(existingConfig?.status?.expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
     } else {
@@ -95,22 +182,42 @@ export const initialize = async (
 
   if (
     existingConfig &&
-    existingConfig.state &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.apiHost === configInput.apiHost &&
-    existingConfig.expiresAt
+    existingConfig.environmentState
   ) {
     logger.debug("Configuration fits init parameters.");
-    if (existingConfig.expiresAt < new Date()) {
+    if (existingConfig.environmentState.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
 
       try {
-        await sync({
+        // fetch the environment state
+
+        const environmentState = await fetchEnvironmentState(
+          {
+            apiHost: configInput.apiHost,
+            environmentId: configInput.environmentId,
+          },
+          "website"
+        );
+
+        // filter the surveys with the default person state
+
+        const filteredSurveys = filterPublicSurveys(
+          environmentState,
+          DEFAULT_PERSON_STATE_WEBSITE,
+          "website"
+        );
+
+        websiteConfig.update({
           apiHost: configInput.apiHost,
           environmentId: configInput.environmentId,
+          environmentState,
+          personState: DEFAULT_PERSON_STATE_WEBSITE,
+          filteredSurveys,
         });
       } catch (e) {
-        putFormbricksInErrorState();
+        putFormbricksInErrorState(websiteConfig);
       }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
@@ -124,9 +231,22 @@ export const initialize = async (
     logger.debug("Syncing.");
 
     try {
-      await sync({
+      const environmentState = await fetchEnvironmentState(
+        {
+          apiHost: configInput.apiHost,
+          environmentId: configInput.environmentId,
+        },
+        "website"
+      );
+
+      const filteredSurveys = filterPublicSurveys(environmentState, DEFAULT_PERSON_STATE_WEBSITE, "website");
+
+      websiteConfig.update({
         apiHost: configInput.apiHost,
         environmentId: configInput.environmentId,
+        environmentState,
+        personState: DEFAULT_PERSON_STATE_WEBSITE,
+        filteredSurveys,
       });
     } catch (e) {
       handleErrorOnFirstInit();
@@ -136,13 +256,14 @@ export const initialize = async (
       const currentWebsiteConfig = websiteConfig.get();
 
       websiteConfig.update({
-        environmentId: currentWebsiteConfig.environmentId,
-        apiHost: currentWebsiteConfig.apiHost,
-        state: {
-          ...websiteConfig.get().state,
-          attributes: { ...websiteConfig.get().state.attributes, ...configInput.attributes },
+        ...currentWebsiteConfig,
+        personState: {
+          ...currentWebsiteConfig.personState,
+          data: {
+            ...currentWebsiteConfig.personState.data,
+            attributes: { ...currentWebsiteConfig.personState.data.attributes, ...configInput.attributes },
+          },
         },
-        expiresAt: websiteConfig.get().expiresAt,
       });
     }
 
@@ -151,7 +272,7 @@ export const initialize = async (
   }
 
   logger.debug("Adding event listeners");
-  addEventListeners();
+  addEventListeners(websiteConfig);
   addCleanupEventListeners();
 
   setIsInitialized(true);
@@ -163,17 +284,19 @@ export const initialize = async (
   return okVoid();
 };
 
-const handleErrorOnFirstInit = () => {
+export const handleErrorOnFirstInit = () => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
   }
 
-  // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig: Partial<TJSAppConfig> = {
-    status: "error",
-    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+  const initialErrorConfig: Partial<TJsConfig> = {
+    status: {
+      value: "error",
+      expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    },
   };
+
   // can't use config.update here because the config is not yet initialized
   wrapThrows(() =>
     localStorage.setItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig))
@@ -201,7 +324,7 @@ export const deinitalize = (): void => {
   setIsInitialized(false);
 };
 
-export const putFormbricksInErrorState = (): void => {
+export const putFormbricksInErrorState = (websiteConfig: WebsiteConfig): void => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
@@ -211,8 +334,10 @@ export const putFormbricksInErrorState = (): void => {
   // change formbricks status to error
   websiteConfig.update({
     ...websiteConfig.get(),
-    status: "error",
-    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    status: {
+      value: "error",
+      expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    },
   });
   deinitalize();
 };
