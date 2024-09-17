@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access -- required */
-
-/* eslint-disable @typescript-eslint/no-dynamic-delete -- required */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition -- could be undefined */
 import { FormbricksAPI } from "@formbricks/api";
 import type { TAttributes } from "@formbricks/types/attributes";
 import { type Result, err, ok } from "@formbricks/types/error-handlers";
@@ -20,10 +18,14 @@ export const updateAttributes = async (
   const updatedAttributes = { ...attributes };
 
   try {
-    const existingAttributes = appConfig.get().state.attributes;
-    for (const [key, value] of Object.entries(existingAttributes)) {
-      if (updatedAttributes[key] === value) {
-        delete updatedAttributes[key];
+    const existingAttributes = appConfig.get()?.state?.attributes;
+
+    if (existingAttributes) {
+      for (const [key, value] of Object.entries(existingAttributes)) {
+        if (updatedAttributes[key] === value) {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- required
+          delete updatedAttributes[key];
+        }
       }
     }
   } catch (e) {
@@ -48,9 +50,11 @@ export const updateAttributes = async (
   if (res.ok) {
     return ok(updatedAttributes);
   }
-  // @ts-expect-error -- required because we set ignore
+
+  // @ts-expect-error -- details is not defined in the error type
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- required
   if (res.error.details?.ignore) {
-    logger.error(`Error updating person with userId ${userId}`);
+    logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
     return ok(updatedAttributes);
   }
 

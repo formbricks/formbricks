@@ -97,7 +97,7 @@ export const responseSelection = {
       isEdited: true,
     },
   },
-};
+} satisfies Prisma.ResponseSelect;
 
 export const getResponsesByPersonId = reactCache(
   (personId: string, page?: number): Promise<TResponse[] | null> =>
@@ -147,6 +147,61 @@ export const getResponsesByPersonId = reactCache(
       [`getResponsesByPersonId-${personId}-${page}`],
       {
         tags: [responseCache.tag.byPersonId(personId)],
+      }
+    )()
+);
+
+export const getResponsesByUserId = reactCache(
+  (environmentId: string, userId: string, page?: number): Promise<TResponse[] | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
+
+        const person = await getPersonByUserId(environmentId, userId);
+
+        if (!person) {
+          throw new ResourceNotFoundError("Person", userId);
+        }
+
+        try {
+          const responsePrisma = await prisma.response.findMany({
+            where: {
+              personId: person.id,
+            },
+            select: responseSelection,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+
+          if (!responsePrisma) {
+            throw new ResourceNotFoundError("Response from PersonId", person.id);
+          }
+
+          const responsePromises = responsePrisma.map(async (response) => {
+            const tags = response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag);
+
+            return {
+              ...response,
+              tags,
+            };
+          });
+
+          const responses = await Promise.all(responsePromises);
+          return responses;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getResponsesByUserId-${environmentId}-${userId}-${page}`],
+      {
+        tags: [responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       }
     )()
 );
@@ -269,6 +324,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       environmentId: environmentId,
       id: response.id,
       personId: response.person?.id,
+      userId: userId ?? undefined,
       surveyId: response.surveyId,
       singleUseId: singleUseId ? singleUseId : undefined,
     });

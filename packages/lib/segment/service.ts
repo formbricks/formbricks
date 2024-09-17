@@ -609,6 +609,11 @@ export const evaluateSegment = async (
   userData: TEvaluateSegmentUserData,
   filters: TBaseFilters
 ): Promise<boolean> => {
+  if (!filters.length) {
+    // if there are no filters, the segment will be evaluated as true
+    return true;
+  }
+
   let resultPairs: ResultConnectorPair[] = [];
 
   try {

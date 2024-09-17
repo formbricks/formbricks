@@ -15,11 +15,23 @@ export const logoutPerson = async (): Promise<void> => {
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
   closeSurvey();
+
+  const userId = appConfig.get().personState.data.userId;
+  if (!userId) {
+    return err({
+      code: "network_error",
+      status: 500,
+      message: "Missing userId",
+      url: `${appConfig.get().apiHost}/api/v1/client/${appConfig.get().environmentId}/people/${userId}/attributes`,
+      responseMessage: "Missing userId",
+    });
+  }
+
   const syncParams = {
     environmentId: appConfig.get().environmentId,
     apiHost: appConfig.get().apiHost,
-    userId: appConfig.get().userId,
-    attributes: appConfig.get().state.attributes,
+    userId,
+    attributes: appConfig.get().personState.data.attributes,
   };
   await logoutPerson();
   try {
