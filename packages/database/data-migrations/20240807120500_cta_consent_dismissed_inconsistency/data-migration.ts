@@ -77,7 +77,7 @@ async function runMigration(): Promise<void> {
       console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toString()}s`);
     },
     {
-      timeout: 180000, // 3 minutes
+      timeout: 900000, // 15 minutes
     }
   );
 }
