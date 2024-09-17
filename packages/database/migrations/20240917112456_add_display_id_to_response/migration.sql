@@ -11,4 +11,4 @@ ALTER TABLE "Response" ADD COLUMN     "displayId" TEXT;
 CREATE UNIQUE INDEX "Response_displayId_key" ON "Response"("displayId");
 
 -- AddForeignKey
-ALTER TABLE "Display" ADD CONSTRAINT "Display_responseId_fkey" FOREIGN KEY ("responseId") REFERENCES "Response"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Response" ADD CONSTRAINT "Response_displayId_fkey" FOREIGN KEY ("displayId") REFERENCES "Display"("id") ON DELETE SET NULL ON UPDATE CASCADE;
