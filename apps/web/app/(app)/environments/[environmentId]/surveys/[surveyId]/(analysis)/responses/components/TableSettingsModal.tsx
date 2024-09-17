@@ -56,7 +56,11 @@ export const TableSettingsModal = ({
           </div>
         </div>
         <div className="max-h-[75vh] space-y-2 overflow-auto p-8">
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
+          <DndContext
+            id="table-settings"
+            sensors={sensors}
+            onDragEnd={handleDragEnd}
+            collisionDetection={closestCorners}>
             <SortableContext items={columnOrder} strategy={verticalListSortingStrategy}>
               {columnOrder.map((columnId) => {
                 if (columnId === "select") return;

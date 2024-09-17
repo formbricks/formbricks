@@ -139,7 +139,7 @@ export const PictureSelectionForm = ({
         <div className="mt-3 flex w-full items-center justify-center">
           <FileInput
             id="choices-file-input"
-            allowedFileExtensions={["png", "jpeg", "jpg"]}
+            allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
             environmentId={environmentId}
             onFileUpload={handleFileInputChanges}
             fileUrl={question?.choices?.map((choice) => choice.imageUrl)}

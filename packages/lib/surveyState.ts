@@ -52,8 +52,8 @@ export class SurveyState {
   }
 
   /**
-   * Update the response ID after a successful response creation
-   * @param id - The response ID
+   * Update the display ID after a successful display creation
+   * @param id - The display ID
    */
   updateDisplayId(id: string) {
     this.displayId = id;
