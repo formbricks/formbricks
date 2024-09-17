@@ -4,6 +4,7 @@ interface RevalidateProps {
   id?: string;
   surveyId?: string;
   personId?: string | null;
+  userId?: string;
   environmentId?: string;
 }
 
@@ -18,11 +19,18 @@ export const displayCache = {
     byPersonId(personId: string) {
       return `people-${personId}-displays`;
     },
+    byEnvironmentIdAndUserId(environmentId: string, userId: string) {
+      return `environments-${environmentId}-users-${userId}-displays`;
+    },
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-displays`;
     },
   },
-  revalidate({ id, surveyId, personId, environmentId }: RevalidateProps): void {
+  revalidate({ id, surveyId, personId, environmentId, userId }: RevalidateProps): void {
+    if (environmentId && userId) {
+      revalidateTag(this.tag.byEnvironmentIdAndUserId(environmentId, userId));
+    }
+
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
