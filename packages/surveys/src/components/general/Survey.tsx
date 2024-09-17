@@ -9,6 +9,7 @@ import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
+import { adTranslations } from "@/lib/adTranslations.ts";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,8 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
+
+type LanguageCode = keyof typeof adTranslations;
 
 export const Survey = ({
   survey,
@@ -60,6 +63,7 @@ export const Survey = ({
     getSetIsResponseSendingFinished ? false : true
   );
   const [selectedLanguage, setselectedLanguage] = useState(languageCode);
+  const [languageKey] = useState<LanguageCode>(languageCode as LanguageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
@@ -279,6 +283,8 @@ export const Survey = ({
     return panelistId;
   };
 
+  const adTranslation = adTranslations[languageKey] || adTranslations.default;
+
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
@@ -416,11 +422,9 @@ export const Survey = ({
                   textAlign: "center",
                   lineHeight: "1.5",
                 }}>
-                <div style={{ marginBottom: "25px" }}>Why are you seeing an ad in this survey?</div>
+                <div style={{ marginBottom: "25px" }}>{adTranslation.adExplanation}</div>
                 <div style={{ fontSize: "large", marginBottom: "25px" }}>⬇️</div>
-                In some selected surveys you might be presented with an ad that you can simply skip to
-                continue with the survey. We use ads to finance the continued growth and development of this
-                platform, so you can continue to earn money and enjoy our surveys.
+                {adTranslation.adDescription}
               </div>
             )}
           </div>
