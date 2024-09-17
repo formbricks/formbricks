@@ -37,6 +37,7 @@ interface SurveyEditorProps {
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
+  isCxMode: boolean;
 }
 
 export const SurveyEditor = ({
@@ -55,6 +56,7 @@ export const SurveyEditor = ({
   isFormbricksCloud,
   isUnsplashConfigured,
   plan,
+  isCxMode = false,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -144,6 +146,7 @@ export const SurveyEditor = ({
           responseCount={responseCount}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
+          isCxMode={isCxMode}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main
@@ -152,6 +155,7 @@ export const SurveyEditor = ({
             <QuestionsAudienceTabs
               activeId={activeView}
               setActiveId={setActiveView}
+              isCxMode={isCxMode}
               isStylingTabVisible={!!product.styling.allowStyleOverwrite}
             />
 
@@ -170,6 +174,7 @@ export const SurveyEditor = ({
                 isFormbricksCloud={isFormbricksCloud}
                 attributeClasses={attributeClasses}
                 plan={plan}
+                isCxMode={isCxMode}
               />
             )}
 
