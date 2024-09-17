@@ -372,7 +372,11 @@ export const QuestionsView = ({
         />
       </div>
 
-      <DndContext sensors={sensors} onDragEnd={onQuestionCardDragEnd} collisionDetection={closestCorners}>
+      <DndContext
+        id="questions"
+        sensors={sensors}
+        onDragEnd={onQuestionCardDragEnd}
+        collisionDetection={closestCorners}>
         <QuestionsDroppable
           localSurvey={localSurvey}
           product={product}
@@ -395,7 +399,11 @@ export const QuestionsView = ({
       <AddQuestionButton addQuestion={addQuestion} product={product} />
       <div className="mt-5 flex flex-col gap-5">
         <hr className="border-t border-dashed" />
-        <DndContext sensors={sensors} onDragEnd={onEndingCardDragEnd} collisionDetection={closestCorners}>
+        <DndContext
+          id="endings"
+          sensors={sensors}
+          onDragEnd={onEndingCardDragEnd}
+          collisionDetection={closestCorners}>
           <SortableContext items={localSurvey.endings} strategy={verticalListSortingStrategy}>
             {localSurvey.endings.map((ending, index) => {
               return (
