@@ -1,188 +1,148 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-// import { PrismaClient } from "@prisma/client";
-// const prisma = new PrismaClient();
-// async function runMigration(): Promise<void> {
-//   await prisma.$transaction(
-//     async (tx) => {
-//       const startTime = Date.now();
-//       console.log("Starting data migration...");
-//       // Fetch all displays
-//       const displays = await tx.display.findMany({
-//         where: {
-//           responseId: {
-//             not: null,
-//           },
-//         },
-//         select: {
-//           id: true,
-//           responseId: true,
-//           // response: {
-//           //   select: { id: true },
-//           // },
-//         },
-//       });
-//       if (displays.length === 0) {
-//         // Stop the migration if there are no Displays
-//         console.log("No Displays found");
-//         return;
-//       }
-//       console.log(`Total displays with responseId: ${displays.length.toString()}`);
-//       let totalResponseTransformed = 0;
-//       let totalDisplaysDeleted = 0;
-//       await Promise.all(
-//         displays.map(async (display) => {
-//           if (!display.responseId) {
-//             return Promise.resolve();
-//           }
-//           const response = await tx.response.findUnique({
-//             where: { id: display.responseId },
-//             select: { id: true },
-//           });
-//           if (response) {
-//             totalResponseTransformed++;
-//             return Promise.all([
-//               tx.response.update({
-//                 where: { id: response.id },
-//                 data: { display: { connect: { id: display.id } } },
-//               }),
-//               tx.display.update({
-//                 where: { id: display.id },
-//                 data: { responseId: null },
-//               }),
-//             ]);
-//           }
-//           totalDisplaysDeleted++;
-//           return tx.display.delete({
-//             where: { id: display.id },
-//           });
-//         })
-//       );
-//       console.log(`${totalResponseTransformed.toString()} responses transformed`);
-//       console.log(`${totalDisplaysDeleted.toString()} displays deleted`);
-//       const endTime = Date.now();
-//       console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toString()}s`);
-//     },
-//     {
-//       timeout: 300000, // 5 minutes
-//     }
-//   );
-// }
-// function handleError(error: unknown): void {
-//   console.error("An error occurred during migration:", error);
-//   process.exit(1);
-// }
-// function handleDisconnectError(): void {
-//   console.error("Failed to disconnect Prisma client");
-//   process.exit(1);
-// }
-// function main(): void {
-//   runMigration()
-//     .catch(handleError)
-//     .finally(() => {
-//       prisma.$disconnect().catch(handleDisconnectError);
-//     });
-// }
-// main();
-import { PrismaClient } from "@prisma/client";
+import { type Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const BATCH_SIZE = 1000; // Adjust the batch size as needed
+const BATCH_SIZE = 1000;
+const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 async function runMigration(): Promise<void> {
-  let totalResponseTransformed = 0;
-  let totalDisplaysDeleted = 0;
-  let skip = 0;
-
   const startTime = Date.now();
   console.log("Starting data migration...");
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition -- We need a while loop
-  while (true) {
-    // Fetch displays in batches
-    const displays = await prisma.display.findMany({
-      where: {
-        responseId: {
-          not: null,
-        },
-      },
-      select: {
-        id: true,
-        responseId: true,
-      },
-      skip,
-      take: BATCH_SIZE, // Fetch in batches
-    });
+  await prisma.$transaction(
+    async (transactionPrisma) => {
+      let totalResponseTransformed = 0;
+      let totalDisplaysDeleted = 0;
+      let totalDisplaysUpdated = 0;
+      let cursor: { id: string } | undefined;
 
-    if (displays.length === 0) {
-      console.log("No more displays found");
-      break;
-    }
-
-    console.log(`Processing batch of ${displays.length.toString()} displays...`);
-
-    // Declare local counters for the batch
-    let batchResponseTransformed = 0;
-    const displayIdsToDelete: string[] = [];
-
-    // Use Promise.all to parallelize updates within each batch
-    await Promise.all(
-      displays.map(async (display) => {
-        if (!display.responseId) {
-          return;
+      // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition -- intentional infinite loop until no more displays
+      while (true) {
+        // Define the type for displays
+        interface DisplayWithResponseId {
+          id: string;
+          responseId: string | null;
         }
 
-        const response = await prisma.response.findUnique({
-          where: { id: display.responseId },
-          select: { id: true },
+        // Fetch displays in batches using cursor-based pagination
+        const displays: DisplayWithResponseId[] = await transactionPrisma.display.findMany({
+          where: {
+            responseId: {
+              not: null,
+            },
+          },
+          select: {
+            id: true,
+            responseId: true,
+          },
+          orderBy: {
+            id: "asc",
+          },
+          take: BATCH_SIZE,
+          cursor,
+          skip: cursor ? 1 : 0, // Skip the cursor itself
         });
 
-        if (response) {
-          batchResponseTransformed++;
-          await Promise.all([
-            prisma.response.update({
-              where: { id: response.id },
-              data: { display: { connect: { id: display.id } } },
-            }),
-            prisma.display.update({
-              where: { id: display.id },
-              data: { responseId: null },
-            }),
-          ]);
-        } else {
-          // Collect display ids to be deleted later in one `deleteMany` call
-          displayIdsToDelete.push(display.id);
+        if (displays.length === 0) {
+          console.log("No more displays found");
+          break;
         }
-      })
-    );
 
-    // If there are displays to delete, do it in one go with `deleteMany`
-    if (displayIdsToDelete.length > 0) {
-      await prisma.display.deleteMany({
-        where: {
-          id: {
-            in: displayIdsToDelete,
+        console.log(`Processing batch of ${String(displays.length)} displays...`);
+
+        // Collect responseIds, filter out any nulls
+        const responseIds = displays
+          .map((display) => display.responseId)
+          .filter((id): id is string => id !== null);
+
+        // Define the type for responses
+        interface ResponseIdOnly {
+          id: string;
+        }
+
+        // Fetch existing responses
+        const responses: ResponseIdOnly[] = await transactionPrisma.response.findMany({
+          where: {
+            id: {
+              in: responseIds,
+            },
           },
-        },
-      });
-      totalDisplaysDeleted += displayIdsToDelete.length;
+          select: {
+            id: true,
+          },
+        });
+
+        const existingResponseIds = new Set(responses.map((response) => response.id));
+
+        // Collect data for updates and deletions
+        const updateResponsePromises: Promise<Prisma.Response>[] = [];
+        const updateDisplayPromises: Promise<Prisma.Display>[] = [];
+        const displayIdsToDelete: string[] = [];
+
+        for (const display of displays) {
+          const responseId = display.responseId;
+          if (responseId && existingResponseIds.has(responseId)) {
+            updateResponsePromises.push(
+              transactionPrisma.response.update({
+                where: { id: responseId },
+                data: { display: { connect: { id: display.id } } },
+              })
+            );
+            updateDisplayPromises.push(
+              transactionPrisma.display.update({
+                where: { id: display.id },
+                data: { responseId: null },
+              })
+            );
+          } else {
+            displayIdsToDelete.push(display.id);
+          }
+        }
+
+        // Execute updates and deletions in parallel
+        await Promise.all([
+          ...updateResponsePromises,
+          ...updateDisplayPromises,
+          displayIdsToDelete.length > 0
+            ? transactionPrisma.display.deleteMany({
+                where: {
+                  id: {
+                    in: displayIdsToDelete,
+                  },
+                },
+              })
+            : Promise.resolve(),
+        ]);
+
+        // Update total counts
+        totalResponseTransformed += updateResponsePromises.length;
+        totalDisplaysDeleted += displayIdsToDelete.length;
+        totalDisplaysUpdated += updateDisplayPromises.length;
+
+        console.log(
+          `Batch processed: ${ 
+            String(updateResponsePromises.length) 
+            } responses transformed, ${ 
+            String(displayIdsToDelete.length) 
+            } displays deleted`
+        );
+        console.log(`Total displays updated so far: ${  String(totalDisplaysUpdated)}`);
+
+        // Move to the next batch
+        cursor = { id: displays[displays.length - 1].id };
+      }
+
+      console.log(`${String(totalResponseTransformed)  } total responses transformed`);
+      console.log(`${String(totalDisplaysUpdated)  } total displays updated`);
+      console.log(`${String(totalDisplaysDeleted)  } total displays deleted`);
+    },
+    {
+      timeout: TRANSACTION_TIMEOUT,
     }
-
-    // After each batch, aggregate the local batch counts to the total counts
-    totalResponseTransformed += batchResponseTransformed;
-
-    console.log(
-      `Batch processed: ${batchResponseTransformed.toString()} responses transformed, ${displayIdsToDelete.length.toString()} displays deleted`
-    );
-
-    // Move to the next batch
-    skip += BATCH_SIZE;
-  }
-
-  console.log(`${totalResponseTransformed.toString()} total responses transformed`);
-  console.log(`${totalDisplaysDeleted.toString()} total displays deleted`);
+  );
 
   const endTime = Date.now();
-  console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toString()}s`);
+  console.log(`Data migration completed. Total time: ${  ((endTime - startTime) / 1000).toFixed(2)  }s`);
 }
 
 function handleError(error: unknown): void {
