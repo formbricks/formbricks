@@ -5,6 +5,7 @@ import {
   mockDisplayInput,
   mockDisplayInputWithUserId,
   mockDisplayWithPersonId,
+  mockEnvironment,
   mockSurveyId,
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
@@ -90,6 +91,7 @@ describe("Tests for getDisplay", () => {
 describe("Tests for createDisplay service", () => {
   describe("Happy Path", () => {
     it("Creates a new display when a userId exists", async () => {
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       prisma.display.create.mockResolvedValue(mockDisplayWithPersonId);
 
       const display = await createDisplay(mockDisplayInputWithUserId);
@@ -109,6 +111,7 @@ describe("Tests for createDisplay service", () => {
 
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
         clientVersion: "0.0.1",
