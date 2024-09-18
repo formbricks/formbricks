@@ -110,6 +110,7 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
             handleInitialPageButton={handleInitialPageButton}
             tabs={tabs}
             activeId={activeId}
+            environmentId={environmentId}
             setActiveId={setActiveId}
             survey={survey}
             email={email}

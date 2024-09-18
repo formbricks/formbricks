@@ -3,6 +3,7 @@
 import { ArrowLeftIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
+import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
 import { WebsiteTab } from "./WebpageTab";
@@ -12,6 +13,7 @@ interface EmbedViewProps {
   tabs: Array<{ id: string; label: string; icon: any }>;
   activeId: string;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
+  environmentId: string;
   survey: any;
   email: string;
   surveyUrl: string;
@@ -24,6 +26,7 @@ export const EmbedView = ({
   tabs,
   activeId,
   setActiveId,
+  environmentId,
   survey,
   email,
   surveyUrl,
@@ -67,7 +70,7 @@ export const EmbedView = ({
             {activeId === "email" ? (
               <EmailTab surveyId={survey.id} email={email} />
             ) : activeId === "webpage" ? (
-              <WebsiteTab surveyUrl={surveyUrl} />
+              <WebsiteTab surveyUrl={surveyUrl} environmentId={environmentId} />
             ) : activeId === "link" ? (
               <LinkTab
                 survey={survey}
@@ -76,21 +79,7 @@ export const EmbedView = ({
                 setSurveyUrl={setSurveyUrl}
               />
             ) : activeId === "app" ? (
-              <div>
-                <p>
-                  Use formbricks in your app by embedding the survey using the formbricks React Native SDK.
-                </p>
-                <p>
-                  Read the documentation,
-                  <a
-                    href="https://formbricks.com/docs/developer-docs/react-native-in-app-surveys"
-                    target="_blank"
-                    rel="noreferrer">
-                    here
-                  </a>
-                  .
-                </p>
-              </div>
+              <AppTab environmentId={environmentId} />
             ) : null}
           </div>
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">

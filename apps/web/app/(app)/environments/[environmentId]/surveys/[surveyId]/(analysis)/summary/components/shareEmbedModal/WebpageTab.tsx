@@ -1,34 +1,35 @@
 "use client";
 
+import ChangeSurveyTypeTip from "@/images/tooltips/change-survey-type.mp4";
 import { CopyIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { CodeBlock } from "@formbricks/ui/CodeBlock";
-import { Tabs } from "@formbricks/ui/Tabs";
+import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
 
-export const WebsiteTab = ({ surveyUrl }) => {
+export const WebsiteTab = ({ surveyUrl, environmentId }) => {
   const [selectedTab, setSelectedTab] = useState("static");
 
   return (
     <div className="flex h-full grow flex-col">
-      <Tabs
-        id="embed-in-website"
-        onChange={(value) => {
-          setSelectedTab(value);
-        }}
+      <OptionsSwitch
         options={[
           { value: "static", label: "Static (iframe)" },
-          { value: "popup", label: "Pop-up" },
+          { value: "popup", label: "Dynamic (Pop-up)" },
         ]}
-        defaultSelected={"static"}
-        className="w-full"
-        tabsContainerClassName="p-1 gap-2"
+        currentOption={selectedTab}
+        handleOptionChange={(value) => setSelectedTab(value)}
       />
 
       <div className="mt-4">
-        {selectedTab === "static" ? <StaticTab surveyUrl={surveyUrl} /> : <div>connect to website here</div>}
+        {selectedTab === "static" ? (
+          <StaticTab surveyUrl={surveyUrl} />
+        ) : (
+          <PopupTab environmentId={environmentId} />
+        )}
       </div>
     </div>
   );
@@ -75,6 +76,36 @@ const StaticTab = ({ surveyUrl }) => {
           description="Embed your survey with a minimalist design, discarding padding and background."
           childBorder={true}
         />
+      </div>
+    </div>
+  );
+};
+
+const PopupTab = ({ environmentId }) => {
+  return (
+    <div>
+      <p className="text-lg font-semibold text-slate-800">How to embed a pop-up survey on your website</p>
+      <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-700">
+        <li>
+          Follow these{" "}
+          <Link
+            href={`/environments/${environmentId}/product/website-connection`}
+            target="_blank"
+            className="decoration-brand-dark font-medium underline underline-offset-2">
+            setup instructions
+          </Link>{" "}
+          to connect your website with Formbricks
+        </li>
+        <li>
+          Change the survey type to &apos;Website Survey&apos; and define when and where the survey should pop
+          up
+        </li>
+      </ol>
+      <div className="mt-4">
+        <video autoPlay loop muted className="w-full rounded-xl border border-slate-200">
+          <source src={ChangeSurveyTypeTip} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </div>
     </div>
   );
