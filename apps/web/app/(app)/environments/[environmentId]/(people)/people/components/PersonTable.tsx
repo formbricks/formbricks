@@ -1,6 +1,4 @@
-import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
-import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
-import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { generatePersonTableColumns } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTableColumn";
 import {
   DndContext,
   type DragEndEvent,
@@ -13,56 +11,41 @@ import {
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { cn } from "@formbricks/lib/cn";
+import { TPersonTableData } from "@formbricks/types/people";
 import { Button } from "@formbricks/ui/Button";
 import { DataTableHeader, DataTableSettingsModal, DataTableToolbar } from "@formbricks/ui/DataTable";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
-interface ResponseTableProps {
-  data: TResponseTableData[];
-  survey: TSurvey;
-  responses: TResponse[] | null;
-  environment: TEnvironment;
-  user?: TUser;
-  environmentTags: TTag[];
-  isViewer: boolean;
+interface PersonTableProps {
+  data: TPersonTableData[];
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteResponses: (responseIds: string[]) => void;
-  updateResponse: (responseId: string, updatedResponse: TResponse) => void;
-  isFetchingFirstPage: boolean;
+  deletePerons: (personIds: string[]) => void;
+  isDataLoaded: boolean;
+  environmentId: string;
 }
 
-export const ResponseTable = ({
+export const PersonTable = ({
   data,
-  survey,
-  responses,
-  user,
-  environment,
-  environmentTags,
-  isViewer,
   fetchNextPage,
   hasMore,
-  deleteResponses,
-  updateResponse,
-  isFetchingFirstPage,
-}: ResponseTableProps) => {
+  deletePerons,
+  isDataLoaded,
+  environmentId,
+}: PersonTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [selectedResponse, setSelectedResponse] = useState<TResponse | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
-
+  const router = useRouter();
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded, isViewer);
+  const columns = generatePersonTableColumns(isExpanded);
 
   // Initialize DnD sensors
   const sensors = useSensors(
@@ -72,13 +55,13 @@ export const ResponseTable = ({
   );
 
   // Memoize table data and columns
-  const tableData: TResponseTableData[] = useMemo(
-    () => (isFetchingFirstPage ? Array(10).fill({}) : data),
-    [data]
+  const tableData: TPersonTableData[] = useMemo(
+    () => (!isDataLoaded ? Array(10).fill({}) : data),
+    [data, isDataLoaded]
   );
   const tableColumns = useMemo(
     () =>
-      isFetchingFirstPage
+      !isDataLoaded
         ? columns.map((column) => ({
             ...column,
             cell: () => (
@@ -95,7 +78,7 @@ export const ResponseTable = ({
   const table = useReactTable({
     data: tableData,
     columns: tableColumns,
-    getRowId: (originalRow) => originalRow.responseId,
+    getRowId: (originalRow) => originalRow.personId,
     getCoreRowModel: getCoreRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
@@ -146,8 +129,8 @@ export const ResponseTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded}
           table={table}
-          deleteRows={deleteResponses}
-          type="response"
+          deleteRows={deletePerons}
+          type="person"
         />
         <div>
           <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
@@ -174,14 +157,21 @@ export const ResponseTable = ({
                   data-state={row.getIsSelected() && "selected"}
                   className={"group cursor-pointer"}>
                   {row.getVisibleCells().map((cell) => (
-                    <ResponseTableCell
+                    <TableCell
                       key={cell.id}
-                      cell={cell}
-                      row={row}
-                      isExpanded={isExpanded}
-                      setSelectedResponseCard={setSelectedResponse}
-                      responses={responses}
-                    />
+                      onClick={() => {
+                        if (cell.column.id === "select") return;
+                        router.push(`/environments/${environmentId}/people/${row.id}`);
+                      }}
+                      className={cn(
+                        "border border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+                        row.getIsSelected() && "bg-slate-100"
+                      )}>
+                      <div
+                        className={cn("flex flex-1 items-center truncate", isExpanded ? "h-full" : "h-10")}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </div>
+                    </TableCell>
                   ))}
                 </TableRow>
               ))}
@@ -207,32 +197,10 @@ export const ResponseTable = ({
         <DataTableSettingsModal
           open={isTableSettingsModalOpen}
           setOpen={setIsTableSettingsModalOpen}
-          survey={survey}
           table={table}
           columnOrder={columnOrder}
           handleDragEnd={handleDragEnd}
         />
-
-        {responses && (
-          <ResponseCardModal
-            survey={survey}
-            responses={responses}
-            user={user}
-            environment={environment}
-            environmentTags={environmentTags}
-            isViewer={isViewer}
-            updateResponse={updateResponse}
-            deleteResponses={deleteResponses}
-            setSelectedResponse={setSelectedResponse}
-            selectedResponse={selectedResponse}
-            open={selectedResponse !== null}
-            setOpen={(open) => {
-              if (!open) {
-                setSelectedResponse(null);
-              }
-            }}
-          />
-        )}
       </DndContext>
     </div>
   );

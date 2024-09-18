@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZAttributes } from "./attributes";
 
 export const ZPerson = z.object({
   id: z.string().cuid2(),
@@ -7,5 +8,14 @@ export const ZPerson = z.object({
   updatedAt: z.date(),
   environmentId: z.string().cuid2(),
 });
+
+export const ZPersonTableData = z.object({
+  personId: z.string(),
+  createdAt: z.date(),
+  userId: z.string(),
+  attributes: ZAttributes,
+});
+
+export type TPersonTableData = z.infer<typeof ZPersonTableData>;
 
 export type TPerson = z.infer<typeof ZPerson>;

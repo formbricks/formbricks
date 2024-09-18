@@ -1,12 +1,12 @@
 "use client";
 
-import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
 import { ColumnDef } from "@tanstack/react-table";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { processResponseData } from "@formbricks/lib/responses";
+import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
@@ -123,7 +123,7 @@ const getQuestionColumnsData = (
   }
 };
 
-export const generateColumns = (
+export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isViewer: boolean
@@ -136,7 +136,7 @@ export const generateColumns = (
     size: 75,
     enableResizing: false,
     header: ({ table }) => (
-      <div className="flex w-full items-center justify-center pr-4">
+      <div className="flex w-full items-center justify-center pr-2">
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}

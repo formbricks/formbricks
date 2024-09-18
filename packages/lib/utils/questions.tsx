@@ -229,12 +229,12 @@ export const questionTypes: TQuestion[] = [
   },
 ];
 
-export const QUESTIONS_ICON_MAP = questionTypes.reduce(
+export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = questionTypes.reduce(
   (prev, curr) => ({
     ...prev,
     [curr.id]: <curr.icon className="h-4 w-4" />,
   }),
-  {}
+  {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
 );
 
 export const QUESTIONS_NAME_MAP = questionTypes.reduce(

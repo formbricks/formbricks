@@ -1,10 +1,10 @@
 "use client";
 
-import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@/app/lib/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,

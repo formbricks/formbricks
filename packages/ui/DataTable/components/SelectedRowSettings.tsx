@@ -2,16 +2,18 @@ import { Table } from "@tanstack/react-table";
 import { Trash2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
-import { TResponseTableData } from "@formbricks/types/responses";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { deleteResponseAction } from "@formbricks/ui/SingleResponseCard/actions";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
+import { DeleteDialog } from "../../DeleteDialog";
+import { deleteResponseAction } from "../../SingleResponseCard/actions";
+import { deletePersonAction } from "../actions";
 
-interface SelectedResponseSettingsProps {
-  table: Table<TResponseTableData>;
-  deleteResponses: (responseIds: string[]) => void;
+interface SelectedRowSettingsProps<T> {
+  table: Table<T>;
+  deleteRows: (rowId: string[]) => void;
+  type: "response" | "person";
 }
 
-export const SelectedResponseSettings = ({ table, deleteResponses }: SelectedResponseSettingsProps) => {
+export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -30,12 +32,21 @@ export const SelectedResponseSettings = ({ table, deleteResponses }: SelectedRes
     try {
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
-      await Promise.all(rowsToBeDeleted.map((responseId) => deleteResponseAction({ responseId })));
 
-      deleteResponses(rowsToBeDeleted);
-      toast.success("Responses deleted successfully");
+      if (type === "response") {
+        await Promise.all(rowsToBeDeleted.map((responseId) => deleteResponseAction({ responseId })));
+      } else if (type === "person") {
+        await Promise.all(rowsToBeDeleted.map((personId) => deletePersonAction({ personId })));
+      }
+
+      deleteRows(rowsToBeDeleted);
+      toast.success(`${capitalizeFirstLetter(type)}s deleted successfully`);
     } catch (error) {
-      toast.error(error.message || "An error occurred while deleting responses");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(`An unknown error occurred while deleting ${type}s`);
+      }
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -54,7 +65,9 @@ export const SelectedResponseSettings = ({ table, deleteResponses }: SelectedRes
 
   return (
     <div className="flex items-center gap-x-2 rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
-      <div>{selectedRowCount} responses selected</div>
+      <div>
+        {selectedRowCount} {type}s selected
+      </div>
       <Separator />
       <SelectableOption label="Select all" onClick={() => handleToggleAllRowsSelection(true)} />
       <Separator />

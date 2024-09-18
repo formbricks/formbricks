@@ -110,7 +110,7 @@ export const getPeople = reactCache(
     )()
 );
 
-export const getPeopleCount = reactCache(
+export const getPersonCount = reactCache(
   (environmentId: string): Promise<number> =>
     cache(
       async () => {
@@ -130,7 +130,7 @@ export const getPeopleCount = reactCache(
           throw error;
         }
       },
-      [`getPeopleCount-${environmentId}`],
+      [`getPersonCount-${environmentId}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }

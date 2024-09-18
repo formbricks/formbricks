@@ -1,11 +1,11 @@
 "use client";
 
-import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/actions";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { deletePersonAction } from "@formbricks/ui/DataTable/actions";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 interface DeletePersonButtonProps {

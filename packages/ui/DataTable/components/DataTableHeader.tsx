@@ -1,28 +1,19 @@
-import { ColumnSettingsDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ColumnSettingsDropdown";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Column, Header, flexRender } from "@tanstack/react-table";
+import { Header, flexRender } from "@tanstack/react-table";
 import { GripVerticalIcon } from "lucide-react";
 import { CSSProperties } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TResponseTableData } from "@formbricks/types/responses";
-import { TableHead } from "@formbricks/ui/Table";
+import { TableHead } from "../../Table";
+import { getCommonPinningStyles } from "../lib/utils";
+import { ColumnSettingsDropdown } from "./ColumnSettingsDropdown";
 
-interface ResponseTableHeaderProps {
-  header: Header<TResponseTableData, unknown>;
+interface DataTableHeaderProps<T> {
+  header: Header<T, unknown>;
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;
 }
 
-export const getCommonPinningStyles = (column: Column<TResponseTableData>): CSSProperties => {
-  return {
-    left: `${column.getStart("left") - 1}px`,
-    position: "sticky",
-    width: column.getSize(),
-    zIndex: 1,
-  };
-};
-
-export const ResponseTableHeader = ({ header, setIsTableSettingsModalOpen }: ResponseTableHeaderProps) => {
+export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: DataTableHeaderProps<T>) => {
   const { attributes, isDragging, listeners, setNodeRef, transform } = useSortable({
     id: header.column.id,
   });
@@ -46,7 +37,7 @@ export const ResponseTableHeader = ({ header, setIsTableSettingsModalOpen }: Res
       key={header.id}
       className="group relative h-10 border border-slate-300 bg-slate-200 px-2 text-center">
       <div className="flex items-center justify-between">
-        <div className="truncate text-left font-semibold">
+        <div className="w-full truncate text-left font-semibold">
           {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
         </div>
 
