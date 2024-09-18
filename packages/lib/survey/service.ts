@@ -38,7 +38,6 @@ import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
-import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -1096,10 +1095,7 @@ export const getSyncSurveys = reactCache(
   (
     environmentId: string,
     personId: string,
-    deviceType: "phone" | "desktop" = "desktop",
-    options?: {
-      version?: string;
-    }
+    deviceType: "phone" | "desktop" = "desktop"
   ): Promise<TSurvey[]> =>
     cache(
       async () => {
@@ -1206,42 +1202,6 @@ export const getSyncSurveys = reactCache(
             // if the survey has no segment, or the segment has no filters, we return the survey
             if (!segment || !segment.filters?.length) {
               return survey;
-            }
-
-            // backwards compatibility for older versions of the js package
-            // if the version is not provided, we will use the old method of evaluating the segment, which is attribute filters
-            // transform the segment filters to attribute filters and evaluate them
-            if (!options?.version) {
-              const attributeFilters = transformSegmentFiltersToAttributeFilters(segment.filters);
-
-              // if the attribute filters are null, it means the segment filters don't match the expected format for attribute filters, so we skip this survey
-              if (attributeFilters === null) {
-                return null;
-              }
-
-              // if there are no attribute filters, we return the survey
-              if (!attributeFilters.length) {
-                return survey;
-              }
-
-              // we check if the person meets the attribute filters for all the attribute filters
-              const isEligible = attributeFilters.every((attributeFilter) => {
-                const personAttributeValue = attributes[attributeFilter.attributeClassName];
-                if (!personAttributeValue) {
-                  return false;
-                }
-
-                if (attributeFilter.operator === "equals") {
-                  return personAttributeValue === attributeFilter.value;
-                } else if (attributeFilter.operator === "notEquals") {
-                  return personAttributeValue !== attributeFilter.value;
-                } else {
-                  // if the operator is not equals or not equals, we skip the survey, this means that new segment filter options are being used
-                  return false;
-                }
-              });
-
-              return isEligible ? survey : null;
             }
 
             // Evaluate the segment filters

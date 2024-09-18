@@ -137,6 +137,7 @@ export const ResponseTable = ({
   return (
     <div>
       <DndContext
+        id="response-table"
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
