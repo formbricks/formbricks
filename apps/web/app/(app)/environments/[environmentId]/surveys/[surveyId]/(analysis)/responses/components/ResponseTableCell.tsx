@@ -9,7 +9,7 @@ interface ResponseTableCellProps {
   cell: Cell<TResponseTableData, unknown>;
   row: Row<TResponseTableData>;
   isExpanded: boolean;
-  setSelectedResponseCard: (responseCard: TResponse) => void;
+  setSelectedResponseId: (responseId: string | null) => void;
   responses: TResponse[] | null;
 }
 
@@ -17,14 +17,14 @@ export const ResponseTableCell = ({
   cell,
   row,
   isExpanded,
-  setSelectedResponseCard,
+  setSelectedResponseId,
   responses,
 }: ResponseTableCellProps) => {
   // Function to handle cell click
   const handleCellClick = () => {
     if (cell.column.id !== "select") {
       const response = responses?.find((response) => response.id === row.id);
-      if (response) setSelectedResponseCard(response);
+      if (response) setSelectedResponseId(response.id);
     }
   };
 

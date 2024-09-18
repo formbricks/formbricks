@@ -40,16 +40,16 @@ export const getEnvironmentState = async (
         getProductByEnvironmentId(environmentId),
       ]);
 
-      if (!organization) {
-        throw new ResourceNotFoundError("organization", environmentId);
-      }
-
       if (!environment) {
         throw new ResourceNotFoundError("environment", environmentId);
       }
 
+      if (!organization) {
+        throw new ResourceNotFoundError("organization", null);
+      }
+
       if (!product) {
-        throw new ResourceNotFoundError("product", environmentId);
+        throw new ResourceNotFoundError("product", null);
       }
 
       if (product.config.channel && product.config.channel !== "app") {

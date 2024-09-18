@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribute/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";
 
 export const OPTIONS = async () => {
@@ -79,6 +80,10 @@ export const PUT = async (
     console.error(err);
     if (err.statusCode === 403) {
       return responses.forbiddenResponse(err.message || "Forbidden", true, { ignore: true });
+    }
+
+    if (err instanceof ResourceNotFoundError) {
+      return responses.notFoundResponse(err.resourceType, err.resourceId, true);
     }
 
     return responses.internalServerErrorResponse("Something went wrong", true);
