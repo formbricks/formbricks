@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-import { type Prisma, PrismaClient } from "@prisma/client";
+import { type Display, PrismaClient, type Response } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const BATCH_SIZE = 1000;
@@ -75,8 +75,8 @@ async function runMigration(): Promise<void> {
         const existingResponseIds = new Set(responses.map((response) => response.id));
 
         // Collect data for updates and deletions
-        const updateResponsePromises: Promise<Prisma.Response>[] = [];
-        const updateDisplayPromises: Promise<Prisma.Display>[] = [];
+        const updateResponsePromises: Promise<Response>[] = [];
+        const updateDisplayPromises: Promise<Display>[] = [];
         const displayIdsToDelete: string[] = [];
 
         for (const display of displays) {
@@ -120,21 +120,19 @@ async function runMigration(): Promise<void> {
         totalDisplaysUpdated += updateDisplayPromises.length;
 
         console.log(
-          `Batch processed: ${ 
-            String(updateResponsePromises.length) 
-            } responses transformed, ${ 
-            String(displayIdsToDelete.length) 
-            } displays deleted`
+          `Batch processed: ${String(updateResponsePromises.length)} responses transformed, ${String(
+            displayIdsToDelete.length
+          )} displays deleted`
         );
-        console.log(`Total displays updated so far: ${  String(totalDisplaysUpdated)}`);
+        console.log(`Total displays updated so far: ${String(totalDisplaysUpdated)}`);
 
         // Move to the next batch
         cursor = { id: displays[displays.length - 1].id };
       }
 
-      console.log(`${String(totalResponseTransformed)  } total responses transformed`);
-      console.log(`${String(totalDisplaysUpdated)  } total displays updated`);
-      console.log(`${String(totalDisplaysDeleted)  } total displays deleted`);
+      console.log(`${String(totalResponseTransformed)} total responses transformed`);
+      console.log(`${String(totalDisplaysUpdated)} total displays updated`);
+      console.log(`${String(totalDisplaysDeleted)} total displays deleted`);
     },
     {
       timeout: TRANSACTION_TIMEOUT,
@@ -142,7 +140,7 @@ async function runMigration(): Promise<void> {
   );
 
   const endTime = Date.now();
-  console.log(`Data migration completed. Total time: ${  ((endTime - startTime) / 1000).toFixed(2)  }s`);
+  console.log(`Data migration completed. Total time: ${((endTime - startTime) / 1000).toFixed(2)}s`);
 }
 
 function handleError(error: unknown): void {
