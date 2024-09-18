@@ -27,8 +27,8 @@ export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRow
     [table]
   );
 
-  // Handle deletion of responses
-  const handleDeleteResponses = async () => {
+  // Handle deletion
+  const handleDelete = async () => {
     try {
       setIsDeleting(true);
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
@@ -81,8 +81,8 @@ export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRow
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        deleteWhat="response"
-        onDelete={handleDeleteResponses}
+        deleteWhat={type}
+        onDelete={handleDelete}
         isDeleting={isDeleting}
       />
     </div>

@@ -9,7 +9,7 @@ interface DataTableToolbarProps<T> {
   setIsExpanded: (isExpanded: boolean) => void;
   isExpanded: boolean;
   table: Table<T>;
-  deleteRows: (responseIds: string[]) => void;
+  deleteRows: (rowIds: string[]) => void;
   type: "person" | "response";
 }
 

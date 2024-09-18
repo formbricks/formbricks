@@ -1,14 +1,13 @@
 import { Cell, Row, flexRender } from "@tanstack/react-table";
 import { Maximize2Icon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
-import { TPersonTableData } from "@formbricks/types/people";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { getCommonPinningStyles } from "@formbricks/ui/DataTable/lib/utils";
 import { TableCell } from "@formbricks/ui/Table";
 
 interface ResponseTableCellProps {
   cell: Cell<TResponseTableData, unknown>;
-  row: Row<TResponseTableData | TPersonTableData>;
+  row: Row<TResponseTableData>;
   isExpanded: boolean;
   setSelectedResponseCard: (responseCard: TResponse) => void;
   responses: TResponse[] | null;
