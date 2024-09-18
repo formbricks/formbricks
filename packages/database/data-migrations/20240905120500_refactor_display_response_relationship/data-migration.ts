@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-import { PrismaClient, type Response } from "@prisma/client";
+import { type Prisma, PrismaClient, type Response } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const BATCH_SIZE = 20000;
@@ -12,15 +12,11 @@ async function runMigration(): Promise<void> {
   await prisma.$transaction(
     async (transactionPrisma) => {
       let totalResponseTransformed = 0;
-      let totalDisplaysDeleted = 0;
       let totalDisplaysUpdated = 0;
       let cursor: { id: string } | undefined;
 
       // Collect display ids to delete at the end (to avoid issues with cursor-based pagination)
       const displayIdsToDelete: string[] = [];
-
-      // Collect displays with responseId to update
-      const displayIdsToUpdate: string[] = [];
 
       // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition -- intentional infinite loop until no more displays
       while (true) {
@@ -104,21 +100,24 @@ async function runMigration(): Promise<void> {
         });
 
         // Update displays to set responseId to null using updateMany
+        let updateDisplayPromise: Promise<Prisma.BatchPayload> | null = null;
         if (displaysToUpdate.length > 0) {
-          for (const display of displaysToUpdate) {
-            displayIdsToUpdate.push(display.id);
-          }
+          const displayIdsToUpdate = displaysToUpdate.map((display) => display.id);
+          updateDisplayPromise = transactionPrisma.display.updateMany({
+            where: { id: { in: displayIdsToUpdate } },
+            data: { responseId: null },
+          });
         }
 
         // Execute updates and deletions in parallel
-        await Promise.all([...updateResponsePromises]);
+        await Promise.all([...updateResponsePromises, updateDisplayPromise]);
 
         // Update total counts
         totalResponseTransformed += updateResponsePromises.length;
-        totalDisplaysDeleted += displayIdsToDelete.length;
         totalDisplaysUpdated += displaysToUpdate.length;
 
-        console.log(`Batch processed. Total displays updated so far: ${String(totalDisplaysUpdated)}`);
+        console.log(`Batch processed: ${String(updateResponsePromises.length)} responses transformed.`);
+        console.log(`Total displays updated so far: ${String(totalDisplaysUpdated)}`);
 
         // Move to the next batch
         cursor = { id: displays[displays.length - 1].id };
@@ -135,23 +134,9 @@ async function runMigration(): Promise<void> {
         });
       }
 
-      // update displays
-      if (displayIdsToUpdate.length > 0) {
-        await transactionPrisma.display.updateMany({
-          where: {
-            id: {
-              in: displayIdsToUpdate,
-            },
-          },
-          data: {
-            responseId: null,
-          },
-        });
-      }
-
       console.log(`${String(totalResponseTransformed)} total responses transformed`);
       console.log(`${String(totalDisplaysUpdated)} total displays updated`);
-      console.log(`${String(totalDisplaysDeleted)} total displays deleted`);
+      console.log(`${String(displayIdsToDelete.length)} total displays deleted`);
     },
     {
       timeout: TRANSACTION_TIMEOUT,
