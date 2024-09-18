@@ -1,10 +1,10 @@
-import { TJsWebsiteConfig, TJsWebsiteConfigUpdateInput } from "@formbricks/types/js";
+import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { WEBSITE_SURVEYS_LOCAL_STORAGE_KEY } from "../../shared/constants";
 import { Result, err, ok, wrapThrows } from "../../shared/errors";
 
 export class WebsiteConfig {
   private static instance: WebsiteConfig | undefined;
-  private config: TJsWebsiteConfig | null = null;
+  private config: TJsConfig | null = null;
 
   private constructor() {
     const localConfig = this.loadFromLocalStorage();
@@ -21,37 +21,49 @@ export class WebsiteConfig {
     return WebsiteConfig.instance;
   }
 
-  public update(newConfig: TJsWebsiteConfigUpdateInput): void {
+  public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
       this.config = {
         ...this.config,
         ...newConfig,
-        status: newConfig.status || "success",
+        status: {
+          value: newConfig.status?.value || "success",
+          expiresAt: newConfig.status?.expiresAt || null,
+        },
       };
 
       this.saveToLocalStorage();
     }
   }
 
-  public get(): TJsWebsiteConfig {
+  public get(): TJsConfig {
     if (!this.config) {
       throw new Error("config is null, maybe the init function was not called?");
     }
     return this.config;
   }
 
-  public loadFromLocalStorage(): Result<TJsWebsiteConfig, Error> {
+  public loadFromLocalStorage(): Result<TJsConfig, Error> {
     if (typeof window !== "undefined") {
       const savedConfig = localStorage.getItem(WEBSITE_SURVEYS_LOCAL_STORAGE_KEY);
       if (savedConfig) {
-        const parsedConfig = JSON.parse(savedConfig) as TJsWebsiteConfig;
+        // TODO: validate config
+        // This is a hack to get around the fact that we don't have a proper
+        // way to validate the config yet.
+        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
 
         // check if the config has expired
-        if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
+
+        // TODO: Figure out the expiration logic
+        if (
+          parsedConfig.environmentState &&
+          parsedConfig.environmentState.expiresAt &&
+          new Date(parsedConfig.environmentState.expiresAt) <= new Date()
+        ) {
           return err(new Error("Config in local storage has expired"));
         }
 
-        return ok(JSON.parse(savedConfig) as TJsWebsiteConfig);
+        return ok(parsedConfig);
       }
     }
 
