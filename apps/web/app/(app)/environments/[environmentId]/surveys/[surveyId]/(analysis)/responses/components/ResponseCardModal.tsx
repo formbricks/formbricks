@@ -66,10 +66,6 @@ export const ResponseCardModal = ({
     setSelectedResponseId(null);
   };
 
-  const setSelectedResponseForSingleResponseCard = (response: TResponse | null) => {
-    setSelectedResponseId(response ? response.id : null);
-  };
-
   // If no response is selected or currentIndex is null, do not render the modal
   if (selectedResponse === null || currentIndex === null) return null;
 
@@ -112,7 +108,7 @@ export const ResponseCardModal = ({
             isViewer={isViewer}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
-            setSelectedResponse={setSelectedResponseForSingleResponseCard}
+            setSelectedResponseId={setSelectedResponseId}
           />
         </div>
       </div>
