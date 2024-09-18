@@ -227,7 +227,7 @@ export const ResponseTable = ({
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
             setSelectedResponseId={setSelectedResponseId}
-            selectedResponse={selectedResponse}
+            selectedResponseId={selectedResponseId}
             open={selectedResponse !== null}
             setOpen={(open) => {
               if (!open) {
