@@ -118,12 +118,7 @@ async function runMigration(): Promise<void> {
         totalDisplaysDeleted += displayIdsToDelete.length;
         totalDisplaysUpdated += displaysToUpdate.length;
 
-        console.log(
-          `Batch processed: ${String(updateResponsePromises.length)} responses transformed, ${String(
-            displayIdsToDelete.length
-          )} displays to be deleted`
-        );
-        console.log(`Total displays updated so far: ${String(totalDisplaysUpdated)}`);
+        console.log(`Batch processed. Total displays updated so far: ${String(totalDisplaysUpdated)}`);
 
         // Move to the next batch
         cursor = { id: displays[displays.length - 1].id };
