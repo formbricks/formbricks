@@ -76,6 +76,7 @@ export class SurveyState {
       finished: responseUpdate.finished,
       ttc: responseUpdate.ttc,
       data: { ...this.responseAcc.data, ...responseUpdate.data },
+      displayId: responseUpdate.displayId,
     };
   }
 
