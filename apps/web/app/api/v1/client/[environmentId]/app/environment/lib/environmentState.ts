@@ -45,11 +45,11 @@ export const getEnvironmentState = async (
       }
 
       if (!organization) {
-        throw new ResourceNotFoundError("organization", environmentId);
+        throw new ResourceNotFoundError("organization", null);
       }
 
       if (!product) {
-        throw new ResourceNotFoundError("product", environmentId);
+        throw new ResourceNotFoundError("product", null);
       }
 
       if (product.config.channel && product.config.channel !== "app") {
