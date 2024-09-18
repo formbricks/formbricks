@@ -2,7 +2,7 @@ import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Button } from "@formbricks/ui/Button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@formbricks/ui/Dialog";
+import { Modal } from "@formbricks/ui/Modal";
 
 interface ShareEmbedSurveyProps {
   open: boolean;
@@ -21,20 +21,11 @@ export const ShareSurveyResults = ({
   surveyUrl,
 }: ShareEmbedSurveyProps) => {
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        setOpen(open);
-      }}>
+    <Modal open={open} setOpen={setOpen} size="lg">
       {showPublishModal && surveyUrl ? (
-        <DialogContent className="flex flex-col rounded-2xl bg-white px-12 py-6">
+        <div className="flex flex-col rounded-2xl bg-white px-12 py-6">
           <div className="flex flex-col items-center gap-y-6 text-center">
-            <DialogHeader>
-              <DialogTitle>
-                <CheckCircle2Icon className="h-20 w-20 text-slate-300" />
-              </DialogTitle>
-            </DialogHeader>
-            <DialogDescription className="hidden" />
+            <CheckCircle2Icon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">Your survey results are public!</p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
@@ -42,7 +33,6 @@ export const ShareSurveyResults = ({
                 by search engines.
               </p>
             </div>
-
             <div className="flex gap-2">
               <div className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800">
                 <span>{surveyUrl}</span>
@@ -60,7 +50,6 @@ export const ShareSurveyResults = ({
                 <Clipboard />
               </Button>
             </div>
-
             <div className="flex gap-2">
               <Button
                 type="submit"
@@ -69,22 +58,16 @@ export const ShareSurveyResults = ({
                 onClick={() => handleUnpublish()}>
                 Unpublish
               </Button>
-
               <Button className="text-center" href={surveyUrl} target="_blank">
                 View site
               </Button>
             </div>
           </div>
-        </DialogContent>
+        </div>
       ) : (
-        <DialogContent className="flex flex-col rounded-2xl bg-white p-8">
+        <div className="flex flex-col rounded-2xl bg-white p-8">
           <div className="flex flex-col items-center gap-y-6 text-center">
-            <DialogHeader>
-              <DialogTitle>
-                <AlertCircleIcon className="h-20 w-20 text-slate-300" />
-              </DialogTitle>
-            </DialogHeader>
-            <DialogDescription className="hidden" />
+            <AlertCircleIcon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">
                 You are about to release these survey results to the public.
@@ -98,8 +81,8 @@ export const ShareSurveyResults = ({
               Publish to public web
             </Button>
           </div>
-        </DialogContent>
+        </div>
       )}
-    </Dialog>
+    </Modal>
   );
 };
