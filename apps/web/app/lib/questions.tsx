@@ -236,6 +236,8 @@ export const CXQuestionTypes = questionTypes.filter((questionType) => {
     TSurveyQuestionTypeEnum.MultipleChoiceMulti,
     TSurveyQuestionTypeEnum.Rating,
     TSurveyQuestionTypeEnum.NPS,
+    TSurveyQuestionTypeEnum.Consent,
+    TSurveyQuestionTypeEnum.CTA,
   ].includes(questionType.id as TSurveyQuestionTypeEnum);
 });
 
