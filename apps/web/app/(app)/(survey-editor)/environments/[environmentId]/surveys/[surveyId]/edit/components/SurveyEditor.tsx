@@ -190,6 +190,7 @@ export const SurveyEditor = ({
                 localStylingChanges={localStylingChanges}
                 setLocalStylingChanges={setLocalStylingChanges}
                 isUnsplashConfigured={isUnsplashConfigured}
+                isCxMode={isCxMode}
               />
             )}
 

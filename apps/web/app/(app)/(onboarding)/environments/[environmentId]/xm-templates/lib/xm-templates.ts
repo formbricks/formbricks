@@ -7,6 +7,9 @@ export const XMSurveyDefault: TXMTemplate = {
   name: "",
   endings: [getDefaultEndingCard([])],
   questions: [],
+  styling: {
+    overwriteThemeStyling: true,
+  },
 };
 
 const NPSSurvey: TXMTemplate = {

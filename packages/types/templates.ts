@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { ZProductConfigChannel, ZProductConfigIndustry } from "./product";
-import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyWelcomeCard } from "./surveys/types";
+import {
+  ZSurveyEndings,
+  ZSurveyHiddenFields,
+  ZSurveyQuestions,
+  ZSurveyStyling,
+  ZSurveyWelcomeCard,
+} from "./surveys/types";
 import { ZUserObjective } from "./user";
 
 export const ZTemplateRole = z.enum(["productManager", "customerSuccess", "marketing", "sales"]);
@@ -29,6 +35,7 @@ export const ZXMTemplate = z.object({
   name: z.string(),
   questions: ZSurveyQuestions,
   endings: ZSurveyEndings,
+  styling: ZSurveyStyling,
 });
 
 export type TXMTemplate = z.infer<typeof ZXMTemplate>;
