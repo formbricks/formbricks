@@ -91,6 +91,7 @@ export const CopySurveyForm = ({
                     {product?.environments.map((environment) => {
                       return (
                         <FormField
+                          key={environment.id}
                           control={form.control}
                           name={`products.${productIndex}.environments`}
                           render={({ field }) => {

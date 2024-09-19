@@ -188,6 +188,7 @@ const renderWidget = async (
             action,
           },
           hiddenFields,
+          displayId: surveyState.displayId,
         });
 
         if (isNewResponse) {

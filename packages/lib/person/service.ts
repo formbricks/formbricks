@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -217,6 +217,16 @@ export const getPersonByUserId = reactCache(
     cache(
       async () => {
         validateInputs([environmentId, ZId], [userId, ZString]);
+
+        const environment = await prisma.environment.findUnique({
+          where: {
+            id: environmentId,
+          },
+        });
+
+        if (!environment) {
+          throw new ResourceNotFoundError("environment", environmentId);
+        }
 
         // check if userId exists as a column
         const personWithUserId = await prisma.person.findFirst({

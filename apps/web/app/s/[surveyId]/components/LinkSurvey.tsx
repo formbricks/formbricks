@@ -278,6 +278,7 @@ export const LinkSurvey = ({
                 url: window.location.href,
                 source: sourceParam || "",
               },
+              displayId: surveyState.displayId,
               ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
             });
         }}

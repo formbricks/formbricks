@@ -3,6 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 import { environmentCache } from "@formbricks/lib/environment/cache";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsSyncInput } from "@formbricks/types/js";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -49,6 +50,10 @@ export const GET = async (
         "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
       );
     } catch (err) {
+      if (err instanceof ResourceNotFoundError) {
+        return responses.notFoundResponse(err.resourceType, err.resourceId);
+      }
+
       console.error(err);
       return responses.internalServerErrorResponse(err.message, true);
     }

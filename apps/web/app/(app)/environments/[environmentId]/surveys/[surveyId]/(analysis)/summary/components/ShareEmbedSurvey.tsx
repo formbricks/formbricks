@@ -7,7 +7,7 @@ import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/Badge";
-import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@formbricks/ui/Dialog";
 import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
 import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
@@ -55,7 +55,10 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
         {showView === "start" ? (
           <div className="h-full max-w-full overflow-hidden">
             <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
-              <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
+              <DialogTitle>
+                <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
+              </DialogTitle>
+              <DialogDescription className="hidden" />
               <ShareSurveyLink
                 survey={survey}
                 webAppUrl={webAppUrl}

@@ -106,7 +106,7 @@ const methodNotAllowedResponse = (
 
 const notFoundResponse = (
   resourceType: string,
-  resourceId: string,
+  resourceId: string | null,
   cors: boolean = false,
   cache: string = "private, no-store"
 ) => {
