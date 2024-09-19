@@ -1,5 +1,4 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-// RAW QUERY ->
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -69,8 +68,9 @@ async function runMigration(): Promise<void> {
         .map((display) => display.id);
 
       if (displayIdsToDelete.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions -- displayIdsToDelete is an array of strings
-        console.log(`Deleting ${displayIdsToDelete.length} displays where the response is missing...`);
+        console.log(
+          `Deleting ${displayIdsToDelete.length.toString()} displays where the response is missing...`
+        );
 
         await transactionPrisma.display.deleteMany({
           where: {
