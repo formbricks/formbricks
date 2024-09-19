@@ -39,13 +39,38 @@ export const PersonTable = ({
   environmentId,
 }: PersonTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
   // Generate columns
   const columns = generatePersonTableColumns(isExpanded);
+
+  // Load saved settings from localStorage
+  useEffect(() => {
+    const savedColumnOrder = localStorage.getItem(`${environmentId}-columnOrder`);
+    const savedColumnVisibility = localStorage.getItem(`${environmentId}-columnVisibility`);
+    if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
+      setColumnOrder(JSON.parse(savedColumnOrder));
+    } else {
+      setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
+    }
+
+    if (savedColumnVisibility) {
+      setColumnVisibility(JSON.parse(savedColumnVisibility));
+    }
+  }, [environmentId]);
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    if (columnOrder.length > 0) {
+      localStorage.setItem(`${environmentId}-columnOrder`, JSON.stringify(columnOrder));
+    }
+    if (Object.keys(columnVisibility).length > 0) {
+      localStorage.setItem(`${environmentId}-columnVisibility`, JSON.stringify(columnVisibility));
+    }
+  }, [columnOrder, columnVisibility, environmentId]);
 
   // Initialize DnD sensors
   const sensors = useSensors(
@@ -97,14 +122,6 @@ export const PersonTable = ({
     },
   });
 
-  useEffect(() => {
-    // Set initial column order
-    const setInitialColumnOrder = () => {
-      table.setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
-    };
-    setInitialColumnOrder();
-  }, [table]);
-
   // Handle column drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -133,7 +150,7 @@ export const PersonTable = ({
           type="person"
         />
         <div>
-          <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
+          <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed", borderRadius: "2.5rem" }}>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
