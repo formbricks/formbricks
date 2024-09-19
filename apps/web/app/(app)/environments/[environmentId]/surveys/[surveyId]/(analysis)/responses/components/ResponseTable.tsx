@@ -64,6 +64,31 @@ export const ResponseTable = ({
   // Generate columns
   const columns = generateResponseTableColumns(survey, isExpanded, isViewer);
 
+  // Load saved settings from localStorage
+  useEffect(() => {
+    const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
+    const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
+    if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
+      setColumnOrder(JSON.parse(savedColumnOrder));
+    } else {
+      setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
+    }
+
+    if (savedColumnVisibility) {
+      setColumnVisibility(JSON.parse(savedColumnVisibility));
+    }
+  }, [survey.id]);
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    if (columnOrder.length > 0) {
+      localStorage.setItem(`${survey.id}-columnOrder`, JSON.stringify(columnOrder));
+    }
+    if (Object.keys(columnVisibility).length > 0) {
+      localStorage.setItem(`${survey.id}-columnVisibility`, JSON.stringify(columnVisibility));
+    }
+  }, [columnOrder, columnVisibility, survey.id]);
+
   // Initialize DnD sensors
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -113,14 +138,6 @@ export const ResponseTable = ({
       },
     },
   });
-
-  useEffect(() => {
-    // Set initial column order
-    const setInitialColumnOrder = () => {
-      table.setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
-    };
-    setInitialColumnOrder();
-  }, [table]);
 
   // Handle column drag end
   const handleDragEnd = (event: DragEndEvent) => {
