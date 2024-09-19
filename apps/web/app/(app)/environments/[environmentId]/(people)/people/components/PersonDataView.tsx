@@ -100,7 +100,7 @@ export const PersonDataView = ({ environment, personCount, itemsPerPage }: Perso
       fetchNextPage={fetchNextPage}
       hasMore={hasMore}
       isDataLoaded={isDataLoaded}
-      deletePerons={deletePersons}
+      deletePersons={deletePersons}
       environmentId={environment.id}
     />
   );

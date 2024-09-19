@@ -25,7 +25,7 @@ interface PersonTableProps {
   data: TPersonTableData[];
   fetchNextPage: () => void;
   hasMore: boolean;
-  deletePerons: (personIds: string[]) => void;
+  deletePersons: (personIds: string[]) => void;
   isDataLoaded: boolean;
   environmentId: string;
 }
@@ -34,7 +34,7 @@ export const PersonTable = ({
   data,
   fetchNextPage,
   hasMore,
-  deletePerons,
+  deletePersons,
   isDataLoaded,
   environmentId,
 }: PersonTableProps) => {
@@ -146,11 +146,11 @@ export const PersonTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded}
           table={table}
-          deleteRows={deletePerons}
+          deleteRows={deletePersons}
           type="person"
         />
         <div>
-          <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed", borderRadius: "2.5rem" }}>
+          <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
