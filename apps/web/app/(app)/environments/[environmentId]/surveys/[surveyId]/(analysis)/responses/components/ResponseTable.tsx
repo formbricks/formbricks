@@ -176,55 +176,57 @@ export const ResponseTable = ({
           deleteRows={deleteResponses}
           type="response"
         />
-        <div className="w-fit max-w-full overflow-x-auto rounded-xl outline outline-slate-300">
-          <Table
-            style={{
-              width: table.getCenterTotalSize(),
-              tableLayout: "fixed",
-            }}>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                    {headerGroup.headers.map((header) => (
-                      <DataTableHeader
-                        key={header.id}
-                        header={header}
-                        setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+        <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-300">
+          <div className="w-full overflow-x-auto">
+            <Table
+              style={{
+                width: table.getCenterTotalSize(),
+                tableLayout: "fixed",
+              }}>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+                      {headerGroup.headers.map((header) => (
+                        <DataTableHeader
+                          key={header.id}
+                          header={header}
+                          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+                        />
+                      ))}
+                    </SortableContext>
+                  </tr>
+                ))}
+              </TableHeader>
+
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={"group cursor-pointer"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <ResponseTableCell
+                        key={cell.id}
+                        cell={cell}
+                        row={row}
+                        isExpanded={isExpanded ?? false}
+                        setSelectedResponseId={setSelectedResponseId}
+                        responses={responses}
                       />
                     ))}
-                  </SortableContext>
-                </tr>
-              ))}
-            </TableHeader>
-
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={"group cursor-pointer"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <ResponseTableCell
-                      key={cell.id}
-                      cell={cell}
-                      row={row}
-                      isExpanded={isExpanded ?? false}
-                      setSelectedResponseId={setSelectedResponseId}
-                      responses={responses}
-                    />
-                  ))}
-                </TableRow>
-              ))}
-              {table.getRowModel().rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                ))}
+                {table.getRowModel().rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {data && hasMore && data.length > 0 && (

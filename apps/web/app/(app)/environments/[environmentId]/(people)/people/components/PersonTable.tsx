@@ -157,62 +157,64 @@ export const PersonTable = ({
           deleteRows={deletePersons}
           type="person"
         />
-        <div className="w-fit max-w-full overflow-x-auto rounded-xl outline outline-slate-300">
-          <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                    {headerGroup.headers.map((header) => (
-                      <DataTableHeader
-                        key={header.id}
-                        header={header}
-                        setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-                      />
-                    ))}
-                  </SortableContext>
-                </tr>
-              ))}
-            </TableHeader>
+        <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-300">
+          <div className="w-full overflow-x-auto">
+            <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+                      {headerGroup.headers.map((header) => (
+                        <DataTableHeader
+                          key={header.id}
+                          header={header}
+                          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+                        />
+                      ))}
+                    </SortableContext>
+                  </tr>
+                ))}
+              </TableHeader>
 
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={"group cursor-pointer"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      onClick={() => {
-                        if (cell.column.id === "select") return;
-                        router.push(`/environments/${environmentId}/people/${row.id}`);
-                      }}
-                      className={cn(
-                        "border-b border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
-                        row.getIsSelected() && "bg-slate-100",
-                        {
-                          "border-r": !cell.column.getIsLastColumn(),
-                          "border-l": !cell.column.getIsFirstColumn(),
-                        }
-                      )}>
-                      <div
-                        className={cn("flex flex-1 items-center truncate", isExpanded ? "h-full" : "h-10")}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </div>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={"group cursor-pointer"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        onClick={() => {
+                          if (cell.column.id === "select") return;
+                          router.push(`/environments/${environmentId}/people/${row.id}`);
+                        }}
+                        className={cn(
+                          "border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+                          row.getIsSelected() && "bg-slate-100",
+                          {
+                            "border-r": !cell.column.getIsLastColumn(),
+                            "border-l": !cell.column.getIsFirstColumn(),
+                          }
+                        )}>
+                        <div
+                          className={cn("flex flex-1 items-center truncate", isExpanded ? "h-full" : "h-10")}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+                {table.getRowModel().rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No results.
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-              {table.getRowModel().rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {data && hasMore && data.length > 0 && (
