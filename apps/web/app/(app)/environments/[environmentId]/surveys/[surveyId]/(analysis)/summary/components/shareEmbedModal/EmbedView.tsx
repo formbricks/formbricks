@@ -6,7 +6,7 @@ import { Button } from "@formbricks/ui/Button";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
-import { WebsiteTab } from "./WebpageTab";
+import { WebsiteTab } from "./WebsiteTab";
 
 interface EmbedViewProps {
   handleInitialPageButton: () => void;

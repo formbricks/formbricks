@@ -46,7 +46,13 @@ export const OnboardingOptionsContainer = ({ options }: OnboardingOptionsContain
         "flex justify-center gap-8": options.length < 3,
       })}>
       {options.map((option) =>
-        option.href ? <Link href={option.href}>{getOptionCard(option)}</Link> : getOptionCard(option)
+        option.href ? (
+          <Link key={option.title} href={option.href}>
+            {getOptionCard(option)}
+          </Link>
+        ) : (
+          getOptionCard(option)
+        )
       )}
     </div>
   );

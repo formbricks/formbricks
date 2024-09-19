@@ -68,7 +68,7 @@ export const EditorCardMenu = ({
       ? survey.questions.length === 1
       : survey.type === "link" && survey.endings.length === 1;
 
-  const availbleQuestionTypes = isCxMode ? CX_QUESTIONS_NAME_MAP : QUESTIONS_NAME_MAP;
+  const availableQuestionTypes = isCxMode ? CX_QUESTIONS_NAME_MAP : QUESTIONS_NAME_MAP;
 
   const changeQuestionType = (type?: TSurveyQuestionTypeEnum) => {
     const parseResult = ZSurveyQuestion.safeParse(card);
@@ -176,7 +176,7 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2 border border-slate-200 text-slate-600 hover:text-slate-700">
-                  {Object.entries(availbleQuestionTypes).map(([type, name]) => {
+                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     const parsedResult = ZSurveyQuestion.safeParse(card);
                     if (parsedResult.success) {
                       const question = parsedResult.data;
@@ -221,7 +221,7 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-4 border border-slate-200">
-                  {Object.entries(availbleQuestionTypes).map(([type, name]) => {
+                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     return (
                       <DropdownMenuItem
                         key={type}

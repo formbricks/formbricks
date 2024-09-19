@@ -28,7 +28,7 @@ export const AppTab = ({ environmentId }) => {
   );
 };
 
-const MobileAppTab = ({}) => {
+const MobileAppTab = () => {
   return (
     <div>
       <p className="text-lg font-semibold text-slate-800">How to embed a survey on your React Native app</p>

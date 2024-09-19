@@ -24,8 +24,6 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
 
   const availableQuestionTypes = isCxMode ? CXQuestionTypes : questionTypes;
 
-  console.log("availableQuestionTypes", availableQuestionTypes);
-
   return (
     <Collapsible.Root
       open={open}
