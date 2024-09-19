@@ -44,34 +44,37 @@ export const PersonDataView = ({ environment, personCount, itemsPerPage }: Perso
     };
 
     fetchData();
-  }, [pageNumber]);
+  }, [pageNumber, personCount, itemsPerPage, environment.id]);
 
   // Fetch additional person attributes and update table data
   useEffect(() => {
     const fetchAttributes = async () => {
-      const updatedPersonTableData = await Promise.all(
-        persons.map(async (person) => {
-          const attributes = await getPersonAttributesAction({
-            environmentId: environment.id,
-            personId: person.id,
-          });
-          return {
-            createdAt: person.createdAt,
-            personId: person.id,
-            userId: person.userId,
-            email: attributes?.data?.email ?? "",
-            attributes: attributes?.data ?? {},
-          };
-        })
-      );
-      setPersonTableData(updatedPersonTableData);
-      setIsDataLoaded(true);
+      try {
+        const updatedPersonTableData = await Promise.all(
+          persons.map(async (person) => {
+            const attributes = await getPersonAttributesAction({
+              environmentId: environment.id,
+              personId: person.id,
+            });
+            return {
+              createdAt: person.createdAt,
+              personId: person.id,
+              userId: person.userId,
+              email: attributes?.data?.email ?? "",
+              attributes: attributes?.data ?? {},
+            };
+          })
+        );
+        setPersonTableData(updatedPersonTableData);
+      } catch (error) {
+        console.error("Error fetching person attributes:", error);
+      } finally {
+        setIsDataLoaded(true);
+      }
     };
 
-    if (persons.length > 0) {
-      fetchAttributes();
-    }
-  }, [persons]);
+    fetchAttributes();
+  }, [persons, environment.id]);
 
   const fetchNextPage = async () => {
     if (hasMore && !loadingNextPage) {
@@ -91,7 +94,7 @@ export const PersonDataView = ({ environment, personCount, itemsPerPage }: Perso
   };
 
   const deletePersons = (personIds: string[]) => {
-    setPersons(persons.filter((p) => !personIds.includes(p.id)));
+    setPersons((prevPersons) => prevPersons.filter((p) => !personIds.includes(p.id)));
   };
 
   return (
