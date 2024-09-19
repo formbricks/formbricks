@@ -1,8 +1,8 @@
-import { getCommonPinningStyles } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableHeader";
 import { Cell, Row, flexRender } from "@tanstack/react-table";
 import { Maximize2Icon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
+import { getCommonPinningStyles } from "@formbricks/ui/DataTable/lib/utils";
 import { TableCell } from "@formbricks/ui/Table";
 
 interface ResponseTableCellProps {
@@ -46,8 +46,12 @@ export const ResponseTableCell = ({
     <TableCell
       key={cell.id}
       className={cn(
-        "border border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
-        row.getIsSelected() && "bg-slate-100"
+        "border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+        row.getIsSelected() && "bg-slate-100",
+        {
+          "border-r": !cell.column.getIsLastColumn(),
+          "border-l": !cell.column.getIsFirstColumn(),
+        }
       )}
       style={cellStyles}
       onClick={handleCellClick}>

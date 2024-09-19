@@ -1,23 +1,16 @@
 import { Column } from "@tanstack/react-table";
 import { EllipsisVerticalIcon, EyeOffIcon, SettingsIcon } from "lucide-react";
-import React from "react";
-import { TResponseTableData } from "@formbricks/types/responses";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 
-interface ColumnSettingsDropdownProps {
-  column: Column<TResponseTableData>;
+interface ColumnSettingsDropdownProps<T> {
+  column: Column<T>;
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;
 }
 
-export const ColumnSettingsDropdown = ({
+export const ColumnSettingsDropdown = <T,>({
   column,
   setIsTableSettingsModalOpen,
-}: ColumnSettingsDropdownProps) => {
+}: ColumnSettingsDropdownProps<T>) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
