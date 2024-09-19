@@ -1,0 +1,38 @@
+{
+  "common": {
+    "surveys": "Surveys",
+    "people": "People",
+    "integrations": "Integrations",
+    "configuration": "Configuration",
+    "new_survey": "New Survey",
+    "full_name": "Full name",
+    "email": "Email",
+    "language": "Language",
+    "update": "Update",
+    "avatar": "Avatar",
+    "account_settings": "Account settings",
+    "invite_them": "Invite them"
+  },
+  "settings": {
+    "profile": {
+      "personal_information": "Personal information",
+      "update_your_personal_information": "Update your personal information",
+      "assist_your_organization_in_identifying_you_on_Formbricks": "Assist your organization in identifying you on Formbricks",
+      "upload_image": "Upload image",
+      "remove_image": "Remove image",
+      "change_image": "Change image",
+      "delete_account": "Delete Account",
+      "delete_your_account_with_all_of_your_personal_information_and_data": "Delete your account with all of your personal information and data",
+      "this_cannot_be_undone!": "This cannot be undone!",
+      "delete_my_account": "Delete My Account"
+    },
+    "notifications": {
+      "email_alerts_surveys": "Email alerts (Surveys)",
+      "weekly_summary_products": "Weekly summary (Products)",
+      "set_up_an_alert_to_get_an_email_on_new_responses": "Set up an alert to get an email on new responses",
+      "stay_up_to_date_with_a_Weekly_every_Monday": "Stay up-to-date with a Weekly every Monday",
+      "auto_subscribe_to_new_surveys": "Auto-subscribe to new surveys",
+      "want_to_loop_in_organization_mates?": "Want to loop in organization mates"
+    }
+  }
+}

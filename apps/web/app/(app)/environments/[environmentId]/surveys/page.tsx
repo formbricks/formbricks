@@ -1,6 +1,7 @@
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { useTranslations } from "next-intl";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -34,7 +35,6 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
-
   if (!session) {
     throw new Error("Session not found");
   }
@@ -69,17 +69,20 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
 
   const currentProductChannel = product.config.channel ?? null;
 
-  const CreateSurveyButton = (
-    <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
-      New survey
-    </Button>
-  );
+  const CreateSurveyButton = () => {
+    const t = useTranslations();
+    return (
+      <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
+        {t("new_survey")}
+      </Button>
+    );
+  };
 
   return (
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle="Surveys" cta={isViewer ? <></> : CreateSurveyButton} />
+          <PageHeader pageTitle="surveys" cta={isViewer ? <></> : <CreateSurveyButton />} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}

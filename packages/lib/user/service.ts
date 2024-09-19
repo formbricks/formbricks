@@ -27,6 +27,7 @@ const responseSelection = {
   identityProvider: true,
   objective: true,
   notificationSettings: true,
+  locale: true,
 };
 
 // function to retrive basic information about a user's user
@@ -286,3 +287,36 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
     throw error;
   }
 };
+
+export const getUserLanguage = reactCache(
+  (id: string): Promise<string | null> =>
+    cache(
+      async () => {
+        validateInputs([id, ZId]);
+
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              id,
+            },
+            select: responseSelection,
+          });
+
+          if (!user) {
+            return null;
+          }
+          return user.locale;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getUserLanguage-${id}`],
+      {
+        tags: [userCache.tag.byId(id)],
+      }
+    )()
+);
