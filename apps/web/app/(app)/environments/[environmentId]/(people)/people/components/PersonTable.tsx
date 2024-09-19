@@ -41,16 +41,17 @@ export const PersonTable = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
   // Generate columns
-  const columns = generatePersonTableColumns(isExpanded);
+  const columns = useMemo(() => generatePersonTableColumns(isExpanded ?? false), [isExpanded]);
 
   // Load saved settings from localStorage
   useEffect(() => {
     const savedColumnOrder = localStorage.getItem(`${environmentId}-columnOrder`);
     const savedColumnVisibility = localStorage.getItem(`${environmentId}-columnVisibility`);
+    const savedExpandedSettings = localStorage.getItem(`${environmentId}-rowExpand`);
     if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
       setColumnOrder(JSON.parse(savedColumnOrder));
     } else {
@@ -59,6 +60,9 @@ export const PersonTable = ({
 
     if (savedColumnVisibility) {
       setColumnVisibility(JSON.parse(savedColumnVisibility));
+    }
+    if (savedExpandedSettings !== null) {
+      setIsExpanded(JSON.parse(savedExpandedSettings));
     }
   }, [environmentId]);
 
@@ -70,7 +74,11 @@ export const PersonTable = ({
     if (Object.keys(columnVisibility).length > 0) {
       localStorage.setItem(`${environmentId}-columnVisibility`, JSON.stringify(columnVisibility));
     }
-  }, [columnOrder, columnVisibility, environmentId]);
+
+    if (isExpanded !== null) {
+      localStorage.setItem(`${environmentId}-rowExpand`, JSON.stringify(isExpanded));
+    }
+  }, [columnOrder, columnVisibility, isExpanded, environmentId]);
 
   // Initialize DnD sensors
   const sensors = useSensors(
@@ -144,12 +152,12 @@ export const PersonTable = ({
         <DataTableToolbar
           setIsExpanded={setIsExpanded}
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-          isExpanded={isExpanded}
+          isExpanded={isExpanded ?? false}
           table={table}
           deleteRows={deletePersons}
           type="person"
         />
-        <div>
+        <div className="w-fit max-w-full overflow-x-auto rounded-xl outline outline-slate-300">
           <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -181,8 +189,12 @@ export const PersonTable = ({
                         router.push(`/environments/${environmentId}/people/${row.id}`);
                       }}
                       className={cn(
-                        "border border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
-                        row.getIsSelected() && "bg-slate-100"
+                        "border-b border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+                        row.getIsSelected() && "bg-slate-100",
+                        {
+                          "border-r": !cell.column.getIsLastColumn(),
+                          "border-l": !cell.column.getIsFirstColumn(),
+                        }
                       )}>
                       <div
                         className={cn("flex flex-1 items-center truncate", isExpanded ? "h-full" : "h-10")}>

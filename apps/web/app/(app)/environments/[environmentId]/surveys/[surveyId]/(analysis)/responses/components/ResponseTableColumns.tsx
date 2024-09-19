@@ -10,7 +10,7 @@ import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { Checkbox } from "@formbricks/ui/Checkbox";
+import { getSelectionColumn } from "@formbricks/ui/DataTable";
 import { ResponseBadges } from "@formbricks/ui/ResponseBadges";
 import { RenderResponse } from "@formbricks/ui/SingleResponseCard/components/RenderResponse";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
@@ -131,30 +131,6 @@ export const generateResponseTableColumns = (
   const questionColumns = survey.questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded)
   );
-  const selectionColumn: ColumnDef<TResponseTableData> = {
-    accessorKey: "select",
-    size: 75,
-    enableResizing: false,
-    header: ({ table }) => (
-      <div className="flex w-full items-center justify-center pr-2">
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex w-full items-center justify-center pr-4">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-          className="mx-1"
-        />
-      </div>
-    ),
-  };
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
@@ -299,8 +275,8 @@ export const generateResponseTableColumns = (
   };
 
   // Combine the selection column with the dynamic question columns
-  return [
-    ...(isViewer ? [] : [selectionColumn]),
+
+  const baseColumns = [
     personColumn,
     dateColumn,
     statusColumn,
@@ -310,4 +286,6 @@ export const generateResponseTableColumns = (
     tagsColumn,
     notesColumn,
   ];
+
+  return isViewer ? baseColumns : [getSelectionColumn(), ...baseColumns];
 };

@@ -30,6 +30,7 @@ export const ResponseTableCell = ({
 
   const cellStyles = {
     width: `${cell.column.getSize()}px`,
+
     ...(cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}),
   };
 
@@ -46,8 +47,12 @@ export const ResponseTableCell = ({
     <TableCell
       key={cell.id}
       className={cn(
-        "border border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
-        row.getIsSelected() && "bg-slate-100"
+        "border-b border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+        row.getIsSelected() && "bg-slate-100",
+        {
+          "border-r": !cell.column.getIsLastColumn(),
+          "border-l": !cell.column.getIsFirstColumn(),
+        }
       )}
       style={cellStyles}
       onClick={handleCellClick}>

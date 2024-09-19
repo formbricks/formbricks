@@ -59,16 +59,18 @@ export const ResponseTable = ({
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
   const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
   const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded, isViewer);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer);
 
   // Load saved settings from localStorage
   useEffect(() => {
     const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
     const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
+    const savedExpandedSettings = localStorage.getItem(`${survey.id}-rowExpand`);
+
     if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
       setColumnOrder(JSON.parse(savedColumnOrder));
     } else {
@@ -77,6 +79,9 @@ export const ResponseTable = ({
 
     if (savedColumnVisibility) {
       setColumnVisibility(JSON.parse(savedColumnVisibility));
+    }
+    if (savedExpandedSettings !== null) {
+      setIsExpanded(JSON.parse(savedExpandedSettings));
     }
   }, [survey.id]);
 
@@ -88,7 +93,10 @@ export const ResponseTable = ({
     if (Object.keys(columnVisibility).length > 0) {
       localStorage.setItem(`${survey.id}-columnVisibility`, JSON.stringify(columnVisibility));
     }
-  }, [columnOrder, columnVisibility, survey.id]);
+    if (isExpanded !== null) {
+      localStorage.setItem(`${survey.id}-rowExpand`, JSON.stringify(isExpanded));
+    }
+  }, [columnOrder, columnVisibility, isExpanded, survey.id]);
 
   // Initialize DnD sensors
   const sensors = useSensors(
@@ -163,13 +171,17 @@ export const ResponseTable = ({
         <DataTableToolbar
           setIsExpanded={setIsExpanded}
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-          isExpanded={isExpanded}
+          isExpanded={isExpanded ?? false}
           table={table}
           deleteRows={deleteResponses}
           type="response"
         />
-        <div>
-          <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
+        <div className="w-fit max-w-full overflow-x-auto rounded-xl outline outline-slate-300">
+          <Table
+            style={{
+              width: table.getCenterTotalSize(),
+              tableLayout: "fixed",
+            }}>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
@@ -197,7 +209,7 @@ export const ResponseTable = ({
                       key={cell.id}
                       cell={cell}
                       row={row}
-                      isExpanded={isExpanded}
+                      isExpanded={isExpanded ?? false}
                       setSelectedResponseId={setSelectedResponseId}
                       responses={responses}
                     />

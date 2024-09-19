@@ -3,34 +3,9 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@formbricks/lib/cn";
 import { TPersonTableData } from "@formbricks/types/people";
-import { Checkbox } from "@formbricks/ui/Checkbox";
+import { getSelectionColumn } from "@formbricks/ui/DataTable";
 
 export const generatePersonTableColumns = (isExpanded: boolean): ColumnDef<TPersonTableData>[] => {
-  const selectionColumn: ColumnDef<TPersonTableData> = {
-    accessorKey: "select",
-    size: 75,
-    enableResizing: false,
-    header: ({ table }) => (
-      <div className="flex w-full items-center justify-center pr-2">
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex w-full items-center justify-center pr-4">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-          className="mx-1"
-        />
-      </div>
-    ),
-  };
-
   const dateColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "createdAt",
     header: () => "Date",
@@ -104,5 +79,5 @@ export const generatePersonTableColumns = (isExpanded: boolean): ColumnDef<TPers
     },
   };
 
-  return [selectionColumn, dateColumn, userColumn, userIdColumn, emailColumn, attributesColumn];
+  return [getSelectionColumn(), dateColumn, userColumn, userIdColumn, emailColumn, attributesColumn];
 };
