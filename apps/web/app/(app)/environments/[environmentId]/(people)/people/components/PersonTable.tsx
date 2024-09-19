@@ -18,6 +18,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TPersonTableData } from "@formbricks/types/people";
 import { Button } from "@formbricks/ui/Button";
 import { DataTableHeader, DataTableSettingsModal, DataTableToolbar } from "@formbricks/ui/DataTable";
+import { getCommonPinningStyles } from "@formbricks/ui/DataTable/lib/utils";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
@@ -189,6 +190,7 @@ export const PersonTable = ({
                           if (cell.column.id === "select") return;
                           router.push(`/environments/${environmentId}/people/${row.id}`);
                         }}
+                        style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
                         className={cn(
                           "border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
                           row.getIsSelected() && "bg-slate-100",

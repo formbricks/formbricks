@@ -5,7 +5,7 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
+import { TPerson, TPersonWithAttributes } from "@formbricks/types/people";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -17,6 +17,16 @@ export const selectPerson = {
   createdAt: true,
   updatedAt: true,
   environmentId: true,
+  attributes: {
+    select: {
+      value: true,
+      attributeClass: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  },
 };
 
 type TransformPersonInput = {
@@ -33,7 +43,7 @@ type TransformPersonInput = {
   updatedAt: Date;
 };
 
-export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
+export const transformPrismaPerson = (person: TransformPersonInput): TPersonWithAttributes => {
   const attributes = person.attributes.reduce(
     (acc, attr) => {
       acc[attr.attributeClass.name] = attr.value;
@@ -49,7 +59,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
     environmentId: person.environmentId,
     createdAt: new Date(person.createdAt),
     updatedAt: new Date(person.updatedAt),
-  } as TPerson;
+  } as TPersonWithAttributes;
 };
 
 export const getPerson = reactCache(
@@ -81,13 +91,13 @@ export const getPerson = reactCache(
 );
 
 export const getPeople = reactCache(
-  (environmentId: string, page?: number): Promise<TPerson[]> =>
+  (environmentId: string, page?: number): Promise<TPersonWithAttributes[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
         try {
-          return await prisma.person.findMany({
+          const persons = await prisma.person.findMany({
             where: {
               environmentId: environmentId,
             },
@@ -95,6 +105,8 @@ export const getPeople = reactCache(
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           });
+
+          return persons.map((person) => transformPrismaPerson(person));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
