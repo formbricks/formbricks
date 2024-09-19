@@ -1,8 +1,8 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-import { type Prisma, PrismaClient, type Response } from "@prisma/client";
+// RAW QUERY ->
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const BATCH_SIZE = 20000;
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 async function runMigration(): Promise<void> {
@@ -11,120 +11,67 @@ async function runMigration(): Promise<void> {
 
   await prisma.$transaction(
     async (transactionPrisma) => {
-      let totalResponseTransformed = 0;
-      let totalDisplaysUpdated = 0;
-      let cursor: { id: string } | undefined;
+      // Step 1: Use raw SQL to bulk update responses where responseId is not null in displays
+      console.log("Running bulk update for responses with valid responseId...");
 
-      // Collect display ids to delete at the end (to avoid issues with cursor-based pagination)
-      const displayIdsToDelete: string[] = [];
+      const rawQueryResult = await transactionPrisma.$executeRaw`
+        WITH updated_displays AS (
+          UPDATE public."Response" r
+          SET "displayId" = d.id
+          FROM public."Display" d
+          WHERE r.id = d."responseId"
+          RETURNING d.id
+        )
+        UPDATE public."Display"
+        SET "responseId" = NULL
+        WHERE id IN (SELECT id FROM updated_displays);
+      `;
 
-      // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition -- intentional infinite loop until no more displays
-      while (true) {
-        // Define the type for displays
-        interface DisplayWithResponseId {
-          id: string;
-          responseId: string | null;
-        }
+      console.log("Bulk update completed!");
 
-        // Fetch displays in batches using cursor-based pagination
-        const displays: DisplayWithResponseId[] = await transactionPrisma.display.findMany({
-          where: {
-            responseId: {
-              not: null,
-            },
+      // Step 2: Handle the case where a display has a responseId but the corresponding response does not exist
+      console.log("Handling displays where the responseId exists but the response is missing...");
+
+      // Find displays where responseId is not null but the corresponding response does not exist
+      const displaysWithMissingResponses = await transactionPrisma.display.findMany({
+        where: {
+          responseId: {
+            not: null,
           },
-          select: {
-            id: true,
-            responseId: true,
+        },
+        select: {
+          id: true,
+          responseId: true,
+        },
+      });
+
+      const responseIds = displaysWithMissingResponses
+        .map((display) => display.responseId)
+        .filter((id): id is string => id !== null);
+
+      // Check which of the responseIds actually exist in the responses table
+      const existingResponses = await transactionPrisma.response.findMany({
+        where: {
+          id: {
+            in: responseIds,
           },
-          orderBy: {
-            id: "asc",
-          },
-          take: BATCH_SIZE,
-          cursor,
-          skip: cursor ? 1 : 0, // Skip the cursor itself
-        });
+        },
+        select: {
+          id: true,
+        },
+      });
 
-        if (displays.length === 0) {
-          console.log("No more displays found");
-          break;
-        }
+      const existingResponseIds = new Set(existingResponses.map((response) => response.id));
 
-        console.log(`Processing batch of ${String(displays.length)} displays...`);
+      // Find displays where the responseId does not exist in the responses table
+      const displayIdsToDelete = displaysWithMissingResponses
+        .filter((display) => !existingResponseIds.has(display.responseId as unknown as string))
+        .map((display) => display.id);
 
-        // Collect responseIds, filter out any nulls
-        const responseIds = displays
-          .map((display) => display.responseId)
-          .filter((id): id is string => id !== null);
-
-        // Define the type for responses
-        interface ResponseIdOnly {
-          id: string;
-        }
-
-        // Fetch existing responses
-        const responses: ResponseIdOnly[] = await transactionPrisma.response.findMany({
-          where: {
-            id: {
-              in: responseIds,
-            },
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        const existingResponseIds = new Set(responses.map((response) => response.id));
-
-        // Separate displays into those to update and those to delete
-        const displaysToUpdate: DisplayWithResponseId[] = [];
-
-        for (const display of displays) {
-          const responseId = display.responseId;
-          if (responseId && existingResponseIds.has(responseId)) {
-            displaysToUpdate.push(display);
-          } else {
-            displayIdsToDelete.push(display.id);
-          }
-        }
-
-        // Update responses to connect displays
-        const updateResponsePromises: Promise<Response>[] = displaysToUpdate.map((display) => {
-          if (!display.responseId) {
-            throw new Error("Unexpected null responseId");
-          }
-          return transactionPrisma.response.update({
-            where: { id: display.responseId },
-            data: { display: { connect: { id: display.id } } },
-          });
-        });
-
-        // Update displays to set responseId to null using updateMany
-        let updateDisplayPromise: Promise<Prisma.BatchPayload> | null = null;
-        if (displaysToUpdate.length > 0) {
-          const displayIdsToUpdate = displaysToUpdate.map((display) => display.id);
-          updateDisplayPromise = transactionPrisma.display.updateMany({
-            where: { id: { in: displayIdsToUpdate } },
-            data: { responseId: null },
-          });
-        }
-
-        // Execute updates and deletions in parallel
-        await Promise.all([...updateResponsePromises, updateDisplayPromise]);
-
-        // Update total counts
-        totalResponseTransformed += updateResponsePromises.length;
-        totalDisplaysUpdated += displaysToUpdate.length;
-
-        console.log(`Batch processed: ${String(updateResponsePromises.length)} responses transformed.`);
-        console.log(`Total displays updated so far: ${String(totalDisplaysUpdated)}`);
-
-        // Move to the next batch
-        cursor = { id: displays[displays.length - 1].id };
-      }
-
-      // delete displays
       if (displayIdsToDelete.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions -- displayIdsToDelete is an array of strings
+        console.log(`Deleting ${displayIdsToDelete.length} displays where the response is missing...`);
+
         await transactionPrisma.display.deleteMany({
           where: {
             id: {
@@ -134,9 +81,9 @@ async function runMigration(): Promise<void> {
         });
       }
 
-      console.log(`${String(totalResponseTransformed)} total responses transformed`);
-      console.log(`${String(totalDisplaysUpdated)} total displays updated`);
-      console.log(`${String(displayIdsToDelete.length)} total displays deleted`);
+      console.log("Displays where the response was missing have been deleted.");
+      console.log("Data migration completed.");
+      console.log(`Affected rows: ${rawQueryResult + displayIdsToDelete.length}`);
     },
     {
       timeout: TRANSACTION_TIMEOUT,
