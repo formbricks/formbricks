@@ -226,6 +226,7 @@ export const ZResponse = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   surveyId: z.string().cuid2(),
+  displayId: z.string().nullish(),
   person: ZResponsePerson.nullable(),
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
@@ -246,6 +247,7 @@ export const ZResponseInput = z.object({
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   userId: z.string().nullish(),
+  displayId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
   language: z.string().optional(),
@@ -301,6 +303,7 @@ export const ZResponseUpdate = z.object({
     })
     .optional(),
   hiddenFields: ZResponseHiddenFieldValue.optional(),
+  displayId: z.string().nullish(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
@@ -314,6 +317,8 @@ export const ZResponseTableData = z.object({
   notes: z.array(ZResponseNote),
   language: z.string().nullable(),
   responseData: ZResponseData,
+  person: ZResponsePerson.nullable(),
+  personAttributes: ZResponsePersonAttributes,
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;

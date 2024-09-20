@@ -2,18 +2,15 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import {
   TDisplay,
   TDisplayCreateInput,
   TDisplayFilters,
-  TDisplayUpdateInput,
   ZDisplayCreateInput,
-  ZDisplayUpdateInput,
 } from "@formbricks/types/displays";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
@@ -25,7 +22,6 @@ export const selectDisplay = {
   createdAt: true,
   updatedAt: true,
   surveyId: true,
-  responseId: true,
   personId: true,
   status: true,
 };
@@ -59,57 +55,6 @@ export const getDisplay = reactCache(
       }
     )()
 );
-
-export const updateDisplay = async (
-  displayId: string,
-  displayInput: TDisplayUpdateInput
-): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayUpdateInput.partial()]);
-
-  let person: TPerson | null = null;
-  if (displayInput.userId) {
-    person = await getPersonByUserId(displayInput.environmentId, displayInput.userId);
-    if (!person) {
-      throw new ResourceNotFoundError("Person", displayInput.userId);
-    }
-  }
-
-  try {
-    const data = {
-      ...(person?.id && {
-        person: {
-          connect: {
-            id: person.id,
-          },
-        },
-      }),
-      ...(displayInput.responseId && {
-        responseId: displayInput.responseId,
-      }),
-    };
-    const display = await prisma.display.update({
-      where: {
-        id: displayId,
-      },
-      data,
-      select: selectDisplay,
-    });
-
-    displayCache.revalidate({
-      id: display.id,
-      surveyId: display.surveyId,
-    });
-
-    return display;
-  } catch (error) {
-    console.error(error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
 
 export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayCreateInput]);
@@ -145,6 +90,8 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       id: display.id,
       personId: display.personId,
       surveyId: display.surveyId,
+      userId,
+      environmentId,
     });
     return display;
   } catch (error) {
@@ -191,33 +138,46 @@ export const getDisplaysByPersonId = reactCache(
     )()
 );
 
-export const deleteDisplayByResponseId = async (
-  responseId: string,
-  surveyId: string
-): Promise<TDisplay | null> => {
-  validateInputs([responseId, ZId], [surveyId, ZId]);
+export const getDisplaysByUserId = reactCache(
+  async (environmentId: string, userId: string, page?: number): Promise<TDisplay[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
 
-  try {
-    const display = await prisma.display.delete({
-      where: {
-        responseId,
+        const person = await getPersonByUserId(environmentId, userId);
+
+        if (!person) {
+          throw new ResourceNotFoundError("person", userId);
+        }
+
+        try {
+          const displays = await prisma.display.findMany({
+            where: {
+              personId: person.id,
+            },
+            select: selectDisplay,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+
+          return displays;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
       },
-      select: selectDisplay,
-    });
-
-    displayCache.revalidate({
-      id: display.id,
-      personId: display.personId,
-      surveyId,
-    });
-    return display;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
+      [`getDisplaysByUserId-${environmentId}-${userId}-${page}`],
+      {
+        tags: [displayCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
+      }
+    )()
+);
 
 export const getDisplayCountBySurveyId = reactCache(
   (surveyId: string, filters?: TDisplayFilters): Promise<number> =>
@@ -258,3 +218,29 @@ export const getDisplayCountBySurveyId = reactCache(
       }
     )()
 );
+
+export const deleteDisplay = async (displayId: string): Promise<TDisplay> => {
+  validateInputs([displayId, ZId]);
+  try {
+    const display = await prisma.display.delete({
+      where: {
+        id: displayId,
+      },
+      select: selectDisplay,
+    });
+
+    displayCache.revalidate({
+      id: display.id,
+      personId: display.personId,
+      surveyId: display.surveyId,
+    });
+
+    return display;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

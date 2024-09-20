@@ -9,7 +9,7 @@ export const SurveyLinkDisplay = ({ surveyUrl }: SurveyLinkDisplayProps) => {
     <Input
       autoFocus={true}
       className="mt-2 w-96 overflow-hidden text-ellipsis rounded-lg border bg-slate-50 px-3 py-2 text-center text-slate-800 caret-transparent"
-      value={surveyUrl}
+      defaultValue={surveyUrl}
     />
   );
 };

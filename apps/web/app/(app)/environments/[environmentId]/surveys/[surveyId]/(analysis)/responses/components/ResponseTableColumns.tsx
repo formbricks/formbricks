@@ -1,16 +1,19 @@
 "use client";
 
-import { QUESTIONS_ICON_MAP } from "@/app/lib/questions";
 import { ColumnDef } from "@tanstack/react-table";
-import { EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
+import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
+import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { processResponseData } from "@formbricks/lib/responses";
+import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { Checkbox } from "@formbricks/ui/Checkbox";
+import { getSelectionColumn } from "@formbricks/ui/DataTable";
 import { ResponseBadges } from "@formbricks/ui/ResponseBadges";
 import { RenderResponse } from "@formbricks/ui/SingleResponseCard/components/RenderResponse";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 const getAddressFieldLabel = (field: string) => {
   switch (field) {
@@ -120,7 +123,7 @@ const getQuestionColumnsData = (
   }
 };
 
-export const generateColumns = (
+export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isViewer: boolean
@@ -128,30 +131,6 @@ export const generateColumns = (
   const questionColumns = survey.questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded)
   );
-  const selectionColumn: ColumnDef<TResponseTableData> = {
-    accessorKey: "select",
-    size: 75,
-    enableResizing: false,
-    header: ({ table }) => (
-      <div className="flex w-full items-center justify-center pr-4">
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex w-full items-center justify-center pr-4">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-          className="mx-1"
-        />
-      </div>
-    ),
-  };
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
@@ -179,6 +158,45 @@ export const generateColumns = (
           <p className="text-slate-900">{formattedTime}</p>
         </div>
       );
+    },
+  };
+
+  const personColumn: ColumnDef<TResponseTableData> = {
+    accessorKey: "personId",
+    header: () => (
+      <div className="flex items-center gap-x-1.5">
+        Person
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger>
+              <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="font-normal">
+              How to identify users for{" "}
+              <Link
+                className="underline underline-offset-2 hover:text-slate-900"
+                href="https://formbricks.com/docs/link-surveys/user-identification"
+                target="_blank">
+                link surveys
+              </Link>{" "}
+              or{" "}
+              <Link
+                className="underline underline-offset-2 hover:text-slate-900"
+                href="https://formbricks.com/docs/app-surveys/user-identification"
+                target="_blank">
+                in-app surveys.
+              </Link>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    ),
+    size: 275,
+    cell: ({ row }) => {
+      const personId = row.original.person
+        ? getPersonIdentifier(row.original.person, row.original.personAttributes)
+        : "Anonymous";
+      return <p className="truncate text-slate-900">{personId}</p>;
     },
   };
 
@@ -257,8 +275,9 @@ export const generateColumns = (
   };
 
   // Combine the selection column with the dynamic question columns
-  return [
-    ...(isViewer ? [] : [selectionColumn]),
+
+  const baseColumns = [
+    personColumn,
     dateColumn,
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
@@ -267,4 +286,6 @@ export const generateColumns = (
     tagsColumn,
     notesColumn,
   ];
+
+  return isViewer ? baseColumns : [getSelectionColumn(), ...baseColumns];
 };

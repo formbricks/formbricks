@@ -71,7 +71,10 @@ const DialogContent = React.forwardRef<
             e.preventDefault();
           }
         }}>
-        {title && <h3 className="mb-4 text-xl font-bold text-slate-500">{title}</h3>}
+        <DialogPrimitive.DialogTitle>
+          {title && <p className="mb-4 text-xl font-bold text-slate-500">{title}</p>}
+        </DialogPrimitive.DialogTitle>
+        <DialogPrimitive.DialogDescription></DialogPrimitive.DialogDescription>
         {children}
         <DialogPrimitive.Close
           className={cn(

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
+import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromProductId,
@@ -227,13 +227,26 @@ export const getImagesFromUnsplashAction = actionClient
     });
   });
 
+const isValidUnsplashUrl = (url: string): boolean => {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === "https:" && UNSPLASH_ALLOWED_DOMAINS.includes(parsedUrl.hostname);
+  } catch {
+    return false;
+  }
+};
+
 const ZTriggerDownloadUnsplashImageAction = z.object({
-  downloadUrl: z.string(),
+  downloadUrl: z.string().url(),
 });
 
 export const triggerDownloadUnsplashImageAction = actionClient
   .schema(ZTriggerDownloadUnsplashImageAction)
   .action(async ({ parsedInput }) => {
+    if (!isValidUnsplashUrl(parsedInput.downloadUrl)) {
+      throw new Error("Invalid Unsplash URL");
+    }
+
     const response = await fetch(`${parsedInput.downloadUrl}/?client_id=${UNSPLASH_ACCESS_KEY}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },

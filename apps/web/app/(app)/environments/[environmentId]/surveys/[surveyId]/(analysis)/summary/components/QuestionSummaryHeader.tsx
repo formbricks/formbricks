@@ -1,5 +1,5 @@
-import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
+import { questionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
