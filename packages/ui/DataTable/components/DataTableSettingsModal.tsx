@@ -1,4 +1,3 @@
-import { TableSettingsModalItem } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TableSettingsModalItem";
 import {
   DndContext,
   DragEndEvent,
@@ -10,27 +9,27 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
-import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Modal } from "@formbricks/ui/Modal";
+import { Modal } from "../../Modal";
+import { DataTableSettingsModalItem } from "./DataTableSettingsModalItem";
 
-interface TableSettingsModalProps {
+interface DataTableSettingsModalProps<T> {
   open: boolean;
   setOpen: (open: boolean) => void;
-  survey: TSurvey;
-  table: Table<TResponseTableData>;
+  table: Table<T>;
   columnOrder: string[];
   handleDragEnd: (event: DragEndEvent) => void;
+  survey?: TSurvey;
 }
 
-export const TableSettingsModal = ({
+export const DataTableSettingsModal = <T,>({
   open,
   setOpen,
-  survey,
   table,
   columnOrder,
   handleDragEnd,
-}: TableSettingsModalProps) => {
+  survey,
+}: DataTableSettingsModalProps<T>) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -63,10 +62,10 @@ export const TableSettingsModal = ({
             collisionDetection={closestCorners}>
             <SortableContext items={columnOrder} strategy={verticalListSortingStrategy}>
               {columnOrder.map((columnId) => {
-                if (columnId === "select") return;
+                if (columnId === "select" || columnId === "createdAt") return;
                 const column = table.getAllColumns().find((column) => column.id === columnId);
-                if (!column) return;
-                return <TableSettingsModalItem column={column} key={column?.id} survey={survey} />;
+                if (!column) return null;
+                return <DataTableSettingsModalItem column={column} key={column.id} survey={survey} />;
               })}
             </SortableContext>
           </DndContext>

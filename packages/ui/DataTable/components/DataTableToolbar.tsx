@@ -1,29 +1,30 @@
-import { SelectedResponseSettings } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/SelectedResponseSettings";
 import { Table } from "@tanstack/react-table";
 import { MoveVerticalIcon, SettingsIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
-import { TResponseTableData } from "@formbricks/types/responses";
-import { TooltipRenderer } from "@formbricks/ui/Tooltip";
+import { TooltipRenderer } from "../../Tooltip";
+import { SelectedRowSettings } from "./SelectedRowSettings";
 
-interface ResponseTableToolbarProps {
+interface DataTableToolbarProps<T> {
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;
   setIsExpanded: (isExpanded: boolean) => void;
   isExpanded: boolean;
-  table: Table<TResponseTableData>;
-  deleteResponses: (responseIds: string[]) => void;
+  table: Table<T>;
+  deleteRows: (rowIds: string[]) => void;
+  type: "person" | "response";
 }
 
-export const ResponseTableToolbar = ({
+export const DataTableToolbar = <T,>({
   setIsExpanded,
   setIsTableSettingsModalOpen,
   isExpanded,
   table,
-  deleteResponses,
-}: ResponseTableToolbarProps) => {
+  deleteRows,
+  type,
+}: DataTableToolbarProps<T>) => {
   return (
     <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <SelectedResponseSettings table={table} deleteResponses={deleteResponses} />
+        <SelectedRowSettings table={table} deleteRows={deleteRows} type={type} />
       ) : (
         <div></div>
       )}
