@@ -16,6 +16,12 @@ export const ZPersonTableData = z.object({
   attributes: ZAttributes,
 });
 
+export const ZPersonWithAttributes = ZPerson.extend({
+  attributes: ZAttributes,
+});
+
+export type TPersonWithAttributes = z.infer<typeof ZPersonWithAttributes>;
+
 export type TPersonTableData = z.infer<typeof ZPersonTableData>;
 
 export type TPerson = z.infer<typeof ZPerson>;
