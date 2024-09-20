@@ -46,7 +46,7 @@ export const ResponseTableCell = ({
     <TableCell
       key={cell.id}
       className={cn(
-        "border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+        "border-slate-200 bg-white shadow-none group-hover:bg-slate-100",
         row.getIsSelected() && "bg-slate-100",
         {
           "border-r": !cell.column.getIsLastColumn(),
