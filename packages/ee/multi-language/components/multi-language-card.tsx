@@ -4,7 +4,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
@@ -59,12 +59,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     onConfirm: () => {},
   });
 
-  const [defaultLanguage, setDefaultLanguage] = useState(
-    localSurvey.languages.length > 1
-      ? localSurvey.languages.find((language) => {
-          return language.default;
-        })?.language
-      : null
+  const defaultLanguage = useMemo(
+    () => localSurvey.languages.find((language) => language.default)?.language,
+    [localSurvey.languages]
   );
 
   const setOpen = (open: boolean) => {
@@ -134,7 +131,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         });
       }
 
-      setDefaultLanguage(language);
       setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
       updateSurvey({ languages: newLanguages });
     }
@@ -152,7 +148,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           onConfirm: () => {
             updateSurveyTranslations(localSurvey, []);
             setIsMultiLanguageActivated(false);
-            setDefaultLanguage(undefined);
             setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
           },
         });
