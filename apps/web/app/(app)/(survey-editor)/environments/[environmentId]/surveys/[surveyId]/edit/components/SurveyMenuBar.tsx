@@ -88,6 +88,13 @@ export const SurveyMenuBar = ({
     };
   }, [localSurvey, survey]);
 
+  const clearSurveyLocalStorage = () => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(`${localSurvey.id}-columnOrder`);
+      localStorage.removeItem(`${localSurvey.id}-columnVisibility`);
+    }
+  };
+
   const containsEmptyTriggers = useMemo(() => {
     if (localSurvey.type === "link") return false;
 
@@ -235,6 +242,7 @@ export const SurveyMenuBar = ({
       }
 
       const segment = await handleSegmentUpdate();
+      clearSurveyLocalStorage();
       const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
 
       setIsSurveySaving(false);
@@ -280,6 +288,7 @@ export const SurveyMenuBar = ({
       }
       const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
       const segment = await handleSegmentUpdate();
+      clearSurveyLocalStorage();
 
       await updateSurveyAction({
         ...localSurvey,

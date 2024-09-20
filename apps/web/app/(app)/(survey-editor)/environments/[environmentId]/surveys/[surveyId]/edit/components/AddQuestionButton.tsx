@@ -1,16 +1,16 @@
 "use client";
 
-import {
-  CXQuestionTypes,
-  getQuestionDefaults,
-  questionTypes,
-  universalQuestionPresets,
-} from "@/app/lib/questions";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import {
+  CXQuestionTypes,
+  getQuestionDefaults,
+  questionTypes,
+  universalQuestionPresets,
+} from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
 
 interface AddQuestionButtonProps {

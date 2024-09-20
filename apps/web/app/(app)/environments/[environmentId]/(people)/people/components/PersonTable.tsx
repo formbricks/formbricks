@@ -1,6 +1,4 @@
-import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
-import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
-import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { generatePersonTableColumns } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTableColumn";
 import {
   DndContext,
   type DragEndEvent,
@@ -13,64 +11,47 @@ import {
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse, TResponseTableData } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { cn } from "@formbricks/lib/cn";
+import { TPersonTableData } from "@formbricks/types/people";
 import { Button } from "@formbricks/ui/Button";
 import { DataTableHeader, DataTableSettingsModal, DataTableToolbar } from "@formbricks/ui/DataTable";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
-interface ResponseTableProps {
-  data: TResponseTableData[];
-  survey: TSurvey;
-  responses: TResponse[] | null;
-  environment: TEnvironment;
-  user?: TUser;
-  environmentTags: TTag[];
-  isViewer: boolean;
+interface PersonTableProps {
+  data: TPersonTableData[];
   fetchNextPage: () => void;
   hasMore: boolean;
-  deleteResponses: (responseIds: string[]) => void;
-  updateResponse: (responseId: string, updatedResponse: TResponse) => void;
-  isFetchingFirstPage: boolean;
+  deletePersons: (personIds: string[]) => void;
+  isDataLoaded: boolean;
+  environmentId: string;
 }
 
-export const ResponseTable = ({
+export const PersonTable = ({
   data,
-  survey,
-  responses,
-  user,
-  environment,
-  environmentTags,
-  isViewer,
   fetchNextPage,
   hasMore,
-  deleteResponses,
-  updateResponse,
-  isFetchingFirstPage,
-}: ResponseTableProps) => {
+  deletePersons,
+  isDataLoaded,
+  environmentId,
+}: PersonTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-  const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
-  const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
-  const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
-
+  const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
+  const [rowSelection, setRowSelection] = useState({});
+  const router = useRouter();
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer);
+  const columns = useMemo(() => generatePersonTableColumns(isExpanded ?? false), [isExpanded]);
 
   // Load saved settings from localStorage
   useEffect(() => {
-    const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
-    const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
-    const savedExpandedSettings = localStorage.getItem(`${survey.id}-rowExpand`);
-
+    const savedColumnOrder = localStorage.getItem(`${environmentId}-columnOrder`);
+    const savedColumnVisibility = localStorage.getItem(`${environmentId}-columnVisibility`);
+    const savedExpandedSettings = localStorage.getItem(`${environmentId}-rowExpand`);
     if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
       setColumnOrder(JSON.parse(savedColumnOrder));
     } else {
@@ -83,20 +64,21 @@ export const ResponseTable = ({
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
-  }, [survey.id]);
+  }, [environmentId]);
 
   // Save settings to localStorage when they change
   useEffect(() => {
     if (columnOrder.length > 0) {
-      localStorage.setItem(`${survey.id}-columnOrder`, JSON.stringify(columnOrder));
+      localStorage.setItem(`${environmentId}-columnOrder`, JSON.stringify(columnOrder));
     }
     if (Object.keys(columnVisibility).length > 0) {
-      localStorage.setItem(`${survey.id}-columnVisibility`, JSON.stringify(columnVisibility));
+      localStorage.setItem(`${environmentId}-columnVisibility`, JSON.stringify(columnVisibility));
     }
+
     if (isExpanded !== null) {
-      localStorage.setItem(`${survey.id}-rowExpand`, JSON.stringify(isExpanded));
+      localStorage.setItem(`${environmentId}-rowExpand`, JSON.stringify(isExpanded));
     }
-  }, [columnOrder, columnVisibility, isExpanded, survey.id]);
+  }, [columnOrder, columnVisibility, isExpanded, environmentId]);
 
   // Initialize DnD sensors
   const sensors = useSensors(
@@ -106,13 +88,13 @@ export const ResponseTable = ({
   );
 
   // Memoize table data and columns
-  const tableData: TResponseTableData[] = useMemo(
-    () => (isFetchingFirstPage ? Array(10).fill({}) : data),
-    [data]
+  const tableData: TPersonTableData[] = useMemo(
+    () => (!isDataLoaded ? Array(10).fill({}) : data),
+    [data, isDataLoaded]
   );
   const tableColumns = useMemo(
     () =>
-      isFetchingFirstPage
+      !isDataLoaded
         ? columns.map((column) => ({
             ...column,
             cell: () => (
@@ -129,7 +111,7 @@ export const ResponseTable = ({
   const table = useReactTable({
     data: tableData,
     columns: tableColumns,
-    getRowId: (originalRow) => originalRow.responseId,
+    getRowId: (originalRow) => originalRow.personId,
     getCoreRowModel: getCoreRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
@@ -163,7 +145,6 @@ export const ResponseTable = ({
   return (
     <div>
       <DndContext
-        id="response-table"
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
@@ -173,16 +154,12 @@ export const ResponseTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRows={deleteResponses}
-          type="response"
+          deleteRows={deletePersons}
+          type="person"
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-300">
           <div className="w-full overflow-x-auto">
-            <Table
-              style={{
-                width: table.getCenterTotalSize(),
-                tableLayout: "fixed",
-              }}>
+            <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
@@ -206,14 +183,25 @@ export const ResponseTable = ({
                     data-state={row.getIsSelected() && "selected"}
                     className={"group cursor-pointer"}>
                     {row.getVisibleCells().map((cell) => (
-                      <ResponseTableCell
+                      <TableCell
                         key={cell.id}
-                        cell={cell}
-                        row={row}
-                        isExpanded={isExpanded ?? false}
-                        setSelectedResponseId={setSelectedResponseId}
-                        responses={responses}
-                      />
+                        onClick={() => {
+                          if (cell.column.id === "select") return;
+                          router.push(`/environments/${environmentId}/people/${row.id}`);
+                        }}
+                        className={cn(
+                          "border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+                          row.getIsSelected() && "bg-slate-100",
+                          {
+                            "border-r": !cell.column.getIsLastColumn(),
+                            "border-l": !cell.column.getIsFirstColumn(),
+                          }
+                        )}>
+                        <div
+                          className={cn("flex flex-1 items-center truncate", isExpanded ? "h-full" : "h-10")}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))}
@@ -240,32 +228,10 @@ export const ResponseTable = ({
         <DataTableSettingsModal
           open={isTableSettingsModalOpen}
           setOpen={setIsTableSettingsModalOpen}
-          survey={survey}
           table={table}
           columnOrder={columnOrder}
           handleDragEnd={handleDragEnd}
         />
-
-        {responses && (
-          <ResponseCardModal
-            survey={survey}
-            responses={responses}
-            user={user}
-            environment={environment}
-            environmentTags={environmentTags}
-            isViewer={isViewer}
-            updateResponse={updateResponse}
-            deleteResponses={deleteResponses}
-            setSelectedResponseId={setSelectedResponseId}
-            selectedResponseId={selectedResponseId}
-            open={selectedResponse !== null}
-            setOpen={(open) => {
-              if (!open) {
-                setSelectedResponseId(null);
-              }
-            }}
-          />
-        )}
       </DndContext>
     </div>
   );
