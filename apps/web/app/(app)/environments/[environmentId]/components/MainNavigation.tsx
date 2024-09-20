@@ -169,7 +169,7 @@ export const MainNavigation = ({
   };
 
   const handleAddProduct = (organizationId: string) => {
-    router.push(`/organizations/${organizationId}/products/new/channel`);
+    router.push(`/organizations/${organizationId}/products/new/mode`);
   };
 
   const mainNavigation = useMemo(
