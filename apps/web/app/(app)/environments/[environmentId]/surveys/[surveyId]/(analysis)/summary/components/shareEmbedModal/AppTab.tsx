@@ -80,8 +80,10 @@ const WebAppTab = ({ environmentId }) => {
           to run highly targeted surveys.
         </li>
         <li>
-          Change the survey type to &apos;App Survey&apos; and define when and where the survey should pop up
+          Make sure your survey type is set to <b>App survey</b>
+          pop up
         </li>
+        <li>Dfine when and where the survey should pop up</li>
       </ol>
       <div className="mt-4">
         <video autoPlay loop muted className="w-full rounded-xl border border-slate-200">

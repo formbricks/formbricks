@@ -97,9 +97,9 @@ const PopupTab = ({ environmentId }) => {
           to connect your website with Formbricks
         </li>
         <li>
-          Change the survey type to &apos;Website Survey&apos; and define when and where the survey should pop
-          up
+          Make sure the survey type is set to <b>Website survey</b>
         </li>
+        <li>Dfine when and where the survey should pop up</li>
       </ol>
       <div className="mt-4">
         <video autoPlay loop muted className="w-full rounded-xl border border-slate-200">
