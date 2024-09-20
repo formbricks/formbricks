@@ -1,9 +1,6 @@
 import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
-import { generateColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
-import { ResponseTableHeader } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableHeader";
-import { ResponseTableToolbar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableToolbar";
-import { TableSettingsModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/TableSettingsModal";
+import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import {
   DndContext,
   type DragEndEvent,
@@ -24,6 +21,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
+import { DataTableHeader, DataTableSettingsModal, DataTableToolbar } from "@formbricks/ui/DataTable";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
@@ -59,12 +57,46 @@ export const ResponseTable = ({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
-  const [selectedResponse, setSelectedResponse] = useState<TResponse | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
+  const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
+  const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
   // Generate columns
-  const columns = generateColumns(survey, isExpanded, isViewer);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer);
+
+  // Load saved settings from localStorage
+  useEffect(() => {
+    const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
+    const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
+    const savedExpandedSettings = localStorage.getItem(`${survey.id}-rowExpand`);
+
+    if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
+      setColumnOrder(JSON.parse(savedColumnOrder));
+    } else {
+      setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
+    }
+
+    if (savedColumnVisibility) {
+      setColumnVisibility(JSON.parse(savedColumnVisibility));
+    }
+    if (savedExpandedSettings !== null) {
+      setIsExpanded(JSON.parse(savedExpandedSettings));
+    }
+  }, [survey.id]);
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    if (columnOrder.length > 0) {
+      localStorage.setItem(`${survey.id}-columnOrder`, JSON.stringify(columnOrder));
+    }
+    if (Object.keys(columnVisibility).length > 0) {
+      localStorage.setItem(`${survey.id}-columnVisibility`, JSON.stringify(columnVisibility));
+    }
+    if (isExpanded !== null) {
+      localStorage.setItem(`${survey.id}-rowExpand`, JSON.stringify(isExpanded));
+    }
+  }, [columnOrder, columnVisibility, isExpanded, survey.id]);
 
   // Initialize DnD sensors
   const sensors = useSensors(
@@ -116,14 +148,6 @@ export const ResponseTable = ({
     },
   });
 
-  useEffect(() => {
-    // Set initial column order
-    const setInitialColumnOrder = () => {
-      table.setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
-    };
-    setInitialColumnOrder();
-  }, [table]);
-
   // Handle column drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -139,62 +163,70 @@ export const ResponseTable = ({
   return (
     <div>
       <DndContext
+        id="response-table"
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
         sensors={sensors}>
-        <ResponseTableToolbar
+        <DataTableToolbar
           setIsExpanded={setIsExpanded}
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-          isExpanded={isExpanded}
+          isExpanded={isExpanded ?? false}
           table={table}
-          deleteResponses={deleteResponses}
+          deleteRows={deleteResponses}
+          type="response"
         />
-        <div>
-          <Table style={{ width: table.getCenterTotalSize(), tableLayout: "fixed" }}>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                    {headerGroup.headers.map((header) => (
-                      <ResponseTableHeader
-                        key={header.id}
-                        header={header}
-                        setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+        <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-300">
+          <div className="w-full overflow-x-auto">
+            <Table
+              style={{
+                width: table.getCenterTotalSize(),
+                tableLayout: "fixed",
+              }}>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+                      {headerGroup.headers.map((header) => (
+                        <DataTableHeader
+                          key={header.id}
+                          header={header}
+                          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
+                        />
+                      ))}
+                    </SortableContext>
+                  </tr>
+                ))}
+              </TableHeader>
+
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={"group cursor-pointer"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <ResponseTableCell
+                        key={cell.id}
+                        cell={cell}
+                        row={row}
+                        isExpanded={isExpanded ?? false}
+                        setSelectedResponseId={setSelectedResponseId}
+                        responses={responses}
                       />
                     ))}
-                  </SortableContext>
-                </tr>
-              ))}
-            </TableHeader>
-
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={"group cursor-pointer"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <ResponseTableCell
-                      key={cell.id}
-                      cell={cell}
-                      row={row}
-                      isExpanded={isExpanded}
-                      setSelectedResponseCard={setSelectedResponse}
-                      responses={responses}
-                    />
-                  ))}
-                </TableRow>
-              ))}
-              {table.getRowModel().rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                ))}
+                {table.getRowModel().rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {data && hasMore && data.length > 0 && (
@@ -205,7 +237,7 @@ export const ResponseTable = ({
           </div>
         )}
 
-        <TableSettingsModal
+        <DataTableSettingsModal
           open={isTableSettingsModalOpen}
           setOpen={setIsTableSettingsModalOpen}
           survey={survey}
@@ -224,12 +256,12 @@ export const ResponseTable = ({
             isViewer={isViewer}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
-            setSelectedResponse={setSelectedResponse}
-            selectedResponse={selectedResponse}
+            setSelectedResponseId={setSelectedResponseId}
+            selectedResponseId={selectedResponseId}
             open={selectedResponse !== null}
             setOpen={(open) => {
               if (!open) {
-                setSelectedResponse(null);
+                setSelectedResponseId(null);
               }
             }}
           />

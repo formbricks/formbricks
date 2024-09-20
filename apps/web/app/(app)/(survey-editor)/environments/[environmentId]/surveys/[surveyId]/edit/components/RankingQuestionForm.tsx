@@ -167,6 +167,7 @@ export const RankingQuestionForm = ({
         <Label htmlFor="choices">Options*</Label>
         <div className="mt-2" id="choices">
           <DndContext
+            id="ranking-choices"
             onDragEnd={(event) => {
               const { active, over } = event;
 
