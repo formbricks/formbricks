@@ -176,7 +176,7 @@ export const ResponseTable = ({
           deleteRows={deleteResponses}
           type="response"
         />
-        <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-300">
+        <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">
             <Table
               style={{
