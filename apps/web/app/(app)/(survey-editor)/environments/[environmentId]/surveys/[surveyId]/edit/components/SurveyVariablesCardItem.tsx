@@ -74,7 +74,7 @@ export const SurveyVariablesCardItem = ({
     return () => subscription.unsubscribe();
   }, [form, mode, editSurveyVariable]);
 
-  const onVaribleDelete = (variable: TSurveyVariable) => {
+  const onVariableDelete = (variable: TSurveyVariable) => {
     const questions = [...localSurvey.questions];
 
     const quesIdx = findVariableUsedInLogic(localSurvey, variable.id);
@@ -220,7 +220,7 @@ export const SurveyVariablesCardItem = ({
                 type="button"
                 size="sm"
                 className="whitespace-nowrap"
-                onClick={() => onVaribleDelete(variable)}>
+                onClick={() => onVariableDelete(variable)}>
                 <TrashIcon className="h-4 w-4" />
               </Button>
             )}

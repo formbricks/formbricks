@@ -1,15 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
-  TAction,
   TActionObjective,
   TConditionGroup,
   TSingleCondition,
   TSurveyAdvancedLogic,
+  TSurveyAdvancedLogicAction,
 } from "@formbricks/types/surveys/logic";
 
 type TCondition = TSingleCondition | TConditionGroup;
 
-export const isConditionsGroup = (condition: TCondition): condition is TConditionGroup => {
+export const isConditionGroup = (condition: TCondition): condition is TConditionGroup => {
   return (condition as TConditionGroup).connector !== undefined;
 };
 
@@ -19,7 +19,7 @@ export const duplicateLogicItem = (logicItem: TSurveyAdvancedLogic): TSurveyAdva
       ...group,
       id: createId(),
       conditions: group.conditions.map((condition) => {
-        if (isConditionsGroup(condition)) {
+        if (isConditionGroup(condition)) {
           return duplicateConditionGroup(condition);
         } else {
           return duplicateCondition(condition);
@@ -35,7 +35,7 @@ export const duplicateLogicItem = (logicItem: TSurveyAdvancedLogic): TSurveyAdva
     };
   };
 
-  const duplicateAction = (action: TAction): TAction => {
+  const duplicateAction = (action: TSurveyAdvancedLogicAction): TSurveyAdvancedLogicAction => {
     return {
       ...action,
       id: createId(),
@@ -58,7 +58,7 @@ export const addConditionBelow = (
   for (let i = 0; i < group.conditions.length; i++) {
     const item = group.conditions[i];
 
-    if (isConditionsGroup(item)) {
+    if (isConditionGroup(item)) {
       if (item.id === resourceId) {
         group.conditions.splice(i + 1, 0, condition);
         break;
@@ -96,7 +96,7 @@ export const removeCondition = (group: TConditionGroup, resourceId: string) => {
       return;
     }
 
-    if (isConditionsGroup(item)) {
+    if (isConditionGroup(item)) {
       removeCondition(item, resourceId);
     }
   }
@@ -127,9 +127,9 @@ export const deleteEmptyGroups = (group: TConditionGroup) => {
   for (let i = 0; i < group.conditions.length; i++) {
     const resource = group.conditions[i];
 
-    if (isConditionsGroup(resource) && resource.conditions.length === 0) {
+    if (isConditionGroup(resource) && resource.conditions.length === 0) {
       group.conditions.splice(i, 1);
-    } else if (isConditionsGroup(resource)) {
+    } else if (isConditionGroup(resource)) {
       deleteEmptyGroups(resource);
     }
   }
@@ -150,7 +150,7 @@ export const createGroupFromResource = (group: TConditionGroup, resourceId: stri
       return;
     }
 
-    if (isConditionsGroup(item)) {
+    if (isConditionGroup(item)) {
       createGroupFromResource(item, resourceId);
     }
   }
@@ -169,13 +169,16 @@ export const updateCondition = (
       return;
     }
 
-    if (isConditionsGroup(item)) {
+    if (isConditionGroup(item)) {
       updateCondition(item, resourceId, condition);
     }
   }
 };
 
-export const getUpdatedActionBody = (action: TAction, objective: TActionObjective): TAction => {
+export const getUpdatedActionBody = (
+  action: TSurveyAdvancedLogicAction,
+  objective: TActionObjective
+): TSurveyAdvancedLogicAction => {
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":

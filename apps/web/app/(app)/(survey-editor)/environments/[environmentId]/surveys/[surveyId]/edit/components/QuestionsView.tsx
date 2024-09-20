@@ -18,17 +18,17 @@ import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
+import { isConditionGroup } from "@formbricks/lib/survey/logic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
-  TAction,
   TConditionGroup,
   TSingleCondition,
   TSurveyAdvancedLogic,
+  TSurveyAdvancedLogicAction,
 } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
@@ -90,7 +90,7 @@ export const QuestionsView = ({
       return {
         ...conditions,
         conditions: conditions?.conditions.map((condition) => {
-          if (isConditionsGroup(condition)) {
+          if (isConditionGroup(condition)) {
             return updateConditions(condition);
           } else {
             return updateSingleCondition(condition);
@@ -106,14 +106,14 @@ export const QuestionsView = ({
         updatedCondition.leftOperand = { ...condition.leftOperand, value: updatedId };
       }
 
-      if (condition.rightOperand?.type === "question" && condition.rightOperand.value === compareId) {
+      if (condition.rightOperand?.type === "question" && condition.rightOperand?.value === compareId) {
         updatedCondition.rightOperand = { ...condition.rightOperand, value: updatedId };
       }
 
       return updatedCondition;
     };
 
-    const updateActions = (actions: TAction[]): TAction[] => {
+    const updateActions = (actions: TSurveyAdvancedLogicAction[]): TSurveyAdvancedLogicAction[] => {
       return actions.map((action) => {
         let updatedAction = { ...action };
 

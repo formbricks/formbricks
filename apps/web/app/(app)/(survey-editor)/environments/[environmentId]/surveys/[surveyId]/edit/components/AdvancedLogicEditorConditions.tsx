@@ -11,7 +11,7 @@ import {
   addConditionBelow,
   createGroupFromResource,
   duplicateCondition,
-  isConditionsGroup,
+  isConditionGroup,
   removeCondition,
   toggleGroupConnector,
   updateCondition,
@@ -32,7 +32,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 import { InputCombobox, TComboboxOption } from "@formbricks/ui/InputCombobox";
 
-interface AdvancedLogicEditorConditions {
+interface AdvancedLogicEditorConditionsProps {
   conditions: TConditionGroup;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
@@ -50,7 +50,7 @@ export function AdvancedLogicEditorConditions({
   questionIdx,
   updateQuestion,
   depth = 0,
-}: AdvancedLogicEditorConditions) {
+}: AdvancedLogicEditorConditionsProps) {
   const handleAddConditionBelow = (resourceId: string) => {
     const operator = getDefaultOperatorForQuestion(question);
 
@@ -63,7 +63,7 @@ export function AdvancedLogicEditorConditions({
       operator,
     };
 
-    const logicCopy = structuredClone(question.logic) || [];
+    const logicCopy = structuredClone(question.logic) ?? [];
     const logicItem = logicCopy[logicIdx];
     addConditionBelow(logicItem.conditions, resourceId, condition);
 
@@ -73,7 +73,7 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleConnectorChange = (groupId: string) => {
-    const logicCopy = structuredClone(question.logic) || [];
+    const logicCopy = structuredClone(question.logic) ?? [];
     const logicItem = logicCopy[logicIdx];
     toggleGroupConnector(logicItem.conditions, groupId);
 
@@ -83,7 +83,7 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleRemoveCondition = (resourceId: string) => {
-    const logicCopy = structuredClone(question.logic) || [];
+    const logicCopy = structuredClone(question.logic) ?? [];
     const logicItem = logicCopy[logicIdx];
     removeCondition(logicItem.conditions, resourceId);
 
@@ -98,7 +98,7 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleDuplicateCondition = (resourceId: string) => {
-    const logicCopy = structuredClone(question.logic) || [];
+    const logicCopy = structuredClone(question.logic) ?? [];
     const logicItem = logicCopy[logicIdx];
     duplicateCondition(logicItem.conditions, resourceId);
 
@@ -108,7 +108,7 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleCreateGroup = (resourceId: string) => {
-    const logicCopy = structuredClone(question.logic) || [];
+    const logicCopy = structuredClone(question.logic) ?? [];
     const logicItem = logicCopy[logicIdx];
     createGroupFromResource(logicItem.conditions, resourceId);
 
@@ -118,7 +118,7 @@ export function AdvancedLogicEditorConditions({
   };
 
   const handleUpdateCondition = (resourceId: string, updateConditionBody: Partial<TSingleCondition>) => {
-    const logicCopy = structuredClone(question.logic) || [];
+    const logicCopy = structuredClone(question.logic) ?? [];
     const logicItem = logicCopy[logicIdx];
     updateCondition(logicItem.conditions, resourceId, updateConditionBody);
 
@@ -175,20 +175,21 @@ export function AdvancedLogicEditorConditions({
         break;
     }
   };
+
   const renderCondition = (
     condition: TSingleCondition | TConditionGroup,
     index: number,
     parentConditionGroup: TConditionGroup
   ) => {
     const connector = parentConditionGroup.connector;
-    if (isConditionsGroup(condition)) {
+    if (isConditionGroup(condition)) {
       return (
         <div key={condition.id} className="flex items-start justify-between gap-4">
           {index === 0 ? (
             <div>When</div>
           ) : (
             <div
-              className={cn("w-14", { "cursor-pointer underline": index === 1 })}
+              className={cn("w-14", index === 1 && "cursor-pointer underline")}
               onClick={() => {
                 if (index !== 1) return;
                 handleConnectorChange(parentConditionGroup.id);
@@ -246,7 +247,7 @@ export function AdvancedLogicEditorConditions({
             "When"
           ) : (
             <div
-              className={cn("w-14", { "cursor-pointer underline": index === 1 })}
+              className={cn("w-14", index === 1 && "cursor-pointer underline")}
               onClick={() => {
                 if (index !== 1) return;
                 handleConnectorChange(parentConditionGroup.id);

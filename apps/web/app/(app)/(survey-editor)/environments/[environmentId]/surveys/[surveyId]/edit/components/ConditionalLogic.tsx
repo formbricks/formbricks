@@ -73,29 +73,31 @@ export function ConditionalLogic({
     };
 
     updateQuestion(questionIdx, {
-      logic: [...(question?.logic || []), initialCondition],
+      logic: [...(question?.logic ?? []), initialCondition],
     });
   };
 
   const handleRemoveLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic || []);
+    const logicCopy = structuredClone(question.logic ?? []);
     logicCopy.splice(logicItemIdx, 1);
+
     updateQuestion(questionIdx, {
       logic: logicCopy,
     });
   };
 
   const moveLogic = (from: number, to: number) => {
-    const logicCopy = structuredClone(question.logic || []);
+    const logicCopy = structuredClone(question.logic ?? []);
     const [movedItem] = logicCopy.splice(from, 1);
     logicCopy.splice(to, 0, movedItem);
+
     updateQuestion(questionIdx, {
       logic: logicCopy,
     });
   };
 
   const duplicateLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic || []);
+    const logicCopy = structuredClone(question.logic ?? []);
     const logicItem = logicCopy[logicItemIdx];
     const newLogicItem = duplicateLogicItem(logicItem);
     logicCopy.splice(logicItemIdx + 1, 0, newLogicItem);
@@ -125,7 +127,7 @@ export function ConditionalLogic({
                 question={question}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
-                isLast={logicItemIdx === (question.logic || []).length - 1}
+                isLast={logicItemIdx === (question.logic ?? []).length - 1}
               />
 
               <DropdownMenu>
@@ -152,7 +154,7 @@ export function ConditionalLogic({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex items-center gap-2"
-                    disabled={logicItemIdx === (question.logic || []).length - 1}
+                    disabled={logicItemIdx === (question.logic ?? []).length - 1}
                     onClick={() => {
                       moveLogic(logicItemIdx, logicItemIdx + 1);
                     }}>
@@ -183,7 +185,7 @@ export function ConditionalLogic({
           size="sm"
           variant="secondary"
           EndIcon={PlusIcon}
-          onClick={() => addLogic()}>
+          onClick={addLogic}>
           Add logic
         </Button>
       </div>

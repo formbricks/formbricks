@@ -48,6 +48,29 @@ export const TableSettingsModalItem = ({ column, survey }: TableSettingsModalIte
     transform: CSS.Translate.toString(transform),
     zIndex: isDragging ? 10 : 1,
   };
+
+  const renderLabel = () => {
+    if (question) {
+      return (
+        <div className="flex items-center space-x-2">
+          <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
+          <span className="max-w-xs truncate">{getLocalizedValue(question.headline, "default")}</span>
+        </div>
+      );
+    }
+
+    if (variable) {
+      return (
+        <div className="flex items-center space-x-2">
+          <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
+          <span className="max-w-xs truncate">{variable.name}</span>
+        </div>
+      );
+    }
+
+    return <span className="max-w-xs truncate">{getLabelFromColumnId()}</span>;
+  };
+
   return (
     <div ref={setNodeRef} style={style} id={column.id}>
       <div {...listeners} {...attributes}>
@@ -58,19 +81,7 @@ export const TableSettingsModalItem = ({ column, survey }: TableSettingsModalIte
             <button onClick={(e) => e.preventDefault()}>
               <GripVertical className="h-4 w-4" />
             </button>
-            {question ? (
-              <div className="flex items-center space-x-2">
-                <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
-                <span className="max-w-xs truncate">{getLocalizedValue(question.headline, "default")}</span>
-              </div>
-            ) : variable ? (
-              <div className="flex items-center space-x-2">
-                <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
-                <span className="max-w-xs truncate">{variable.name}</span>
-              </div>
-            ) : (
-              <span className="max-w-xs truncate">{getLabelFromColumnId()}</span>
-            )}
+            {renderLabel()}
           </div>
           <Switch
             id={column.id}

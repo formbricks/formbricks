@@ -1,9 +1,9 @@
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
-  TAction,
   TActionCalculate,
   TConditionGroup,
   TSingleCondition,
+  TSurveyAdvancedLogicAction,
 } from "@formbricks/types/surveys/logic";
 import {
   TSurvey,
@@ -12,7 +12,7 @@ import {
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
-import { isConditionsGroup } from "../survey/logic/utils";
+import { isConditionGroup } from "../survey/logic/utils";
 
 export const evaluateAdvancedLogic = (
   localSurvey: TSurvey,
@@ -23,7 +23,7 @@ export const evaluateAdvancedLogic = (
 ): boolean => {
   const evaluateConditionGroup = (group: TConditionGroup): boolean => {
     const results = group.conditions.map((condition) => {
-      if (isConditionsGroup(condition)) {
+      if (isConditionGroup(condition)) {
         return evaluateConditionGroup(condition);
       } else {
         return evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage);
@@ -291,20 +291,20 @@ const getLeftOperandValue = (
 
           return choice.id;
         } else if (Array.isArray(responseValue)) {
-          let choice: string[] = [];
+          let choices: string[] = [];
           responseValue.forEach((value) => {
             const foundChoice = currentQuestion.choices.find((choice) => {
               return getLocalizedValue(choice.label, selectedLanguage) === value;
             });
 
             if (foundChoice) {
-              choice.push(foundChoice.id);
+              choices.push(foundChoice.id);
             } else if (isOthersEnabled) {
-              choice.push("other");
+              choices.push("other");
             }
           });
-          if (choice) {
-            return Array.from(new Set(choice));
+          if (choices) {
+            return Array.from(new Set(choices));
           }
         }
       }
@@ -359,7 +359,7 @@ const getRightOperandValue = (
 
 export const performActions = (
   survey: TSurvey,
-  actions: TAction[],
+  actions: TSurveyAdvancedLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {

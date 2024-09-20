@@ -4,10 +4,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
 import type {
-  TAction,
   TRightOperand,
   TSingleCondition,
   TSurveyAdvancedLogic,
+  TSurveyAdvancedLogicAction,
   TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
 import {
@@ -223,7 +223,7 @@ function convertLogic(
     }
   }
 
-  const action: TAction = {
+  const action: TSurveyAdvancedLogicAction = {
     id: createId(),
     objective: "jumpToQuestion",
     target: actionTarget,

@@ -39,24 +39,9 @@ export const PictureSelectionForm = ({
     // Filter out the deleted choice from the choices array
     const newChoices = question.choices?.filter((choice) => choice.id !== choiceValue) || [];
 
-    // // Update the logic, removing the deleted choice value
-    // const newLogic =
-    //   question.logic?.map((logic) => {
-    //     let updatedValue = logic.value;
-
-    //     if (Array.isArray(logic.value)) {
-    //       updatedValue = logic.value.filter((value) => value !== choiceValue);
-    //     } else if (logic.value === choiceValue) {
-    //       updatedValue = undefined;
-    //     }
-
-    //     return { ...logic, value: updatedValue };
-    //   }) || [];
-
     // Update the question with new choices and logic
     updateQuestion(questionIdx, {
       choices: newChoices,
-      //  logic: newLogic
     });
   };
 

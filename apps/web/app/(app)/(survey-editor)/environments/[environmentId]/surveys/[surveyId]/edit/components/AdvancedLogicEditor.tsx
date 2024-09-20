@@ -1,7 +1,6 @@
 import { AdvancedLogicEditorActions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorActions";
 import { AdvancedLogicEditorConditions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorConditions";
 import { ArrowRightIcon } from "lucide-react";
-import { cn } from "@formbricks/lib/cn";
 import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
@@ -25,7 +24,7 @@ export function AdvancedLogicEditor({
   isLast,
 }: AdvancedLogicEditorProps) {
   return (
-    <div className={cn("flex w-full grow flex-col gap-4 overflow-x-auto text-sm")}>
+    <div className="flex w-full grow flex-col gap-4 overflow-x-auto text-sm">
       <AdvancedLogicEditorConditions
         conditions={logicItem.conditions}
         updateQuestion={updateQuestion}
@@ -42,12 +41,12 @@ export function AdvancedLogicEditor({
         localSurvey={localSurvey}
         questionIdx={questionIdx}
       />
-      {isLast && (
+      {isLast ? (
         <div className="flex flex-wrap items-center space-x-2">
           <ArrowRightIcon className="h-4 w-4" />
           <p className="text-slate-700">All other answers will continue to the next question</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

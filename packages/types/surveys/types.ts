@@ -6,10 +6,10 @@ import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
 import {
-  type TAction,
   type TConditionGroup,
   type TSingleCondition,
   type TSurveyAdvancedLogic,
+  type TSurveyAdvancedLogicAction,
   type TSurveyLogicConditionsOperator,
   ZActionCalculateNumber,
   ZActionCalculateText,
@@ -19,7 +19,7 @@ import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
-  isConditionsGroup,
+  isConditionGroup,
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
@@ -1612,7 +1612,7 @@ const validateConditions = (
 
   const validateConditionGroup = (group: TConditionGroup): void => {
     group.conditions.forEach((condition) => {
-      if (isConditionsGroup(condition)) {
+      if (isConditionGroup(condition)) {
         validateConditionGroup(condition);
       } else {
         validateSingleCondition(condition);
@@ -1629,7 +1629,7 @@ const validateActions = (
   survey: TSurvey,
   questionIndex: number,
   logicIndex: number,
-  actions: TAction[]
+  actions: TSurveyAdvancedLogicAction[]
 ): z.ZodIssue[] => {
   const questionIds = survey.questions.map((q) => q.id);
 

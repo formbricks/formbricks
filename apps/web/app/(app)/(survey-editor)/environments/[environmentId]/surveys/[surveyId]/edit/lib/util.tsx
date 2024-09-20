@@ -1,4 +1,3 @@
-import { ruleEngine } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/logicRuleEngine";
 import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
@@ -20,14 +19,14 @@ import {
 } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
+import { isConditionGroup } from "@formbricks/lib/survey/logic/utils";
 import {
-  TAction,
   TConditionGroup,
   TLeftOperand,
   TRightOperand,
   TSingleCondition,
   TSurveyAdvancedLogic,
+  TSurveyAdvancedLogicAction,
   TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
 import {
@@ -37,6 +36,7 @@ import {
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
 import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/InputCombobox";
+import { TLogicRuleOption, logicRules } from "./logicRuleEngine";
 
 // formats the text to highlight specific parts of the text with slashes
 export const formatTextWithSlashes = (text: string) => {
@@ -78,8 +78,8 @@ export const getConditionValueOptions = (
   localSurvey: TSurvey,
   currQuestionIdx: number
 ): TComboboxGroupedOption[] => {
-  const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
-  const variables = localSurvey.variables || [];
+  const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
+  const variables = localSurvey.variables ?? [];
   const questions = localSurvey.questions;
 
   const groupedOptions: TComboboxGroupedOption[] = [];
@@ -152,17 +152,17 @@ export const actionObjectiveOptions: TComboboxOption[] = [
 ];
 
 const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {
-  let options;
+  let options: TLogicRuleOption;
 
   if (question.type === "openText") {
     const inputType = question.inputType === "number" ? "number" : "text";
-    options = ruleEngine.question.openText[inputType].options;
+    options = logicRules.question[`openText.${inputType}`].options;
   } else {
-    options = ruleEngine.question[question.type].options;
+    options = logicRules.question[question.type].options;
   }
 
   if (question.required) {
-    options = options.filter((option) => option.value !== "isSkipped");
+    options = options.filter((option) => option.value !== "isSkipped") as TLogicRuleOption;
   }
 
   return options;
@@ -179,14 +179,14 @@ export const getConditionOperatorOptions = (
   localSurvey: TSurvey
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
-    const variables = localSurvey.variables || [];
+    const variables = localSurvey.variables ?? [];
     const variableType =
       variables.find((variable) => variable.id === condition.leftOperand.value)?.type || "text";
-    return ruleEngine.variable[variableType].options;
+    return logicRules[`variable.${variableType}`].options;
   } else if (condition.leftOperand.type === "hiddenField") {
-    return ruleEngine.hiddenField.options;
+    return logicRules.hiddenField.options;
   } else if (condition.leftOperand.type === "question") {
-    const questions = localSurvey.questions || [];
+    const questions = localSurvey.questions ?? [];
     const question = questions.find((question) => question.id === condition.leftOperand.value);
 
     if (!question) return [];
@@ -219,9 +219,9 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  let questions = localSurvey.questions || [];
-  let variables = localSurvey.variables || [];
-  let hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
+  let questions = localSurvey.questions ?? [];
+  let variables = localSurvey.variables ?? [];
+  let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
 
   const selectedQuestion = questions.find((question) => question.id === condition.leftOperand.value);
   const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
@@ -763,7 +763,7 @@ export const getMatchValueProps = (
 };
 
 export const getActionTargetOptions = (
-  action: TAction,
+  action: TSurveyAdvancedLogicAction,
   localSurvey: TSurvey,
   currQuestionIdx: number
 ): TComboboxOption[] => {
@@ -797,7 +797,7 @@ export const getActionTargetOptions = (
 };
 
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] => {
-  const variables = localSurvey.variables || [];
+  const variables = localSurvey.variables ?? [];
 
   return variables.map((variable) => {
     return {
@@ -851,8 +851,8 @@ export const getActionOpeartorOptions = (variableType?: TSurveyVariable["type"])
 };
 
 export const getActionValueOptions = (variableId: string, localSurvey: TSurvey): TComboboxGroupedOption[] => {
-  const hiddenFields = localSurvey.hiddenFields?.fieldIds || [];
-  let variables = localSurvey.variables || [];
+  const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
+  let variables = localSurvey.variables ?? [];
   const questions = localSurvey.questions;
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
@@ -995,29 +995,51 @@ export const getActionValueOptions = (variableId: string, localSurvey: TSurvey):
   return [];
 };
 
+const isUsedInLeftOperand = (
+  leftOperand: TLeftOperand,
+  type: "question" | "hiddenField" | "variable",
+  id: string
+): boolean => {
+  switch (type) {
+    case "question":
+      return leftOperand.type === "question" && leftOperand.value === id;
+    case "hiddenField":
+      return leftOperand.type === "hiddenField" && leftOperand.value === id;
+    case "variable":
+      return leftOperand.type === "variable" && leftOperand.value === id;
+  }
+};
+
+const isUsedInRightOperand = (
+  rightOperand: TRightOperand,
+  type: "question" | "hiddenField" | "variable",
+  id: string
+): boolean => {
+  switch (type) {
+    case "question":
+      return rightOperand.type === "question" && rightOperand.value === id;
+    case "hiddenField":
+      return rightOperand.type === "hiddenField" && rightOperand.value === id;
+    case "variable":
+      return rightOperand.type === "variable" && rightOperand.value === id;
+  }
+};
+
 export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
-    if (isConditionsGroup(condition)) {
+    if (isConditionGroup(condition)) {
       // It's a TConditionGroup
       return condition.conditions.some(isUsedInCondition);
     } else {
       // It's a TSingleCondition
       return (
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, questionId)) ||
-        isUsedInLeftOperand(condition.leftOperand, questionId)
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "question", questionId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "question", questionId)
       );
     }
   };
 
-  const isUsedInLeftOperand = (leftOperand: TLeftOperand, id: string): boolean => {
-    return leftOperand.type === "question" && leftOperand.value === id;
-  };
-
-  const isUsedInRightOperand = (rightOperand: TRightOperand, id: string): boolean => {
-    return rightOperand.type === "question" && rightOperand.value === id;
-  };
-
-  const isUsedInAction = (action: TAction): boolean => {
+  const isUsedInAction = (action: TSurveyAdvancedLogicAction): boolean => {
     return (
       (action.objective === "jumpToQuestion" && action.target === questionId) ||
       (action.objective === "requireAnswer" && action.target === questionId)
@@ -1035,7 +1057,7 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): nu
 
 export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optionId: string): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
-    if (isConditionsGroup(condition)) {
+    if (isConditionGroup(condition)) {
       // It's a TConditionGroup
       return condition.conditions.some(isUsedInCondition);
     } else {
@@ -1066,27 +1088,19 @@ export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optio
 
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
-    if (isConditionsGroup(condition)) {
+    if (isConditionGroup(condition)) {
       // It's a TConditionGroup
       return condition.conditions.some(isUsedInCondition);
     } else {
       // It's a TSingleCondition
       return (
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand)) ||
-        isUsedInLeftOperand(condition.leftOperand)
+        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand, "variable", variableId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "variable", variableId)
       );
     }
   };
 
-  const isUsedInLeftOperand = (leftOperand: TLeftOperand): boolean => {
-    return leftOperand.type === "variable" && leftOperand.value === variableId;
-  };
-
-  const isUsedInRightOperand = (rightOperand: TRightOperand): boolean => {
-    return rightOperand.type === "variable" && rightOperand.value === variableId;
-  };
-
-  const isUsedInAction = (action: TAction): boolean => {
+  const isUsedInAction = (action: TSurveyAdvancedLogicAction): boolean => {
     return action.objective === "calculate" && action.variableId === variableId;
   };
 
@@ -1099,24 +1113,17 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
 
 export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
-    if (isConditionsGroup(condition)) {
+    if (isConditionGroup(condition)) {
       // It's a TConditionGroup
       return condition.conditions.some(isUsedInCondition);
     } else {
       // It's a TSingleCondition
       return (
-        (condition.rightOperand && isUsedInRightOperand(condition.rightOperand)) ||
-        isUsedInLeftOperand(condition.leftOperand)
+        (condition.rightOperand &&
+          isUsedInRightOperand(condition.rightOperand, "hiddenField", hiddenFieldId)) ||
+        isUsedInLeftOperand(condition.leftOperand, "hiddenField", hiddenFieldId)
       );
     }
-  };
-
-  const isUsedInLeftOperand = (leftOperand: TLeftOperand): boolean => {
-    return leftOperand.type === "hiddenField" && leftOperand.value === hiddenFieldId;
-  };
-
-  const isUsedInRightOperand = (rightOperand: TRightOperand): boolean => {
-    return rightOperand.type === "hiddenField" && rightOperand.value === hiddenFieldId;
   };
 
   const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {

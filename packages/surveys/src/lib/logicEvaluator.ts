@@ -1,11 +1,11 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { isConditionsGroup } from "@formbricks/lib/survey/logic/utils";
+import { isConditionGroup } from "@formbricks/lib/survey/logic/utils";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
-  TAction,
   TActionCalculate,
   TConditionGroup,
   TSingleCondition,
+  TSurveyAdvancedLogicAction,
 } from "@formbricks/types/surveys/logic";
 import {
   TSurvey,
@@ -23,7 +23,7 @@ export const evaluateAdvancedLogic = (
 ): boolean => {
   const evaluateConditionGroup = (group: TConditionGroup): boolean => {
     const results = group.conditions.map((condition) => {
-      if (isConditionsGroup(condition)) {
+      if (isConditionGroup(condition)) {
         return evaluateConditionGroup(condition);
       } else {
         return evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage);
@@ -359,7 +359,7 @@ const getRightOperandValue = (
 
 export const performActions = (
   survey: TSurvey,
-  actions: TAction[],
+  actions: TSurveyAdvancedLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {

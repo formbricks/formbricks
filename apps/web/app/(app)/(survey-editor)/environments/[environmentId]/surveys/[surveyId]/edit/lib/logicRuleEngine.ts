@@ -1,89 +1,87 @@
 import { ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
-export const ruleEngine = {
+export const logicRules = {
   question: {
-    [TSurveyQuestionTypeEnum.OpenText]: {
-      text: {
-        options: [
-          {
-            label: "equals",
-            value: ZSurveyLogicConditionsOperator.Enum.equals,
-          },
-          {
-            label: "does not equal",
-            value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
-          },
-          {
-            label: "contains",
-            value: ZSurveyLogicConditionsOperator.Enum.contains,
-          },
-          {
-            label: "does not contain",
-            value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
-          },
-          {
-            label: "starts with",
-            value: ZSurveyLogicConditionsOperator.Enum.startsWith,
-          },
-          {
-            label: "does not start with",
-            value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
-          },
-          {
-            label: "ends with",
-            value: ZSurveyLogicConditionsOperator.Enum.endsWith,
-          },
-          {
-            label: "does not end with",
-            value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
-          },
-          {
-            label: "is submitted",
-            value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
-          },
-          {
-            label: "is skipped",
-            value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
-          },
-        ],
-      },
-      number: {
-        options: [
-          {
-            label: "=",
-            value: ZSurveyLogicConditionsOperator.Enum.equals,
-          },
-          {
-            label: "!=",
-            value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
-          },
-          {
-            label: ">",
-            value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
-          },
-          {
-            label: "<",
-            value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
-          },
-          {
-            label: ">=",
-            value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
-          },
-          {
-            label: "<=",
-            value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
-          },
-          {
-            label: "is submitted",
-            value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
-          },
-          {
-            label: "is skipped",
-            value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
-          },
-        ],
-      },
+    [`${TSurveyQuestionTypeEnum.OpenText}.text`]: {
+      options: [
+        {
+          label: "equals",
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
+        },
+        {
+          label: "does not equal",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
+        },
+        {
+          label: "contains",
+          value: ZSurveyLogicConditionsOperator.Enum.contains,
+        },
+        {
+          label: "does not contain",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
+        },
+        {
+          label: "starts with",
+          value: ZSurveyLogicConditionsOperator.Enum.startsWith,
+        },
+        {
+          label: "does not start with",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
+        },
+        {
+          label: "ends with",
+          value: ZSurveyLogicConditionsOperator.Enum.endsWith,
+        },
+        {
+          label: "does not end with",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
+        },
+        {
+          label: "is submitted",
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
+        },
+        {
+          label: "is skipped",
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
+        },
+      ],
+    },
+    [`${TSurveyQuestionTypeEnum.OpenText}.number`]: {
+      options: [
+        {
+          label: "=",
+          value: ZSurveyLogicConditionsOperator.Enum.equals,
+        },
+        {
+          label: "!=",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
+        },
+        {
+          label: ">",
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
+        },
+        {
+          label: "<",
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
+        },
+        {
+          label: ">=",
+          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
+        },
+        {
+          label: "<=",
+          value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
+        },
+        {
+          label: "is submitted",
+          value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
+        },
+        {
+          label: "is skipped",
+          value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
+        },
+      ],
     },
     [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: {
       options: [
@@ -354,71 +352,69 @@ export const ruleEngine = {
       ],
     },
   },
-  variable: {
-    text: {
-      options: [
-        {
-          label: "equals",
-          value: ZSurveyLogicConditionsOperator.Enum.equals,
-        },
-        {
-          label: "does not equal",
-          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
-        },
-        {
-          label: "contains",
-          value: ZSurveyLogicConditionsOperator.Enum.contains,
-        },
-        {
-          label: "does not contain",
-          value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
-        },
-        {
-          label: "starts with",
-          value: ZSurveyLogicConditionsOperator.Enum.startsWith,
-        },
-        {
-          label: "does not start with",
-          value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
-        },
-        {
-          label: "ends with",
-          value: ZSurveyLogicConditionsOperator.Enum.endsWith,
-        },
-        {
-          label: "does not end with",
-          value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
-        },
-      ],
-    },
-    number: {
-      options: [
-        {
-          label: "=",
-          value: ZSurveyLogicConditionsOperator.Enum.equals,
-        },
-        {
-          label: "!=",
-          value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
-        },
-        {
-          label: ">",
-          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
-        },
-        {
-          label: "<",
-          value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
-        },
-        {
-          label: ">=",
-          value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
-        },
-        {
-          label: "<=",
-          value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
-        },
-      ],
-    },
+  ["variable.text"]: {
+    options: [
+      {
+        label: "equals",
+        value: ZSurveyLogicConditionsOperator.Enum.equals,
+      },
+      {
+        label: "does not equal",
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
+      },
+      {
+        label: "contains",
+        value: ZSurveyLogicConditionsOperator.Enum.contains,
+      },
+      {
+        label: "does not contain",
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
+      },
+      {
+        label: "starts with",
+        value: ZSurveyLogicConditionsOperator.Enum.startsWith,
+      },
+      {
+        label: "does not start with",
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
+      },
+      {
+        label: "ends with",
+        value: ZSurveyLogicConditionsOperator.Enum.endsWith,
+      },
+      {
+        label: "does not end with",
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
+      },
+    ],
+  },
+  ["variable.number"]: {
+    options: [
+      {
+        label: "=",
+        value: ZSurveyLogicConditionsOperator.Enum.equals,
+      },
+      {
+        label: "!=",
+        value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
+      },
+      {
+        label: ">",
+        value: ZSurveyLogicConditionsOperator.Enum.isGreaterThan,
+      },
+      {
+        label: "<",
+        value: ZSurveyLogicConditionsOperator.Enum.isLessThan,
+      },
+      {
+        label: ">=",
+        value: ZSurveyLogicConditionsOperator.Enum.isGreaterThanOrEqual,
+      },
+      {
+        label: "<=",
+        value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
+      },
+    ],
   },
   hiddenField: {
     options: [
@@ -457,3 +453,5 @@ export const ruleEngine = {
     ],
   },
 };
+
+export type TLogicRuleOption = (typeof logicRules.question)[keyof typeof logicRules.question]["options"];

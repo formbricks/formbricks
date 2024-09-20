@@ -19,16 +19,14 @@ export const AdvancedSettings = ({
   attributeClasses,
 }: AdvancedSettingsProps) => {
   return (
-    <div>
-      <div className="mb-4">
-        <ConditionalLogic
-          question={question}
-          updateQuestion={updateQuestion}
-          localSurvey={localSurvey}
-          questionIdx={questionIdx}
-          attributeClasses={attributeClasses}
-        />
-      </div>
+    <div className="flex flex-col gap-4">
+      <ConditionalLogic
+        question={question}
+        updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+        attributeClasses={attributeClasses}
+      />
 
       <UpdateQuestionId
         question={question}

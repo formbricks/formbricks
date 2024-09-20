@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { structuredClone } from "pollyfills/structuredClone";
 import {
   TResponse,
   TResponseData,
@@ -620,10 +621,13 @@ export const getSurveySummaryDropOff = (
   let impressionsArr = new Array(survey.questions.length).fill(0) as number[];
   let dropOffPercentageArr = new Array(survey.questions.length).fill(0) as number[];
 
-  const surveyVariablesData = survey.variables?.reduce((acc, variable) => {
-    acc[variable.id] = variable.value;
-    return acc;
-  }, {});
+  const surveyVariablesData = survey.variables?.reduce(
+    (acc, variable) => {
+      acc[variable.id] = variable.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
 
   responses.forEach((response) => {
     // Calculate total time-to-completion

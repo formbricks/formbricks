@@ -1,5 +1,10 @@
 import { z } from "zod";
-import type { TAction, TActionJumpToQuestion, TConditionGroup, TSingleCondition } from "./logic";
+import type {
+  TActionJumpToQuestion,
+  TConditionGroup,
+  TSingleCondition,
+  TSurveyAdvancedLogicAction,
+} from "./logic";
 import type { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
 
 export const FORBIDDEN_IDS = [
@@ -225,7 +230,7 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
 };
 
 // Helper function to find all "jumpToQuestion" actions in the logic
-const findJumpToQuestionActions = (actions: TAction[]): TActionJumpToQuestion[] => {
+const findJumpToQuestionActions = (actions: TSurveyAdvancedLogicAction[]): TActionJumpToQuestion[] => {
   return actions.filter((action) => action.objective === "jumpToQuestion");
 };
 
@@ -264,6 +269,6 @@ export const validateId = (
 
 type TCondition = TSingleCondition | TConditionGroup;
 
-export const isConditionsGroup = (condition: TCondition): condition is TConditionGroup => {
+export const isConditionGroup = (condition: TCondition): condition is TConditionGroup => {
   return "conditions" in condition;
 };
