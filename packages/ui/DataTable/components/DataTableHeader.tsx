@@ -36,7 +36,7 @@ export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: Dat
       ref={setNodeRef}
       style={style}
       key={header.id}
-      className={cn("group relative h-10 border-b border-slate-300 bg-white px-4 text-center", {
+      className={cn("group relative h-10 border-b border-slate-200 bg-white px-4 text-center", {
         "border-r": !header.column.getIsLastColumn(),
         "border-l": !header.column.getIsFirstColumn(),
       })}>
