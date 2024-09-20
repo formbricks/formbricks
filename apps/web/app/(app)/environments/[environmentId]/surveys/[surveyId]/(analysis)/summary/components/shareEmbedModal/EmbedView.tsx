@@ -3,15 +3,17 @@
 import { ArrowLeftIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/Button";
+import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
-import { WebpageTab } from "./WebpageTab";
+import { WebsiteTab } from "./WebsiteTab";
 
 interface EmbedViewProps {
   handleInitialPageButton: () => void;
   tabs: Array<{ id: string; label: string; icon: any }>;
   activeId: string;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
+  environmentId: string;
   survey: any;
   email: string;
   surveyUrl: string;
@@ -24,6 +26,7 @@ export const EmbedView = ({
   tabs,
   activeId,
   setActiveId,
+  environmentId,
   survey,
   email,
   surveyUrl,
@@ -67,7 +70,7 @@ export const EmbedView = ({
             {activeId === "email" ? (
               <EmailTab surveyId={survey.id} email={email} />
             ) : activeId === "webpage" ? (
-              <WebpageTab surveyUrl={surveyUrl} />
+              <WebsiteTab surveyUrl={surveyUrl} environmentId={environmentId} />
             ) : activeId === "link" ? (
               <LinkTab
                 survey={survey}
@@ -75,6 +78,8 @@ export const EmbedView = ({
                 surveyUrl={surveyUrl}
                 setSurveyUrl={setSurveyUrl}
               />
+            ) : activeId === "app" ? (
+              <AppTab environmentId={environmentId} />
             ) : null}
           </div>
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">

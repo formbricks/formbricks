@@ -49,6 +49,7 @@ interface QuestionsViewProps {
   isFormbricksCloud: boolean;
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
+  isCxMode: boolean;
 }
 
 export const QuestionsView = ({
@@ -65,6 +66,7 @@ export const QuestionsView = ({
   isFormbricksCloud,
   attributeClasses,
   plan,
+  isCxMode,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -359,18 +361,20 @@ export const QuestionsView = ({
 
   return (
     <div className="mt-12 w-full px-5 py-4">
-      <div className="mb-5 flex w-full flex-col gap-5">
-        <EditWelcomeCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-          isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          selectedLanguageCode={selectedLanguageCode}
-          attributeClasses={attributeClasses}
-        />
-      </div>
+      {!isCxMode && (
+        <div className="mb-5 flex w-full flex-col gap-5">
+          <EditWelcomeCard
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            setActiveQuestionId={setActiveQuestionId}
+            activeQuestionId={activeQuestionId}
+            isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            selectedLanguageCode={selectedLanguageCode}
+            attributeClasses={attributeClasses}
+          />
+        </div>
+      )}
 
       <DndContext
         id="questions"
@@ -393,10 +397,11 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
+          isCxMode={isCxMode}
         />
       </DndContext>
 
-      <AddQuestionButton addQuestion={addQuestion} product={product} />
+      <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} />
       <div className="mt-5 flex flex-col gap-5">
         <hr className="border-t border-dashed" />
         <DndContext
@@ -427,37 +432,41 @@ export const QuestionsView = ({
           </SortableContext>
         </DndContext>
 
-        <AddEndingCardButton
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          addEndingCard={addEndingCard}
-        />
-        <hr />
+        {!isCxMode && (
+          <>
+            <AddEndingCardButton
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              addEndingCard={addEndingCard}
+            />
+            <hr />
 
-        <HiddenFieldsCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-        />
+            <HiddenFieldsCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              setActiveQuestionId={setActiveQuestionId}
+              activeQuestionId={activeQuestionId}
+            />
 
-        {/* <SurveyVariablesCard
+            {/* <SurveyVariablesCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           activeQuestionId={activeQuestionId}
           setActiveQuestionId={setActiveQuestionId}
         /> */}
 
-        <MultiLanguageCard
-          localSurvey={localSurvey}
-          product={product}
-          setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-          isFormbricksCloud={isFormbricksCloud}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-        />
+            <MultiLanguageCard
+              localSurvey={localSurvey}
+              product={product}
+              setLocalSurvey={setLocalSurvey}
+              setActiveQuestionId={setActiveQuestionId}
+              activeQuestionId={activeQuestionId}
+              isMultiLanguageAllowed={isMultiLanguageAllowed}
+              isFormbricksCloud={isFormbricksCloud}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+            />
+          </>
+        )}
       </div>
     </div>
   );

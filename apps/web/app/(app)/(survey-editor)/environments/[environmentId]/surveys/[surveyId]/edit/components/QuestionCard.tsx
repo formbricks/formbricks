@@ -54,6 +54,7 @@ interface QuestionCardProps {
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
+  isCxMode: boolean;
 }
 
 export const QuestionCard = ({
@@ -74,6 +75,7 @@ export const QuestionCard = ({
   attributeClasses,
   addQuestion,
   isFormbricksCloud,
+  isCxMode,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -206,6 +208,7 @@ export const QuestionCard = ({
                 updateCard={updateQuestion}
                 addCard={addQuestion}
                 cardType="question"
+                isCxMode={isCxMode}
               />
             </div>
           </div>

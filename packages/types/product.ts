@@ -15,6 +15,9 @@ export type TProductConfigIndustry = z.infer<typeof ZProductConfigIndustry>;
 export const ZProductConfigChannel = z.enum(["link", "app", "website"]).nullable();
 export type TProductConfigChannel = z.infer<typeof ZProductConfigChannel>;
 
+export const ZProductMode = z.enum(["surveys", "cx"]);
+export type TProductMode = z.infer<typeof ZProductMode>;
+
 export const ZProductConfig = z.object({
   channel: ZProductConfigChannel,
   industry: ZProductConfigIndustry,

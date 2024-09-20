@@ -229,6 +229,18 @@ export const questionTypes: TQuestion[] = [
   },
 ];
 
+export const CXQuestionTypes = questionTypes.filter((questionType) => {
+  return [
+    TSurveyQuestionTypeEnum.OpenText,
+    TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+    TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+    TSurveyQuestionTypeEnum.Rating,
+    TSurveyQuestionTypeEnum.NPS,
+    TSurveyQuestionTypeEnum.Consent,
+    TSurveyQuestionTypeEnum.CTA,
+  ].includes(questionType.id as TSurveyQuestionTypeEnum);
+});
+
 export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = questionTypes.reduce(
   (prev, curr) => ({
     ...prev,
@@ -238,6 +250,14 @@ export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = 
 );
 
 export const QUESTIONS_NAME_MAP = questionTypes.reduce(
+  (prev, curr) => ({
+    ...prev,
+    [curr.id]: curr.label,
+  }),
+  {}
+) as Record<TSurveyQuestionTypeEnum, string>;
+
+export const CX_QUESTIONS_NAME_MAP = CXQuestionTypes.reduce(
   (prev, curr) => ({
     ...prev,
     [curr.id]: curr.label,
