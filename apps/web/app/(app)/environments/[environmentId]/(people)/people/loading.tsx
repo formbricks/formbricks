@@ -1,4 +1,4 @@
-import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
+import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/PageHeader";
 
@@ -7,7 +7,7 @@ const Loading = () => {
     <>
       <PageContentWrapper>
         <PageHeader pageTitle="People">
-          <PeopleSecondaryNavigation activeId="people" loading />
+          <PersonSecondaryNavigation activeId="people" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">

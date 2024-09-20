@@ -34,6 +34,7 @@ type StylingViewProps = {
   localStylingChanges: TSurveyStyling | null;
   setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
   isUnsplashConfigured: boolean;
+  isCxMode: boolean;
 };
 
 export const StylingView = ({
@@ -47,6 +48,7 @@ export const StylingView = ({
   localStylingChanges,
   setLocalStylingChanges,
   isUnsplashConfigured,
+  isCxMode,
 }: StylingViewProps) => {
   const stylingDefaults: TBaseStyling = useMemo(() => {
     let stylingDefaults: TBaseStyling;
@@ -197,28 +199,30 @@ export const StylingView = ({
     <FormProvider {...form}>
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="mt-12 space-y-3 p-5">
-          <div className="flex items-center gap-4 py-4">
-            <FormField
-              control={form.control}
-              name="overwriteThemeStyling"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2 space-y-0">
-                  <FormControl>
-                    <Switch checked={!!field.value} onCheckedChange={handleOverwriteToggle} />
-                  </FormControl>
+          {!isCxMode && (
+            <div className="flex items-center gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="overwriteThemeStyling"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2 space-y-0">
+                    <FormControl>
+                      <Switch checked={!!field.value} onCheckedChange={handleOverwriteToggle} />
+                    </FormControl>
 
-                  <div>
-                    <FormLabel className="text-base font-semibold text-slate-900">
-                      Add custom styles
-                    </FormLabel>
-                    <FormDescription className="text-sm text-slate-800">
-                      Override the theme with individual styles for this survey.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-          </div>
+                    <div>
+                      <FormLabel className="text-base font-semibold text-slate-900">
+                        Add custom styles
+                      </FormLabel>
+                      <FormDescription className="text-sm text-slate-800">
+                        Override the theme with individual styles for this survey.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
 
           <FormStylingSettings
             open={formStylingOpen}
@@ -248,31 +252,32 @@ export const StylingView = ({
             />
           )}
 
-          <div className="mt-4 flex h-8 items-center justify-between">
-            <div>
-              {overwriteThemeStyling && (
-                <Button
-                  type="button"
-                  variant="minimal"
-                  className="flex items-center gap-2"
-                  onClick={() => setConfirmResetStylingModalOpen(true)}>
-                  Reset to theme styles
-                  <RotateCcwIcon className="h-4 w-4" />
-                </Button>
-              )}
+          {!isCxMode && (
+            <div className="mt-4 flex h-8 items-center justify-between">
+              <div>
+                {overwriteThemeStyling && (
+                  <Button
+                    type="button"
+                    variant="minimal"
+                    className="flex items-center gap-2"
+                    onClick={() => setConfirmResetStylingModalOpen(true)}>
+                    Reset to theme styles
+                    <RotateCcwIcon className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <p className="text-sm text-slate-500">
+                Adjust the theme in the{" "}
+                <Link
+                  href={`/environments/${environment.id}/product/look`}
+                  target="_blank"
+                  className="font-semibold underline">
+                  Look & Feel
+                </Link>{" "}
+                settings
+              </p>
             </div>
-            <p className="text-sm text-slate-500">
-              Adjust the theme in the{" "}
-              <Link
-                href={`/environments/${environment.id}/product/look`}
-                target="_blank"
-                className="font-semibold underline">
-                Look & Feel
-              </Link>{" "}
-              settings
-            </p>
-          </div>
-
+          )}
           <AlertDialog
             open={confirmResetStylingModalOpen}
             setOpen={setConfirmResetStylingModalOpen}

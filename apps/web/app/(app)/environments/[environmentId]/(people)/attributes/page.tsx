@@ -1,4 +1,4 @@
-import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
+import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -42,7 +42,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="People" cta={HowToAddAttributesButton}>
-        <PeopleSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
+        <PersonSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
       </PageHeader>
       <AttributeClassesTable attributeClasses={attributeClasses} />
     </PageContentWrapper>
