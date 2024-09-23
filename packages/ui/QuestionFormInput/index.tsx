@@ -1,7 +1,8 @@
 "use client";
 
+import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
-import { RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -117,7 +118,7 @@ export const QuestionFormInput = ({
     [value, id, isInvalid, surveyLanguageCodes]
   );
 
-  const getElementTextBasedOnType = (): TI18nString => {
+  const getElementTextBasedOnType = useCallback((): TI18nString => {
     if (isChoice && typeof index === "number") {
       return getChoiceLabel(question, index, surveyLanguageCodes);
     }
@@ -138,9 +139,22 @@ export const QuestionFormInput = ({
       (question && (question[id as keyof TSurveyQuestion] as TI18nString)) ||
       createI18nString("", surveyLanguageCodes)
     );
-  };
+  }, [
+    id,
+    index,
+    isChoice,
+    isEndingCard,
+    isMatrixLabelColumn,
+    isMatrixLabelRow,
+    isWelcomeCard,
+    localSurvey,
+    question,
+    questionIdx,
+    surveyLanguageCodes,
+  ]);
 
   const [text, setText] = useState(getElementTextBasedOnType());
+  // const [debouncedText, setDebouncedText] = useState(text); // Added debouncedText state
   const [renderedText, setRenderedText] = useState<JSX.Element[]>();
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
     determineImageUploaderVisibility(questionIdx, localSurvey)
@@ -356,50 +370,79 @@ export const QuestionFormInput = ({
   // choice -> updateChoice
   // matrixLabel -> updateMatrixLabel
 
-  const handleUpdate = (updatedText: string) => {
-    const translatedText = createUpdatedText(updatedText);
+  const createUpdatedText = useCallback(
+    (updatedText: string): TI18nString => {
+      return {
+        ...getElementTextBasedOnType(),
+        [usedLanguageCode]: updatedText,
+      };
+    },
+    [getElementTextBasedOnType, usedLanguageCode]
+  );
 
-    if (isChoice) {
-      updateChoiceDetails(translatedText);
-    } else if (isEndingCard || isWelcomeCard) {
-      updateSurveyDetails(translatedText);
-    } else if (isMatrixLabelRow || isMatrixLabelColumn) {
-      updateMatrixLabelDetails(translatedText);
-    } else {
-      updateQuestionDetails(translatedText);
-    }
-  };
+  const updateChoiceDetails = useCallback(
+    (translatedText: TI18nString) => {
+      if (updateChoice && typeof index === "number") {
+        updateChoice(index, { label: translatedText });
+      }
+    },
+    [index, updateChoice]
+  );
 
-  const createUpdatedText = (updatedText: string): TI18nString => {
-    return {
-      ...getElementTextBasedOnType(),
-      [usedLanguageCode]: updatedText,
-    };
-  };
+  const updateSurveyDetails = useCallback(
+    (translatedText: TI18nString) => {
+      if (updateSurvey) {
+        updateSurvey({ [id]: translatedText });
+      }
+    },
+    [id, updateSurvey]
+  );
 
-  const updateChoiceDetails = (translatedText: TI18nString) => {
-    if (updateChoice && typeof index === "number") {
-      updateChoice(index, { label: translatedText });
-    }
-  };
+  const updateMatrixLabelDetails = useCallback(
+    (translatedText: TI18nString) => {
+      if (updateMatrixLabel && typeof index === "number") {
+        updateMatrixLabel(index, isMatrixLabelRow ? "row" : "column", translatedText);
+      }
+    },
+    [index, isMatrixLabelRow, updateMatrixLabel]
+  );
 
-  const updateSurveyDetails = (translatedText: TI18nString) => {
-    if (updateSurvey) {
-      updateSurvey({ [id]: translatedText });
-    }
-  };
+  const updateQuestionDetails = useCallback(
+    (translatedText: TI18nString) => {
+      if (updateQuestion) {
+        updateQuestion(questionIdx, { [id]: translatedText });
+      }
+    },
+    [id, questionIdx, updateQuestion]
+  );
 
-  const updateMatrixLabelDetails = (translatedText: TI18nString) => {
-    if (updateMatrixLabel && typeof index === "number") {
-      updateMatrixLabel(index, isMatrixLabelRow ? "row" : "column", translatedText);
-    }
-  };
+  const handleUpdate = useCallback(
+    (updatedText: string) => {
+      const translatedText = createUpdatedText(updatedText);
 
-  const updateQuestionDetails = (translatedText: TI18nString) => {
-    if (updateQuestion) {
-      updateQuestion(questionIdx, { [id]: translatedText });
-    }
-  };
+      if (isChoice) {
+        updateChoiceDetails(translatedText);
+      } else if (isEndingCard || isWelcomeCard) {
+        updateSurveyDetails(translatedText);
+      } else if (isMatrixLabelRow || isMatrixLabelColumn) {
+        updateMatrixLabelDetails(translatedText);
+      } else {
+        updateQuestionDetails(translatedText);
+      }
+    },
+    [
+      createUpdatedText,
+      isChoice,
+      isEndingCard,
+      isMatrixLabelColumn,
+      isMatrixLabelRow,
+      isWelcomeCard,
+      updateChoiceDetails,
+      updateMatrixLabelDetails,
+      updateQuestionDetails,
+      updateSurveyDetails,
+    ]
+  );
 
   const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
@@ -415,6 +458,20 @@ export const QuestionFormInput = ({
       const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
       if (endingCard && endingCard.type === "endScreen") return endingCard.videoUrl;
     } else return question.videoUrl;
+  };
+
+  const debouncedHandleUpdate = useMemo(
+    () => debounce((value) => handleUpdate(headlineToRecall(value, recallItems, fallbacks)), 300),
+    [handleUpdate, recallItems, fallbacks]
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const updatedText = {
+      ...getElementTextBasedOnType(),
+      [usedLanguageCode]: e.target.value,
+    };
+    setText(recallToHeadline(updatedText, localSurvey, false, usedLanguageCode, attributeClasses));
+    debouncedHandleUpdate(e.target.value);
   };
 
   return (
@@ -454,7 +511,9 @@ export const QuestionFormInput = ({
               <div
                 id="wrapper"
                 ref={highlightContainerRef}
-                className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${localSurvey.languages?.length > 1 ? "pr-24" : ""}`}
+                className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
+                  localSurvey.languages?.length > 1 ? "pr-24" : ""
+                }`}
                 dir="auto">
                 {renderedText}
               </div>
@@ -472,7 +531,9 @@ export const QuestionFormInput = ({
               <Input
                 key={`${questionId}-${id}-${usedLanguageCode}`}
                 dir="auto"
-                className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""} ${className}`}
+                className={`absolute top-0 text-black caret-black ${
+                  localSurvey.languages?.length > 1 ? "pr-24" : ""
+                } ${className}`}
                 placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
                 id={id}
                 name={id}
@@ -483,18 +544,9 @@ export const QuestionFormInput = ({
                     usedLanguageCode
                   ]
                 }
+                onChange={handleInputChange}
                 ref={inputRef}
                 onBlur={onBlur}
-                onChange={(e) => {
-                  let translatedText = {
-                    ...getElementTextBasedOnType(),
-                    [usedLanguageCode]: e.target.value,
-                  };
-                  setText(
-                    recallToHeadline(translatedText, localSurvey, false, usedLanguageCode, attributeClasses)
-                  );
-                  handleUpdate(headlineToRecall(e.target.value, recallItems, fallbacks));
-                }}
                 maxLength={maxLength ?? undefined}
                 isInvalid={
                   isInvalid &&

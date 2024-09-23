@@ -1,6 +1,7 @@
+import debounce from "lodash/debounce";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
 import Image from "next/image";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 import { cn } from "@formbricks/lib/cn";
 import {
@@ -62,13 +63,23 @@ export const InputCombobox = ({
   comboboxClasses,
   emptyDropdownText = "No option found.",
 }: InputComboboxProps) => {
-  const [open, setOpen] = React.useState(false);
-  const [localValue, setLocalValue] = React.useState<
-    TComboboxOption | TComboboxOption[] | string | number | null
-  >(null);
-  const [inputType, setInputType] = React.useState<"dropdown" | "input" | null>(null);
+  const [open, setOpen] = useState(false);
+  const [localValue, setLocalValue] = useState<TComboboxOption | TComboboxOption[] | string | number | null>(
+    null
+  );
+  const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
+  const [inputValue, setInputValue] = useState(value || "");
 
-  showCheckIcon = allowMultiSelect ? true : showCheckIcon;
+  // Debounced function to call onChangeValue
+  const debouncedOnChangeValue = useMemo(
+    () => debounce((val) => onChangeValue(val, undefined, true), 300),
+    [onChangeValue]
+  );
+
+  useEffect(() => {
+    // Sync inputValue when value changes externally
+    setInputValue(value || "");
+  }, [value]);
 
   useEffect(() => {
     const validOptions = options?.length ? options : groupedOptions?.flatMap((group) => group.options);
@@ -140,8 +151,9 @@ export const InputCombobox = ({
     const value = e.target.value;
 
     if (value === "") {
-      setLocalValue(null);
-      onChangeValue("");
+      setLocalValue("");
+      setInputValue("");
+      debouncedOnChangeValue("");
     }
 
     if (inputType !== "input") {
@@ -150,8 +162,12 @@ export const InputCombobox = ({
 
     const val = inputType === "number" ? Number(value) : value;
 
+    // Set the local input value immediately
+    setInputValue(val);
     setLocalValue(val);
-    onChangeValue(val, undefined, true);
+
+    // Trigger the debounced onChangeValue
+    debouncedOnChangeValue(val);
   };
 
   const getDisplayValue = useMemo(() => {
@@ -196,7 +212,7 @@ export const InputCombobox = ({
           className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-300"
           {...inputProps}
           id={`${id}-input`}
-          value={localValue as string | number}
+          value={inputValue as string | number}
           onChange={onInputChange}
         />
       )}
@@ -224,9 +240,7 @@ export const InputCombobox = ({
         <PopoverContent
           className={cn(
             "w-auto max-w-[400px] overflow-y-auto truncate border border-slate-400 bg-slate-50 p-0 shadow-none",
-            {
-              "px-2 pt-2": showSearch,
-            }
+            { "px-2 pt-2": showSearch }
           )}>
           <Command>
             {showSearch && (
@@ -237,7 +251,7 @@ export const InputCombobox = ({
             )}
             <CommandList className="mx-1 my-2">
               <CommandEmpty className="mx-2 my-0">{emptyDropdownText}</CommandEmpty>
-              {options && options.length > 0 ? (
+              {options && options.length > 0 && (
                 <CommandGroup>
                   {options.map((option) => (
                     <CommandItem
@@ -246,13 +260,9 @@ export const InputCombobox = ({
                       title={option.label}
                       className="cursor-pointer truncate hover:text-slate-500">
                       {showCheckIcon &&
-                        ((allowMultiSelect &&
-                          Array.isArray(localValue) &&
-                          localValue.find((item) => item.value === option.value)) ||
-                          (!allowMultiSelect &&
-                            typeof localValue === "object" &&
-                            !Array.isArray(localValue) &&
-                            localValue?.value === option.value)) && (
+                        allowMultiSelect &&
+                        Array.isArray(localValue) &&
+                        localValue.find((item) => item.value === option.value) && (
                           <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                         )}
                       {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
@@ -269,8 +279,7 @@ export const InputCombobox = ({
                     </CommandItem>
                   ))}
                 </CommandGroup>
-              ) : null}
-
+              )}
               {groupedOptions?.map((group, idx) => (
                 <>
                   {idx !== 0 && <CommandSeparator key={idx} className="bg-slate-300" />}
@@ -281,14 +290,10 @@ export const InputCombobox = ({
                         onSelect={() => handleSelect(option)}
                         className="cursor-pointer truncate hover:text-slate-500">
                         {showCheckIcon &&
-                          ((allowMultiSelect &&
-                            Array.isArray(localValue) &&
-                            localValue.find((item) => item.value === option.value)) ||
-                            (!allowMultiSelect &&
-                              typeof localValue === "object" &&
-                              !Array.isArray(localValue) &&
-                              localValue?.value === option.value)) && (
-                            <CheckIcon className="mr-2 h-4 w-4 shrink-0 text-slate-300 hover:text-slate-400" />
+                          allowMultiSelect &&
+                          Array.isArray(localValue) &&
+                          localValue.find((item) => item.value === option.value) && (
+                            <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
                           )}
                         {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
                         {option.imgSrc && (
