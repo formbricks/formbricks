@@ -3,10 +3,8 @@ import {
   TActionCalculate,
   TConditionGroup,
   TSingleCondition,
-  TSurveyAdvancedLogicAction,
-} from "@formbricks/types/surveys/logic";
-import {
   TSurvey,
+  TSurveyLogicAction,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
@@ -14,7 +12,7 @@ import {
 import { getLocalizedValue } from "../i18n/utils";
 import { isConditionGroup } from "../survey/logic/utils";
 
-export const evaluateAdvancedLogic = (
+export const evaluateLogic = (
   localSurvey: TSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
@@ -359,7 +357,7 @@ const getRightOperandValue = (
 
 export const performActions = (
   survey: TSurvey,
-  actions: TSurveyAdvancedLogicAction[],
+  actions: TSurveyLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {

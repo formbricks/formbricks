@@ -31,7 +31,7 @@ import {
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
-import { evaluateAdvancedLogic, performActions } from "../utils/evaluateLogic";
+import { evaluateLogic, performActions } from "../utils/evaluateLogic";
 import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
@@ -638,7 +638,7 @@ export const getSurveySummaryDropOff = (
       }
     });
 
-    let localSurvey = JSON.parse(JSON.stringify(survey)) as TSurvey;
+    let localSurvey = structuredClone(survey);
     let localResponseData: TResponseData = { ...response.data };
     let localVariables: TResponseVariables = {
       ...surveyVariablesData,
@@ -742,15 +742,7 @@ const evaluateLogicAndGetNextQuestionId = (
 
   if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
     for (const logic of currQuesTemp.logic) {
-      if (
-        evaluateAdvancedLogic(
-          localSurvey,
-          data,
-          localVariables,
-          logic.conditions,
-          selectedLanguage ?? "default"
-        )
-      ) {
+      if (evaluateLogic(localSurvey, data, localVariables, logic.conditions, selectedLanguage ?? "default")) {
         const { jumpTarget, requiredQuestionIds, calculations } = performActions(
           updatedSurvey,
           logic.actions,

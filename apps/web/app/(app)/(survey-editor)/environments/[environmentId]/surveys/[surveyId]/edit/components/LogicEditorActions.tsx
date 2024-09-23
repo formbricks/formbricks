@@ -4,7 +4,7 @@ import {
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
-} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { getUpdatedActionBody } from "@formbricks/lib/survey/logic/utils";
@@ -13,10 +13,11 @@ import {
   TActionObjective,
   TActionTextVariableCalculateOperator,
   TActionVariableValueType,
-  TSurveyAdvancedLogic,
-  TSurveyAdvancedLogicAction,
-} from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+  TSurvey,
+  TSurveyLogic,
+  TSurveyLogicAction,
+  TSurveyQuestion,
+} from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,29 +26,29 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 import { InputCombobox } from "@formbricks/ui/InputCombobox";
 
-interface AdvancedLogicEditorActions {
+interface LogicEditorActions {
   localSurvey: TSurvey;
-  logicItem: TSurveyAdvancedLogic;
+  logicItem: TSurveyLogic;
   logicIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   questionIdx: number;
 }
 
-export function AdvancedLogicEditorActions({
+export function LogicEditorActions({
   localSurvey,
   logicItem,
   logicIdx,
   question,
   updateQuestion,
   questionIdx,
-}: AdvancedLogicEditorActions) {
+}: LogicEditorActions) {
   const actions = logicItem.actions;
 
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
     actionIdx: number,
-    action?: TSurveyAdvancedLogicAction
+    action?: TSurveyLogicAction
   ) => {
     const logicCopy = structuredClone(question.logic) ?? [];
     const logicItem = logicCopy[logicIdx];
@@ -80,9 +81,9 @@ export function AdvancedLogicEditorActions({
     handleActionsChange("update", actionIdx, actionBody);
   };
 
-  const handleValuesChange = (actionIdx: number, values: Partial<TSurveyAdvancedLogicAction>) => {
+  const handleValuesChange = (actionIdx: number, values: Partial<TSurveyLogicAction>) => {
     const action = actions[actionIdx];
-    const actionBody = { ...action, ...values } as TSurveyAdvancedLogicAction;
+    const actionBody = { ...action, ...values } as TSurveyLogicAction;
     handleActionsChange("update", actionIdx, actionBody);
   };
 

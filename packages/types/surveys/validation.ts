@@ -2,10 +2,12 @@ import { z } from "zod";
 import type {
   TActionJumpToQuestion,
   TConditionGroup,
+  TI18nString,
   TSingleCondition,
-  TSurveyAdvancedLogicAction,
-} from "./logic";
-import type { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
+  TSurveyLanguage,
+  TSurveyLogicAction,
+  TSurveyQuestion,
+} from "./types";
 
 export const FORBIDDEN_IDS = [
   "userId",
@@ -230,7 +232,7 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
 };
 
 // Helper function to find all "jumpToQuestion" actions in the logic
-const findJumpToQuestionActions = (actions: TSurveyAdvancedLogicAction[]): TActionJumpToQuestion[] => {
+const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpToQuestion[] => {
   return actions.filter((action) => action.objective === "jumpToQuestion");
 };
 

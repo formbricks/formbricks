@@ -5,16 +5,14 @@ import {
   TActionCalculate,
   TConditionGroup,
   TSingleCondition,
-  TSurveyAdvancedLogicAction,
-} from "@formbricks/types/surveys/logic";
-import {
   TSurvey,
+  TSurveyLogicAction,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
 
-export const evaluateAdvancedLogic = (
+export const evaluateLogic = (
   localSurvey: TSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
@@ -359,7 +357,7 @@ const getRightOperandValue = (
 
 export const performActions = (
   survey: TSurvey,
-  actions: TSurveyAdvancedLogicAction[],
+  actions: TSurveyLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
 ): {

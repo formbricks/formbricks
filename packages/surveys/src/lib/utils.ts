@@ -1,5 +1,10 @@
-import { TSurveyAdvancedLogic, TSurveyAdvancedLogicAction } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyLogic,
+  TSurveyLogicAction,
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+} from "@formbricks/types/surveys/types";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -63,8 +68,8 @@ const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
 
   const possibleDestinations: string[] = [];
 
-  question.logic.forEach((logic: TSurveyAdvancedLogic) => {
-    logic.actions.forEach((action: TSurveyAdvancedLogicAction) => {
+  question.logic.forEach((logic: TSurveyLogic) => {
+    logic.actions.forEach((action: TSurveyLogicAction) => {
       if (action.objective === "jumpToQuestion") {
         possibleDestinations.push(action.target);
       }

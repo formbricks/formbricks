@@ -2,7 +2,7 @@
 
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
-import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
+import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import {
   DndContext,
   DragEndEvent,
@@ -27,9 +27,9 @@ import { TProduct } from "@formbricks/types/product";
 import {
   TConditionGroup,
   TSingleCondition,
-  TSurveyAdvancedLogic,
-  TSurveyAdvancedLogicAction,
-} from "@formbricks/types/surveys/logic";
+  TSurveyLogic,
+  TSurveyLogicAction,
+} from "@formbricks/types/surveys/types";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
 import {
@@ -115,7 +115,7 @@ export const QuestionsView = ({
       return updatedCondition;
     };
 
-    const updateActions = (actions: TSurveyAdvancedLogicAction[]): TSurveyAdvancedLogicAction[] => {
+    const updateActions = (actions: TSurveyLogicAction[]): TSurveyLogicAction[] => {
       return actions.map((action) => {
         let updatedAction = { ...action };
 
@@ -145,7 +145,7 @@ export const QuestionsView = ({
 
         // Update advanced logic
         if (question.logic) {
-          updatedQuestion.logic = question.logic.map((logicRule: TSurveyAdvancedLogic) => ({
+          updatedQuestion.logic = question.logic.map((logicRule: TSurveyLogic) => ({
             ...logicRule,
             conditions: updateConditions(logicRule.conditions),
             actions: updateActions(logicRule.actions),

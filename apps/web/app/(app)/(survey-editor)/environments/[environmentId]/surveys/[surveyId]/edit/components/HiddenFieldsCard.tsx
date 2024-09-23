@@ -1,6 +1,6 @@
 "use client";
 
-import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
+import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
 import { useState } from "react";

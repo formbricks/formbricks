@@ -3,15 +3,13 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
 import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
-import type {
-  TRightOperand,
-  TSingleCondition,
-  TSurveyAdvancedLogic,
-  TSurveyAdvancedLogicAction,
-  TSurveyLogicConditionsOperator,
-} from "@formbricks/types/surveys/logic";
 import {
+  type TRightOperand,
+  type TSingleCondition,
   type TSurveyEndings,
+  type TSurveyLogic,
+  type TSurveyLogicAction,
+  type TSurveyLogicConditionsOperator,
   type TSurveyMultipleChoiceQuestion,
   type TSurveyQuestion,
   TSurveyQuestionTypeEnum,
@@ -25,7 +23,7 @@ interface TOldLogic {
   destination: string;
 }
 
-const isOldLogic = (logic: TOldLogic | TSurveyAdvancedLogic): logic is TOldLogic => {
+const isOldLogic = (logic: TOldLogic | TSurveyLogic): logic is TOldLogic => {
   return Object.keys(logic).some((key) => ["condition", "destination", "value"].includes(key));
 };
 
@@ -202,7 +200,7 @@ function convertLogic(
   surveyEndings: TSurveyEndings,
   oldLogic: TOldLogic,
   question: TSurveyQuestion
-): TSurveyAdvancedLogic | undefined {
+): TSurveyLogic | undefined {
   if (!oldLogic.condition || !oldLogic.destination) {
     return undefined;
   }
@@ -223,7 +221,7 @@ function convertLogic(
     }
   }
 
-  const action: TSurveyAdvancedLogicAction = {
+  const action: TSurveyLogicAction = {
     id: createId(),
     objective: "jumpToQuestion",
     target: actionTarget,

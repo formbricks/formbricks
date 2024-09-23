@@ -1,5 +1,5 @@
-import { AdvancedLogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditor";
-import { getDefaultOperatorForQuestion } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
+import { LogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditor";
+import { getDefaultOperatorForQuestion } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import {
   ArrowDownIcon,
@@ -14,8 +14,7 @@ import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/survey/logic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -47,7 +46,7 @@ export function ConditionalLogic({
   const addLogic = () => {
     const operator = getDefaultOperatorForQuestion(question);
 
-    const initialCondition: TSurveyAdvancedLogic = {
+    const initialCondition: TSurveyLogic = {
       id: createId(),
       conditions: {
         id: createId(),
@@ -120,7 +119,7 @@ export function ConditionalLogic({
             <div
               key={logicItem.id}
               className="flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <AdvancedLogicEditor
+              <LogicEditor
                 localSurvey={transformedSurvey}
                 logicItem={logicItem}
                 updateQuestion={updateQuestion}

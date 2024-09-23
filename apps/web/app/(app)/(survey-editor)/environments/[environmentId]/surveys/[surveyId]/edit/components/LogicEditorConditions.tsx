@@ -3,7 +3,7 @@ import {
   getConditionValueOptions,
   getDefaultOperatorForQuestion,
   getMatchValueProps,
-} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, MoreVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
@@ -21,9 +21,10 @@ import {
   TDyanmicLogicField,
   TRightOperand,
   TSingleCondition,
+  TSurvey,
   TSurveyLogicConditionsOperator,
-} from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+  TSurveyQuestion,
+} from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +33,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 import { InputCombobox, TComboboxOption } from "@formbricks/ui/InputCombobox";
 
-interface AdvancedLogicEditorConditionsProps {
+interface LogicEditorConditionsProps {
   conditions: TConditionGroup;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
@@ -42,7 +43,7 @@ interface AdvancedLogicEditorConditionsProps {
   depth?: number;
 }
 
-export function AdvancedLogicEditorConditions({
+export function LogicEditorConditions({
   conditions,
   logicIdx,
   question,
@@ -50,7 +51,7 @@ export function AdvancedLogicEditorConditions({
   questionIdx,
   updateQuestion,
   depth = 0,
-}: AdvancedLogicEditorConditionsProps) {
+}: LogicEditorConditionsProps) {
   const handleAddConditionBelow = (resourceId: string) => {
     const operator = getDefaultOperatorForQuestion(question);
 
@@ -198,7 +199,7 @@ export function AdvancedLogicEditorConditions({
             </div>
           )}
           <div className="rounded-lg border border-slate-400 p-3">
-            <AdvancedLogicEditorConditions
+            <LogicEditorConditions
               conditions={condition}
               updateQuestion={updateQuestion}
               localSurvey={localSurvey}

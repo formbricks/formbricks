@@ -1,6 +1,6 @@
 "use client";
 
-import { findVariableUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
+import { findVariableUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { TrashIcon } from "lucide-react";
 import React, { useCallback, useEffect } from "react";

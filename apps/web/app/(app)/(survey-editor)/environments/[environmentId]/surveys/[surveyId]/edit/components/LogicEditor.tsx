@@ -1,12 +1,11 @@
-import { AdvancedLogicEditorActions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorActions";
-import { AdvancedLogicEditorConditions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedLogicEditorConditions";
+import { LogicEditorActions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditorActions";
+import { LogicEditorConditions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditorConditions";
 import { ArrowRightIcon } from "lucide-react";
-import { TSurveyAdvancedLogic } from "@formbricks/types/surveys/logic";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
-interface AdvancedLogicEditorProps {
+interface LogicEditorProps {
   localSurvey: TSurvey;
-  logicItem: TSurveyAdvancedLogic;
+  logicItem: TSurveyLogic;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
   questionIdx: number;
@@ -14,7 +13,7 @@ interface AdvancedLogicEditorProps {
   isLast: boolean;
 }
 
-export function AdvancedLogicEditor({
+export function LogicEditor({
   localSurvey,
   logicItem,
   updateQuestion,
@@ -22,10 +21,10 @@ export function AdvancedLogicEditor({
   questionIdx,
   logicIdx,
   isLast,
-}: AdvancedLogicEditorProps) {
+}: LogicEditorProps) {
   return (
     <div className="flex w-full grow flex-col gap-4 overflow-x-auto text-sm">
-      <AdvancedLogicEditorConditions
+      <LogicEditorConditions
         conditions={logicItem.conditions}
         updateQuestion={updateQuestion}
         question={question}
@@ -33,7 +32,7 @@ export function AdvancedLogicEditor({
         localSurvey={localSurvey}
         logicIdx={logicIdx}
       />
-      <AdvancedLogicEditorActions
+      <LogicEditorActions
         logicItem={logicItem}
         logicIdx={logicIdx}
         question={question}

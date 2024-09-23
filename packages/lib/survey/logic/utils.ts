@@ -3,9 +3,9 @@ import {
   TActionObjective,
   TConditionGroup,
   TSingleCondition,
-  TSurveyAdvancedLogic,
-  TSurveyAdvancedLogicAction,
-} from "@formbricks/types/surveys/logic";
+  TSurveyLogic,
+  TSurveyLogicAction,
+} from "@formbricks/types/surveys/types";
 
 type TCondition = TSingleCondition | TConditionGroup;
 
@@ -13,7 +13,7 @@ export const isConditionGroup = (condition: TCondition): condition is TCondition
   return (condition as TConditionGroup).connector !== undefined;
 };
 
-export const duplicateLogicItem = (logicItem: TSurveyAdvancedLogic): TSurveyAdvancedLogic => {
+export const duplicateLogicItem = (logicItem: TSurveyLogic): TSurveyLogic => {
   const duplicateConditionGroup = (group: TConditionGroup): TConditionGroup => {
     return {
       ...group,
@@ -35,7 +35,7 @@ export const duplicateLogicItem = (logicItem: TSurveyAdvancedLogic): TSurveyAdva
     };
   };
 
-  const duplicateAction = (action: TSurveyAdvancedLogicAction): TSurveyAdvancedLogicAction => {
+  const duplicateAction = (action: TSurveyLogicAction): TSurveyLogicAction => {
     return {
       ...action,
       id: createId(),
@@ -176,9 +176,9 @@ export const updateCondition = (
 };
 
 export const getUpdatedActionBody = (
-  action: TSurveyAdvancedLogicAction,
+  action: TSurveyLogicAction,
   objective: TActionObjective
-): TSurveyAdvancedLogicAction => {
+): TSurveyLogicAction => {
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":

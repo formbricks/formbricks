@@ -1,36 +1,17 @@
-import {
-  ArrowUpFromLineIcon,
-  CalendarDaysIcon,
-  CheckIcon,
-  EyeOffIcon,
-  FileDigitIcon,
-  FileType2Icon,
-  Grid3X3Icon,
-  HomeIcon,
-  ImageIcon,
-  ListIcon,
-  ListOrderedIcon,
-  MessageSquareTextIcon,
-  MousePointerClickIcon,
-  PhoneIcon,
-  PresentationIcon,
-  Rows3Icon,
-  StarIcon,
-} from "lucide-react";
+import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/survey/logic/utils";
+import { questionTypes } from "@formbricks/lib/utils/questions";
 import {
   TConditionGroup,
   TLeftOperand,
   TRightOperand,
   TSingleCondition,
-  TSurveyAdvancedLogic,
-  TSurveyAdvancedLogicAction,
-  TSurveyLogicConditionsOperator,
-} from "@formbricks/types/surveys/logic";
-import {
   TSurvey,
+  TSurveyLogic,
+  TSurveyLogicAction,
+  TSurveyLogicConditionsOperator,
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
@@ -57,22 +38,13 @@ export const formatTextWithSlashes = (text: string) => {
   });
 };
 
-const questionIconMapping = {
-  openText: MessageSquareTextIcon,
-  multipleChoiceSingle: Rows3Icon,
-  multipleChoiceMulti: ListIcon,
-  pictureSelection: ImageIcon,
-  rating: StarIcon,
-  nps: PresentationIcon,
-  cta: MousePointerClickIcon,
-  consent: CheckIcon,
-  date: CalendarDaysIcon,
-  fileUpload: ArrowUpFromLineIcon,
-  cal: PhoneIcon,
-  matrix: Grid3X3Icon,
-  ranking: ListOrderedIcon,
-  address: HomeIcon,
-};
+const questionIconMapping = questionTypes.reduce(
+  (prev, curr) => ({
+    ...prev,
+    [curr.id]: curr.icon,
+  }),
+  {}
+);
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
@@ -763,7 +735,7 @@ export const getMatchValueProps = (
 };
 
 export const getActionTargetOptions = (
-  action: TSurveyAdvancedLogicAction,
+  action: TSurveyLogicAction,
   localSurvey: TSurvey,
   currQuestionIdx: number
 ): TComboboxOption[] => {
@@ -1039,14 +1011,14 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): nu
     }
   };
 
-  const isUsedInAction = (action: TSurveyAdvancedLogicAction): boolean => {
+  const isUsedInAction = (action: TSurveyLogicAction): boolean => {
     return (
       (action.objective === "jumpToQuestion" && action.target === questionId) ||
       (action.objective === "requireAnswer" && action.target === questionId)
     );
   };
 
-  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+  const isUsedInLogicRule = (logicRule: TSurveyLogic): boolean => {
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
@@ -1079,7 +1051,7 @@ export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optio
     return false;
   };
 
-  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+  const isUsedInLogicRule = (logicRule: TSurveyLogic): boolean => {
     return isUsedInCondition(logicRule.conditions);
   };
 
@@ -1100,11 +1072,11 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
     }
   };
 
-  const isUsedInAction = (action: TSurveyAdvancedLogicAction): boolean => {
+  const isUsedInAction = (action: TSurveyLogicAction): boolean => {
     return action.objective === "calculate" && action.variableId === variableId;
   };
 
-  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+  const isUsedInLogicRule = (logicRule: TSurveyLogic): boolean => {
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
@@ -1126,7 +1098,7 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
     }
   };
 
-  const isUsedInLogicRule = (logicRule: TSurveyAdvancedLogic): boolean => {
+  const isUsedInLogicRule = (logicRule: TSurveyLogic): boolean => {
     return isUsedInCondition(logicRule.conditions);
   };
 

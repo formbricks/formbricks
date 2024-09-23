@@ -8,7 +8,7 @@ import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
-import { evaluateAdvancedLogic, performActions } from "@/lib/logicEvaluator";
+import { evaluateLogic, performActions } from "@/lib/logicEvaluator";
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
@@ -179,14 +179,18 @@ export const Survey = ({
   };
 
   const makeQuestionsRequired = (questionIds: string[]): void => {
-    const localSurveyClone = structuredClone(localSurvey);
-    localSurveyClone.questions.forEach((question) => {
-      if (questionIds.includes(question.id)) {
-        question.required = true;
-      }
-    });
-
-    setlocalSurvey(localSurveyClone);
+    setlocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      questions: prevSurvey.questions.map((question) => {
+        if (questionIds.includes(question.id)) {
+          return {
+            ...question,
+            required: true,
+          };
+        }
+        return question;
+      }),
+    }));
   };
 
   const pushVariableState = (questionId: string) => {
@@ -224,13 +228,7 @@ export const Survey = ({
     if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
       for (const logic of currQuesTemp.logic) {
         if (
-          evaluateAdvancedLogic(
-            localSurvey,
-            localResponseData,
-            currentVariables,
-            logic.conditions,
-            selectedLanguage
-          )
+          evaluateLogic(localSurvey, localResponseData, currentVariables, logic.conditions, selectedLanguage)
         ) {
           const { jumpTarget, requiredQuestionIds, calculations } = performActions(
             localSurvey,

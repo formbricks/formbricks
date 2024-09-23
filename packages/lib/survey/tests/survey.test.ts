@@ -1,7 +1,7 @@
 import { prisma } from "../../__mocks__/database";
 import { mockResponseNote, mockResponseWithMockPerson } from "../../response/tests/__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
-import { evaluateAdvancedLogic } from "utils/evaluateLogic";
+import { evaluateLogic } from "utils/evaluateLogic";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -39,12 +39,12 @@ beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
 });
 
-describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
+describe("evaluateLogic with mockSurveyWithLogic", () => {
   it("should return true when q1 answer is blue", () => {
     const data = { q1: "blue" };
     const variablesData = {};
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -58,7 +58,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q1: "red" };
     const variablesData = {};
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -72,7 +72,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q1: "blue", q2: "pizza" };
     const variablesData = {};
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -86,7 +86,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q1: "blue", q2: "burger" };
     const variablesData = {};
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -100,7 +100,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q2: "pizza", q3: "Inception" };
     const variablesData = {};
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -114,7 +114,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q4: "lmao" };
     const variablesData = { siog1dabtpo3l0a3xoxw2922: "lmao" };
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -128,7 +128,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q4: "lol" };
     const variablesData = { siog1dabtpo3l0a3xoxw2922: "damn" };
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -142,7 +142,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q5: "40" };
     const variablesData = { km1srr55owtn2r7lkoh5ny1u: 35 };
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -156,7 +156,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q5: "40" };
     const variablesData = { km1srr55owtn2r7lkoh5ny1u: 25 };
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
@@ -170,7 +170,7 @@ describe("evaluateAdvancedLogic with mockSurveyWithLogic", () => {
     const data = { q6: ["lmao", "XD"], q1: "green", q2: "pizza", q3: "inspection", name: "pizza" };
     const variablesData = { siog1dabtpo3l0a3xoxw2922: "tokyo" };
 
-    const result = evaluateAdvancedLogic(
+    const result = evaluateLogic(
       mockSurveyWithLogic,
       data,
       variablesData,
