@@ -16,7 +16,7 @@ export const ResponseVariables = ({ variables, variablesData }: HiddenFieldsProp
           variablesData[variable.id] === undefined ||
           !["string", "number"].includes(typeof variablesData[variable.id])
         )
-          return;
+          return null;
         return (
           <div key={variable.id}>
             <div className="flex space-x-2 text-sm text-slate-500">
