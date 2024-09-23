@@ -96,7 +96,7 @@ const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.
     {
       userId: {
         contains: search,
-        mode: "insensitive" as Prisma.QueryMode,
+        mode: "insensitive",
       },
     },
     {
@@ -104,7 +104,7 @@ const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.
         some: {
           value: {
             contains: search,
-            mode: "insensitive" as Prisma.QueryMode,
+            mode: "insensitive",
           },
         },
       },
@@ -112,7 +112,7 @@ const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.
     {
       id: {
         contains: search,
-        mode: "insensitive" as Prisma.QueryMode,
+        mode: "insensitive",
       },
     },
   ],
@@ -140,7 +140,7 @@ export const getPeople = reactCache(
           throw error;
         }
       },
-      [`getPeople-${environmentId}-${offset}-${searchValue}`],
+      [`getPeople-${environmentId}-${offset}-${searchValue ?? ""}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }
@@ -165,7 +165,7 @@ export const getPersonCount = reactCache(
           throw error;
         }
       },
-      [`getPersonCount-${environmentId}-${searchValue}`],
+      [`getPersonCount-${environmentId}-${searchValue ?? ""}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }

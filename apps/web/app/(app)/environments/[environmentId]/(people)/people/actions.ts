@@ -10,7 +10,7 @@ import { ZId } from "@formbricks/types/common";
 
 const ZGetPersonsAction = z.object({
   environmentId: ZId,
-  offset: z.number(),
+  offset: z.number().int().nonnegative(),
   searchValue: z.string().optional(),
 });
 

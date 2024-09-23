@@ -16,7 +16,7 @@ export const HighlightedText: React.FC<HighlightedTextProps> = ({ value, searchV
     <span className="text-slate-900">
       {parts.map((part, index) =>
         regex.test(part) ? (
-          <mark key={index} style={{ backgroundColor: "yellow" }}>
+          <mark key={`${part}-${index}`} style={{ backgroundColor: "yellow" }}>
             {part}
           </mark>
         ) : (
