@@ -147,13 +147,27 @@ export const InputCombobox = ({
   };
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputType = e.target.type;
     const value = e.target.value;
 
+    if (value === "") {
+      setLocalValue("");
+      setInputValue("");
+      debouncedOnChangeValue("");
+    }
+
+    if (inputType !== "input") {
+      setInputType("input");
+    }
+
+    const val = inputType === "number" ? Number(value) : value;
+
     // Set the local input value immediately
-    setInputValue(value);
+    setInputValue(val);
+    setLocalValue(val);
 
     // Trigger the debounced onChangeValue
-    debouncedOnChangeValue(value);
+    debouncedOnChangeValue(val);
   };
 
   const getDisplayValue = useMemo(() => {
