@@ -1,5 +1,6 @@
 "use client";
 
+import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -459,16 +460,18 @@ export const QuestionFormInput = ({
     } else return question.videoUrl;
   };
 
+  const debouncedHandleUpdate = useMemo(
+    () => debounce((value) => handleUpdate(headlineToRecall(value, recallItems, fallbacks)), 300),
+    [handleUpdate, recallItems, fallbacks]
+  );
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const updatedText = {
       ...getElementTextBasedOnType(),
       [usedLanguageCode]: e.target.value,
     };
     setText(recallToHeadline(updatedText, localSurvey, false, usedLanguageCode, attributeClasses));
-
-    setTimeout(() => {
-      handleUpdate(headlineToRecall(e.target.value, recallItems, fallbacks));
-    }, 100);
+    debouncedHandleUpdate(e.target.value);
   };
 
   return (
