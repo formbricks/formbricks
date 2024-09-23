@@ -119,13 +119,13 @@ const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.
 });
 
 export const getPeople = reactCache(
-  (environmentId: string, offset?: number, search?: string): Promise<TPersonWithAttributes[]> =>
+  (environmentId: string, offset?: number, searchValue?: string): Promise<TPersonWithAttributes[]> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [search, ZOptionalString]);
+        validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
         try {
           const persons = await prisma.person.findMany({
-            where: buildPersonWhereClause(environmentId, search),
+            where: buildPersonWhereClause(environmentId, searchValue),
             select: selectPerson,
             take: ITEMS_PER_PAGE,
             skip: offset,
@@ -140,7 +140,7 @@ export const getPeople = reactCache(
           throw error;
         }
       },
-      [`getPeople-${environmentId}-${offset}-${search}`],
+      [`getPeople-${environmentId}-${offset}-${searchValue}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }
@@ -148,14 +148,14 @@ export const getPeople = reactCache(
 );
 
 export const getPersonCount = reactCache(
-  (environmentId: string, search?: string): Promise<number> =>
+  (environmentId: string, searchValue?: string): Promise<number> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId], [search, ZOptionalString]);
+        validateInputs([environmentId, ZId], [searchValue, ZOptionalString]);
 
         try {
           return await prisma.person.count({
-            where: buildPersonWhereClause(environmentId, search),
+            where: buildPersonWhereClause(environmentId, searchValue),
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -165,7 +165,7 @@ export const getPersonCount = reactCache(
           throw error;
         }
       },
-      [`getPersonCount-${environmentId}-${search}`],
+      [`getPersonCount-${environmentId}-${searchValue}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }

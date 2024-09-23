@@ -11,7 +11,7 @@ import { ZId } from "@formbricks/types/common";
 const ZGetPersonsAction = z.object({
   environmentId: ZId,
   offset: z.number(),
-  search: z.string().optional(),
+  searchValue: z.string().optional(),
 });
 
 export const getPersonsAction = authenticatedActionClient
@@ -23,12 +23,12 @@ export const getPersonsAction = authenticatedActionClient
       rules: ["environment", "read"],
     });
 
-    return getPeople(parsedInput.environmentId, parsedInput.offset, parsedInput.search);
+    return getPeople(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
   });
 
 const ZGetPersonCountAction = z.object({
   environmentId: ZId,
-  search: z.string().optional(),
+  searchValue: z.string().optional(),
 });
 
 export const getPersonCountAction = authenticatedActionClient
@@ -40,7 +40,7 @@ export const getPersonCountAction = authenticatedActionClient
       rules: ["environment", "read"],
     });
 
-    return getPersonCount(parsedInput.environmentId, parsedInput.search);
+    return getPersonCount(parsedInput.environmentId, parsedInput.searchValue);
   });
 
 const ZGetPersonAttributesAction = z.object({

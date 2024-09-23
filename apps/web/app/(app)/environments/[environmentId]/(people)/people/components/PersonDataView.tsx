@@ -5,6 +5,7 @@ import {
   getPersonsAction,
 } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { PersonTable } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTable";
+import { debounce } from "lodash";
 import { useEffect, useState } from "react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -28,7 +29,7 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
         const getPersonActionData = await getPersonsAction({
           environmentId: environment.id,
           offset: 0,
-          search: searchValue,
+          searchValue,
         });
         if (getPersonActionData?.data) {
           setPersons(getPersonActionData.data);
@@ -40,22 +41,32 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
       }
     };
 
-    fetchData();
+    const debouncedFetchData = debounce(fetchData, 300);
+    debouncedFetchData();
+
+    return () => {
+      debouncedFetchData.cancel();
+    };
   }, [searchValue]);
 
   const fetchNextPage = async () => {
     if (hasMore && !loadingNextPage) {
       setLoadingNextPage(true);
-      const getPersonsActionData = await getPersonsAction({
-        environmentId: environment.id,
-        offset: persons.length,
-        search: searchValue,
-      });
-      if (getPersonsActionData?.data) {
-        const newData = getPersonsActionData.data;
-        setPersons((prevPersonsData) => [...prevPersonsData, ...newData]);
+      try {
+        const getPersonsActionData = await getPersonsAction({
+          environmentId: environment.id,
+          offset: persons.length,
+          searchValue,
+        });
+        if (getPersonsActionData?.data) {
+          const newData = getPersonsActionData.data;
+          setPersons((prevPersonsData) => [...prevPersonsData, ...newData]);
+        }
+      } catch (error) {
+        console.error("Error fetching next page of people data:", error);
+      } finally {
+        setLoadingNextPage(false);
       }
-      setLoadingNextPage(false);
     }
   };
 
@@ -65,12 +76,16 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
 
   useEffect(() => {
     const calculateHasMore = async () => {
-      const personCount = await getPersonCountAction({
-        environmentId: environment.id,
-        search: searchValue,
-      });
-      if (personCount && typeof personCount.data === "number") {
-        setHasMore(personCount.data > persons.length);
+      try {
+        const personCount = await getPersonCountAction({
+          environmentId: environment.id,
+          searchValue,
+        });
+        if (personCount && typeof personCount.data === "number") {
+          setHasMore(personCount.data > persons.length);
+        }
+      } catch (error) {
+        console.error("Error calculating has more:", error);
       }
     };
     calculateHasMore();
