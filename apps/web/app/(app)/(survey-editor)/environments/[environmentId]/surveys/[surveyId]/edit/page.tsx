@@ -22,7 +22,7 @@ export const generateMetadata = async ({ params }) => {
   };
 };
 
-const Page = async ({ params }) => {
+const Page = async ({ params, searchParams }) => {
   const [
     survey,
     product,
@@ -70,6 +70,8 @@ const Page = async ({ params }) => {
     return <ErrorComponent />;
   }
 
+  const isCxMode = searchParams.mode === "cx";
+
   return (
     <SurveyEditor
       survey={survey}
@@ -87,6 +89,7 @@ const Page = async ({ params }) => {
       plan={organization.billing.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
+      isCxMode={isCxMode}
     />
   );
 };

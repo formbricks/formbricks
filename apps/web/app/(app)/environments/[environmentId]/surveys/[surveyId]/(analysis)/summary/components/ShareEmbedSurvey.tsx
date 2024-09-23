@@ -1,13 +1,21 @@
 "use client";
 
-import { BellRing, BlocksIcon, Code2Icon, LinkIcon, MailIcon, UsersRound } from "lucide-react";
+import {
+  BellRing,
+  BlocksIcon,
+  Code2Icon,
+  LinkIcon,
+  MailIcon,
+  SmartphoneIcon,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/Badge";
-import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@formbricks/ui/Dialog";
 import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
 import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
@@ -27,9 +35,10 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
   const { email } = user;
 
   const tabs = [
-    { id: "email", label: "Embed in an Email", icon: MailIcon },
-    { id: "webpage", label: "Embed in a Web Page", icon: Code2Icon },
-    { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
+    { id: "email", label: "Embed in an email", icon: MailIcon },
+    { id: "webpage", label: "Embed on website", icon: Code2Icon },
+    { id: "link", label: `${isSingleUseLinkSurvey ? "Single use links" : "Share the link"}`, icon: LinkIcon },
+    { id: "app", label: "Embed in app", icon: SmartphoneIcon },
   ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
@@ -55,7 +64,10 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
         {showView === "start" ? (
           <div className="h-full max-w-full overflow-hidden">
             <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
-              <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
+              <DialogTitle>
+                <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
+              </DialogTitle>
+              <DialogDescription className="hidden" />
               <ShareSurveyLink
                 survey={survey}
                 webAppUrl={webAppUrl}
@@ -74,7 +86,7 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
                   Embed survey
                 </button>
                 <Link
-                  href={`/environments/${environmentId}//settings/notifications`}
+                  href={`/environments/${environmentId}/settings/notifications`}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <BellRing className="h-6 w-6 text-slate-700" />
                   Configure alerts
@@ -101,6 +113,7 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
             handleInitialPageButton={handleInitialPageButton}
             tabs={tabs}
             activeId={activeId}
+            environmentId={environmentId}
             setActiveId={setActiveId}
             survey={survey}
             email={email}

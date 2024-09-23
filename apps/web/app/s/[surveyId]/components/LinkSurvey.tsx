@@ -279,6 +279,7 @@ export const LinkSurvey = ({
                 source: sourceParam || "",
               },
               variables: responseUpdate.variables,
+              displayId: surveyState.displayId,
               ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
             });
         }}

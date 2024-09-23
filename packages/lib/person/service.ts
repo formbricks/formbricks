@@ -4,8 +4,8 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson, TPersonWithAttributes } from "@formbricks/types/people";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -17,6 +17,16 @@ export const selectPerson = {
   createdAt: true,
   updatedAt: true,
   environmentId: true,
+  attributes: {
+    select: {
+      value: true,
+      attributeClass: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  },
 };
 
 type TransformPersonInput = {
@@ -33,7 +43,7 @@ type TransformPersonInput = {
   updatedAt: Date;
 };
 
-export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
+export const transformPrismaPerson = (person: TransformPersonInput): TPersonWithAttributes => {
   const attributes = person.attributes.reduce(
     (acc, attr) => {
       acc[attr.attributeClass.name] = attr.value;
@@ -49,7 +59,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPerson => 
     environmentId: person.environmentId,
     createdAt: new Date(person.createdAt),
     updatedAt: new Date(person.updatedAt),
-  } as TPerson;
+  } as TPersonWithAttributes;
 };
 
 export const getPerson = reactCache(
@@ -81,13 +91,13 @@ export const getPerson = reactCache(
 );
 
 export const getPeople = reactCache(
-  (environmentId: string, page?: number): Promise<TPerson[]> =>
+  (environmentId: string, page?: number): Promise<TPersonWithAttributes[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
         try {
-          return await prisma.person.findMany({
+          const persons = await prisma.person.findMany({
             where: {
               environmentId: environmentId,
             },
@@ -95,6 +105,8 @@ export const getPeople = reactCache(
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           });
+
+          return persons.map((person) => transformPrismaPerson(person));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
@@ -110,7 +122,7 @@ export const getPeople = reactCache(
     )()
 );
 
-export const getPeopleCount = reactCache(
+export const getPersonCount = reactCache(
   (environmentId: string): Promise<number> =>
     cache(
       async () => {
@@ -130,7 +142,7 @@ export const getPeopleCount = reactCache(
           throw error;
         }
       },
-      [`getPeopleCount-${environmentId}`],
+      [`getPersonCount-${environmentId}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }
@@ -217,6 +229,16 @@ export const getPersonByUserId = reactCache(
     cache(
       async () => {
         validateInputs([environmentId, ZId], [userId, ZString]);
+
+        const environment = await prisma.environment.findUnique({
+          where: {
+            id: environmentId,
+          },
+        });
+
+        if (!environment) {
+          throw new ResourceNotFoundError("environment", environmentId);
+        }
 
         // check if userId exists as a column
         const personWithUserId = await prisma.person.findFirst({

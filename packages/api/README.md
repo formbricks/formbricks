@@ -37,18 +37,6 @@ The API client is now ready to be used across your project. It can be used to in
   });
   ```
 
-- Update a Display
-
-  ```ts
-  await api.client.display.update(
-    displayId: "<your-display-id>",
-    {
-      userId: "<your-user-id>", // optional
-      responseId: "<your-response-id>", // optional
-    },
-  );
-  ```
-
 ### Response
 
 - Create a Response

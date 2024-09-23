@@ -79,7 +79,9 @@ export const finishOnboarding = async (
   page: Page,
   ProductChannel: TProductConfigChannel = "website"
 ): Promise<void> => {
-  await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
+  await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/mode/);
+
+  await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
   if (ProductChannel === "website") {
     await page.getByRole("button", { name: "Built for scale Public website" }).click();
@@ -89,7 +91,7 @@ export const finishOnboarding = async (
     await page.getByRole("button", { name: "Anywhere online Link" }).click();
   }
 
-  await page.getByRole("button", { name: "Proven methods SaaS" }).click();
+  // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("e.g. Formbricks").click();
   await page.getByPlaceholder("e.g. Formbricks").fill("My Product");
   await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();

@@ -1,4 +1,5 @@
 import { prisma } from "../../__mocks__/database";
+import { mockResponseNote, mockResponseWithMockPerson } from "../../response/tests/__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
 import { evaluateAdvancedLogic } from "utils/evaluateLogic";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -445,6 +446,9 @@ describe("Tests for getSyncSurveys", () => {
     it("Returns synced surveys", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSyncSurveyOutput]);
       prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
+      prisma.responseNote.findMany.mockResolvedValue([mockResponseNote]);
+
       const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
         version: "1.7.0",
       });
