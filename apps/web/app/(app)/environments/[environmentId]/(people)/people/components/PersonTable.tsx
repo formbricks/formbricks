@@ -19,6 +19,7 @@ import { TPersonTableData } from "@formbricks/types/people";
 import { Button } from "@formbricks/ui/Button";
 import { DataTableHeader, DataTableSettingsModal, DataTableToolbar } from "@formbricks/ui/DataTable";
 import { getCommonPinningStyles } from "@formbricks/ui/DataTable/lib/utils";
+import { Input } from "@formbricks/ui/Input";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
 
@@ -29,6 +30,8 @@ interface PersonTableProps {
   deletePersons: (personIds: string[]) => void;
   isDataLoaded: boolean;
   environmentId: string;
+  searchValue: string;
+  setSearchValue: (value: string) => void;
 }
 
 export const PersonTable = ({
@@ -38,6 +41,8 @@ export const PersonTable = ({
   deletePersons,
   isDataLoaded,
   environmentId,
+  searchValue,
+  setSearchValue,
 }: PersonTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -46,7 +51,10 @@ export const PersonTable = ({
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
   // Generate columns
-  const columns = useMemo(() => generatePersonTableColumns(isExpanded ?? false), [isExpanded]);
+  const columns = useMemo(
+    () => generatePersonTableColumns(isExpanded ?? false, searchValue),
+    [isExpanded, searchValue]
+  );
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -145,6 +153,14 @@ export const PersonTable = ({
 
   return (
     <div>
+      <div className="flex items-center justify-between">
+        <Input
+          type="text"
+          placeholder="Search"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+        />
+      </div>
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}

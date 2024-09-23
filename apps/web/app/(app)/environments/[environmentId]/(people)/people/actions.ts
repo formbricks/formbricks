@@ -5,12 +5,13 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
-import { getPeople } from "@formbricks/lib/person/service";
+import { getPeople, getPersonCount } from "@formbricks/lib/person/service";
 import { ZId } from "@formbricks/types/common";
 
 const ZGetPersonsAction = z.object({
   environmentId: ZId,
-  page: z.number(),
+  offset: z.number(),
+  search: z.string().optional(),
 });
 
 export const getPersonsAction = authenticatedActionClient
@@ -22,7 +23,24 @@ export const getPersonsAction = authenticatedActionClient
       rules: ["environment", "read"],
     });
 
-    return getPeople(parsedInput.environmentId, parsedInput.page);
+    return getPeople(parsedInput.environmentId, parsedInput.offset, parsedInput.search);
+  });
+
+const ZGetPersonCountAction = z.object({
+  environmentId: ZId,
+  search: z.string().optional(),
+});
+
+export const getPersonCountAction = authenticatedActionClient
+  .schema(ZGetPersonCountAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["environment", "read"],
+    });
+
+    return getPersonCount(parsedInput.environmentId, parsedInput.search);
   });
 
 const ZGetPersonAttributesAction = z.object({

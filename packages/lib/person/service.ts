@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { ZOptionalNumber, ZOptionalString, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson, TPersonWithAttributes } from "@formbricks/types/people";
@@ -90,20 +90,45 @@ export const getPerson = reactCache(
     )()
 );
 
+const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.PersonWhereInput => ({
+  environmentId: environmentId,
+  OR: [
+    {
+      userId: {
+        contains: search,
+        mode: "insensitive" as Prisma.QueryMode,
+      },
+    },
+    {
+      attributes: {
+        some: {
+          value: {
+            contains: search,
+            mode: "insensitive" as Prisma.QueryMode,
+          },
+        },
+      },
+    },
+    {
+      id: {
+        contains: search,
+        mode: "insensitive" as Prisma.QueryMode,
+      },
+    },
+  ],
+});
+
 export const getPeople = reactCache(
-  (environmentId: string, page?: number): Promise<TPersonWithAttributes[]> =>
+  (environmentId: string, offset?: number, search?: string): Promise<TPersonWithAttributes[]> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
-
+        validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [search, ZOptionalString]);
         try {
           const persons = await prisma.person.findMany({
-            where: {
-              environmentId: environmentId,
-            },
+            where: buildPersonWhereClause(environmentId, search),
             select: selectPerson,
-            take: page ? ITEMS_PER_PAGE : undefined,
-            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            take: ITEMS_PER_PAGE,
+            skip: offset,
           });
 
           return persons.map((person) => transformPrismaPerson(person));
@@ -115,7 +140,7 @@ export const getPeople = reactCache(
           throw error;
         }
       },
-      [`getPeople-${environmentId}-${page}`],
+      [`getPeople-${environmentId}-${offset}-${search}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }
@@ -123,16 +148,14 @@ export const getPeople = reactCache(
 );
 
 export const getPersonCount = reactCache(
-  (environmentId: string): Promise<number> =>
+  (environmentId: string, search?: string): Promise<number> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId]);
+        validateInputs([environmentId, ZId], [search, ZOptionalString]);
 
         try {
           return await prisma.person.count({
-            where: {
-              environmentId: environmentId,
-            },
+            where: buildPersonWhereClause(environmentId, search),
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -142,7 +165,7 @@ export const getPersonCount = reactCache(
           throw error;
         }
       },
-      [`getPersonCount-${environmentId}`],
+      [`getPersonCount-${environmentId}-${search}`],
       {
         tags: [personCache.tag.byEnvironmentId(environmentId)],
       }
