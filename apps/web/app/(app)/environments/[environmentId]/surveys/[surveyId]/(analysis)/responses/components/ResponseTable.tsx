@@ -178,11 +178,7 @@ export const ResponseTable = ({
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">
-            <Table
-              style={{
-                width: table.getCenterTotalSize(),
-                tableLayout: "fixed",
-              }}>
+            <Table className="w-full" style={{ tableLayout: "fixed" }}>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>

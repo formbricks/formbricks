@@ -13,7 +13,6 @@ export const generatePersonTableColumns = (
   const dateColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "createdAt",
     header: () => "Date",
-    size: 200,
     cell: ({ row }) => {
       const isoDateString = row.original.createdAt;
       const date = new Date(isoDateString);
