@@ -1439,6 +1439,15 @@ const validateConditions = (
               message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
+          } else {
+            const choice = question.choices.find((c) => c.id === rightOperand.value);
+            if (!choice) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
           }
         } else if (condition.operator === "equalsOneOf") {
           if (!Array.isArray(rightOperand.value)) {

@@ -50,7 +50,6 @@ const getChoiceId = (question: TSurveyMultipleChoiceQuestion, choiceText: string
 };
 
 const getRightOperandValue = (
-  surveyId: string,
   oldCondition: string,
   oldValue: string | string[] | undefined,
   question: TSurveyQuestion
@@ -89,7 +88,7 @@ const getRightOperandValue = (
       }
     }
 
-    throw new Error(`Invalid value for 'equals' or 'notEquals' condition in survey ${surveyId}`);
+    return undefined;
   }
 
   if (["includesAll", "includesOne"].includes(oldCondition)) {
@@ -121,15 +120,14 @@ const getRightOperandValue = (
       };
     }
 
-    throw new Error(`Invalid value for 'includesAll' or 'includesOne' condition in survey ${surveyId}`);
+    return undefined;
   }
 
-  throw new Error(`Invalid condition ${oldCondition} in survey ${surveyId}`);
+  return undefined;
 };
 
 // Helper function to convert old logic condition to new format
 function convertLogicCondition(
-  surveyId: string,
   oldCondition: string,
   oldValue: string | string[] | undefined,
   question: TSurveyQuestion
@@ -140,7 +138,7 @@ function convertLogicCondition(
 
   const doesRightOperandExistResult = doesRightOperandExist(operator);
   if (doesRightOperandExistResult) {
-    rightOperandValue = getRightOperandValue(surveyId, oldCondition, oldValue, question);
+    rightOperandValue = getRightOperandValue(oldCondition, oldValue, question);
 
     if (!rightOperandValue) {
       return undefined;
@@ -196,7 +194,6 @@ function mapOldOperatorToNew(
 
 // Helper function to convert old logic to new format
 function convertLogic(
-  surveyId: string,
   surveyEndings: TSurveyEndings,
   oldLogic: TOldLogic,
   question: TSurveyQuestion
@@ -205,7 +202,7 @@ function convertLogic(
     return undefined;
   }
 
-  const condition = convertLogicCondition(surveyId, oldLogic.condition, oldLogic.value, question);
+  const condition = convertLogicCondition(oldLogic.condition, oldLogic.value, question);
 
   if (!condition) {
     return undefined;
@@ -263,7 +260,7 @@ async function runMigration(): Promise<void> {
             if (question.logic && Array.isArray(question.logic) && question.logic.some(isOldLogic)) {
               doesThisSurveyHasOldLogic = true;
               const newLogic = (question.logic as unknown as TOldLogic[])
-                .map((oldLogic) => convertLogic(survey.id, survey.endings, oldLogic, question))
+                .map((oldLogic) => convertLogic(survey.endings, oldLogic, question))
                 .filter((logic) => logic !== undefined);
 
               questions.push({ ...question, logic: newLogic });
