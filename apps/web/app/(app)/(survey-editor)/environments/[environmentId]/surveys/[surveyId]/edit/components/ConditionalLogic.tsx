@@ -1,5 +1,8 @@
 import { LogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditor";
-import { getDefaultOperatorForQuestion } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import {
+  getDefaultOperatorForQuestion,
+  replaceEndingCardHeadlineRecall,
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import {
   ArrowDownIcon,
@@ -40,7 +43,10 @@ export function ConditionalLogic({
   updateQuestion,
 }: ConditionalLogicProps) {
   const transformedSurvey = useMemo(() => {
-    return replaceHeadlineRecall(localSurvey, "default", attributeClasses);
+    let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default", attributeClasses);
+    modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default", attributeClasses);
+
+    return modifiedSurvey;
   }, [localSurvey, attributeClasses]);
 
   const addLogic = () => {

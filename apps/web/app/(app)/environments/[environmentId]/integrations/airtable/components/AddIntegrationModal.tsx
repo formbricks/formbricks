@@ -76,7 +76,6 @@ export const AddIntegrationModal = ({
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
-  const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const airtableIntegrationData: TIntegrationAirtableInput = {
@@ -103,6 +102,12 @@ export const AddIntegrationModal = ({
   }, [isEditMode]);
 
   const survey = watch("survey");
+  const includeVariables = watch("includeVariables");
+
+  const setIncludeVariables = (includeVariables: boolean) => {
+    setValue("includeVariables", includeVariables);
+  };
+
   const selectedSurvey = surveys.find((item) => item.id === survey);
   const submitHandler = async (data: IntegrationModalInputs) => {
     try {
@@ -133,7 +138,7 @@ export const AddIntegrationModal = ({
         baseId: data.base,
         tableId: data.table,
         tableName: currentTable?.name ?? "",
-        includeVariables,
+        includeVariables: data.includeVariables,
         includeHiddenFields,
         includeMetadata,
       };

@@ -277,9 +277,7 @@ export const QuestionsView = ({
     const quesIdx = findQuestionUsedInLogic(localSurvey, questionId);
 
     if (quesIdx !== -1) {
-      toast.error(
-        `This question is used in logic of question ${quesIdx + 1}. ${localSurvey.questions[quesIdx].headline["default"]}`
-      );
+      toast.error(`This question is used in logic of question ${quesIdx + 1}.`);
       return;
     }
 

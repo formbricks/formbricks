@@ -1863,6 +1863,18 @@ const validateActions = (
         };
       }
 
+      if (action.value.type === "variable") {
+        const selectedVariable = survey.variables.find((v) => v.id === action.value.value);
+
+        if (!selectedVariable || selectedVariable.type !== variable.type) {
+          return {
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
+      }
+
       if (variable.type === "text") {
         const textVariableParseData = ZActionCalculateText.safeParse(action);
         if (!textVariableParseData.success) {
@@ -1872,6 +1884,27 @@ const validateActions = (
             path: ["questions", questionIndex, "logic", logicIndex],
           };
         }
+
+        if (action.value.type === "question") {
+          const allowedQuestions = [
+            TSurveyQuestionTypeEnum.OpenText,
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            TSurveyQuestionTypeEnum.Rating,
+            TSurveyQuestionTypeEnum.NPS,
+            TSurveyQuestionTypeEnum.Date,
+          ];
+
+          const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
+
+          if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
+            return {
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Invalid question type for text variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex],
+            };
+          }
+        }
+
         return undefined;
       }
 
@@ -1882,6 +1915,19 @@ const validateActions = (
           message: numberVariableParseData.error.errors[0].message,
           path: ["questions", questionIndex, "logic", logicIndex],
         };
+      }
+
+      if (action.value.type === "question") {
+        const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
+
+        const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
+        if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
+          return {
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Invalid question type for number variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
       }
     } else {
       const endingIds = survey.endings.map((ending) => ending.id);

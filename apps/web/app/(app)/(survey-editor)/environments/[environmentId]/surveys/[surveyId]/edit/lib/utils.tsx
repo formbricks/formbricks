@@ -3,6 +3,8 @@ import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { questionTypes } from "@formbricks/lib/utils/questions";
+import { recallToHeadline } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -115,6 +117,26 @@ export const getConditionValueOptions = (
   }
 
   return groupedOptions;
+};
+
+export const replaceEndingCardHeadlineRecall = (
+  survey: TSurvey,
+  language: string,
+  attributeClasses: TAttributeClass[]
+) => {
+  const modifiedSurvey = structuredClone(survey);
+  modifiedSurvey.endings.forEach((ending) => {
+    if (ending.type === "endScreen") {
+      ending.headline = recallToHeadline(
+        ending.headline || {},
+        modifiedSurvey,
+        false,
+        language,
+        attributeClasses
+      );
+    }
+  });
+  return modifiedSurvey;
 };
 
 export const actionObjectiveOptions: TComboboxOption[] = [
