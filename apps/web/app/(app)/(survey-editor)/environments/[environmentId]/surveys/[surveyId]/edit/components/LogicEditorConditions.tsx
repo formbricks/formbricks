@@ -15,7 +15,7 @@ import {
   removeCondition,
   toggleGroupConnector,
   updateCondition,
-} from "@formbricks/lib/survey/logic/utils";
+} from "@formbricks/lib/surveyLogic/utils";
 import {
   TConditionGroup,
   TDyanmicLogicField,

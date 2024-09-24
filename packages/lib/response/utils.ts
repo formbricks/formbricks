@@ -1,6 +1,5 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { structuredClone } from "pollyfills/structuredClone";
 import {
   TResponse,
   TResponseData,
@@ -29,9 +28,10 @@ import {
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
+import { structuredClone } from "../pollyfills/structuredClone";
 import { processResponseData } from "../responses";
+import { evaluateLogic, performActions } from "../surveyLogic/utils";
 import { getTodaysDateTimeFormatted } from "../time";
-import { evaluateLogic, performActions } from "../utils/evaluateLogic";
 import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {

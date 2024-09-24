@@ -1,7 +1,7 @@
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { isConditionGroup } from "@formbricks/lib/survey/logic/utils";
+import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { questionTypes } from "@formbricks/lib/utils/questions";
 import {
   TConditionGroup,

@@ -1,7 +1,7 @@
 import { prisma } from "../../__mocks__/database";
 import { mockResponseNote, mockResponseWithMockPerson } from "../../response/tests/__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
-import { evaluateLogic } from "utils/evaluateLogic";
+import { evaluateLogic } from "surveyLogic/utils";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";

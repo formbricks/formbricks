@@ -8,10 +8,10 @@ import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
-import { evaluateLogic, performActions } from "@/lib/logicEvaluator";
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
 import type {
   TResponseData,

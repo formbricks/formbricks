@@ -7,7 +7,7 @@ import {
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { getUpdatedActionBody } from "@formbricks/lib/survey/logic/utils";
+import { getUpdatedActionBody } from "@formbricks/lib/surveyLogic/utils";
 import {
   TActionNumberVariableCalculateOperator,
   TActionObjective,

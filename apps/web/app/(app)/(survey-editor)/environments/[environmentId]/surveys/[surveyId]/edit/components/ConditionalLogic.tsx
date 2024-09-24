@@ -11,7 +11,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { useMemo } from "react";
-import { duplicateLogicItem } from "@formbricks/lib/survey/logic/utils";
+import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
