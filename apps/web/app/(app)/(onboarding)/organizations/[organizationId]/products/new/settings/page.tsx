@@ -24,7 +24,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
   const industry = searchParams.industry || null;
   const mode = searchParams.mode || "surveys";
 
-  const customHeadline = getCustomHeadline(channel, industry);
+  const customHeadline = getCustomHeadline(channel);
   const products = await getProducts(params.organizationId);
 
   return (
@@ -36,7 +36,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         />
       ) : (
         <Header
-          title={`You maintain ${startsWithVowel(customHeadline) ? "an " + customHeadline : "a " + customHeadline}, how exciting!`}
+          title={customHeadline}
           subtitle="Get 2x more responses matching surveys with your brand and UI"
         />
       )}
