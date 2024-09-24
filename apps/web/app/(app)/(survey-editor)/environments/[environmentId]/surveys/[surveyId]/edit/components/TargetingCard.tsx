@@ -369,7 +369,7 @@ export const TargetingCard = ({
             {isFormbricksCloud ? (
               <UpgradePlanNotice
                 message="For advanced targeting, please"
-                textForUrl="upgrade to the User Identification plan."
+                textForUrl="upgrade to the Scale plan."
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (

@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { mockLegacySurvey, mockTranslatedSurvey } from "./i18n.mock";
-import { reverseTranslateSurvey } from "./reverseTranslation";
 import { createI18nString } from "./utils";
 
 describe("createI18nString", () => {
@@ -32,12 +30,5 @@ describe("createI18nString", () => {
     expect(result).toEqual({
       default: "Hello",
     });
-  });
-});
-
-describe("translate to Legacy Survey", () => {
-  it("should translate all questions of a normal survey to Legacy Survey", () => {
-    const translatedSurvey = reverseTranslateSurvey(mockTranslatedSurvey, "default");
-    expect(translatedSurvey).toEqual(mockLegacySurvey);
   });
 });

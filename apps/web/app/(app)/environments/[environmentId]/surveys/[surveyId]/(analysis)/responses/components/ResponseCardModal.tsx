@@ -11,8 +11,8 @@ import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
 
 interface ResponseCardModalProps {
   responses: TResponse[];
-  selectedResponse: TResponse | null;
-  setSelectedResponse: (response: TResponse | null) => void;
+  selectedResponseId: string | null;
+  setSelectedResponseId: (id: string | null) => void;
   survey: TSurvey;
   environment: TEnvironment;
   user?: TUser;
@@ -26,8 +26,8 @@ interface ResponseCardModalProps {
 
 export const ResponseCardModal = ({
   responses,
-  selectedResponse,
-  setSelectedResponse,
+  selectedResponseId,
+  setSelectedResponseId,
   survey,
   environment,
   user,
@@ -41,33 +41,33 @@ export const ResponseCardModal = ({
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (selectedResponse) {
+    if (selectedResponseId) {
       setOpen(true);
-      const index = responses.findIndex((response) => response.id === selectedResponse.id);
+      const index = responses.findIndex((response) => response.id === selectedResponseId);
       setCurrentIndex(index);
     } else {
       setOpen(false);
     }
-  }, [selectedResponse, responses, setOpen]);
+  }, [selectedResponseId, responses, setOpen]);
 
   const handleNext = () => {
     if (currentIndex !== null && currentIndex < responses.length - 1) {
-      setSelectedResponse(responses[currentIndex + 1]);
+      setSelectedResponseId(responses[currentIndex + 1].id);
     }
   };
 
   const handleBack = () => {
     if (currentIndex !== null && currentIndex > 0) {
-      setSelectedResponse(responses[currentIndex - 1]);
+      setSelectedResponseId(responses[currentIndex - 1].id);
     }
   };
 
   const handleClose = () => {
-    setSelectedResponse(null);
+    setSelectedResponseId(null);
   };
 
   // If no response is selected or currentIndex is null, do not render the modal
-  if (selectedResponse === null || currentIndex === null) return null;
+  if (selectedResponseId === null || currentIndex === null) return null;
 
   return (
     <Modal
@@ -100,7 +100,7 @@ export const ResponseCardModal = ({
           </div>
           <SingleResponseCard
             survey={survey}
-            response={selectedResponse}
+            response={responses[currentIndex]}
             user={user}
             pageType="response"
             environment={environment}
@@ -108,7 +108,7 @@ export const ResponseCardModal = ({
             isViewer={isViewer}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
-            setSelectedResponse={setSelectedResponse}
+            setSelectedResponseId={setSelectedResponseId}
           />
         </div>
       </div>

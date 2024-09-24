@@ -51,7 +51,7 @@ export const SingleResponseCardHeader = ({
       <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>{children}</TooltipTrigger>
-          <TooltipContent avoidCollisions align="start" side="bottom">
+          <TooltipContent avoidCollisions align="start" side="bottom" className="max-w-[75vw]">
             {tooltipContent}
           </TooltipContent>
         </Tooltip>
@@ -78,7 +78,10 @@ export const SingleResponseCardHeader = ({
         <div>
           <p className="py-1 font-bold text-slate-700">Person attributes:</p>
           {Object.keys(response.personAttributes).map((key) => (
-            <p key={key}>
+            <p
+              key={key}
+              className="truncate"
+              title={`${key}: ${response.personAttributes && response.personAttributes[key]}`}>
               {key}:{" "}
               <span className="font-bold">{response.personAttributes && response.personAttributes[key]}</span>
             </p>
@@ -92,18 +95,44 @@ export const SingleResponseCardHeader = ({
             <hr className="my-2 border-slate-200" />
           )}
           <p className="py-1 font-bold text-slate-700">Device info:</p>
-          {response.meta.userAgent?.browser && <p>Browser: {response.meta.userAgent.browser}</p>}
-          {response.meta.userAgent?.os && <p>OS: {response.meta.userAgent.os}</p>}
+          {response.meta.userAgent?.browser && (
+            <p className="truncate" title={`Browser: ${response.meta.userAgent.browser}`}>
+              Browser: {response.meta.userAgent.browser}
+            </p>
+          )}
+          {response.meta.userAgent?.os && (
+            <p className="truncate" title={`OS: ${response.meta.userAgent.os}`}>
+              OS: {response.meta.userAgent.os}
+            </p>
+          )}
           {response.meta.userAgent && (
-            <p>
+            <p
+              className="truncate"
+              title={`Device: ${response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}`}>
               Device:{" "}
               {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
             </p>
           )}
-          {response.meta.url && <p>URL: {response.meta.url}</p>}
-          {response.meta.action && <p>Action: {response.meta.action}</p>}
-          {response.meta.source && <p>Source: {response.meta.source}</p>}
-          {response.meta.country && <p>Country: {response.meta.country}</p>}
+          {response.meta.url && (
+            <p className="truncate" title={`URL: ${response.meta.url}`}>
+              URL: {response.meta.url}
+            </p>
+          )}
+          {response.meta.action && (
+            <p className="truncate" title={`Action: ${response.meta.action}`}>
+              Action: {response.meta.action}
+            </p>
+          )}
+          {response.meta.source && (
+            <p className="truncate" title={`Source: ${response.meta.source}`}>
+              Source: {response.meta.source}
+            </p>
+          )}
+          {response.meta.country && (
+            <p className="truncate" title={`Country: ${response.meta.country}`}>
+              Country: {response.meta.country}
+            </p>
+          )}
         </div>
       )}
     </>

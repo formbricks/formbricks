@@ -32,11 +32,6 @@ interface EditEndingCardProps {
   isFormbricksCloud: boolean;
 }
 
-const endingCardTypes = [
-  { value: "endScreen", label: "Ending card" },
-  { value: "redirectToUrl", label: "Redirect to Url" },
-];
-
 export const EditEndingCard = ({
   localSurvey,
   endingCardIndex,
@@ -52,9 +47,16 @@ export const EditEndingCard = ({
   isFormbricksCloud,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
+
   const isRedirectToUrlDisabled = isFormbricksCloud
     ? plan === "free" && endingCard.type !== "redirectToUrl"
     : false;
+
+  const endingCardTypes = [
+    { value: "endScreen", label: "Ending card" },
+    { value: "redirectToUrl", label: "Redirect to Url", disabled: isRedirectToUrlDisabled },
+  ];
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: endingCard.id,
   });
@@ -204,14 +206,16 @@ export const EditEndingCard = ({
             <OptionsSwitch
               options={endingCardTypes}
               currentOption={endingCard.type}
-              handleOptionChange={() => {
-                if (endingCard.type === "endScreen") {
-                  updateSurvey({ type: "redirectToUrl" });
-                } else {
-                  updateSurvey({ type: "endScreen" });
+              handleOptionChange={(newType) => {
+                const selectedOption = endingCardTypes.find((option) => option.value === newType);
+                if (!selectedOption?.disabled) {
+                  if (newType === "redirectToUrl") {
+                    updateSurvey({ type: "redirectToUrl" });
+                  } else {
+                    updateSurvey({ type: "endScreen" });
+                  }
                 }
               }}
-              disabled={isRedirectToUrlDisabled}
             />
           </TooltipRenderer>
           {endingCard.type === "endScreen" && (

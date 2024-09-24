@@ -4,7 +4,6 @@ import {
   TYPE_MAPPING,
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
-import { questionTypes } from "@/app/lib/questions";
 import NotionLogo from "@/images/notion.png";
 import { PlusIcon, XIcon } from "lucide-react";
 import Image from "next/image";
@@ -13,6 +12,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { questionTypes } from "@formbricks/lib/utils/questions";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TIntegrationInput } from "@formbricks/types/integration";
