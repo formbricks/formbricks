@@ -1,8 +1,7 @@
 import debounce from "lodash/debounce";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
 import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
-import { ForwardRefExoticComponent, RefAttributes } from "react";
+import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import {
   Command,
@@ -204,12 +203,12 @@ export const InputCombobox = ({
   return (
     <div
       className={cn(
-        "flex max-w-[440px] overflow-hidden rounded-md border border-slate-300",
+        "group/icon flex max-w-[440px] overflow-hidden rounded-md border border-slate-300 transition-colors duration-200 ease-in-out hover:border-slate-400",
         comboboxClasses
       )}>
       {withInput && inputType !== "dropdown" && (
         <Input
-          className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-300"
+          className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-400"
           {...inputProps}
           id={`${id}-input`}
           value={inputValue as string | number}
@@ -233,15 +232,14 @@ export const InputCombobox = ({
             {clearable && inputType === "dropdown" ? (
               <XIcon className="h-5 w-5 shrink-0 text-slate-300 hover:text-slate-400" onClick={handleClear} />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 shrink-0 text-slate-300 hover:text-slate-400" />
+              <ChevronDownIcon className="h-5 w-5 shrink-0 text-slate-300 transition-colors duration-200 ease-in-out group-hover/icon:text-slate-400" />
             )}
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className={cn(
-            "w-auto max-w-[400px] overflow-y-auto truncate border border-slate-400 bg-slate-50 p-0 shadow-none",
-            { "px-2 pt-2": showSearch }
-          )}>
+          className={cn("w-auto max-w-[400px] overflow-y-auto truncate p-0", {
+            "px-2 pt-2": showSearch,
+          })}>
           <Command>
             {showSearch && (
               <CommandInput
@@ -249,8 +247,10 @@ export const InputCombobox = ({
                 className="h-8 border-slate-400 bg-white placeholder-slate-300"
               />
             )}
-            <CommandList className="mx-1 my-2">
-              <CommandEmpty className="mx-2 my-0">{emptyDropdownText}</CommandEmpty>
+            <CommandList className="m-1">
+              <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
+                {emptyDropdownText}
+              </CommandEmpty>
               {options && options.length > 0 && (
                 <CommandGroup>
                   {options.map((option) => (
@@ -258,7 +258,7 @@ export const InputCombobox = ({
                       key={option.value}
                       onSelect={() => handleSelect(option)}
                       title={option.label}
-                      className="cursor-pointer truncate hover:text-slate-500">
+                      className="cursor-pointer truncate">
                       {showCheckIcon &&
                         allowMultiSelect &&
                         Array.isArray(localValue) &&
@@ -288,7 +288,7 @@ export const InputCombobox = ({
                       <CommandItem
                         key={option.value}
                         onSelect={() => handleSelect(option)}
-                        className="cursor-pointer truncate hover:text-slate-500">
+                        className="cursor-pointer truncate">
                         {showCheckIcon &&
                           allowMultiSelect &&
                           Array.isArray(localValue) &&

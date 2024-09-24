@@ -8,7 +8,7 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   CopyIcon,
-  MoreVerticalIcon,
+  EllipsisVerticalIcon,
   PlusIcon,
   SplitIcon,
   TrashIcon,
@@ -137,7 +137,7 @@ export function ConditionalLogic({
 
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <MoreVerticalIcon className="h-4 w-4" />
+                  <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem

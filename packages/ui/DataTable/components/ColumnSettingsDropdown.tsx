@@ -15,7 +15,7 @@ export const ColumnSettingsDropdown = <T,>({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="py-2 focus:outline-none">
-          <EllipsisVerticalIcon name="three-dots" className="h-4 w-4" />{" "}
+          <EllipsisVerticalIcon name="three-dots" className="h-4 w-4 text-slate-700 hover:text-slate-950" />{" "}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

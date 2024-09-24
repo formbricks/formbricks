@@ -6,7 +6,7 @@ import {
   getActionVariableOptions,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
-import { CopyIcon, CornerDownRightIcon, MoreVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { getUpdatedActionBody } from "@formbricks/lib/surveyLogic/utils";
 import {
   TActionNumberVariableCalculateOperator,
@@ -195,7 +195,7 @@ export function LogicEditorActions({
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger id={`actions-${idx}-dropdown`}>
-                <MoreVerticalIcon className="h-4 w-4" />
+                <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
               </DropdownMenuTrigger>
 
               <DropdownMenuContent>

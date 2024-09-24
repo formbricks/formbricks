@@ -5,7 +5,7 @@ import {
   getMatchValueProps,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
-import { CopyIcon, MoreVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
+import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import {
   addConditionBelow,
@@ -212,7 +212,7 @@ export function LogicEditorConditions({
           <div className="mt-2">
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <MoreVerticalIcon className="h-4 w-4" />
+                <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem
@@ -301,7 +301,7 @@ export function LogicEditorConditions({
         )}
         <DropdownMenu>
           <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`}>
-            <MoreVerticalIcon className="h-4 w-4" />
+            <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
