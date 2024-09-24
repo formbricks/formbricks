@@ -74,7 +74,7 @@ export const Survey = ({
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
-  const [variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
+  const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>(() => {
     return localSurvey.variables.reduce((acc, variable) => {
       acc[variable.id] = variable.value;
@@ -198,8 +198,8 @@ export const Survey = ({
   };
 
   const popVariableState = () => {
-    setVariableStack(() => {
-      const newStack = [...variableStack];
+    setVariableStack((prevStack) => {
+      const newStack = [...prevStack];
       const poppedState = newStack.pop();
       if (poppedState) {
         setCurrentVariables(poppedState.variables);

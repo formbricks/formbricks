@@ -117,28 +117,32 @@ export const InputCombobox = ({
     }
   }, [value, options, groupedOptions, inputType, withInput]);
 
+  const handleMultiSelect = (option: TComboboxOption) => {
+    if (Array.isArray(localValue)) {
+      const doesExist = localValue.find((item) => item.value === option.value);
+      const newValue = doesExist
+        ? localValue.filter((item) => item.value !== option.value)
+        : [...localValue, option];
+
+      if (!newValue.length) {
+        onChangeValue([]);
+        setInputType(null);
+      }
+      onChangeValue(newValue.map((item) => item.value) as string[], option);
+      setLocalValue(newValue);
+    } else {
+      onChangeValue([option.value] as string[], option);
+      setLocalValue([option]);
+    }
+  };
+
   const handleSelect = (option: TComboboxOption) => {
     if (inputType !== "dropdown") {
       setInputType("dropdown");
     }
 
     if (allowMultiSelect) {
-      if (Array.isArray(localValue)) {
-        const doesExist = localValue.find((item) => item.value === option.value);
-        const newValue = doesExist
-          ? localValue.filter((item) => item.value !== option.value)
-          : [...localValue, option];
-
-        if (!newValue.length) {
-          onChangeValue([]);
-          setInputType(null);
-        }
-        onChangeValue(newValue.map((item) => item.value) as string[], option);
-        setLocalValue(newValue);
-      } else {
-        onChangeValue([option.value] as string[], option);
-        setLocalValue([option]);
-      }
+      handleMultiSelect(option);
     } else {
       onChangeValue(option.value, option);
       setLocalValue(option);

@@ -466,12 +466,13 @@ export const QuestionFormInput = ({
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     const updatedText = {
       ...getElementTextBasedOnType(),
-      [usedLanguageCode]: e.target.value,
+      [usedLanguageCode]: value,
     };
     setText(recallToHeadline(updatedText, localSurvey, false, usedLanguageCode, attributeClasses));
-    debouncedHandleUpdate(e.target.value);
+    debouncedHandleUpdate(value);
   };
 
   return (

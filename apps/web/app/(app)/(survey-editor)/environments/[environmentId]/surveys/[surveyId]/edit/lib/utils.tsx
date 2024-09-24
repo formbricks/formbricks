@@ -805,7 +805,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
   });
 };
 
-export const getActionOpeartorOptions = (variableType?: TSurveyVariable["type"]): TComboboxOption[] => {
+export const getActionOperatorOptions = (variableType?: TSurveyVariable["type"]): TComboboxOption[] => {
   if (variableType === "number") {
     return [
       {
@@ -1001,6 +1001,8 @@ const isUsedInLeftOperand = (
       return leftOperand.type === "hiddenField" && leftOperand.value === id;
     case "variable":
       return leftOperand.type === "variable" && leftOperand.value === id;
+    default:
+      return false;
   }
 };
 
@@ -1016,6 +1018,8 @@ const isUsedInRightOperand = (
       return rightOperand.type === "hiddenField" && rightOperand.value === id;
     case "variable":
       return rightOperand.type === "variable" && rightOperand.value === id;
+    default:
+      return false;
   }
 };
 
@@ -1077,7 +1081,7 @@ export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optio
     return isUsedInCondition(logicRule.conditions);
   };
 
-  return survey.questions.findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
+  return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number => {
@@ -1102,7 +1106,7 @@ export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): nu
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  return survey.questions.findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
+  return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
 export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number => {
@@ -1124,5 +1128,5 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
     return isUsedInCondition(logicRule.conditions);
   };
 
-  return survey.questions.findIndex((question) => question.logic && question.logic.some(isUsedInLogicRule));
+  return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };

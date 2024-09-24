@@ -266,7 +266,7 @@ const operatorsWithoutRightOperand = [
   ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
 ] as const;
 
-export const ZDyanmicLogicField = z.enum(["question", "variable", "hiddenField"]);
+export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
 export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQuestion"]);
 export const ZActionTextVariableCalculateOperator = z.enum(["assign", "concat"], {
   message: "Conditional Logic: Invalid operator for a text variable",
@@ -299,7 +299,7 @@ const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDy
 });
 
 export type TSurveyLogicConditionsOperator = z.infer<typeof ZSurveyLogicConditionsOperator>;
-export type TDyanmicLogicField = z.infer<typeof ZDyanmicLogicField>;
+export type TDyanmicLogicField = z.infer<typeof ZDynamicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
 export type TActionNumberVariableCalculateOperator = z.infer<typeof ZActionNumberVariableCalculateOperator>;
@@ -370,7 +370,7 @@ const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
 );
 
 // Actions
-export const ZActionVariableValueType = z.union([z.literal("static"), ZDyanmicLogicField]);
+export const ZActionVariableValueType = z.union([z.literal("static"), ZDynamicLogicField]);
 export type TActionVariableValueType = z.infer<typeof ZActionVariableValueType>;
 
 const ZActionBase = z.object({

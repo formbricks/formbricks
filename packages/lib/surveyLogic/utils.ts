@@ -452,6 +452,17 @@ const evaluateSingleCondition = (
   }
 };
 
+const getVariableValue = (
+  variables: TSurveyVariable[],
+  variableId: string,
+  variablesData: TResponseVariables
+) => {
+  const variable = variables.find((v) => v.id === variableId);
+  if (!variable) return undefined;
+  const variableValue = variablesData[variableId];
+  return variable.type === "number" ? Number(variableValue) || 0 : variableValue || "";
+};
+
 const getLeftOperandValue = (
   localSurvey: TSurvey,
   data: TResponseData,
@@ -509,14 +520,7 @@ const getLeftOperandValue = (
       return data[leftOperand.value];
     case "variable":
       const variables = localSurvey.variables || [];
-      const variable = variables.find((v) => v.id === leftOperand.value);
-
-      if (!variable) return undefined;
-
-      const variableValue = variablesData[leftOperand.value];
-
-      if (variable.type === "number") return Number(variableValue) || 0;
-      return variableValue || "";
+      return getVariableValue(variables, leftOperand.value, variablesData);
     case "hiddenField":
       return data[leftOperand.value];
     default:
@@ -537,14 +541,7 @@ const getRightOperandValue = (
       return data[rightOperand.value];
     case "variable":
       const variables = localSurvey.variables || [];
-      const variable = variables.find((v) => v.id === rightOperand.value);
-
-      if (!variable) return undefined;
-
-      const variableValue = variablesData[rightOperand.value];
-
-      if (variable.type === "number") return Number(variableValue) || 0;
-      return variableValue || "";
+      return getVariableValue(variables, rightOperand.value, variablesData);
     case "hiddenField":
       return data[rightOperand.value];
     case "static":

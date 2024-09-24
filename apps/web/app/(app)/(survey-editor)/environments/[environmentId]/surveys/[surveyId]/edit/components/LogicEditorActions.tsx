@@ -1,6 +1,6 @@
 import {
   actionObjectiveOptions,
-  getActionOpeartorOptions,
+  getActionOperatorOptions,
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
@@ -92,12 +92,12 @@ export function LogicEditorActions({
       <CornerDownRightIcon className="mt-3 h-4 w-4 shrink-0" />
       <div className="flex grow flex-col gap-y-2">
         {actions?.map((action, idx) => (
-          <div className="flex grow items-center justify-between gap-x-2">
+          <div key={action.id} className="flex grow items-center justify-between gap-x-2">
             <div className="block w-9 shrink-0">{idx === 0 ? "Then" : "and"}</div>
             <div className="flex grow items-center gap-x-2">
               <InputCombobox
                 id={`action-${idx}-objective`}
-                key="objective"
+                key={`objective-${action.id}`}
                 showSearch={false}
                 options={actionObjectiveOptions}
                 value={action.objective}
@@ -109,7 +109,7 @@ export function LogicEditorActions({
               {action.objective !== "calculate" && (
                 <InputCombobox
                   id={`action-${idx}-target`}
-                  key="target"
+                  key={`target-${action.id}`}
                   showSearch={false}
                   options={getActionTargetOptions(action, localSurvey, questionIdx)}
                   value={action.target}
@@ -125,7 +125,7 @@ export function LogicEditorActions({
                 <>
                   <InputCombobox
                     id={`action-${idx}-variableId`}
-                    key="variableId"
+                    key={`variableId-${action.id}`}
                     showSearch={false}
                     options={getActionVariableOptions(localSurvey)}
                     value={action.variableId}
@@ -143,9 +143,9 @@ export function LogicEditorActions({
                   />
                   <InputCombobox
                     id={`action-${idx}-operator`}
-                    key="operator"
+                    key={`operator-${action.id}`}
                     showSearch={false}
-                    options={getActionOpeartorOptions(
+                    options={getActionOperatorOptions(
                       localSurvey.variables.find((v) => v.id === action.variableId)?.type
                     )}
                     value={action.operator}
@@ -160,7 +160,7 @@ export function LogicEditorActions({
                   />
                   <InputCombobox
                     id={`action-${idx}-value`}
-                    key="value"
+                    key={`value-${action.id}`}
                     withInput={true}
                     clearable={true}
                     value={action.value?.value ?? ""}
