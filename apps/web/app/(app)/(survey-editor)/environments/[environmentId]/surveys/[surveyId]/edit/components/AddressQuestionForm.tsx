@@ -4,9 +4,9 @@ import { PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { Switch } from "@formbricks/ui/Switch";
 
 interface AddressQuestionFormProps {
   localSurvey: TSurvey;
@@ -31,6 +31,39 @@ export const AddressQuestionForm = ({
   attributeClasses,
 }: AddressQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
+
+  const fields = [
+    {
+      id: "addressLine1",
+      label: "Address Line 1",
+      ...question.addressLine1,
+    },
+    {
+      id: "addressLine2",
+      label: "Address Line 2",
+      ...question.addressLine2,
+    },
+    {
+      id: "city",
+      label: "City",
+      ...question.city,
+    },
+    {
+      id: "state",
+      label: "State",
+      ...question.state,
+    },
+    {
+      id: "zip",
+      label: "Zip",
+      ...question.zip,
+    },
+    {
+      id: "country",
+      label: "Country",
+      ...question.country,
+    },
+  ];
 
   return (
     <form>
@@ -82,7 +115,51 @@ export const AddressQuestionForm = ({
           </Button>
         )}
         <div className="mt-2 font-medium">Settings</div>
-        <AdvancedOptionToggle
+
+        <table className="mt-4 w-1/2 table-fixed">
+          <thead>
+            <tr className="text-left font-medium text-slate-800">
+              <th className="w-1/2 text-sm">Address Fields</th>
+              <th className="w-1/4 text-sm">Show</th>
+              <th className="w-1/4 text-sm">Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fields.map((field) => (
+              <tr className="text-slate-900">
+                <td className="py-2 text-sm">{field.label}</td>
+                <td className="py-">
+                  <Switch
+                    checked={field.show}
+                    onCheckedChange={(show) => {
+                      updateQuestion(questionIdx, {
+                        [field.id]: {
+                          show,
+                          required: field.required,
+                        },
+                      });
+                    }}
+                  />
+                </td>
+                <td className="py-2">
+                  <Switch
+                    checked={field.required}
+                    onCheckedChange={(required) => {
+                      updateQuestion(questionIdx, {
+                        [field.id]: {
+                          show: field.show,
+                          required,
+                        },
+                      });
+                    }}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* <AdvancedOptionToggle
           isChecked={question.isAddressLine1Required}
           onToggle={() =>
             updateQuestion(questionIdx, {
@@ -147,7 +224,7 @@ export const AddressQuestionForm = ({
           title="Required: Country"
           description=""
           childBorder
-          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
+          customContainerClass="p-0 mt-4"></AdvancedOptionToggle> */}
       </div>
     </form>
   );

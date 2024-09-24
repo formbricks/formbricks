@@ -221,12 +221,12 @@ export const questionTypes: TQuestion[] = [
     icon: HomeIcon,
     preset: {
       headline: { default: "Where do you live?" },
-      isAddressLine1Required: false,
-      isAddressLine2Required: false,
-      isCityRequired: false,
-      isStateRequired: false,
-      isZipRequired: false,
-      isCountryRequired: false,
+      addressLine1: { show: true, required: true },
+      addressLine2: { show: true, required: true },
+      city: { show: true, required: true },
+      state: { show: true, required: true },
+      zip: { show: true, required: true },
+      country: { show: true, required: true },
     } as Partial<TSurveyAddressQuestion>,
   },
   {

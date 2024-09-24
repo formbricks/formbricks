@@ -131,6 +131,8 @@ export const SurveyEditor = ({
     return <LoadingSkeleton />;
   }
 
+  console.log({ questions: localSurvey.questions });
+
   return (
     <>
       <div className="flex h-full w-full flex-col">

@@ -517,29 +517,29 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
-export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionTypeEnum.Address),
-  isAddressLine1Required: z.boolean().default(false),
-  isAddressLine2Required: z.boolean().default(false),
-  isCityRequired: z.boolean().default(false),
-  isStateRequired: z.boolean().default(false),
-  isZipRequired: z.boolean().default(false),
-  isCountryRequired: z.boolean().default(false),
-});
-export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
-
-const ZSurveyContactInfoQuestionField = z.object({
+const ZSurveyShowRequiredToggle = z.object({
   show: z.boolean(),
   required: z.boolean(),
 });
 
+export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.Address),
+  addressLine1: ZSurveyShowRequiredToggle,
+  addressLine2: ZSurveyShowRequiredToggle,
+  city: ZSurveyShowRequiredToggle,
+  state: ZSurveyShowRequiredToggle,
+  zip: ZSurveyShowRequiredToggle,
+  country: ZSurveyShowRequiredToggle,
+});
+export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
+
 export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
-  firstName: ZSurveyContactInfoQuestionField,
-  lastName: ZSurveyContactInfoQuestionField,
-  email: ZSurveyContactInfoQuestionField,
-  phone: ZSurveyContactInfoQuestionField,
-  company: ZSurveyContactInfoQuestionField,
+  firstName: ZSurveyShowRequiredToggle,
+  lastName: ZSurveyShowRequiredToggle,
+  email: ZSurveyShowRequiredToggle,
+  phone: ZSurveyShowRequiredToggle,
+  company: ZSurveyShowRequiredToggle,
 });
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
