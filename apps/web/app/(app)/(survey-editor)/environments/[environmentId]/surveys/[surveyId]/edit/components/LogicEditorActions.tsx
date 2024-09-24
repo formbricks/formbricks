@@ -51,8 +51,8 @@ export function LogicEditorActions({
     action?: TSurveyLogicAction
   ) => {
     const logicCopy = structuredClone(question.logic) ?? [];
-    const logicItem = logicCopy[logicIdx];
-    const actionsClone = logicItem.actions;
+    const currentLogicItem = logicCopy[logicIdx];
+    const actionsClone = currentLogicItem.actions;
 
     switch (operation) {
       case "remove":
