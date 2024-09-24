@@ -170,9 +170,13 @@ const checkScrollDepthWrapper = () => checkScrollDepth();
 
 export const addScrollDepthListener = (): void => {
   if (typeof window !== "undefined" && !scrollDepthListenerAdded) {
-    window.addEventListener("load", () => {
+    if (document.readyState === "complete") {
       window.addEventListener("scroll", checkScrollDepthWrapper);
-    });
+    } else {
+      window.addEventListener("load", () => {
+        window.addEventListener("scroll", checkScrollDepthWrapper);
+      });
+    }
     scrollDepthListenerAdded = true;
   }
 };
