@@ -299,7 +299,7 @@ const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDy
 });
 
 export type TSurveyLogicConditionsOperator = z.infer<typeof ZSurveyLogicConditionsOperator>;
-export type TDyanmicLogicField = z.infer<typeof ZDynamicLogicField>;
+export type TDynamicLogicField = z.infer<typeof ZDynamicLogicField>;
 export type TActionObjective = z.infer<typeof ZActionObjective>;
 export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
 export type TActionNumberVariableCalculateOperator = z.infer<typeof ZActionNumberVariableCalculateOperator>;

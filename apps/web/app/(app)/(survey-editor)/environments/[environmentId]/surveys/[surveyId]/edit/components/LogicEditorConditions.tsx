@@ -18,7 +18,7 @@ import {
 } from "@formbricks/lib/surveyLogic/utils";
 import {
   TConditionGroup,
-  TDyanmicLogicField,
+  TDynamicLogicField,
   TRightOperand,
   TSingleCondition,
   TSurvey,
@@ -132,7 +132,7 @@ export function LogicEditorConditions({
     handleUpdateCondition(condition.id, {
       leftOperand: {
         value,
-        type: option?.meta?.type as TDyanmicLogicField,
+        type: option?.meta?.type as TDynamicLogicField,
       },
       operator: "isSkipped",
       rightOperand: undefined,
