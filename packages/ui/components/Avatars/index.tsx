@@ -18,7 +18,6 @@ interface ProfileAvatar {
 }
 
 export const ProfileAvatar: React.FC<ProfileAvatar> = ({ imageUrl, email }) => {
-  // The `d` parameter is a fallback for Gravatar images, using either a URL or types like "retro", "identicon", "monsterid", etc.
   const imageSrc = imageUrl || `https://www.gravatar.com/avatar/${sha256(email)}?d=retro`;
 
   return (
