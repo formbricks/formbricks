@@ -105,6 +105,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+    NEXT_PUBLIC_E2E_TESTING: z.enum(["1", "0"]).optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -187,5 +188,6 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
+    NEXT_PUBLIC_E2E_TESTING: process.env.NEXT_PUBLIC_E2E_TESTING,
   },
 });

@@ -46,6 +46,8 @@ export interface InputComboboxProps {
   emptyDropdownText?: string;
 }
 
+const isE2E = process.env.NEXT_PUBLIC_E2E_TESTING === "1";
+
 export const InputCombobox = ({
   id = "temp",
   showSearch = true,
@@ -156,7 +158,11 @@ export const InputCombobox = ({
     if (value === "") {
       setLocalValue("");
       setInputValue("");
-      debouncedOnChangeValue("");
+      if (!isE2E) {
+        debouncedOnChangeValue("");
+      } else {
+        onChangeValue("", undefined, true);
+      }
     }
 
     if (inputType !== "input") {
@@ -170,7 +176,12 @@ export const InputCombobox = ({
     setLocalValue(val);
 
     // Trigger the debounced onChangeValue
-    debouncedOnChangeValue(val);
+
+    if (!isE2E) {
+      debouncedOnChangeValue(val);
+    } else {
+      onChangeValue(val, undefined, true);
+    }
   };
 
   const getDisplayValue = useMemo(() => {
