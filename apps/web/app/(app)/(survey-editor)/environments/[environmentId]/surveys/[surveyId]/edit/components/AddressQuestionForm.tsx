@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
@@ -64,6 +65,31 @@ export const AddressQuestionForm = ({
       ...question.country,
     },
   ];
+
+  useEffect(() => {
+    const allFieldsAreOptional = [
+      question.addressLine1,
+      question.addressLine2,
+      question.city,
+      question.state,
+      question.zip,
+      question.country,
+    ]
+      .filter((field) => field.show)
+      .every((field) => !field.required);
+
+    if (allFieldsAreOptional) {
+      updateQuestion(questionIdx, { required: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    question.addressLine1,
+    question.addressLine2,
+    question.city,
+    question.state,
+    question.zip,
+    question.country,
+  ]);
 
   return (
     <form>
@@ -137,8 +163,16 @@ export const AddressQuestionForm = ({
                           show,
                           required: field.required,
                         },
+                        // when show changes, and the field is required, the question should be required
+                        ...(show && field.required && { required: true }),
                       });
                     }}
+                    disabled={
+                      // if all the other fields are hidden, this should be disabled
+                      fields
+                        .filter((currentField) => currentField.id !== field.id)
+                        .every((field) => !field.show)
+                    }
                   />
                 </td>
                 <td className="py-2">
@@ -150,81 +184,16 @@ export const AddressQuestionForm = ({
                           show: field.show,
                           required,
                         },
+                        required: true,
                       });
                     }}
+                    disabled={!field.show}
                   />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        {/* <AdvancedOptionToggle
-          isChecked={question.isAddressLine1Required}
-          onToggle={() =>
-            updateQuestion(questionIdx, {
-              isAddressLine1Required: !question.isAddressLine1Required,
-              required: true,
-            })
-          }
-          htmlId="isAddressRequired"
-          title="Required: Address Line 1"
-          description=""
-          childBorder
-          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
-        <AdvancedOptionToggle
-          isChecked={question.isAddressLine2Required}
-          onToggle={() =>
-            updateQuestion(questionIdx, {
-              isAddressLine2Required: !question.isAddressLine2Required,
-              required: true,
-            })
-          }
-          htmlId="isAddressLine2Required"
-          title="Required: Address Line 2"
-          description=""
-          childBorder
-          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
-        <AdvancedOptionToggle
-          isChecked={question.isCityRequired}
-          onToggle={() =>
-            updateQuestion(questionIdx, { isCityRequired: !question.isCityRequired, required: true })
-          }
-          htmlId="isCityRequired"
-          title="Required: City / Town"
-          description=""
-          childBorder
-          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
-        <AdvancedOptionToggle
-          isChecked={question.isStateRequired}
-          onToggle={() =>
-            updateQuestion(questionIdx, { isStateRequired: !question.isStateRequired, required: true })
-          }
-          htmlId="isStateRequired"
-          title="Required: State / Region"
-          description=""
-          childBorder
-          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
-        <AdvancedOptionToggle
-          isChecked={question.isZipRequired}
-          onToggle={() =>
-            updateQuestion(questionIdx, { isZipRequired: !question.isZipRequired, required: true })
-          }
-          htmlId="isZipRequired"
-          title="Required: ZIP / Post Code"
-          description=""
-          childBorder
-          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
-        <AdvancedOptionToggle
-          isChecked={question.isCountryRequired}
-          onToggle={() =>
-            updateQuestion(questionIdx, { isCountryRequired: !question.isCountryRequired, required: true })
-          }
-          htmlId="iscountryRequired"
-          title="Required: Country"
-          description=""
-          childBorder
-          customContainerClass="p-0 mt-4"></AdvancedOptionToggle> */}
       </div>
     </form>
   );

@@ -94,19 +94,28 @@ export const QuestionCard = ({
     });
   };
 
-  // const getIsRequiredToggleDisabled = (): boolean => {
-  //   // if (question.type === "address") {
-  //   //   return [
-  //   //     question.isAddressLine1Required,
-  //   //     question.isAddressLine2Required,
-  //   //     question.isCityRequired,
-  //   //     question.isCountryRequired,
-  //   //     question.isStateRequired,
-  //   //     question.isZipRequired,
-  //   //   ].some((condition) => condition === true);
-  //   // }
-  //   return false;
-  // };
+  const getIsRequiredToggleDisabled = (): boolean => {
+    if (question.type === TSurveyQuestionTypeEnum.Address) {
+      return [
+        question.addressLine1,
+        question.addressLine2,
+        question.city,
+        question.state,
+        question.zip,
+        question.country,
+      ]
+        .filter((field) => field.show)
+        .some((condition) => condition.required === true);
+    }
+
+    if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+      return [question.firstName, question.lastName, question.email, question.phone, question.company]
+        .filter((field) => field.show)
+        .some((condition) => condition.required === true);
+    }
+
+    return false;
+  };
 
   const handleRequiredToggle = () => {
     // Fix for NPS and Rating questions having missing translations when buttonLabel is not removed
@@ -514,7 +523,7 @@ export const QuestionCard = ({
                 <Switch
                   id="required-toggle"
                   checked={question.required}
-                  // disabled={getIsRequiredToggleDisabled()}
+                  disabled={getIsRequiredToggleDisabled()}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRequiredToggle();

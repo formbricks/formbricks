@@ -19,7 +19,6 @@ interface AddressQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -92,10 +91,6 @@ export const AddressQuestion = ({
     onChange({ [question.id]: newValue });
   };
 
-  const isAnyRequiredFieldFilled = fields.some(
-    (field, index) => field.required && field.show && safeValue?.length && safeValue?.[index]?.trim() !== ""
-  );
-
   const handleSubmit = (e: Event) => {
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -125,13 +120,26 @@ export const AddressQuestion = ({
         </div>
       </ScrollableContainer>
       <div className={`fb-flex fb-flex-col fb-space-y-4 fb-w-full fb-px-4`}>
-        {fields.map(
-          (field, index) =>
+        {fields.map((field, index) => {
+          const isFieldRequired = () => {
+            if (field.required) {
+              return true;
+            }
+
+            // if all fields are optional and the question is required, then the fields should be required
+            if (fields.filter((field) => field.show).every((field) => !field.required) && question.required) {
+              return true;
+            }
+
+            return false;
+          };
+
+          return (
             field.show && (
               <Input
                 key={field.id}
-                placeholder={field.required ? `${field.placeholder}*` : field.placeholder}
-                required={question.required || (isAnyRequiredFieldFilled && field.required)}
+                placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
+                required={isFieldRequired()}
                 value={safeValue?.[index] || ""}
                 className="fb-py-3"
                 type={field.id === "email" ? "email" : "text"}
@@ -139,7 +147,8 @@ export const AddressQuestion = ({
                 onChange={(e) => handleChange(field.id, e?.target?.value ?? "")}
               />
             )
-        )}
+          );
+        })}
       </div>
       <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (

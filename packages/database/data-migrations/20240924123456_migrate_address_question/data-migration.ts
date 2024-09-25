@@ -15,8 +15,6 @@ async function runMigration(): Promise<void> {
 
   await prisma.$transaction(
     async (transactionPrisma) => {
-      console.log("Starting data migration");
-
       const surveysWithAddressQuestion = await transactionPrisma.survey.findMany({
         where: {
           questions: {
@@ -30,7 +28,7 @@ async function runMigration(): Promise<void> {
       const updationPromises = surveysWithAddressQuestion.map((survey) => {
         const updatedQuestions = survey.questions.map((question: TSurveyQuestion) => {
           if (question.type === TSurveyQuestionTypeEnum.Address) {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- addressLine1 is not defined in TSurveyQuestin
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- addressLine1 is not defined for unmigrated surveys
             if (question.addressLine1 !== undefined) {
               return question;
             }

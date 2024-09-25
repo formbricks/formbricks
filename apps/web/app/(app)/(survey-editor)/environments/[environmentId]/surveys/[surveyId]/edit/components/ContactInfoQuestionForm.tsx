@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
@@ -59,6 +60,23 @@ export const ContactInfoQuestionForm = ({
       ...question.company,
     },
   ];
+
+  useEffect(() => {
+    const allFieldsAreOptional = [
+      question.firstName,
+      question.lastName,
+      question.email,
+      question.phone,
+      question.company,
+    ]
+      .filter((field) => field.show)
+      .every((field) => !field.required);
+
+    if (allFieldsAreOptional) {
+      updateQuestion(questionIdx, { required: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.firstName, question.lastName, question.email, question.phone, question.company]);
 
   return (
     <form>
@@ -132,8 +150,16 @@ export const ContactInfoQuestionForm = ({
                           show,
                           required: field.required,
                         },
+                        // when show changes, and the field is required, the question should be required
+                        ...(show && field.required && { required: true }),
                       });
                     }}
+                    disabled={
+                      // if all the other fields are hidden, this should be disabled
+                      fields
+                        .filter((currentField) => currentField.id !== field.id)
+                        .every((field) => !field.show)
+                    }
                   />
                 </td>
                 <td className="py-2">
@@ -145,8 +171,10 @@ export const ContactInfoQuestionForm = ({
                           show: field.show,
                           required,
                         },
+                        required: true,
                       });
                     }}
+                    disabled={!field.show}
                   />
                 </td>
               </tr>
