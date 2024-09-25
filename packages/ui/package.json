@@ -10,9 +10,9 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
     "@formbricks/types": "workspace:*",
     "concurrently": "^8.2.2",
-    "@formbricks/eslint-config": "workspace:*",
     "postcss": "^8.4.41",
     "react": "18.3.1"
   },
@@ -36,6 +36,7 @@
     "@radix-ui/react-radio-group": "^1.2.0",
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-slider": "^1.2.0",
+    "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
     "boring-avatars": "^1.10.2",
@@ -50,6 +51,7 @@
     "react-day-picker": "^9.0.8",
     "react-hot-toast": "^2.4.1",
     "react-radio-group": "^3.0.3",
-    "react-use": "^17.5.1"
+    "react-use": "^17.5.1",
+    "tailwind-merge": "^2.5.2"
   }
 }

@@ -17,7 +17,6 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@formbricks/api": "workspace:*",
-    "@formbricks/config-tailwind": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
     "@formbricks/email": "workspace:*",
