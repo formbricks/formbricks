@@ -3,7 +3,6 @@ import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organiz
 import { XIcon } from "lucide-react";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getProducts } from "@formbricks/lib/product/service";
-import { startsWithVowel } from "@formbricks/lib/utils/strings";
 import { TProductConfigChannel, TProductConfigIndustry, TProductMode } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
@@ -24,7 +23,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
   const industry = searchParams.industry || null;
   const mode = searchParams.mode || "surveys";
 
-  const customHeadline = getCustomHeadline(channel, industry);
+  const customHeadline = getCustomHeadline(channel);
   const products = await getProducts(params.organizationId);
 
   return (
@@ -36,7 +35,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         />
       ) : (
         <Header
-          title={`You maintain ${startsWithVowel(customHeadline) ? "an " + customHeadline : "a " + customHeadline}, how exciting!`}
+          title={customHeadline}
           subtitle="Get 2x more responses matching surveys with your brand and UI"
         />
       )}
