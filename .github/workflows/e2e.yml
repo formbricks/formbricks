@@ -51,6 +51,7 @@ jobs:
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
           echo "E2E_TESTING=1" >> .env
+          echo "NEXT_PUBLIC_E2E_TESTING=1" >> .env
         shell: bash
 
       - name: Build App

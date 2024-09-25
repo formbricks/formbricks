@@ -66,6 +66,8 @@ interface QuestionFormInputProps {
   attributeClasses: TAttributeClass[];
 }
 
+const isE2E = process.env.NEXT_PUBLIC_E2E_TESTING === "1";
+
 export const QuestionFormInput = ({
   id,
   value,
@@ -472,7 +474,12 @@ export const QuestionFormInput = ({
       [usedLanguageCode]: value,
     };
     setText(recallToHeadline(updatedText, localSurvey, false, usedLanguageCode, attributeClasses));
-    debouncedHandleUpdate(value);
+
+    if (!isE2E) {
+      debouncedHandleUpdate(value);
+    } else {
+      handleUpdate(headlineToRecall(value, recallItems, fallbacks));
+    }
   };
 
   return (
