@@ -1,6 +1,5 @@
 "use client";
 
-import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -133,9 +132,7 @@ export const ProductSettings = ({
                 <FormItem className="w-full space-y-4">
                   <div>
                     <FormLabel>Product name</FormLabel>
-                    <FormDescription>
-                      What is your {getCustomHeadline(channel, industry)} called?
-                    </FormDescription>
+                    <FormDescription>What is your product called?</FormDescription>
                   </div>
                   <FormControl>
                     <div>

@@ -3,7 +3,6 @@ import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organiz
 import { XIcon } from "lucide-react";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getProducts } from "@formbricks/lib/product/service";
-import { startsWithVowel } from "@formbricks/lib/utils/strings";
 import { TProductConfigChannel, TProductConfigIndustry, TProductMode } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
