@@ -241,6 +241,7 @@ export function LogicEditorConditions({
     const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
     const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey);
 
+    const allowMultiSelect = ["equalsOneOf", "includesAllOf", "includesOneOf"].includes(condition.operator);
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
         <div className="w-10 shrink-0">
@@ -290,7 +291,8 @@ export function LogicEditorConditions({
             key="conditionMatchValue"
             showSearch={false}
             groupedOptions={options}
-            allowMultiSelect={["equalsOneOf", "includesAllOf", "includesOneOf"].includes(condition.operator)}
+            allowMultiSelect={allowMultiSelect}
+            showCheckIcon={allowMultiSelect}
             comboboxClasses="grow min-w-[180px] max-w-[300px]"
             value={condition.rightOperand?.value}
             clearable={true}

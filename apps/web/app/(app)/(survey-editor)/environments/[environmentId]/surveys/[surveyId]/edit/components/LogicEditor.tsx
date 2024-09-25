@@ -23,7 +23,7 @@ export function LogicEditor({
   isLast,
 }: LogicEditorProps) {
   return (
-    <div className="flex w-full grow flex-col gap-4 overflow-x-auto text-sm">
+    <div className="flex w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
       <LogicEditorConditions
         conditions={logicItem.conditions}
         updateQuestion={updateQuestion}

@@ -478,7 +478,7 @@ const getLeftOperandValue = (
       const responseValue = data[leftOperand.value];
 
       if (currentQuestion.type === "openText" && currentQuestion.inputType === "number") {
-        return Number(responseValue) || 0;
+        return Number(responseValue) || undefined;
       }
 
       if (currentQuestion.type === "multipleChoiceSingle" || currentQuestion.type === "multipleChoiceMulti") {

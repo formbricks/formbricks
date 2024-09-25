@@ -204,6 +204,15 @@ export const InputCombobox = ({
     setLocalValue(null);
   };
 
+  const isSelected = (option: TComboboxOption) => {
+    if (typeof localValue === "object") {
+      if (Array.isArray(localValue)) {
+        return localValue.find((item) => item.value === option.value) !== undefined;
+      }
+      return localValue?.value === option.value;
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -263,12 +272,9 @@ export const InputCombobox = ({
                       onSelect={() => handleSelect(option)}
                       title={option.label}
                       className="cursor-pointer truncate">
-                      {showCheckIcon &&
-                        allowMultiSelect &&
-                        Array.isArray(localValue) &&
-                        localValue.find((item) => item.value === option.value) && (
-                          <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
-                        )}
+                      {showCheckIcon && isSelected(option) && (
+                        <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
+                      )}
                       {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
                       {option.imgSrc && (
                         <Image
@@ -293,12 +299,9 @@ export const InputCombobox = ({
                         key={option.value}
                         onSelect={() => handleSelect(option)}
                         className="cursor-pointer truncate">
-                        {showCheckIcon &&
-                          allowMultiSelect &&
-                          Array.isArray(localValue) &&
-                          localValue.find((item) => item.value === option.value) && (
-                            <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
-                          )}
+                        {showCheckIcon && isSelected(option) && (
+                          <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
+                        )}
                         {option.icon && <option.icon className="mr-2 h-5 w-5 shrink-0 text-slate-400" />}
                         {option.imgSrc && (
                           <Image
