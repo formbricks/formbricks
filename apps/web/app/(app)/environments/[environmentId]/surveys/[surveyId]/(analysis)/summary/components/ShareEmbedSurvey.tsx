@@ -1,6 +1,14 @@
 "use client";
 
-import { BellRing, BlocksIcon, Code2Icon, LinkIcon, MailIcon, UsersRound } from "lucide-react";
+import {
+  BellRing,
+  BlocksIcon,
+  Code2Icon,
+  LinkIcon,
+  MailIcon,
+  SmartphoneIcon,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,9 +35,10 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
   const { email } = user;
 
   const tabs = [
-    { id: "email", label: "Embed in an Email", icon: MailIcon },
-    { id: "webpage", label: "Embed in a Web Page", icon: Code2Icon },
-    { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
+    { id: "email", label: "Embed in an email", icon: MailIcon },
+    { id: "webpage", label: "Embed on website", icon: Code2Icon },
+    { id: "link", label: `${isSingleUseLinkSurvey ? "Single use links" : "Share the link"}`, icon: LinkIcon },
+    { id: "app", label: "Embed in app", icon: SmartphoneIcon },
   ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
@@ -77,7 +86,7 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
                   Embed survey
                 </button>
                 <Link
-                  href={`/environments/${environmentId}//settings/notifications`}
+                  href={`/environments/${environmentId}/settings/notifications`}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <BellRing className="h-6 w-6 text-slate-700" />
                   Configure alerts
@@ -104,6 +113,7 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
             handleInitialPageButton={handleInitialPageButton}
             tabs={tabs}
             activeId={activeId}
+            environmentId={environmentId}
             setActiveId={setActiveId}
             survey={survey}
             email={email}

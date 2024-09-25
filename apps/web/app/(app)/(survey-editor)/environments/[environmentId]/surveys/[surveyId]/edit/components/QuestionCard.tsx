@@ -2,13 +2,13 @@
 
 import { RankingQuestionForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RankingQuestionForm";
 import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/util";
-import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@/app/lib/questions";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
@@ -54,6 +54,7 @@ interface QuestionCardProps {
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
+  isCxMode: boolean;
 }
 
 export const QuestionCard = ({
@@ -74,6 +75,7 @@ export const QuestionCard = ({
   attributeClasses,
   addQuestion,
   isFormbricksCloud,
+  isCxMode,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -206,6 +208,7 @@ export const QuestionCard = ({
                 updateCard={updateQuestion}
                 addCard={addQuestion}
                 cardType="question"
+                isCxMode={isCxMode}
               />
             </div>
           </div>

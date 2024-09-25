@@ -1,7 +1,5 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
-import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { XIcon } from "lucide-react";
-import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -26,18 +24,12 @@ const Page = async ({ params }: ConnectPageProps) => {
     throw new Error("Product not found");
   }
 
-  const channel = product.config.channel;
-  const industry = product.config.industry;
-
-  if (!channel || !industry) {
-    return notFound();
-  }
-  const customHeadline = getCustomHeadline(channel, industry);
+  const channel = product.config.channel || null;
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center py-10">
       <Header
-        title={`Let's connect your ${customHeadline} with Formbricks`}
+        title={`Let's connect your product with Formbricks`}
         subtitle="It takes less than 4 minutes, pinky promise!"
       />
       <div className="space-y-4 text-center">

@@ -48,7 +48,8 @@ export const MultipleChoiceSummary = ({
     return b.count - a.count; // Sort by count
   });
 
-  const handleLoadMore = () => {
+  const handleLoadMore = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const lastChoice = results[results.length - 1];
     const hasOthers = lastChoice.others && lastChoice.others.length > 0;
 
@@ -102,7 +103,7 @@ export const MultipleChoiceSummary = ({
               <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
             </div>
             {result.others && result.others.length > 0 && (
-              <div className="mt-4 rounded-lg border border-slate-200">
+              <div className="mt-4 rounded-lg border border-slate-200" onClick={(e) => e.stopPropagation()}>
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
                   <div className="col-span-1 pl-6">Other values found</div>
                   <div className="col-span-1 pl-6">{surveyType === "app" && "User"}</div>

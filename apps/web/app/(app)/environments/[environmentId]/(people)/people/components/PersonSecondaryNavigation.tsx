@@ -2,17 +2,17 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
-interface PeopleSegmentsTabsProps {
+interface PersonSecondaryNavigationProps {
   activeId: string;
   environmentId?: string;
   loading?: boolean;
 }
 
-export const PeopleSecondaryNavigation = async ({
+export const PersonSecondaryNavigation = async ({
   activeId,
   environmentId,
   loading,
-}: PeopleSegmentsTabsProps) => {
+}: PersonSecondaryNavigationProps) => {
   let currentProductChannel: TProductConfigChannel = null;
 
   if (!loading && environmentId) {

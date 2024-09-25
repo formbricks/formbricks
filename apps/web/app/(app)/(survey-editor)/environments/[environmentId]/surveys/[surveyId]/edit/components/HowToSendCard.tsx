@@ -231,7 +231,7 @@ export const HowToSendCard = ({
                 You can also use Formbricks to run {promotedFeaturesString} surveys.{" "}
                 <Link
                   target="_blank"
-                  href={`/organizations/${organizationId}/products/new/channel`}
+                  href={`/organizations/${organizationId}/products/new/mode`}
                   className="font-medium underline decoration-slate-400 underline-offset-2">
                   Create a new product
                 </Link>{" "}

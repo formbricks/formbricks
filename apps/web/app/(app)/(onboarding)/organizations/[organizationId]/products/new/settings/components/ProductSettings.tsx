@@ -1,6 +1,5 @@
 "use client";
 
-import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -13,6 +12,7 @@ import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import {
   TProductConfigChannel,
   TProductConfigIndustry,
+  TProductMode,
   TProductUpdateInput,
   ZProductUpdateInput,
 } from "@formbricks/types/product";
@@ -32,6 +32,7 @@ import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ProductSettingsProps {
   organizationId: string;
+  productMode: TProductMode;
   channel: TProductConfigChannel;
   industry: TProductConfigIndustry;
   defaultBrandColor: string;
@@ -39,6 +40,7 @@ interface ProductSettingsProps {
 
 export const ProductSettings = ({
   organizationId,
+  productMode,
   channel,
   industry,
   defaultBrandColor,
@@ -68,10 +70,12 @@ export const ProductSettings = ({
             localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
           }
         }
-        if (channel !== "link") {
+        if (channel === "app" || channel === "website") {
           router.push(`/environments/${productionEnvironment?.id}/connect`);
-        } else {
+        } else if (channel === "link") {
           router.push(`/environments/${productionEnvironment?.id}/surveys`);
+        } else if (productMode === "cx") {
+          router.push(`/environments/${productionEnvironment?.id}/xm-templates`);
         }
       } else {
         const errorMessage = getFormattedErrorMessage(createProductResponse);
@@ -128,9 +132,7 @@ export const ProductSettings = ({
                 <FormItem className="w-full space-y-4">
                   <div>
                     <FormLabel>Product name</FormLabel>
-                    <FormDescription>
-                      What is your {getCustomHeadline(channel, industry)} called?
-                    </FormDescription>
+                    <FormDescription>What is your product called?</FormDescription>
                   </div>
                   <FormControl>
                     <div>

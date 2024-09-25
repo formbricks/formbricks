@@ -23,7 +23,7 @@ interface SetupInstructionsProps {
 }
 
 export const SetupInstructions = ({ environmentId, webAppUrl, type }: SetupInstructionsProps) => {
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const [activeTab, setActiveTab] = useState(type === "website" ? tabs[1].id : tabs[0].id);
 
   return (
     <div>

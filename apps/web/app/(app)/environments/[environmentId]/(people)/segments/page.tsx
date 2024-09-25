@@ -1,4 +1,4 @@
-import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
+import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/BasicCreateSegmentModal";
 import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
 import { CreateSegmentModal } from "@formbricks/ee/advanced-targeting/components/create-segment-modal";
@@ -56,7 +56,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="People" cta={renderCreateSegmentButton()}>
-        <PeopleSecondaryNavigation activeId="segments" environmentId={params.environmentId} />
+        <PersonSecondaryNavigation activeId="segments" environmentId={params.environmentId} />
       </PageHeader>
       <SegmentTable
         segments={filteredSegments}

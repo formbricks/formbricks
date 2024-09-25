@@ -17,14 +17,14 @@ const Page = async ({ params }: ChannelPageProps) => {
       description: "Run well-timed pop-up surveys.",
       icon: GlobeIcon,
       iconText: "Built for scale",
-      href: `/organizations/${params.organizationId}/products/new/industry?channel=website`,
+      href: `/organizations/${params.organizationId}/products/new/settings?channel=website`,
     },
     {
       title: "App with sign up",
       description: "Run highly-targeted micro-surveys.",
       icon: GlobeLockIcon,
       iconText: "Enrich user profiles",
-      href: `/organizations/${params.organizationId}/products/new/industry?channel=app`,
+      href: `/organizations/${params.organizationId}/products/new/settings?channel=app`,
     },
     {
       channel: "link",
@@ -32,7 +32,7 @@ const Page = async ({ params }: ChannelPageProps) => {
       description: "Reach people anywhere online.",
       icon: LinkIcon,
       iconText: "Anywhere online",
-      href: `/organizations/${params.organizationId}/products/new/industry?channel=link`,
+      href: `/organizations/${params.organizationId}/products/new/settings?channel=link`,
     },
   ];
 

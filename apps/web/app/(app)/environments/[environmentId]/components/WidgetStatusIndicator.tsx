@@ -15,7 +15,7 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
     notImplemented: {
       icon: AlertTriangleIcon,
       title: `Your ${type} is not yet connected.`,
-      subtitle: `Connect your ${type} with Formbricks to get started. To run ${type === "app" ? "in-app" : "website"} surveys follow the setup guide.`,
+      subtitle: ``,
       shortText: `Connect your ${type} with Formbricks`,
     },
     running: {

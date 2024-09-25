@@ -1,10 +1,15 @@
 "use client";
 
-import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@/app/lib/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import {
+  CX_QUESTIONS_NAME_MAP,
+  QUESTIONS_ICON_MAP,
+  QUESTIONS_NAME_MAP,
+  getQuestionDefaults,
+} from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
@@ -37,6 +42,7 @@ interface EditorCardMenuProps {
   addCard: (question: any, index?: number) => void;
   cardType: "question" | "ending";
   product?: TProduct;
+  isCxMode?: boolean;
 }
 
 export const EditorCardMenu = ({
@@ -51,6 +57,7 @@ export const EditorCardMenu = ({
   updateCard,
   addCard,
   cardType,
+  isCxMode = false,
 }: EditorCardMenuProps) => {
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(
@@ -60,6 +67,8 @@ export const EditorCardMenu = ({
     cardType === "question"
       ? survey.questions.length === 1
       : survey.type === "link" && survey.endings.length === 1;
+
+  const availableQuestionTypes = isCxMode ? CX_QUESTIONS_NAME_MAP : QUESTIONS_NAME_MAP;
 
   const changeQuestionType = (type?: TSurveyQuestionTypeEnum) => {
     const parseResult = ZSurveyQuestion.safeParse(card);
@@ -167,7 +176,7 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2 border border-slate-200 text-slate-600 hover:text-slate-700">
-                  {Object.entries(QUESTIONS_NAME_MAP).map(([type, name]) => {
+                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     const parsedResult = ZSurveyQuestion.safeParse(card);
                     if (parsedResult.success) {
                       const question = parsedResult.data;
@@ -212,7 +221,7 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-4 border border-slate-200">
-                  {Object.entries(QUESTIONS_NAME_MAP).map(([type, name]) => {
+                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     return (
                       <DropdownMenuItem
                         key={type}
