@@ -7,7 +7,7 @@ import { GripVertical } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Switch } from "@formbricks/ui/Switch";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 interface TableSettingsModalItemProps {
   column: Column<TResponseTableData, unknown>;

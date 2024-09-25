@@ -3,9 +3,9 @@
 import { CopyIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { CodeBlock } from "@formbricks/ui/CodeBlock";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
 
 export const WebpageTab = ({ surveyUrl }) => {
   const [embedModeEnabled, setEmbedModeEnabled] = useState(false);

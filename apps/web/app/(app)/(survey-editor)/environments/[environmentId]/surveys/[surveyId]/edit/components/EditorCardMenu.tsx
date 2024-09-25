@@ -14,7 +14,7 @@ import {
   TSurveyRedirectUrlCard,
   ZSurveyQuestion,
 } from "@formbricks/types/surveys/types";
-import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
+import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 
 interface EditorCardMenuProps {
   survey: TSurvey;

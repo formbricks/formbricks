@@ -9,7 +9,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { ToasterClient } from "@formbricks/ui/ToasterClient";
+import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 import { FormbricksClient } from "../../components/FormbricksClient";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 

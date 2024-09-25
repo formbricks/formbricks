@@ -14,13 +14,13 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Calendar } from "@formbricks/ui/Calendar";
+import { Calendar } from "@formbricks/ui/components/Calendar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {

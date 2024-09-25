@@ -3,7 +3,7 @@ import { Table } from "@tanstack/react-table";
 import { MoveVerticalIcon, SettingsIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { TResponseTableData } from "@formbricks/types/responses";
-import { TooltipRenderer } from "@formbricks/ui/Tooltip";
+import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
 interface ResponseTableToolbarProps {
   setIsTableSettingsModalOpen: (isTableSettingsModalOpen: boolean) => void;

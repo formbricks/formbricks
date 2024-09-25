@@ -1,6 +1,6 @@
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
-import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { SkeletonLoader } from "@formbricks/ui/components/SkeletonLoader";
 
 const Loading = () => {
   return (

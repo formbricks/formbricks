@@ -12,7 +12,7 @@ import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
+import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
 import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";

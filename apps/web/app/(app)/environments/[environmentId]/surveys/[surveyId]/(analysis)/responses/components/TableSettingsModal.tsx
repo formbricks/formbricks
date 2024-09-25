@@ -12,7 +12,7 @@ import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Modal } from "@formbricks/ui/Modal";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface TableSettingsModalProps {
   open: boolean;

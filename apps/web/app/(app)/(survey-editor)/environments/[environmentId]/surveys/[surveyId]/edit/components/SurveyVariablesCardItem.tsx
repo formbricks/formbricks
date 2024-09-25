@@ -6,11 +6,17 @@ import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui/components/Select";
 
 interface SurveyVariablesCardItemProps {
   variable?: TSurveyVariable;

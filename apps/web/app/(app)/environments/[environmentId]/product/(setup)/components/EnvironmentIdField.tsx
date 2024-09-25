@@ -1,6 +1,6 @@
 "use client";
 
-import { CodeBlock } from "@formbricks/ui/CodeBlock";
+import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
 
 export const EnvironmentIdField = ({ environmentId }: { environmentId: string }) => {
   return (

@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/Badge";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@formbricks/ui/Dialog";
-import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@formbricks/ui/components/Dialog";
+import { ShareSurveyLink } from "@formbricks/ui/components/ShareSurveyLink";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
 import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 

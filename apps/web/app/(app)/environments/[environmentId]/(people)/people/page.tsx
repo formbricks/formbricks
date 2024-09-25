@@ -4,11 +4,11 @@ import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
 import { TPerson } from "@formbricks/types/people";
-import { Button } from "@formbricks/ui/Button";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
-import { Pagination } from "@formbricks/ui/Pagination";
+import { Button } from "@formbricks/ui/components/Button";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { Pagination } from "@formbricks/ui/components/Pagination";
 import { PersonCard } from "./components/PersonCard";
 
 const Page = async ({

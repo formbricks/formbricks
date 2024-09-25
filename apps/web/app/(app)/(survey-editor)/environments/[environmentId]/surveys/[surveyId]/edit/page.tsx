@@ -12,7 +12,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
 export const generateMetadata = async ({ params }) => {

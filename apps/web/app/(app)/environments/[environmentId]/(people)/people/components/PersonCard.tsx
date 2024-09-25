@@ -3,7 +3,7 @@ import React from "react";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { TPerson } from "@formbricks/types/people";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 
 export const PersonCard = async ({ person }: { person: TPerson }) => {
   const attributes = await getAttributes(person.id);

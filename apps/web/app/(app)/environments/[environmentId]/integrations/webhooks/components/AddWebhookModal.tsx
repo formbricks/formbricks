@@ -10,10 +10,10 @@ import toast from "react-hot-toast";
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhookInput } from "@formbricks/types/webhooks";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { Modal } from "@formbricks/ui/components/Modal";
 import { createWebhookAction, testEndpointAction } from "../actions";
 
 interface AddWebhookModalProps {

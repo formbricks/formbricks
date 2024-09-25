@@ -7,10 +7,10 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { EnvironmentNotice } from "@formbricks/ui/components/EnvironmentNotice";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { ApiKeyList } from "./components/ApiKeyList";
 

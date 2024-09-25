@@ -1,6 +1,6 @@
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { TProductConfigChannel } from "@formbricks/types/product";
-import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
+import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface PeopleSegmentsTabsProps {
   activeId: string;

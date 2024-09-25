@@ -10,10 +10,10 @@ import React, { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { Button } from "@formbricks/ui/Button";
-import { Modal } from "@formbricks/ui/Modal";
-import { OTPInput } from "@formbricks/ui/OTPInput";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { Button } from "@formbricks/ui/components/Button";
+import { Modal } from "@formbricks/ui/components/Modal";
+import { OTPInput } from "@formbricks/ui/components/OTPInput";
+import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
 type TConfirmPasswordFormState = {
   password: string;

@@ -4,7 +4,7 @@ import ProlificLogo from "@/images/prolific-logo.webp";
 import ProlificUI from "@/images/prolific-screenshot.webp";
 import { ArrowLeftIcon } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 interface PanelInfoViewProps {
   handleInitialPageButton: () => void;

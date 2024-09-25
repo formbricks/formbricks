@@ -3,8 +3,8 @@ import { Trash2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TResponseTableData } from "@formbricks/types/responses";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { deleteResponseAction } from "@formbricks/ui/SingleResponseCard/actions";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { deleteResponseAction } from "@formbricks/ui/components/SingleResponseCard/actions";
 
 interface SelectedResponseSettingsProps {
   table: Table<TResponseTableData>;

@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 
 interface ColumnSettingsDropdownProps {
   column: Column<TResponseTableData>;

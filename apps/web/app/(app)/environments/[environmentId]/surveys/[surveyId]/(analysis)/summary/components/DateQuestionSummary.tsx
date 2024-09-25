@@ -5,8 +5,8 @@ import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys/types";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
+import { PersonAvatar } from "@formbricks/ui/components/Avatars";
+import { Button } from "@formbricks/ui/components/Button";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface DateQuestionSummary {

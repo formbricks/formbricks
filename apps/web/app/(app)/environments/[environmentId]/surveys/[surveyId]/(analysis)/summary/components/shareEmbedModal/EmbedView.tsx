@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";
 import { WebpageTab } from "./WebpageTab";

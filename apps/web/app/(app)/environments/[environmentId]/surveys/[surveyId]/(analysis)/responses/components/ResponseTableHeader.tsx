@@ -6,7 +6,7 @@ import { GripVerticalIcon } from "lucide-react";
 import { CSSProperties } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TResponseTableData } from "@formbricks/types/responses";
-import { TableHead } from "@formbricks/ui/Table";
+import { TableHead } from "@formbricks/ui/components/Table";
 
 interface ResponseTableHeaderProps {
   header: Header<TResponseTableData, unknown>;

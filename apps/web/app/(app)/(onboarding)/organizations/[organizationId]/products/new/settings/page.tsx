@@ -6,8 +6,8 @@ import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getProducts } from "@formbricks/lib/product/service";
 import { startsWithVowel } from "@formbricks/lib/utils/strings";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface ProductSettingsPageProps {
   params: {

@@ -5,8 +5,8 @@ import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface ConnectPageProps {
   params: {
