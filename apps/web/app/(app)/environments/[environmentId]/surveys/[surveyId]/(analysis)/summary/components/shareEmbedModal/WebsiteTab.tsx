@@ -99,7 +99,7 @@ const PopupTab = ({ environmentId }) => {
         <li>
           Make sure the survey type is set to <b>Website survey</b>
         </li>
-        <li>Dfine when and where the survey should pop up</li>
+        <li>Define when and where the survey should pop up</li>
       </ol>
       <div className="mt-4">
         <video autoPlay loop muted className="w-full rounded-xl border border-slate-200">
