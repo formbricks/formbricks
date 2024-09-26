@@ -4,7 +4,7 @@ import { Column } from "@tanstack/react-table";
 import { capitalize } from "lodash";
 import { GripVertical } from "lucide-react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/questions";
+import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Switch } from "../../Switch";
 
@@ -40,34 +40,11 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
   };
 
   const question = survey?.questions.find((question) => question.id === column.id);
-  const variable = survey?.variables.find((variable) => variable.id === column.id);
 
   const style = {
     transition: transition ?? "transform 100ms ease",
     transform: CSS.Translate.toString(transform),
     zIndex: isDragging ? 10 : 1,
-  };
-
-  const renderLabel = () => {
-    if (question) {
-      return (
-        <div className="flex items-center space-x-2">
-          <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
-          <span className="max-w-xs truncate">{getLocalizedValue(question.headline, "default")}</span>
-        </div>
-      );
-    }
-
-    if (variable) {
-      return (
-        <div className="flex items-center space-x-2">
-          <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
-          <span className="max-w-xs truncate">{variable.name}</span>
-        </div>
-      );
-    }
-
-    return <span className="max-w-xs truncate">{getLabelFromColumnId()}</span>;
   };
 
   return (
@@ -80,7 +57,14 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
             <button onClick={(e) => e.preventDefault()}>
               <GripVertical className="h-4 w-4" />
             </button>
-            {renderLabel()}
+            {question ? (
+              <div className="flex items-center space-x-2">
+                <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
+                <span className="max-w-xs truncate">{getLocalizedValue(question.headline, "default")}</span>
+              </div>
+            ) : (
+              <span className="max-w-xs truncate">{getLabelFromColumnId()}</span>
+            )}
           </div>
           <Switch
             id={column.id}
