@@ -3,7 +3,7 @@ interface HighlightedTextProps {
   searchValue: string;
 }
 
-export const HighlightedText: React.FC<HighlightedTextProps> = ({ value, searchValue }) => {
+export const HighlightedText = ({ value, searchValue }: HighlightedTextProps) => {
   if (!searchValue.trim()) {
     return <span>{value}</span>;
   }
@@ -16,7 +16,7 @@ export const HighlightedText: React.FC<HighlightedTextProps> = ({ value, searchV
     <span className="text-slate-900">
       {parts.map((part, index) =>
         regex.test(part) ? (
-          <mark key={`${part}-${index}`} style={{ backgroundColor: "yellow" }}>
+          <mark key={`${part}-${index}`} className="bg-[#FFFF00]">
             {part}
           </mark>
         ) : (
