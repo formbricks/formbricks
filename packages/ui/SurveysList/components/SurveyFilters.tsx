@@ -136,7 +136,12 @@ export const SurveyFilters = ({
   return (
     <div className="flex justify-between">
       <div className="flex space-x-2">
-        <SearchBar value={name} onChange={setName} placeholder={"Search by survey name"} />
+        <SearchBar
+          value={name}
+          onChange={setName}
+          placeholder={"Search by survey name"}
+          className="border-slate-700"
+        />
         <div>
           <SurveyFilterDropdown
             title="Created By"

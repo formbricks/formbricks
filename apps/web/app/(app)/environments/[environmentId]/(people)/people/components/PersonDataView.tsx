@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  getPersonCountAction,
-  getPersonsAction,
-} from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
+import { getPersonsAction } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { PersonTable } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTable";
 import { debounce } from "lodash";
 import { useEffect, useState } from "react";
@@ -26,13 +23,18 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
     const fetchData = async () => {
       setIsDataLoaded(false);
       try {
+        setHasMore(true);
         const getPersonActionData = await getPersonsAction({
           environmentId: environment.id,
           offset: 0,
           searchValue,
         });
+        const personData = getPersonActionData?.data;
         if (getPersonActionData?.data) {
           setPersons(getPersonActionData.data);
+        }
+        if (personData && personData.length < 50) {
+          setHasMore(false);
         }
       } catch (error) {
         console.error("Error fetching people data:", error);
@@ -58,9 +60,12 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
           offset: persons.length,
           searchValue,
         });
-        if (getPersonsActionData?.data) {
-          const newData = getPersonsActionData.data;
-          setPersons((prevPersonsData) => [...prevPersonsData, ...newData]);
+        const personData = getPersonsActionData?.data;
+        if (personData) {
+          setPersons((prevPersonsData) => [...prevPersonsData, ...personData]);
+          if (personData.length === 0 || personData.length < 50) {
+            setHasMore(false);
+          }
         }
       } catch (error) {
         console.error("Error fetching next page of people data:", error);
@@ -73,23 +78,6 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
   const deletePersons = (personIds: string[]) => {
     setPersons((prevPersons) => prevPersons.filter((p) => !personIds.includes(p.id)));
   };
-
-  useEffect(() => {
-    const calculateHasMore = async () => {
-      try {
-        const personCount = await getPersonCountAction({
-          environmentId: environment.id,
-          searchValue,
-        });
-        if (personCount && typeof personCount.data === "number") {
-          setHasMore(personCount.data > persons.length);
-        }
-      } catch (error) {
-        console.error("Error calculating has more:", error);
-      }
-    };
-    calculateHasMore();
-  }, [persons.length]);
 
   const personTableData = persons.map((person) => ({
     id: person.id,

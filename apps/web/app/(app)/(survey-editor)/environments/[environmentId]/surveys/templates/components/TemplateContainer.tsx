@@ -43,6 +43,7 @@ export const TemplateContainerWithPreview = ({
                 value={templateSearch ?? ""}
                 onChange={setTemplateSearch}
                 placeholder={"Search..."}
+                className="border-slate-700"
               />
             </div>
           </div>
