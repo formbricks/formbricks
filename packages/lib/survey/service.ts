@@ -60,6 +60,11 @@ export const selectSurvey = {
   name: true,
   type: true,
   environmentId: true,
+  creator: {
+    select: {
+      name: true,
+    },
+  },
   createdBy: true,
   status: true,
   welcomeCard: true,
