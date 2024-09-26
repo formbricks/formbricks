@@ -4,6 +4,7 @@ import {
   replaceEndingCardHeadlineRecall,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
+import { debounce } from "lodash";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -13,7 +14,7 @@ import {
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -42,12 +43,26 @@ export function ConditionalLogic({
   questionIdx,
   updateQuestion,
 }: ConditionalLogicProps) {
+  const [questionLogic, setQuestionLogic] = useState(question.logic);
+
+  const debouncedUpdateQuestion = useMemo(() => debounce(updateQuestion, 500), [updateQuestion]);
+
+  useEffect(() => {
+    debouncedUpdateQuestion(questionIdx, {
+      logic: questionLogic,
+    });
+  }, [questionLogic]);
+
   const transformedSurvey = useMemo(() => {
     let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default", attributeClasses);
     modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default", attributeClasses);
 
     return modifiedSurvey;
   }, [localSurvey, attributeClasses]);
+
+  const updateQuestionLogic = (_questionIdx: number, updatedAttributes: any) => {
+    setQuestionLogic(updatedAttributes.logic);
+  };
 
   const addLogic = () => {
     const operator = getDefaultOperatorForQuestion(question);
@@ -77,37 +92,37 @@ export function ConditionalLogic({
       ],
     };
 
-    updateQuestion(questionIdx, {
+    updateQuestionLogic(questionIdx, {
       logic: [...(question?.logic ?? []), initialCondition],
     });
   };
 
   const handleRemoveLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(questionLogic ?? []);
     logicCopy.splice(logicItemIdx, 1);
 
-    updateQuestion(questionIdx, {
+    updateQuestionLogic(questionIdx, {
       logic: logicCopy,
     });
   };
 
   const moveLogic = (from: number, to: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(questionLogic ?? []);
     const [movedItem] = logicCopy.splice(from, 1);
     logicCopy.splice(to, 0, movedItem);
 
-    updateQuestion(questionIdx, {
+    updateQuestionLogic(questionIdx, {
       logic: logicCopy,
     });
   };
 
   const duplicateLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
+    const logicCopy = structuredClone(questionLogic ?? []);
     const logicItem = logicCopy[logicItemIdx];
     const newLogicItem = duplicateLogicItem(logicItem);
     logicCopy.splice(logicItemIdx + 1, 0, newLogicItem);
 
-    updateQuestion(questionIdx, {
+    updateQuestionLogic(questionIdx, {
       logic: logicCopy,
     });
   };
@@ -119,20 +134,20 @@ export function ConditionalLogic({
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
-      {question.logic && question.logic.length > 0 && (
+      {questionLogic && questionLogic.length > 0 && (
         <div className="mt-2 flex flex-col gap-4">
-          {question.logic.map((logicItem, logicItemIdx) => (
+          {questionLogic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}
               className="flex w-full grow items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <LogicEditor
                 localSurvey={transformedSurvey}
                 logicItem={logicItem}
-                updateQuestion={updateQuestion}
+                updateQuestion={updateQuestionLogic}
                 question={question}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
-                isLast={logicItemIdx === (question.logic ?? []).length - 1}
+                isLast={logicItemIdx === (questionLogic ?? []).length - 1}
               />
 
               <DropdownMenu>
@@ -159,7 +174,7 @@ export function ConditionalLogic({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex items-center gap-2"
-                    disabled={logicItemIdx === (question.logic ?? []).length - 1}
+                    disabled={logicItemIdx === (questionLogic ?? []).length - 1}
                     onClick={() => {
                       moveLogic(logicItemIdx, logicItemIdx + 1);
                     }}>

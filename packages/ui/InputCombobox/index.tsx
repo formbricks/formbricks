@@ -79,44 +79,50 @@ export const InputCombobox = ({
 
   useEffect(() => {
     // Sync inputValue when value changes externally
-    setInputValue(value || "");
+    setInputValue(value ?? "");
   }, [value]);
 
-  useEffect(() => {
-    const validOptions = options?.length ? options : groupedOptions?.flatMap((group) => group.options);
-
-    if (value === null || value === undefined) {
-      setLocalValue("");
-      setInputType(null);
-    } else {
-      if (Array.isArray(value)) {
-        if (value.length > 0) {
-          setLocalValue(validOptions?.filter((option) => value.includes(option.value as string)) || null);
-          if (inputType !== "dropdown") {
-            setInputType("dropdown");
-          }
-        }
-      } else {
-        const option = validOptions?.find((option) => option.value === value);
-        if (option) {
-          setLocalValue(option);
-          if (inputType !== "dropdown") {
-            setInputType("dropdown");
-          }
-        } else {
-          if (withInput) {
-            setLocalValue(value);
-            if (inputType !== "input") {
-              setInputType("input");
-            }
-          } else {
-            setLocalValue(null);
-            setInputType(null);
-          }
-        }
-      }
+  const validOptions = useMemo(() => {
+    if (options?.length) {
+      return options;
     }
-  }, [value, options, groupedOptions, inputType, withInput]);
+
+    return groupedOptions?.flatMap((group) => group.options);
+  }, [options, groupedOptions]);
+
+  // useEffect(() => {
+  //   if (value === null || value === undefined) {
+  //     setLocalValue("");
+  //     setInputType(null);
+  //   } else {
+  //     if (Array.isArray(value)) {
+  //       if (value.length > 0) {
+  //         setLocalValue(validOptions?.filter((option) => value.includes(option.value as string)) || null);
+  //         if (inputType !== "dropdown") {
+  //           setInputType("dropdown");
+  //         }
+  //       }
+  //     } else {
+  //       const option = validOptions?.find((option) => option.value === value);
+  //       if (option) {
+  //         setLocalValue(option);
+  //         if (inputType !== "dropdown") {
+  //           setInputType("dropdown");
+  //         }
+  //       } else {
+  //         if (withInput) {
+  //           setLocalValue(value);
+  //           if (inputType !== "input") {
+  //             setInputType("input");
+  //           }
+  //         } else {
+  //           setLocalValue(null);
+  //           setInputType(null);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }, [value, options, groupedOptions, withInput]);
 
   const handleMultiSelect = (option: TComboboxOption) => {
     if (Array.isArray(localValue)) {
