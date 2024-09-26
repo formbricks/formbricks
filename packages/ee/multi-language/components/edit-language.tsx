@@ -6,10 +6,10 @@ import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
-import { Label } from "@formbricks/ui/Label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { Button } from "@formbricks/ui/components/Button";
+import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
+import { Label } from "@formbricks/ui/components/Label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import {
   createLanguageAction,
   deleteLanguageAction,

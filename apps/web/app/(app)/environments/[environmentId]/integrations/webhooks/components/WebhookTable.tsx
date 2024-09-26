@@ -5,7 +5,7 @@ import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 
 interface WebhookTableProps {
   environment: TEnvironment;

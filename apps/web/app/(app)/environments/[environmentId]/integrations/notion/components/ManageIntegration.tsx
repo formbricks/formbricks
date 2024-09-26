@@ -5,9 +5,9 @@ import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;

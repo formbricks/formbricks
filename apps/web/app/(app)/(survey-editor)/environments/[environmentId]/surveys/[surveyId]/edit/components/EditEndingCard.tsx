@@ -14,8 +14,8 @@ import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
-import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
-import { TooltipRenderer } from "@formbricks/ui/Tooltip";
+import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
+import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;

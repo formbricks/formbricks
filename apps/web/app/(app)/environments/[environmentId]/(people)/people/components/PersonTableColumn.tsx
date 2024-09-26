@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@formbricks/lib/cn";
 import { TPersonTableData } from "@formbricks/types/people";
-import { getSelectionColumn } from "@formbricks/ui/DataTable";
+import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
 
 export const generatePersonTableColumns = (isExpanded: boolean): ColumnDef<TPersonTableData>[] => {
   const dateColumn: ColumnDef<TPersonTableData> = {

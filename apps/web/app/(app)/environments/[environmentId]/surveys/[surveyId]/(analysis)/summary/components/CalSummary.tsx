@@ -1,7 +1,7 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys/types";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
+import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CalSummaryProps {

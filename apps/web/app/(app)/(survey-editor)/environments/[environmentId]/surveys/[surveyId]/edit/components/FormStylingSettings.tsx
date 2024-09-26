@@ -9,9 +9,9 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { mixColor } from "@formbricks/lib/utils/colors";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
+import { Button } from "@formbricks/ui/components/Button";
+import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
 
 type FormStylingSettingsProps = {
   open: boolean;

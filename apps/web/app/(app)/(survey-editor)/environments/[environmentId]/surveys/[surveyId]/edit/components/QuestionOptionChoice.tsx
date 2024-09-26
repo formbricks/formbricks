@@ -12,7 +12,7 @@ import {
   TSurveyQuestionChoice,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {

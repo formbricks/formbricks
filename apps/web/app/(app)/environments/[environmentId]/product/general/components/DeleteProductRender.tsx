@@ -7,8 +7,8 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
 type DeleteProductRenderProps = {
   isDeleteDisabled: boolean;

@@ -40,9 +40,9 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
+import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
+import { Button } from "@formbricks/ui/components/Button";
+import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +55,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 import { version } from "../../../../../package.json";
 
 interface NavigationProps {

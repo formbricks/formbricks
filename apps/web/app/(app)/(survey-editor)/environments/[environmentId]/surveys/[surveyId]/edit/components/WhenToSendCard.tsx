@@ -14,9 +14,9 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
 import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {

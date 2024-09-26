@@ -2,10 +2,10 @@
 
 import { useForm } from "react-hook-form";
 import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { MembershipRole } from "./AddMemberModal";
 
 interface IndividualInviteTabProps {

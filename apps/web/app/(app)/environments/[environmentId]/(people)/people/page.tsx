@@ -4,9 +4,9 @@ import { CircleHelpIcon } from "lucide-react";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPersonCount } from "@formbricks/lib/person/service";
-import { Button } from "@formbricks/ui/Button";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { Button } from "@formbricks/ui/components/Button";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
   const environment = await getEnvironment(params.environmentId);

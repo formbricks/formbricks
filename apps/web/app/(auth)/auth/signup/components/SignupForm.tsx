@@ -4,7 +4,7 @@ import { XCircleIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { SignupOptions } from "@formbricks/ui/SignupOptions";
+import { SignupOptions } from "@formbricks/ui/components/SignupOptions";
 
 interface SignupFormProps {
   webAppUrl: string;

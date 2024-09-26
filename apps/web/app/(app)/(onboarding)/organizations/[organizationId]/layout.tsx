@@ -7,7 +7,7 @@ import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { ToasterClient } from "@formbricks/ui/ToasterClient";
+import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
 const ProductOnboardingLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);

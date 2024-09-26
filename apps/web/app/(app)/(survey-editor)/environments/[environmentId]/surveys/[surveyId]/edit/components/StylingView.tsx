@@ -8,8 +8,8 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TBaseStyling } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { AlertDialog } from "@formbricks/ui/AlertDialog";
-import { Button } from "@formbricks/ui/Button";
+import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
+import { Button } from "@formbricks/ui/components/Button";
 import {
   FormControl,
   FormDescription,
@@ -17,8 +17,8 @@ import {
   FormItem,
   FormLabel,
   FormProvider,
-} from "@formbricks/ui/Form";
-import { Switch } from "@formbricks/ui/Switch";
+} from "@formbricks/ui/components/Form";
+import { Switch } from "@formbricks/ui/components/Switch";
 import { BackgroundStylingCard } from "./BackgroundStylingCard";
 import { CardStylingSettings } from "./CardStylingSettings";
 import { FormStylingSettings } from "./FormStylingSettings";

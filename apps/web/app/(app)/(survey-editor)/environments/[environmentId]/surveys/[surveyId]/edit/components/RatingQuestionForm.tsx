@@ -2,10 +2,10 @@ import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { Dropdown } from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
