@@ -82,8 +82,27 @@ export const InputCombobox = ({
     setInputValue(value || "");
   }, [value]);
 
+  // useEffect(() => {
+  //   console.log("changing the options");
+  // }, [options]);
+  // useEffect(() => {
+  //   console.log("changing the groupedOptions");
+  // }, [groupedOptions]);
+  // useEffect(() => {
+  //   console.log("changing the value");
+  // }, [value]);
+  // useEffect(() => {
+  //   console.log("changing the inputType");
+  // }, [inputType]);
+  // useEffect(() => {
+  //   console.log("changing the withInput");
+  // }, [withInput]);
+
   useEffect(() => {
+    // console.log("running this useEffect");
     const validOptions = options?.length ? options : groupedOptions?.flatMap((group) => group.options);
+
+    console.log({ options, groupedOptions, value, validOptions });
 
     if (value === null || value === undefined) {
       setLocalValue("");
@@ -158,11 +177,11 @@ export const InputCombobox = ({
     if (value === "") {
       setLocalValue("");
       setInputValue("");
-      if (!isE2E) {
-        debouncedOnChangeValue("");
-      } else {
-        onChangeValue("", undefined, true);
-      }
+      // if (!isE2E) {
+      //   debouncedOnChangeValue("");
+      // } else {
+      onChangeValue("", undefined, true);
+      // }
     }
 
     if (inputType !== "input") {
@@ -177,11 +196,11 @@ export const InputCombobox = ({
 
     // Trigger the debounced onChangeValue
 
-    if (!isE2E) {
-      debouncedOnChangeValue(val);
-    } else {
-      onChangeValue(val, undefined, true);
-    }
+    // if (!isE2E) {
+    //   debouncedOnChangeValue(val);
+    // } else {
+    onChangeValue(val, undefined, true);
+    // }
   };
 
   const getDisplayValue = useMemo(() => {

@@ -258,7 +258,7 @@ export function LogicEditorConditions({
             </div>
           )}
         </div>
-        <InputCombobox
+        {/* <InputCombobox
           id={`condition-${depth}-${index}-conditionValue`}
           key="conditionValue"
           showSearch={false}
@@ -300,7 +300,7 @@ export function LogicEditorConditions({
               handleRightOperandChange(condition, val, option);
             }}
           />
-        )}
+        )} */}
         <DropdownMenu>
           <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`}>
             <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />

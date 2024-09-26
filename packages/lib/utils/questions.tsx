@@ -231,6 +231,14 @@ export const questionTypes: TQuestion[] = [
   },
 ];
 
+export const questionIconMapping = questionTypes.reduce(
+  (prev, curr) => ({
+    ...prev,
+    [curr.id]: curr.icon,
+  }),
+  {}
+);
+
 export const CXQuestionTypes = questionTypes.filter((questionType) => {
   return [
     TSurveyQuestionTypeEnum.OpenText,

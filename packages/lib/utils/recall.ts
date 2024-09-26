@@ -12,7 +12,7 @@ import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";
 
-export interface fallbacks {
+export interface TFallbackString {
   [id: string]: string;
 }
 
@@ -209,17 +209,19 @@ export const getRecallItems = (
 };
 
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
-export const getFallbackValues = (text: string): fallbacks => {
+export const getFallbackValues = (text: string): TFallbackString => {
   if (!text.includes("#recall:")) return {};
-  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([\S*]+)#/g;
-  let match;
-  const fallbacks: fallbacks = {};
 
-  while ((match = pattern.exec(text)) !== null) {
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([\S*]+)#/g;
+  const fallbacks: TFallbackString = {};
+
+  let match = pattern.exec(text);
+  while (match !== null) {
     const id = match[1];
     const fallbackValue = match[2];
     fallbacks[id] = fallbackValue;
   }
+
   return fallbacks;
 };
 
@@ -227,7 +229,7 @@ export const getFallbackValues = (text: string): fallbacks => {
 export const headlineToRecall = (
   text: string,
   recallItems: TSurveyRecallItem[],
-  fallbacks: fallbacks
+  fallbacks: TFallbackString
 ): string => {
   recallItems.forEach((recallItem) => {
     const recallInfo = `#recall:${recallItem.id}/fallback:${fallbacks[recallItem.id]}#`;

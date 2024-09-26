@@ -1,8 +1,8 @@
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
-import { HTMLInputTypeAttribute } from "react";
+import { HTMLInputTypeAttribute, useMemo } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { questionTypes } from "@formbricks/lib/utils/questions";
+import { questionIconMapping, questionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
@@ -39,14 +39,6 @@ export const formatTextWithSlashes = (text: string) => {
     }
   });
 };
-
-const questionIconMapping = questionTypes.reduce(
-  (prev, curr) => ({
-    ...prev,
-    [curr.id]: curr.icon,
-  }),
-  {}
-);
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
@@ -754,40 +746,6 @@ export const getMatchValueProps = (
   }
 
   return { show: false, options: [] };
-};
-
-export const getActionTargetOptions = (
-  action: TSurveyLogicAction,
-  localSurvey: TSurvey,
-  currQuestionIdx: number
-): TComboboxOption[] => {
-  let questions = localSurvey.questions.filter((_, idx) => idx !== currQuestionIdx);
-
-  if (action.objective === "requireAnswer") {
-    questions = questions.filter((question) => !question.required);
-  }
-
-  const questionOptions = questions.map((question) => {
-    return {
-      icon: questionIconMapping[question.type],
-      label: getLocalizedValue(question.headline, "default"),
-      value: question.id,
-    };
-  });
-
-  if (action.objective === "requireAnswer") return questionOptions;
-
-  const endingCardOptions = localSurvey.endings.map((ending) => {
-    return {
-      label:
-        ending.type === "endScreen"
-          ? getLocalizedValue(ending.headline, "default") || "End Screen"
-          : ending.label || "Redirect Thank you card",
-      value: ending.id,
-    };
-  });
-
-  return [...questionOptions, ...endingCardOptions];
 };
 
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] => {
