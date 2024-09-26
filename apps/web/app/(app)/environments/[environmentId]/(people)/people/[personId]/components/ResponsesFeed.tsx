@@ -10,8 +10,8 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
-import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
+import { SingleResponseCard } from "@formbricks/ui/components/SingleResponseCard";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];

@@ -5,7 +5,7 @@ import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/l
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
-import { Editor } from "@formbricks/ui/Editor";
+import { Editor } from "@formbricks/ui/components/Editor";
 import { LanguageIndicator } from "./language-indicator";
 
 interface LocalizedEditorProps {

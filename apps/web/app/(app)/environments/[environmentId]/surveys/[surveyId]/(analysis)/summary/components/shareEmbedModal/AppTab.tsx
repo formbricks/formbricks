@@ -4,8 +4,8 @@ import ChangeSurveyTypeTip from "@/images/tooltips/change-survey-type-app.mp4";
 import { CogIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Alert, AlertDescription } from "@formbricks/ui/Alert";
-import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
+import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 
 export const AppTab = ({ environmentId }) => {
   const [selectedTab, setSelectedTab] = useState("webapp");

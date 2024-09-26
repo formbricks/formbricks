@@ -16,11 +16,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TPersonTableData } from "@formbricks/types/people";
-import { Button } from "@formbricks/ui/Button";
-import { DataTableHeader, DataTableSettingsModal, DataTableToolbar } from "@formbricks/ui/DataTable";
-import { getCommonPinningStyles } from "@formbricks/ui/DataTable/lib/utils";
-import { Skeleton } from "@formbricks/ui/Skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
+import { Button } from "@formbricks/ui/components/Button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@formbricks/ui/components/DataTable";
+import { getCommonPinningStyles } from "@formbricks/ui/components/DataTable/lib/utils";
+import { Skeleton } from "@formbricks/ui/components/Skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/components/Table";
 
 interface PersonTableProps {
   data: TPersonTableData[];

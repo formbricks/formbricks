@@ -6,7 +6,7 @@ import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { TEnvironment } from "@formbricks/types/environment";
-import { ClientLogout } from "@formbricks/ui/ClientLogout";
+import { ClientLogout } from "@formbricks/ui/components/ClientLogout";
 
 const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);

@@ -15,10 +15,10 @@ import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { StackedCardsContainer } from "@formbricks/ui/StackedCardsContainer";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { StackedCardsContainer } from "@formbricks/ui/components/StackedCardsContainer";
 
 interface VerifyEmailProps {
   survey: TSurvey;

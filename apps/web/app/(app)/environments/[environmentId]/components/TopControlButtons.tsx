@@ -7,7 +7,7 @@ import formbricks from "@formbricks/js/app";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductConfigChannel } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 interface TopControlButtonsProps {
   environment: TEnvironment;
