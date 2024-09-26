@@ -1,10 +1,11 @@
 import { PersonDataView } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonDataView";
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
+import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { Button } from "@formbricks/ui/Button";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { Button } from "@formbricks/ui/components/Button";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
   const environment = await getEnvironment(params.environmentId);
@@ -29,7 +30,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <PageHeader pageTitle="People" cta={HowToAddPeopleButton}>
         <PersonSecondaryNavigation activeId="people" environmentId={params.environmentId} />
       </PageHeader>
-      <PersonDataView environment={environment} />
+      <PersonDataView environment={environment} itemsPerPage={ITEMS_PER_PAGE} />
     </PageContentWrapper>
   );
 };

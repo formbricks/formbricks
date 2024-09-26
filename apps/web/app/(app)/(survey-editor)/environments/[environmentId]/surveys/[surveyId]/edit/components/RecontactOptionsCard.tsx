@@ -5,10 +5,10 @@ import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 
 interface DisplayOption {
   id: "displayOnce" | "displayMultiple" | "respondMultiple" | "displaySome";

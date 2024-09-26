@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TIntegrationType } from "@formbricks/types/integration";
-import { Button } from "../../ui/Button";
+import { Button } from "../Button";
 import { FormbricksLogo } from "../FormbricksLogo";
 import { getIntegrationDetails } from "./lib/utils";
 

@@ -19,13 +19,13 @@ import {
   TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdditionalIntegrationSettings } from "@formbricks/ui/AdditionalIntegrationSettings";
-import { Button } from "@formbricks/ui/Button";
-import { Checkbox } from "@formbricks/ui/Checkbox";
-import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Modal } from "@formbricks/ui/Modal";
+import { AdditionalIntegrationSettings } from "@formbricks/ui/components/AdditionalIntegrationSettings";
+import { Button } from "@formbricks/ui/components/Button";
+import { Checkbox } from "@formbricks/ui/components/Checkbox";
+import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddIntegrationModalProps {
   environmentId: string;

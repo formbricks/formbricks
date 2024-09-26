@@ -20,10 +20,14 @@ import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/Button";
-import { DataTableHeader, DataTableSettingsModal, DataTableToolbar } from "@formbricks/ui/DataTable";
-import { Skeleton } from "@formbricks/ui/Skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/Table";
+import { Button } from "@formbricks/ui/components/Button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@formbricks/ui/components/DataTable";
+import { Skeleton } from "@formbricks/ui/components/Skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/components/Table";
 
 interface ResponseTableProps {
   data: TResponseTableData[];

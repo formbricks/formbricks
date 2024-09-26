@@ -10,9 +10,10 @@ import { TPersonWithAttributes } from "@formbricks/types/people";
 
 interface PersonDataViewProps {
   environment: TEnvironment;
+  itemsPerPage: number;
 }
 
-export const PersonDataView = ({ environment }: PersonDataViewProps) => {
+export const PersonDataView = ({ environment, itemsPerPage }: PersonDataViewProps) => {
   const [persons, setPersons] = useState<TPersonWithAttributes[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(false);
@@ -33,7 +34,7 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
         if (getPersonActionData?.data) {
           setPersons(getPersonActionData.data);
         }
-        if (personData && personData.length < 50) {
+        if (personData && personData.length < itemsPerPage) {
           setHasMore(false);
         }
       } catch (error) {
@@ -63,7 +64,7 @@ export const PersonDataView = ({ environment }: PersonDataViewProps) => {
         const personData = getPersonsActionData?.data;
         if (personData) {
           setPersons((prevPersonsData) => [...prevPersonsData, ...personData]);
-          if (personData.length === 0 || personData.length < 50) {
+          if (personData.length === 0 || personData.length < itemsPerPage) {
             setHasMore(false);
           }
         }

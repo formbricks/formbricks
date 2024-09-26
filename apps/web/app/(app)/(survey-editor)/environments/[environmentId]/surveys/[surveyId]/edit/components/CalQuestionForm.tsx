@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { deletePersonAction } from "@formbricks/ui/DataTable/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { deletePersonAction } from "@formbricks/ui/components/DataTable/actions";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
 interface DeletePersonButtonProps {
   environmentId: string;

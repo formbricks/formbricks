@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { Input } from "@formbricks/ui/Input";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { Input } from "@formbricks/ui/components/Input";
 
 type DeleteOrganizationProps = {
   organization: TOrganization;

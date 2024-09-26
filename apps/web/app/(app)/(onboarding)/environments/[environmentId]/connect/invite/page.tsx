@@ -5,8 +5,8 @@ import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface InvitePageProps {
   params: {

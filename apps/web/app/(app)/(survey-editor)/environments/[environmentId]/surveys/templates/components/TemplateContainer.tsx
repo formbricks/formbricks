@@ -7,9 +7,9 @@ import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
-import { SearchBar } from "@formbricks/ui/SearchBar";
-import { TemplateList } from "@formbricks/ui/TemplateList";
+import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
+import { SearchBar } from "@formbricks/ui/components/SearchBar";
+import { TemplateList } from "@formbricks/ui/components/TemplateList";
 import { minimalSurvey } from "../../lib/minimalSurvey";
 
 type TemplateContainerWithPreviewProps = {

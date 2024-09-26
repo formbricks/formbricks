@@ -3,8 +3,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@formbricks/lib/cn";
 import { TPersonTableData } from "@formbricks/types/people";
-import { getSelectionColumn } from "@formbricks/ui/DataTable";
-import { HighlightedText } from "@formbricks/ui/HighlightedText";
+import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
+import { HighlightedText } from "@formbricks/ui/components/HighlightedText";
 
 export const generatePersonTableColumns = (
   isExpanded: boolean,

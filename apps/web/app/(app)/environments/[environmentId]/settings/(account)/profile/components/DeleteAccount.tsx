@@ -4,8 +4,8 @@ import { formbricksLogout } from "@/app/lib/formbricks";
 import type { Session } from "next-auth";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteAccountModal } from "@formbricks/ui/DeleteAccountModal";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteAccountModal } from "@formbricks/ui/components/DeleteAccountModal";
 
 export const DeleteAccount = ({
   session,

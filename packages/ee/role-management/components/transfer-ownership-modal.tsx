@@ -2,8 +2,8 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
-import { CustomDialog } from "@formbricks/ui/CustomDialog";
-import { Input } from "@formbricks/ui/Input";
+import { CustomDialog } from "@formbricks/ui/components/CustomDialog";
+import { Input } from "@formbricks/ui/components/Input";
 
 interface TransferOwnershipModalProps {
   open: boolean;

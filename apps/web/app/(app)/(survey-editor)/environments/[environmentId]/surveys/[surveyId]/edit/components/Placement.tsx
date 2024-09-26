@@ -2,9 +2,9 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
-import { Label } from "@formbricks/ui/Label";
-import { getPlacementStyle } from "@formbricks/ui/PreviewSurvey/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Label } from "@formbricks/ui/components/Label";
+import { getPlacementStyle } from "@formbricks/ui/components/PreviewSurvey/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
