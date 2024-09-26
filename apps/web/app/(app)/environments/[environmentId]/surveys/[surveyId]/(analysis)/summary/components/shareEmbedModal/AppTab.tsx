@@ -75,15 +75,14 @@ const WebAppTab = ({ environmentId }) => {
             href="https://formbricks.com/docs/app-surveys/user-identification"
             target="_blank"
             className="decoration-brand-dark font-medium underline underline-offset-2">
-            identify users and set attrubutes
+            identify users and set attributes
           </Link>{" "}
           to run highly targeted surveys.
         </li>
         <li>
-          Make sure your survey type is set to <b>App survey</b>
-          pop up
+          Make sure the survey type is set to <b>App survey</b>
         </li>
-        <li>Dfine when and where the survey should pop up</li>
+        <li>Define when and where the survey should pop up</li>
       </ol>
       <div className="mt-4">
         <video autoPlay loop muted className="w-full rounded-xl border border-slate-200">
