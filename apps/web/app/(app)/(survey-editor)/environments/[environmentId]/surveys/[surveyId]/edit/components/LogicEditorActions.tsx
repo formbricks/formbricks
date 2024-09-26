@@ -1,39 +1,15 @@
 import { LogicEditorAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditorAction";
-import {
-  actionObjectiveOptions,
-  getActionOperatorOptions, // getActionTargetOptions,
-  getActionValueOptions,
-  getActionVariableOptions,
-} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
-import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { CornerDownRightIcon } from "lucide-react";
+import React, { useCallback, useMemo } from "react";
 import { getUpdatedActionBody } from "@formbricks/lib/surveyLogic/utils";
-import { questionIconMapping } from "@formbricks/lib/utils/questions";
-import {
-  TActionNumberVariableCalculateOperator,
-  TActionObjective,
-  TActionTextVariableCalculateOperator,
-  TActionVariableValueType,
-  TSurvey,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-} from "@formbricks/types/surveys/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import { InputCombobox, TComboboxOption } from "@formbricks/ui/InputCombobox";
+import { TActionObjective, TSurvey, TSurveyLogic, TSurveyLogicAction } from "@formbricks/types/surveys/types";
 
 interface LogicEditorActions {
   localSurvey: TSurvey;
   logicItem: TSurveyLogic;
   logicIdx: number;
-  question: TSurveyQuestion;
+  questionLogic: TSurveyLogic[];
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   questionIdx: number;
 }
@@ -42,7 +18,7 @@ export const LogicEditorActions = ({
   localSurvey,
   logicItem,
   logicIdx,
-  question,
+  questionLogic,
   updateQuestion,
   questionIdx,
 }: LogicEditorActions) => {
@@ -54,9 +30,8 @@ export const LogicEditorActions = ({
       actionIdx: number,
       action?: TSurveyLogicAction
     ) => {
-      const logicCopy = structuredClone(question.logic) ?? [];
-      const currentLogicItem = logicCopy[logicIdx];
-      const actionsClone = currentLogicItem.actions;
+      const currentLogicCopy = structuredClone(logicItem);
+      const actionsClone = currentLogicCopy.actions;
 
       switch (operation) {
         case "remove":
@@ -78,11 +53,13 @@ export const LogicEditorActions = ({
           break;
       }
 
+      const updatedLogic = questionLogic.map((item, idx) => (idx === logicIdx ? currentLogicCopy : item));
+
       updateQuestion(questionIdx, {
-        logic: logicCopy,
+        logic: updatedLogic,
       });
     },
-    [logicIdx, question.logic, questionIdx]
+    [logicIdx, logicItem, questionIdx, questionLogic]
   );
 
   const handleObjectiveChange = useCallback(
@@ -103,12 +80,10 @@ export const LogicEditorActions = ({
     [actions]
   );
 
-  const filteredQuestions = useMemo(
-    () => localSurvey.questions.filter((_, idx) => idx !== questionIdx),
-    [localSurvey.questions, questionIdx]
-  );
-
-  const endings = useMemo(() => localSurvey.endings, [JSON.stringify(localSurvey.endings)]);
+  const questions = useMemo(() => localSurvey.questions, [localSurvey.questions]);
+  const endings = useMemo(() => localSurvey.endings, [localSurvey.endings]);
+  const variables = useMemo(() => localSurvey.variables, [localSurvey.variables]);
+  const hiddenFields = useMemo(() => localSurvey.hiddenFields, [localSurvey.hiddenFields]);
 
   return (
     <div className="flex grow gap-2">
@@ -123,44 +98,13 @@ export const LogicEditorActions = ({
             handleValuesChange={handleValuesChange}
             endings={endings}
             isRemoveDisabled={actions.length === 1}
-            filteredQuestions={filteredQuestions}
+            questions={questions}
+            variables={variables}
+            questionIdx={questionIdx}
+            hiddenFields={hiddenFields}
           />
         ))}
       </div>
     </div>
   );
-};
-
-// a code snippet living in a component
-// source: https://stackoverflow.com/a/59843241/3600510
-const usePrevious = (value, initialValue) => {
-  const ref = useRef(initialValue);
-  useEffect(() => {
-    ref.current = value;
-  });
-  return ref.current;
-};
-const useEffectDebugger = (effectHook, dependencies, dependencyNames = []) => {
-  const previousDeps = usePrevious(dependencies, []);
-
-  const changedDeps = dependencies.reduce((accum, dependency, index) => {
-    if (dependency !== previousDeps[index]) {
-      const keyName = dependencyNames[index] || index;
-      return {
-        ...accum,
-        [keyName]: {
-          before: previousDeps[index],
-          after: dependency,
-        },
-      };
-    }
-
-    return accum;
-  }, {});
-
-  if (Object.keys(changedDeps).length) {
-    console.log("[use-effect-debugger] ", changedDeps);
-  }
-
-  useEffect(effectHook, dependencies);
 };

@@ -4,6 +4,7 @@ import {
   replaceEndingCardHeadlineRecall,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
+import { debounce } from "lodash";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -44,8 +45,10 @@ export function ConditionalLogic({
 }: ConditionalLogicProps) {
   const [questionLogic, setQuestionLogic] = useState(question.logic);
 
+  const debouncedUpdateQuestion = useMemo(() => debounce(updateQuestion, 500), [updateQuestion]);
+
   useEffect(() => {
-    updateQuestion(questionIdx, {
+    debouncedUpdateQuestion(questionIdx, {
       logic: questionLogic,
     });
   }, [questionLogic]);
@@ -90,7 +93,7 @@ export function ConditionalLogic({
     };
 
     updateQuestionLogic(questionIdx, {
-      logic: [...(question?.logic ?? []), initialCondition],
+      logic: [...(questionLogic ?? []), initialCondition],
     });
   };
 
@@ -142,6 +145,7 @@ export function ConditionalLogic({
                 logicItem={logicItem}
                 updateQuestion={updateQuestionLogic}
                 question={question}
+                questionLogic={questionLogic}
                 questionIdx={questionIdx}
                 logicIdx={logicItemIdx}
                 isLast={logicItemIdx === (questionLogic ?? []).length - 1}

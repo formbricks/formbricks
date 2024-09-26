@@ -1,6 +1,17 @@
-import { actionObjectiveOptions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
-import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import React, { useEffect, useMemo } from "react";
+import {
+  actionObjectiveOptions,
+  getActionOperatorOptions,
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import {
+  CopyIcon,
+  EllipsisVerticalIcon,
+  EyeOffIcon,
+  FileDigitIcon,
+  FileType2Icon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
+import React, { useCallback, useMemo } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { questionIconMapping } from "@formbricks/lib/utils/questions";
 import {
@@ -11,6 +22,7 @@ import {
   TSurvey,
   TSurveyLogicAction,
   TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
@@ -18,7 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { InputCombobox, TComboboxOption } from "@formbricks/ui/InputCombobox";
+import { InputCombobox, TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/InputCombobox";
 
 interface LogicEditorActionProps {
   action: TSurveyLogicAction;
@@ -27,8 +39,14 @@ interface LogicEditorActionProps {
   handleValuesChange: (actionIdx: number, values: any) => void;
   handleActionsChange: (operation: "remove" | "addBelow" | "duplicate", actionIdx: number) => void;
   isRemoveDisabled: boolean;
-  filteredQuestions: TSurveyQuestion[];
+  questions: TSurveyQuestion[];
   endings: TSurvey["endings"];
+  variables: TSurvey["variables"];
+  questionIdx: number;
+  hiddenFields: {
+    enabled: boolean;
+    fieldIds?: string[] | undefined;
+  };
 }
 
 const _LogicEditorAction = ({
@@ -38,43 +56,20 @@ const _LogicEditorAction = ({
   handleObjectiveChange,
   handleValuesChange,
   isRemoveDisabled,
-  filteredQuestions,
+  questions,
   endings,
+  variables,
+  questionIdx,
+  hiddenFields,
 }: LogicEditorActionProps) => {
-  useEffect(() => {
-    console.log("action changed");
-  }, [action]);
-  useEffect(() => {
-    console.log("filteredQuestions changed");
-  }, [filteredQuestions]);
-  useEffect(() => {
-    console.log("endings changed");
-  }, [endings]);
-  useEffect(() => {
-    console.log("isRemoveDisabled changed");
-  }, [isRemoveDisabled]);
-  useEffect(() => {
-    console.log("actionIdx changed");
-  }, [actionIdx]);
-  useEffect(() => {
-    console.log("handleActionsChange changed");
-  }, [handleActionsChange]);
-  useEffect(() => {
-    console.log("handleObjectiveChange changed");
-  }, [handleObjectiveChange]);
-  useEffect(() => {
-    console.log("handleValuesChange changed");
-  }, [handleValuesChange]);
-
   const actionTargetOptions = useMemo((): TComboboxOption[] => {
-    // let questions = localSurvey.questions.filter((_, idx) => idx !== questionIdx);
-    let questions = [...filteredQuestions];
+    let filteredQuestions = questions.filter((_, idx) => idx !== questionIdx);
 
     if (action.objective === "requireAnswer") {
-      questions = questions.filter((question) => !question.required);
+      filteredQuestions = filteredQuestions.filter((question) => !question.required);
     }
 
-    const questionOptions = questions.map((question) => {
+    const questionOptions = filteredQuestions.map((question) => {
       return {
         icon: questionIconMapping[question.type],
         label: getLocalizedValue(question.headline, "default"),
@@ -95,7 +90,163 @@ const _LogicEditorAction = ({
     });
 
     return [...questionOptions, ...endingCardOptions];
-  }, [action.objective, JSON.stringify(filteredQuestions), endings]);
+  }, [action.objective, endings, questionIdx, questions]);
+
+  const actionVariableOptions = useMemo((): TComboboxOption[] => {
+    return variables.map((variable) => {
+      return {
+        icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
+        label: variable.name,
+        value: variable.id,
+        meta: {
+          variableType: variable.type,
+        },
+      };
+    });
+  }, [variables]);
+
+  const getActionValueOptions = useCallback(
+    (variableId: string): TComboboxGroupedOption[] => {
+      const hiddenFieldIds = hiddenFields?.fieldIds ?? [];
+
+      const hiddenFieldsOptions = hiddenFieldIds.map((field) => {
+        return {
+          icon: EyeOffIcon,
+          label: field,
+          value: field,
+          meta: {
+            type: "hiddenField",
+          },
+        };
+      });
+
+      const selectedVariable = variables.find((variable) => variable.id === variableId);
+      const filteredVariables = variables.filter((variable) => variable.id !== variableId);
+
+      if (!selectedVariable) return [];
+
+      if (selectedVariable.type === "text") {
+        const allowedQuestions = questions.filter((question) =>
+          [
+            TSurveyQuestionTypeEnum.OpenText,
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            TSurveyQuestionTypeEnum.Rating,
+            TSurveyQuestionTypeEnum.NPS,
+            TSurveyQuestionTypeEnum.Date,
+          ].includes(question.type)
+        );
+
+        const questionOptions = allowedQuestions.map((question) => {
+          return {
+            icon: questionIconMapping[question.type],
+            label: getLocalizedValue(question.headline, "default"),
+            value: question.id,
+            meta: {
+              type: "question",
+            },
+          };
+        });
+
+        const stringVariables = filteredVariables.filter((variable) => variable.type === "text");
+        const variableOptions = stringVariables.map((variable) => {
+          return {
+            icon: FileType2Icon,
+            label: variable.name,
+            value: variable.id,
+            meta: {
+              type: "variable",
+            },
+          };
+        });
+
+        const groupedOptions: TComboboxGroupedOption[] = [];
+
+        if (questionOptions.length > 0) {
+          groupedOptions.push({
+            label: "Questions",
+            value: "questions",
+            options: questionOptions,
+          });
+        }
+
+        if (variableOptions.length > 0) {
+          groupedOptions.push({
+            label: "Variables",
+            value: "variables",
+            options: variableOptions,
+          });
+        }
+
+        if (hiddenFieldsOptions.length > 0) {
+          groupedOptions.push({
+            label: "Hidden Fields",
+            value: "hiddenFields",
+            options: hiddenFieldsOptions,
+          });
+        }
+
+        return groupedOptions;
+      } else if (selectedVariable.type === "number") {
+        const allowedQuestions = questions.filter((question) =>
+          [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+        );
+
+        const questionOptions = allowedQuestions.map((question) => {
+          return {
+            icon: questionIconMapping[question.type],
+            label: getLocalizedValue(question.headline, "default"),
+            value: question.id,
+            meta: {
+              type: "question",
+            },
+          };
+        });
+
+        const numberVariables = filteredVariables.filter((variable) => variable.type === "number");
+        const variableOptions = numberVariables.map((variable) => {
+          return {
+            icon: FileDigitIcon,
+            label: variable.name,
+            value: variable.id,
+            meta: {
+              type: "variable",
+            },
+          };
+        });
+
+        const groupedOptions: TComboboxGroupedOption[] = [];
+
+        if (questionOptions.length > 0) {
+          groupedOptions.push({
+            label: "Questions",
+            value: "questions",
+            options: questionOptions,
+          });
+        }
+
+        if (variableOptions.length > 0) {
+          groupedOptions.push({
+            label: "Variables",
+            value: "variables",
+            options: variableOptions,
+          });
+        }
+
+        if (hiddenFieldsOptions.length > 0) {
+          groupedOptions.push({
+            label: "Hidden Fields",
+            value: "hiddenFields",
+            options: hiddenFieldsOptions,
+          });
+        }
+
+        return groupedOptions;
+      }
+
+      return [];
+    },
+    [hiddenFields?.fieldIds, questions, variables]
+  );
 
   return (
     <div key={action.id} className="flex grow items-center justify-between gap-x-2">
@@ -127,13 +278,13 @@ const _LogicEditorAction = ({
             comboboxClasses="grow"
           />
         )}
-        {/* {action.objective === "calculate" && (
+        {action.objective === "calculate" && (
           <>
             <InputCombobox
               id={`action-${actionIdx}-variableId`}
               key={`variableId-${action.id}`}
               showSearch={false}
-              options={getActionVariableOptions(localSurvey)}
+              options={actionVariableOptions}
               value={action.variableId}
               onChangeValue={(val: string) => {
                 handleValuesChange(actionIdx, {
@@ -151,9 +302,7 @@ const _LogicEditorAction = ({
               id={`action-${actionIdx}-operator`}
               key={`operator-${action.id}`}
               showSearch={false}
-              options={getActionOperatorOptions(
-                localSurvey.variables.find((v) => v.id === action.variableId)?.type
-              )}
+              options={getActionOperatorOptions(variables.find((v) => v.id === action.variableId)?.type)}
               value={action.operator}
               onChangeValue={(
                 val: TActionTextVariableCalculateOperator | TActionNumberVariableCalculateOperator
@@ -172,9 +321,9 @@ const _LogicEditorAction = ({
               value={action.value?.value ?? ""}
               inputProps={{
                 placeholder: "Value",
-                type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
+                type: variables.find((v) => v.id === action.variableId)?.type || "text",
               }}
-              groupedOptions={getActionValueOptions(action.variableId, localSurvey)}
+              groupedOptions={getActionValueOptions(action.variableId)}
               onChangeValue={(val, option, fromInput) => {
                 const fieldType = option?.meta?.type as TActionVariableValueType;
 
@@ -197,7 +346,7 @@ const _LogicEditorAction = ({
               comboboxClasses="grow shrink-0"
             />
           </>
-        )} */}
+        )}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger id={`actions-${actionIdx}-dropdown`}>

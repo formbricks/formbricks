@@ -8,6 +8,7 @@ interface LogicEditorProps {
   logicItem: TSurveyLogic;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   question: TSurveyQuestion;
+  questionLogic: TSurveyLogic[];
   questionIdx: number;
   logicIdx: number;
   isLast: boolean;
@@ -18,6 +19,7 @@ export function LogicEditor({
   logicItem,
   updateQuestion,
   question,
+  questionLogic,
   questionIdx,
   logicIdx,
   isLast,
@@ -35,7 +37,7 @@ export function LogicEditor({
       <LogicEditorActions
         logicItem={logicItem}
         logicIdx={logicIdx}
-        question={question}
+        questionLogic={questionLogic}
         updateQuestion={updateQuestion}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
