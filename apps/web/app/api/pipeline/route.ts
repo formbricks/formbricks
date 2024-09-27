@@ -4,11 +4,13 @@ import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
+import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
+import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
@@ -35,13 +37,22 @@ export const POST = async (request: Request) => {
   const { environmentId, surveyId, event, response } = inputValidation.data;
 
   // Fetch webhooks
-  const webhooks = await prisma.webhook.findMany({
-    where: {
-      environmentId,
-      triggers: { has: event },
-      OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
+  const webhooks = cache(
+    async () => {
+      await prisma.webhook.findMany({
+        where: {
+          environmentId,
+          triggers: { has: event },
+          OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
+        },
+      });
+      return webhooks;
     },
-  });
+    [`pipeline-webhooks-${environmentId}-${event}-${surveyId}`],
+    {
+      tags: [webhookCache.tag.byEnvironmentId(environmentId)],
+    }
+  )();
 
   // Prepare webhook and email promises
 
