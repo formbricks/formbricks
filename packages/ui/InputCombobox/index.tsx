@@ -1,4 +1,3 @@
-import debounce from "lodash/debounce";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
 import Image from "next/image";
 import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
@@ -46,8 +45,6 @@ export interface InputComboboxProps {
   emptyDropdownText?: string;
 }
 
-const isE2E = process.env.NEXT_PUBLIC_E2E_TESTING === "1";
-
 export const InputCombobox = ({
   id = "temp",
   showSearch = true,
@@ -65,22 +62,8 @@ export const InputCombobox = ({
   emptyDropdownText = "No option found.",
 }: InputComboboxProps) => {
   const [open, setOpen] = useState(false);
-  const [localValue, setLocalValue] = useState<TComboboxOption | TComboboxOption[] | string | number | null>(
-    null
-  );
   const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
-  const [inputValue, setInputValue] = useState(value || "");
-
-  // Debounced function to call onChangeValue
-  const debouncedOnChangeValue = useMemo(
-    () => debounce((val) => onChangeValue(val, undefined, true), 300),
-    [onChangeValue]
-  );
-
-  useEffect(() => {
-    // Sync inputValue when value changes externally
-    setInputValue(value ?? "");
-  }, [value]);
+  const [localValue, setLocalValue] = useState<string | number | string[] | null>(null);
 
   const validOptions = useMemo(() => {
     if (options?.length) {
@@ -90,56 +73,58 @@ export const InputCombobox = ({
     return groupedOptions?.flatMap((group) => group.options);
   }, [options, groupedOptions]);
 
-  // useEffect(() => {
-  //   if (value === null || value === undefined) {
-  //     setLocalValue("");
-  //     setInputType(null);
-  //   } else {
-  //     if (Array.isArray(value)) {
-  //       if (value.length > 0) {
-  //         setLocalValue(validOptions?.filter((option) => value.includes(option.value as string)) || null);
-  //         if (inputType !== "dropdown") {
-  //           setInputType("dropdown");
-  //         }
-  //       }
-  //     } else {
-  //       const option = validOptions?.find((option) => option.value === value);
-  //       if (option) {
-  //         setLocalValue(option);
-  //         if (inputType !== "dropdown") {
-  //           setInputType("dropdown");
-  //         }
-  //       } else {
-  //         if (withInput) {
-  //           setLocalValue(value);
-  //           if (inputType !== "input") {
-  //             setInputType("input");
-  //           }
-  //         } else {
-  //           setLocalValue(null);
-  //           setInputType(null);
-  //         }
-  //       }
-  //     }
-  //   }
-  // }, [value, options, groupedOptions, withInput]);
+  useEffect(() => {
+    if (value === null || value === undefined) {
+      setLocalValue(null);
+      setInputType(null);
+    } else {
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          setLocalValue(value);
+
+          if (inputType !== "dropdown") {
+            setInputType("dropdown");
+          }
+        }
+      } else {
+        const option = validOptions?.find((option) => option.value === value);
+        if (option) {
+          setLocalValue(option.value);
+          if (inputType !== "dropdown") {
+            setInputType("dropdown");
+          }
+        } else {
+          if (withInput) {
+            setLocalValue(value);
+            if (inputType !== "input") {
+              setInputType("input");
+            }
+          } else {
+            setLocalValue(null);
+            setInputType(null);
+          }
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   const handleMultiSelect = (option: TComboboxOption) => {
     if (Array.isArray(localValue)) {
-      const doesExist = localValue.find((item) => item.value === option.value);
+      const doesExist = localValue.includes(option.value as string);
       const newValue = doesExist
-        ? localValue.filter((item) => item.value !== option.value)
-        : [...localValue, option];
+        ? localValue.filter((item) => item !== option.value)
+        : [...localValue, option.value];
 
       if (!newValue.length) {
         onChangeValue([]);
         setInputType(null);
       }
-      onChangeValue(newValue.map((item) => item.value) as string[], option);
-      setLocalValue(newValue);
+      onChangeValue(newValue as string[], option);
+      setLocalValue(newValue as string[]);
     } else {
       onChangeValue([option.value] as string[], option);
-      setLocalValue([option]);
+      setLocalValue([option.value] as string[]);
     }
   };
 
@@ -152,7 +137,7 @@ export const InputCombobox = ({
       handleMultiSelect(option);
     } else {
       onChangeValue(option.value, option);
-      setLocalValue(option);
+      setLocalValue(option.value);
       setOpen(false);
     }
   };
@@ -160,15 +145,10 @@ export const InputCombobox = ({
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputType = e.target.type;
     const value = e.target.value;
+    setLocalValue(null);
 
     if (value === "") {
-      setLocalValue("");
-      setInputValue("");
-      if (!isE2E) {
-        debouncedOnChangeValue("");
-      } else {
-        onChangeValue("", undefined, true);
-      }
+      onChangeValue("", undefined, true);
     }
 
     if (inputType !== "input") {
@@ -176,44 +156,47 @@ export const InputCombobox = ({
     }
 
     const val = inputType === "number" ? Number(value) : value;
-
-    // Set the local input value immediately
-    setInputValue(val);
     setLocalValue(val);
 
-    // Trigger the debounced onChangeValue
-
-    if (!isE2E) {
-      debouncedOnChangeValue(val);
-    } else {
-      onChangeValue(val, undefined, true);
-    }
+    onChangeValue(val, undefined, true);
   };
 
   const getDisplayValue = useMemo(() => {
     if (Array.isArray(localValue)) {
-      return localValue.map((item, idx) => (
-        <>
-          {idx !== 0 && <span>,</span>}
-          <div className="flex items-center gap-2">
-            {item.icon && <item.icon className="h-5 w-5 shrink-0 text-slate-400" />}
-            {item.imgSrc && <Image src={item.imgSrc} alt={item.label} width={24} height={24} />}
-            <span>{item.label}</span>
-          </div>
-        </>
-      ));
-    } else if (localValue && typeof localValue === "object") {
+      return localValue.map((item, idx) => {
+        const option = validOptions?.find((opt) => opt.value === item);
+
+        if (!option) {
+          return null;
+        }
+
+        return (
+          <>
+            {idx !== 0 && <span>,</span>}
+            <div className="flex items-center gap-2">
+              {option.icon && <option.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+              {option.imgSrc && <Image src={option.imgSrc} alt={option.label} width={24} height={24} />}
+              <span>{option.label}</span>
+            </div>
+          </>
+        );
+      });
+    } else {
+      const option = validOptions?.find((opt) => opt.value === localValue);
+
+      if (!option) {
+        return null;
+      }
+
       return (
         <div className="flex items-center gap-2 truncate">
-          {localValue.icon && <localValue.icon className="h-5 w-5 shrink-0 text-slate-400" />}
-          {localValue.imgSrc && (
-            <Image src={localValue.imgSrc} alt={localValue.label} width={24} height={24} />
-          )}
-          <span className="truncate">{localValue.label}</span>
+          {option.icon && <option.icon className="h-5 w-5 shrink-0 text-slate-400" />}
+          {option.imgSrc && <Image src={option.imgSrc} alt={option.label} width={24} height={24} />}
+          <span className="truncate">{option.label}</span>
         </div>
       );
     }
-  }, [localValue]);
+  }, [localValue, validOptions]);
 
   const handleClear = () => {
     setInputType(null);
@@ -224,9 +207,10 @@ export const InputCombobox = ({
   const isSelected = (option: TComboboxOption) => {
     if (typeof localValue === "object") {
       if (Array.isArray(localValue)) {
-        return localValue.find((item) => item.value === option.value) !== undefined;
+        return localValue.find((item) => item === option.value) !== undefined;
       }
-      return localValue?.value === option.value;
+
+      return localValue === option.value;
     }
   };
 
@@ -241,7 +225,7 @@ export const InputCombobox = ({
           className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-400"
           {...inputProps}
           id={`${id}-input`}
-          value={inputValue as string | number}
+          value={localValue as string | number}
           onChange={onInputChange}
         />
       )}

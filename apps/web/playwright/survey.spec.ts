@@ -3,8 +3,16 @@ import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 import { createSurvey, createSurveyWithLogic } from "./utils/helper";
 
+test.use({
+  launchOptions: {
+    slowMo: 110,
+  },
+});
+
 test.describe("Survey Create & Submit Response without logic", async () => {
   let url: string | null;
+
+  test.slow();
 
   test("Create survey and submit response", async ({ page, users }) => {
     const user = await users.create();

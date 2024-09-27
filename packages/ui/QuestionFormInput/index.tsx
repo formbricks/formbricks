@@ -66,8 +66,6 @@ interface QuestionFormInputProps {
   attributeClasses: TAttributeClass[];
 }
 
-const isE2E = process.env.NEXT_PUBLIC_E2E_TESTING === "1";
-
 export const QuestionFormInput = ({
   id,
   value,
@@ -203,9 +201,6 @@ export const QuestionFormInput = ({
   }, [usedLanguageCode]);
 
   useEffect(() => {
-    // if (id === "headline" || id === "subheader") {
-    //   checkForRecallSymbol();
-    // }
     // Generates an array of headlines from recallItems, replacing nested recall questions with '___' .
     const recallItemLabels = recallItems.flatMap((recallItem) => {
       if (!recallItem.label.includes("#recall:")) {
@@ -481,7 +476,7 @@ export const QuestionFormInput = ({
   };
 
   const debouncedHandleUpdate = useMemo(
-    () => debounce((value) => handleUpdate(headlineToRecall(value, recallItems, fallbacks)), 300),
+    () => debounce((value) => handleUpdate(headlineToRecall(value, recallItems, fallbacks)), 100),
     [handleUpdate, recallItems, fallbacks]
   );
 
@@ -506,11 +501,7 @@ export const QuestionFormInput = ({
       checkForRecallSymbol(valueTI18nString);
     }
 
-    // if (!isE2E) {
-    //   debouncedHandleUpdate(value);
-    // } else {
-    handleUpdate(headlineToRecall(value, recallItems, fallbacks));
-    // }
+    debouncedHandleUpdate(value);
   };
 
   return (
