@@ -8,7 +8,7 @@ import type { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@f
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
-import { SearchBox } from "@formbricks/ui/components/SearchBox";
+import { SearchBar } from "@formbricks/ui/components/SearchBar";
 import { TemplateList } from "@formbricks/ui/components/TemplateList";
 import { minimalSurvey } from "../../lib/minimalSurvey";
 
@@ -39,14 +39,11 @@ export const TemplateContainerWithPreview = ({
           <div className="mb-3 ml-6 mt-6 flex flex-col items-center justify-between md:flex-row md:items-end">
             <h1 className="text-2xl font-bold text-slate-800">Create a new survey</h1>
             <div className="px-6">
-              <SearchBox
-                autoFocus
+              <SearchBar
                 value={templateSearch ?? ""}
-                onChange={(e) => setTemplateSearch(e.target.value)}
+                onChange={setTemplateSearch}
                 placeholder={"Search..."}
-                className="block rounded-md border border-slate-100 bg-white shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm md:w-auto"
-                type="search"
-                name="search"
+                className="border-slate-700"
               />
             </div>
           </div>
