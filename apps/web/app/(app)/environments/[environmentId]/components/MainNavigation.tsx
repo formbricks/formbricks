@@ -119,16 +119,6 @@ export const MainNavigation = ({
     }
   }, [organization]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const productId = localStorage.getItem(FORMBRICKS_PRODUCT_ID_LS);
-    const targetProduct = products.find((product) => product.id === productId);
-    if (targetProduct && productId && product && product.id !== targetProduct.id) {
-      router.push(`/products/${targetProduct.id}/`);
-    }
-  }, []);
-
   const sortedOrganizations = useMemo(() => {
     return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
   }, [organizations]);
@@ -155,12 +145,6 @@ export const MainNavigation = ({
   }, [products]);
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_PRODUCT_ID_LS, productId);
-
-      // Remove filters when switching products
-      localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-    }
     router.push(`/products/${productId}/`);
   };
 
