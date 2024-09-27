@@ -18,6 +18,13 @@ module.exports = {
         surveyLoading: "surveyLoadingAnimation 0.5s ease-out forwards",
         surveyExit: "surveyExitAnimation 0.5s ease-out forwards",
       },
+      height: {
+        '500': '115rem',
+        
+      },
+      spacing: {
+        '500': '115rem',
+      },
       blur: {
         xxs: "0.33px",
         xs: "2px",
@@ -54,6 +61,7 @@ module.exports = {
           secondary: "var(--formbricks-fill-secondary, #0f172a)",
           disabled: "var(--formbricks-fill-disabled, #e0e0e0)",
         },
+       
       },
       keyframes: {
         fadeIn: {
