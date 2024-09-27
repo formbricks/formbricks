@@ -96,6 +96,7 @@ export const POST = async (request: Request) => {
     }
 
     // Fetch users with notifications in a single query
+    // TODO: add cache for this query. Not possible at the moment since we can't get the membership cache by environmentId
     const usersWithNotifications = await prisma.user.findMany({
       where: {
         memberships: {
