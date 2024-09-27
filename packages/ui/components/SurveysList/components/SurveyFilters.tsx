@@ -1,4 +1,4 @@
-import { ChevronDownIcon, Equal, Grid2X2, Search, X } from "lucide-react";
+import { ChevronDownIcon, Equal, Grid2X2, X } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "react-use";
 import { FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS } from "@formbricks/lib/localStorage";
@@ -7,6 +7,7 @@ import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/su
 import { initialFilters } from "..";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
+import { SearchBar } from "../../SearchBar";
 import { TooltipRenderer } from "../../Tooltip";
 import { SortOption } from "./SortOption";
 import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
@@ -135,17 +136,12 @@ export const SurveyFilters = ({
   return (
     <div className="flex justify-between">
       <div className="flex space-x-2">
-        <div className="flex h-8 items-center rounded-lg border border-slate-300 bg-white px-4">
-          <Search className="h-4 w-4" />
-          <input
-            type="text"
-            className="border-none bg-transparent placeholder:text-sm"
-            placeholder="Search by survey name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-
+        <SearchBar
+          value={name}
+          onChange={setName}
+          placeholder={"Search by survey name"}
+          className="border-slate-700"
+        />
         <div>
           <SurveyFilterDropdown
             title="Created By"
