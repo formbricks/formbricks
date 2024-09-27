@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 import {
   Command,
   CommandEmpty,
@@ -7,8 +7,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@formbricks/ui/Command";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+} from "@formbricks/ui/components/Command";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/components/Popover";
 
 interface IMergeTagsComboboxProps {
   tags: Tag[];

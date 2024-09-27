@@ -1,5 +1,5 @@
-import { Button } from "@formbricks/ui/Button";
-import { GoBackButton } from "@formbricks/ui/GoBackButton";
+import { Button } from "@formbricks/ui/components/Button";
+import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 
 const Loading = () => {
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
+import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { BulkInviteTab } from "./BulkInviteTab";
 import { IndividualInviteTab } from "./IndividualInviteTab";
 

@@ -3,8 +3,8 @@ import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
-import { AddressResponse } from "@formbricks/ui/AddressResponse";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { AddressResponse } from "@formbricks/ui/components/AddressResponse";
+import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface AddressSummaryProps {

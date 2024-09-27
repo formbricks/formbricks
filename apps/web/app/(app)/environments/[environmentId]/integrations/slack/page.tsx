@@ -7,9 +7,9 @@ import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { GoBackButton } from "@formbricks/ui/GoBackButton";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);

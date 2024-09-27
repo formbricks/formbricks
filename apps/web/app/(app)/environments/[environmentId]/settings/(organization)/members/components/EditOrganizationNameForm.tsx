@@ -9,9 +9,16 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
+import { Button } from "@formbricks/ui/components/Button";
+import {
+  FormControl,
+  FormError,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
 
 interface EditOrganizationNameProps {
   environmentId: string;

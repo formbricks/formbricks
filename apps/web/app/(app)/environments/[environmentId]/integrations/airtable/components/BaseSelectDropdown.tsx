@@ -1,7 +1,13 @@
 import { Control, Controller, UseFormSetValue } from "react-hook-form";
 import { TIntegrationItem } from "@formbricks/types/integration";
-import { Label } from "@formbricks/ui/Label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Label } from "@formbricks/ui/components/Label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui/components/Select";
 import { IntegrationModalInputs } from "./AddIntegrationModal";
 
 interface BaseSelectProps {

@@ -11,7 +11,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
+import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 
 interface SlackWrapperProps {
   isEnabled: boolean;

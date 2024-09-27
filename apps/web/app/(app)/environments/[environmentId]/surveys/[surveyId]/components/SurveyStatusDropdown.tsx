@@ -2,9 +2,15 @@ import { CheckCircle2Icon, PauseCircleIcon, PlayCircleIcon } from "lucide-react"
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui/components/Select";
+import { SurveyStatusIndicator } from "@formbricks/ui/components/SurveyStatusIndicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import { updateSurveyAction } from "../actions";
 
 interface SurveyStatusDropdownProps {

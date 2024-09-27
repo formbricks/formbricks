@@ -5,7 +5,7 @@ import {
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TooltipRenderer } from "@formbricks/ui/Tooltip";
+import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
