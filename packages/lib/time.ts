@@ -117,18 +117,22 @@ export const getTodaysDateTimeFormatted = (seperator: string) => {
   return [formattedDate, formattedTime].join(seperator);
 };
 
-export const convertDatesInObject = (obj: any): any => {
+export const convertDatesInObject = <T>(obj: T): T => {
   if (obj === null || typeof obj !== "object") {
-    return obj; // Return the value if obj is not an object
+    return obj; // Return if obj is not an object
   }
   if (Array.isArray(obj)) {
-    // Handle arrays separately
-    return obj.map((item) => convertDatesInObject(item));
+    // Handle arrays by mapping each element through the function
+    return obj.map((item) => convertDatesInObject(item)) as unknown as T;
   }
   const newObj: any = {};
   for (const key in obj) {
-    if ((key === "createdAt" || key === "updatedAt") && !isNaN(Date.parse(obj[key]))) {
-      newObj[key] = new Date(obj[key]);
+    if (
+      (key === "createdAt" || key === "updatedAt") &&
+      typeof obj[key] === "string" &&
+      !isNaN(Date.parse(obj[key] as unknown as string))
+    ) {
+      newObj[key] = new Date(obj[key] as unknown as string);
     } else if (typeof obj[key] === "object" && obj[key] !== null) {
       newObj[key] = convertDatesInObject(obj[key]);
     } else {

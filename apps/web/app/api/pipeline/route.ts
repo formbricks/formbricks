@@ -62,17 +62,18 @@ export const POST = async (request: Request) => {
         event,
         data: response,
       }),
+    }).catch((error) => {
+      console.error(`Webhook call to ${webhook.url} failed:`, error);
     })
   );
 
   if (event === "responseFinished") {
     // Fetch integrations, survey, and responseCount in parallel
-    const [integrations, surveyData, responseCount] = await Promise.all([
+    const [integrations, survey, responseCount] = await Promise.all([
       getIntegrations(environmentId),
       getSurvey(surveyId),
       getResponseCountBySurveyId(surveyId),
     ]);
-    const survey = surveyData ?? undefined;
 
     if (!survey) {
       console.error(`Survey with id ${surveyId} not found`);
@@ -108,7 +109,9 @@ export const POST = async (request: Request) => {
     });
 
     const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount)
+      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
+        console.error(`Failed to send email to ${user.email}:`, error);
+      })
     );
 
     // Update survey status if necessary
@@ -117,11 +120,21 @@ export const POST = async (request: Request) => {
       await updateSurvey(survey);
     }
 
-    // Await all promises
-    await Promise.all([...webhookPromises, ...emailPromises]);
+    // Await webhook and email promises with allSettled to prevent early rejection
+    const results = await Promise.allSettled([...webhookPromises, ...emailPromises]);
+    results.forEach((result) => {
+      if (result.status === "rejected") {
+        console.error("Promise rejected:", result.reason);
+      }
+    });
   } else {
-    // Await webhook promises if no emails are sent
-    await Promise.all(webhookPromises);
+    // Await webhook promises if no emails are sent (with allSettled to prevent early rejection)
+    const results = await Promise.allSettled(webhookPromises);
+    results.forEach((result) => {
+      if (result.status === "rejected") {
+        console.error("Promise rejected:", result.reason);
+      }
+    });
   }
 
   return Response.json({ data: {} });
