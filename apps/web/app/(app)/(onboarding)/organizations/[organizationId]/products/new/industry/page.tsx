@@ -3,8 +3,8 @@ import { HeartIcon, MonitorIcon, ShoppingCart, XIcon } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getProducts } from "@formbricks/lib/product/service";
 import { TProductConfigChannel } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface IndustryPageProps {
   params: {

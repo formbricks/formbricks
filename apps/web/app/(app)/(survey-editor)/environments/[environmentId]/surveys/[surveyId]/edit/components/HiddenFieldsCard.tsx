@@ -9,11 +9,11 @@ import { cn } from "@formbricks/lib/cn";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
-import { Tag } from "@formbricks/ui/Tag";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { Switch } from "@formbricks/ui/components/Switch";
+import { Tag } from "@formbricks/ui/components/Tag";
 
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;

@@ -20,7 +20,7 @@ import {
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { SurveyInline } from "@formbricks/ui/Survey";
+import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};

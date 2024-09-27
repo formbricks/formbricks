@@ -4,8 +4,8 @@ import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys/types";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
+import { PersonAvatar } from "@formbricks/ui/components/Avatars";
+import { Button } from "@formbricks/ui/components/Button";
 
 interface HiddenFieldsSummaryProps {
   environment: TEnvironment;

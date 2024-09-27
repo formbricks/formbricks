@@ -4,7 +4,7 @@ import { DisableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/
 import { EnableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/EnableTwoFactorModal";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
-import { Switch } from "@formbricks/ui/Switch";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 export const AccountSecurity = ({ user }: { user: TUser }) => {
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);

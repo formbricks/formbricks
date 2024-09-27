@@ -54,15 +54,21 @@ import {
   DEVICE_OPERATORS,
   PERSON_OPERATORS,
 } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import { Input } from "@formbricks/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+} from "@formbricks/ui/components/DropdownMenu";
+import { Input } from "@formbricks/ui/components/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui/components/Select";
 import { AddFilterModal } from "./add-filter-modal";
 
 interface TSegmentFilterProps {

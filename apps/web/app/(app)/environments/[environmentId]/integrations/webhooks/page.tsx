@@ -5,9 +5,9 @@ import { WebhookTableHeading } from "@/app/(app)/environments/[environmentId]/in
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getWebhooks } from "@formbricks/lib/webhook/service";
-import { GoBackButton } from "@formbricks/ui/GoBackButton";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
   const [webhooksUnsorted, surveys, environment] = await Promise.all([

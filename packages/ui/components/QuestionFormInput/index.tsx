@@ -27,8 +27,8 @@ import {
   TSurveyRecallItem,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
-import { LanguageIndicator } from "../../ee/multi-language/components/language-indicator";
-import { createI18nString } from "../../lib/i18n/utils";
+import { LanguageIndicator } from "../../../ee/multi-language/components/language-indicator";
+import { createI18nString } from "../../../lib/i18n/utils";
 import { FileInput } from "../FileInput";
 import { Input } from "../Input";
 import { Label } from "../Label";

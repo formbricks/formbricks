@@ -9,9 +9,9 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
+import { PersonAvatar } from "@formbricks/ui/components/Avatars";
+import { Button } from "@formbricks/ui/components/Button";
+import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

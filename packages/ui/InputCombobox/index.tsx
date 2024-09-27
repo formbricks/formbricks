@@ -10,9 +10,9 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "../Command";
-import { Input } from "../Input";
-import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
+} from "../components/Command";
+import { Input } from "../components/Input";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/Popover";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;

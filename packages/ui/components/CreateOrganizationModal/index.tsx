@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { createOrganizationAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
+import { createOrganizationAction } from "../../../../apps/web/app/(app)/environments/[environmentId]/actions";
 import { Button } from "../Button";
 import { Input } from "../Input";
 import { Label } from "../Label";

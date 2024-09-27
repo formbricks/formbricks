@@ -16,8 +16,8 @@ import {
   TProductUpdateInput,
   ZProductUpdateInput,
 } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Button } from "@formbricks/ui/components/Button";
+import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
 import {
   FormControl,
   FormDescription,
@@ -26,9 +26,9 @@ import {
   FormItem,
   FormLabel,
   FormProvider,
-} from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { SurveyInline } from "@formbricks/ui/Survey";
+} from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ProductSettingsProps {
   organizationId: string;

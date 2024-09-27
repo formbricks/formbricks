@@ -83,7 +83,7 @@ async function runMigration(): Promise<void> {
 
       console.log("Displays where the response was missing have been deleted.");
       console.log("Data migration completed.");
-      console.log(`Affected rows: ${String(rawQueryResult + displayIdsToDelete.length)}`);
+      console.log(`Affected rows: ${rawQueryResult.toString() + displayIdsToDelete.length.toString()}`);
     },
     {
       timeout: TRANSACTION_TIMEOUT,

@@ -10,10 +10,10 @@ import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/qu
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getSelectionColumn } from "@formbricks/ui/DataTable";
-import { ResponseBadges } from "@formbricks/ui/ResponseBadges";
-import { RenderResponse } from "@formbricks/ui/SingleResponseCard/components/RenderResponse";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
+import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
+import { RenderResponse } from "@formbricks/ui/components/SingleResponseCard/components/RenderResponse";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 const getAddressFieldLabel = (field: string) => {
   switch (field) {

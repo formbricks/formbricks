@@ -3,7 +3,7 @@ import { WebhookSettingsTab } from "@/app/(app)/environments/[environmentId]/int
 import { Webhook } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
-import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
+import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 
 interface WebhookModalProps {
   open: boolean;

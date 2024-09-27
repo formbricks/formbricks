@@ -25,13 +25,13 @@ import {
   TSurveyLogicConditionsOperator,
   TSurveyQuestion,
 } from "@formbricks/types/surveys/types";
+import { InputCombobox, TComboboxOption } from "@formbricks/ui/InputCombobox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import { InputCombobox, TComboboxOption } from "@formbricks/ui/InputCombobox";
+} from "@formbricks/ui/components/DropdownMenu";
 
 interface LogicEditorConditionsProps {
   conditions: TConditionGroup;
