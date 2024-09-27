@@ -1,28 +1,27 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
-import { TUserNotificationSettings } from "@formbricks/types/user";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
-  // check authentication with x-api-key header and CRON_SECRET env variable
+  // Check authentication
   if (headers().get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
   }
+
   const jsonInput = await request.json();
+  const convertedJsonInput = convertDatesInObject(jsonInput);
 
-  convertDatesInObject(jsonInput);
-
-  const inputValidation = ZPipelineInput.safeParse(jsonInput);
+  const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 
   if (!inputValidation.success) {
     console.error(inputValidation.error);
@@ -34,52 +33,58 @@ export const POST = async (request: Request) => {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
-  const product = await getProductByEnvironmentId(environmentId);
-  if (!product) return;
 
-  // get all webhooks of this environment where event in triggers
+  // Fetch webhooks
   const webhooks = await prisma.webhook.findMany({
     where: {
       environmentId,
-      triggers: {
-        has: event,
-      },
-      OR: [
-        {
-          surveyIds: {
-            has: surveyId,
-          },
-        },
-        {
-          surveyIds: {
-            isEmpty: true,
-          },
-        },
-      ],
+      triggers: { has: event },
+      OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
     },
   });
 
-  // send request to all webhooks
-  await Promise.all(
-    webhooks.map(async (webhook) => {
-      await fetch(webhook.url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          webhookId: webhook.id,
-          event,
-          data: response,
-        }),
-      });
+  // Prepare webhook and email promises
+
+  // Fetch with timeout of 5 seconds to prevent hanging
+  const fetchWithTimeout = (url, options, timeout = 5000) => {
+    return Promise.race([
+      fetch(url, options),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
+    ]);
+  };
+
+  const webhookPromises = webhooks.map((webhook) =>
+    fetchWithTimeout(webhook.url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        webhookId: webhook.id,
+        event,
+        data: response,
+      }),
     })
   );
 
   if (event === "responseFinished") {
-    // check for email notifications
-    // get all users that have a membership of this environment's organization
-    const users = await prisma.user.findMany({
+    // Fetch integrations, survey, and responseCount in parallel
+    const [integrations, surveyData, responseCount] = await Promise.all([
+      getIntegrations(environmentId),
+      getSurvey(surveyId),
+      getResponseCountBySurveyId(surveyId),
+    ]);
+    const survey = surveyData ?? undefined;
+
+    if (!survey) {
+      console.error(`Survey with id ${surveyId} not found`);
+      return new Response("Survey not found", { status: 404 });
+    }
+
+    if (integrations.length > 0) {
+      await handleIntegrations(integrations, inputValidation.data, survey);
+    }
+
+    // Fetch users with notifications in a single query
+    const usersWithNotifications = await prisma.user.findMany({
       where: {
         memberships: {
           some: {
@@ -87,74 +92,36 @@ export const POST = async (request: Request) => {
               products: {
                 some: {
                   environments: {
-                    some: {
-                      id: environmentId,
-                    },
+                    some: { id: environmentId },
                   },
                 },
               },
             },
           },
         },
+        notificationSettings: {
+          path: ["alert", surveyId],
+          not: Prisma.JsonNull,
+        },
       },
+      select: { email: true },
     });
 
-    const [integrations, surveyData] = await Promise.all([
-      getIntegrations(environmentId),
-      getSurvey(surveyId),
-    ]);
-    const survey = surveyData ?? undefined;
+    const emailPromises = usersWithNotifications.map((user) =>
+      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount)
+    );
 
-    if (integrations.length > 0 && survey) {
-      await handleIntegrations(integrations, inputValidation.data, survey);
+    // Update survey status if necessary
+    if (survey.autoComplete && responseCount === survey.autoComplete) {
+      survey.status = "completed";
+      await updateSurvey(survey);
     }
 
-    // filter all users that have email notifications enabled for this survey
-    const usersWithNotifications = users.filter((user) => {
-      const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;
-      if (notificationSettings?.alert && notificationSettings.alert[surveyId]) {
-        return true;
-      }
-      return false;
-    });
-
-    // Exclude current response
-    const responseCount = await getResponseCountBySurveyId(surveyId);
-
-    if (usersWithNotifications.length > 0) {
-      if (!survey) {
-        console.error(`Pipeline: Survey with id ${surveyId} not found`);
-        return new Response("Survey not found", {
-          status: 404,
-        });
-      }
-      // send email to all users
-      await Promise.all(
-        usersWithNotifications.map(async (user) => {
-          await sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount);
-        })
-      );
-    }
-    const updateSurveyStatus = async (surveyId: string) => {
-      // Get the survey instance by surveyId
-      const survey = await getSurvey(surveyId);
-
-      if (survey?.autoComplete) {
-        // Get the number of responses to a survey
-        const responseCount = await prisma.response.count({
-          where: {
-            surveyId: surveyId,
-          },
-        });
-        if (responseCount === survey.autoComplete) {
-          const updatedSurvey = { ...survey };
-          updatedSurvey.status = "completed";
-          await updateSurvey(updatedSurvey);
-        }
-      }
-    };
-
-    await updateSurveyStatus(surveyId);
+    // Await all promises
+    await Promise.all([...webhookPromises, ...emailPromises]);
+  } else {
+    // Await webhook promises if no emails are sent
+    await Promise.all(webhookPromises);
   }
 
   return Response.json({ data: {} });

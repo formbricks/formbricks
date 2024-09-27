@@ -117,12 +117,23 @@ export const getTodaysDateTimeFormatted = (seperator: string) => {
   return [formattedDate, formattedTime].join(seperator);
 };
 
-export const convertDatesInObject = (obj: any) => {
-  for (let key in obj) {
+export const convertDatesInObject = (obj: any): any => {
+  if (obj === null || typeof obj !== "object") {
+    return obj; // Return the value if obj is not an object
+  }
+  if (Array.isArray(obj)) {
+    // Handle arrays separately
+    return obj.map((item) => convertDatesInObject(item));
+  }
+  const newObj: any = {};
+  for (const key in obj) {
     if ((key === "createdAt" || key === "updatedAt") && !isNaN(Date.parse(obj[key]))) {
-      obj[key] = new Date(obj[key]);
+      newObj[key] = new Date(obj[key]);
     } else if (typeof obj[key] === "object" && obj[key] !== null) {
-      convertDatesInObject(obj[key]);
+      newObj[key] = convertDatesInObject(obj[key]);
+    } else {
+      newObj[key] = obj[key];
     }
   }
+  return newObj;
 };
