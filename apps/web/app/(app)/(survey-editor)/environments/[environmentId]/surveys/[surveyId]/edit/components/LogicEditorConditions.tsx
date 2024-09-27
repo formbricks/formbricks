@@ -88,7 +88,7 @@ export function LogicEditorConditions({
     const logicItem = logicCopy[logicIdx];
     removeCondition(logicItem.conditions, resourceId);
 
-    // Remove the logic item if there are no conditions left
+    // Remove the logic item if there are zero conditions left
     if (logicItem.conditions.conditions.length === 0) {
       logicCopy.splice(logicIdx, 1);
     }
