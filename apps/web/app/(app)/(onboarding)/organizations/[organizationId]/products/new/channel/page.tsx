@@ -1,5 +1,5 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { GlobeIcon, GlobeLockIcon, LinkIcon, XIcon } from "lucide-react";
+import { LinkIcon, XIcon } from "lucide-react";
 import { getProducts } from "@formbricks/lib/product/service";
 import { Button } from "@formbricks/ui/Button";
 import { Header } from "@formbricks/ui/Header";
@@ -12,20 +12,6 @@ interface ChannelPageProps {
 
 const Page = async ({ params }: ChannelPageProps) => {
   const channelOptions = [
-    {
-      title: "Public website",
-      description: "Run well-timed pop-up surveys.",
-      icon: GlobeIcon,
-      iconText: "Built for scale",
-      href: `/organizations/${params.organizationId}/products/new/industry?channel=website`,
-    },
-    {
-      title: "App with sign up",
-      description: "Run highly-targeted micro-surveys.",
-      icon: GlobeLockIcon,
-      iconText: "Enrich user profiles",
-      href: `/organizations/${params.organizationId}/products/new/industry?channel=app`,
-    },
     {
       channel: "link",
       title: "Link & email surveys",
