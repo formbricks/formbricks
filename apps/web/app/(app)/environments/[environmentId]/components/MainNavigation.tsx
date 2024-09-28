@@ -56,7 +56,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/components/DropdownMenu";
-import { version } from "../../../../../package.json";
+import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -257,7 +257,7 @@ export const MainNavigation = ({
       const res = await getLatestStableFbReleaseAction();
       if (res?.data) {
         const latestVersionTag = res.data;
-        const currentVersionTag = `v${version}`;
+        const currentVersionTag = `v${packageJson.version}`;
 
         if (currentVersionTag !== latestVersionTag) {
           setLatestVersion(latestVersionTag);
