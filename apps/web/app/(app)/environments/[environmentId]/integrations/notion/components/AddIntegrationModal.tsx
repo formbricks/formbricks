@@ -22,10 +22,10 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
-import { Label } from "@formbricks/ui/Label";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
+import { Label } from "@formbricks/ui/components/Label";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddIntegrationModalProps {
   environmentId: string;

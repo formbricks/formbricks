@@ -11,11 +11,11 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
-import { Button } from "@formbricks/ui/Button";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
-import { SurveysList } from "@formbricks/ui/SurveysList";
-import { TemplateList } from "@formbricks/ui/TemplateList";
+import { Button } from "@formbricks/ui/components/Button";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { SurveysList } from "@formbricks/ui/components/SurveysList";
+import { TemplateList } from "@formbricks/ui/components/TemplateList";
 
 export const metadata: Metadata = {
   title: "Your Surveys",

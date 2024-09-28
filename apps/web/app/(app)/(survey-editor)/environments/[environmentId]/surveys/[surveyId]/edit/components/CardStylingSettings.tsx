@@ -8,12 +8,12 @@ import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
-import { Badge } from "@formbricks/ui/Badge";
-import { CardArrangementTabs } from "@formbricks/ui/CardArrangementTabs";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
-import { Slider } from "@formbricks/ui/Slider";
-import { Switch } from "@formbricks/ui/Switch";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { CardArrangementTabs } from "@formbricks/ui/components/CardArrangementTabs";
+import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
+import { Slider } from "@formbricks/ui/components/Slider";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 type CardStylingSettingsProps = {
   open: boolean;

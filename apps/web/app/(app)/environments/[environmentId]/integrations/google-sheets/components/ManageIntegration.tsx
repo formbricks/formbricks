@@ -10,9 +10,9 @@ import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/google-sheet";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;

@@ -9,7 +9,7 @@ import {
   OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
 } from "@formbricks/lib/constants";
-import { SignupOptions } from "@formbricks/ui/SignupOptions";
+import { SignupOptions } from "@formbricks/ui/components/SignupOptions";
 
 export const metadata: Metadata = {
   title: "Sign up",

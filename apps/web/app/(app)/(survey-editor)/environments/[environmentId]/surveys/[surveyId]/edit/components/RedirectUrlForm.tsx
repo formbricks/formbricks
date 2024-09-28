@@ -1,6 +1,6 @@
 import { TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
 
 interface RedirectUrlFormProps {
   endingCard: TSurveyRedirectUrlCard;

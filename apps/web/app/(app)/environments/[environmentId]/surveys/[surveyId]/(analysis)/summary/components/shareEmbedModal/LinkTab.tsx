@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
+import { ShareSurveyLink } from "@formbricks/ui/components/ShareSurveyLink";
 
 interface LinkTabProps {
   survey: TSurvey;

@@ -8,12 +8,12 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, TSegmentWithSurveyNames, ZSegmentFilters } from "@formbricks/types/segment";
-import { BasicAddFilterModal } from "@formbricks/ui/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/BasicSegmentEditor";
-import { Button } from "@formbricks/ui/Button";
-import { ConfirmDeleteSegmentModal } from "@formbricks/ui/ConfirmDeleteSegmentModal";
-import { Input } from "@formbricks/ui/Input";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+import { BasicAddFilterModal } from "@formbricks/ui/components/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/components/BasicSegmentEditor";
+import { Button } from "@formbricks/ui/components/Button";
+import { ConfirmDeleteSegmentModal } from "@formbricks/ui/components/ConfirmDeleteSegmentModal";
+import { Input } from "@formbricks/ui/components/Input";
+import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { deleteBasicSegmentAction, updateBasicSegmentAction } from "../actions";
 
 type TBasicSegmentSettingsTabProps = {
