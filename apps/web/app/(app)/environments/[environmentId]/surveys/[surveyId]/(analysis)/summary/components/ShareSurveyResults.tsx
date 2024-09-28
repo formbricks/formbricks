@@ -1,8 +1,8 @@
 import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { Button } from "@formbricks/ui/Button";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface ShareEmbedSurveyProps {
   open: boolean;

@@ -1,4 +1,4 @@
-import { SlackIcon } from "@formbricks/ui/icons";
+import { SlackIcon } from "@formbricks/ui/components/icons";
 
 interface IntegrationsTipProps {
   environmentId: string;

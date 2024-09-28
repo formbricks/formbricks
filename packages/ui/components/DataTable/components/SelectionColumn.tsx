@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "../../Checkbox";
 
-export function getSelectionColumn<T extends object>(): ColumnDef<T, unknown> {
+export const getSelectionColumn = <T extends object>(): ColumnDef<T, unknown> => {
   return {
     id: "select",
     accessorKey: "select",
@@ -28,4 +28,4 @@ export function getSelectionColumn<T extends object>(): ColumnDef<T, unknown> {
       </div>
     ),
   };
-}
+};

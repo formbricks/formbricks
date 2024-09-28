@@ -1,8 +1,8 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { GlobeIcon, GlobeLockIcon, LinkIcon, XIcon } from "lucide-react";
 import { getProducts } from "@formbricks/lib/product/service";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface ChannelPageProps {
   params: {

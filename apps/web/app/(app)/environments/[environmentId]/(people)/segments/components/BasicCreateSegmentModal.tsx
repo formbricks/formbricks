@@ -8,12 +8,12 @@ import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actio
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { BasicAddFilterModal } from "@formbricks/ui/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/BasicSegmentEditor";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Modal } from "@formbricks/ui/Modal";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+import { BasicAddFilterModal } from "@formbricks/ui/components/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/components/BasicSegmentEditor";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Modal } from "@formbricks/ui/components/Modal";
+import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 
 type TCreateSegmentModalProps = {
   environmentId: string;

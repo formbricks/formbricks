@@ -14,11 +14,11 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
-import { Input } from "@formbricks/ui/Input";
-import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
+import { Input } from "@formbricks/ui/components/Input";
+import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 
 interface EditTagsWrapperProps {
   environment: TEnvironment;

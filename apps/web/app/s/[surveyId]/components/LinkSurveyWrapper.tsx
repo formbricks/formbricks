@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { ClientLogo } from "@formbricks/ui/ClientLogo";
-import { MediaBackground } from "@formbricks/ui/MediaBackground";
-import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
+import { ClientLogo } from "@formbricks/ui/components/ClientLogo";
+import { MediaBackground } from "@formbricks/ui/components/MediaBackground";
+import { ResetProgressButton } from "@formbricks/ui/components/ResetProgressButton";
 
 interface LinkSurveyWrapperProps {
   children: JSX.Element;

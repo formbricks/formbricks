@@ -8,9 +8,9 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { ZOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
 
 const ZCreateOrganizationFormSchema = ZOrganization.pick({ name: true });
 type TCreateOrganizationForm = z.infer<typeof ZCreateOrganizationFormSchema>;
