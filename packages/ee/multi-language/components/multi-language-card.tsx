@@ -4,7 +4,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
@@ -71,6 +71,12 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       setActiveQuestionId(null);
     }
   };
+
+  useEffect(() => {
+    if (localSurvey.languages.length === 0) {
+      setIsMultiLanguageActivated(false);
+    }
+  }, [localSurvey.languages]);
 
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
