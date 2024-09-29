@@ -11,8 +11,9 @@ export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIn
   let nextCursor: string | undefined = undefined;
 
   do {
-    const url = new URL("https://slack.com/api/conversations.list");
+    const url = new URL("https://slack.com/api/users.conversations");
     url.searchParams.append("limit", "200");
+    url.searchParams.append("types", "private_channel,public_channel");
     if (nextCursor) {
       url.searchParams.append("cursor", nextCursor);
     }
