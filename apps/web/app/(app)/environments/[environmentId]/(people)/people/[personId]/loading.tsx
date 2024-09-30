@@ -1,5 +1,5 @@
 import { ArrowDownUpIcon, TrashIcon } from "lucide-react";
-import { BackIcon } from "@formbricks/ui/icons";
+import { BackIcon } from "@formbricks/ui/components/icons";
 
 const Loading = () => {
   return (

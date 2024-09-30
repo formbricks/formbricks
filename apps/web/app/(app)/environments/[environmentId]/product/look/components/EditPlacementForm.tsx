@@ -6,11 +6,11 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
-import { Label } from "@formbricks/ui/Label";
-import { getPlacementStyle } from "@formbricks/ui/PreviewSurvey/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/components/Form";
+import { Label } from "@formbricks/ui/components/Label";
+import { getPlacementStyle } from "@formbricks/ui/components/PreviewSurvey/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 import { updateProductAction } from "../../actions";
 
 const placements = [

@@ -3,9 +3,9 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+import { Label } from "@formbricks/ui/components/Label";
+import { Switch } from "@formbricks/ui/components/Switch";
+import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { updateProductAction } from "../../actions";
 
 interface EditFormbricksBrandingProps {

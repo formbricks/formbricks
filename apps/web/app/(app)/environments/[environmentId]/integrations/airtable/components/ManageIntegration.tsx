@@ -14,9 +14,9 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 
 interface ManageIntegrationProps {
   airtableIntegration: TIntegrationAirtable;

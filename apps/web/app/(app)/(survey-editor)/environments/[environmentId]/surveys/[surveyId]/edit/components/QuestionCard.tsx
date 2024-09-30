@@ -19,9 +19,9 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { Switch } from "@formbricks/ui/Switch";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { Switch } from "@formbricks/ui/components/Switch";
 import { AddressQuestionForm } from "./AddressQuestionForm";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CTAQuestionForm } from "./CTAQuestionForm";

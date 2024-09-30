@@ -12,7 +12,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-import { createSurveyAction } from "@formbricks/ui/TemplateList/actions";
+import { createSurveyAction } from "@formbricks/ui/components/TemplateList/actions";
 
 interface XMTemplateListProps {
   product: TProduct;

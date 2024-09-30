@@ -28,8 +28,8 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
-import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
+import { SkeletonLoader } from "@formbricks/ui/components/SkeletonLoader";
 import { AddressSummary } from "./AddressSummary";
 
 interface SummaryListProps {

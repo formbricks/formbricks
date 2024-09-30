@@ -5,7 +5,7 @@ import { SegmentSettings } from "@formbricks/ee/advanced-targeting/components/se
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
-import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
+import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { BasicSegmentSettings } from "./BasicSegmentSettings";
 import { SegmentActivityTab } from "./SegmentActivityTab";
 
