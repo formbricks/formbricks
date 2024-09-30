@@ -109,15 +109,12 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       }
       break;
     case TSurveyQuestionTypeEnum.Address:
-      if (Array.isArray(responseData)) {
-        return <ArrayResponse value={responseData} />;
-      }
-      break;
     case TSurveyQuestionTypeEnum.ContactInfo:
       if (Array.isArray(responseData)) {
         return <ArrayResponse value={responseData} />;
       }
       break;
+
     case TSurveyQuestionTypeEnum.Cal:
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (

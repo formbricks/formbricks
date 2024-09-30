@@ -7,7 +7,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { Switch } from "@formbricks/ui/Switch";
+import { QuestionToggleTable } from "@formbricks/ui/QuestionToggleTable";
 
 interface ContactInfoQuestionFormProps {
   localSurvey: TSurvey;
@@ -127,60 +127,29 @@ export const ContactInfoQuestionForm = ({
             Add Description
           </Button>
         )}
-        <div className="mt-2 text-base font-semibold">Settings</div>
 
-        <table className="mt-4 w-1/2 table-fixed">
-          <thead>
-            <tr className="text-left font-medium text-slate-800">
-              <th className="w-1/2 text-sm">Contact Data</th>
-              <th className="w-1/4 text-sm">Show</th>
-              <th className="w-1/4 text-sm">Required</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fields.map((field) => (
-              <tr className="text-slate-900">
-                <td className="py-2 text-sm">{field.label}</td>
-                <td className="py-">
-                  <Switch
-                    checked={field.show}
-                    onCheckedChange={(show) => {
-                      updateQuestion(questionIdx, {
-                        [field.id]: {
-                          show,
-                          required: field.required,
-                        },
-                        // when show changes, and the field is required, the question should be required
-                        ...(show && field.required && { required: true }),
-                      });
-                    }}
-                    disabled={
-                      // if all the other fields are hidden, this should be disabled
-                      fields
-                        .filter((currentField) => currentField.id !== field.id)
-                        .every((field) => !field.show)
-                    }
-                  />
-                </td>
-                <td className="py-2">
-                  <Switch
-                    checked={field.required}
-                    onCheckedChange={(required) => {
-                      updateQuestion(questionIdx, {
-                        [field.id]: {
-                          show: field.show,
-                          required,
-                        },
-                        required: true,
-                      });
-                    }}
-                    disabled={!field.show}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <QuestionToggleTable
+          fields={fields}
+          onShowToggle={(field, show) => {
+            updateQuestion(questionIdx, {
+              [field.id]: {
+                show,
+                required: field.required,
+              },
+              // when show changes, and the field is required, the question should be required
+              ...(show && field.required && { required: true }),
+            });
+          }}
+          onRequiredToggle={(field, required) => {
+            updateQuestion(questionIdx, {
+              [field.id]: {
+                show: field.show,
+                required,
+              },
+              required: true,
+            });
+          }}
+        />
       </div>
     </form>
   );

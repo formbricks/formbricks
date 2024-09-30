@@ -436,31 +436,6 @@ export function PreviewEmailTemplate({
         </EmailTemplateWrapper>
       );
     case TSurveyQuestionTypeEnum.Address:
-      return (
-        <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
-          {[
-            "Address Line 1",
-            "Address Line 2",
-            "City / Town",
-            "State / Region",
-            "ZIP / Post Code",
-            "Country",
-          ].map((label) => (
-            <Section
-              className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid py-2 pl-2 text-slate-400"
-              key={label}>
-              {label}
-            </Section>
-          ))}
-          <EmailFooter />
-        </EmailTemplateWrapper>
-      );
     case TSurveyQuestionTypeEnum.ContactInfo:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>

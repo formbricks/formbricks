@@ -117,59 +117,62 @@ export const AddressQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
+
+          <div className={`fb-flex fb-flex-col fb-space-y-4 fb-w-full`}>
+            {fields.map((field, index) => {
+              const isFieldRequired = () => {
+                if (field.required) {
+                  return true;
+                }
+
+                // if all fields are optional and the question is required, then the fields should be required
+                if (
+                  fields.filter((field) => field.show).every((field) => !field.required) &&
+                  question.required
+                ) {
+                  return true;
+                }
+
+                return false;
+              };
+
+              return (
+                field.show && (
+                  <Input
+                    key={field.id}
+                    placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
+                    required={isFieldRequired()}
+                    value={safeValue?.[index] || ""}
+                    className="fb-py-3"
+                    type={field.id === "email" ? "email" : "text"}
+                    onChange={(e) => handleChange(field.id, e?.currentTarget?.value ?? "")}
+                  />
+                )
+              );
+            })}
+          </div>
+          <div className="fb-flex fb-w-full fb-justify-between fb-py-4">
+            {!isFirstQuestion && (
+              <BackButton
+                tabIndex={8}
+                backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+                onClick={() => {
+                  const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                  setTtc(updatedttc);
+                  onBack();
+                }}
+              />
+            )}
+            <div></div>
+            <SubmitButton
+              tabIndex={7}
+              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+              isLastQuestion={isLastQuestion}
+              onClick={() => {}}
+            />
+          </div>
         </div>
       </ScrollableContainer>
-      <div className={`fb-flex fb-flex-col fb-space-y-4 fb-w-full fb-px-4`}>
-        {fields.map((field, index) => {
-          const isFieldRequired = () => {
-            if (field.required) {
-              return true;
-            }
-
-            // if all fields are optional and the question is required, then the fields should be required
-            if (fields.filter((field) => field.show).every((field) => !field.required) && question.required) {
-              return true;
-            }
-
-            return false;
-          };
-
-          return (
-            field.show && (
-              <Input
-                key={field.id}
-                placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
-                required={isFieldRequired()}
-                value={safeValue?.[index] || ""}
-                className="fb-py-3"
-                type={field.id === "email" ? "email" : "text"}
-                // @ts-expect-error
-                onChange={(e) => handleChange(field.id, e?.target?.value ?? "")}
-              />
-            )
-          );
-        })}
-      </div>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        {!isFirstQuestion && (
-          <BackButton
-            tabIndex={8}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={() => {
-              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedttc);
-              onBack();
-            }}
-          />
-        )}
-        <div></div>
-        <SubmitButton
-          tabIndex={7}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-          onClick={() => {}}
-        />
-      </div>
     </form>
   );
 };

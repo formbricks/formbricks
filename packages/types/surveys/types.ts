@@ -541,6 +541,7 @@ export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   phone: ZSurveyShowRequiredToggle,
   company: ZSurveyShowRequiredToggle,
 });
+
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
 export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
@@ -986,6 +987,32 @@ export const ZSurvey = z
               path: ["questions", questionIndex, "calHost"],
             });
           }
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+        const { company, email, firstName, lastName, phone } = question;
+        const fields = [company, email, firstName, lastName, phone];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "At least one field must be shown in the Contact Info question",
+            path: ["questions", questionIndex],
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Address) {
+        const { addressLine1, addressLine2, city, state, zip, country } = question;
+        const fields = [addressLine1, addressLine2, city, state, zip, country];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "At least one field must be shown in the Address question",
+            path: ["questions", questionIndex],
+          });
         }
       }
 
