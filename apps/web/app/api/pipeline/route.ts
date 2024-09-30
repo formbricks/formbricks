@@ -11,7 +11,8 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
-import { ZPipelineInput } from "@formbricks/types/pipelines";
+import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
+import { TWebhook } from "@formbricks/types/webhooks";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
@@ -37,9 +38,9 @@ export const POST = async (request: Request) => {
   const { environmentId, surveyId, event, response } = inputValidation.data;
 
   // Fetch webhooks
-  const webhooks = cache(
-    async () => {
-      await prisma.webhook.findMany({
+  const getWebhooksForPipeline = cache(
+    async (environmentId: string, event: TPipelineTrigger, surveyId: string) => {
+      const webhooks = await prisma.webhook.findMany({
         where: {
           environmentId,
           triggers: { has: event },
@@ -48,19 +49,19 @@ export const POST = async (request: Request) => {
       });
       return webhooks;
     },
-    [`pipeline-webhooks-${environmentId}-${event}-${surveyId}`],
+    [`getWebhooksForPipeline-${environmentId}-${event}-${surveyId}`],
     {
       tags: [webhookCache.tag.byEnvironmentId(environmentId)],
     }
-  )();
-
+  );
+  const webhooks: TWebhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
   // Prepare webhook and email promises
 
   // Fetch with timeout of 5 seconds to prevent hanging
-  const fetchWithTimeout = (url, options, timeout = 5000) => {
+  const fetchWithTimeout = (url: string, options: RequestInit, timeout: number = 5000): Promise<Response> => {
     return Promise.race([
       fetch(url, options),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
   };
 
