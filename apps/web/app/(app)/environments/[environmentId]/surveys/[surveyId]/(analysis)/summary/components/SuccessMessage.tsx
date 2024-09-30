@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Confetti } from "@formbricks/ui/Confetti";
+import { Confetti } from "@formbricks/ui/components/Confetti";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;

@@ -4,7 +4,12 @@ import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { QUESTIONS_ICON_MAP, QUESTIONS_NAME_MAP, getQuestionDefaults } from "@formbricks/lib/utils/questions";
+import {
+  CX_QUESTIONS_NAME_MAP,
+  QUESTIONS_ICON_MAP,
+  QUESTIONS_NAME_MAP,
+  getQuestionDefaults,
+} from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
@@ -12,9 +17,8 @@ import {
   TSurveyQuestion,
   TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
-  ZSurveyQuestion,
 } from "@formbricks/types/surveys/types";
-import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
+import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +27,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 
 interface EditorCardMenuProps {
   survey: TSurvey;
@@ -37,6 +41,7 @@ interface EditorCardMenuProps {
   addCard: (question: any, index?: number) => void;
   cardType: "question" | "ending";
   product?: TProduct;
+  isCxMode?: boolean;
 }
 
 export const EditorCardMenu = ({
@@ -51,76 +56,75 @@ export const EditorCardMenu = ({
   updateCard,
   addCard,
   cardType,
+  isCxMode = false,
 }: EditorCardMenuProps) => {
   const [logicWarningModal, setLogicWarningModal] = useState(false);
-  const [changeToType, setChangeToType] = useState(
-    card.type !== "endScreen" && card.type !== "redirectToUrl" ? card.type : undefined
-  );
+  const [changeToType, setChangeToType] = useState(() => {
+    if (card.type !== "endScreen" && card.type !== "redirectToUrl") {
+      return card.type;
+    }
+
+    return undefined;
+  });
   const isDeleteDisabled =
     cardType === "question"
       ? survey.questions.length === 1
       : survey.type === "link" && survey.endings.length === 1;
 
+  const availableQuestionTypes = isCxMode ? CX_QUESTIONS_NAME_MAP : QUESTIONS_NAME_MAP;
+
   const changeQuestionType = (type?: TSurveyQuestionTypeEnum) => {
-    const parseResult = ZSurveyQuestion.safeParse(card);
-    if (parseResult.success && type) {
-      const question = parseResult.data;
-      const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } = question;
+    if (!type) return;
 
-      const questionDefaults = getQuestionDefaults(type, product);
+    const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
+      card as TSurveyQuestion;
 
-      // if going from single select to multi select or vice versa, we need to keep the choices as well
+    const questionDefaults = getQuestionDefaults(type, product);
 
-      if (
-        (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
-          question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) ||
-        (type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
-          question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
-      ) {
-        updateCard(cardIdx, {
-          choices: question.choices,
-          type,
-          logic: undefined,
-        });
-
-        return;
-      }
-
+    if (
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
+        card.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) ||
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
+        card.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
+    ) {
       updateCard(cardIdx, {
-        ...questionDefaults,
+        choices: card.choices,
         type,
-        headline,
-        subheader,
-        required,
-        imageUrl,
-        videoUrl,
-        buttonLabel,
-        backButtonLabel,
         logic: undefined,
       });
+
+      return;
     }
+
+    updateCard(cardIdx, {
+      ...questionDefaults,
+      type,
+      headline,
+      subheader,
+      required,
+      imageUrl,
+      videoUrl,
+      buttonLabel,
+      backButtonLabel,
+      logic: undefined,
+    });
   };
 
   const addQuestionCardBelow = (type: TSurveyQuestionTypeEnum) => {
-    const parseResult = ZSurveyQuestion.safeParse(card);
-    if (parseResult.success) {
-      const question = parseResult.data;
-      const questionDefaults = getQuestionDefaults(type, product);
+    const questionDefaults = getQuestionDefaults(type, product);
 
-      addCard(
-        {
-          ...questionDefaults,
-          type,
-          id: createId(),
-          required: true,
-        },
-        cardIdx + 1
-      );
+    addCard(
+      {
+        ...questionDefaults,
+        type,
+        id: createId(),
+        required: true,
+      },
+      cardIdx + 1
+    );
 
-      // scroll to the new question
-      const section = document.getElementById(`${question.id}`);
-      section?.scrollIntoView({ behavior: "smooth", block: "end", inline: "end" });
-    }
+    const section = document.getElementById(`${card.id}`);
+    section?.scrollIntoView({ behavior: "smooth", block: "end", inline: "end" });
   };
 
   const addEndingCardBelow = () => {
@@ -167,29 +171,25 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2 border border-slate-200 text-slate-600 hover:text-slate-700">
-                  {Object.entries(QUESTIONS_NAME_MAP).map(([type, name]) => {
-                    const parsedResult = ZSurveyQuestion.safeParse(card);
-                    if (parsedResult.success) {
-                      const question = parsedResult.data;
-                      if (type === question.type) return null;
-                      return (
-                        <DropdownMenuItem
-                          key={type}
-                          className="min-h-8 cursor-pointer"
-                          onClick={() => {
-                            setChangeToType(type as TSurveyQuestionTypeEnum);
-                            if (question.logic) {
-                              setLogicWarningModal(true);
-                              return;
-                            }
+                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
+                    if (type === card.type) return null;
+                    return (
+                      <DropdownMenuItem
+                        key={type}
+                        className="min-h-8 cursor-pointer"
+                        onClick={() => {
+                          setChangeToType(type as TSurveyQuestionTypeEnum);
+                          if ((card as TSurveyQuestion).logic) {
+                            setLogicWarningModal(true);
+                            return;
+                          }
 
-                            changeQuestionType(type as TSurveyQuestionTypeEnum);
-                          }}>
-                          {QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}
-                          <span className="ml-2">{name}</span>
-                        </DropdownMenuItem>
-                      );
-                    }
+                          changeQuestionType(type as TSurveyQuestionTypeEnum);
+                        }}>
+                        {QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}
+                        <span className="ml-2">{name}</span>
+                      </DropdownMenuItem>
+                    );
                   })}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
@@ -212,7 +212,7 @@ export const EditorCardMenu = ({
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-4 border border-slate-200">
-                  {Object.entries(QUESTIONS_NAME_MAP).map(([type, name]) => {
+                  {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     return (
                       <DropdownMenuItem
                         key={type}

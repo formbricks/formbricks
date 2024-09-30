@@ -2,8 +2,8 @@ import { Cell, Row, flexRender } from "@tanstack/react-table";
 import { Maximize2Icon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
-import { getCommonPinningStyles } from "@formbricks/ui/DataTable/lib/utils";
-import { TableCell } from "@formbricks/ui/Table";
+import { getCommonPinningStyles } from "@formbricks/ui/components/DataTable/lib/utils";
+import { TableCell } from "@formbricks/ui/components/Table";
 
 interface ResponseTableCellProps {
   cell: Cell<TResponseTableData, unknown>;
@@ -46,7 +46,7 @@ export const ResponseTableCell = ({
     <TableCell
       key={cell.id}
       className={cn(
-        "border-slate-300 bg-white shadow-none group-hover:bg-slate-100",
+        "border-slate-200 bg-white shadow-none group-hover:bg-slate-100",
         row.getIsSelected() && "bg-slate-100",
         {
           "border-r": !cell.column.getIsLastColumn(),

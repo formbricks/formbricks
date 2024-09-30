@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 export const metadata: Metadata = {
   title: "Intro",

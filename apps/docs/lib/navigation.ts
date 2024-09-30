@@ -44,6 +44,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
         ],
       },
     ],
@@ -68,6 +69,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
         ],
       },
     ],
@@ -91,6 +93,7 @@ export const navigation: Array<NavGroup> = [
           { title: "User Metadata", href: "/global/metadata" },
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" },
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
           { title: "Start & End Dates", href: "/global/custom-start-end-conditions" },
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" },
@@ -106,6 +109,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Access Roles", href: "/global/access-roles" },
       { title: "Styling Theme", href: "/global/styling-theme" },
+      { title: "Logic Editor", href: "/global/logic-editor" },
     ],
   },
   {

@@ -118,6 +118,9 @@ model Response {
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
   data             Json              @default("{}")
+  /// @zod.custom(imports.ZResponseVariables)
+  /// [ResponseVariables]
+  variables        Json              @default("{}")
   /// @zod.custom(imports.ZResponseTtc)
   /// [ResponseTtc]
   ttc              Json              @default("{}")

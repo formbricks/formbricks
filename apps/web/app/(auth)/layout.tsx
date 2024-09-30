@@ -1,4 +1,4 @@
-import { NoMobileOverlay } from "@formbricks/ui/NoMobileOverlay";
+import { NoMobileOverlay } from "@formbricks/ui/components/NoMobileOverlay";
 
 const AppLayout = ({ children }) => {
   return (

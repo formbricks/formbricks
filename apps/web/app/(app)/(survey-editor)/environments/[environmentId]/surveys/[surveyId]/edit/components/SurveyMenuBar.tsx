@@ -20,10 +20,10 @@ import {
   ZSurveyEndScreenCard,
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
-import { AlertDialog } from "@formbricks/ui/AlertDialog";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import { updateSurveyAction } from "../actions";
 import { isSurveyValid } from "../lib/validation";
 
@@ -39,6 +39,7 @@ interface SurveyMenuBarProps {
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
+  isCxMode: boolean;
 }
 
 export const SurveyMenuBar = ({
@@ -52,6 +53,7 @@ export const SurveyMenuBar = ({
   product,
   responseCount,
   selectedLanguageCode,
+  isCxMode,
 }: SurveyMenuBarProps) => {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -190,7 +192,9 @@ export const SurveyMenuBar = ({
 
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
-          toast.error(currentError.message);
+          toast.error(currentError.message, {
+            className: "w-fit !max-w-md",
+          });
         }
 
         return false;
@@ -305,16 +309,18 @@ export const SurveyMenuBar = ({
     <>
       <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
         <div className="flex h-full items-center space-x-2 whitespace-nowrap">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-full"
-            StartIcon={ArrowLeftIcon}
-            onClick={() => {
-              handleBack();
-            }}>
-            Back
-          </Button>
+          {!isCxMode && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-full"
+              StartIcon={ArrowLeftIcon}
+              onClick={() => {
+                handleBack();
+              }}>
+              Back
+            </Button>
+          )}
           <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
           <Input
             defaultValue={localSurvey.name}
@@ -350,16 +356,19 @@ export const SurveyMenuBar = ({
               updateLocalSurveyStatus={updateLocalSurveyStatus}
             />
           </div>
-          <Button
-            disabled={disableSave}
-            variant="secondary"
-            size="sm"
-            className="mr-3"
-            loading={isSurveySaving}
-            onClick={() => handleSurveySave()}
-            type="submit">
-            Save
-          </Button>
+          {!isCxMode && (
+            <Button
+              disabled={disableSave}
+              variant="secondary"
+              size="sm"
+              className="mr-3"
+              loading={isSurveySaving}
+              onClick={() => handleSurveySave()}
+              type="submit">
+              Save
+            </Button>
+          )}
+
           {localSurvey.status !== "draft" && (
             <Button
               disabled={disableSave}
@@ -388,7 +397,7 @@ export const SurveyMenuBar = ({
               disabled={isSurveySaving || containsEmptyTriggers}
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>
-              Publish
+              {isCxMode ? "Save & Close" : "Publish"}
             </Button>
           )}
         </div>

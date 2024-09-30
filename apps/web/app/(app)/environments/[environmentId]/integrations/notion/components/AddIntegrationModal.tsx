@@ -22,10 +22,10 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
-import { Label } from "@formbricks/ui/Label";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
+import { Label } from "@formbricks/ui/components/Label";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -118,6 +118,13 @@ export const AddIntegrationModal = ({
         }))
       : [];
 
+    const variables =
+      selectedSurvey?.variables.map((variable) => ({
+        id: variable.id,
+        name: variable.name,
+        type: TSurveyQuestionTypeEnum.OpenText,
+      })) || [];
+
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
           id: fId,
@@ -133,7 +140,7 @@ export const AddIntegrationModal = ({
       },
     ];
 
-    return [...questions, ...hiddenFields, ...Metadata];
+    return [...questions, ...variables, ...hiddenFields, ...Metadata];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 

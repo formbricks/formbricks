@@ -1,101 +1,93 @@
 "use client";
 
-import {
-  getPersonAttributesAction,
-  getPersonsAction,
-} from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
+import { getPersonsAction } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { PersonTable } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTable";
+import { debounce } from "lodash";
 import { useEffect, useState } from "react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TPerson, TPersonTableData } from "@formbricks/types/people";
+import { TPersonWithAttributes } from "@formbricks/types/people";
 
 interface PersonDataViewProps {
   environment: TEnvironment;
-  personCount: number;
   itemsPerPage: number;
 }
 
-export const PersonDataView = ({ environment, personCount, itemsPerPage }: PersonDataViewProps) => {
-  const [persons, setPersons] = useState<TPerson[]>([]);
-  const [personTableData, setPersonTableData] = useState<TPersonTableData[]>([]);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [totalPersons, setTotalPersons] = useState<number>(0);
+export const PersonDataView = ({ environment, itemsPerPage }: PersonDataViewProps) => {
+  const [persons, setPersons] = useState<TPersonWithAttributes[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
+  const [searchValue, setSearchValue] = useState<string>("");
 
   useEffect(() => {
-    setTotalPersons(personCount);
-    setHasMore(pageNumber < Math.ceil(personCount / itemsPerPage));
-
     const fetchData = async () => {
+      setIsDataLoaded(false);
       try {
+        setHasMore(true);
         const getPersonActionData = await getPersonsAction({
           environmentId: environment.id,
-          page: pageNumber,
+          offset: 0,
+          searchValue,
         });
+        const personData = getPersonActionData?.data;
         if (getPersonActionData?.data) {
           setPersons(getPersonActionData.data);
         }
+        if (personData && personData.length < itemsPerPage) {
+          setHasMore(false);
+        }
       } catch (error) {
         console.error("Error fetching people data:", error);
-      }
-    };
-
-    fetchData();
-  }, [pageNumber, personCount, itemsPerPage, environment.id]);
-
-  // Fetch additional person attributes and update table data
-  useEffect(() => {
-    const fetchAttributes = async () => {
-      try {
-        const updatedPersonTableData = await Promise.all(
-          persons.map(async (person) => {
-            const attributes = await getPersonAttributesAction({
-              environmentId: environment.id,
-              personId: person.id,
-            });
-            return {
-              createdAt: person.createdAt,
-              personId: person.id,
-              userId: person.userId,
-              email: attributes?.data?.email ?? "",
-              attributes: attributes?.data ?? {},
-            };
-          })
-        );
-        setPersonTableData(updatedPersonTableData);
-      } catch (error) {
-        console.error("Error fetching person attributes:", error);
       } finally {
         setIsDataLoaded(true);
       }
     };
 
-    fetchAttributes();
-  }, [persons, environment.id]);
+    const debouncedFetchData = debounce(fetchData, 300);
+    debouncedFetchData();
+
+    return () => {
+      debouncedFetchData.cancel();
+    };
+  }, [searchValue]);
 
   const fetchNextPage = async () => {
     if (hasMore && !loadingNextPage) {
       setLoadingNextPage(true);
-      const getPersonsActionData = await getPersonsAction({
-        environmentId: environment.id,
-        page: pageNumber,
-      });
-      if (getPersonsActionData?.data) {
-        const newData = getPersonsActionData.data;
-        setPersons((prevPersonsData) => [...prevPersonsData, ...newData]);
+      try {
+        const getPersonsActionData = await getPersonsAction({
+          environmentId: environment.id,
+          offset: persons.length,
+          searchValue,
+        });
+        const personData = getPersonsActionData?.data;
+        if (personData) {
+          setPersons((prevPersonsData) => [...prevPersonsData, ...personData]);
+          if (personData.length === 0 || personData.length < itemsPerPage) {
+            setHasMore(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching next page of people data:", error);
+      } finally {
+        setLoadingNextPage(false);
       }
-      setPageNumber((prevPage) => prevPage + 1);
-      setHasMore(pageNumber + 1 < Math.ceil(totalPersons / itemsPerPage));
-      setLoadingNextPage(false);
     }
   };
 
   const deletePersons = (personIds: string[]) => {
     setPersons((prevPersons) => prevPersons.filter((p) => !personIds.includes(p.id)));
   };
+
+  const personTableData = persons.map((person) => ({
+    id: person.id,
+    userId: person.userId,
+    email: person.attributes.email,
+    createdAt: person.createdAt,
+    attributes: person.attributes,
+    personId: person.id,
+  }));
 
   return (
     <PersonTable
@@ -105,6 +97,8 @@ export const PersonDataView = ({ environment, personCount, itemsPerPage }: Perso
       isDataLoaded={isDataLoaded}
       deletePersons={deletePersons}
       environmentId={environment.id}
+      searchValue={searchValue}
+      setSearchValue={setSearchValue}
     />
   );
 };

@@ -8,10 +8,10 @@ import { LocalizedEditor } from "@formbricks/ee/multi-language/components/locali
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
-import { FileInput } from "@formbricks/ui/FileInput";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { Switch } from "@formbricks/ui/Switch";
+import { FileInput } from "@formbricks/ui/components/FileInput";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;

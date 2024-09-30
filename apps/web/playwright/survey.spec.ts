@@ -1,10 +1,18 @@
 import { surveys } from "@/playwright/utils/mock";
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { createSurvey } from "./utils/helper";
+import { createSurvey, createSurveyWithLogic } from "./utils/helper";
 
-test.describe("Survey Create & Submit Response", async () => {
+test.use({
+  launchOptions: {
+    slowMo: 110,
+  },
+});
+
+test.describe("Survey Create & Submit Response without logic", async () => {
   let url: string | null;
+
+  test.slow();
 
   test("Create survey and submit response", async ({ page, users }) => {
     const user = await users.create();
@@ -451,5 +459,258 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Copy survey link to clipboard").click();
     const germanSurveyUrl = await page.evaluate("navigator.clipboard.readText()");
     expect(germanSurveyUrl).toContain("lang=de");
+  });
+});
+
+test.describe("Testing Survey with advanced logic", async () => {
+  test.setTimeout(180000);
+  let url: string | null;
+
+  test("Create survey and submit response", async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
+
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+
+    await test.step("Create Survey", async () => {
+      await createSurveyWithLogic(page, surveys.createWithLogicAndSubmit);
+
+      // Save & Publish Survey
+      await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+      await page.locator("#howToSendCardTrigger").click();
+      await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+      await page.locator("#howToSendCardOption-link").click();
+
+      await page.getByRole("button", { name: "Publish" }).click();
+
+      // Get URL
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+      await page.getByLabel("Copy survey link to clipboard").click();
+      url = await page.evaluate("navigator.clipboard.readText()");
+    });
+
+    await test.step("Submit Survey Response", async () => {
+      await page.goto(url!);
+      await page.waitForURL(/\/s\/[A-Za-z0-9]+$/);
+
+      // Welcome Card
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.welcomeCard.headline)).toBeVisible();
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.welcomeCard.description)).toBeVisible();
+      await page.locator("#questionCard--1").getByRole("button", { name: "Next" }).click();
+
+      // Open Text Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.openTextQuestion.question)).toBeVisible();
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.openTextQuestion.description)
+      ).toBeVisible();
+      await expect(
+        page.getByPlaceholder(surveys.createWithLogicAndSubmit.openTextQuestion.placeholder)
+      ).toBeVisible();
+      await page
+        .getByPlaceholder(surveys.createWithLogicAndSubmit.openTextQuestion.placeholder)
+        .fill("This is my Open Text answer");
+      await page.locator("#questionCard-0").getByRole("button", { name: "Next" }).click();
+
+      // Single Select Question
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.singleSelectQuestion.question)
+      ).toBeVisible();
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.singleSelectQuestion.description)
+      ).toBeVisible();
+      for (let i = 0; i < surveys.createWithLogicAndSubmit.singleSelectQuestion.options.length; i++) {
+        await expect(
+          page
+            .locator("#questionCard-1 label")
+            .filter({ hasText: surveys.createWithLogicAndSubmit.singleSelectQuestion.options[i] })
+        ).toBeVisible();
+      }
+      await expect(page.getByText("Other")).toBeVisible();
+      await expect(page.locator("#questionCard-1").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-1").getByRole("button", { name: "Back" })).toBeVisible();
+      await page
+        .locator("#questionCard-1 label")
+        .filter({ hasText: surveys.createWithLogicAndSubmit.singleSelectQuestion.options[0] })
+        .click();
+      await page.locator("#questionCard-1").getByRole("button", { name: "Next" }).click();
+
+      // Multi Select Question
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.multiSelectQuestion.question)
+      ).toBeVisible();
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.multiSelectQuestion.description)
+      ).toBeVisible();
+      for (let i = 0; i < surveys.createWithLogicAndSubmit.singleSelectQuestion.options.length; i++) {
+        await expect(
+          page
+            .locator("#questionCard-2 label")
+            .filter({ hasText: surveys.createWithLogicAndSubmit.multiSelectQuestion.options[i] })
+        ).toBeVisible();
+      }
+      await expect(page.locator("#questionCard-2").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-2").getByRole("button", { name: "Back" })).toBeVisible();
+      for (let i = 0; i < surveys.createWithLogicAndSubmit.multiSelectQuestion.options.length; i++) {
+        await page
+          .locator("#questionCard-2 label")
+          .filter({ hasText: surveys.createWithLogicAndSubmit.multiSelectQuestion.options[i] })
+          .click();
+      }
+      await page.locator("#questionCard-2").getByRole("button", { name: "Next" }).click();
+
+      // Picture Select Question
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.pictureSelectQuestion.question)
+      ).toBeVisible();
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.pictureSelectQuestion.description)
+      ).toBeVisible();
+      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(page.getByRole("img", { name: "puppy-1-small.jpg" })).toBeVisible();
+      await expect(page.getByRole("img", { name: "puppy-2-small.jpg" })).toBeVisible();
+      await page.getByRole("img", { name: "puppy-1-small.jpg" }).click();
+      await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
+
+      // Rating Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.ratingQuestion.question)).toBeVisible();
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.ratingQuestion.description)).toBeVisible();
+      await expect(
+        page.locator("#questionCard-4").getByText(surveys.createWithLogicAndSubmit.ratingQuestion.lowLabel)
+      ).toBeVisible();
+      await expect(
+        page.locator("#questionCard-4").getByText(surveys.createWithLogicAndSubmit.ratingQuestion.highLabel)
+      ).toBeVisible();
+      expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
+      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-4").getByRole("button", { name: "Back" })).toBeVisible();
+      await page.getByRole("group", { name: "Choices" }).locator("path").nth(3).click();
+
+      // NPS Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.npsQuestion.question)).toBeVisible();
+      await expect(
+        page.locator("#questionCard-5").getByText(surveys.createWithLogicAndSubmit.npsQuestion.lowLabel)
+      ).toBeVisible();
+      await expect(
+        page.locator("#questionCard-5").getByText(surveys.createWithLogicAndSubmit.npsQuestion.highLabel)
+      ).toBeVisible();
+      await expect(page.locator("#questionCard-5").getByRole("button", { name: "Next" })).not.toBeVisible();
+      await expect(page.locator("#questionCard-5").getByRole("button", { name: "Back" })).toBeVisible();
+
+      for (let i = 0; i < 11; i++) {
+        await expect(page.locator("#questionCard-5").getByText(`${i}`, { exact: true })).toBeVisible();
+      }
+      await page.locator("#questionCard-5").getByText("5", { exact: true }).click();
+
+      // Ranking Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.ranking.question)).toBeVisible();
+      await page.locator("#questionCard-6").getByRole("button", { name: "Next" }).click();
+
+      // Matrix Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.matrix.question)).toBeVisible();
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.matrix.description)).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[0] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[1] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[2] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[0] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[1] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[2] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[3] })
+      ).toBeVisible();
+      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
+      await page.getByRole("row", { name: "Roses" }).getByRole("cell").nth(1).click();
+      await page.getByRole("row", { name: "Trees" }).getByRole("cell").nth(1).click();
+      await page.getByRole("row", { name: "Ocean" }).getByRole("cell").nth(1).click();
+      await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
+
+      // CTA Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.ctaQuestion.question)).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: surveys.createWithLogicAndSubmit.ctaQuestion.buttonLabel })
+      ).toBeVisible();
+      await page
+        .getByRole("button", { name: surveys.createWithLogicAndSubmit.ctaQuestion.buttonLabel })
+        .click();
+
+      // Consent Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.consentQuestion.question)).toBeVisible();
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.consentQuestion.checkboxLabel)
+      ).toBeVisible();
+      await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
+      await page.getByText(surveys.createWithLogicAndSubmit.consentQuestion.checkboxLabel).check();
+      await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
+
+      // File Upload Question
+      await expect(
+        page.getByText(surveys.createWithLogicAndSubmit.fileUploadQuestion.question)
+      ).toBeVisible();
+      await expect(page.locator("#questionCard-10").getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(page.locator("#questionCard-10").getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(
+        page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
+      ).toBeVisible();
+      await page.locator("input[type=file]").setInputFiles({
+        name: "file.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from("this is test"),
+      });
+      await page.getByText("Uploading...").waitFor({ state: "hidden" });
+      await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
+
+      // Date Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.date.question)).toBeVisible();
+      await page.getByText("Select a date").click();
+      const date = new Date().getDate();
+      const month = new Date().toLocaleString("default", { month: "long" });
+      await page.getByRole("button", { name: `${month} ${date},` }).click();
+      await page.locator("#questionCard-11").getByRole("button", { name: "Next" }).click();
+
+      // Cal Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.cal.question)).toBeVisible();
+      await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
+
+      // Address Question
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.address.question)).toBeVisible();
+      await expect(page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)).toBeVisible();
+      await page
+        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)
+        .fill("This is my Address");
+      await page.getByRole("button", { name: "Finish" }).click();
+
+      // loading spinner -> wait for it to disappear
+      await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
+
+      // Thank You Card
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.thankYouCard.headline)).toBeVisible();
+      await expect(page.getByText(surveys.createWithLogicAndSubmit.thankYouCard.description)).toBeVisible();
+    });
+
+    await test.step("Verify Survey Response", async () => {
+      await page.goBack();
+      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+      await page.getByRole("button", { name: "Close" }).click();
+      await page.getByRole("link").filter({ hasText: "Responses" }).click();
+      await expect(page.getByRole("table")).toBeVisible();
+      await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
+      await page.waitForTimeout(5000);
+      await expect(page.getByRole("cell", { name: "32", exact: true })).toBeVisible();
+    });
   });
 });

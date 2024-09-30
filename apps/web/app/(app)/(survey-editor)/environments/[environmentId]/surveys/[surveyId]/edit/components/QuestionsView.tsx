@@ -1,6 +1,8 @@
 "use client";
 
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
+import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
+import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import {
   DndContext,
   DragEndEvent,
@@ -16,11 +18,18 @@ import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
+import {
+  TConditionGroup,
+  TSingleCondition,
+  TSurveyLogic,
+  TSurveyLogicAction,
+} from "@formbricks/types/surveys/types";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
 import {
@@ -49,6 +58,7 @@ interface QuestionsViewProps {
   isFormbricksCloud: boolean;
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
+  isCxMode: boolean;
 }
 
 export const QuestionsView = ({
@@ -65,6 +75,7 @@ export const QuestionsView = ({
   isFormbricksCloud,
   attributeClasses,
   plan,
+  isCxMode,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -75,22 +86,75 @@ export const QuestionsView = ({
 
   const surveyLanguages = localSurvey.languages;
   const [backButtonLabel, setbackButtonLabel] = useState(null);
+
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
-    survey.questions.forEach((question) => {
-      if (question.headline[selectedLanguageCode].includes(`recall:${compareId}`)) {
-        question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replaceAll(
-          `recall:${compareId}`,
-          `recall:${updatedId}`
-        );
+    const updateConditions = (conditions: TConditionGroup): TConditionGroup => {
+      return {
+        ...conditions,
+        conditions: conditions?.conditions.map((condition) => {
+          if (isConditionGroup(condition)) {
+            return updateConditions(condition);
+          } else {
+            return updateSingleCondition(condition);
+          }
+        }),
+      };
+    };
+
+    const updateSingleCondition = (condition: TSingleCondition): TSingleCondition => {
+      let updatedCondition = { ...condition };
+
+      if (condition.leftOperand.value === compareId) {
+        updatedCondition.leftOperand = { ...condition.leftOperand, value: updatedId };
       }
-      if (!question.logic) return;
-      question.logic.forEach((rule) => {
-        if (rule.destination === compareId) {
-          rule.destination = updatedId;
+
+      if (condition.rightOperand?.type === "question" && condition.rightOperand?.value === compareId) {
+        updatedCondition.rightOperand = { ...condition.rightOperand, value: updatedId };
+      }
+
+      return updatedCondition;
+    };
+
+    const updateActions = (actions: TSurveyLogicAction[]): TSurveyLogicAction[] => {
+      return actions.map((action) => {
+        let updatedAction = { ...action };
+
+        if (updatedAction.objective === "jumpToQuestion" && updatedAction.target === compareId) {
+          updatedAction.target = updatedId;
         }
+
+        if (updatedAction.objective === "requireAnswer" && updatedAction.target === compareId) {
+          updatedAction.target = updatedId;
+        }
+
+        return updatedAction;
       });
-    });
-    return survey;
+    };
+
+    return {
+      ...survey,
+      questions: survey.questions.map((question) => {
+        let updatedQuestion = { ...question };
+
+        if (question.headline[selectedLanguageCode].includes(`recall:${compareId}`)) {
+          question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replaceAll(
+            `recall:${compareId}`,
+            `recall:${updatedId}`
+          );
+        }
+
+        // Update advanced logic
+        if (question.logic) {
+          updatedQuestion.logic = question.logic.map((logicRule: TSurveyLogic) => ({
+            ...logicRule,
+            conditions: updateConditions(logicRule.conditions),
+            actions: updateActions(logicRule.actions),
+          }));
+        }
+
+        return updatedQuestion;
+      }),
+    };
   };
 
   useEffect(() => {
@@ -209,6 +273,14 @@ export const QuestionsView = ({
     const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
     let updatedSurvey: TSurvey = { ...localSurvey };
 
+    // checking if this question is used in logic of any other question
+    const quesIdx = findQuestionUsedInLogic(localSurvey, questionId);
+
+    if (quesIdx !== -1) {
+      toast.error(`This question is used in logic of question ${quesIdx + 1}.`);
+      return;
+    }
+
     // check if we are recalling from this question for every language
     updatedSurvey.questions.forEach((question) => {
       for (const [languageCode, headline] of Object.entries(question.headline)) {
@@ -221,7 +293,7 @@ export const QuestionsView = ({
       }
     });
     updatedSurvey.questions.splice(questionIdx, 1);
-    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "");
+
     const firstEndingCard = localSurvey.endings[0];
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
@@ -359,18 +431,20 @@ export const QuestionsView = ({
 
   return (
     <div className="mt-12 w-full px-5 py-4">
-      <div className="mb-5 flex w-full flex-col gap-5">
-        <EditWelcomeCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-          isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          selectedLanguageCode={selectedLanguageCode}
-          attributeClasses={attributeClasses}
-        />
-      </div>
+      {!isCxMode && (
+        <div className="mb-5 flex w-full flex-col gap-5">
+          <EditWelcomeCard
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            setActiveQuestionId={setActiveQuestionId}
+            activeQuestionId={activeQuestionId}
+            isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            selectedLanguageCode={selectedLanguageCode}
+            attributeClasses={attributeClasses}
+          />
+        </div>
+      )}
 
       <DndContext
         id="questions"
@@ -393,10 +467,11 @@ export const QuestionsView = ({
           attributeClasses={attributeClasses}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
+          isCxMode={isCxMode}
         />
       </DndContext>
 
-      <AddQuestionButton addQuestion={addQuestion} product={product} />
+      <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} />
       <div className="mt-5 flex flex-col gap-5">
         <hr className="border-t border-dashed" />
         <DndContext
@@ -427,37 +502,41 @@ export const QuestionsView = ({
           </SortableContext>
         </DndContext>
 
-        <AddEndingCardButton
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          addEndingCard={addEndingCard}
-        />
-        <hr />
+        {!isCxMode && (
+          <>
+            <AddEndingCardButton
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              addEndingCard={addEndingCard}
+            />
+            <hr />
 
-        <HiddenFieldsCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-        />
+            <HiddenFieldsCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              setActiveQuestionId={setActiveQuestionId}
+              activeQuestionId={activeQuestionId}
+            />
 
-        {/* <SurveyVariablesCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          activeQuestionId={activeQuestionId}
-          setActiveQuestionId={setActiveQuestionId}
-        /> */}
+            <SurveyVariablesCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              activeQuestionId={activeQuestionId}
+              setActiveQuestionId={setActiveQuestionId}
+            />
 
-        <MultiLanguageCard
-          localSurvey={localSurvey}
-          product={product}
-          setLocalSurvey={setLocalSurvey}
-          setActiveQuestionId={setActiveQuestionId}
-          activeQuestionId={activeQuestionId}
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-          isFormbricksCloud={isFormbricksCloud}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-        />
+            <MultiLanguageCard
+              localSurvey={localSurvey}
+              product={product}
+              setLocalSurvey={setLocalSurvey}
+              setActiveQuestionId={setActiveQuestionId}
+              activeQuestionId={activeQuestionId}
+              isMultiLanguageAllowed={isMultiLanguageAllowed}
+              isFormbricksCloud={isFormbricksCloud}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+            />
+          </>
+        )}
       </div>
     </div>
   );

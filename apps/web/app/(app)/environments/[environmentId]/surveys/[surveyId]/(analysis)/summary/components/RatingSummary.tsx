@@ -8,8 +8,8 @@ import {
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
-import { RatingResponse } from "@formbricks/ui/RatingResponse";
+import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
+import { RatingResponse } from "@formbricks/ui/components/RatingResponse";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {

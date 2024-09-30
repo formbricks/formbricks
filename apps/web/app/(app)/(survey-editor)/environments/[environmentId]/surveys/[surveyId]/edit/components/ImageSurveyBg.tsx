@@ -1,4 +1,4 @@
-import { FileInput } from "@formbricks/ui/FileInput";
+import { FileInput } from "@formbricks/ui/components/FileInput";
 
 interface UploadImageSurveyBgProps {
   environmentId: string;

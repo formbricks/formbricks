@@ -14,8 +14,8 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
-import { AlertDialog } from "@formbricks/ui/AlertDialog";
-import { Button } from "@formbricks/ui/Button";
+import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
+import { Button } from "@formbricks/ui/components/Button";
 import {
   FormControl,
   FormDescription,
@@ -23,8 +23,8 @@ import {
   FormItem,
   FormLabel,
   FormProvider,
-} from "@formbricks/ui/Form";
-import { Switch } from "@formbricks/ui/Switch";
+} from "@formbricks/ui/components/Form";
+import { Switch } from "@formbricks/ui/components/Switch";
 import { updateProductAction } from "../../actions";
 
 type ThemeStylingProps = {

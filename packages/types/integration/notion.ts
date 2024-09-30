@@ -8,17 +8,19 @@ export const ZIntegrationNotionCredential = z.object({
   duplicated_template_id: z.string().nullable(),
   owner: z.object({
     type: z.string(),
-    workspace: z.boolean().nullable(),
+    workspace: z.boolean().nullish(),
     user: z
       .object({
         id: z.string(),
-        name: z.string(),
-        type: z.string(),
+        name: z.string().nullish(),
+        type: z.string().nullish(),
         object: z.string(),
-        person: z.object({
-          email: z.string().email(),
-        }),
-        avatar_url: z.string(),
+        person: z
+          .object({
+            email: z.string().email(),
+          })
+          .nullish(),
+        avatar_url: z.string().nullish(),
       })
       .nullable(),
   }),

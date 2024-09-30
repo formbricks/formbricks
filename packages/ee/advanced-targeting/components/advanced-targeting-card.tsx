@@ -16,12 +16,12 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { AlertDialog } from "@formbricks/ui/AlertDialog";
-import { Button } from "@formbricks/ui/Button";
-import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
-import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
-import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
-import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
+import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
+import { Button } from "@formbricks/ui/components/Button";
+import { LoadSegmentModal } from "@formbricks/ui/components/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/components/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/components/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/components/TargetingIndicator";
 import {
   cloneSegmentAction,
   createSegmentAction,
