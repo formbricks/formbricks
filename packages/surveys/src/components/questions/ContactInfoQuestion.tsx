@@ -114,7 +114,7 @@ export const ContactInfoQuestion = ({
             questionId={question.id}
           />
 
-          <div className={`fb-flex fb-flex-col fb-space-y-2 fb-w-full`}>
+          <div className={`fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full`}>
             {fields.map((field, index) => {
               const isFieldRequired = () => {
                 if (field.required) {

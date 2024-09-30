@@ -180,6 +180,12 @@ test.describe("Survey Create & Submit Response", async () => {
       await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
+      // Contact Info Question
+      await expect(page.getByText(surveys.createAndSubmit.contactInfo.question)).toBeVisible();
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder)).toBeVisible();
+      await page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder).fill("John Doe");
+      await page.locator("#questionCard-11").getByRole("button", { name: "Next" }).click();
+
       // Ranking Question
       await expect(page.getByText(surveys.createAndSubmit.ranking.question)).toBeVisible();
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {

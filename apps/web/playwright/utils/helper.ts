@@ -286,6 +286,24 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Address" }).click();
   await page.getByLabel("Question*").fill(params.address.question);
+  await page.getByRole("row", { name: "Address Line 2" }).getByRole("switch").nth(1).click();
+  await page.getByRole("row", { name: "City" }).getByRole("cell").nth(2).click();
+  await page.getByRole("row", { name: "State" }).getByRole("switch").nth(1).click();
+  await page.getByRole("row", { name: "Zip" }).getByRole("cell").nth(2).click();
+  await page.getByRole("row", { name: "Country" }).getByRole("switch").nth(1).click();
+
+  // Fill Contact Info Question
+  await page
+    .locator("div")
+    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .nth(1)
+    .click();
+  await page.getByRole("button", { name: "Contact Info" }).click();
+  await page.getByLabel("Question*").fill(params.contactInfo.question);
+  await page.getByRole("row", { name: "Last Name" }).getByRole("switch").nth(1).click();
+  await page.getByRole("row", { name: "Email" }).getByRole("switch").nth(1).click();
+  await page.getByRole("row", { name: "Phone" }).getByRole("switch").nth(1).click();
+  await page.getByRole("row", { name: "Company" }).getByRole("switch").nth(1).click();
 
   // Fill Ranking question
   await page
