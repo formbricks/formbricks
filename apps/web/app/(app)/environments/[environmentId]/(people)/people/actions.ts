@@ -10,7 +10,8 @@ import { ZId } from "@formbricks/types/common";
 
 const ZGetPersonsAction = z.object({
   environmentId: ZId,
-  page: z.number(),
+  offset: z.number().int().nonnegative(),
+  searchValue: z.string().optional(),
 });
 
 export const getPersonsAction = authenticatedActionClient
@@ -22,7 +23,7 @@ export const getPersonsAction = authenticatedActionClient
       rules: ["environment", "read"],
     });
 
-    return getPeople(parsedInput.environmentId, parsedInput.page);
+    return getPeople(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
   });
 
 const ZGetPersonAttributesAction = z.object({

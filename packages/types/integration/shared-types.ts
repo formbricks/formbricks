@@ -8,6 +8,7 @@ export const ZIntegrationBase = z.object({
 export const ZIntegrationBaseSurveyData = z.object({
   createdAt: z.date(),
   questionIds: z.array(z.string()),
+  includeVariables: z.boolean().optional(),
   includeHiddenFields: z.boolean().optional(),
   includeMetadata: z.boolean().optional(),
   questions: z.string(),

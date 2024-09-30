@@ -908,6 +908,7 @@ export const copySurveyToOtherEnvironment = async (
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
       questions: structuredClone(existingSurvey.questions),
       endings: structuredClone(existingSurvey.endings),
+      variables: structuredClone(existingSurvey.variables),
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
       languages: hasLanguages
         ? {
