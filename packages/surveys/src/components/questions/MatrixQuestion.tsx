@@ -5,6 +5,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { getShuffledChoicesIds, getShuffledRows } from "@/lib/utils";
 import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -41,6 +42,13 @@ export const MatrixQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+
+  question.rows = useMemo(() => {
+    if (question.shuffleOption) {
+      return getShuffledRows(question.rows, question.shuffleOption);
+    } else return question.rows;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.shuffleOption, question.rows.length, question.rows[question.rows.length - 1].id]);
 
   const handleSelect = useCallback(
     (column: string, row: string) => {

@@ -1,4 +1,6 @@
 import {
+  TI18nString,
+  TShuffleOption,
   TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,
@@ -17,7 +19,23 @@ const shuffle = (array: any[]) => {
   }
 };
 
-export const getShuffledChoicesIds = (choices: TSurveyQuestionChoice[], shuffleOption: string): string[] => {
+export const getShuffledRows = (rows: TI18nString[], shuffleOption: TShuffleOption): TI18nString[] => {
+  if (shuffleOption === "all") {
+    shuffle(rows);
+  } else if (shuffleOption === "exceptLast") {
+    const lastElement = rows.pop();
+    if (lastElement) {
+      shuffle(rows);
+      rows.push(lastElement);
+    }
+  }
+  return rows;
+};
+
+export const getShuffledChoicesIds = (
+  choices: TSurveyQuestionChoice[],
+  shuffleOption: TShuffleOption
+): string[] => {
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
