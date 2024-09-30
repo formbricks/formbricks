@@ -14,7 +14,6 @@ import {
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestionSummaryAddress,
-  TSurveyQuestionSummaryContactInfo,
   TSurveyQuestionSummaryDate,
   TSurveyQuestionSummaryFileUpload,
   TSurveyQuestionSummaryHiddenFields,

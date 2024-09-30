@@ -5,9 +5,9 @@ import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { QuestionToggleTable } from "@formbricks/ui/QuestionToggleTable";
+import { Button } from "@formbricks/ui/components/Button";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { QuestionToggleTable } from "@formbricks/ui/components/QuestionToggleTable";
 
 interface ContactInfoQuestionFormProps {
   localSurvey: TSurvey;
