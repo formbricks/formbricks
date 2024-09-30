@@ -64,7 +64,7 @@ export const ConnectWithFormbricks = ({
           )}>
           {widgetSetupCompleted ? (
             <div>
-              <p className="text-3xl">🥳</p>
+              <p className="text-3xl">Congrats!</p>
               <p className="pt-4 text-sm font-medium text-slate-600">Well done! We&apos;re connected.</p>
             </div>
           ) : (
