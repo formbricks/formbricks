@@ -8,13 +8,23 @@ import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
-import { evaluateCondition } from "@/lib/logicEvaluator";
-import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
+import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
-import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
+import type {
+  TResponseData,
+  TResponseDataValue,
+  TResponseTtc,
+  TResponseVariables,
+} from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys/types";
+
+interface VariableStackEntry {
+  questionId: string;
+  variables: TResponseVariables;
+}
 
 export const Survey = ({
   survey,
@@ -42,15 +52,17 @@ export const Survey = ({
   fullSizeCards = false,
   autoFocus,
 }: SurveyBaseProps) => {
+  const [localSurvey, setlocalSurvey] = useState<TSurvey>(survey);
+
   const autoFocusEnabled = autoFocus !== undefined ? autoFocus : window.self === window.top;
 
   const [questionId, setQuestionId] = useState(() => {
     if (startAtQuestionId) {
       return startAtQuestionId;
-    } else if (survey.welcomeCard.enabled) {
+    } else if (localSurvey.welcomeCard.enabled) {
       return "start";
     } else {
-      return survey?.questions[0]?.id;
+      return localSurvey?.questions[0]?.id;
     }
   });
   const [showError, setShowError] = useState(false);
@@ -62,34 +74,45 @@ export const Survey = ({
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
+  const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>(() => {
+    return localSurvey.variables.reduce((acc, variable) => {
+      acc[variable.id] = variable.value;
+      return acc;
+    }, {} as TResponseVariables);
+  });
+
   const [ttc, setTtc] = useState<TResponseTtc>({});
-  const questionIds = useMemo(() => survey.questions.map((question) => question.id), [survey.questions]);
+  const questionIds = useMemo(
+    () => localSurvey.questions.map((question) => question.id),
+    [localSurvey.questions]
+  );
   const cardArrangement = useMemo(() => {
-    if (survey.type === "link") {
+    if (localSurvey.type === "link") {
       return styling.cardArrangement?.linkSurveys ?? "straight";
     } else {
       return styling.cardArrangement?.appSurveys ?? "straight";
     }
-  }, [survey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
+  }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
-  const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
+  const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
     if (!questionIds.includes(questionId)) {
       const newHistory = [...history];
       const prevQuestionId = newHistory.pop();
-      return survey.questions.find((q) => q.id === prevQuestionId);
+      return localSurvey.questions.find((q) => q.id === prevQuestionId);
     } else {
-      return survey.questions.find((q) => q.id === questionId);
+      return localSurvey.questions.find((q) => q.id === questionId);
     }
-  }, [questionId, survey, history]);
+  }, [questionId, localSurvey, history]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
   const getShowSurveyCloseButton = (offset: number) => {
-    return offset === 0 && survey.type !== "link" && (clickOutside === undefined ? true : clickOutside);
+    return offset === 0 && localSurvey.type !== "link" && (clickOutside === undefined ? true : clickOutside);
   };
   const getShowLanguageSwitch = (offset: number) => {
-    return survey.showLanguageSwitch && survey.languages.length > 0 && offset <= 0;
+    return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
   };
 
   useEffect(() => {
@@ -145,82 +168,122 @@ export const Survey = ({
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  const getNextQuestionId = (data: TResponseData): string | undefined => {
-    const questions = survey.questions;
-    const responseValue = data[questionId];
-    const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
-    if (questionId === "start") return questions[0]?.id || firstEndingId;
-    if (currIdxTemp === -1) throw new Error("Question not found");
-    if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
-      for (let logic of currQuesTemp.logic) {
-        if (!logic.destination) continue;
-        // Check if the current question is of type 'multipleChoiceSingle' or 'multipleChoiceMulti'
-        if (
-          currentQuestion.type === "multipleChoiceSingle" ||
-          currentQuestion.type === "multipleChoiceMulti"
-        ) {
-          let choice;
-
-          // Check if the response is a string (applies to single choice questions)
-          // Sonne -> sun
-          if (typeof responseValue === "string") {
-            // Find the choice in currentQuestion.choices that matches the responseValue after localization
-            choice = currentQuestion.choices.find((choice) => {
-              return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
-            })?.label;
-
-            // If a matching choice is found, get its default localized value
-            if (choice) {
-              choice = getLocalizedValue(choice, "default");
-            }
-          }
-          // Check if the response is an array (applies to multiple choices questions)
-          // ["Sonne","Mond"]->["sun","moon"]
-          else if (Array.isArray(responseValue)) {
-            // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
-            choice = currentQuestion.choices
-              .filter((choice) => {
-                return responseValue.includes(getLocalizedValue(choice.label, selectedLanguage));
-              })
-              .map((choice) => getLocalizedValue(choice.label, "default"));
-          }
-
-          // If a choice is determined (either single or multiple), evaluate the logic condition with that choice
-          if (choice) {
-            if (evaluateCondition(logic, choice)) {
-              return logic.destination;
-            }
-          }
-          // If choice is undefined, it implies an "other" option is selected. Evaluate the logic condition for "Other"
-          else {
-            if (evaluateCondition(logic, "Other")) {
-              return logic.destination;
-            }
-          }
-        }
-        if (evaluateCondition(logic, responseValue)) {
-          return logic.destination;
-        }
-      }
-    }
-
-    return questions[currIdxTemp + 1]?.id || firstEndingId;
-  };
-
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
   };
 
+  const onChangeVariables = (variables: TResponseVariables) => {
+    const updatedVariables = { ...currentVariables, ...variables };
+    setCurrentVariables(updatedVariables);
+  };
+
+  const makeQuestionsRequired = (questionIds: string[]): void => {
+    setlocalSurvey((prevSurvey) => ({
+      ...prevSurvey,
+      questions: prevSurvey.questions.map((question) => {
+        if (questionIds.includes(question.id)) {
+          return {
+            ...question,
+            required: true,
+          };
+        }
+        return question;
+      }),
+    }));
+  };
+
+  const pushVariableState = (questionId: string) => {
+    setVariableStack((prevStack) => [...prevStack, { questionId, variables: { ...currentVariables } }]);
+  };
+
+  const popVariableState = () => {
+    setVariableStack((prevStack) => {
+      const newStack = [...prevStack];
+      const poppedState = newStack.pop();
+      if (poppedState) {
+        setCurrentVariables(poppedState.variables);
+      }
+      return newStack;
+    });
+  };
+
+  const evaluateLogicAndGetNextQuestionId = (
+    data: TResponseData
+  ): { nextQuestionId: string | undefined; calculatedVariables: TResponseVariables } => {
+    const questions = survey.questions;
+    const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
+
+    if (questionId === "start")
+      return { nextQuestionId: questions[0]?.id || firstEndingId, calculatedVariables: {} };
+
+    if (!currQuesTemp) throw new Error("Question not found");
+
+    let firstJumpTarget: string | undefined;
+    const allRequiredQuestionIds: string[] = [];
+
+    let calculationResults = { ...currentVariables };
+    const localResponseData = { ...responseData, ...data };
+
+    if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
+      for (const logic of currQuesTemp.logic) {
+        if (
+          evaluateLogic(
+            localSurvey,
+            localResponseData,
+            calculationResults,
+            logic.conditions,
+            selectedLanguage
+          )
+        ) {
+          const { jumpTarget, requiredQuestionIds, calculations } = performActions(
+            localSurvey,
+            logic.actions,
+            localResponseData,
+            calculationResults
+          );
+
+          if (jumpTarget && !firstJumpTarget) {
+            firstJumpTarget = jumpTarget;
+          }
+
+          allRequiredQuestionIds.push(...requiredQuestionIds);
+          calculationResults = { ...calculationResults, ...calculations };
+        }
+      }
+    }
+
+    // Make all collected questions required
+    if (allRequiredQuestionIds.length > 0) {
+      makeQuestionsRequired(allRequiredQuestionIds);
+    }
+
+    // Return the first jump target if found, otherwise go to the next question or ending
+    const nextQuestionId = firstJumpTarget || questions[currentQuestionIndex + 1]?.id || firstEndingId;
+
+    return { nextQuestionId, calculatedVariables: calculationResults };
+  };
+
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData);
+
+    pushVariableState(questionId);
+
+    const { nextQuestionId, calculatedVariables } = evaluateLogicAndGetNextQuestionId(responseData);
     const finished =
       nextQuestionId === undefined ||
-      !survey.questions.map((question) => question.id).includes(nextQuestionId);
+      !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
+
     onChange(responseData);
-    onResponse({ data: responseData, ttc, finished, language: selectedLanguage });
+    onChangeVariables(calculatedVariables);
+    onResponse({
+      data: responseData,
+      ttc,
+      finished,
+      variables: calculatedVariables,
+      language: selectedLanguage,
+    });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*");
@@ -243,8 +306,9 @@ export const Survey = ({
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
-      prevQuestionId = survey.questions[currIdxTemp - 1]?.id;
+      prevQuestionId = localSurvey.questions[currIdxTemp - 1]?.id;
     }
+    popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
   };
@@ -259,7 +323,11 @@ export const Survey = ({
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
-        <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
+        <ResponseErrorComponent
+          responseData={responseData}
+          questions={localSurvey.questions}
+          onRetry={onRetry}
+        />
       );
     }
 
@@ -268,28 +336,28 @@ export const Survey = ({
         return (
           <WelcomeCard
             key="start"
-            headline={survey.welcomeCard.headline}
-            html={survey.welcomeCard.html}
-            fileUrl={survey.welcomeCard.fileUrl}
-            buttonLabel={survey.welcomeCard.buttonLabel}
+            headline={localSurvey.welcomeCard.headline}
+            html={localSurvey.welcomeCard.html}
+            fileUrl={localSurvey.welcomeCard.fileUrl}
+            buttonLabel={localSurvey.welcomeCard.buttonLabel}
             onSubmit={onSubmit}
-            survey={survey}
+            survey={localSurvey}
             languageCode={selectedLanguage}
             responseCount={responseCount}
             autoFocusEnabled={autoFocusEnabled}
-            replaceRecallInfo={replaceRecallInfo}
             isCurrent={offset === 0}
             responseData={responseData}
+            variablesData={currentVariables}
           />
         );
-      } else if (questionIdx >= survey.questions.length) {
-        const endingCard = survey.endings.find((ending) => {
+      } else if (questionIdx >= localSurvey.questions.length) {
+        const endingCard = localSurvey.endings.find((ending) => {
           return ending.id === questionId;
         });
         if (endingCard) {
           return (
             <EndingCard
-              survey={survey}
+              survey={localSurvey}
               endingCard={endingCard}
               isRedirectDisabled={isRedirectDisabled}
               autoFocusEnabled={autoFocusEnabled}
@@ -297,17 +365,18 @@ export const Survey = ({
               languageCode={selectedLanguage}
               isResponseSendingFinished={isResponseSendingFinished}
               responseData={responseData}
+              variablesData={currentVariables}
             />
           );
         }
       } else {
-        const question = survey.questions[questionIdx];
+        const question = localSurvey.questions[questionIdx];
         return (
           question && (
             <QuestionConditional
               key={question.id}
-              surveyId={survey.id}
-              question={parseRecallInformation(question, selectedLanguage, responseData, survey.variables)}
+              surveyId={localSurvey.id}
+              question={parseRecallInformation(question, selectedLanguage, responseData, currentVariables)}
               value={responseData[question.id]}
               onChange={onChange}
               onSubmit={onSubmit}
@@ -315,10 +384,10 @@ export const Survey = ({
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
-              isFirstQuestion={question.id === survey?.questions[0]?.id}
+              isFirstQuestion={question.id === localSurvey?.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
-              isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
+              isLastQuestion={question.id === localSurvey.questions[localSurvey.questions.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
               currentQuestionId={questionId}
@@ -329,7 +398,7 @@ export const Survey = ({
     };
 
     return (
-      <AutoCloseWrapper survey={survey} onClose={onClose} offset={offset}>
+      <AutoCloseWrapper survey={localSurvey} onClose={onClose} offset={offset}>
         <div
           className={cn(
             "fb-no-scrollbar md:fb-rounded-custom fb-rounded-t-custom fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
@@ -339,7 +408,7 @@ export const Survey = ({
           <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">
             {getShowLanguageSwitch(offset) && (
               <LanguageSwitch
-                surveyLanguages={survey.languages}
+                surveyLanguages={localSurvey.languages}
                 setSelectedLanguageCode={setselectedLanguage}
               />
             )}
@@ -355,7 +424,7 @@ export const Survey = ({
           </div>
           <div className="fb-mx-6 fb-mb-10 fb-mt-2 fb-space-y-3 md:fb-mb-6 md:fb-mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
-            {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
+            {showProgressBar && <ProgressBar survey={localSurvey} questionId={questionId} />}
           </div>
         </div>
       </AutoCloseWrapper>
@@ -368,7 +437,7 @@ export const Survey = ({
         cardArrangement={cardArrangement}
         currentQuestionId={questionId}
         getCardContent={getCardContent}
-        survey={survey}
+        survey={localSurvey}
         styling={styling}
         setQuestionId={setQuestionId}
         shouldResetQuestionId={shouldResetQuestionId}
