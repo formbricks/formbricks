@@ -53,6 +53,7 @@ export type IntegrationModalInputs = {
   table: string;
   survey: string;
   questions: string[];
+  includeVariables: boolean;
   includeHiddenFields: boolean;
   includeMetadata: boolean;
 };
@@ -97,8 +98,9 @@ export const AddIntegrationModal = ({
       const { index: _index, ...rest } = defaultData;
       reset(rest);
       fetchTable(defaultData.base);
-      setIncludeHiddenFields(defaultData.includeHiddenFields);
-      setIncludeMetadata(defaultData.includeMetadata);
+      setIncludeVariables(!!defaultData.includeVariables);
+      setIncludeHiddenFields(!!defaultData.includeHiddenFields);
+      setIncludeMetadata(!!defaultData.includeMetadata);
     } else {
       reset();
     }
@@ -106,6 +108,12 @@ export const AddIntegrationModal = ({
   }, [isEditMode]);
 
   const survey = watch("survey");
+  const includeVariables = watch("includeVariables");
+
+  const setIncludeVariables = (includeVariables: boolean) => {
+    setValue("includeVariables", includeVariables);
+  };
+
   const selectedSurvey = surveys.find((item) => item.id === survey);
   const submitHandler = async (data: IntegrationModalInputs) => {
     try {
@@ -136,6 +144,7 @@ export const AddIntegrationModal = ({
         baseId: data.base,
         tableId: data.table,
         tableName: currentTable?.name ?? "",
+        includeVariables: data.includeVariables,
         includeHiddenFields,
         includeMetadata,
       };
@@ -335,6 +344,8 @@ export const AddIntegrationModal = ({
                   </div>
                 </div>
                 <AdditionalIntegrationSettings
+                  includeVariables={includeVariables}
+                  setIncludeVariables={setIncludeVariables}
                   includeHiddenFields={includeHiddenFields}
                   includeMetadata={includeMetadata}
                   setIncludeHiddenFields={setIncludeHiddenFields}

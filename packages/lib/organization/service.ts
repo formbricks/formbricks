@@ -309,17 +309,23 @@ export const getMonthlyOrganizationResponseCount = reactCache(
         validateInputs([organizationId, ZId]);
 
         try {
-          // Define the start of the month
-          // const now = new Date();
-          // const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
           const organization = await getOrganization(organizationId);
           if (!organization) {
             throw new ResourceNotFoundError("Organization", organizationId);
           }
 
-          if (!organization.billing.periodStart) {
-            throw new Error("Organization billing period start is not set");
+          // Determine the start date based on the plan type
+          let startDate: Date;
+          if (organization.billing.plan === "free") {
+            // For free plans, use the first day of the current calendar month
+            const now = new Date();
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          } else {
+            // For other plans, use the periodStart from billing
+            if (!organization.billing.periodStart) {
+              throw new Error("Organization billing period start is not set");
+            }
+            startDate = organization.billing.periodStart;
           }
 
           // Get all environment IDs for the organization
@@ -332,10 +338,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(
               id: true,
             },
             where: {
-              AND: [
-                { survey: { environmentId: { in: environmentIds } } },
-                { createdAt: { gte: organization.billing.periodStart } },
-              ],
+              AND: [{ survey: { environmentId: { in: environmentIds } } }, { createdAt: { gte: startDate } }],
             },
           });
 

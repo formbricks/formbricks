@@ -36,7 +36,7 @@ const SelectContent: React.ComponentType<SelectPrimitive.SelectContentProps> = R
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-slate-50 text-slate-700 shadow-md dark:bg-slate-700 dark:text-slate-300",
+        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white text-slate-700 shadow-md dark:bg-slate-700 dark:text-slate-300",
         className
       )}
       {...props}>
@@ -65,7 +65,7 @@ const SelectItem: React.ComponentType<SelectPrimitive.SelectItemProps> = React.f
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-2 text-sm font-medium outline-none hover:text-slate-500 focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer select-none items-center rounded-md py-1.5 pl-2 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}>
