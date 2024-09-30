@@ -20,16 +20,17 @@ const shuffle = (array: any[]) => {
 };
 
 export const getShuffledRows = (rows: TI18nString[], shuffleOption: TShuffleOption): TI18nString[] => {
+  const rowsCopy = [...rows];
   if (shuffleOption === "all") {
-    shuffle(rows);
+    shuffle(rowsCopy);
   } else if (shuffleOption === "exceptLast") {
-    const lastElement = rows.pop();
+    const lastElement = rowsCopy.pop();
     if (lastElement) {
-      shuffle(rows);
-      rows.push(lastElement);
+      shuffle(rowsCopy);
+      rowsCopy.push(lastElement);
     }
   }
-  return rows;
+  return rowsCopy;
 };
 
 export const getShuffledChoicesIds = (
