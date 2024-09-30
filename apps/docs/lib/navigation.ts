@@ -109,6 +109,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Access Roles", href: "/global/access-roles" },
       { title: "Styling Theme", href: "/global/styling-theme" },
+      { title: "Logic Editor", href: "/global/logic-editor" },
     ],
   },
   {
