@@ -4,7 +4,11 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
+import {
+  type TActionClass,
+  type TActionClassInput,
+  ZActionClassInput,
+} from "@formbricks/types/action-classes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
