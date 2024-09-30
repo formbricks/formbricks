@@ -187,6 +187,7 @@ const renderWidget = async (
             url: window.location.href,
             action,
           },
+          variables: responseUpdate.variables,
           hiddenFields,
           displayId: surveyState.displayId,
         });
