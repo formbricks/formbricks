@@ -155,7 +155,7 @@ export const RankingQuestion = ({
                       key={item.id}
                       tabIndex={idx + 1}
                       className={cn(
-                        "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer focus:fb-outline-none fb-transform fb-duration-500 fb-ease-in-out",
+                        "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading focus-within:fb-border-brand-dark hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer focus:fb-outline-none fb-transform fb-duration-500 fb-ease-in-out",
                         isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
                       )}
                       autoFocus={idx === 0 && autoFocusEnabled}>
@@ -164,9 +164,9 @@ export const RankingQuestion = ({
                         onClick={() => handleItemClick(item)}>
                         <span
                           className={cn(
-                            "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
+                            "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand-dark fb-border",
                             isSorted
-                              ? "fb-bg-brand fb-text-white fb-border"
+                              ? "fb-bg-brand-dark fb-text-white fb-border"
                               : "fb-border-dashed group-hover:fb-bg-white fb-text-transparent group-hover:fb-text-heading"
                           )}>
                           {(idx + 1).toString()}

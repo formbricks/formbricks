@@ -158,7 +158,7 @@ export const AddressQuestion = ({
                 value={safeValue[index] || ""}
                 onInput={(e) => handleInputChange(e.currentTarget.value, index)}
                 autoFocus={autoFocusEnabled && index === 0}
-                className="fb-border-border focus:fb-border-brand placeholder:fb-text-placeholder fb-text-subheading fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm sm:fb-text-sm"
+                className="fb-border-border focus:fb-border-brand-dark placeholder:fb-text-placeholder fb-text-subheading fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm sm:fb-text-sm"
               />
             ))}
           </div>
