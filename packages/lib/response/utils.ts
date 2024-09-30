@@ -2,9 +2,11 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import {
   TResponse,
+  TResponseData,
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
   TResponseTtc,
+  TResponseVariables,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
@@ -12,6 +14,7 @@ import {
   TSurvey,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
+  TSurveyQuestion,
   TSurveyQuestionSummaryAddress,
   TSurveyQuestionSummaryDate,
   TSurveyQuestionSummaryFileUpload,
@@ -25,9 +28,10 @@ import {
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
+import { structuredClone } from "../pollyfills/structuredClone";
 import { processResponseData } from "../responses";
+import { evaluateLogic, performActions } from "../surveyLogic/utils";
 import { getTodaysDateTimeFormatted } from "../time";
-import { evaluateCondition } from "../utils/evaluateLogic";
 import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
@@ -483,11 +487,13 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
     return `${idx + 1}. ${headline}`;
   });
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
-  const userAttributes = Array.from(
-    new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat())
-  );
+  const userAttributes =
+    survey.type === "app"
+      ? Array.from(new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat()))
+      : [];
+  const variables = survey.variables?.map((variable) => variable.name) || [];
 
-  return { metaDataFields, questions, hiddenFields, userAttributes };
+  return { metaDataFields, questions, hiddenFields, variables, userAttributes };
 };
 
 export const getResponsesJson = (
@@ -529,6 +535,11 @@ export const getResponsesJson = (
       const questionId = survey?.questions[i].id || "";
       const answer = response.data[questionId];
       jsonData[idx][question] = processResponseData(answer);
+    });
+
+    survey.variables?.forEach((variable) => {
+      const answer = response.variables[variable.id];
+      jsonData[idx][variable.name] = answer;
     });
 
     // user attributes
@@ -610,6 +621,14 @@ export const getSurveySummaryDropOff = (
   let impressionsArr = new Array(survey.questions.length).fill(0) as number[];
   let dropOffPercentageArr = new Array(survey.questions.length).fill(0) as number[];
 
+  const surveyVariablesData = survey.variables?.reduce(
+    (acc, variable) => {
+      acc[variable.id] = variable.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
+
   responses.forEach((response) => {
     // Calculate total time-to-completion
     Object.keys(totalTtc).forEach((questionId) => {
@@ -619,44 +638,20 @@ export const getSurveySummaryDropOff = (
       }
     });
 
+    let localSurvey = structuredClone(survey);
+    let localResponseData: TResponseData = { ...response.data };
+    let localVariables: TResponseVariables = {
+      ...surveyVariablesData,
+    };
+
     let currQuesIdx = 0;
 
-    while (currQuesIdx < survey.questions.length) {
-      const currQues = survey.questions[currQuesIdx];
+    while (currQuesIdx < localSurvey.questions.length) {
+      const currQues = localSurvey.questions[currQuesIdx];
       if (!currQues) break;
 
-      if (!currQues.required) {
-        if (!response.data[currQues.id]) {
-          impressionsArr[currQuesIdx]++;
-
-          if (currQuesIdx === survey.questions.length - 1 && !response.finished) {
-            dropOffArr[currQuesIdx]++;
-            break;
-          }
-
-          const questionHasCustomLogic = currQues.logic;
-          if (questionHasCustomLogic) {
-            let didLogicPass = false;
-            for (let logic of questionHasCustomLogic) {
-              if (!logic.destination) continue;
-              if (evaluateCondition(logic, response.data[currQues.id] ?? null)) {
-                didLogicPass = true;
-                currQuesIdx = survey.questions.findIndex((q) => q.id === logic.destination);
-                break;
-              }
-            }
-            if (!didLogicPass) currQuesIdx++;
-          } else {
-            currQuesIdx++;
-          }
-          continue;
-        }
-      }
-
-      if (
-        (response.data[currQues.id] === undefined && !response.finished) ||
-        (currQues.required && !response.data[currQues.id])
-      ) {
+      // question is not answered and required
+      if (response.data[currQues.id] === undefined && currQues.required) {
         dropOffArr[currQuesIdx]++;
         impressionsArr[currQuesIdx]++;
         break;
@@ -664,26 +659,29 @@ export const getSurveySummaryDropOff = (
 
       impressionsArr[currQuesIdx]++;
 
-      let nextQuesIdx = currQuesIdx + 1;
-      const questionHasCustomLogic = currQues.logic;
+      const { nextQuestionId, updatedSurvey, updatedVariables } = evaluateLogicAndGetNextQuestionId(
+        localSurvey,
+        localResponseData,
+        localVariables,
+        currQuesIdx,
+        currQues,
+        response.language
+      );
 
-      if (questionHasCustomLogic) {
-        for (let logic of questionHasCustomLogic) {
-          if (!logic.destination) continue;
-          if (evaluateCondition(logic, response.data[currQues.id])) {
-            nextQuesIdx = survey.questions.findIndex((q) => q.id === logic.destination);
-            break;
-          }
+      localSurvey = updatedSurvey;
+      localVariables = updatedVariables;
+
+      if (nextQuestionId) {
+        const nextQuesIdx = survey.questions.findIndex((q) => q.id === nextQuestionId);
+        if (!response.data[nextQuestionId] && !response.finished) {
+          dropOffArr[nextQuesIdx]++;
+          impressionsArr[nextQuesIdx]++;
+          break;
         }
+        currQuesIdx = nextQuesIdx;
+      } else {
+        currQuesIdx++;
       }
-
-      if (!response.data[survey.questions[nextQuesIdx]?.id] && !response.finished) {
-        dropOffArr[nextQuesIdx]++;
-        impressionsArr[nextQuesIdx]++;
-        break;
-      }
-
-      currQuesIdx = nextQuesIdx;
     }
   });
 
@@ -725,6 +723,51 @@ export const getSurveySummaryDropOff = (
   });
 
   return dropOff;
+};
+
+const evaluateLogicAndGetNextQuestionId = (
+  localSurvey: TSurvey,
+  data: TResponseData,
+  localVariables: TResponseVariables,
+  currentQuestionIndex: number,
+  currQuesTemp: TSurveyQuestion,
+  selectedLanguage: string | null
+): { nextQuestionId: string | undefined; updatedSurvey: TSurvey; updatedVariables: TResponseVariables } => {
+  const questions = localSurvey.questions;
+
+  let updatedSurvey = { ...localSurvey };
+  let updatedVariables = { ...localVariables };
+
+  let firstJumpTarget: string | undefined;
+
+  if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
+    for (const logic of currQuesTemp.logic) {
+      if (evaluateLogic(localSurvey, data, localVariables, logic.conditions, selectedLanguage ?? "default")) {
+        const { jumpTarget, requiredQuestionIds, calculations } = performActions(
+          updatedSurvey,
+          logic.actions,
+          data,
+          updatedVariables
+        );
+
+        if (requiredQuestionIds.length > 0) {
+          updatedSurvey.questions = updatedSurvey.questions.map((q) =>
+            requiredQuestionIds.includes(q.id) ? { ...q, required: true } : q
+          );
+        }
+        updatedVariables = { ...updatedVariables, ...calculations };
+
+        if (jumpTarget && !firstJumpTarget) {
+          firstJumpTarget = jumpTarget;
+        }
+      }
+    }
+  }
+
+  // Return the first jump target if found, otherwise go to the next question
+  const nextQuestionId = firstJumpTarget || questions[currentQuestionIndex + 1]?.id || undefined;
+
+  return { nextQuestionId, updatedSurvey, updatedVariables };
 };
 
 const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
