@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { FORMBRICKS_PRODUCT_ID_LS, FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import {
   TProductConfigChannel,
@@ -64,8 +64,6 @@ export const ProductSettings = ({
         );
         if (productionEnvironment) {
           if (typeof window !== "undefined") {
-            localStorage.setItem(FORMBRICKS_PRODUCT_ID_LS, productionEnvironment.productId);
-
             // Rmove filters when creating a new product
             localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
           }

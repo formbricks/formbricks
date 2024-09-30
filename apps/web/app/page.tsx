@@ -1,3 +1,4 @@
+import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -42,7 +43,7 @@ const Page = async () => {
     return redirect(`/organizations/${userOrganizations[0].id}/products/new/mode`);
   }
 
-  return redirect(`/environments/${environment.id}`);
+  return <ClientEnvironmentRedirect environmentId={environment.id} />;
 };
 
 export default Page;
