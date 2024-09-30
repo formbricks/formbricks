@@ -18,7 +18,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
-import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/InputCombobox";
+import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/components/InputCombobox";
 import { TLogicRuleOption, logicRules } from "./logicRuleEngine";
 
 // formats the text to highlight specific parts of the text with slashes

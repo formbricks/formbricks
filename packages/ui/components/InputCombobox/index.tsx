@@ -10,9 +10,9 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "../components/Command";
-import { Input } from "../components/Input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/Popover";
+} from "../Command";
+import { Input } from "../Input";
+import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
 export interface TComboboxOption {
   icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
@@ -251,10 +251,10 @@ export const InputCombobox = ({
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className={cn("w-auto max-w-[400px] overflow-y-auto truncate p-0", {
+          className={cn("h-full w-auto max-w-[400px] truncate p-0", {
             "px-2 pt-2": showSearch,
           })}>
-          <Command>
+          <Command className="h-full max-h-[400px] overflow-y-auto">
             {showSearch && (
               <CommandInput
                 placeholder={searchPlaceholder}

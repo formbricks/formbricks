@@ -18,13 +18,13 @@ import {
   TSurveyLogicAction,
   TSurveyQuestion,
 } from "@formbricks/types/surveys/types";
-import { InputCombobox } from "@formbricks/ui/InputCombobox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/components/DropdownMenu";
+import { InputCombobox } from "@formbricks/ui/components/InputCombobox";
 
 interface LogicEditorActions {
   localSurvey: TSurvey;
