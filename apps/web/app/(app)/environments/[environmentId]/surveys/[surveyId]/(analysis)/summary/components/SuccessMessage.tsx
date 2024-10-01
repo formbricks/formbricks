@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -15,6 +15,7 @@ interface SummaryMetadataProps {
 export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) => {
   const searchParams = useSearchParams();
   const [confetti, setConfetti] = useState(false);
+  const messageShownRef = useRef(false);
 
   const isAppSurvey = survey.type === "app" || survey.type === "website";
   const widgetSetupCompleted =
@@ -22,7 +23,7 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
 
   useEffect(() => {
     const newSurveyParam = searchParams?.get("success");
-    if (newSurveyParam && survey && environment) {
+    if (newSurveyParam && survey && environment && !messageShownRef.current) {
       setConfetti(true);
       toast.success(
         isAppSurvey && !widgetSetupCompleted
@@ -34,6 +35,7 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
           position: "bottom-right",
         }
       );
+      messageShownRef.current = true;
 
       // Remove success param from url
       const url = new URL(window.location.href);
