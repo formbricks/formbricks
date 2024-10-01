@@ -9,23 +9,24 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
 
-interface AddressQuestionProps {
-  question: TSurveyAddressQuestion;
+interface ContactInfoQuestionProps {
+  question: TSurveyContactInfoQuestion;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: string;
 }
 
-export const AddressQuestion = ({
+export const ContactInfoQuestion = ({
   question,
   value,
   onChange,
@@ -37,46 +38,41 @@ export const AddressQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-}: AddressQuestionProps) => {
+}: ContactInfoQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const safeValue = useMemo(() => {
-    return Array.isArray(value) ? value : ["", "", "", "", "", ""];
+    return Array.isArray(value) ? value : ["", "", "", "", ""];
   }, [value]);
 
   const fields = [
     {
-      id: "addressLine1",
-      placeholder: "Address Line 1",
-      ...question.addressLine1,
+      id: "firstName",
+      placeholder: "First Name",
+      ...question.firstName,
     },
     {
-      id: "addressLine2",
-      placeholder: "Address Line 2",
-      ...question.addressLine2,
+      id: "lastName",
+      placeholder: "Last Name",
+      ...question.lastName,
     },
     {
-      id: "city",
-      placeholder: "City",
-      ...question.city,
+      id: "email",
+      placeholder: "Email",
+      ...question.email,
     },
     {
-      id: "state",
-      placeholder: "State",
-      ...question.state,
+      id: "phone",
+      placeholder: "Phone",
+      ...question.phone,
     },
     {
-      id: "zip",
-      placeholder: "Zip",
-      ...question.zip,
-    },
-    {
-      id: "country",
-      placeholder: "Country",
-      ...question.country,
+      id: "company",
+      placeholder: "Company",
+      ...question.company,
     },
   ];
 
@@ -95,7 +91,7 @@ export const AddressQuestion = ({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue?.length === 6 && safeValue.every((item) => item.trim() === "");
+    const containsAllEmptyStrings = safeValue?.length === 5 && safeValue.every((item) => item.trim() === "");
     if (containsAllEmptyStrings) {
       onSubmit({ [question.id]: [] }, updatedTtc);
     } else {
@@ -136,6 +132,13 @@ export const AddressQuestion = ({
                 return false;
               };
 
+              let inputType = "text";
+              if (field.id === "email") {
+                inputType = "email";
+              } else if (field.id === "phone") {
+                inputType = "number";
+              }
+
               return (
                 field.show && (
                   <Input
@@ -144,7 +147,7 @@ export const AddressQuestion = ({
                     required={isFieldRequired()}
                     value={safeValue?.[index] || ""}
                     className="fb-py-3"
-                    type={field.id === "email" ? "email" : "text"}
+                    type={inputType}
                     onChange={(e) => handleChange(field.id, e?.currentTarget?.value ?? "")}
                   />
                 )
@@ -153,6 +156,7 @@ export const AddressQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
+
       <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton

@@ -30,6 +30,16 @@ const formatAddressData = (responseValue: TResponseDataValue): Record<string, st
     : {};
 };
 
+const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
+  const addressKeys = ["firstName", "lastName", "email", "phone", "company"];
+  return Array.isArray(responseValue)
+    ? responseValue.reduce((acc, curr, index) => {
+        acc[addressKeys[index]] = curr || ""; // Fallback to empty string if undefined
+        return acc;
+      }, {})
+    : {};
+};
+
 const extractResponseData = (response: TResponse, survey: TSurvey): Record<string, any> => {
   let responseData: Record<string, any> = {};
 
@@ -43,6 +53,9 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
         break;
       case "address":
         responseData = { ...responseData, ...formatAddressData(responseValue) };
+        break;
+      case "contactInfo":
+        responseData = { ...responseData, ...formatContactInfoData(responseValue) };
         break;
       default:
         responseData[question.id] = responseValue;
