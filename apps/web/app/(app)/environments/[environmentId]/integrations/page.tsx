@@ -18,10 +18,10 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { Card } from "@formbricks/ui/IntegrationCard";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { Card } from "@formbricks/ui/components/IntegrationCard";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
   const environmentId = params.environmentId;

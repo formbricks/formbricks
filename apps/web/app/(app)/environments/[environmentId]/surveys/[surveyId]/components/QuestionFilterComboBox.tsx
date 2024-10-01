@@ -7,13 +7,19 @@ import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@formbricks/ui/Command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@formbricks/ui/components/Command";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;

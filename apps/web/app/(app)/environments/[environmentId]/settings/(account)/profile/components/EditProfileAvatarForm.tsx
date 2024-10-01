@@ -12,9 +12,9 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
-import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
+import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
 
 interface EditProfileAvatarFormProps {
   session: Session;
@@ -34,9 +34,9 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
           .refine((files) => files.length === 1, "You must select a file.")
           .refine((files) => {
             const file = files[0];
-            const allowedTypes = ["image/jpeg", "image/png"];
+            const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
             return allowedTypes.includes(file.type);
-          }, "Invalid file type. Only JPEG and PNG are allowed.")
+          }, "Invalid file type. Only JPEG, PNG, and WEBP files are allowed.")
           .refine((files) => {
             const file = files[0];
             const maxSize = 10 * 1024 * 1024;
@@ -145,7 +145,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                         inputRef.current = e;
                       }}
                       className="hidden"
-                      accept="image/jpeg, image/png"
+                      accept="image/jpeg, image/png, image/webp"
                       onChange={(e) => {
                         field.onChange(e.target.files);
                         form.handleSubmit(onSubmit)();

@@ -5,7 +5,7 @@ export class SurveyState {
   displayId: string | null = null;
   userId: string | null = null;
   surveyId: string;
-  responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {} };
+  responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {}, variables: {} };
   singleUseId: string | null;
 
   constructor(
@@ -52,8 +52,8 @@ export class SurveyState {
   }
 
   /**
-   * Update the response ID after a successful response creation
-   * @param id - The response ID
+   * Update the display ID after a successful display creation
+   * @param id - The display ID
    */
   updateDisplayId(id: string) {
     this.displayId = id;
@@ -76,6 +76,8 @@ export class SurveyState {
       finished: responseUpdate.finished,
       ttc: responseUpdate.ttc,
       data: { ...this.responseAcc.data, ...responseUpdate.data },
+      variables: responseUpdate.variables,
+      displayId: responseUpdate.displayId,
     };
   }
 
@@ -91,6 +93,6 @@ export class SurveyState {
    */
   clear() {
     this.responseId = null;
-    this.responseAcc = { finished: false, data: {}, ttc: {} };
+    this.responseAcc = { finished: false, data: {}, ttc: {}, variables: {} };
   }
 }

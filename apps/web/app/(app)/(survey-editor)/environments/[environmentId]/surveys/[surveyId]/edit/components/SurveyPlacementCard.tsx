@@ -6,8 +6,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyProductOverwrites } from "@formbricks/types/surveys/types";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
+import { Label } from "@formbricks/ui/components/Label";
+import { Switch } from "@formbricks/ui/components/Switch";
 import { Placement } from "./Placement";
 
 interface SurveyPlacementCardProps {

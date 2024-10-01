@@ -16,7 +16,7 @@ export const trackAction = async (
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = websiteConfig.get().state?.surveys;
+  const activeSurveys = websiteConfig.get().filteredSurveys;
 
   if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
@@ -37,9 +37,7 @@ export const trackCodeAction = (
   code: string,
   properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> | Result<void, InvalidCodeError> => {
-  const {
-    state: { actionClasses = [] },
-  } = websiteConfig.get();
+  const actionClasses = websiteConfig.get().environmentState.data.actionClasses;
 
   const codeActionClasses = actionClasses.filter((action) => action.type === "code");
   const action = codeActionClasses.find((action) => action.key === code);

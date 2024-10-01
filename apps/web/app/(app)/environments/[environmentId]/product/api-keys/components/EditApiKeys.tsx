@@ -7,8 +7,8 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TApiKey } from "@formbricks/types/api-keys";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./AddApiKeyModal";
 

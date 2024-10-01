@@ -6,12 +6,19 @@ import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TInsight } from "@formbricks/types/insights";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { Badge } from "@formbricks/ui/Badge";
-import { Button } from "@formbricks/ui/Button";
 import { InsightSheet } from "@formbricks/ui/InsightSheet";
-import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@formbricks/ui/Table";
+import { PersonAvatar } from "@formbricks/ui/components/Avatars";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
+import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@formbricks/ui/components/Table";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 const NotFound = () => {
   return (

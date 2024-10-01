@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TabBar } from "@formbricks/ui/TabBar";
+import { TabBar } from "@formbricks/ui/components/TabBar";
 import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
 import { ColorSurveyBg } from "./ColorSurveyBg";
 import { UploadImageSurveyBg } from "./ImageSurveyBg";
