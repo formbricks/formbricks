@@ -115,7 +115,7 @@ export const POST = async (request: Request) => {
         },
         notificationSettings: {
           path: ["alert", surveyId],
-          not: Prisma.JsonNull,
+          equals: true,
         },
       },
       select: { email: true },
