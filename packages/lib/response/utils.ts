@@ -12,6 +12,7 @@ import {
 } from "@formbricks/types/responses";
 import {
   TSurvey,
+  TSurveyContactInfoQuestion,
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
@@ -212,6 +213,14 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             },
           });
           break;
+        case "filledOut":
+          data.push({
+            data: {
+              path: [key],
+              not: [],
+            },
+          });
+          break;
         case "skipped":
           data.push({
             OR: [
@@ -385,7 +394,6 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
           }
 
           break;
-
         case "uploaded":
           data.push({
             data: {
@@ -1271,7 +1279,8 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionTypeEnum.Address: {
+      case TSurveyQuestionTypeEnum.Address:
+      case TSurveyQuestionTypeEnum.ContactInfo: {
         let values: TSurveyQuestionSummaryAddress["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -1287,8 +1296,8 @@ export const getQuestionWiseSummary = (
         });
 
         summary.push({
-          type: question.type,
-          question,
+          type: question.type as TSurveyQuestionTypeEnum.ContactInfo,
+          question: question as TSurveyContactInfoQuestion,
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
         });
