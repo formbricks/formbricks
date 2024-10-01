@@ -2,24 +2,24 @@ import Link from "next/link";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionSummaryContactInfo } from "@formbricks/types/surveys/types";
 import { ArrayResponse } from "@formbricks/ui/components/ArrayResponse";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
-interface AddressSummaryProps {
-  questionSummary: TSurveyQuestionSummaryAddress;
+interface ContactInfoSummaryProps {
+  questionSummary: TSurveyQuestionSummaryContactInfo;
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
 }
 
-export const AddressSummary = ({
+export const ContactInfoSummary = ({
   questionSummary,
   environmentId,
   survey,
   attributeClasses,
-}: AddressSummaryProps) => {
+}: ContactInfoSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader

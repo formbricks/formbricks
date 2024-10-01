@@ -4,16 +4,16 @@ import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { QuestionToggleTable } from "@formbricks/ui/components/QuestionToggleTable";
 
-interface AddressQuestionFormProps {
+interface ContactInfoQuestionFormProps {
   localSurvey: TSurvey;
-  question: TSurveyAddressQuestion;
+  question: TSurveyContactInfoQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyAddressQuestion>) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyContactInfoQuestion>) => void;
   lastQuestion: boolean;
   isInvalid: boolean;
   selectedLanguageCode: string;
@@ -21,7 +21,7 @@ interface AddressQuestionFormProps {
   attributeClasses: TAttributeClass[];
 }
 
-export const AddressQuestionForm = ({
+export const ContactInfoQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -30,50 +30,44 @@ export const AddressQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
-}: AddressQuestionFormProps): JSX.Element => {
+}: ContactInfoQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   const fields = [
     {
-      id: "addressLine1",
-      label: "Address Line 1",
-      ...question.addressLine1,
+      id: "firstName",
+      label: "First Name",
+      ...question.firstName,
     },
     {
-      id: "addressLine2",
-      label: "Address Line 2",
-      ...question.addressLine2,
+      id: "lastName",
+      label: "Last Name",
+      ...question.lastName,
     },
     {
-      id: "city",
-      label: "City",
-      ...question.city,
+      id: "email",
+      label: "Email",
+      ...question.email,
     },
     {
-      id: "state",
-      label: "State",
-      ...question.state,
+      id: "phone",
+      label: "Phone",
+      ...question.phone,
     },
     {
-      id: "zip",
-      label: "Zip",
-      ...question.zip,
-    },
-    {
-      id: "country",
-      label: "Country",
-      ...question.country,
+      id: "company",
+      label: "Company",
+      ...question.company,
     },
   ];
 
   useEffect(() => {
     const allFieldsAreOptional = [
-      question.addressLine1,
-      question.addressLine2,
-      question.city,
-      question.state,
-      question.zip,
-      question.country,
+      question.firstName,
+      question.lastName,
+      question.email,
+      question.phone,
+      question.company,
     ]
       .filter((field) => field.show)
       .every((field) => !field.required);
@@ -82,14 +76,7 @@ export const AddressQuestionForm = ({
       updateQuestion(questionIdx, { required: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    question.addressLine1,
-    question.addressLine2,
-    question.city,
-    question.state,
-    question.zip,
-    question.country,
-  ]);
+  }, [question.firstName, question.lastName, question.email, question.phone, question.company]);
 
   return (
     <form>
@@ -142,7 +129,7 @@ export const AddressQuestionForm = ({
         )}
 
         <QuestionToggleTable
-          type="address"
+          type="contact"
           fields={fields}
           onShowToggle={(field, show) => {
             updateQuestion(questionIdx, {
