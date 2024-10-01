@@ -6,9 +6,16 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
+import { Button } from "@formbricks/ui/components/Button";
+import {
+  FormControl,
+  FormError,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
 import { updateProductAction } from "../../actions";
 
 type EditProductNameProps = {

@@ -6,14 +6,14 @@ import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { processResponseData } from "@formbricks/lib/responses";
-import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
+import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getSelectionColumn } from "@formbricks/ui/DataTable";
-import { ResponseBadges } from "@formbricks/ui/ResponseBadges";
-import { RenderResponse } from "@formbricks/ui/SingleResponseCard/components/RenderResponse";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
+import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
+import { RenderResponse } from "@formbricks/ui/components/SingleResponseCard/components/RenderResponse";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 const getAddressFieldLabel = (field: string) => {
   switch (field) {
@@ -30,6 +30,23 @@ const getAddressFieldLabel = (field: string) => {
     case "country":
       return "Country";
 
+    default:
+      break;
+  }
+};
+
+const getContactInfoFieldLabel = (field: string) => {
+  switch (field) {
+    case "firstName":
+      return "First Name";
+    case "lastName":
+      return "Last Name";
+    case "email":
+      return "Email";
+    case "phone":
+      return "Phone";
+    case "company":
+      return "Company";
     default:
       break;
   }
@@ -81,6 +98,30 @@ const getQuestionColumnsData = (
           },
           cell: ({ row }) => {
             const responseValue = row.original.responseData[addressField];
+            if (typeof responseValue === "string") {
+              return <p className="text-slate-900">{responseValue}</p>;
+            }
+          },
+        };
+      });
+
+    case "contactInfo":
+      const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
+      return contactInfoFields.map((contactInfoField) => {
+        return {
+          accessorKey: contactInfoField,
+          header: () => {
+            return (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 overflow-hidden">
+                  <span className="h-4 w-4">{QUESTIONS_ICON_MAP["contactInfo"]}</span>
+                  <span className="truncate">{getContactInfoFieldLabel(contactInfoField)}</span>
+                </div>
+              </div>
+            );
+          },
+          cell: ({ row }) => {
+            const responseValue = row.original.responseData[contactInfoField];
             if (typeof responseValue === "string") {
               return <p className="text-slate-900">{responseValue}</p>;
             }
@@ -240,6 +281,24 @@ export const generateResponseTableColumns = (
     },
   };
 
+  const variableColumns: ColumnDef<TResponseTableData>[] = survey.variables.map((variable) => {
+    return {
+      accessorKey: variable.id,
+      header: () => (
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
+          <span className="truncate">{variable.name}</span>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const variableResponse = row.original.variables[variable.id];
+        if (typeof variableResponse === "string" || typeof variableResponse === "number") {
+          return <div className="text-slate-900">{variableResponse}</div>;
+        }
+      },
+    };
+  });
+
   const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = survey.hiddenFields.fieldIds
     ? survey.hiddenFields.fieldIds.map((hiddenFieldId) => {
         return {
@@ -282,6 +341,7 @@ export const generateResponseTableColumns = (
     statusColumn,
     ...(survey.isVerifyEmailEnabled ? [verifiedEmailColumn] : []),
     ...questionColumns,
+    ...variableColumns,
     ...hiddenFieldColumns,
     tagsColumn,
     notesColumn,

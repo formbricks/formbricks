@@ -4,17 +4,17 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
+import { Label } from "@formbricks/ui/components/Label";
+import { Switch } from "@formbricks/ui/components/Switch";
+import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { DefaultLanguageSelect } from "./default-language-select";
 import { SecondaryLanguageSelect } from "./secondary-language-select";
 
@@ -59,10 +59,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     onConfirm: () => {},
   });
 
-  const [defaultLanguage, setDefaultLanguage] = useState(
-    localSurvey.languages.find((language) => {
-      return language.default;
-    })?.language
+  const defaultLanguage = useMemo(
+    () => localSurvey.languages.find((language) => language.default)?.language,
+    [localSurvey.languages]
   );
 
   const setOpen = (open: boolean) => {
@@ -72,6 +71,12 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       setActiveQuestionId(null);
     }
   };
+
+  useEffect(() => {
+    if (localSurvey.languages.length === 0) {
+      setIsMultiLanguageActivated(false);
+    }
+  }, [localSurvey.languages]);
 
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
@@ -132,7 +137,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         });
       }
 
-      setDefaultLanguage(language);
       setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
       updateSurvey({ languages: newLanguages });
     }
@@ -150,7 +154,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           onConfirm: () => {
             updateSurveyTranslations(localSurvey, []);
             setIsMultiLanguageActivated(false);
-            setDefaultLanguage(undefined);
             setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
           },
         });

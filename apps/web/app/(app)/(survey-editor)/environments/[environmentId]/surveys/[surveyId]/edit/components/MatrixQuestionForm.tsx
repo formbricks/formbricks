@@ -4,9 +4,9 @@ import { PlusIcon, TrashIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { Button } from "@formbricks/ui/components/Button";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {

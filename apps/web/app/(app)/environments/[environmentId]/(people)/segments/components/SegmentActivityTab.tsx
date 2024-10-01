@@ -2,7 +2,7 @@
 
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TSegment } from "@formbricks/types/segment";
-import { Label } from "@formbricks/ui/Label";
+import { Label } from "@formbricks/ui/components/Label";
 
 interface SegmentActivityTabProps {
   environmentId: string;

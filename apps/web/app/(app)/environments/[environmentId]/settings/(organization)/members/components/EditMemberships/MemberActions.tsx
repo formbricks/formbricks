@@ -15,8 +15,8 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 type MemberActionsProps = {
   organization: TOrganization;

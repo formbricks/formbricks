@@ -5,7 +5,7 @@ import {
   TSurveyQuestionSummaryConsent,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
+import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

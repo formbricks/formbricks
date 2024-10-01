@@ -5,10 +5,10 @@ import { CopyIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { CodeBlock } from "@formbricks/ui/CodeBlock";
-import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
+import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 
 export const WebsiteTab = ({ surveyUrl, environmentId }) => {
   const [selectedTab, setSelectedTab] = useState("static");
@@ -99,7 +99,7 @@ const PopupTab = ({ environmentId }) => {
         <li>
           Make sure the survey type is set to <b>Website survey</b>
         </li>
-        <li>Dfine when and where the survey should pop up</li>
+        <li>Define when and where the survey should pop up</li>
       </ol>
       <div className="mt-4">
         <video autoPlay loop muted className="w-full rounded-xl border border-slate-200">

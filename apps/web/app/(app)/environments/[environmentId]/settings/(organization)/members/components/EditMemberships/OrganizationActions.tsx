@@ -11,9 +11,9 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { TInvitee } from "@formbricks/types/invites";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
-import { CustomDialog } from "@formbricks/ui/CustomDialog";
+import { Button } from "@formbricks/ui/components/Button";
+import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
+import { CustomDialog } from "@formbricks/ui/components/CustomDialog";
 
 type OrganizationActionsProps = {
   role: string;
