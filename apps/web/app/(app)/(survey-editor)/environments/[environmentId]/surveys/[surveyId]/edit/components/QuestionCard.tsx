@@ -1,5 +1,6 @@
 "use client";
 
+import { ContactInfoQuestionForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/ContactInfoQuestionForm";
 import { RankingQuestionForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RankingQuestionForm";
 import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
@@ -94,16 +95,25 @@ export const QuestionCard = ({
   };
 
   const getIsRequiredToggleDisabled = (): boolean => {
-    if (question.type === "address") {
+    if (question.type === TSurveyQuestionTypeEnum.Address) {
       return [
-        question.isAddressLine1Required,
-        question.isAddressLine2Required,
-        question.isCityRequired,
-        question.isCountryRequired,
-        question.isStateRequired,
-        question.isZipRequired,
-      ].some((condition) => condition === true);
+        question.addressLine1,
+        question.addressLine2,
+        question.city,
+        question.state,
+        question.zip,
+        question.country,
+      ]
+        .filter((field) => field.show)
+        .some((condition) => condition.required === true);
     }
+
+    if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+      return [question.firstName, question.lastName, question.email, question.phone, question.company]
+        .filter((field) => field.show)
+        .some((condition) => condition.required === true);
+    }
+
     return false;
   };
 
@@ -373,6 +383,18 @@ export const QuestionCard = ({
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
+              localSurvey={localSurvey}
+              question={question}
+              questionIdx={questionIdx}
+              updateQuestion={updateQuestion}
+              lastQuestion={lastQuestion}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+              isInvalid={isInvalid}
+              attributeClasses={attributeClasses}
+            />
+          ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
+            <ContactInfoQuestionForm
               localSurvey={localSurvey}
               question={question}
               questionIdx={questionIdx}
