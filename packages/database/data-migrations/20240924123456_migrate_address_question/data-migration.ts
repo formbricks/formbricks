@@ -1,6 +1,10 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
-import { type TSurveyAddressQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  type TSurveyAddressQuestion,
+  type TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 
 const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -22,14 +26,15 @@ async function runMigration(): Promise<void> {
       console.log(`Found ${surveysWithAddressQuestion.length.toString()} surveys with address questions`);
 
       const updationPromises = [];
-      const updatedQuestions = [];
+      // const updatedSurveys = [];
 
       for (const survey of surveysWithAddressQuestion) {
-        for (let question of survey.questions) {
+        const updatedQuestions = survey.questions.map((question: TSurveyQuestion) => {
           if (question.type === TSurveyQuestionTypeEnum.Address) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- addressLine1 is not defined for unmigrated surveys
             if (question.addressLine1 !== undefined) {
-              break;
+              // return question;
+              return null;
             }
 
             const {
@@ -49,7 +54,7 @@ async function runMigration(): Promise<void> {
               isCountryRequired: boolean;
             };
 
-            question = {
+            return {
               ...rest,
               addressLine1: { show: true, required: isAddressLine1Required },
               addressLine2: { show: true, required: isAddressLine2Required },
@@ -58,19 +63,21 @@ async function runMigration(): Promise<void> {
               zip: { show: true, required: isZipRequired },
               country: { show: true, required: isCountryRequired },
             };
-
-            updatedQuestions.push(question);
           }
-        }
 
-        if (updatedQuestions.length > 0) {
+          return question;
+        });
+
+        const isUpdationRequired = updatedQuestions.some((question) => question !== null);
+
+        if (isUpdationRequired) {
           updationPromises.push(
             transactionPrisma.survey.update({
               where: {
                 id: survey.id,
               },
               data: {
-                questions: updatedQuestions,
+                questions: updatedQuestions.filter((question) => question !== null),
               },
             })
           );
