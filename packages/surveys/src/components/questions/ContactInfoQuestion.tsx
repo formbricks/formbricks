@@ -154,28 +154,29 @@ export const ContactInfoQuestion = ({
               );
             })}
           </div>
-          <div className="fb-flex fb-w-full fb-justify-between fb-py-4">
-            {!isFirstQuestion && (
-              <BackButton
-                tabIndex={8}
-                backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-                onClick={() => {
-                  const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                  setTtc(updatedttc);
-                  onBack();
-                }}
-              />
-            )}
-            <div></div>
-            <SubmitButton
-              tabIndex={7}
-              buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-              isLastQuestion={isLastQuestion}
-              onClick={() => {}}
-            />
-          </div>
         </div>
       </ScrollableContainer>
+
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        {!isFirstQuestion && (
+          <BackButton
+            tabIndex={8}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+            onClick={() => {
+              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedttc);
+              onBack();
+            }}
+          />
+        )}
+        <div></div>
+        <SubmitButton
+          tabIndex={7}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+        />
+      </div>
     </form>
   );
 };
