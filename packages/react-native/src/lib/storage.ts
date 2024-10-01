@@ -66,18 +66,18 @@ export class StorageAPI {
     const formDataForS3 = new FormData();
 
     if (presignedFields) {
-      Object.entries(presignedFields).forEach(([key, value]) => {
-        formDataForS3.append(key, value);
+      Object.keys(presignedFields).forEach((key) => {
+        formDataForS3.append(key, presignedFields[key]);
       });
 
       try {
-        const binaryString = atob(file.base64.split(",")[1]);
-        const uint8Array = Uint8Array.from([...binaryString].map((char) => char.charCodeAt(0)));
-        const blob = new Blob([uint8Array], { type: file.type });
+        const buffer = Buffer.from(file.base64.split(",")[1], "base64");
+        const blob = new Blob([buffer], { type: file.type });
 
         formDataForS3.append("file", blob);
-      } catch (err) {
-        console.error(err);
+      } catch (buffErr) {
+        console.error({ buffErr });
+
         throw new Error("Error uploading file");
       }
     }
