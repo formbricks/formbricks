@@ -4,13 +4,13 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@formbricks/lib/cn";
-import { Badge } from "@formbricks/ui/Badge";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-import { Switch } from "@formbricks/ui/Switch";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
+import { Label } from "@formbricks/ui/components/Label";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },

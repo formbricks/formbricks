@@ -36,7 +36,7 @@ export const ZIntegrationBaseSurveyData = z.object({
   surveyName: z.string(),
 });
 
-export const ZIntegrationInput = z.union([
+export const ZIntegrationInput = z.discriminatedUnion("type", [
   ZIntegrationGoogleSheetsInput,
   ZIntegrationAirtableInput,
   ZIntegrationNotionInput,

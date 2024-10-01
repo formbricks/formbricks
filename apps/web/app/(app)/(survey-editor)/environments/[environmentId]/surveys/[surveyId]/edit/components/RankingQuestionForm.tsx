@@ -13,10 +13,16 @@ import {
   TSurvey,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/components/Button";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui/components/Select";
 import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface RankingQuestionFormProps {

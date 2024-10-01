@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { Switch } from "@formbricks/ui/Switch";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 interface EndScreenFormProps {
   localSurvey: TSurvey;

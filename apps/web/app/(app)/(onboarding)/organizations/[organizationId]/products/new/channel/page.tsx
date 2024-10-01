@@ -1,8 +1,8 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { LinkIcon, XIcon } from "lucide-react";
 import { getProducts } from "@formbricks/lib/product/service";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface ChannelPageProps {
   params: {
@@ -18,7 +18,7 @@ const Page = async ({ params }: ChannelPageProps) => {
       description: "Reach people anywhere online.",
       icon: LinkIcon,
       iconText: "Anywhere online",
-      href: `/organizations/${params.organizationId}/products/new/industry?channel=link`,
+      href: `/organizations/${params.organizationId}/products/new/settings?channel=link`,
     },
   ];
 

@@ -2,7 +2,7 @@ import OpinodoLogo from "@/images/opinodo-logo.png";
 import { HelpCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 const NotFound = () => {
   return (

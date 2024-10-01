@@ -9,8 +9,8 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
-import { ToasterClient } from "@formbricks/ui/ToasterClient";
+import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
+import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
 const EnvLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);

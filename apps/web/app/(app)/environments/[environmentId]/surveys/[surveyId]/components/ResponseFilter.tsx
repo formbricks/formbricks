@@ -13,9 +13,9 @@ import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { Checkbox } from "@formbricks/ui/Checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
+import { Button } from "@formbricks/ui/components/Button";
+import { Checkbox } from "@formbricks/ui/components/Checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/components/Popover";
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {

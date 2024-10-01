@@ -1,4 +1,4 @@
-import { Modal } from "@formbricks/ui/Modal";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface UploadAttributesModalProps {
   open: boolean;

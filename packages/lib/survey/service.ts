@@ -36,6 +36,7 @@ import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { diffInDays } from "../utils/datetime";
@@ -924,6 +925,7 @@ export const copySurveyToOtherEnvironment = async (
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
       questions: structuredClone(existingSurvey.questions),
       endings: structuredClone(existingSurvey.endings),
+      variables: structuredClone(existingSurvey.variables),
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
       languages: hasLanguages
         ? {
@@ -1144,6 +1146,7 @@ export const getSyncSurveys = reactCache(
           }
 
           const displays = await getDisplaysByPersonId(person.id);
+          const responses = await getResponsesByPersonId(person.id);
 
           // filter surveys that meet the displayOption criteria
           surveys = surveys.filter((survey) => {
@@ -1153,20 +1156,18 @@ export const getSyncSurveys = reactCache(
               case "displayOnce":
                 return displays.filter((display) => display.surveyId === survey.id).length === 0;
               case "displayMultiple":
-                return (
-                  displays
-                    .filter((display) => display.surveyId === survey.id)
-                    .filter((display) => display.responseId).length === 0
-                );
+                if (!responses) return true;
+                else {
+                  return responses.filter((response) => response.surveyId === survey.id).length === 0;
+                }
               case "displaySome":
                 if (survey.displayLimit === null) {
                   return true;
                 }
 
                 if (
-                  displays
-                    .filter((display) => display.surveyId === survey.id)
-                    .some((display) => display.responseId)
+                  responses &&
+                  responses.filter((response) => response.surveyId === survey.id).length !== 0
                 ) {
                   return false;
                 }

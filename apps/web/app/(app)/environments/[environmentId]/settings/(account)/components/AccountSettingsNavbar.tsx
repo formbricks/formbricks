@@ -2,7 +2,7 @@
 
 import { UserCircleIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
+import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 export const AccountSettingsNavbar = ({
   environmentId,

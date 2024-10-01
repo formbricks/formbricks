@@ -1,5 +1,5 @@
 import { ConfirmationPage } from "@/app/(app)/billing-confirmation/components/ConfirmationPage";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 
 export const dynamic = "force-dynamic";
 

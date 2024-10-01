@@ -120,6 +120,9 @@ model Response {
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
   data             Json              @default("{}")
+  /// @zod.custom(imports.ZResponseVariables)
+  /// [ResponseVariables]
+  variables        Json              @default("{}")
   /// @zod.custom(imports.ZResponseTtc)
   /// [ResponseTtc]
   ttc              Json              @default("{}")
@@ -134,6 +137,8 @@ model Response {
   singleUseId      String?
   language         String?
   panelistId       String?
+  displayId        String?           @unique
+  display          Display?          @relation(fields: [displayId], references: [id])
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
@@ -200,8 +205,9 @@ model Display {
   surveyId   String
   person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId   String?
-  responseId String?        @unique
+  responseId String?        @unique //deprecated
   status     DisplayStatus?
+  response   Response?
 
   @@index([surveyId])
   @@index([personId, createdAt])

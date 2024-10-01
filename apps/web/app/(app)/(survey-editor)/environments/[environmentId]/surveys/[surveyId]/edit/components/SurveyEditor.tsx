@@ -12,7 +12,7 @@ import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { PreviewSurvey } from "@formbricks/ui/PreviewSurvey";
+import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
 import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";
@@ -37,6 +37,7 @@ interface SurveyEditorProps {
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
+  isCxMode: boolean;
 }
 
 export const SurveyEditor = ({
@@ -55,6 +56,7 @@ export const SurveyEditor = ({
   isFormbricksCloud,
   isUnsplashConfigured,
   plan,
+  isCxMode = false,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -144,6 +146,7 @@ export const SurveyEditor = ({
           responseCount={responseCount}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
+          isCxMode={isCxMode}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main
@@ -152,6 +155,7 @@ export const SurveyEditor = ({
             <QuestionsAudienceTabs
               activeId={activeView}
               setActiveId={setActiveView}
+              isCxMode={isCxMode}
               isStylingTabVisible={!!product.styling.allowStyleOverwrite}
             />
 
@@ -170,6 +174,7 @@ export const SurveyEditor = ({
                 isFormbricksCloud={isFormbricksCloud}
                 attributeClasses={attributeClasses}
                 plan={plan}
+                isCxMode={isCxMode}
               />
             )}
 
@@ -185,6 +190,7 @@ export const SurveyEditor = ({
                 localStylingChanges={localStylingChanges}
                 setLocalStylingChanges={setLocalStylingChanges}
                 isUnsplashConfigured={isUnsplashConfigured}
+                isCxMode={isCxMode}
               />
             )}
 

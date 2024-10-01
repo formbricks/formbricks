@@ -9,7 +9,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
+import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 
 interface AirtableWrapperProps {
   environmentId: string;

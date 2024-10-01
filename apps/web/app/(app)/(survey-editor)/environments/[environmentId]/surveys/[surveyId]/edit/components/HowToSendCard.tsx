@@ -10,9 +10,9 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
-import { Badge } from "@formbricks/ui/Badge";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Label } from "@formbricks/ui/components/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
@@ -231,7 +231,7 @@ export const HowToSendCard = ({
                 You can also use Formbricks to run {promotedFeaturesString} surveys.{" "}
                 <Link
                   target="_blank"
-                  href={`/organizations/${organizationId}/products/new/channel`}
+                  href={`/organizations/${organizationId}/products/new/mode`}
                   className="font-medium underline decoration-slate-400 underline-offset-2">
                   Create a new product
                 </Link>{" "}

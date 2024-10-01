@@ -8,9 +8,9 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { EnvironmentNotice } from "@formbricks/ui/EnvironmentNotice";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { EnvironmentNotice } from "@formbricks/ui/components/EnvironmentNotice";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../../settings/components/SettingsCard";
 
 const Page = async ({ params }) => {

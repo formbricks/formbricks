@@ -4,7 +4,7 @@ import { XCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { forgotPassword } from "@formbricks/lib/utils/users";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 export const PasswordResetForm = ({}) => {
   const router = useRouter();

@@ -1,12 +1,12 @@
-import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
+import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { Button } from "@formbricks/ui/Button";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { Button } from "@formbricks/ui/components/Button";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { AttributeClassesTable } from "./components/AttributeClassesTable";
 
 export const metadata: Metadata = {
@@ -42,7 +42,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="People" cta={HowToAddAttributesButton}>
-        <PeopleSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
+        <PersonSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
       </PageHeader>
       <AttributeClassesTable attributeClasses={attributeClasses} />
     </PageContentWrapper>
