@@ -1,10 +1,6 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
-import {
-  type TSurveyAddressQuestion,
-  type TSurveyQuestion,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
+import { type TSurveyAddressQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -25,12 +21,15 @@ async function runMigration(): Promise<void> {
 
       console.log(`Found ${surveysWithAddressQuestion.length.toString()} surveys with address questions`);
 
-      const updationPromises = surveysWithAddressQuestion.map((survey) => {
-        const updatedQuestions = survey.questions.map((question: TSurveyQuestion) => {
+      const updationPromises = [];
+      const updatedQuestions = [];
+
+      for (const survey of surveysWithAddressQuestion) {
+        for (let question of survey.questions) {
           if (question.type === TSurveyQuestionTypeEnum.Address) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- addressLine1 is not defined for unmigrated surveys
             if (question.addressLine1 !== undefined) {
-              return question;
+              break;
             }
 
             const {
@@ -50,7 +49,7 @@ async function runMigration(): Promise<void> {
               isCountryRequired: boolean;
             };
 
-            return {
+            question = {
               ...rest,
               addressLine1: { show: true, required: isAddressLine1Required },
               addressLine2: { show: true, required: isAddressLine2Required },
@@ -59,20 +58,29 @@ async function runMigration(): Promise<void> {
               zip: { show: true, required: isZipRequired },
               country: { show: true, required: isCountryRequired },
             };
+
+            updatedQuestions.push(question);
           }
+        }
 
-          return question;
-        });
+        if (updatedQuestions.length > 0) {
+          updationPromises.push(
+            transactionPrisma.survey.update({
+              where: {
+                id: survey.id,
+              },
+              data: {
+                questions: updatedQuestions,
+              },
+            })
+          );
+        }
+      }
 
-        return transactionPrisma.survey.update({
-          where: {
-            id: survey.id,
-          },
-          data: {
-            questions: updatedQuestions,
-          },
-        });
-      });
+      if (updationPromises.length === 0) {
+        console.log("No surveys require migration... Exiting");
+        return;
+      }
 
       await Promise.all(updationPromises);
 
