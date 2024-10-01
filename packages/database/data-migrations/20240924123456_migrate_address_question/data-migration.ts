@@ -26,7 +26,6 @@ async function runMigration(): Promise<void> {
       console.log(`Found ${surveysWithAddressQuestion.length.toString()} surveys with address questions`);
 
       const updationPromises = [];
-
       for (const survey of surveysWithAddressQuestion) {
         const updatedQuestions = survey.questions.map((question: TSurveyQuestion) => {
           if (question.type === TSurveyQuestionTypeEnum.Address) {
@@ -91,7 +90,7 @@ async function runMigration(): Promise<void> {
 
       await Promise.all(updationPromises);
 
-      console.log("Data migration completed");
+      console.log("Total surveys updated: ", updationPromises.length.toString());
     },
     {
       timeout: TRANSACTION_TIMEOUT,
