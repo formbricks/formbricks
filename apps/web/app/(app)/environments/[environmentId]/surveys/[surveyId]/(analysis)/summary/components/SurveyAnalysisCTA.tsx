@@ -149,7 +149,6 @@ export const SurveyAnalysisCTA = ({
                         setIsDropDownOpen(false);
                         navigator.clipboard.writeText(surveyUrl);
                         toast.success("Copied link to clipboard");
-                        router.refresh();
                       }}>
                       <LinkIcon className="mr-2 h-4 w-4" />
                       Copy Link
@@ -165,7 +164,6 @@ export const SurveyAnalysisCTA = ({
                         e.preventDefault();
                         setIsDropDownOpen(false);
                         setShowPanelSurveyModal(true);
-                        router.refresh();
                       }}>
                       <UsersRound className="mr-2 h-4 w-4" />
                       Send to panel
@@ -174,21 +172,17 @@ export const SurveyAnalysisCTA = ({
                 </>
                 <>
                   <DropdownMenuItem>
-                    <button
-                      type="button"
-                      className="flex w-full items-center"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsDropDownOpen(false);
-                        router.refresh();
-                      }}>
+                    <DropdownMenuItem asChild>
                       <Link
                         href={`/environments/${survey.environmentId}/settings/notifications`}
-                        className="flex w-full items-center">
+                        className="flex w-full items-center"
+                        onClick={() => {
+                          setIsDropDownOpen(false);
+                        }}>
                         <BellRing className="mr-2 h-4 w-4" />
                         Configure alerts
                       </Link>
-                    </button>
+                    </DropdownMenuItem>
                   </DropdownMenuItem>
                 </>
               </DropdownMenuGroup>

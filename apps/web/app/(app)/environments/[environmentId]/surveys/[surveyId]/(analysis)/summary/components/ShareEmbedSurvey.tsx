@@ -66,7 +66,7 @@ export const ShareEmbedSurvey = ({
     setShowView("start");
   };
 
-  if (modalType == "start") {
+  if (modalType === "start") {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
