@@ -129,6 +129,7 @@ export const ContactInfoQuestionForm = ({
         )}
 
         <QuestionToggleTable
+          type="contact"
           fields={fields}
           onShowToggle={(field, show) => {
             updateQuestion(questionIdx, {

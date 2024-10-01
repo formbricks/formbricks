@@ -142,6 +142,7 @@ export const AddressQuestionForm = ({
         )}
 
         <QuestionToggleTable
+          type="address"
           fields={fields}
           onShowToggle={(field, show) => {
             updateQuestion(questionIdx, {

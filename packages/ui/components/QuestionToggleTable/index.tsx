@@ -1,6 +1,8 @@
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { Switch } from "../Switch";
 
 interface QuestionToggleTableProps {
+  type: "address" | "contact";
   fields: {
     required: boolean;
     show: boolean;
@@ -25,12 +27,17 @@ interface QuestionToggleTableProps {
   ) => void;
 }
 
-export const QuestionToggleTable = ({ fields, onShowToggle, onRequiredToggle }: QuestionToggleTableProps) => {
+export const QuestionToggleTable = ({
+  type,
+  fields,
+  onShowToggle,
+  onRequiredToggle,
+}: QuestionToggleTableProps) => {
   return (
     <table className="mt-4 w-1/2 table-fixed">
       <thead>
         <tr className="text-left text-slate-800">
-          <th className="w-1/2 text-sm font-semibold">Address Fields</th>
+          <th className="w-1/2 text-sm font-semibold">{capitalizeFirstLetter(type)} Fields</th>
           <th className="w-1/4 text-sm font-semibold">Show</th>
           <th className="w-1/4 text-sm font-semibold">Required</th>
         </tr>
