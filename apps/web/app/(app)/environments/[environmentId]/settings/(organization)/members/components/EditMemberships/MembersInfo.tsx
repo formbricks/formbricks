@@ -4,7 +4,7 @@ import { EditMembershipRole } from "@formbricks/ee/role-management/components/ed
 import { TInvite } from "@formbricks/types/invites";
 import { TMember, TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Badge } from "@formbricks/ui/Badge";
+import { Badge } from "@formbricks/ui/components/Badge";
 
 type MembersInfoProps = {
   organization: TOrganization;

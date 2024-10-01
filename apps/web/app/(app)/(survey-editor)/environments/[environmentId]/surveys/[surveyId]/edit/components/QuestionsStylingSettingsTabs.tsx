@@ -31,12 +31,14 @@ interface QuestionsAudienceTabsProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   isStylingTabVisible?: boolean;
+  isCxMode: boolean;
 }
 
 export const QuestionsAudienceTabs = ({
   activeId,
   setActiveId,
   isStylingTabVisible,
+  isCxMode,
 }: QuestionsAudienceTabsProps) => {
   const tabsComputed = useMemo(() => {
     if (isStylingTabVisible) {
@@ -45,10 +47,13 @@ export const QuestionsAudienceTabs = ({
     return tabs.filter((tab) => tab.id !== "styling");
   }, [isStylingTabVisible]);
 
+  // Hide settings tab in CX mode
+  let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;
+
   return (
     <div className="fixed z-30 flex h-12 w-full items-center justify-center border-b bg-white md:w-1/2">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
-        {tabsComputed.map((tab) => (
+        {tabsToDisplay.map((tab) => (
           <button
             type="button"
             key={tab.id}

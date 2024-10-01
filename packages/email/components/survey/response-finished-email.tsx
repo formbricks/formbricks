@@ -1,4 +1,5 @@
 import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
+import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import { getQuestionResponseMapping } from "@formbricks/lib/responses";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import type { TOrganization } from "@formbricks/types/organizations";
@@ -107,6 +108,27 @@ export function ResponseFinishedEmail({
                 </Column>
               </Row>
             );
+          })}
+          {survey.variables.map((variable) => {
+            const variableResponse = response.variables[variable.id];
+            if (variableResponse && ["number", "string"].includes(typeof variable)) {
+              return (
+                <Row key={variable.id}>
+                  <Column className="w-full">
+                    <Text className="mb-2 flex items-center gap-2 font-medium">
+                      {variable.type === "number" ? (
+                        <FileDigitIcon className="h-4 w-4" />
+                      ) : (
+                        <FileType2Icon className="h-4 w-4" />
+                      )}
+                      {variable.name}
+                    </Text>
+                    <Text className="mt-0 whitespace-pre-wrap break-words font-bold">{variableResponse}</Text>
+                  </Column>
+                </Row>
+              );
+            }
+            return null;
           })}
           {survey.hiddenFields.fieldIds?.map((hiddenFieldId) => {
             const hiddenFieldResponse = response.data[hiddenFieldId];

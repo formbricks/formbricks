@@ -1,7 +1,4 @@
-import {
-  replaceAttributeRecall,
-  replaceAttributeRecallInLegacySurveys,
-} from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
+import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
@@ -22,8 +19,6 @@ import {
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
-import { transformToLegacySurvey } from "@formbricks/lib/survey/utils";
-import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -44,7 +39,6 @@ export const GET = async (
 ): Promise<Response> => {
   try {
     const { device } = userAgent(request);
-    const version = request.nextUrl.searchParams.get("version");
 
     // validate using zod
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
@@ -168,9 +162,7 @@ export const GET = async (
     }
 
     const [surveys, actionClasses] = await Promise.all([
-      getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
-        version: version ?? undefined,
-      }),
+      getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop"),
       getActionClasses(environmentId),
     ]);
 
@@ -187,7 +179,6 @@ export const GET = async (
     };
     const attributes = await getAttributes(person.id);
     const language = attributes["language"];
-    const noCodeActionClasses = actionClasses.filter((actionClass) => actionClass.type === "noCode");
 
     // Scenario 1: Multi language and updated trigger action classes supported.
     // Use the surveys as they are.
@@ -202,30 +193,6 @@ export const GET = async (
       language,
       product: updatedProduct,
     };
-
-    // Backwards compatibility for versions less than 2.0.0 (no multi-language support and updated trigger action classes).
-    if (!isVersionGreaterThanOrEqualTo(version ?? "", "2.0.0")) {
-      // Scenario 2: Multi language and updated trigger action classes not supported
-      // Convert to legacy surveys with default language
-      // convert triggers to array of actionClasses Names
-      transformedSurveys = await Promise.all(
-        surveys.map((survey) => {
-          const languageCode = "default";
-          return transformToLegacySurvey(survey as TSurvey, languageCode);
-        })
-      );
-
-      const legacyState: any = {
-        surveys: !isMonthlyResponsesLimitReached
-          ? transformedSurveys.map((survey) => replaceAttributeRecallInLegacySurveys(survey, attributes))
-          : [],
-        person,
-        noCodeActionClasses,
-        language,
-        product: updatedProduct,
-      };
-      return responses.successResponse({ ...legacyState }, true);
-    }
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {

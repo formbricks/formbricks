@@ -4,10 +4,10 @@ import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 const options = [
   {

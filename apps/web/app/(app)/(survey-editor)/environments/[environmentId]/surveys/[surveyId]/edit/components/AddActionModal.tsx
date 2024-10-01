@@ -2,7 +2,7 @@
 
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
+import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { CreateNewActionTab } from "./CreateNewActionTab";
 import { SavedActionsTab } from "./SavedActionsTab";
 
@@ -56,6 +56,7 @@ export const AddActionModal = ({
   return (
     <ModalWithTabs
       label="Add action"
+      description="Capture a new action to trigger a survey on."
       open={open}
       setOpen={setOpen}
       tabs={tabs}

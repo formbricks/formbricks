@@ -3,9 +3,9 @@
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
-import { CodeBlock } from "@formbricks/ui/CodeBlock";
-import { TabBar } from "@formbricks/ui/TabBar";
-import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
+import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
+import { TabBar } from "@formbricks/ui/components/TabBar";
+import { Html5Icon, NpmIcon } from "@formbricks/ui/components/icons";
 
 const tabs = [
   {
@@ -23,7 +23,7 @@ interface SetupInstructionsProps {
 }
 
 export const SetupInstructions = ({ environmentId, webAppUrl, type }: SetupInstructionsProps) => {
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const [activeTab, setActiveTab] = useState(type === "website" ? tabs[1].id : tabs[0].id);
 
   return (
     <div>

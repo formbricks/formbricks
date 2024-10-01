@@ -9,6 +9,7 @@ import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
   findQuestionsWithCyclicLogic,
+  isConditionGroup,
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
@@ -66,6 +67,7 @@ export enum TSurveyQuestionTypeEnum {
   Matrix = "matrix",
   Address = "address",
   Ranking = "ranking",
+  ContactInfo = "contactInfo",
 }
 
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
@@ -227,135 +229,225 @@ export const ZSurveyPictureChoice = z.object({
 
 export type TSurveyQuestionChoice = z.infer<typeof ZSurveyQuestionChoice>;
 
-export const ZSurveyLogicCondition = z.enum([
-  "accepted",
-  "clicked",
-  "submitted",
-  "skipped",
+// Logic types
+export const ZSurveyLogicConditionsOperator = z.enum([
   "equals",
-  "notEquals",
-  "lessThan",
-  "lessEqual",
-  "greaterThan",
-  "greaterEqual",
-  "includesAll",
-  "includesOne",
-  "uploaded",
-  "notUploaded",
-  "booked",
-  "isCompletelySubmitted",
+  "doesNotEqual",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "doesNotStartWith",
+  "endsWith",
+  "doesNotEndWith",
+  "isSubmitted",
+  "isSkipped",
+  "isGreaterThan",
+  "isLessThan",
+  "isGreaterThanOrEqual",
+  "isLessThanOrEqual",
+  "equalsOneOf",
+  "includesAllOf",
+  "includesOneOf",
+  "isClicked",
+  "isAccepted",
+  "isBefore",
+  "isAfter",
+  "isBooked",
   "isPartiallySubmitted",
+  "isCompletelySubmitted",
 ]);
 
-export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
+const operatorsWithoutRightOperand = [
+  ZSurveyLogicConditionsOperator.Enum.isSubmitted,
+  ZSurveyLogicConditionsOperator.Enum.isSkipped,
+  ZSurveyLogicConditionsOperator.Enum.isClicked,
+  ZSurveyLogicConditionsOperator.Enum.isAccepted,
+  ZSurveyLogicConditionsOperator.Enum.isBooked,
+  ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
+  ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
+] as const;
 
-export const ZSurveyLogicBase = z.object({
-  condition: ZSurveyLogicCondition.optional(),
-  value: z.union([z.string(), z.array(z.string())]).optional(),
-  destination: ZSurveyQuestionId.optional(),
+export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
+export const ZActionObjective = z.enum(["calculate", "requireAnswer", "jumpToQuestion"]);
+export const ZActionTextVariableCalculateOperator = z.enum(["assign", "concat"], {
+  message: "Conditional Logic: Invalid operator for a text variable",
+});
+export const ZActionNumberVariableCalculateOperator = z.enum(
+  ["add", "subtract", "multiply", "divide", "assign"],
+  { message: "Conditional Logic: Invalid operator for a number variable" }
+);
+
+const ZDynamicQuestion = z.object({
+  type: z.literal("question"),
+  value: z.string().min(1, "Conditional Logic: Question id cannot be empty"),
 });
 
-export const ZSurveyFileUploadLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["uploaded", "notUploaded"]).optional(),
-  value: z.undefined(),
+const ZDynamicVariable = z.object({
+  type: z.literal("variable"),
+  value: z
+    .string()
+    .cuid2({ message: "Conditional Logic: Variable id must be a valid cuid" })
+    .min(1, "Conditional Logic: Variable id cannot be empty"),
 });
 
-export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.undefined(),
+const ZDynamicHiddenField = z.object({
+  type: z.literal("hiddenField"),
+  value: z.string().min(1, "Conditional Logic: Hidden field id cannot be empty"),
 });
 
-export const ZSurveyAddressLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.undefined(),
+const ZDynamicLogicFieldValue = z.union([ZDynamicQuestion, ZDynamicVariable, ZDynamicHiddenField], {
+  message: "Conditional Logic: Invalid dynamic field value",
 });
 
-export const ZSurveyRankingLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
-  value: z.undefined(),
+export type TSurveyLogicConditionsOperator = z.infer<typeof ZSurveyLogicConditionsOperator>;
+export type TDynamicLogicField = z.infer<typeof ZDynamicLogicField>;
+export type TActionObjective = z.infer<typeof ZActionObjective>;
+export type TActionTextVariableCalculateOperator = z.infer<typeof ZActionTextVariableCalculateOperator>;
+export type TActionNumberVariableCalculateOperator = z.infer<typeof ZActionNumberVariableCalculateOperator>;
+
+// Conditions
+const ZLeftOperand = ZDynamicLogicFieldValue;
+export type TLeftOperand = z.infer<typeof ZLeftOperand>;
+
+export const ZRightOperandStatic = z.object({
+  type: z.literal("static"),
+  value: z.union([z.string(), z.number(), z.array(z.string())]),
 });
 
-export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["skipped", "accepted"]).optional(),
-  value: z.undefined(),
+export const ZRightOperand = z.union([ZRightOperandStatic, ZDynamicLogicFieldValue]);
+export type TRightOperand = z.infer<typeof ZRightOperand>;
+
+export const ZSingleCondition = z
+  .object({
+    id: ZId,
+    leftOperand: ZLeftOperand,
+    operator: ZSurveyLogicConditionsOperator,
+    rightOperand: ZRightOperand.optional(),
+  })
+  .and(
+    z.object({
+      connector: z.undefined(),
+    })
+  )
+  .superRefine((val, ctx) => {
+    if (
+      !operatorsWithoutRightOperand.includes(val.operator as (typeof operatorsWithoutRightOperand)[number])
+    ) {
+      if (val.rightOperand === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: right operand is required for operator "${val.operator}"`,
+          path: ["rightOperand"],
+        });
+      } else if (val.rightOperand.type === "static" && val.rightOperand.value === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: right operand value cannot be empty for operator "${val.operator}"`,
+        });
+      }
+    } else if (val.rightOperand !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: right operand should not be present for operator "${val.operator}"`,
+        path: ["rightOperand"],
+      });
+    }
+  });
+
+export type TSingleCondition = z.infer<typeof ZSingleCondition>;
+
+export interface TConditionGroup {
+  id: string;
+  connector: "and" | "or";
+  conditions: (TSingleCondition | TConditionGroup)[];
+}
+
+const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
+  z.object({
+    id: ZId,
+    connector: z.enum(["and", "or"]),
+    conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
+  })
+);
+
+// Actions
+export const ZActionVariableValueType = z.union([z.literal("static"), ZDynamicLogicField]);
+export type TActionVariableValueType = z.infer<typeof ZActionVariableValueType>;
+
+const ZActionBase = z.object({
+  id: ZId,
+  objective: ZActionObjective,
 });
 
-export const ZSurveyMultipleChoiceLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "equals", "notEquals", "includesOne", "includesAll"]).optional(),
-  value: z.union([z.array(z.string()), z.string()]).optional(),
+export type TActionBase = z.infer<typeof ZActionBase>;
+
+const ZActionCalculateBase = ZActionBase.extend({
+  objective: z.literal("calculate"),
+  variableId: z.string(),
 });
 
-export const ZSurveyNPSLogic = ZSurveyLogicBase.extend({
-  condition: z
-    .enum([
-      "equals",
-      "notEquals",
-      "lessThan",
-      "lessEqual",
-      "greaterThan",
-      "greaterEqual",
-      "submitted",
-      "skipped",
-    ])
-    .optional(),
-  value: z.union([z.string(), z.number()]).optional(),
+export const ZActionCalculateText = ZActionCalculateBase.extend({
+  operator: ZActionTextVariableCalculateOperator,
+  value: z.union([
+    z.object({
+      type: z.literal("static"),
+      value: z
+        .string({ message: "Conditional Logic: Value must be a string for text variable" })
+        .min(1, "Conditional Logic: Please enter a value in logic field"),
+    }),
+    ZDynamicLogicFieldValue,
+  ]),
 });
 
-export const ZSurveyCTALogic = ZSurveyLogicBase.extend({
-  // "submitted" condition is legacy and should be removed later
-  condition: z.enum(["clicked", "submitted", "skipped"]).optional(),
-  value: z.undefined(),
+export const ZActionCalculateNumber = ZActionCalculateBase.extend({
+  operator: ZActionNumberVariableCalculateOperator,
+  value: z.union([
+    z.object({
+      type: z.literal("static"),
+      value: z.number({ message: "Conditional Logic: Value must be a number for number variable" }),
+    }),
+    ZDynamicLogicFieldValue,
+  ]),
+}).superRefine((val, ctx) => {
+  if (val.operator === "divide" && val.value.type === "static" && val.value.value === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Conditional Logic: Cannot divide by zero",
+      path: ["value", "value"],
+    });
+  }
 });
 
-export const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
-  condition: z
-    .enum([
-      "equals",
-      "notEquals",
-      "lessThan",
-      "lessEqual",
-      "greaterThan",
-      "greaterEqual",
-      "submitted",
-      "skipped",
-    ])
-    .optional(),
-  value: z.union([z.string(), z.number()]).optional(),
+const ZActionCalculate = z.union([ZActionCalculateText, ZActionCalculateNumber]);
+
+export type TActionCalculate = z.infer<typeof ZActionCalculate>;
+
+const ZActionRequireAnswer = ZActionBase.extend({
+  objective: z.literal("requireAnswer"),
+  target: z.string().min(1, "Conditional Logic: Target question id cannot be empty"),
+});
+export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
+
+const ZActionJumpToQuestion = ZActionBase.extend({
+  objective: z.literal("jumpToQuestion"),
+  target: z.string().min(1, "Conditional Logic: Target question id cannot be empty"),
 });
 
-export const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "equals", "includesOne", "includesAll"]).optional(),
-  value: z.union([z.array(z.string()), z.string()]).optional(),
-});
+export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;
 
-export const ZSurveyCalLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["booked", "skipped"]).optional(),
-  value: z.undefined(),
-});
+export const ZSurveyLogicAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToQuestion]);
 
-const ZSurveyMatrixLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["isCompletelySubmitted", "isPartiallySubmitted", "skipped"]).optional(),
-  value: z.undefined(),
-});
+export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
 
-export const ZSurveyLogic = z.union([
-  ZSurveyOpenTextLogic,
-  ZSurveyConsentLogic,
-  ZSurveyMultipleChoiceLogic,
-  ZSurveyNPSLogic,
-  ZSurveyCTALogic,
-  ZSurveyRatingLogic,
-  ZSurveyPictureSelectionLogic,
-  ZSurveyFileUploadLogic,
-  ZSurveyCalLogic,
-  ZSurveyMatrixLogic,
-  ZSurveyAddressLogic,
-  ZSurveyRankingLogic,
-]);
+const ZSurveyLogicActions = z.array(ZSurveyLogicAction);
+
+export const ZSurveyLogic = z.object({
+  id: ZId,
+  conditions: ZConditionGroup,
+  actions: ZSurveyLogicActions,
+});
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
-
-export type TSurveyPictureSelectionLogic = z.infer<typeof ZSurveyPictureSelectionLogic>;
 
 export const ZSurveyQuestionBase = z.object({
   id: ZSurveyQuestionId,
@@ -380,7 +472,6 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
-  logic: z.array(ZSurveyOpenTextLogic).optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
 });
 
@@ -391,7 +482,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   html: ZI18nString.optional(),
   label: ZI18nString,
   placeholder: z.string().optional(),
-  logic: z.array(ZSurveyConsentLogic).optional(),
 });
 
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
@@ -408,25 +498,9 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
   choices: z
     .array(ZSurveyQuestionChoice)
     .min(2, { message: "Multiple Choice Question must have at least two choices" }),
-  logic: z.array(ZSurveyMultipleChoiceLogic).optional(),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
-}).refine(
-  (question) => {
-    const { logic, type } = question;
-
-    if (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
-      // The single choice question should not have 'includesAll' logic
-      return !logic?.some((l) => l.condition === "includesAll");
-    }
-    // The multi choice question should not have 'notEquals' logic
-    return !logic?.some((l) => l.condition === "notEquals");
-  },
-  {
-    message:
-      "MultipleChoiceSingle question should not have 'includesAll' logic and MultipleChoiceMulti question should not have 'notEquals' logic",
-  }
-);
+});
 
 export type TSurveyMultipleChoiceQuestion = z.infer<typeof ZSurveyMultipleChoiceQuestion>;
 
@@ -435,7 +509,6 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
   isColorCodingEnabled: z.boolean().optional().default(false),
-  logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
 export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
@@ -446,7 +519,6 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: ZI18nString.optional(),
-  logic: z.array(ZSurveyCTALogic).optional(),
 });
 
 export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
@@ -458,7 +530,6 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
   isColorCodingEnabled: z.boolean().optional().default(false),
-  logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
 export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
@@ -477,7 +548,6 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   choices: z
     .array(ZSurveyPictureChoice)
     .min(2, { message: "Picture Selection question must have atleast 2 choices" }),
-  logic: z.array(ZSurveyPictureSelectionLogic).optional(),
 });
 
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
@@ -487,7 +557,6 @@ export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
   allowMultipleFiles: z.boolean(),
   maxSizeInMB: z.number().optional(),
   allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
-  logic: z.array(ZSurveyFileUploadLogic).optional(),
 });
 
 export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
@@ -496,7 +565,6 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string().min(1, { message: "Cal user name is required" }),
   calHost: z.string().optional(),
-  logic: z.array(ZSurveyCalLogic).optional(),
 });
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
@@ -505,21 +573,36 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZI18nString),
   columns: z.array(ZI18nString),
-  logic: z.array(ZSurveyMatrixLogic).optional(),
 });
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
+const ZSurveyShowRequiredToggle = z.object({
+  show: z.boolean(),
+  required: z.boolean(),
+});
+
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
-  isAddressLine1Required: z.boolean().default(false),
-  isAddressLine2Required: z.boolean().default(false),
-  isCityRequired: z.boolean().default(false),
-  isStateRequired: z.boolean().default(false),
-  isZipRequired: z.boolean().default(false),
-  isCountryRequired: z.boolean().default(false),
+  addressLine1: ZSurveyShowRequiredToggle,
+  addressLine2: ZSurveyShowRequiredToggle,
+  city: ZSurveyShowRequiredToggle,
+  state: ZSurveyShowRequiredToggle,
+  zip: ZSurveyShowRequiredToggle,
+  country: ZSurveyShowRequiredToggle,
 });
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
+
+export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
+  firstName: ZSurveyShowRequiredToggle,
+  lastName: ZSurveyShowRequiredToggle,
+  email: ZSurveyShowRequiredToggle,
+  phone: ZSurveyShowRequiredToggle,
+  company: ZSurveyShowRequiredToggle,
+});
+
+export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
 export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
@@ -546,6 +629,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyMatrixQuestion,
   ZSurveyAddressQuestion,
   ZSurveyRankingQuestion,
+  ZSurveyContactInfoQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -569,6 +653,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Rating,
   TSurveyQuestionTypeEnum.Cal,
   TSurveyQuestionTypeEnum.Ranking,
+  TSurveyQuestionTypeEnum.ContactInfo,
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
@@ -740,7 +825,6 @@ export const ZSurvey = z
 
     // Custom default validation for each question
     questions.forEach((question, questionIndex) => {
-      const existingLogicConditions = new Set();
       multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
       if (multiLangIssue) {
         ctx.addIssue(multiLangIssue);
@@ -965,38 +1049,37 @@ export const ZSurvey = z
         }
       }
 
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+        const { company, email, firstName, lastName, phone } = question;
+        const fields = [company, email, firstName, lastName, phone];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "At least one field must be shown in the Contact Info question",
+            path: ["questions", questionIndex],
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Address) {
+        const { addressLine1, addressLine2, city, state, zip, country } = question;
+        const fields = [addressLine1, addressLine2, city, state, zip, country];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "At least one field must be shown in the Address question",
+            path: ["questions", questionIndex],
+          });
+        }
+      }
+
       if (question.logic) {
-        question.logic.forEach((logic, logicIndex) => {
-          const logicConditions = ["condition", "value", "destination"] as const;
-          const validFields = logicConditions.filter((field) => logic[field] !== undefined).length;
+        const logicIssues = validateLogic(survey, questionIndex, question.logic);
 
-          if (validFields < 2) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Logic for question ${String(questionIndex + 1)} is missing required fields`,
-              path: ["questions", questionIndex, "logic"],
-            });
-          }
-
-          if (question.required && logic.condition === "skipped") {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Logic for question ${String(questionIndex + 1)} is invalid. Required questions cannot be skipped.`,
-              path: ["questions", questionIndex, "logic"],
-            });
-          }
-
-          // logic condition and value mapping should not be repeated
-          const thisLogic = `${logic.condition ?? ""}-${Array.isArray(logic.value) ? logic.value.sort().join(",") : String(logic.value)}`;
-          if (existingLogicConditions.has(thisLogic)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message:
-                "There are two competing logic conditions: Please update or delete one in the Questions tab.",
-              path: ["questions", questionIndex, "logic", logicIndex],
-            });
-          }
-          existingLogicConditions.add(thisLogic);
+        logicIssues.forEach((issue) => {
+          ctx.addIssue(issue);
         });
       }
     });
@@ -1007,11 +1090,12 @@ export const ZSurvey = z
         const questionIndex = questions.findIndex((q) => q.id === questionId);
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Cyclic logic detected 🔃 Please check the logic of question ${String(questionIndex + 1)}.`,
+          message: `Conditional Logic: Cyclic logic detected 🔃 Please check the logic of question ${String(questionIndex + 1)}.`,
           path: ["questions", questionIndex, "logic"],
         });
       });
     }
+
     endings.forEach((ending, index) => {
       // thank you card validations
       if (ending.type === "endScreen") {
@@ -1065,6 +1149,877 @@ export const ZSurvey = z
       }
     });
   });
+
+const isInvalidOperatorsForQuestionType = (
+  question: TSurveyQuestion,
+  operator: TSurveyLogicConditionsOperator
+): boolean => {
+  let isInvalidOperator = false;
+
+  const questionType = question.type;
+
+  if (question.required && operator === "isSkipped") return true;
+
+  switch (questionType) {
+    case TSurveyQuestionTypeEnum.OpenText:
+      switch (question.inputType) {
+        case "email":
+        case "phone":
+        case "text":
+        case "url":
+          if (
+            ![
+              "equals",
+              "doesNotEqual",
+              "contains",
+              "doesNotContain",
+              "startsWith",
+              "doesNotStartWith",
+              "endsWith",
+              "doesNotEndWith",
+              "isSubmitted",
+              "isSkipped",
+            ].includes(operator)
+          ) {
+            isInvalidOperator = true;
+          }
+          break;
+        case "number":
+          if (
+            ![
+              "equals",
+              "doesNotEqual",
+              "isGreaterThan",
+              "isLessThan",
+              "isGreaterThanOrEqual",
+              "isLessThanOrEqual",
+              "isSubmitted",
+              "isSkipped",
+            ].includes(operator)
+          ) {
+            isInvalidOperator = true;
+          }
+      }
+      break;
+    case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
+      if (!["equals", "doesNotEqual", "equalsOneOf", "isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
+    case TSurveyQuestionTypeEnum.PictureSelection:
+      if (
+        !["equals", "doesNotEqual", "includesAllOf", "includesOneOf", "isSubmitted", "isSkipped"].includes(
+          operator
+        )
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.NPS:
+    case TSurveyQuestionTypeEnum.Rating:
+      if (
+        ![
+          "equals",
+          "doesNotEqual",
+          "isGreaterThan",
+          "isLessThan",
+          "isGreaterThanOrEqual",
+          "isLessThanOrEqual",
+          "isSubmitted",
+          "isSkipped",
+        ].includes(operator)
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.CTA:
+      if (!["isClicked", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Consent:
+      if (!["isAccepted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Date:
+      if (!["equals", "doesNotEqual", "isBefore", "isAfter", "isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.FileUpload:
+    case TSurveyQuestionTypeEnum.Address:
+    case TSurveyQuestionTypeEnum.Ranking:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Cal:
+      if (!["isBooked", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.Matrix:
+      if (!["isPartiallySubmitted", "isCompletelySubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    default:
+      isInvalidOperator = true;
+  }
+
+  return isInvalidOperator;
+};
+
+const isInvalidOperatorsForVariableType = (
+  variableType: "text" | "number",
+  operator: TSurveyLogicConditionsOperator
+): boolean => {
+  let isInvalidOperator = false;
+
+  switch (variableType) {
+    case "text":
+      if (
+        ![
+          "equals",
+          "doesNotEqual",
+          "contains",
+          "doesNotContain",
+          "startsWith",
+          "doesNotStartWith",
+          "endsWith",
+          "doesNotEndWith",
+        ].includes(operator)
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+    case "number":
+      if (
+        ![
+          "equals",
+          "doesNotEqual",
+          "isGreaterThan",
+          "isLessThan",
+          "isGreaterThanOrEqual",
+          "isLessThanOrEqual",
+        ].includes(operator)
+      ) {
+        isInvalidOperator = true;
+      }
+      break;
+  }
+
+  return isInvalidOperator;
+};
+
+const isInvalidOperatorsForHiddenFieldType = (operator: TSurveyLogicConditionsOperator): boolean => {
+  let isInvalidOperator = false;
+
+  if (
+    ![
+      "equals",
+      "doesNotEqual",
+      "contains",
+      "doesNotContain",
+      "startsWith",
+      "doesNotStartWith",
+      "endsWith",
+      "doesNotEndWith",
+    ].includes(operator)
+  ) {
+    isInvalidOperator = true;
+  }
+
+  return isInvalidOperator;
+};
+
+const validateConditions = (
+  survey: TSurvey,
+  questionIndex: number,
+  logicIndex: number,
+  conditions: TConditionGroup
+): z.ZodIssue[] => {
+  const issues: z.ZodIssue[] = [];
+
+  const validateSingleCondition = (condition: TSingleCondition): void => {
+    const { leftOperand, operator, rightOperand } = condition;
+
+    // Validate left operand
+    if (leftOperand.type === "question") {
+      const questionId = leftOperand.value;
+      const questionIdx = survey.questions.findIndex((q) => q.id === questionId);
+      const question = questionIdx !== -1 ? survey.questions[questionIdx] : undefined;
+
+      if (!question) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+        return;
+      } else if (questionIndex < questionIdx) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: Question ${String(questionIndex + 1)} cannot refer to a question ${String(questionIdx + 1)} that appears later in the survey`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+        return;
+      }
+
+      // Validate operator based on question type
+      const isInvalidOperator = isInvalidOperatorsForQuestionType(question, operator);
+      if (isInvalidOperator) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: Invalid operator "${operator}" for question type "${question.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+
+      // Validate right operand
+      if (
+        [
+          "isSubmitted",
+          "isSkipped",
+          "isClicked",
+          "isAccepted",
+          "isBooked",
+          "isPartiallySubmitted",
+          "isCompletelySubmitted",
+        ].includes(operator)
+      ) {
+        if (rightOperand !== undefined) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+        return;
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.OpenText) {
+        // Validate right operand
+        if (rightOperand?.type === "question") {
+          const quesId = rightOperand.value;
+          const ques = survey.questions.find((q) => q.id === quesId);
+
+          if (!ques) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const validQuestionTypes = [TSurveyQuestionTypeEnum.OpenText];
+
+            if (question.inputType === "number") {
+              validQuestionTypes.push(...[TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS]);
+            }
+
+            if (["equals", "doesNotEqual"].includes(condition.operator)) {
+              if (question.inputType !== "number") {
+                validQuestionTypes.push(
+                  ...[
+                    TSurveyQuestionTypeEnum.Date,
+                    TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+                    TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+                  ]
+                );
+              }
+            }
+
+            if (!validQuestionTypes.includes(ques.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid question type "${ques.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "hiddenField") {
+          const fieldId = rightOperand.value;
+          const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
+
+          if (!field) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          if (!rightOperand.value) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Static value is required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
+      } else if (question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
+        if (rightOperand?.type !== "static") {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
+          if (typeof rightOperand.value !== "string") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const choice = question.choices.find((c) => c.id === rightOperand.value);
+            if (!choice) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (condition.operator === "equalsOneOf") {
+          if (!Array.isArray(rightOperand.value)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            rightOperand.value.forEach((value) => {
+              if (typeof value !== "string") {
+                issues.push({
+                  code: z.ZodIssueCode.custom,
+                  message: `Conditional Logic: Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                  path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                });
+              }
+            });
+
+            const choices = question.choices.map((c) => c.id);
+
+            if (rightOperand.value.some((value) => !choices.includes(value))) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        }
+      } else if (
+        question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+        question.type === TSurveyQuestionTypeEnum.PictureSelection
+      ) {
+        if (rightOperand?.type !== "static") {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Right operand should be amongst the choice values for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
+          if (typeof rightOperand.value !== "string") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const choice = question.choices.find((c) => c.id === rightOperand.value);
+            if (!choice) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (condition.operator === "includesAllOf" || condition.operator === "includesOneOf") {
+          if (!Array.isArray(rightOperand.value)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            rightOperand.value.forEach((value) => {
+              if (typeof value !== "string") {
+                issues.push({
+                  code: z.ZodIssueCode.custom,
+                  message: `Conditional Logic: Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                  path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                });
+              }
+            });
+
+            const choices = question.choices.map((c) => c.id);
+
+            if (rightOperand.value.some((value) => !choices.includes(value))) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        }
+      } else if (
+        question.type === TSurveyQuestionTypeEnum.NPS ||
+        question.type === TSurveyQuestionTypeEnum.Rating
+      ) {
+        if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== "number") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable type should be number in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          if (typeof rightOperand.value !== "number") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
+            if (rightOperand.value < 0 || rightOperand.value > 10) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          } else if (rightOperand.value < 1 || rightOperand.value > question.range) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Rating value should be between 1 and ${String(question.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+      } else if (question.type === TSurveyQuestionTypeEnum.Date) {
+        if (rightOperand?.type === "question") {
+          const quesId = rightOperand.value;
+          const ques = survey.questions.find((q) => q.id === quesId);
+
+          if (!ques) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else {
+            const validQuestionTypes = [TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.Date];
+            if (!validQuestionTypes.includes(question.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (rightOperand?.type === "variable") {
+          const variableId = rightOperand.value;
+          const variable = survey.variables.find((v) => v.id === variableId);
+
+          if (!variable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== "text") {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "hiddenField") {
+          const fieldId = rightOperand.value;
+          const doesFieldExists = survey.hiddenFields.fieldIds?.includes(fieldId);
+
+          if (!doesFieldExists) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "static") {
+          const date = rightOperand.value as string;
+
+          if (!date) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Please select a date value in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (isNaN(new Date(date).getTime())) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
+      }
+    } else if (leftOperand.type === "variable") {
+      const variableId = leftOperand.value;
+      const variable = survey.variables.find((v) => v.id === variableId);
+      if (!variable) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      } else {
+        // Validate operator based on variable type
+        const isInvalidOperator = isInvalidOperatorsForVariableType(variable.type, operator);
+        if (isInvalidOperator) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Invalid operator "${operator}" for variable ${variable.name} of type "${variable.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+
+        // Validate right operand
+        if (rightOperand?.type === "question") {
+          const questionId = rightOperand.value;
+          const question = survey.questions.find((q) => q.id === questionId);
+
+          if (!question) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type === "number") {
+            const validQuestionTypes = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
+            if (!validQuestionTypes.includes(question.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          } else {
+            const validQuestionTypes = [
+              TSurveyQuestionTypeEnum.OpenText,
+              TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            ];
+
+            if (["equals", "doesNotEqual"].includes(operator)) {
+              validQuestionTypes.push(
+                TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+                TSurveyQuestionTypeEnum.Date
+              );
+            }
+
+            if (!validQuestionTypes.includes(question.type)) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          }
+        } else if (rightOperand?.type === "variable") {
+          const id = rightOperand.value;
+          const foundVariable = survey.variables.find((v) => v.id === id);
+
+          if (!foundVariable) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          } else if (variable.type !== foundVariable.type) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Variable type mismatch in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        } else if (rightOperand?.type === "hiddenField") {
+          const fieldId = rightOperand.value;
+          const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
+
+          if (!field) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
+      }
+    } else {
+      const hiddenFieldId = leftOperand.value;
+      const hiddenField = survey.hiddenFields.fieldIds?.find((fieldId) => fieldId === hiddenFieldId);
+
+      if (!hiddenField) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: Hidden field ID ${hiddenFieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+
+      // Validate operator based on hidden field type
+      const isInvalidOperator = isInvalidOperatorsForHiddenFieldType(operator);
+      if (isInvalidOperator) {
+        issues.push({
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: Invalid operator "${operator}" for hidden field in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+        });
+      }
+
+      // Validate right operand
+      if (rightOperand?.type === "question") {
+        const questionId = rightOperand.value;
+        const question = survey.questions.find((q) => q.id === questionId);
+
+        if (!question) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else {
+          const validQuestionTypes = [
+            TSurveyQuestionTypeEnum.OpenText,
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          ];
+
+          if (["equals", "doesNotEqual"].includes(condition.operator)) {
+            validQuestionTypes.push(
+              TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+              TSurveyQuestionTypeEnum.Date
+            );
+          }
+
+          if (!validQuestionTypes.includes(question.type)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            });
+          }
+        }
+      } else if (rightOperand?.type === "variable") {
+        const variableId = rightOperand.value;
+        const variable = survey.variables.find((v) => v.id === variableId);
+
+        if (!variable) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        } else if (variable.type !== "text") {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+      } else if (rightOperand?.type === "hiddenField") {
+        const fieldId = rightOperand.value;
+        const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
+
+        if (!field) {
+          issues.push({
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          });
+        }
+      }
+    }
+  };
+
+  const validateConditionGroup = (group: TConditionGroup): void => {
+    group.conditions.forEach((condition) => {
+      if (isConditionGroup(condition)) {
+        validateConditionGroup(condition);
+      } else {
+        validateSingleCondition(condition);
+      }
+    });
+  };
+
+  validateConditionGroup(conditions);
+
+  return issues;
+};
+
+const validateActions = (
+  survey: TSurvey,
+  questionIndex: number,
+  logicIndex: number,
+  actions: TSurveyLogicAction[]
+): z.ZodIssue[] => {
+  const questionIds = survey.questions.map((q) => q.id);
+
+  const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
+    if (action.objective === "calculate") {
+      const variable = survey.variables.find((v) => v.id === action.variableId);
+
+      if (!variable) {
+        return {
+          code: z.ZodIssueCode.custom,
+          message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic", logicIndex],
+        };
+      }
+
+      if (action.value.type === "variable") {
+        const selectedVariable = survey.variables.find((v) => v.id === action.value.value);
+
+        if (!selectedVariable || selectedVariable.type !== variable.type) {
+          return {
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
+      }
+
+      if (variable.type === "text") {
+        const textVariableParseData = ZActionCalculateText.safeParse(action);
+        if (!textVariableParseData.success) {
+          return {
+            code: z.ZodIssueCode.custom,
+            message: textVariableParseData.error.errors[0].message,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
+
+        if (action.value.type === "question") {
+          const allowedQuestions = [
+            TSurveyQuestionTypeEnum.OpenText,
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            TSurveyQuestionTypeEnum.Rating,
+            TSurveyQuestionTypeEnum.NPS,
+            TSurveyQuestionTypeEnum.Date,
+          ];
+
+          const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
+
+          if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
+            return {
+              code: z.ZodIssueCode.custom,
+              message: `Conditional Logic: Invalid question type for text variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              path: ["questions", questionIndex, "logic", logicIndex],
+            };
+          }
+        }
+
+        return undefined;
+      }
+
+      const numberVariableParseData = ZActionCalculateNumber.safeParse(action);
+      if (!numberVariableParseData.success) {
+        return {
+          code: z.ZodIssueCode.custom,
+          message: numberVariableParseData.error.errors[0].message,
+          path: ["questions", questionIndex, "logic", logicIndex],
+        };
+      }
+
+      if (action.value.type === "question") {
+        const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
+
+        const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
+        if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
+          return {
+            code: z.ZodIssueCode.custom,
+            message: `Conditional Logic: Invalid question type for number variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
+      }
+    } else {
+      const endingIds = survey.endings.map((ending) => ending.id);
+
+      const possibleQuestionIds =
+        action.objective === "jumpToQuestion" ? [...questionIds, ...endingIds] : questionIds;
+
+      if (!possibleQuestionIds.includes(action.target)) {
+        return {
+          code: z.ZodIssueCode.custom,
+          message: `Question ID ${action.target} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          path: ["questions", questionIndex, "logic"],
+        };
+      }
+
+      if (action.objective === "requireAnswer") {
+        const optionalQuestionIds = survey.questions
+          .filter((question) => !question.required)
+          .map((question) => question.id);
+
+        if (!optionalQuestionIds.includes(action.target)) {
+          const quesIdx = survey.questions.findIndex((q) => q.id === action.target);
+
+          return {
+            code: z.ZodIssueCode.custom,
+            message: `Question ${String(quesIdx + 1)} is already required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            path: ["questions", questionIndex, "logic", logicIndex],
+          };
+        }
+      }
+    }
+
+    return undefined;
+  });
+
+  return actionIssues.filter((issue) => issue !== undefined);
+};
+
+const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLogic[]): z.ZodIssue[] => {
+  const logicIssues = logic.map((logicItem, logicIndex) => {
+    return [
+      ...validateConditions(survey, questionIndex, logicIndex, logicItem.conditions),
+      ...validateActions(survey, questionIndex, logicIndex, logicItem.actions),
+    ];
+  });
+  return logicIssues.flat();
+};
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
 export const ZSurveyUpdateInput = ZSurvey.innerType()
@@ -1380,11 +2335,32 @@ export const ZSurveyQuestionSummaryAddress = z.object({
 
 export type TSurveyQuestionSummaryAddress = z.infer<typeof ZSurveyQuestionSummaryAddress>;
 
+export const ZSurveyQuestionSummaryContactInfo = z.object({
+  type: z.literal("contactInfo"),
+  question: ZSurveyContactInfoQuestion,
+  responseCount: z.number(),
+  samples: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.array(z.string()),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyQuestionSummaryContactInfo = z.infer<typeof ZSurveyQuestionSummaryContactInfo>;
+
 export const ZSurveyQuestionSummaryRanking = z.object({
   type: z.literal("ranking"),
   question: ZSurveyRankingQuestion,
   responseCount: z.number(),
-
   choices: z.array(
     z.object({
       value: z.string(),
@@ -1423,6 +2399,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryMatrix,
   ZSurveyQuestionSummaryAddress,
   ZSurveyQuestionSummaryRanking,
+  ZSurveyQuestionSummaryContactInfo,
 ]);
 
 export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;

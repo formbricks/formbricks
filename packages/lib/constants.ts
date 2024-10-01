@@ -74,7 +74,7 @@ export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !==
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
-export const ITEMS_PER_PAGE = 50;
+export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 20;
 export const TEXT_RESPONSES_PER_PAGE = 5;
@@ -168,6 +168,7 @@ export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
 export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
+export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
 export const STRIPE_API_VERSION = "2024-06-20";
 

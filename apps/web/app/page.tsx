@@ -1,3 +1,4 @@
+import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -6,7 +7,7 @@ import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { TEnvironment } from "@formbricks/types/environment";
-import { ClientLogout } from "@formbricks/ui/ClientLogout";
+import { ClientLogout } from "@formbricks/ui/components/ClientLogout";
 
 const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);
@@ -39,10 +40,10 @@ const Page = async () => {
 
   if (!environment) {
     console.error("Failed to get first environment of user");
-    return redirect(`/organizations/${userOrganizations[0].id}/products/new/channel`);
+    return redirect(`/organizations/${userOrganizations[0].id}/products/new/mode`);
   }
 
-  return redirect(`/environments/${environment.id}`);
+  return <ClientEnvironmentRedirect environmentId={environment.id} />;
 };
 
 export default Page;

@@ -13,8 +13,8 @@ import { getPerson } from "@formbricks/lib/person/service";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
   const [environment, environmentTags, product, session, organization, person, attributes, attributeClasses] =

@@ -5,12 +5,12 @@ import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { FileInput } from "@formbricks/ui/FileInput";
-import { Input } from "@formbricks/ui/Input";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { FileInput } from "@formbricks/ui/components/FileInput";
+import { Input } from "@formbricks/ui/components/Input";
 import { updateProductAction } from "../../actions";
 
 interface EditLogoProps {
@@ -117,7 +117,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       ) : (
         <FileInput
           id="logo-input"
-          allowedFileExtensions={["png", "jpeg", "jpg"]}
+          allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
           environmentId={environmentId}
           onFileUpload={(files: string[]) => {
             setLogoUrl(files[0]);
@@ -129,7 +129,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       <Input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg, image/png"
+        accept="image/jpeg, image/png, image/webp"
         className="hidden"
         onChange={handleFileChange}
       />

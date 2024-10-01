@@ -1,5 +1,6 @@
 "use client";
 
+import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
@@ -19,6 +20,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
+  RocketIcon,
   UserCircleIcon,
   UserIcon,
   UsersIcon,
@@ -30,7 +32,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { FORMBRICKS_PRODUCT_ID_LS, FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -38,9 +39,9 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
+import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
+import { Button } from "@formbricks/ui/components/Button";
+import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +54,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
+import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -61,9 +63,9 @@ interface NavigationProps {
   user: TUser;
   organization: TOrganization;
   products: TProduct[];
-  isFormbricksCloud: boolean;
-  membershipRole?: TMembershipRole;
   isMultiOrgEnabled: boolean;
+  isFormbricksCloud?: boolean;
+  membershipRole?: TMembershipRole;
 }
 
 export const MainNavigation = ({
@@ -72,9 +74,9 @@ export const MainNavigation = ({
   organization,
   user,
   products,
-  isFormbricksCloud,
-  membershipRole,
   isMultiOrgEnabled,
+  isFormbricksCloud = true,
+  membershipRole,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -84,6 +86,7 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
+  const [latestVersion, setLatestVersion] = useState("");
 
   const product = products.find((product) => product.id === environment.productId);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
@@ -115,16 +118,6 @@ export const MainNavigation = ({
     }
   }, [organization]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const productId = localStorage.getItem(FORMBRICKS_PRODUCT_ID_LS);
-    const targetProduct = products.find((product) => product.id === productId);
-    if (targetProduct && productId && product && product.id !== targetProduct.id) {
-      router.push(`/products/${targetProduct.id}/`);
-    }
-  }, []);
-
   const sortedOrganizations = useMemo(() => {
     return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
   }, [organizations]);
@@ -151,12 +144,6 @@ export const MainNavigation = ({
   }, [products]);
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_PRODUCT_ID_LS, productId);
-
-      // Remove filters when switching products
-      localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-    }
     router.push(`/products/${productId}/`);
   };
 
@@ -165,7 +152,7 @@ export const MainNavigation = ({
   };
 
   const handleAddProduct = (organizationId: string) => {
-    router.push(`/organizations/${organizationId}/products/new/channel`);
+    router.push(`/organizations/${organizationId}/products/new/mode`);
   };
 
   const mainNavigation = useMemo(
@@ -241,6 +228,21 @@ export const MainNavigation = ({
     },
   ];
 
+  useEffect(() => {
+    async function loadReleases() {
+      const res = await getLatestStableFbReleaseAction();
+      if (res?.data) {
+        const latestVersionTag = res.data;
+        const currentVersionTag = `v${packageJson.version}`;
+
+        if (currentVersionTag !== latestVersionTag) {
+          setLatestVersion(latestVersionTag);
+        }
+      }
+    }
+    if (isOwnerOrAdmin) loadReleases();
+  }, [isOwnerOrAdmin]);
+
   return (
     <>
       {product && (
@@ -298,8 +300,22 @@ export const MainNavigation = ({
               )}
             </ul>
           </div>
+
           {/* Product Switch */}
           <div>
+            {/* New Version Available */}
+            {!isCollapsed && isOwnerOrAdmin && latestVersion && !isFormbricksCloud && (
+              <Link
+                href="https://github.com/formbricks/formbricks/releases"
+                target="_blank"
+                className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
+                <p className="flex items-center justify-center gap-x-2 text-xs">
+                  <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
+                  Formbricks {latestVersion} is here. Upgrade now!
+                </p>
+              </Link>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger
                 asChild

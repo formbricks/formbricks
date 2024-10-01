@@ -6,16 +6,23 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { TUser, ZUser } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+} from "@formbricks/ui/components/DropdownMenu";
+import {
+  FormControl,
+  FormError,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
 import { updateUserAction } from "../actions";
 
 const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true });

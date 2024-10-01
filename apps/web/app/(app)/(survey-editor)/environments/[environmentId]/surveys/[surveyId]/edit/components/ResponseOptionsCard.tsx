@@ -7,11 +7,11 @@ import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { DatePicker } from "@formbricks/ui/DatePicker";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { DatePicker } from "@formbricks/ui/components/DatePicker";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;

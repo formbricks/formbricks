@@ -1,13 +1,13 @@
-import { PeopleSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PeopleSecondaryNavigation";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = () => {
   return (
     <>
       <PageContentWrapper>
         <PageHeader pageTitle="common.people">
-          <PeopleSecondaryNavigation activeId="people" loading />
+          <PersonSecondaryNavigation activeId="people" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">

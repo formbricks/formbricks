@@ -2,7 +2,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import "./globals.css";
+import "@formbricks/ui/globals.css";
 
 export const metadata: Metadata = {
   title: {

@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
-import { Badge } from "@formbricks/ui/Badge";
+import { Badge } from "@formbricks/ui/components/Badge";
 
 export const SettingsCard = ({
   title,

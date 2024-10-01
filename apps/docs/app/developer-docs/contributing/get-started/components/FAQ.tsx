@@ -1,4 +1,9 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui/Accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@formbricks/ui/components/Accordion";
 import { FaqJsonLdComponent } from "./FAQPageJsonLd";
 
 const FAQ_DATA = [

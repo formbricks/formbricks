@@ -12,7 +12,7 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { SecondaryNavigation } from "@formbricks/ui/SecondaryNavigation";
+import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface SurveyAnalysisNavigationProps {
   environmentId: string;

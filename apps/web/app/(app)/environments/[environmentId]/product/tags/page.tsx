@@ -10,9 +10,9 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { EditTagsWrapper } from "./components/EditTagsWrapper";
 
 const Page = async ({ params }) => {

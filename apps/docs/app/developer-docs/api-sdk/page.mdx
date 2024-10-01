@@ -79,28 +79,6 @@ Promise<{ id: string }, NetworkError | Error>
 </CodeGroup>
 </Col>
 
-- Update Display
-
-<Col>
-<CodeGroup title="Update Display">
-
-```javascript {{ title: 'Update Display Method Call'}}
-await api.client.display.update(
-  displayId: "<your-display-id>",
-  {
-    userId: "<your-user-id>", // optional
-    responseId: "<your-response-id>", // optional
-  },
-);
-```
-
-```javascript {{ title: 'Update Display Method Return Type' }}
-Promise<{ }, NetworkError | Error]>
-```
-
-</CodeGroup>
-</Col>
-
 ## Responses
 
 - Create Response
@@ -167,29 +145,6 @@ await api.client.response.update({
 ```
 
 ```javascript {{ title: 'Update Response Method Return Type' }}
-Promise<{ }, NetworkError | Error]>
-```
-
-</CodeGroup>
-</Col>
-
-## Action
-
-- Create Action:
-
-<Note> An environment cannot have 2 actions with the same name. </Note>
-
-<Col>
-<CodeGroup title="Create Action">
-
-```javascript {{ title: 'Create Action Method Call'}}
-await api.client.action.create({
-  name: "<your-action-name>", // required
-  userId: "<your-user-id>", // required
-});
-```
-
-```javascript {{ title: 'Create Action Method Return Type' }}
 Promise<{ }, NetworkError | Error]>
 ```
 

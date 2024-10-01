@@ -11,10 +11,10 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;

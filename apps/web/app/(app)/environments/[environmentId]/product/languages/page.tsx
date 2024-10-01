@@ -5,8 +5,8 @@ import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { EditLanguage } from "@formbricks/ee/multi-language/components/edit-language";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
   const product = await getProductByEnvironmentId(params.environmentId);

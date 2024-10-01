@@ -6,9 +6,9 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { Label } from "@formbricks/ui/Label";
-import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { Label } from "@formbricks/ui/components/Label";
+import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { getActiveInactiveSurveysAction } from "../actions";
 
 interface ActivityTabProps {

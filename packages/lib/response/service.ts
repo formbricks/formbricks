@@ -16,19 +16,19 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
-import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
+import { deleteDisplay, getDisplayCountBySurveyId } from "../display/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
-import { putFile } from "../storage/service";
+import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
@@ -59,9 +59,11 @@ export const responseSelection = {
   data: true,
   meta: true,
   ttc: true,
+  variables: true,
   personAttributes: true,
   singleUseId: true,
   language: true,
+  displayId: true,
   person: {
     select: {
       id: true,
@@ -97,7 +99,7 @@ export const responseSelection = {
       isEdited: true,
     },
   },
-};
+} satisfies Prisma.ResponseSelect;
 
 export const getResponsesByPersonId = reactCache(
   (personId: string, page?: number): Promise<TResponse[] | null> =>
@@ -151,6 +153,61 @@ export const getResponsesByPersonId = reactCache(
     )()
 );
 
+export const getResponsesByUserId = reactCache(
+  (environmentId: string, userId: string, page?: number): Promise<TResponse[] | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
+
+        const person = await getPersonByUserId(environmentId, userId);
+
+        if (!person) {
+          throw new ResourceNotFoundError("Person", userId);
+        }
+
+        try {
+          const responsePrisma = await prisma.response.findMany({
+            where: {
+              personId: person.id,
+            },
+            select: responseSelection,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+
+          if (!responsePrisma) {
+            throw new ResourceNotFoundError("Response from PersonId", person.id);
+          }
+
+          const responsePromises = responsePrisma.map(async (response) => {
+            const tags = response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag);
+
+            return {
+              ...response,
+              tags,
+            };
+          });
+
+          const responses = await Promise.all(responsePromises);
+          return responses;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getResponsesByUserId-${environmentId}-${userId}-${page}`],
+      {
+        tags: [responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
+      }
+    )()
+);
+
 export const getResponseBySingleUseId = reactCache(
   (surveyId: string, singleUseId: string): Promise<TResponse | null> =>
     cache(
@@ -199,10 +256,12 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     language,
     userId,
     surveyId,
+    displayId,
     finished,
     data,
     meta,
     singleUseId,
+    variables,
     ttc: initialTtc,
     createdAt,
     updatedAt,
@@ -237,6 +296,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           id: surveyId,
         },
       },
+      display: displayId ? { connect: { id: displayId } } : undefined,
       finished: finished,
       data: data,
       language: language,
@@ -250,6 +310,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       }),
       ...(meta && ({ meta } as Prisma.JsonObject)),
       singleUseId,
+      ...(variables && { variables }),
       ttc: ttc,
       createdAt,
       updatedAt,
@@ -269,6 +330,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       environmentId: environmentId,
       id: response.id,
       personId: response.person?.id,
+      userId: userId ?? undefined,
       surveyId: response.surveyId,
       singleUseId: singleUseId ? singleUseId : undefined,
     });
@@ -531,7 +593,7 @@ export const getResponseDownloadUrl = async (
     );
     const responses = responsesArray.flat();
 
-    const { metaDataFields, questions, hiddenFields, userAttributes } = extractSurveyDetails(
+    const { metaDataFields, questions, hiddenFields, variables, userAttributes } = extractSurveyDetails(
       survey,
       responses
     );
@@ -548,6 +610,7 @@ export const getResponseDownloadUrl = async (
       "Tags",
       ...metaDataFields,
       ...questions,
+      ...variables,
       ...hiddenFields,
       ...userAttributes,
     ];
@@ -658,6 +721,10 @@ export const updateResponse = async (
         : responseInput.ttc
       : {};
     const language = responseInput.language;
+    const variables = {
+      ...currentResponse.variables,
+      ...responseInput.variables,
+    };
 
     const responsePrisma = await prisma.response.update({
       where: {
@@ -668,6 +735,7 @@ export const updateResponse = async (
         data,
         ttc,
         language,
+        variables,
       },
       select: responseSelection,
     });
@@ -697,6 +765,35 @@ export const updateResponse = async (
   }
 };
 
+const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
+  const fileUploadQuestions = new Set(
+    survey.questions
+      .filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload)
+      .map((q) => q.id)
+  );
+
+  const fileUrls = Object.entries(response.data)
+    .filter(([questionId]) => fileUploadQuestions.has(questionId))
+    .flatMap(([, questionResponse]) => questionResponse as string[]);
+
+  const deletionPromises = fileUrls.map(async (fileUrl) => {
+    try {
+      const { pathname } = new URL(fileUrl);
+      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+
+      if (!environmentId || !accessType || !fileName) {
+        throw new Error(`Invalid file path: ${pathname}`);
+      }
+
+      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+    } catch (error) {
+      console.error(`Failed to delete file ${fileUrl}:`, error);
+    }
+  });
+
+  await Promise.all(deletionPromises);
+};
+
 export const deleteResponse = async (responseId: string): Promise<TResponse> => {
   validateInputs([responseId, ZId]);
   try {
@@ -714,9 +811,20 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
-    deleteDisplayByResponseId(responseId, response.surveyId);
-
+    if (response.displayId) {
+      deleteDisplay(response.displayId);
+    }
     const survey = await getSurvey(response.surveyId);
+
+    if (survey) {
+      await findAndDeleteUploadedFilesInResponse(
+        {
+          ...responsePrisma,
+          tags: responsePrisma.tags.map((tag) => tag.tag),
+        },
+        survey
+      );
+    }
 
     responseCache.revalidate({
       environmentId: survey?.environmentId,
