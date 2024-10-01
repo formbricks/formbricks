@@ -5,9 +5,9 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/Button";
-import { Modal } from "@formbricks/ui/Modal";
-import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
+import { Button } from "@formbricks/ui/components/Button";
+import { Modal } from "@formbricks/ui/components/Modal";
+import { SingleResponseCard } from "@formbricks/ui/components/SingleResponseCard";
 
 interface ResponseCardModalProps {
   responses: TResponse[];

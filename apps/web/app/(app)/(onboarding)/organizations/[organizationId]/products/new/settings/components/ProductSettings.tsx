@@ -1,6 +1,5 @@
 "use client";
 
-import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -8,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { FORMBRICKS_PRODUCT_ID_LS, FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import {
   TProductConfigChannel,
@@ -17,8 +16,8 @@ import {
   TProductUpdateInput,
   ZProductUpdateInput,
 } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Button } from "@formbricks/ui/components/Button";
+import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
 import {
   FormControl,
   FormDescription,
@@ -27,9 +26,9 @@ import {
   FormItem,
   FormLabel,
   FormProvider,
-} from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { SurveyInline } from "@formbricks/ui/Survey";
+} from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ProductSettingsProps {
   organizationId: string;
@@ -65,8 +64,6 @@ export const ProductSettings = ({
         );
         if (productionEnvironment) {
           if (typeof window !== "undefined") {
-            localStorage.setItem(FORMBRICKS_PRODUCT_ID_LS, productionEnvironment.productId);
-
             // Rmove filters when creating a new product
             localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
           }
@@ -133,9 +130,7 @@ export const ProductSettings = ({
                 <FormItem className="w-full space-y-4">
                   <div>
                     <FormLabel>Product name</FormLabel>
-                    <FormDescription>
-                      What is your {getCustomHeadline(channel, industry)} called?
-                    </FormDescription>
+                    <FormDescription>What is your product called?</FormDescription>
                   </div>
                   <FormControl>
                     <div>

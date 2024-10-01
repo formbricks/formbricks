@@ -8,10 +8,10 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TInviteMembersFormSchema, ZInviteMembersFormSchema } from "@formbricks/types/invites";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
 
 interface InviteMembersProps {
   IS_SMTP_CONFIGURED: boolean;

@@ -12,10 +12,10 @@ import { CLOUD_PRICING_DATA } from "@formbricks/ee/billing/lib/constants";
 import { cn } from "@formbricks/lib/cn";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
-import { Badge } from "@formbricks/ui/Badge";
-import { BillingSlider } from "@formbricks/ui/BillingSlider";
-import { Button } from "@formbricks/ui/Button";
-import { PricingCard } from "@formbricks/ui/PricingCard";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { BillingSlider } from "@formbricks/ui/components/BillingSlider";
+import { Button } from "@formbricks/ui/components/Button";
+import { PricingCard } from "@formbricks/ui/components/PricingCard";
 
 interface PricingTableProps {
   organization: TOrganization;

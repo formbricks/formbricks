@@ -129,10 +129,8 @@ Locate that file. We are using the [Tailwind Template “Syntax”](https://tail
 ```tsx
 import { useRouter } from "next/router";
 import { useState } from "react";
-
-import { Button } from "@formbricks/ui/Button";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
-
+import { Button } from "@formbricks/ui/components/Button";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/components/Popover";
 import { handleFeedbackSubmit, updateFeedback } from "../../lib/handleFeedbackSubmit";
 
 export const DocsFeedback = () => {

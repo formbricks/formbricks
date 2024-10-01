@@ -6,8 +6,8 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getProductByEnvironmentId, getProducts } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface XMTemplatePageProps {
   params: {

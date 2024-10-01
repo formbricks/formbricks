@@ -33,8 +33,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@formbricks/ui/Command";
-import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
+} from "@formbricks/ui/components/Command";
+import { NetPromoterScoreIcon } from "@formbricks/ui/components/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",

@@ -1,6 +1,6 @@
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
-import "./globals.css";
+import "@formbricks/ui/globals.css";
 
 export const metadata: Metadata = {
   title: {

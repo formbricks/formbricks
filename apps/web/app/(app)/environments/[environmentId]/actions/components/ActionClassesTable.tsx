@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {
