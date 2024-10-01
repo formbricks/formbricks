@@ -188,6 +188,12 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
+      // Contact Info Question
+      await expect(page.getByText(surveys.createAndSubmit.contactInfo.question)).toBeVisible();
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder)).toBeVisible();
+      await page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder).fill("John Doe");
+      await page.locator("#questionCard-11").getByRole("button", { name: "Next" }).click();
+
       // Ranking Question
       await expect(page.getByText(surveys.createAndSubmit.ranking.question)).toBeVisible();
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
@@ -705,6 +711,10 @@ test.describe("Testing Survey with advanced logic", async () => {
     await test.step("Verify Survey Response", async () => {
       await page.goBack();
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(5000);
+
       await page.getByRole("button", { name: "Close" }).click();
       await page.getByRole("link").filter({ hasText: "Responses" }).click();
       await expect(page.getByRole("table")).toBeVisible();
