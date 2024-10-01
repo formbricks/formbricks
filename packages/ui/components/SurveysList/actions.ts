@@ -13,6 +13,7 @@ import {
   deleteSurvey,
   getSurvey,
   getSurveys,
+  migrateSurveyToOtherEnvironment,
 } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { ZId } from "@formbricks/types/common";
@@ -71,6 +72,40 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
       parsedInput.targetEnvironmentId,
       ctx.user.id
     );
+  });
+
+const ZMigrateSurveyToOtherEnvironmentAction = z.object({
+  surveyId: ZId,
+  targetEnvironmentId: ZId,
+});
+
+export const migrateSurveyToOtherEnvironmentAction = authenticatedActionClient
+  .schema(ZMigrateSurveyToOtherEnvironmentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const { surveyId, targetEnvironmentId } = parsedInput;
+
+    const survey = await getSurvey(surveyId);
+    if (!survey) throw new Error("Survey not found.");
+    const environmentId = survey.environmentId;
+
+    const isSameEnvironment = environmentId === targetEnvironmentId;
+    if (isSameEnvironment) {
+      throw new Error("You cannot move the survey to the same product.");
+    }
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(environmentId),
+      rules: ["survey", "update"],
+    });
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(targetEnvironmentId),
+      rules: ["survey", "update"],
+    });
+
+    // Perform the migration of the survey
+    return await migrateSurveyToOtherEnvironment(surveyId, environmentId, targetEnvironmentId, ctx.user.id);
   });
 
 const ZGetProductsByEnvironmentIdAction = z.object({
