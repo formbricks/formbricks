@@ -26,14 +26,13 @@ async function runMigration(): Promise<void> {
       console.log(`Found ${surveysWithAddressQuestion.length.toString()} surveys with address questions`);
 
       const updationPromises = [];
-      // const updatedSurveys = [];
+      let migratedSurveyCount = 0;
 
       for (const survey of surveysWithAddressQuestion) {
         const updatedQuestions = survey.questions.map((question: TSurveyQuestion) => {
           if (question.type === TSurveyQuestionTypeEnum.Address) {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- addressLine1 is not defined for unmigrated surveys
             if (question.addressLine1 !== undefined) {
-              // return question;
               return null;
             }
 
@@ -68,27 +67,28 @@ async function runMigration(): Promise<void> {
           return question;
         });
 
-        const isUpdationRequired = updatedQuestions.some(
-          (question: TSurveyQuestion | null) => question !== null
+        console.log(updatedQuestions);
+
+        const filteredQuestions = updatedQuestions.filter(
+          (q: TSurveyQuestion | null): q is TSurveyQuestion => q !== null
         );
 
-        if (isUpdationRequired) {
+        if (filteredQuestions.length !== survey.questions.length) {
           updationPromises.push(
             transactionPrisma.survey.update({
-              where: {
-                id: survey.id,
-              },
-              data: {
-                questions: updatedQuestions.filter((question: TSurveyQuestion | null) => question !== null),
-              },
+              where: { id: survey.id },
+              data: { questions: filteredQuestions },
             })
           );
+
+          migratedSurveyCount++;
         }
       }
 
-      if (updationPromises.length === 0) {
-        console.log("No surveys require migration... Exiting");
-        return;
+      if (migratedSurveyCount === 0) {
+        console.log("No surveys required migration.");
+      } else {
+        console.log(`${migratedSurveyCount.toString()} surveys were successfully migrated.`);
       }
 
       await Promise.all(updationPromises);
