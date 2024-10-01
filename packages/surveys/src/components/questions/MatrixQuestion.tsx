@@ -43,12 +43,11 @@ export const MatrixQuestion = ({
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
-  question.rows = useMemo(() => {
+  const questionRows = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledRows(question.rows, question.shuffleOption);
     } else return question.rows;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question.shuffleOption, question.rows.length, question.rows[question.rows.length - 1].id]);
+  }, [question.shuffleOption, question.rows]);
 
   const handleSelect = useCallback(
     (column: string, row: string) => {
@@ -124,7 +123,7 @@ export const MatrixQuestion = ({
                 </tr>
               </thead>
               <tbody>
-                {question.rows.map((row, rowIndex) => (
+                {questionRows.map((row, rowIndex) => (
                   // Table rows
                   <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
                     <td
