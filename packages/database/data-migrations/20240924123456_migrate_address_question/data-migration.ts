@@ -68,7 +68,9 @@ async function runMigration(): Promise<void> {
           return question;
         });
 
-        const isUpdationRequired = updatedQuestions.some((question) => question !== null);
+        const isUpdationRequired = updatedQuestions.some(
+          (question: TSurveyQuestion | null) => question !== null
+        );
 
         if (isUpdationRequired) {
           updationPromises.push(
@@ -77,7 +79,7 @@ async function runMigration(): Promise<void> {
                 id: survey.id,
               },
               data: {
-                questions: updatedQuestions.filter((question) => question !== null),
+                questions: updatedQuestions.filter((question: TSurveyQuestion | null) => question !== null),
               },
             })
           );
