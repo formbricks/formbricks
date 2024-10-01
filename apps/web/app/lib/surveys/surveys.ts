@@ -32,6 +32,7 @@ const conditionOptions = {
   consent: ["is"],
   matrix: [""],
   address: ["is"],
+  contactInfo: ["is"],
   ranking: ["is"],
 };
 const filterOptions = {
@@ -42,6 +43,7 @@ const filterOptions = {
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
   address: ["Filled out", "Skipped"],
+  contactInfo: ["Filled out", "Skipped"],
   ranking: ["Filled out", "Skipped"],
 };
 
@@ -273,10 +275,11 @@ export const getFormattedFilters = (
       if (!filters.data) filters.data = {};
       switch (questionType.questionType) {
         case TSurveyQuestionTypeEnum.OpenText:
-        case TSurveyQuestionTypeEnum.Address: {
+        case TSurveyQuestionTypeEnum.Address:
+        case TSurveyQuestionTypeEnum.ContactInfo: {
           if (filterType.filterComboBoxValue === "Filled out") {
             filters.data[questionType.id ?? ""] = {
-              op: "submitted",
+              op: "filledOut",
             };
           } else if (filterType.filterComboBoxValue === "Skipped") {
             filters.data[questionType.id ?? ""] = {
