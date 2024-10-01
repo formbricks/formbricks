@@ -520,6 +520,11 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Address" }).click();
   await page.getByLabel("Question*").fill(params.address.question);
+  await page.getByRole("row", { name: "Address Line 2" }).getByRole("switch").nth(1).click();
+  await page.getByRole("row", { name: "City" }).getByRole("cell").nth(2).click();
+  await page.getByRole("row", { name: "State" }).getByRole("switch").nth(1).click();
+  await page.getByRole("row", { name: "Zip" }).getByRole("cell").nth(2).click();
+  await page.getByRole("row", { name: "Country" }).getByRole("switch").nth(1).click();
 
   // Adding logic
   // Open Text Question
