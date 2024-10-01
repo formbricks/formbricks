@@ -11,6 +11,19 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
+const transformIntegration = (integration: TIntegration): TIntegration => {
+  return {
+    ...integration,
+    config: {
+      ...integration.config,
+      data: integration.config.data.map((data) => ({
+        ...data,
+        createdAt: new Date(data.createdAt),
+      })),
+    },
+  };
+};
+
 export const createOrUpdateIntegration = async (
   environmentId: string,
   integrationData: TIntegrationInput
@@ -75,7 +88,9 @@ export const getIntegrations = reactCache(
       {
         tags: [integrationCache.tag.byEnvironmentId(environmentId)],
       }
-    )()
+    )().then((cachedIntegration) => {
+      return cachedIntegration.map((integration) => transformIntegration(integration));
+    })
 );
 
 export const getIntegration = reactCache(
@@ -130,7 +145,11 @@ export const getIntegrationByType = reactCache(
       {
         tags: [integrationCache.tag.byEnvironmentIdAndType(environmentId, type)],
       }
-    )()
+    )().then((cachedIntegration) => {
+      if (cachedIntegration) {
+        return transformIntegration(cachedIntegration);
+      } else return null;
+    })
 );
 
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
