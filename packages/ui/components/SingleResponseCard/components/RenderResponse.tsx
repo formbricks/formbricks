@@ -13,7 +13,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
-import { AddressResponse } from "../../AddressResponse";
+import { ArrayResponse } from "../../ArrayResponse";
 import { FileUploadResponse } from "../../FileUploadResponse";
 import { PictureSelectionResponse } from "../../PictureSelectionResponse";
 import { RankingRespone } from "../../RankingResponse";
@@ -109,10 +109,12 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       }
       break;
     case TSurveyQuestionTypeEnum.Address:
+    case TSurveyQuestionTypeEnum.ContactInfo:
       if (Array.isArray(responseData)) {
-        return <AddressResponse value={responseData} />;
+        return <ArrayResponse value={responseData} />;
       }
       break;
+
     case TSurveyQuestionTypeEnum.Cal:
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (

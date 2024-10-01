@@ -11,6 +11,7 @@ import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 import { FormbricksClient } from "../../components/FormbricksClient";
+import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 
 const EnvLayout = async ({ children, params }) => {
@@ -54,6 +55,7 @@ const EnvLayout = async ({ children, params }) => {
         />
         <FormbricksClient session={session} userEmail={user.email} />
         <ToasterClient />
+        <EnvironmentStorageHandler environmentId={params.environmentId} />
         <EnvironmentLayout environmentId={params.environmentId} session={session}>
           {children}
         </EnvironmentLayout>

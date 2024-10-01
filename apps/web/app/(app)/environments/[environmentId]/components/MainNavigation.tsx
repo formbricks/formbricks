@@ -32,7 +32,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { FORMBRICKS_PRODUCT_ID_LS, FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -119,16 +118,6 @@ export const MainNavigation = ({
     }
   }, [organization]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const productId = localStorage.getItem(FORMBRICKS_PRODUCT_ID_LS);
-    const targetProduct = products.find((product) => product.id === productId);
-    if (targetProduct && productId && product && product.id !== targetProduct.id) {
-      router.push(`/products/${targetProduct.id}/`);
-    }
-  }, []);
-
   const sortedOrganizations = useMemo(() => {
     return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
   }, [organizations]);
@@ -155,12 +144,6 @@ export const MainNavigation = ({
   }, [products]);
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_PRODUCT_ID_LS, productId);
-
-      // Remove filters when switching products
-      localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-    }
     router.push(`/products/${productId}/`);
   };
 
