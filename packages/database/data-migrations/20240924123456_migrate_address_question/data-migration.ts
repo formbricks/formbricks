@@ -26,7 +26,6 @@ async function runMigration(): Promise<void> {
       console.log(`Found ${surveysWithAddressQuestion.length.toString()} surveys with address questions`);
 
       const updationPromises = [];
-      let migratedSurveyCount = 0;
 
       for (const survey of surveysWithAddressQuestion) {
         const updatedQuestions = survey.questions.map((question: TSurveyQuestion) => {
@@ -67,28 +66,27 @@ async function runMigration(): Promise<void> {
           return question;
         });
 
-        console.log(updatedQuestions);
-
-        const filteredQuestions = updatedQuestions.filter(
-          (q: TSurveyQuestion | null): q is TSurveyQuestion => q !== null
+        const isUpdationNotRequired = updatedQuestions.some(
+          (question: TSurveyQuestion | null) => question === null
         );
 
-        if (filteredQuestions.length !== survey.questions.length) {
+        if (!isUpdationNotRequired) {
           updationPromises.push(
             transactionPrisma.survey.update({
-              where: { id: survey.id },
-              data: { questions: filteredQuestions },
+              where: {
+                id: survey.id,
+              },
+              data: {
+                questions: updatedQuestions.filter((question: TSurveyQuestion | null) => question !== null),
+              },
             })
           );
-
-          migratedSurveyCount++;
         }
       }
 
-      if (migratedSurveyCount === 0) {
-        console.log("No surveys required migration.");
-      } else {
-        console.log(`${migratedSurveyCount.toString()} surveys were successfully migrated.`);
+      if (updationPromises.length === 0) {
+        console.log("No surveys require migration... Exiting");
+        return;
       }
 
       await Promise.all(updationPromises);
