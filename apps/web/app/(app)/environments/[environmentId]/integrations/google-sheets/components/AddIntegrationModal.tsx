@@ -62,6 +62,7 @@ export const AddIntegrationModal = ({
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
+  const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
@@ -89,6 +90,7 @@ export const AddIntegrationModal = ({
         })!
       );
       setSelectedQuestions(selectedIntegration.questionIds);
+      setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       return;
@@ -127,6 +129,7 @@ export const AddIntegrationModal = ({
           ? "All questions"
           : "Selected questions";
       integrationData.createdAt = new Date();
+      integrationData.includeVariables = includeVariables;
       integrationData.includeHiddenFields = includeHiddenFields;
       integrationData.includeMetadata = includeMetadata;
       if (selectedIntegration) {
@@ -256,6 +259,8 @@ export const AddIntegrationModal = ({
                     </div>
                   </div>
                   <AdditionalIntegrationSettings
+                    includeVariables={includeVariables}
+                    setIncludeVariables={setIncludeVariables}
                     includeHiddenFields={includeHiddenFields}
                     includeMetadata={includeMetadata}
                     setIncludeHiddenFields={setIncludeHiddenFields}

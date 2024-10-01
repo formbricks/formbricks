@@ -74,7 +74,7 @@ export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !==
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
-export const ITEMS_PER_PAGE = 50;
+export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 20;
 export const TEXT_RESPONSES_PER_PAGE = 5;

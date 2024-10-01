@@ -4,7 +4,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
@@ -59,10 +59,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     onConfirm: () => {},
   });
 
-  const [defaultLanguage, setDefaultLanguage] = useState(
-    localSurvey.languages.find((language) => {
-      return language.default;
-    })?.language
+  const defaultLanguage = useMemo(
+    () => localSurvey.languages.find((language) => language.default)?.language,
+    [localSurvey.languages]
   );
 
   const setOpen = (open: boolean) => {
@@ -72,6 +71,12 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       setActiveQuestionId(null);
     }
   };
+
+  useEffect(() => {
+    if (localSurvey.languages.length === 0) {
+      setIsMultiLanguageActivated(false);
+    }
+  }, [localSurvey.languages]);
 
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
@@ -132,7 +137,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         });
       }
 
-      setDefaultLanguage(language);
       setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
       updateSurvey({ languages: newLanguages });
     }
@@ -150,7 +154,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           onConfirm: () => {
             updateSurveyTranslations(localSurvey, []);
             setIsMultiLanguageActivated(false);
-            setDefaultLanguage(undefined);
             setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
           },
         });
