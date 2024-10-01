@@ -77,6 +77,12 @@ const mapResponsesToTableData = (responses: TResponse[], survey: TSurvey): TResp
     responseId: response.id,
     tags: response.tags,
     notes: response.notes,
+    variables: survey.variables.reduce(
+      (acc, curr) => {
+        return Object.assign(acc, { [curr.id]: response.variables[curr.id] });
+      },
+      {} as Record<string, string | number>
+    ),
     verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
     language: response.language,
     person: response.person,
