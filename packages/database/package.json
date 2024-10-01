@@ -49,7 +49,8 @@
     "data-migration:remove-dismissed-value-inconsistency": "ts-node ./data-migrations/20240807120500_cta_consent_dismissed_inconsistency/data-migration.ts",
     "data-migration:v2.5": "pnpm data-migration:remove-dismissed-value-inconsistency",
     "data-migration:add-display-id-to-response": "ts-node ./data-migrations/20240905120500_refactor_display_response_relationship/data-migration.ts",
-    "data-migration:address-question": "ts-node ./data-migrations/20240924123456_migrate_address_question/data-migration.ts"
+    "data-migration:address-question": "ts-node ./data-migrations/20240924123456_migrate_address_question/data-migration.ts",
+    "data-migration:advanced-logic": "ts-node ./data-migrations/20240828122408_advanced_logic_editor/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",
