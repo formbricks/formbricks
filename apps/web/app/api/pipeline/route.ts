@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
@@ -117,20 +116,12 @@ export const POST = async (request: Request) => {
         },
         notificationSettings: {
           path: ["alert", surveyId],
-          not: Prisma.JsonNull,
+          equals: true,
         },
       },
       select: { email: true },
     });
 
-    // const [integrations, survey] = await Promise.all([getIntegrations(environmentId), getSurvey(surveyId)]);
-
-    // if (!survey) {
-    //   console.error(`Pipeline: Survey with id ${surveyId} not found`);
-    //   return new Response("Survey not found", {
-    //     status: 404,
-    //   });
-    // }
     const emailPromises = usersWithNotifications.map((user) =>
       sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
         console.error(`Failed to send email to ${user.email}:`, error);
