@@ -2720,7 +2720,7 @@ const customerSatisfactionScore = (): TTemplate => {
           scale: "number",
           headline: {
             default:
-              "How likely is it that you would recommend this {{produceName}} to a friend or colleague?",
+              "How likely is it that you would recommend this {{productName}} to a friend or colleague?",
           },
           required: true,
           lowerLabel: { default: "Not satisfied" },
@@ -2734,7 +2734,7 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Please select one:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Very satified" } },
+            { id: createId(), label: { default: "Very satisfied" } },
             { id: createId(), label: { default: "Somewhat satisfied" } },
             { id: createId(), label: { default: "Neither satisfied nor dissatisfied" } },
             { id: createId(), label: { default: "Somewhat dissatisfied" } },
@@ -2765,7 +2765,7 @@ const customerSatisfactionScore = (): TTemplate => {
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How well do our {{productsName}} meet your needs?" },
+          headline: { default: "How well do our {{productName}} meet your needs?" },
           subheader: { default: "Select one option:" },
           required: true,
           choices: [
