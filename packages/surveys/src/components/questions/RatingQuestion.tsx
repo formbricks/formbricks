@@ -155,7 +155,7 @@ export const RatingQuestion = ({
                           number === 1 ? "fb-rounded-l-custom" : "",
                           hoveredNumber === number ? "fb-bg-accent-bg" : "",
                           question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
-                          "fb-text-heading focus:fb-border-brand-dark fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
+                          "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
                         )}>
                         {question.isColorCodingEnabled && (
                           <div

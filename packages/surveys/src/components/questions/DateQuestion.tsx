@@ -166,7 +166,7 @@ export const DateQuestion = ({
                   onKeyDown={(e) => {
                     if (e.key === " ") setDatePickerOpen(true);
                   }}
-                  className="focus:fb-outline-brand-dark fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
+                  className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
                   <div className="fb-flex fb-items-center fb-gap-2">
                     {selectedDate ? (
                       <div className="fb-flex fb-items-center fb-gap-2">
@@ -230,7 +230,7 @@ export const DateQuestion = ({
                     date.getMonth() === new Date().getMonth() &&
                     date.getFullYear() === new Date().getFullYear()
                   ) {
-                    return `${baseClass} !fb-bg-brand-dark !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
+                    return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
                   }
                   // active date class
                   if (
@@ -238,7 +238,7 @@ export const DateQuestion = ({
                     date.getMonth() === selectedDate?.getMonth() &&
                     date.getFullYear() === selectedDate?.getFullYear()
                   ) {
-                    return `${baseClass} !fb-bg-brand-dark !fb-border-border-highlight !fb-text-heading`;
+                    return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
                   }
 
                   return baseClass;

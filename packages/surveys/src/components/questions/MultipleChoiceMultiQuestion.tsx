@@ -168,9 +168,9 @@ export const MultipleChoiceMultiQuestion = ({
                       tabIndex={idx + 1}
                       className={cn(
                         value.includes(getLocalizedValue(choice.label, languageCode))
-                          ? "fb-border-brand-dark fb-bg-input-bg-selected fb-z-10"
+                          ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
                           : "fb-border-border fb-bg-input-bg",
-                        "fb-text-heading focus-within:fb-border-brand-dark hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                        "fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                       )}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input
@@ -188,7 +188,7 @@ export const MultipleChoiceMultiQuestion = ({
                           name={question.id}
                           tabIndex={-1}
                           value={getLocalizedValue(choice.label, languageCode)}
-                          className="fb-border-brand-dark fb-text-brand-dark fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                          className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           aria-labelledby={`${choice.id}-label`}
                           onChange={(e) => {
                             if ((e.target as HTMLInputElement)?.checked) {
@@ -219,9 +219,9 @@ export const MultipleChoiceMultiQuestion = ({
                     tabIndex={questionChoices.length + 1}
                     className={cn(
                       value.includes(getLocalizedValue(otherOption.label, languageCode))
-                        ? "fb-border-brand-dark fb-bg-input-bg-selected fb-z-10"
+                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
                         : "fb-border-border",
-                      "fb-text-heading focus-within:fb-border-brand-dark fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
                     )}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input
@@ -238,7 +238,7 @@ export const MultipleChoiceMultiQuestion = ({
                         id={otherOption.id}
                         name={question.id}
                         value={getLocalizedValue(otherOption.label, languageCode)}
-                        className="fb-border-brand-dark fb-text-brand-dark fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                        className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                         aria-labelledby={`${otherOption.id}-label`}
                         onChange={() => {
                           setOtherSelected(!otherSelected);

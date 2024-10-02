@@ -50,7 +50,7 @@ export const LanguageSwitch = ({
       </button>
       {showLanguageDropdown && (
         <div
-          className="fb-bg-brand-dark fb-text-on-brand-dark fb-absolute fb-right-8 fb-top-10 fb-space-y-2 fb-rounded-md fb-p-2 fb-text-xs"
+          className="fb-bg-brand fb-text-on-brand fb-absolute fb-right-8 fb-top-10 fb-space-y-2 fb-rounded-md fb-p-2 fb-text-xs"
           ref={languageDropdownRef}>
           {surveyLanguages.map((surveyLanguage) => {
             if (!surveyLanguage.enabled) return;

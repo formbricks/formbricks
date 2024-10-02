@@ -38,7 +38,7 @@ export const EndingCard = ({
       <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
     ) : null;
   const checkmark = (
-    <div className="fb-text-brand-dark fb-flex fb-flex-col fb-items-center fb-justify-center">
+    <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -52,7 +52,7 @@ export const EndingCard = ({
           d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
-      <span className="fb-bg-brand-dark fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]"></span>
+      <span className="fb-bg-brand fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]"></span>
     </div>
   );
 

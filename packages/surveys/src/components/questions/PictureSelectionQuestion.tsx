@@ -126,9 +126,9 @@ export const PictureSelectionQuestion = ({
                     }}
                     onClick={() => handleChange(choice.id)}
                     className={cn(
-                      "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus:fb-outline-none fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] focus:fb-border-brand-dark focus:fb-border-4 group/image",
+                      "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus:fb-outline-none fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] focus:fb-border-brand focus:fb-border-4 group/image",
                       Array.isArray(value) && value.includes(choice.id)
-                        ? "fb-border-brand-dark fb-text-brand-dark fb-z-10 fb-border-4 fb-shadow-sm"
+                        ? "fb-border-brand fb-text-brand fb-z-10 fb-border-4 fb-shadow-sm"
                         : ""
                     )}>
                     <img
@@ -171,7 +171,7 @@ export const PictureSelectionQuestion = ({
                         checked={value.includes(choice.id)}
                         className={cn(
                           "fb-border-border fb-rounded-custom fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-border",
-                          value.includes(choice.id) ? "fb-border-brand-dark fb-text-brand" : ""
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
                         )}
                         required={question.required && value.length ? false : question.required}
                       />
@@ -184,7 +184,7 @@ export const PictureSelectionQuestion = ({
                         checked={value.includes(choice.id)}
                         className={cn(
                           "fb-border-border fb-pointer-events-none fb-absolute fb-right-2 fb-top-2 fb-z-20 fb-h-5 fb-w-5 fb-rounded-full fb-border",
-                          value.includes(choice.id) ? "fb-border-brand-dark fb-text-brand" : ""
+                          value.includes(choice.id) ? "fb-border-brand fb-text-brand" : ""
                         )}
                         required={question.required && value.length ? false : question.required}
                       />

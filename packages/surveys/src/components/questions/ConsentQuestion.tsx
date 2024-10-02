@@ -77,7 +77,7 @@ export const ConsentQuestion = ({
                   document.getElementById(`${question.id}-label`)?.focus();
                 }
               }}
-              className="fb-border-border fb-bg-input-bg fb-text-heading hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected focus:fb-ring-brand-dark fb-rounded-custom fb-relative fb-z-10 fb-my-2 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-border fb-p-4 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+              className="fb-border-border fb-bg-input-bg fb-text-heading hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected focus:fb-ring-brand fb-rounded-custom fb-relative fb-z-10 fb-my-2 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-border fb-p-4 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
               <input
                 type="checkbox"
                 id={question.id}
@@ -91,7 +91,7 @@ export const ConsentQuestion = ({
                   }
                 }}
                 checked={value === "accepted"}
-                className="fb-border-brand-dark fb-text-brand-dark fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                 aria-labelledby={`${question.id}-label`}
                 required={question.required}
               />
