@@ -47,7 +47,7 @@ const Loading = () => {
   return (
     <div>
       <PageContentWrapper>
-        <PageHeader pageTitle="People">
+        <PageHeader pageTitle="Configuration">
           <ProductConfigNavigation activeId="general" loading />
         </PageHeader>
         {cards.map((card, index) => (
