@@ -157,6 +157,10 @@ export const surveys = {
       question: "Where do you live?",
       placeholder: "Address Line 1",
     },
+    contactInfo: {
+      question: "Contact Info",
+      placeholder: "First Name",
+    },
     ranking: {
       question: "What is most important for you in life?",
       choices: ["Work", "Money", "Travel", "Family", "Friends"],

@@ -8,6 +8,7 @@ import { EmptyAppSurveys } from "@/app/(app)/environments/[environmentId]/survey
 import { CTASummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary";
 import { CalSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import { ConsentSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
+import { ContactInfoSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ContactInfoSummary";
 import { DateQuestionSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/DateQuestionSummary";
 import { FileUploadSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/FileUploadSummary";
 import { HiddenFieldsSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
@@ -275,6 +276,17 @@ export const SummaryList = ({
                 key={questionSummary.id}
                 questionSummary={questionSummary}
                 environment={environment}
+              />
+            );
+          }
+          if (questionSummary.type === TSurveyQuestionTypeEnum.ContactInfo) {
+            return (
+              <ContactInfoSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                environmentId={environment.id}
+                survey={survey}
+                attributeClasses={attributeClasses}
               />
             );
           }
