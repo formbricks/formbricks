@@ -1,8 +1,6 @@
 "use client";
 
-import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { cn } from "@formbricks/lib/cn";
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
@@ -27,8 +25,6 @@ const LoadingCard = ({ title, description, skeletonLines }) => {
 };
 
 const Loading = () => {
-  const pathname = usePathname();
-
   const cards = [
     {
       title: "Product Name",
@@ -48,77 +44,11 @@ const Loading = () => {
     },
   ];
 
-  let navigation = [
-    {
-      id: "general",
-      label: "General",
-      icon: <UsersIcon className="h-5 w-5" />,
-      current: pathname?.includes("/general"),
-    },
-    {
-      id: "look",
-      label: "Look & Feel",
-      icon: <BrushIcon className="h-5 w-5" />,
-      current: pathname?.includes("/look"),
-    },
-    {
-      id: "languages",
-      label: "Survey Languages",
-      icon: <LanguagesIcon className="h-5 w-5" />,
-      hidden: true,
-      current: pathname?.includes("/languages"),
-    },
-    {
-      id: "tags",
-      label: "Tags",
-      icon: <TagIcon className="h-5 w-5" />,
-      current: pathname?.includes("/tags"),
-    },
-    {
-      id: "api-keys",
-      label: "API Keys",
-      icon: <KeyIcon className="h-5 w-5" />,
-      current: pathname?.includes("/api-keys"),
-    },
-    {
-      id: "website-connection",
-      label: "Website Connection",
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/website-connection"),
-      hidden: true,
-    },
-    {
-      id: "app-connection",
-      label: "App Connection",
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/app-connection"),
-      hidden: true,
-    },
-  ];
-
   return (
     <div>
       <PageContentWrapper>
-        <PageHeader pageTitle="Configuration">
-          <div className="grid h-10 w-full grid-cols-[auto,1fr]">
-            <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
-              {navigation.map((navElem) => (
-                <div
-                  key={navElem.id}
-                  className={cn(
-                    navElem.id === "general"
-                      ? "border-brand-dark border-b-2 font-semibold text-slate-900"
-                      : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
-                    "flex h-full items-center border-b-2 px-3 text-sm font-medium",
-                    navElem.hidden && "hidden"
-                  )}
-                  aria-current={navElem.id === "general" ? "page" : undefined}>
-                  {navElem.label}
-                </div>
-              ))}
-            </nav>
-            <div className="justify-self-end"></div>
-          </div>
+        <PageHeader pageTitle="People">
+          <ProductConfigNavigation activeId="general" loading />
         </PageHeader>
         {cards.map((card, index) => (
           <LoadingCard key={index} {...card} />

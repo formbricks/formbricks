@@ -6,17 +6,19 @@ import { TProductConfigChannel } from "@formbricks/types/product";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface ProductConfigNavigationProps {
-  environmentId: string;
   activeId: string;
-  isMultiLanguageAllowed: boolean;
-  productChannel: TProductConfigChannel;
+  environmentId?: string;
+  isMultiLanguageAllowed?: boolean;
+  productChannel?: TProductConfigChannel;
+  loading?: boolean;
 }
 
 export const ProductConfigNavigation = ({
-  environmentId,
   activeId,
+  environmentId,
   isMultiLanguageAllowed,
   productChannel,
+  loading,
 }: ProductConfigNavigationProps) => {
   const pathname = usePathname();
   let navigation = [
@@ -74,5 +76,5 @@ export const ProductConfigNavigation = ({
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
 };
