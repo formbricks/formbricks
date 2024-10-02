@@ -6,7 +6,7 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 
 export const metadata: Metadata = {
   title: "Billing",

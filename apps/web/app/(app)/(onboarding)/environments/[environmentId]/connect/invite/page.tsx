@@ -5,8 +5,8 @@ import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface InvitePageProps {
   params: {
@@ -33,7 +33,7 @@ const Page = async ({ params }: InvitePageProps) => {
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">
       <Header
         title="Who is your favorite engineer?"
-        subtitle="Invite your tech-savvy co-worker to help with the setup 🤓"
+        subtitle="Invite your tech-savvy co-worker to help with the setup."
       />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>

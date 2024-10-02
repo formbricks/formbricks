@@ -6,7 +6,7 @@ import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { getUser, updateUser } from "@formbricks/lib/user/service";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 import { ContentLayout } from "./components/ContentLayout";
 
 const Page = async ({ searchParams }) => {

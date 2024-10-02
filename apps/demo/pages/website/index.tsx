@@ -56,8 +56,8 @@ const AppPage = ({}) => {
   });
 
   return (
-    <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
-      <div className="flex flex-col items-center justify-between md:flex-row">
+    <div className="min-h-screen bg-white px-12 py-6 dark:bg-slate-800">
+      <div className="flex flex-col justify-between md:flex-row">
         <div className="flex flex-col items-center gap-2 sm:flex-row">
           <SurveySwitch value="website" formbricks={formbricks} />
           <div>
@@ -113,7 +113,7 @@ const AppPage = ({}) => {
         </div>
 
         <div className="md:grid md:grid-cols-3">
-          <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
+          <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-900">
             <h3 className="text-lg font-semibold dark:text-white">
               Reset person / pull data from Formbricks app
             </h3>

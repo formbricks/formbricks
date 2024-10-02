@@ -12,9 +12,9 @@ import type {
   TSegmentAttributeFilter,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
-import { Input } from "@formbricks/ui/Input";
-import { Modal } from "@formbricks/ui/Modal";
-import { TabBar } from "@formbricks/ui/TabBar";
+import { Input } from "@formbricks/ui/components/Input";
+import { Modal } from "@formbricks/ui/components/Modal";
+import { TabBar } from "@formbricks/ui/components/TabBar";
 
 interface TAddFilterModalProps {
   open: boolean;

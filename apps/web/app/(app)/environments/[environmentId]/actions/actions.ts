@@ -2,8 +2,9 @@
 
 import { z } from "zod";
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { cache } from "@formbricks/lib/cache";
 import { getOrganizationIdFromActionClassId } from "@formbricks/lib/organization/utils";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
@@ -72,3 +73,33 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
     };
     return response;
   });
+
+const getLatestStableFbRelease = async (): Promise<string | null> =>
+  cache(
+    async () => {
+      try {
+        const res = await fetch("https://api.github.com/repos/formbricks/formbricks/releases");
+        const releases = await res.json();
+
+        if (Array.isArray(releases)) {
+          const latestStableReleaseTag = releases.filter((release) => !release.prerelease)?.[0]
+            ?.tag_name as string;
+          if (latestStableReleaseTag) {
+            return latestStableReleaseTag;
+          }
+        }
+
+        return null;
+      } catch (err) {
+        return null;
+      }
+    },
+    ["latest-fb-release"],
+    {
+      revalidate: 60 * 60 * 24, // 24 hours
+    }
+  )();
+
+export const getLatestStableFbReleaseAction = actionClient.action(async () => {
+  return await getLatestStableFbRelease();
+});

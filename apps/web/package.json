@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "2.5.1",
+  "version": "2.5.3",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -17,7 +17,6 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@formbricks/api": "workspace:*",
-    "@formbricks/config-tailwind": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
     "@formbricks/email": "workspace:*",
@@ -39,6 +38,7 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "encoding": "^0.1.13",
+    "file-loader": "^6.2.0",
     "framer-motion": "11.3.28",
     "googleapis": "^140.0.1",
     "jiti": "^1.21.6",

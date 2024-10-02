@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@formbricks/ui/Button";
-import { Confetti } from "@formbricks/ui/Confetti";
+import { Button } from "@formbricks/ui/components/Button";
+import { Confetti } from "@formbricks/ui/components/Confetti";
 
 interface ConfirmationPageProps {
   environmentId: string;

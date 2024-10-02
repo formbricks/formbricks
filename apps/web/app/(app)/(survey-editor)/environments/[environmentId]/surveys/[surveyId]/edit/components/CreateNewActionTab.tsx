@@ -11,13 +11,13 @@ import {
   ZActionClassInput,
 } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { TabToggle } from "@formbricks/ui/TabToggle";
-import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
-import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { TabToggle } from "@formbricks/ui/components/TabToggle";
+import { CodeActionForm } from "@formbricks/ui/components/organisms/CodeActionForm";
+import { NoCodeActionForm } from "@formbricks/ui/components/organisms/NoCodeActionForm";
 import { createActionClassAction } from "../actions";
 
 interface CreateNewActionTabProps {
@@ -171,14 +171,14 @@ export const CreateNewActionTab = ({
     <div>
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(submitHandler)}>
-          <div className="max-h-[400px] w-full space-y-4 overflow-y-auto">
+          <div className="max-h-[500px] w-full space-y-4 overflow-y-auto pr-4">
             <div className="w-3/5">
               <FormField
                 name={`type`}
                 control={control}
                 render={({ field }) => (
                   <div>
-                    <Label className="font-semibold">Type</Label>
+                    <Label className="font-semibold">Action Type</Label>
                     <TabToggle
                       id="type"
                       options={[

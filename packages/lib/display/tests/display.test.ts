@@ -4,10 +4,8 @@ import {
   mockDisplay,
   mockDisplayInput,
   mockDisplayInputWithUserId,
-  mockDisplayUpdate,
   mockDisplayWithPersonId,
-  mockDisplayWithResponseId,
-  mockResponseId,
+  mockEnvironment,
   mockSurveyId,
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
@@ -16,11 +14,10 @@ import { testInputValidation } from "vitestSetup";
 import { DatabaseError } from "@formbricks/types/errors";
 import {
   createDisplay,
-  deleteDisplayByResponseId,
+  deleteDisplay,
   getDisplay,
   getDisplayCountBySurveyId,
   getDisplaysByPersonId,
-  updateDisplay,
 } from "../service";
 
 beforeEach(() => {
@@ -94,6 +91,7 @@ describe("Tests for getDisplay", () => {
 describe("Tests for createDisplay service", () => {
   describe("Happy Path", () => {
     it("Creates a new display when a userId exists", async () => {
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       prisma.display.create.mockResolvedValue(mockDisplayWithPersonId);
 
       const display = await createDisplay(mockDisplayInputWithUserId);
@@ -113,6 +111,7 @@ describe("Tests for createDisplay service", () => {
 
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
         clientVersion: "0.0.1",
@@ -132,47 +131,13 @@ describe("Tests for createDisplay service", () => {
   });
 });
 
-describe("Tests for updateDisplay Service", () => {
+describe("Tests for delete display service", () => {
   describe("Happy Path", () => {
-    it("Updates a display (responded)", async () => {
-      prisma.display.update.mockResolvedValue(mockDisplayWithResponseId);
+    it("Deletes a display", async () => {
+      prisma.display.delete.mockResolvedValue(mockDisplay);
 
-      const display = await updateDisplay(mockDisplay.id, mockDisplayUpdate);
-      expect(display).toEqual(mockDisplayWithResponseId);
-    });
-  });
-
-  describe("Sad Path", () => {
-    testInputValidation(updateDisplay, "123", "123");
-
-    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
-      const mockErrorMessage = "Mock error message";
-      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
-        clientVersion: "0.0.1",
-      });
-
-      prisma.display.update.mockRejectedValue(errToThrow);
-
-      await expect(updateDisplay(mockDisplay.id, mockDisplayUpdate)).rejects.toThrow(DatabaseError);
-    });
-
-    it("Throws a generic Error for other unexpected issues", async () => {
-      const mockErrorMessage = "Mock error message";
-      prisma.display.update.mockRejectedValue(new Error(mockErrorMessage));
-
-      await expect(updateDisplay(mockDisplay.id, mockDisplayUpdate)).rejects.toThrow(Error);
-    });
-  });
-});
-
-describe("Tests for deleteDisplayByResponseId service", () => {
-  describe("Happy Path", () => {
-    it("Deletes a display when a response associated to it is deleted", async () => {
-      prisma.display.delete.mockResolvedValue(mockDisplayWithResponseId);
-
-      const display = await deleteDisplayByResponseId(mockResponseId, mockSurveyId);
-      expect(display).toEqual(mockDisplayWithResponseId);
+      const display = await deleteDisplay(mockDisplay.id);
+      expect(display).toEqual(mockDisplay);
     });
   });
   describe("Sad Path", () => {
@@ -185,14 +150,14 @@ describe("Tests for deleteDisplayByResponseId service", () => {
 
       prisma.display.delete.mockRejectedValue(errToThrow);
 
-      await expect(deleteDisplayByResponseId(mockResponseId, mockSurveyId)).rejects.toThrow(DatabaseError);
+      await expect(deleteDisplay(mockDisplay.id)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.display.delete.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(deleteDisplayByResponseId(mockResponseId, mockSurveyId)).rejects.toThrow(Error);
+      await expect(deleteDisplay(mockDisplay.id)).rejects.toThrow(Error);
     });
   });
 });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { Switch } from "@formbricks/ui/Switch";
+import { Switch } from "@formbricks/ui/components/Switch";
 import { updateNotificationSettingsAction } from "../actions";
 
 interface NotificationSwitchProps {

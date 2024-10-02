@@ -6,9 +6,9 @@ import UnsplashImage from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurveyBackgroundBgType } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { getImagesFromUnsplashAction, triggerDownloadUnsplashImageAction } from "../actions";
 
 interface ImageFromUnsplashSurveyBgProps {

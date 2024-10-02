@@ -1,10 +1,11 @@
+import { diffInDays } from "@formbricks/lib/utils/datetime";
 import {
   TActionClass,
   TActionClassNoCodeConfig,
   TActionClassPageUrlRule,
 } from "@formbricks/types/action-classes";
 import { TAttributes } from "@formbricks/types/attributes";
-import { TJsTrackProperties } from "@formbricks/types/js";
+import { TJsEnvironmentState, TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Logger } from "./logger";
@@ -107,7 +108,6 @@ export const handleHiddenFields = (
 
   return hiddenFieldsObject;
 };
-export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
 
 export const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   const randomNum = Math.floor(Math.random() * 10000) / 100;
@@ -144,4 +144,92 @@ export const getDefaultLanguageCode = (survey: TSurvey) => {
     return surveyLanguage.default === true;
   });
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
+};
+
+export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
+
+/**
+ * Filters surveys based on the displayOption, recontactDays, and segments
+ * @param environmentSate The environment state
+ * @param personState The person state
+ * @returns The filtered surveys
+ */
+
+// takes the environment and person state and returns the filtered surveys
+export const filterSurveys = (
+  environmentState: TJsEnvironmentState,
+  personState: TJsPersonState,
+  sdkType: "app" | "website" = "app"
+): TSurvey[] => {
+  const { product, surveys } = environmentState.data;
+  const { displays, responses, lastDisplayAt, segments } = personState.data;
+
+  if (!displays) {
+    return [];
+  }
+
+  // Function to filter surveys based on displayOption criteria
+  let filteredSurveys = surveys.filter((survey: TSurvey) => {
+    switch (survey.displayOption) {
+      case "respondMultiple":
+        return true;
+      case "displayOnce":
+        return displays.filter((display) => display.surveyId === survey.id).length === 0;
+      case "displayMultiple":
+        return responses.filter((surveyId) => surveyId === survey.id).length === 0;
+
+      case "displaySome":
+        if (survey.displayLimit === null) {
+          return true;
+        }
+
+        // Check if survey response exists, if so, stop here
+        if (responses.filter((surveyId) => surveyId === survey.id).length) {
+          return false;
+        }
+
+        // Otherwise, check if displays length is less than displayLimit
+        return displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit;
+
+      default:
+        throw Error("Invalid displayOption");
+    }
+  });
+
+  // filter surveys that meet the recontactDays criteria
+  filteredSurveys = filteredSurveys.filter((survey) => {
+    // if no survey was displayed yet, show the survey
+    if (!lastDisplayAt) {
+      return true;
+    }
+    // if survey has recontactDays, check if the last display was more than recontactDays ago
+    else if (survey.recontactDays !== null) {
+      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+      if (!lastDisplaySurvey) {
+        return true;
+      }
+      return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+    }
+    // use recontactDays of the product if survey does not have recontactDays
+    else if (product.recontactDays !== null) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= product.recontactDays;
+    }
+    // if no recontactDays is set, show the survey
+    else {
+      return true;
+    }
+  });
+
+  if (sdkType === "website") {
+    return filteredSurveys;
+  }
+
+  if (!segments.length) {
+    return [];
+  }
+
+  // filter surveys based on segments
+  return filteredSurveys.filter((survey) => {
+    return survey.segment?.id && segments.includes(survey.segment.id);
+  });
 };

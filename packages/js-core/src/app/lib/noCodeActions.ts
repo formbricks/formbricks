@@ -5,7 +5,7 @@ import { evaluateNoCodeConfigClick, handleUrlFilters } from "../../shared/utils"
 import { trackNoCodeAction } from "./actions";
 import { AppConfig } from "./config";
 
-const inAppConfig = AppConfig.getInstance();
+const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 
@@ -17,8 +17,7 @@ let arePageUrlEventListenersAdded = false;
 
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
-  const { state } = inAppConfig.get();
-  const { actionClasses = [] } = state ?? {};
+  const actionClasses = appConfig.get().environmentState.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
@@ -55,10 +54,11 @@ export const removePageUrlEventListeners = (): void => {
 let isClickEventListenerAdded = false;
 
 const checkClickMatch = (event: MouseEvent) => {
-  const { state } = inAppConfig.get();
-  if (!state) return;
+  const { environmentState } = appConfig.get();
+  if (!environmentState) return;
 
-  const { actionClasses = [] } = state;
+  const { actionClasses = [] } = environmentState.data;
+
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
   );
@@ -96,8 +96,8 @@ export const removeClickEventListener = (): void => {
 let isExitIntentListenerAdded = false;
 
 const checkExitIntent = async (e: MouseEvent) => {
-  const { state } = inAppConfig.get();
-  const { actionClasses = [] } = state ?? {};
+  const { environmentState } = appConfig.get();
+  const { actionClasses = [] } = environmentState.data ?? {};
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
@@ -148,8 +148,8 @@ const checkScrollDepth = async () => {
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
 
-    const { state } = inAppConfig.get();
-    const { actionClasses = [] } = state ?? {};
+    const { environmentState } = appConfig.get();
+    const { actionClasses = [] } = environmentState.data ?? {};
 
     const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"
@@ -173,9 +173,13 @@ const checkScrollDepthWrapper = () => checkScrollDepth();
 
 export const addScrollDepthListener = (): void => {
   if (typeof window !== "undefined" && !scrollDepthListenerAdded) {
-    window.addEventListener("load", () => {
+    if (document.readyState === "complete") {
       window.addEventListener("scroll", checkScrollDepthWrapper);
-    });
+    } else {
+      window.addEventListener("load", () => {
+        window.addEventListener("scroll", checkScrollDepthWrapper);
+      });
+    }
     scrollDepthListenerAdded = true;
   }
 };

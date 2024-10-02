@@ -1,4 +1,4 @@
-import { FileInput } from "@formbricks/ui/FileInput";
+import { FileInput } from "@formbricks/ui/components/FileInput";
 
 interface UploadImageSurveyBgProps {
   environmentId: string;
@@ -16,7 +16,7 @@ export const UploadImageSurveyBg = ({
       <div className="flex w-full items-center justify-center">
         <FileInput
           id="survey-bg-file-input"
-          allowedFileExtensions={["png", "jpeg", "jpg"]}
+          allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
           environmentId={environmentId}
           onFileUpload={(url: string[]) => {
             if (url.length > 0) {

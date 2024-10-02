@@ -11,7 +11,7 @@ import {
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ConnectIntegration } from "@formbricks/ui/ConnectIntegration";
+import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
 interface GoogleSheetWrapperProps {
