@@ -2716,36 +2716,6 @@ const customerSatisfactionScore = (): TTemplate => {
         {
           id: reusableQuestionIds[0],
           type: TSurveyQuestionTypeEnum.Rating,
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "isLessThanOrEqual",
-                    rightOperand: {
-                      type: "static",
-                      value: 3,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[5], // Jump to Flow 2
-                },
-              ],
-            },
-          ],
           range: 10,
           scale: "number",
           headline: {
