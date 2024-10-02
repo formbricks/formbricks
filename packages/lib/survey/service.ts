@@ -855,7 +855,7 @@ export const migrateSurveyToOtherEnvironment = async (
   environmentId: string,
   targetEnvironmentId: string,
   userId: string
-) => {
+): Promise<Prisma.Survey> => {
   validateInputs([environmentId, ZId], [surveyId, ZId], [targetEnvironmentId, ZId], [userId, ZId]);
 
   try {
