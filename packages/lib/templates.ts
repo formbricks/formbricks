@@ -5185,9 +5185,9 @@ export const getExampleAppSurveyTemplate = (
       ({
         ...question,
         type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "App successfully connected 🥳" },
+        headline: { default: "App successfully connected" },
         html: {
-          default: "You're all set up. Create your own survey for your app users 👇",
+          default: "You're all set up. Create your own survey for your app users.",
         },
         buttonLabel: { default: "Let's do it!" },
         buttonExternal: true,
