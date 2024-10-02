@@ -1,6 +1,5 @@
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment } from "@formbricks/types/segment";
 import { SegmentTableDataRow } from "./SegmentTableDataRow";
@@ -9,14 +8,12 @@ type TSegmentTableDataRowProps = {
   currentSegment: TSegment;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
-  actionClasses: TActionClass[];
   isAdvancedTargetingAllowed: boolean;
 };
 
 export const SegmentTableDataRowContainer = async ({
   currentSegment,
   segments,
-  actionClasses,
   attributeClasses,
   isAdvancedTargetingAllowed,
 }: TSegmentTableDataRowProps) => {
@@ -38,7 +35,6 @@ export const SegmentTableDataRowContainer = async ({
         inactiveSurveys,
       }}
       segments={segments}
-      actionClasses={actionClasses}
       attributeClasses={attributeClasses}
       isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
