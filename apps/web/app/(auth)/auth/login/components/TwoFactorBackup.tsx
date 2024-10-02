@@ -17,7 +17,7 @@ export const TwoFactorBackup = () => {
           id="totpBackup"
           required
           placeholder="XXXXX-XXXXX"
-          className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+          className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
           {...register("backupCode")}
         />
       </div>

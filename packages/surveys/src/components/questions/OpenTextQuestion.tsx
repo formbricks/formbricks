@@ -106,7 +106,7 @@ export const OpenTextQuestion = ({
                 type={question.inputType}
                 onInput={(e) => handleInputChange(e.currentTarget.value)}
                 autoFocus={autoFocusEnabled}
-                className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
+                className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand-dark fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
               />
@@ -128,7 +128,7 @@ export const OpenTextQuestion = ({
                   handleInputResize(e);
                 }}
                 autoFocus={autoFocusEnabled}
-                className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
+                className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand-dark fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
               />

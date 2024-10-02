@@ -216,7 +216,7 @@ export const FileInput = ({
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader && (
             <div
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
+              className="focus:fb-outline-brand-dark fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
               tabIndex={1}
               onKeyDown={(e) => {
                 // Accessibility: if spacebar was pressed pass this down to the input
