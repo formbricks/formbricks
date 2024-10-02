@@ -26,7 +26,6 @@ import { TJsPersonState } from "@formbricks/types/js";
  * @returns The person state
  * @throws {ValidationError} - If the input is invalid
  * @throws {ResourceNotFoundError} - If the environment or organization is not found
- * @throws {OperationNotAllowedError} - If the MAU limit is reached and the person has not been active this month
  */
 export const getPersonState = async ({
   environmentId,
