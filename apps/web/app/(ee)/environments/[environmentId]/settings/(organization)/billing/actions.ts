@@ -1,9 +1,9 @@
 "use server";
 
+import { createCustomerPortalSession } from "@/app/(ee)/api/billing/stripe-webhook/lib/createCustomerPortalSession";
+import { createSubscription } from "@/app/(ee)/api/billing/stripe-webhook/lib/createSubscription";
+import { isSubscriptionCancelled } from "@/app/(ee)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
 import { z } from "zod";
-import { createCustomerPortalSession } from "@formbricks/ee/billing/lib/create-customer-portal-session";
-import { createSubscription } from "@formbricks/ee/billing/lib/create-subscription";
-import { isSubscriptionCancelled } from "@formbricks/ee/billing/lib/is-subscription-cancelled";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";

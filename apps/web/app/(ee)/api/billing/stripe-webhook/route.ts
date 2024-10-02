@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { webhookHandler } from "@formbricks/ee/billing/api/stripe-webhook";
+import { webhookHandler } from "./lib/stripeWebhook";
 
 export const POST = async (request: Request) => {
   const body = await request.text();
