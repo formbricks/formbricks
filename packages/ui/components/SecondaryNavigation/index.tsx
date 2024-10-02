@@ -21,25 +21,32 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
           {loading ? (
             <>
               {navigation.map((navElem) => (
-                <span
-                  key={navElem.id}
-                  aria-disabled="true"
-                  className={cn(
-                    navElem.id === activeId
-                      ? "border-slate600-dark border-b-2 font-semibold text-slate-900"
-                      : "border-transparent text-slate-500",
-                    "flex h-full items-center border-b-2 px-3 text-sm font-medium",
-                    navElem.hidden && "hidden"
-                  )}
-                  aria-current={navElem.id === activeId ? "page" : undefined}>
-                  {navElem.label}
-                </span>
+                <div className="group flex h-full flex-col">
+                  <div
+                    key={navElem.id}
+                    aria-disabled="true"
+                    className={cn(
+                      navElem.id === activeId ? "font-semibold text-slate-900" : "text-slate-500",
+                      "flex h-full items-center px-3 text-sm font-medium",
+                      navElem.hidden && "hidden"
+                    )}
+                    aria-current={navElem.id === activeId ? "page" : undefined}>
+                    {navElem.label}
+                  </div>
+                  <div
+                    className={cn(
+                      "bottom-0 mt-auto h-[2px] w-full rounded-t-lg transition-all duration-150 ease-in-out",
+                      navElem.id === activeId ? "bg-slate-300" : "bg-transparent group-hover:bg-slate-300",
+                      navElem.hidden && "hidden"
+                    )}
+                  />
+                </div>
               ))}
             </>
           ) : (
             <>
               {navigation.map((navElem) => (
-                <>
+                <div className="group flex h-full flex-col">
                   {navElem.href ? (
                     <Link
                       key={navElem.id}
@@ -47,9 +54,9 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
                       {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
                       className={cn(
                         navElem.id === activeId
-                          ? "border-brand-dark border-b-2 font-semibold text-slate-900"
-                          : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
-                        "flex h-full items-center border-b-2 px-3 text-sm font-medium",
+                          ? "font-semibold text-slate-900"
+                          : "text-slate-500 hover:text-slate-700",
+                        "flex h-full items-center px-3 text-sm font-medium",
                         navElem.hidden && "hidden"
                       )}
                       aria-current={navElem.id === activeId ? "page" : undefined}>
@@ -61,16 +68,23 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
                       {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
                       className={cn(
                         navElem.id === activeId
-                          ? "border-brand-dark border-b-2 font-semibold text-slate-900"
-                          : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
-                        "flex h-full items-center border-b-2 px-3 text-sm font-medium",
+                          ? "font-semibold text-slate-900"
+                          : "text-slate-500 hover:text-slate-700",
+                        "grow items-center px-3 text-sm font-medium transition-all duration-150 ease-in-out",
                         navElem.hidden && "hidden"
                       )}
                       aria-current={navElem.id === activeId ? "page" : undefined}>
                       {navElem.label}
                     </button>
                   )}
-                </>
+                  <div
+                    className={cn(
+                      "bottom-0 mt-auto h-[2px] w-full rounded-t-lg transition-all duration-150 ease-in-out",
+                      navElem.id === activeId ? "bg-brand-dark" : "bg-transparent group-hover:bg-slate-300",
+                      navElem.hidden && "hidden"
+                    )}
+                  />
+                </div>
               ))}
             </>
           )}

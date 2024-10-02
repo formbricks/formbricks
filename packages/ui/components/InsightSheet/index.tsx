@@ -53,7 +53,16 @@ export const InsightSheet = ({ isOpen, setIsOpen, insight, surveyId, questionId 
     <Sheet open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
       <SheetContent className="w-[400rem] bg-white lg:max-w-lg xl:max-w-2xl">
         <SheetHeader>
-          <SheetTitle>{insight.title}</SheetTitle>
+          <SheetTitle>
+            <span className="mr-3">{insight.title}</span>
+            {insight.category === "complaint" ? (
+              <Badge text="Complaint" type="error" size="tiny" />
+            ) : insight.category === "featureRequest" ? (
+              <Badge text="Request" type="warning" size="tiny" />
+            ) : insight.category === "praise" ? (
+              <Badge text="Praise" type="success" size="tiny" />
+            ) : null}
+          </SheetTitle>
           <SheetDescription>{insight.description}</SheetDescription>
           <div className="flex flex-col space-y-2 pt-4">
             {documents.map((document) => (

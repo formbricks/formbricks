@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { BellRing } from "lucide-react";
-import { Card } from "../IntegrationCard";
+import { Card } from "./index";
 
 const meta = {
   title: "ui/IntegrationCard",

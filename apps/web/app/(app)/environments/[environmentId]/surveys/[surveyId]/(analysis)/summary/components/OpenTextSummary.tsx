@@ -6,10 +6,11 @@ import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TInsight } from "@formbricks/types/insights";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
-import { InsightSheet } from "@formbricks/ui/InsightSheet";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
+import { InsightFilter } from "@formbricks/ui/components/InsightFilter";
+import { InsightSheet } from "@formbricks/ui/components/InsightSheet";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 import {
   Table,
@@ -41,6 +42,7 @@ export const OpenTextSummary = ({
     isAiEnabled ? "insights" : "responses"
   );
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
+  const [insights, setInsights] = useState<TInsight[]>(questionSummary.insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
 
   const handleLoadMore = () => {
@@ -77,7 +79,12 @@ export const OpenTextSummary = ({
         surveyId={survey.id}
         questionId={questionSummary.question.id}
       />
-      {isAiEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
+      {isAiEnabled && (
+        <div className="flex items-center justify-between pr-4">
+          <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />
+          <InsightFilter insights={questionSummary.insights} setInsights={setInsights} />
+        </div>
+      )}
       <div className="max-h-[40vh] overflow-y-auto">
         {activeTab === "insights" ? (
           <Table className="border-t border-slate-200">
@@ -88,8 +95,14 @@ export const OpenTextSummary = ({
                     <p className="text-slate-500">No insights found for this question.</p>
                   </TableCell>
                 </TableRow>
+              ) : insights.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="py-8 text-center">
+                    <p className="text-slate-500">No insights found for this filter.</p>
+                  </TableCell>
+                </TableRow>
               ) : (
-                questionSummary.insights.map((insight) => (
+                insights.map((insight) => (
                   <TableRow
                     key={insight.id}
                     className="cursor-pointer hover:bg-slate-50"
