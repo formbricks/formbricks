@@ -9,7 +9,7 @@ import { TPerson, TPersonWithAttributes } from "@formbricks/types/people";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
-import { activePersonCache, personCache } from "./cache";
+import { personCache } from "./cache";
 
 export const selectPerson = {
   id: true,
@@ -281,42 +281,6 @@ export const getPersonByUserId = reactCache(
       [`getPersonByUserId-${environmentId}-${userId}`],
       {
         tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      }
-    )()
-);
-
-export const getIsPersonMonthlyActive = reactCache(
-  (personId: string): Promise<boolean> =>
-    cache(
-      async () => {
-        try {
-          const latestAction = await prisma.action.findFirst({
-            where: {
-              personId,
-            },
-            orderBy: {
-              createdAt: "desc",
-            },
-            select: {
-              createdAt: true,
-            },
-          });
-          if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
-            return false;
-          }
-          return true;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getIsPersonMonthlyActive-${personId}`],
-      {
-        tags: [activePersonCache.tag.byId(personId)],
-        revalidate: 60 * 60 * 24, // 24 hours
       }
     )()
 );
