@@ -16,6 +16,6 @@ Your turn 👇
 
 ////////////////////////////
 
-» 01-October-2024 by X
+» 02-October-2024 by [@Jemeni11\_](https://x.com/Jemeni11_)
 
 ---
