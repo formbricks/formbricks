@@ -2735,10 +2735,10 @@ const customerSatisfactionScore = (): TTemplate => {
           required: true,
           choices: [
             { id: createId(), label: { default: "Very satified" } },
-            { id: createId(), label: { default: "Somewhat dissatisfied" } },
             { id: createId(), label: { default: "Somewhat satisfied" } },
-            { id: createId(), label: { default: "Very dissatisfied" } },
             { id: createId(), label: { default: "Neither satisfied nor dissatisfied" } },
+            { id: createId(), label: { default: "Somewhat dissatisfied" } },
+            { id: createId(), label: { default: "Very dissatisfied" } },
           ],
         },
         {
@@ -2770,10 +2770,10 @@ const customerSatisfactionScore = (): TTemplate => {
           required: true,
           choices: [
             { id: createId(), label: { default: "Extremely well" } },
-            { id: createId(), label: { default: "Not so well" } },
             { id: createId(), label: { default: "Very well" } },
-            { id: createId(), label: { default: "Not at all well" } },
             { id: createId(), label: { default: "Somewhat well" } },
+            { id: createId(), label: { default: "Not so well" } },
+            { id: createId(), label: { default: "Not at all well" } },
           ],
         },
         {
@@ -2799,8 +2799,8 @@ const customerSatisfactionScore = (): TTemplate => {
           choices: [
             { id: createId(), label: { default: "Excellent" } },
             { id: createId(), label: { default: "Above average" } },
-            { id: createId(), label: { default: "Below average" } },
             { id: createId(), label: { default: "Average" } },
+            { id: createId(), label: { default: "Below average" } },
             { id: createId(), label: { default: "Poor" } },
           ],
         },
@@ -2831,7 +2831,7 @@ const customerSatisfactionScore = (): TTemplate => {
             { id: createId(), label: { default: "Six months to a year" } },
             { id: createId(), label: { default: "1 - 2 years" } },
             { id: createId(), label: { default: "3 or more years" } },
-            { id: createId(), label: { default: "I haven't a purchase yet " } },
+            { id: createId(), label: { default: "I haven't made a purchase yet" } },
           ],
         },
         {
@@ -2842,14 +2842,12 @@ const customerSatisfactionScore = (): TTemplate => {
           required: true,
           choices: [
             { id: createId(), label: { default: "Extremely likely" } },
-            { id: createId(), label: { default: "Not so likely" } },
             { id: createId(), label: { default: "Very likely" } },
-            { id: createId(), label: { default: "Not at all likely" } },
             { id: createId(), label: { default: "Somewhat likely" } },
+            { id: createId(), label: { default: "Not so likely" } },
+            { id: createId(), label: { default: "Not at all likely" } },
           ],
         },
-
-        // Common ending: Text input
         {
           id: reusableQuestionIds[9],
           type: TSurveyQuestionTypeEnum.OpenText,
