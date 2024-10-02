@@ -5,6 +5,7 @@ import {
   mockDeleteSegmentId,
   mockDeleteSegmentPrisma,
   mockEnvironmentId,
+  mockEvaluateFailedSegmentUserData,
   mockEvaluateSegmentUserData,
   mockSegment,
   mockSegmentCreateInput,
@@ -27,85 +28,27 @@ import {
   updateSegment,
 } from "../service";
 
-const addOrSubractDays = (date: Date, number: number) => {
-  return new Date(new Date().setDate(date.getDate() - number));
-};
-
 beforeEach(() => {
   prisma.segment.findUnique.mockResolvedValue(mockSegmentPrisma);
   prisma.segment.findMany.mockResolvedValue([mockSegmentPrisma]);
   prisma.segment.update.mockResolvedValue({
     ...mockSegmentPrisma,
-    filters: getMockSegmentFilters("lastMonthCount", 5, "greaterEqual"),
+    filters: getMockSegmentFilters(),
   });
 });
 
 describe("Tests for evaluateSegment service", () => {
   describe("Happy Path", () => {
     it("Returns true when the user meets the segment criteria", async () => {
-      prisma.action.count.mockResolvedValue(4);
-      const result = await evaluateSegment(
-        mockEvaluateSegmentUserData,
-        getMockSegmentFilters("lastQuarterCount", 5, "lessThan")
-      );
-      expect(result).toBe(true);
-    });
-
-    it("Calculates the action count for the last month", async () => {
-      prisma.action.count.mockResolvedValue(0);
-      const result = await evaluateSegment(
-        mockEvaluateSegmentUserData,
-        getMockSegmentFilters("lastMonthCount", 5, "lessThan")
-      );
-      expect(result).toBe(true);
-    });
-
-    it("Calculates the action count for the last week", async () => {
-      prisma.action.count.mockResolvedValue(6);
-      const result = await evaluateSegment(
-        mockEvaluateSegmentUserData,
-        getMockSegmentFilters("lastWeekCount", 5, "greaterEqual")
-      );
-      expect(result).toBe(true);
-    });
-
-    it("Calculates the total occurences of action", async () => {
-      prisma.action.count.mockResolvedValue(6);
-      const result = await evaluateSegment(
-        mockEvaluateSegmentUserData,
-        getMockSegmentFilters("occuranceCount", 5, "greaterEqual")
-      );
-      expect(result).toBe(true);
-    });
-
-    it("Calculates the last occurence days ago of action", async () => {
-      prisma.action.findFirst.mockResolvedValue({ createdAt: addOrSubractDays(new Date(), 5) } as any);
-
-      const result = await evaluateSegment(
-        mockEvaluateSegmentUserData,
-        getMockSegmentFilters("lastOccurranceDaysAgo", 0, "greaterEqual")
-      );
-      expect(result).toBe(true);
-    });
-
-    it("Calculates the first occurence days ago of action", async () => {
-      prisma.action.findFirst.mockResolvedValue({ createdAt: addOrSubractDays(new Date(), 5) } as any);
-
-      const result = await evaluateSegment(
-        mockEvaluateSegmentUserData,
-        getMockSegmentFilters("firstOccurranceDaysAgo", 6, "lessThan")
-      );
+      // prisma.action.count.mockResolvedValue(4);
+      const result = await evaluateSegment(mockEvaluateSegmentUserData, getMockSegmentFilters());
       expect(result).toBe(true);
     });
   });
 
   describe("Sad Path", () => {
     it("Returns false when the user does not meet the segment criteria", async () => {
-      prisma.action.count.mockResolvedValue(0);
-      const result = await evaluateSegment(
-        mockEvaluateSegmentUserData,
-        getMockSegmentFilters("lastQuarterCount", 5, "greaterThan")
-      );
+      const result = await evaluateSegment(mockEvaluateFailedSegmentUserData, getMockSegmentFilters());
       expect(result).toBe(false);
     });
   });
@@ -219,7 +162,7 @@ describe("Tests for updateSegment service", () => {
       const result = await updateSegment(mockSegmentId, mockSegmentUpdateInput);
       expect(result).toEqual({
         ...mockSegment,
-        filters: getMockSegmentFilters("lastMonthCount", 5, "greaterEqual"),
+        filters: getMockSegmentFilters(),
       });
     });
   });
