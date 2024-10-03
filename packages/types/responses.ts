@@ -134,6 +134,10 @@ const ZResponseFilterCriteriaMatrix = z.object({
   value: z.record(z.string(), z.string()),
 });
 
+const ZResponseFilterCriteriaFilledOut = z.object({
+  op: z.literal("filledOut"),
+});
+
 export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
   failed: z.boolean().optional(),
@@ -172,6 +176,7 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaDataNotUploaded,
         ZResponseFilterCriteriaDataBooked,
         ZResponseFilterCriteriaMatrix,
+        ZResponseFilterCriteriaFilledOut,
       ])
     )
     .optional(),

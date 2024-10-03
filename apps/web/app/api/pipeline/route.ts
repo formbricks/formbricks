@@ -65,26 +65,24 @@ export const POST = async (request: Request) => {
   };
 
   const webhookPromises = webhooks.map((webhook) => {
-      const body = {
-        webhookId: webhook.id,
-        event,
-        data: response,
-      };
+    const body = {
+      webhookId: webhook.id,
+      event,
+      data: response,
+    };
 
-      body["hash"] = createHmac("sha256", WEBHOOK_SECRET).update(JSON.stringify(body)).digest("hex");
+    body["hash"] = createHmac("sha256", WEBHOOK_SECRET).update(JSON.stringify(body)).digest("hex");
 
-      fetchWithTimeout(webhook.url, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      }).catch((error) => {
-        console.error(`Webhook call to ${webhook.url} failed:`, error);
-      })
-    }
-  );
+    fetchWithTimeout(webhook.url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch((error) => {
+      console.error(`Webhook call to ${webhook.url} failed:`, error);
+    });
+  });
 
   if (event === "responseFinished") {
-    //todo: remove emails
     // Fetch integrations, survey, and responseCount in parallel
     const [integrations, survey, responseCount] = await Promise.all([
       getIntegrations(environmentId),

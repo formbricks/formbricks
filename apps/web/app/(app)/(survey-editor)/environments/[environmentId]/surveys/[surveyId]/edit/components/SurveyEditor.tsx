@@ -132,105 +132,101 @@ export const SurveyEditor = ({
   }
 
   return (
-    <>
-      <div className="flex h-full w-full flex-col">
-        <SurveyMenuBar
-          setLocalSurvey={setLocalSurvey}
-          localSurvey={localSurvey}
-          survey={survey}
-          environment={environment}
-          activeId={activeView}
-          setActiveId={setActiveView}
-          setInvalidQuestions={setInvalidQuestions}
-          product={localProduct}
-          responseCount={responseCount}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          isCxMode={isCxMode}
-        />
-        <div className="relative z-0 flex flex-1 overflow-hidden">
-          <main
-            className="relative z-0 w-1/2 flex-1 overflow-y-auto bg-slate-50 focus:outline-none"
-            ref={surveyEditorRef}>
-            <QuestionsAudienceTabs
-              activeId={activeView}
-              setActiveId={setActiveView}
-              isCxMode={isCxMode}
-              isStylingTabVisible={!!product.styling.allowStyleOverwrite}
-            />
+    <div className="flex h-full w-full flex-col">
+      <SurveyMenuBar
+        setLocalSurvey={setLocalSurvey}
+        localSurvey={localSurvey}
+        survey={survey}
+        environment={environment}
+        activeId={activeView}
+        setActiveId={setActiveView}
+        setInvalidQuestions={setInvalidQuestions}
+        product={localProduct}
+        responseCount={responseCount}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
+        isCxMode={isCxMode}
+      />
+      <div className="relative z-0 flex flex-1 overflow-hidden">
+        <main
+          className="relative z-0 w-1/2 flex-1 overflow-y-auto bg-slate-50 focus:outline-none"
+          ref={surveyEditorRef}>
+          <QuestionsAudienceTabs
+            activeId={activeView}
+            setActiveId={setActiveView}
+            isCxMode={isCxMode}
+            isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+          />
 
-            {activeView === "questions" && (
-              <QuestionsView
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                activeQuestionId={activeQuestionId}
-                setActiveQuestionId={setActiveQuestionId}
-                product={localProduct}
-                invalidQuestions={invalidQuestions}
-                setInvalidQuestions={setInvalidQuestions}
-                selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                isMultiLanguageAllowed={isMultiLanguageAllowed}
-                isFormbricksCloud={isFormbricksCloud}
-                attributeClasses={attributeClasses}
-                plan={plan}
-                isCxMode={isCxMode}
-              />
-            )}
-
-            {activeView === "styling" && product.styling.allowStyleOverwrite && (
-              <StylingView
-                colors={colors}
-                environment={environment}
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                product={localProduct}
-                styling={styling ?? null}
-                setStyling={setStyling}
-                localStylingChanges={localStylingChanges}
-                setLocalStylingChanges={setLocalStylingChanges}
-                isUnsplashConfigured={isUnsplashConfigured}
-                isCxMode={isCxMode}
-              />
-            )}
-
-            {activeView === "settings" && (
-              <SettingsView
-                environment={environment}
-                organizationId={organizationId}
-                localSurvey={localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                actionClasses={actionClasses}
-                attributeClasses={attributeClasses}
-                segments={segments}
-                responseCount={responseCount}
-                membershipRole={membershipRole}
-                isUserTargetingAllowed={isUserTargetingAllowed}
-                isFormbricksCloud={isFormbricksCloud}
-                product={localProduct}
-                invalidQuestions={invalidQuestions}
-                setInvalidQuestions={setInvalidQuestions}
-                selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-              />
-            )}
-          </main>
-
-          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
-            <PreviewSurvey
-              survey={localSurvey}
-              questionId={activeQuestionId}
+          {activeView === "questions" && (
+            <QuestionsView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              activeQuestionId={activeQuestionId}
+              setActiveQuestionId={setActiveQuestionId}
               product={localProduct}
-              environment={environment}
-              previewType={
-                localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"
-              }
-              languageCode={selectedLanguageCode}
-              onFileUpload={async (file) => file.name}
+              invalidQuestions={invalidQuestions}
+              setInvalidQuestions={setInvalidQuestions}
+              selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+              isMultiLanguageAllowed={isMultiLanguageAllowed}
+              isFormbricksCloud={isFormbricksCloud}
+              attributeClasses={attributeClasses}
+              plan={plan}
+              isCxMode={isCxMode}
             />
-          </aside>
-        </div>
+          )}
+
+          {activeView === "styling" && product.styling.allowStyleOverwrite && (
+            <StylingView
+              colors={colors}
+              environment={environment}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              product={localProduct}
+              styling={styling ?? null}
+              setStyling={setStyling}
+              localStylingChanges={localStylingChanges}
+              setLocalStylingChanges={setLocalStylingChanges}
+              isUnsplashConfigured={isUnsplashConfigured}
+              isCxMode={isCxMode}
+            />
+          )}
+
+          {activeView === "settings" && (
+            <SettingsView
+              environment={environment}
+              organizationId={organizationId}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              actionClasses={actionClasses}
+              attributeClasses={attributeClasses}
+              segments={segments}
+              responseCount={responseCount}
+              membershipRole={membershipRole}
+              isUserTargetingAllowed={isUserTargetingAllowed}
+              isFormbricksCloud={isFormbricksCloud}
+              product={localProduct}
+              invalidQuestions={invalidQuestions}
+              setInvalidQuestions={setInvalidQuestions}
+              selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+              setSelectedLanguageCode={setSelectedLanguageCode}
+            />
+          )}
+        </main>
+
+        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
+          <PreviewSurvey
+            survey={localSurvey}
+            questionId={activeQuestionId}
+            product={localProduct}
+            environment={environment}
+            previewType={localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"}
+            languageCode={selectedLanguageCode}
+            onFileUpload={async (file) => file.name}
+          />
+        </aside>
       </div>
-    </>
+    </div>
   );
 };

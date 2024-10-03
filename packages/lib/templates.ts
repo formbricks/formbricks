@@ -2692,7 +2692,18 @@ const NPS = (): TTemplate => {
 };
 
 const customerSatisfactionScore = (): TTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
+  const reusableQuestionIds = [
+    createId(),
+    createId(),
+    createId(),
+    createId(),
+    createId(),
+    createId(),
+    createId(),
+    createId(),
+    createId(),
+    createId(),
+  ];
   return {
     name: "Customer Satisfaction Score (CSAT)",
     role: "customerSuccess",
@@ -2706,39 +2717,12 @@ const customerSatisfactionScore = (): TTemplate => {
         {
           id: reusableQuestionIds[0],
           type: TSurveyQuestionTypeEnum.Rating,
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[0],
-                      type: "question",
-                    },
-                    operator: "isLessThanOrEqual",
-                    rightOperand: {
-                      type: "static",
-                      value: 3,
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: reusableQuestionIds[2],
-                },
-              ],
-            },
-          ],
-          range: 5,
-          scale: "smiley",
-          headline: { default: "How satisfied are you with your {{productName}} experience?" },
+          range: 10,
+          scale: "number",
+          headline: {
+            default:
+              "How likely is it that you would recommend this {{productName}} to a friend or colleague?",
+          },
           required: true,
           lowerLabel: { default: "Not satisfied" },
           upperLabel: { default: "Very satisfied" },
@@ -2746,42 +2730,129 @@ const customerSatisfactionScore = (): TTemplate => {
         },
         {
           id: reusableQuestionIds[1],
-          type: TSurveyQuestionTypeEnum.OpenText,
-          logic: [
-            {
-              id: createId(),
-              conditions: {
-                id: createId(),
-                connector: "and",
-                conditions: [
-                  {
-                    id: createId(),
-                    leftOperand: {
-                      value: reusableQuestionIds[1],
-                      type: "question",
-                    },
-                    operator: "isSubmitted",
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: createId(),
-                  objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
-                },
-              ],
-            },
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "Overall, how satisfied or dissatisfied are you with our {{productName}}" },
+          subheader: { default: "Please select one:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "Very satisfied" } },
+            { id: createId(), label: { default: "Somewhat satisfied" } },
+            { id: createId(), label: { default: "Neither satisfied nor dissatisfied" } },
+            { id: createId(), label: { default: "Somewhat dissatisfied" } },
+            { id: createId(), label: { default: "Very dissatisfied" } },
           ],
-          headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
-          required: false,
-          placeholder: { default: "Type your answer here..." },
-          inputType: "text",
         },
         {
           id: reusableQuestionIds[2],
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "Which of the following words would you use to describe our {{productName}}?",
+          },
+          subheader: { default: "Select all that apply:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "Reliable" } },
+            { id: createId(), label: { default: "High quality" } },
+            { id: createId(), label: { default: "Overpriced" } },
+            { id: createId(), label: { default: "Impractical" } },
+            { id: createId(), label: { default: "Useful" } },
+            { id: createId(), label: { default: "Ineffective" } },
+            { id: createId(), label: { default: "Unique" } },
+            { id: createId(), label: { default: "Poor quality" } },
+            { id: createId(), label: { default: "Good value for money" } },
+            { id: createId(), label: { default: "Unreliable" } },
+          ],
+        },
+        {
+          id: reusableQuestionIds[3],
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "How well do our {{productName}} meet your needs?" },
+          subheader: { default: "Select one option:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "Extremely well" } },
+            { id: createId(), label: { default: "Very well" } },
+            { id: createId(), label: { default: "Somewhat well" } },
+            { id: createId(), label: { default: "Not so well" } },
+            { id: createId(), label: { default: "Not at all well" } },
+          ],
+        },
+        {
+          id: reusableQuestionIds[4],
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "How would you rate the quality of the {{productName}}?" },
+          subheader: { default: "Select one option:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "Very high quality" } },
+            { id: createId(), label: { default: "High quality" } },
+            { id: createId(), label: { default: "Low quality" } },
+            { id: createId(), label: { default: "Very low quality" } },
+            { id: createId(), label: { default: "Neither high nor low" } },
+          ],
+        },
+        {
+          id: reusableQuestionIds[5],
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "How would you rate the value for money of the {{productName}}?" },
+          subheader: { default: "Please select one:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "Excellent" } },
+            { id: createId(), label: { default: "Above average" } },
+            { id: createId(), label: { default: "Average" } },
+            { id: createId(), label: { default: "Below average" } },
+            { id: createId(), label: { default: "Poor" } },
+          ],
+        },
+        {
+          id: reusableQuestionIds[6],
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "How responsive have we been to your questions about our services?" },
+          subheader: { default: "Select one option:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "Extremely responsive" } },
+            { id: createId(), label: { default: "Very responsive" } },
+            { id: createId(), label: { default: "Somewhat responsive" } },
+            { id: createId(), label: { default: "Not so responsive" } },
+            { id: createId(), label: { default: "Not at all responsive" } },
+            { id: createId(), label: { default: "Not applicable" } },
+          ],
+        },
+        {
+          id: reusableQuestionIds[7],
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "How long have you been a customer of {{productName}}?" },
+          subheader: { default: "Select one option:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "This is my first purchase" } },
+            { id: createId(), label: { default: "Less than six months" } },
+            { id: createId(), label: { default: "Six months to a year" } },
+            { id: createId(), label: { default: "1 - 2 years" } },
+            { id: createId(), label: { default: "3 or more years" } },
+            { id: createId(), label: { default: "I haven't made a purchase yet" } },
+          ],
+        },
+        {
+          id: reusableQuestionIds[8],
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "How likely are you to purchase any of our {{productName}} again ?" },
+          subheader: { default: "Select one option:" },
+          required: true,
+          choices: [
+            { id: createId(), label: { default: "Extremely likely" } },
+            { id: createId(), label: { default: "Very likely" } },
+            { id: createId(), label: { default: "Somewhat likely" } },
+            { id: createId(), label: { default: "Not so likely" } },
+            { id: createId(), label: { default: "Not at all likely" } },
+          ],
+        },
+        {
+          id: reusableQuestionIds[9],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Ugh, sorry! Is there anything we can do to improve your experience?" },
+          headline: { default: "Do you have any other comments, questions or concerns?" },
           required: false,
           placeholder: { default: "Type your answer here..." },
           inputType: "text",
@@ -5186,9 +5257,9 @@ export const getExampleAppSurveyTemplate = (
       ({
         ...question,
         type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "App successfully connected 🥳" },
+        headline: { default: "App successfully connected" },
         html: {
-          default: "You're all set up. Create your own survey for your app users 👇",
+          default: "You're all set up. Create your own survey for your app users.",
         },
         buttonLabel: { default: "Let's do it!" },
         buttonExternal: true,

@@ -179,6 +179,11 @@ export const isEndingCardValid = (
   surveyLanguages: TSurveyLanguage[]
 ) => {
   if (card.type === "endScreen") {
+    const parseResult = z.string().url().safeParse(card.buttonLink);
+    if (card.buttonLabel !== undefined && !parseResult.success) {
+      return false;
+    }
+
     return (
       isContentValid(card.headline, surveyLanguages) &&
       isContentValid(card.subheader, surveyLanguages) &&
@@ -189,7 +194,6 @@ export const isEndingCardValid = (
     if (parseResult.success) {
       return card.label?.trim() !== "";
     } else {
-      toast.error("Invalid Redirect Url in Ending card");
       return false;
     }
   }
