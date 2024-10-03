@@ -1,15 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyMigrateFormData, ZSurveyMigrateFormValidation } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyMigrateFormData,
+  ZSurveyMigrateFormValidation,
+} from "@formbricks/types/surveys/types";
 import { Button } from "../../Button";
-import { RadioGroup, RadioGroupItem } from "../../RadioGroup";
 import { FormField, FormProvider } from "../../Form";
 import { Label } from "../../Label";
+import { RadioGroup, RadioGroupItem } from "../../RadioGroup";
 import { TooltipRenderer } from "../../Tooltip";
 import { migrateSurveyToOtherEnvironmentAction } from "../actions";
-import { useState } from "react"; // Import useState
+
+// Import useState
 
 export const SurveyMigrateForm = ({
   defaultProducts,
@@ -45,11 +51,14 @@ export const SurveyMigrateForm = ({
       return;
     }
     try {
-      await migrateSurveyToOtherEnvironmentAction({
+      const result = await migrateSurveyToOtherEnvironmentAction({
         surveyId: survey.id,
         targetEnvironmentId: selectedEnvironmentId,
       });
 
+      if (result?.serverError) {
+        throw new Error("Server Error while trying to migrate the survey.");
+      }
       toast.success("Survey migrated successfully!");
     } catch (error) {
       toast.error("Failed to migrate survey");
@@ -71,12 +80,13 @@ export const SurveyMigrateForm = ({
 
               return (
                 <div key={product?.id}>
-                  <div className="flex flex-col gap-2 mb-4">
+                  <div className="mb-4 flex flex-col gap-2">
                     <TooltipRenderer
                       shouldRender={isDisabled}
                       tooltipContent={
                         <span>
-                          This product is not compatible with the survey type. Please select a different product.
+                          This product is not compatible with the survey type. Please select a different
+                          product.
                         </span>
                       }>
                       <div className="w-fit">
@@ -95,6 +105,10 @@ export const SurveyMigrateForm = ({
                             control={form.control}
                             name={`products.${productIndex}.environments`}
                             render={({ field }) => {
+                              // Skip the current environment
+                              if (environment.id === survey.environmentId) {
+                                return <></>;
+                              }
                               return (
                                 <div className="flex items-center space-x-2 whitespace-nowrap">
                                   <RadioGroupItem

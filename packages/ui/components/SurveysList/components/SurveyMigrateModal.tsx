@@ -18,18 +18,16 @@ export const SurveyMigrateModal = ({ open, setOpen, survey }: MigrateSurveyModal
             <SendToBack className="h-6 w-6 text-slate-500" />
             <div>
               <div className="text-xl font-medium text-slate-700">Migrate Survey</div>
-              <div className="text-sm text-slate-500">Move this survey to a different product while keeping all responses attached</div>
+              <div className="text-sm text-slate-500">
+                Move this survey to a different product while keeping all responses attached
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="h-full max-h-[500px] overflow-auto pl-4 pt-24">
-        <SurveyMigrateOptions
-          survey={survey}
-          onCancel={() => setOpen(false)}
-          setOpen={setOpen}
-        />
+        <SurveyMigrateOptions survey={survey} onCancel={() => setOpen(false)} setOpen={setOpen} />
       </div>
     </div>
   </Modal>

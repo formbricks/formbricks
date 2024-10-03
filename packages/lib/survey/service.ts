@@ -897,28 +897,59 @@ export const migrateSurveyToOtherEnvironment = async (
         })),
       },
       triggers: {
-        create: existingSurvey.triggers.map((trigger) => ({
-          actionClass: {
-            connectOrCreate: {
-              where: {
-                name_environmentId: {
+        update: (
+          await Promise.all(
+            existingSurvey.triggers.map(async (trigger) => {
+              // Find if the ActionClass with the same properties exists in the target environment
+              const existingActionClass = await prisma.actionClass.findFirst({
+                where: {
                   name: trigger.actionClass.name,
                   environmentId: targetEnvironmentId,
+                  description: trigger.actionClass.description,
+                  type: trigger.actionClass.type,
+                  key: trigger.actionClass.key,
+                  noCodeConfig: trigger.actionClass.noCodeConfig
+                    ? { equals: trigger.actionClass.noCodeConfig }
+                    : undefined,
                 },
-              },
-              create: {
-                name: trigger.actionClass.name,
-                environment: { connect: { id: targetEnvironmentId } },
-                description: trigger.actionClass.description,
-                type: trigger.actionClass.type,
-                key: trigger.actionClass.key,
-                noCodeConfig: trigger.actionClass.noCodeConfig
-                  ? structuredClone(trigger.actionClass.noCodeConfig)
-                  : undefined,
-              },
-            },
-          },
-        })),
+              });
+
+              let actionClassId;
+              if (existingActionClass) {
+                actionClassId = existingActionClass.id;
+              } else {
+                // Create a new ActionClass if it doesn't exist
+                const newActionClass = await prisma.actionClass.create({
+                  data: {
+                    name: trigger.actionClass.name,
+                    description: trigger.actionClass.description,
+                    type: trigger.actionClass.type,
+                    key: trigger.actionClass.key,
+                    noCodeConfig: trigger.actionClass.noCodeConfig
+                      ? structuredClone(trigger.actionClass.noCodeConfig)
+                      : undefined,
+                    environment: { connect: { id: targetEnvironmentId } },
+                  },
+                });
+                actionClassId = newActionClass.id;
+              }
+
+              await prisma.surveyTrigger.update({
+                where: {
+                  surveyId_actionClassId: {
+                    surveyId: existingSurvey.id,
+                    actionClassId: trigger.actionClass.id,
+                  },
+                },
+                data: {
+                  actionClassId: actionClassId,
+                },
+              });
+
+              return null;
+            })
+          )
+        ).filter(Boolean), // Filter out `undefined` values
       },
       segment: existingSurvey.segment
         ? existingSurvey.segment.isPrivate

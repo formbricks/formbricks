@@ -19,7 +19,9 @@ const SurveyMigrateOptions = ({ survey, onCancel, setOpen }: SurveyMigrateOption
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const getProductsByEnvironmentIdResponse = await getProductsByEnvironmentIdAction({ environmentId: survey.environmentId });
+      const getProductsByEnvironmentIdResponse = await getProductsByEnvironmentIdAction({
+        environmentId: survey.environmentId,
+      });
       if (getProductsByEnvironmentIdResponse?.data) {
         setProducts(getProductsByEnvironmentIdResponse?.data);
       } else {
@@ -41,7 +43,9 @@ const SurveyMigrateOptions = ({ survey, onCancel, setOpen }: SurveyMigrateOption
     );
   }
 
-  return <SurveyMigrateForm defaultProducts={products} survey={survey} onCancel={onCancel} setOpen={setOpen} />;
+  return (
+    <SurveyMigrateForm defaultProducts={products} survey={survey} onCancel={onCancel} setOpen={setOpen} />
+  );
 };
 
 export default SurveyMigrateOptions;
