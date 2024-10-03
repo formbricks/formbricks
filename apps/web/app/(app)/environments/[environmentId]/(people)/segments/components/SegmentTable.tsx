@@ -1,4 +1,3 @@
-import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment } from "@formbricks/types/segment";
 import { SegmentTableDataRowContainer } from "./SegmentTableDataRowContainer";
@@ -6,13 +5,11 @@ import { SegmentTableDataRowContainer } from "./SegmentTableDataRowContainer";
 type TSegmentTableProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
-  actionClasses: TActionClass[];
   isAdvancedTargetingAllowed: boolean;
 };
 
 export const SegmentTable = ({
   segments,
-  actionClasses,
   attributeClasses,
   isAdvancedTargetingAllowed,
 }: TSegmentTableProps) => {
@@ -32,7 +29,6 @@ export const SegmentTable = ({
             <SegmentTableDataRowContainer
               currentSegment={segment}
               segments={segments}
-              actionClasses={actionClasses}
               attributeClasses={attributeClasses}
               isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
             />

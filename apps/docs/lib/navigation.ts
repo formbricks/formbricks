@@ -57,7 +57,7 @@ export const navigation: Array<NavGroup> = [
       {
         title: "Features",
         children: [
-          { title: "Actions & Targeting", href: "/website-surveys/actions-and-targeting" },
+          { title: "Actions", href: "/website-surveys/actions" },
           { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
           { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
