@@ -179,7 +179,7 @@ export const isEndingCardValid = (
 ) => {
   if (card.type === "endScreen") {
     const parseResult = z.string().url().safeParse(card.buttonLink);
-    if (!parseResult.success) {
+    if (card.buttonLabel !== undefined && !parseResult.success) {
       return false;
     }
 
