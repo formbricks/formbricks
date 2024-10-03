@@ -78,8 +78,15 @@ export const SurveyAnalysisCTA = ({
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(surveyUrl);
-    toast.success("Copied link to clipboard");
+    navigator.clipboard
+      .writeText(surveyUrl)
+      .then(() => {
+        toast.success("Copied link to clipboard");
+      })
+      .catch((err) => {
+        toast.error("Failed to copy link");
+        console.error(err);
+      });
     setModalState((prev) => ({ ...prev, dropdown: false }));
   };
 
