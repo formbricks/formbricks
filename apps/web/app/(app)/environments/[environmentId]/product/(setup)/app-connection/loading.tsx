@@ -1,8 +1,6 @@
 "use client";
 
-import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { cn } from "@formbricks/lib/cn";
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
@@ -28,12 +26,10 @@ const LoadingCard = ({ title, description, skeletonLines }) => {
 };
 
 const Loading = () => {
-  const pathname = usePathname();
-
   const cards = [
     {
-      title: "Widget Status",
-      description: "Check if the Formbricks widget is alive and kicking.",
+      title: "App Connection Status",
+      description: "Check if your app is successfully connected with Formbricks. Reload page to recheck.",
       skeletonLines: [{ classes: " h-44 max-w-full rounded-md" }],
     },
     {
@@ -43,7 +39,7 @@ const Loading = () => {
     },
     {
       title: "How to setup",
-      description: "Follow these steps to setup the Formbricks widget within your app",
+      description: "Follow these steps to setup the Formbricks widget within your app.",
       skeletonLines: [
         { classes: "h-6 w-24 rounded-full" },
         { classes: "h-4 w-60 rounded-full" },
@@ -55,77 +51,11 @@ const Loading = () => {
     },
   ];
 
-  let navigation = [
-    {
-      id: "general",
-      label: "General",
-      icon: <UsersIcon className="h-5 w-5" />,
-      current: pathname?.includes("/general"),
-    },
-    {
-      id: "look",
-      label: "Look & Feel",
-      icon: <BrushIcon className="h-5 w-5" />,
-      current: pathname?.includes("/look"),
-    },
-    {
-      id: "languages",
-      label: "Survey Languages",
-      icon: <LanguagesIcon className="h-5 w-5" />,
-      hidden: true,
-      current: pathname?.includes("/languages"),
-    },
-    {
-      id: "tags",
-      label: "Tags",
-      icon: <TagIcon className="h-5 w-5" />,
-      current: pathname?.includes("/tags"),
-    },
-    {
-      id: "api-keys",
-      label: "API Keys",
-      icon: <KeyIcon className="h-5 w-5" />,
-      current: pathname?.includes("/api-keys"),
-    },
-    {
-      id: "website-connection",
-      label: "Website Connection",
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/website-connection"),
-      hidden: true,
-    },
-    {
-      id: "app-connection",
-      label: "App Connection",
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/app-connection"),
-      hidden: true,
-    },
-  ];
-
   return (
     <div>
       <PageContentWrapper>
         <PageHeader pageTitle="Configuration">
-          <div className="grid h-10 w-full grid-cols-[auto,1fr]">
-            <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
-              {navigation.map((navElem) => (
-                <div
-                  key={navElem.id}
-                  className={cn(
-                    navElem.id === "app-connection"
-                      ? "border-brand-dark border-b-2 font-semibold text-slate-900"
-                      : "border-transparent text-slate-500 transition-all duration-150 ease-in-out hover:border-slate-300 hover:text-slate-700",
-                    "flex h-full items-center border-b-2 px-3 text-sm font-medium",
-                    navElem.hidden && "hidden"
-                  )}
-                  aria-current={navElem.id === "app-connection" ? "page" : undefined}>
-                  {navElem.label}
-                </div>
-              ))}
-            </nav>
-            <div className="justify-self-end"></div>
-          </div>
+          <ProductConfigNavigation activeId="app-connection" loading />
         </PageHeader>
         <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
         {cards.map((card, index) => (
