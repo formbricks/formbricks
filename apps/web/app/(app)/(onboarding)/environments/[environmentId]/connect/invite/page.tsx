@@ -33,7 +33,7 @@ const Page = async ({ params }: InvitePageProps) => {
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">
       <Header
         title="Who is your favorite engineer?"
-        subtitle="Invite your tech-savvy co-worker to help with the setup 🤓"
+        subtitle="Invite your tech-savvy co-worker to help with the setup."
       />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>
