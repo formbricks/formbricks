@@ -180,7 +180,6 @@ export const isEndingCardValid = (
   if (card.type === "endScreen") {
     const parseResult = z.string().url().safeParse(card.buttonLink);
     if (!parseResult.success) {
-      toast.error("Invalid Button Url in Ending card");
       return false;
     }
 
@@ -194,7 +193,6 @@ export const isEndingCardValid = (
     if (parseResult.success) {
       return card.label?.trim() !== "";
     } else {
-      toast.error("Invalid Redirect Url in Ending card");
       return false;
     }
   }
