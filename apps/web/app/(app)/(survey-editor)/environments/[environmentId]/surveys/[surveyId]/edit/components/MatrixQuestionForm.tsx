@@ -3,17 +3,11 @@
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TI18nString, TShuffleOption, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/components/Select";
+import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -237,29 +231,12 @@ export const MatrixQuestionForm = ({
             </Button>
           </div>
           <div className="mt-3 flex flex-1 items-center justify-end gap-2">
-            <Select
-              defaultValue={question.shuffleOption}
-              value={question.shuffleOption}
-              onValueChange={(e: TShuffleOption) => {
-                updateQuestion(questionIdx, { shuffleOption: e });
-              }}>
-              <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
-                <SelectValue placeholder="Select ordering" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(shuffleOptionsTypes).map(
-                  (shuffleOptionsType) =>
-                    shuffleOptionsType.show && (
-                      <SelectItem
-                        key={shuffleOptionsType.id}
-                        value={shuffleOptionsType.id}
-                        title={shuffleOptionsType.label}>
-                        {shuffleOptionsType.label}
-                      </SelectItem>
-                    )
-                )}
-              </SelectContent>
-            </Select>
+            <ShuffleOptionSelect
+              shuffleOptionsTypes={shuffleOptionsTypes}
+              questionIdx={questionIdx}
+              updateQuestion={updateQuestion}
+              shuffleOption={question.shuffleOption}
+            />
           </div>
         </div>
       </div>
