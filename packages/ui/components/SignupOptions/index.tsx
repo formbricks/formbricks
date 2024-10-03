@@ -109,7 +109,7 @@ export const SignupOptions = ({
                     placeholder="Full Name"
                     aria-placeholder="Full Name"
                     required
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                   />
                 </div>
               </div>
@@ -125,7 +125,7 @@ export const SignupOptions = ({
                   required
                   placeholder="work@email.com"
                   defaultValue={emailFromSearchParams}
-                  className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                  className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                 />
               </div>
               <div className="transition-all duration-500 ease-in-out">
@@ -142,7 +142,7 @@ export const SignupOptions = ({
                   aria-placeholder="password"
                   onFocus={() => setIsPasswordFocused(true)}
                   required
-                  className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
+                  className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
                 />
               </div>
               {passwordResetEnabled && isPasswordFocused && (
