@@ -10,9 +10,8 @@ import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { adTranslations } from "@/lib/adTranslations.ts";
-import { evaluateCondition } from "@/lib/logicEvaluator";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
-import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
@@ -394,12 +393,12 @@ export const Survey = ({
               headline={replaceRecallInfo(
                 getLocalizedValue(localSurvey.failureCard.headline, selectedLanguage),
                 responseData,
-                localSurvey.variables
+                {} //todo marko
               )}
               subheader={replaceRecallInfo(
                 getLocalizedValue(localSurvey.failureCard.subheader, selectedLanguage),
                 responseData,
-                localSurvey.variables
+                {}
               )}
               isResponseSendingFinished={isResponseSendingFinished}
               buttonLabel={getLocalizedValue(localSurvey.failureCard.buttonLabel, selectedLanguage)}

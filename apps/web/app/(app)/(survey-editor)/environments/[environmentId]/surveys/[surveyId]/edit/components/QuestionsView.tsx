@@ -38,7 +38,7 @@ import {
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
-import { LoadingSpinner } from "@formbricks/ui/LoadingSpinner";
+import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import {
   isEndingCardValid,
   isWelcomeCardValid,

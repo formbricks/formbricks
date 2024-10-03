@@ -1,10 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { createHmac } from "crypto";
-import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { sendResponseFinishedEmail } from "@formbricks/email";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, WEBHOOK_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -66,19 +64,23 @@ export const POST = async (request: Request) => {
     ]);
   };
 
-  const webhookPromises = webhooks.map((webhook) =>
-    fetchWithTimeout(webhook.url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
+  const webhookPromises = webhooks.map((webhook) => {
+      const body = {
         webhookId: webhook.id,
         event,
         data: response,
-        hash: createHmac("sha256", WEBHOOK_SECRET).update(JSON.stringify(body)).digest("hex"),
-      }),
-    }).catch((error) => {
-      console.error(`Webhook call to ${webhook.url} failed:`, error);
-    })
+      };
+
+      body["hash"] = createHmac("sha256", WEBHOOK_SECRET).update(JSON.stringify(body)).digest("hex");
+
+      fetchWithTimeout(webhook.url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      }).catch((error) => {
+        console.error(`Webhook call to ${webhook.url} failed:`, error);
+      })
+    }
   );
 
   if (event === "responseFinished") {
@@ -99,37 +101,6 @@ export const POST = async (request: Request) => {
       await handleIntegrations(integrations, inputValidation.data, survey);
     }
 
-    // Fetch users with notifications in a single query
-    // TODO: add cache for this query. Not possible at the moment since we can't get the membership cache by environmentId
-    const usersWithNotifications = await prisma.user.findMany({
-      where: {
-        memberships: {
-          some: {
-            organization: {
-              products: {
-                some: {
-                  environments: {
-                    some: { id: environmentId },
-                  },
-                },
-              },
-            },
-          },
-        },
-        notificationSettings: {
-          path: ["alert", surveyId],
-          not: Prisma.JsonNull,
-        },
-      },
-      select: { email: true },
-    });
-
-    const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
-        console.error(`Failed to send email to ${user.email}:`, error);
-      })
-    );
-
     // Update survey status if necessary
     if (survey.autoComplete && responseCount === survey.autoComplete) {
       survey.status = "completed";
@@ -137,7 +108,7 @@ export const POST = async (request: Request) => {
     }
 
     // Await webhook and email promises with allSettled to prevent early rejection
-    const results = await Promise.allSettled([...webhookPromises, ...emailPromises]);
+    const results = await Promise.allSettled([...webhookPromises]);
     results.forEach((result) => {
       if (result.status === "rejected") {
         console.error("Promise rejected:", result.reason);
