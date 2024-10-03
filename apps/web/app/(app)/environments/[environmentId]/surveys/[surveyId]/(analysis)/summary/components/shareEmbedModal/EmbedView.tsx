@@ -37,7 +37,7 @@ export const EmbedView = ({
 }: EmbedViewProps) => {
   return (
     <div className="h-full overflow-hidden">
-      {disableBack && (
+      {!disableBack && (
         <div className="border-b border-slate-200 py-2">
           <Button
             variant="minimal"
