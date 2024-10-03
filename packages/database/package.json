@@ -61,13 +61,13 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@paralleldrive/cuid2": "^2.2.2",
+    "@paralleldrive/cuid2": "2.2.2",
     "@formbricks/eslint-config": "workspace:*",
-    "prisma": "^5.18.0",
-    "prisma-dbml-generator": "^0.12.0",
-    "prisma-json-types-generator": "^3.0.4",
-    "ts-node": "^10.9.2",
-    "zod": "^3.23.8",
-    "zod-prisma": "^0.5.4"
+    "prisma": "5.18.0",
+    "prisma-dbml-generator": "0.12.0",
+    "prisma-json-types-generator": "3.0.4",
+    "ts-node": "10.9.2",
+    "zod": "3.23.8",
+    "zod-prisma": "0.5.4"
   }
 }

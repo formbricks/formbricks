@@ -564,7 +564,7 @@ importers:
   packages/config-eslint:
     devDependencies:
       '@next/eslint-plugin-next':
-        specifier: ^14.2.5
+        specifier: 14.2.5
         version: 14.2.5
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.0.0
@@ -576,7 +576,7 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(@next/eslint-plugin-next@14.2.5)(eslint@8.57.0)(prettier@3.3.3)(typescript@5.5.4)(vitest@2.0.5)
       eslint-config-next:
-        specifier: ^14.2.5
+        specifier: 14.2.5
         version: 14.2.5(eslint@8.57.0)(typescript@5.5.4)
       eslint-config-prettier:
         specifier: ^9.1.0
@@ -643,25 +643,25 @@ importers:
         specifier: workspace:*
         version: link:../types
       '@paralleldrive/cuid2':
-        specifier: ^2.2.2
+        specifier: 2.2.2
         version: 2.2.2
       prisma:
-        specifier: ^5.18.0
+        specifier: 5.18.0
         version: 5.18.0
       prisma-dbml-generator:
-        specifier: ^0.12.0
+        specifier: 0.12.0
         version: 0.12.0(encoding@0.1.13)
       prisma-json-types-generator:
-        specifier: ^3.0.4
+        specifier: 3.0.4
         version: 3.0.4(prisma@5.18.0)(typescript@5.5.4)
       ts-node:
-        specifier: ^10.9.2
+        specifier: 10.9.2
         version: 10.9.2(@swc/core@1.3.101)(@types/node@22.3.0)(typescript@5.5.4)
       zod:
-        specifier: ^3.23.8
+        specifier: 3.23.8
         version: 3.23.8
       zod-prisma:
-        specifier: ^0.5.4
+        specifier: 0.5.4
         version: 0.5.4(decimal.js@10.4.3)(prisma@5.18.0)(zod@3.23.8)
 
   packages/ee:
@@ -691,7 +691,7 @@ importers:
         specifier: ^0.427.0
         version: 0.427.0(react@19.0.0-rc-935180c7e0-20240524)
       next:
-        specifier: ^14.2.5
+        specifier: 14.2.5
         version: 14.2.5(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524)
       next-auth:
         specifier: ^4.24.7
@@ -9905,10 +9905,6 @@ packages:
 
   loupe@3.1.1:
     resolution: {integrity: sha512-edNu/8D5MKVfGVFRhFf8aAxiTM6Wumfz5XsaatSxlD3w4R1d/WEKUTydCdPGbl9K7QG/Ca3GnDV2sIKIpXRQcw==}
-
-  lru-cache@10.2.2:
-    resolution: {integrity: sha512-9hp3Vp2/hFQUiIwKo8XCeFVnrg8Pk3TYNPIR7tJADKi5YfcF7vEaK7avFHTlSy3kOKYaJQaalfEo6YuXdceBOQ==}
-    engines: {node: 14 || >=16.14}
 
   lru-cache@10.3.0:
     resolution: {integrity: sha512-CQl19J/g+Hbjbv4Y3mFNNXFEL/5t/KCg8POCuUqd4rMKjGG+j1ybER83hxV58zL+dFI1PTkt3GNFSHRt+d8qEQ==}
@@ -25388,8 +25384,6 @@ snapshots:
     dependencies:
       get-func-name: 2.0.2
 
-  lru-cache@10.2.2: {}
-
   lru-cache@10.3.0: {}
 
   lru-cache@11.0.0: {}
@@ -26997,7 +26991,7 @@ snapshots:
 
   path-scurry@1.11.1:
     dependencies:
-      lru-cache: 10.2.2
+      lru-cache: 10.3.0
       minipass: 7.1.2
 
   path-scurry@2.0.0:
