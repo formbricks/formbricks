@@ -2008,7 +2008,7 @@ const validateActions = (
     return undefined;
   });
 
-  return actionIssues.filter((issue) => issue !== undefined);
+  return actionIssues.filter((issue): issue is z.ZodIssue => issue !== undefined);
 };
 
 const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLogic[]): z.ZodIssue[] => {
