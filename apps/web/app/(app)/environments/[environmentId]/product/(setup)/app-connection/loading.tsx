@@ -33,11 +33,6 @@ const Loading = () => {
       skeletonLines: [{ classes: " h-44 max-w-full rounded-md" }],
     },
     {
-      title: "Your EnvironmentId",
-      description: "This id uniquely identifies this Formbricks environment.",
-      skeletonLines: [{ classes: "h-6 w-4/6 rounded-full" }],
-    },
-    {
       title: "How to setup",
       description: "Follow these steps to setup the Formbricks widget within your app.",
       skeletonLines: [
@@ -48,6 +43,11 @@ const Loading = () => {
         { classes: "h-4 w-60 rounded-full" },
         { classes: "h-4 w-60 rounded-full" },
       ],
+    },
+    {
+      title: "Your EnvironmentId",
+      description: "This id uniquely identifies this Formbricks environment.",
+      skeletonLines: [{ classes: "h-6 w-4/6 rounded-full" }],
     },
   ];
 
