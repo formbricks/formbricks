@@ -50,7 +50,7 @@ export const OnboardingSetupInstructions = ({
   `;
 
   const npmSnippetForAppSurveys = `
-  import formbricks from "@formbricks/js/app";
+  import formbricks from "@formbricks/js";
   
   if (typeof window !== "undefined") {
     formbricks.init({
