@@ -6,22 +6,16 @@ import {
 } from "@formbricks/types/surveys/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
 
+type ShuffleOptionType = {
+  id: string;
+  label: string;
+  show: boolean;
+};
+
 type ShuffleOptionsTypes = {
-  none?: {
-    id: string;
-    label: string;
-    show: boolean;
-  };
-  all?: {
-    id: string;
-    label: string;
-    show: boolean;
-  };
-  exceptLast?: {
-    id: string;
-    label: string;
-    show: boolean;
-  };
+  none?: ShuffleOptionType;
+  all?: ShuffleOptionType;
+  exceptLast?: ShuffleOptionType;
 };
 
 interface ShuffleOptionSelectInterface {
