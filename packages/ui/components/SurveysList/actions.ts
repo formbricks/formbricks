@@ -90,7 +90,7 @@ export const migrateSurveyToOtherEnvironmentAction = authenticatedActionClient
 
     const isSameEnvironment = environmentId === targetEnvironmentId;
     if (isSameEnvironment) {
-      throw new Error("You cannot move the survey to the same product.");
+      throw new Error("You cannot move the survey to the same environment.");
     }
 
     await checkAuthorization({

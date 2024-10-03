@@ -15,8 +15,6 @@ import { RadioGroup, RadioGroupItem } from "../../RadioGroup";
 import { TooltipRenderer } from "../../Tooltip";
 import { migrateSurveyToOtherEnvironmentAction } from "../actions";
 
-// Import useState
-
 export const SurveyMigrateForm = ({
   defaultProducts,
   survey,
