@@ -50,6 +50,7 @@ const Page = async ({ params }) => {
           />
         </PageHeader>
         <SummaryPage
+          productName={product.name}
           environment={environment}
           survey={survey}
           surveyId={survey.id}
