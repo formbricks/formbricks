@@ -156,7 +156,7 @@ export const SigninForm = ({
                     required
                     placeholder="work@email.com"
                     defaultValue={searchParams?.get("email") || ""}
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                     {...formMethods.register("email", {
                       required: true,
                       pattern: /\S+@\S+\.\S+/,
@@ -178,7 +178,7 @@ export const SigninForm = ({
                         aria-placeholder="password"
                         onFocus={() => setIsPasswordFocused(true)}
                         required
-                        className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                        className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                         {...field}
                       />
                     )}
