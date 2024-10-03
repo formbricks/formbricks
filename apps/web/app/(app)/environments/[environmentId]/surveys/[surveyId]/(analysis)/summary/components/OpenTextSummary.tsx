@@ -1,6 +1,7 @@
 import { UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import formbricks from "@formbricks/js/app";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -28,6 +29,8 @@ interface OpenTextSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   isAiEnabled: boolean;
+  productId: string;
+  productName: string;
 }
 
 export const OpenTextSummary = ({
@@ -36,6 +39,8 @@ export const OpenTextSummary = ({
   survey,
   attributeClasses,
   isAiEnabled,
+  productId,
+  productName,
 }: OpenTextSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
@@ -65,6 +70,22 @@ export const OpenTextSummary = ({
     },
   ];
 
+  const handleFeedback = (feedback: "positive" | "negative") => {
+    formbricks.track("Insight Feedback", {
+      hiddenFields: {
+        feedbackSentiment: feedback,
+        productId,
+        productName,
+        surveyId: survey.id,
+        surveyName: survey.name,
+        insightId: currentInsight?.id,
+        insightCategory: currentInsight?.category,
+        questionId: questionSummary.question.id,
+        environmentId,
+      },
+    });
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -78,6 +99,7 @@ export const OpenTextSummary = ({
         insight={currentInsight}
         surveyId={survey.id}
         questionId={questionSummary.question.id}
+        handleFeedback={handleFeedback}
       />
       {isAiEnabled && (
         <div className="flex items-center justify-between pr-4">

@@ -40,6 +40,7 @@ interface SummaryListProps {
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
   isAiEnabled: boolean;
+  productName: string;
 }
 
 export const SummaryList = ({
@@ -50,6 +51,7 @@ export const SummaryList = ({
   totalResponseCount,
   attributeClasses,
   isAiEnabled,
+  productName,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const widgetSetupCompleted =
@@ -134,6 +136,8 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 isAiEnabled={isAiEnabled}
+                productId={environment.productId}
+                productName={productName}
               />
             );
           }

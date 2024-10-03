@@ -1,5 +1,6 @@
 "use client";
 
+import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
@@ -8,7 +9,7 @@ import { TDocument } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "../Badge";
 import { Card, CardContent, CardFooter } from "../Card";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "../Sheet";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "../Sheet";
 import { getDocumentsByInsightIdSurveyIdQuestionIdAction } from "./actions";
 
 interface InsightSheetProps {
@@ -17,9 +18,17 @@ interface InsightSheetProps {
   insight: TInsight | null;
   surveyId: string;
   questionId: string;
+  handleFeedback: (feedback: "positive" | "negative") => void;
 }
 
-export const InsightSheet = ({ isOpen, setIsOpen, insight, surveyId, questionId }: InsightSheetProps) => {
+export const InsightSheet = ({
+  isOpen,
+  setIsOpen,
+  insight,
+  surveyId,
+  questionId,
+  handleFeedback,
+}: InsightSheetProps) => {
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
   useEffect(() => {
@@ -49,22 +58,31 @@ export const InsightSheet = ({ isOpen, setIsOpen, insight, surveyId, questionId 
   if (!insight) {
     return null;
   }
+
+  const handleFeedbackClick = (feedback: "positive" | "negative") => {
+    setIsOpen(false);
+    handleFeedback(feedback);
+  };
+
   return (
-    <Sheet open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
-      <SheetContent className="w-[400rem] bg-white lg:max-w-lg xl:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle>
-            <span className="mr-3">{insight.title}</span>
-            {insight.category === "complaint" ? (
-              <Badge text="Complaint" type="error" size="tiny" />
-            ) : insight.category === "featureRequest" ? (
-              <Badge text="Request" type="warning" size="tiny" />
-            ) : insight.category === "praise" ? (
-              <Badge text="Praise" type="success" size="tiny" />
-            ) : null}
-          </SheetTitle>
-          <SheetDescription>{insight.description}</SheetDescription>
-          <div className="flex flex-col space-y-2 pt-4">
+    <>
+      <Sheet open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
+        <SheetContent className="flex h-full w-[400rem] flex-col bg-white lg:max-w-lg xl:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>
+              <span className="mr-3">{insight.title}</span>
+              {insight.category === "complaint" ? (
+                <Badge text="Complaint" type="error" size="tiny" />
+              ) : insight.category === "featureRequest" ? (
+                <Badge text="Request" type="warning" size="tiny" />
+              ) : insight.category === "praise" ? (
+                <Badge text="Praise" type="success" size="tiny" />
+              ) : null}
+            </SheetTitle>
+            <SheetDescription>{insight.description}</SheetDescription>
+          </SheetHeader>
+
+          <div className="flex flex-1 flex-col space-y-2 overflow-auto pt-4">
             {documents.map((document) => (
               <Card>
                 <CardContent className="p-4 text-sm">
@@ -86,8 +104,22 @@ export const InsightSheet = ({ isOpen, setIsOpen, insight, surveyId, questionId 
               </Card>
             ))}
           </div>
-        </SheetHeader>
-      </SheetContent>
-    </Sheet>
+
+          <SheetFooter>
+            <div className="flex items-center gap-2">
+              <p>Did you find this insight helpful?</p>
+              <ThumbsUpIcon
+                className="upvote h-5 w-5 cursor-pointer"
+                onClick={() => handleFeedbackClick("positive")}
+              />
+              <ThumbsDownIcon
+                className="downvote h-5 w-5 cursor-pointer"
+                onClick={() => handleFeedbackClick("negative")}
+              />
+            </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };

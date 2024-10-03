@@ -100,6 +100,7 @@ const Page = async ({ params }) => {
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
         isAiEnabled={isAiEnabled}
+        productName={product.name}
       />
     </PageContentWrapper>
   );
