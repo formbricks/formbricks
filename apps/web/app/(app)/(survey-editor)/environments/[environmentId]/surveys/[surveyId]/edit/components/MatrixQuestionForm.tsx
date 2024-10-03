@@ -236,7 +236,7 @@ export const MatrixQuestionForm = ({
               <span>Add column</span>
             </Button>
           </div>
-          <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="mt-3 flex flex-1 items-center justify-end gap-2">
             <Select
               defaultValue={question.shuffleOption}
               value={question.shuffleOption}

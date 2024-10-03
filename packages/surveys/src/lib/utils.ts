@@ -18,6 +18,21 @@ const shuffle = (array: any[]) => {
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
+export function getRandomRowIdx(n: number, shuffleOption: TShuffleOption): number[] {
+  // Create an array with numbers from 0 to n-1
+  let array = Array.from(Array(n).keys());
+
+  if (shuffleOption === "all") {
+    shuffle(array);
+  } else if (shuffleOption === "exceptLast") {
+    const lastElement = array.pop();
+    if (lastElement) {
+      shuffle(array);
+      array.push(lastElement);
+    }
+  }
+  return array;
+}
 
 export const getShuffledRows = (rows: TI18nString[], shuffleOption: TShuffleOption): TI18nString[] => {
   const rowsCopy = [...rows];
