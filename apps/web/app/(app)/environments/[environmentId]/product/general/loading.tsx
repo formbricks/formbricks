@@ -45,16 +45,14 @@ const Loading = () => {
   ];
 
   return (
-    <div>
-      <PageContentWrapper>
-        <PageHeader pageTitle="Configuration">
-          <ProductConfigNavigation activeId="general" loading />
-        </PageHeader>
-        {cards.map((card, index) => (
-          <LoadingCard key={index} {...card} />
-        ))}
-      </PageContentWrapper>
-    </div>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation activeId="general" loading />
+      </PageHeader>
+      {cards.map((card, index) => (
+        <LoadingCard key={index} {...card} />
+      ))}
+    </PageContentWrapper>
   );
 };
 
