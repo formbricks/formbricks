@@ -30,7 +30,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().optional(),
+  buttonLink: z.string().url("Invalid Button Url in Ending card").optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -39,7 +39,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z.string().url("Invalid redirect Url in Ending card").optional(),
+  url: z.string().url("Invalid Redirect Url in Ending card").optional(),
   label: z.string().optional(),
 });
 
@@ -2009,7 +2009,8 @@ const validateActions = (
     return undefined;
   });
 
-  return actionIssues.filter((issue) => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue) => issue !== undefined);
+  return filteredActionIssues;
 };
 
 const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLogic[]): z.ZodIssue[] => {

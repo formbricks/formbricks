@@ -18,7 +18,6 @@ import {
   ZSurvey,
   ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
-import { getActionsByPersonId } from "../action/service";
 import { actionClassCache } from "../actionClass/cache";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
@@ -1323,11 +1322,6 @@ export const getSyncSurveys = reactCache(
             return surveys;
           }
 
-          const personActions = await getActionsByPersonId(person.id);
-          const personActionClassIds = Array.from(
-            new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
-          );
-
           const attributes = await getAttributes(person.id);
           const personUserId = person.userId;
 
@@ -1343,7 +1337,6 @@ export const getSyncSurveys = reactCache(
             const result = await evaluateSegment(
               {
                 attributes: attributes ?? {},
-                actionIds: personActionClassIds,
                 deviceType,
                 environmentId,
                 personId: person.id,
