@@ -55,7 +55,7 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
         surveyId: display.surveyId,
         createdAt: display.createdAt,
       }));
-      const lastDisplayAt = displaysState
+      const lastDisplayAt = (displaysState && displaysState.length > 0)
         ? displaysState.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
             .createdAt
         : null;
