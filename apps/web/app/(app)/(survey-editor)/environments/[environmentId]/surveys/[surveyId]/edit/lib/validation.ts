@@ -178,6 +178,12 @@ export const isEndingCardValid = (
   surveyLanguages: TSurveyLanguage[]
 ) => {
   if (card.type === "endScreen") {
+    const parseResult = z.string().url().safeParse(card.buttonLink);
+    if (!parseResult.success) {
+      toast.error("Invalid Button Url in Ending card");
+      return false;
+    }
+
     return (
       isContentValid(card.headline, surveyLanguages) &&
       isContentValid(card.subheader, surveyLanguages) &&
