@@ -29,7 +29,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().optional(),
+  buttonLink: z.string().url("Invalid Button Url in Ending card").optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -38,7 +38,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z.string().url("Invalid redirect Url in Ending card").optional(),
+  url: z.string().url("Invalid Redirect Url in Ending card").optional(),
   label: z.string().optional(),
 });
 
@@ -67,6 +67,7 @@ export enum TSurveyQuestionTypeEnum {
   Matrix = "matrix",
   Address = "address",
   Ranking = "ranking",
+  ContactInfo = "contactInfo",
 }
 
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
@@ -576,16 +577,32 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
+const ZSurveyShowRequiredToggle = z.object({
+  show: z.boolean(),
+  required: z.boolean(),
+});
+
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
-  isAddressLine1Required: z.boolean().default(false),
-  isAddressLine2Required: z.boolean().default(false),
-  isCityRequired: z.boolean().default(false),
-  isStateRequired: z.boolean().default(false),
-  isZipRequired: z.boolean().default(false),
-  isCountryRequired: z.boolean().default(false),
+  addressLine1: ZSurveyShowRequiredToggle,
+  addressLine2: ZSurveyShowRequiredToggle,
+  city: ZSurveyShowRequiredToggle,
+  state: ZSurveyShowRequiredToggle,
+  zip: ZSurveyShowRequiredToggle,
+  country: ZSurveyShowRequiredToggle,
 });
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
+
+export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
+  firstName: ZSurveyShowRequiredToggle,
+  lastName: ZSurveyShowRequiredToggle,
+  email: ZSurveyShowRequiredToggle,
+  phone: ZSurveyShowRequiredToggle,
+  company: ZSurveyShowRequiredToggle,
+});
+
+export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
 export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
@@ -612,6 +629,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyMatrixQuestion,
   ZSurveyAddressQuestion,
   ZSurveyRankingQuestion,
+  ZSurveyContactInfoQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -635,6 +653,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Rating,
   TSurveyQuestionTypeEnum.Cal,
   TSurveyQuestionTypeEnum.Ranking,
+  TSurveyQuestionTypeEnum.ContactInfo,
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
@@ -1027,6 +1046,32 @@ export const ZSurvey = z
               path: ["questions", questionIndex, "calHost"],
             });
           }
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+        const { company, email, firstName, lastName, phone } = question;
+        const fields = [company, email, firstName, lastName, phone];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "At least one field must be shown in the Contact Info question",
+            path: ["questions", questionIndex],
+          });
+        }
+      }
+
+      if (question.type === TSurveyQuestionTypeEnum.Address) {
+        const { addressLine1, addressLine2, city, state, zip, country } = question;
+        const fields = [addressLine1, addressLine2, city, state, zip, country];
+
+        if (fields.every((field) => !field.show)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "At least one field must be shown in the Address question",
+            path: ["questions", questionIndex],
+          });
         }
       }
 
@@ -2290,11 +2335,32 @@ export const ZSurveyQuestionSummaryAddress = z.object({
 
 export type TSurveyQuestionSummaryAddress = z.infer<typeof ZSurveyQuestionSummaryAddress>;
 
+export const ZSurveyQuestionSummaryContactInfo = z.object({
+  type: z.literal("contactInfo"),
+  question: ZSurveyContactInfoQuestion,
+  responseCount: z.number(),
+  samples: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.array(z.string()),
+      person: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      personAttributes: ZAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyQuestionSummaryContactInfo = z.infer<typeof ZSurveyQuestionSummaryContactInfo>;
+
 export const ZSurveyQuestionSummaryRanking = z.object({
   type: z.literal("ranking"),
   question: ZSurveyRankingQuestion,
   responseCount: z.number(),
-
   choices: z.array(
     z.object({
       value: z.string(),
@@ -2333,6 +2399,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryMatrix,
   ZSurveyQuestionSummaryAddress,
   ZSurveyQuestionSummaryRanking,
+  ZSurveyQuestionSummaryContactInfo,
 ]);
 
 export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;
