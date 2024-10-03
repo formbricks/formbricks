@@ -110,6 +110,11 @@ const nextConfig = {
         destination: "/global/schedule-start-end-dates",
         permanent: true,
       },
+      {
+        source: "/global/logic-editor",
+        destination: "/global/conditional-logic",
+        permanent: true,
+      },
       // Integrations
       {
         source: "/integrations/:path",
