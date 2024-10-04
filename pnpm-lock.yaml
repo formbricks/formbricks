@@ -1111,9 +1111,6 @@ importers:
       cmdk:
         specifier: ^1.0.0
         version: 1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@19.0.0-rc-935180c7e0-20240524(react@18.3.1))(react@18.3.1)
-      js-sha256:
-        specifier: ^0.11.0
-        version: 0.11.0
       lexical:
         specifier: ^0.17.0
         version: 0.17.0
@@ -9282,9 +9279,6 @@ packages:
 
   js-sdsl@4.3.0:
     resolution: {integrity: sha512-mifzlm2+5nZ+lEcLJMoBK0/IH/bDg8XnJfd/Wq6IP+xoCjLZsTOnV2QpxlVbX9bMnkl5PdEjNtBJ9Cj1NjifhQ==}
-
-  js-sha256@0.11.0:
-    resolution: {integrity: sha512-6xNlKayMZvds9h1Y1VWc0fQHQ82BxTXizWPEtEeGvmOUYpBRy4gbWroHLpzowe6xiQhHpelCQiE7HEdznyBL9Q==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -24355,8 +24349,6 @@ snapshots:
   js-cookie@3.0.5: {}
 
   js-sdsl@4.3.0: {}
-
-  js-sha256@0.11.0: {}
 
   js-tokens@4.0.0: {}
 
