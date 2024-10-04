@@ -37,8 +37,9 @@ To display the Product-Market Fit survey in your app you want to proceed as foll
 3. Setup the user action to display survey at good point in time
 
 <Note>
-  ## Formbricks Widget running? 
-  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide (15mins).](/app-surveys/quickstart)
+  ## Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web
+  app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
+  (15mins).](/app-surveys/quickstart)
 </Note>
 
 ### 1. Create new PMF survey
@@ -69,24 +70,11 @@ _Want to change the button color? You can do so in the product settings!_
 
 Save, and move over to where the magic happens: The “Audience” tab.
 
-### 3. Pre-segment your audience (coming soon)
-
-<Note>
-  ## Filter by attribute coming soon We're working on pre-segmenting users by attributes. We will update this
-  manual in the next days.
-</Note>
+### 3. Pre-segment your audience
 
 To run this survey properly, you should pre-segment your user base. As touched upon earlier: if you ask every user you’ll get lots of opinions which are often misleading. You only want to gather feedback from people who invested the time to get to know and use your product:
 
 **Filter by attribute**: You can keep the logic to decide if a user has (or has not) experienced value in your application. This makes most sense if you want to use historic usage data to decide if a user qualifies or not. Create your logic and if it applies, send an attribute to Formbricks by e.g. `formbricks.setAttribute("Loyalty", "Experienced Value");` Here is the full manual on how to [set attributes](/app-surveys/user-identification).
-
-**Filter by actions (coming soon)**: Later, you can also segment users based on events tracked with Formbricks. However, this makes it impossible to use historic usage data (pre Formbricks usage). Here we will have a few options to achieve that:
-
-- Check the time passed since sign-up (e.g. signed up 4 weeks ago)
-- User has performed a specific action a certain number of times or (e.g. created 5 reports)
-- User has performed a combination of actions (e.g. created a report **and** invited a organization member)
-
-This way you make sure that you separate potentially misleading opinions from valuable insights.
 
 ### 4. Set up a trigger for the Product-Market Fit survey:
 

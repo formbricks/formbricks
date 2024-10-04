@@ -28,6 +28,7 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
           ? "Almost there! Install widget to start receiving responses."
           : "Congrats! Your survey is live.",
         {
+          id: "survey-publish-success-toast",
           icon: isAppSurvey && !widgetSetupCompleted ? "🤏" : "🎉",
           duration: 5000,
           position: "bottom-right",
