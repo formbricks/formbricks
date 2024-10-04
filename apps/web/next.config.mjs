@@ -165,6 +165,18 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/packages/website",
+        destination: "/api/packages/js",
+      },
+      {
+        source: "/api/v1/client/:environmentId/website/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+    ];
+  },
   env: {
     NEXTAUTH_URL: process.env.WEBAPP_URL,
   },
