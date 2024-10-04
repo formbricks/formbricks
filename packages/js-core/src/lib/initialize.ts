@@ -1,9 +1,13 @@
 import { TAttributes } from "@formbricks/types/attributes";
-import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
+import { type TJsConfig, type TJsConfigInput, ZJsConfig } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { Config } from "./config";
-import { JS_LOCAL_STORAGE_KEY } from "./constants";
+import {
+  JS_LOCAL_STORAGE_KEY,
+  LEGACY_JS_APP_LOCAL_STORAGE_KEY,
+  LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
+} from "./constants";
 import { fetchEnvironmentState } from "./environmentState";
 import {
   ErrorHandler,
@@ -23,7 +27,6 @@ import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./personState
 import { filterSurveys, getIsDebug } from "./utils";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
@@ -32,13 +35,72 @@ export const setIsInitialized = (value: boolean) => {
   isInitialized = value;
 };
 
-// const checkForOlderLocalConfig = (): boolean => {
-//   const oldConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
+const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
+  const oldWebsiteConfig = localStorage.getItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
+  const oldAppConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
+
+  if (oldWebsiteConfig) {
+    // localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
+    const parsedOldConfig = JSON.parse(oldWebsiteConfig) as TJsConfig;
+    console.log(ZJsConfig.safeParse(parsedOldConfig));
+
+    if (
+      parsedOldConfig.environmentId &&
+      parsedOldConfig.apiHost &&
+      parsedOldConfig.environmentState &&
+      parsedOldConfig.personState &&
+      parsedOldConfig.filteredSurveys
+    ) {
+      const newLocalStorageConfig = { ...parsedOldConfig };
+
+      return {
+        changed: true,
+        newState: newLocalStorageConfig,
+      };
+    }
+  }
+
+  if (oldAppConfig) {
+    const parsedOldConfig = JSON.parse(oldAppConfig) as TJsConfig;
+    console.log(ZJsConfig.safeParse(parsedOldConfig));
+
+    if (
+      parsedOldConfig.environmentId &&
+      parsedOldConfig.apiHost &&
+      parsedOldConfig.environmentState &&
+      parsedOldConfig.personState &&
+      parsedOldConfig.filteredSurveys
+    ) {
+      const newLocalStorageConfig = { ...parsedOldConfig };
+
+      return {
+        changed: true,
+        newState: newLocalStorageConfig,
+      };
+    }
+  }
+
+  return {
+    changed: false,
+  };
+};
+
+// const checkForOlderAppConfig = (): boolean => {
+//   const oldConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
 
 //   if (oldConfig) {
-//     const parsedOldConfig = JSON.parse(oldConfig);
-//     if (parsedOldConfig.state || parsedOldConfig.expiresAt) {
-//       // local config follows old structure
+//     localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
+
+//     const parsedOldConfig = JSON.parse(oldConfig) as TJsConfig;
+//     console.log(ZJsConfig.safeParse(parsedOldConfig));
+
+//     if (
+//       parsedOldConfig.environmentId &&
+//       parsedOldConfig.apiHost &&
+//       parsedOldConfig.environmentState &&
+//       parsedOldConfig.personState &&
+//       parsedOldConfig.filteredSurveys
+//     ) {
 //       return true;
 //     }
 //   }
@@ -53,17 +115,21 @@ export const initialize = async (
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
   }
+  let config = Config.getInstance();
 
-  // const isLocalStorageOld = checkForOlderLocalConfig();
-  // const isLocalStorageOld = false;
+  const { changed, newState } = migrateLocalStorage();
 
-  // if (isLocalStorageOld) {
-  //   logger.debug("Local config is of an older version");
-  //   logger.debug("Resetting config");
+  if (changed && newState) {
+    console.log({ changed, newState });
+    config.resetConfig();
+    config = Config.getInstance();
 
-  //   appConfig.resetConfig();
-  //   appConfig = AppConfig.getInstance();
-  // }
+    if (!configInput.userId) {
+      config.resetConfig();
+      config = Config.getInstance();
+      config.update(newState);
+    }
+  }
 
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
@@ -320,7 +386,7 @@ export const deinitalize = (): void => {
   setIsInitialized(false);
 };
 
-export const putFormbricksInErrorState = (appConfig: Config): void => {
+export const putFormbricksInErrorState = (config: Config): void => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
@@ -328,7 +394,7 @@ export const putFormbricksInErrorState = (appConfig: Config): void => {
 
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
-  appConfig.update({
+  config.update({
     ...config.get(),
     status: {
       value: "error",
