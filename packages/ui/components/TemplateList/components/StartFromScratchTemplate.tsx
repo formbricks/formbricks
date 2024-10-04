@@ -33,7 +33,7 @@ export const StartFromScratchTemplate = ({
       }}
       className={cn(
         activeTemplate?.name === customSurvey.name
-          ? "ring-brand border-transparent ring-2"
+          ? "ring-brand-dark border-transparent ring-2"
           : "hover:border-brand-dark border-dashed border-slate-300",
         "duration-120 group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-150"
       )}>
