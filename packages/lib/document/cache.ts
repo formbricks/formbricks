@@ -29,6 +29,9 @@ export const documentCache = {
     byInsightId(insightId: string) {
       return `insights-${insightId}-documents`;
     },
+    byInsightIdSurveyIdQuestionId(insightId: string, surveyId: string, questionId: string) {
+      return `insights-${insightId}-surveys-${surveyId}-questions-${questionId}-documents`;
+    },
   },
   revalidate({ id, environmentId, surveyId, responseId, questionId, insightId }: RevalidateProps): void {
     if (id) {
@@ -48,6 +51,9 @@ export const documentCache = {
     }
     if (insightId) {
       revalidateTag(this.tag.byInsightId(insightId));
+    }
+    if (insightId && surveyId && questionId) {
+      revalidateTag(this.tag.byInsightIdSurveyIdQuestionId(insightId, questionId));
     }
   },
 };

@@ -15,6 +15,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { ZInsightCategory } from "@formbricks/types/insights";
 import { embeddingsModel, llmModel } from "../ai";
 import { cache } from "../cache";
+import { insightCache } from "../insight/cache";
 import { validateInputs } from "../utils/validate";
 import { documentCache } from "./cache";
 import { handleInsightAssignments } from "./utils";
@@ -61,7 +62,7 @@ export const getDocumentsByInsightId = reactCache(
       },
       [`getDocumentsByInsightId-${insightId}-${limit}-${offset}`],
       {
-        tags: [documentCache.tag.byInsightId(insightId)],
+        tags: [documentCache.tag.byInsightId(insightId), insightCache.tag.byId(insightId)],
       }
     )()
 );
@@ -76,13 +77,20 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
   ): Promise<TDocument[]> =>
     cache(
       async () => {
-        validateInputs([insightId, ZId]);
+        validateInputs(
+          [insightId, ZId],
+          [surveyId, ZId],
+          [questionId, ZId],
+          [limit, z.number()],
+          [offset, z.number()]
+        );
 
         limit = limit ?? DOCUMENTS_PER_PAGE;
         try {
           const documents = await prisma.document.findMany({
             where: {
               questionId,
+              surveyId,
               documentInsights: {
                 some: {
                   insightId,
@@ -107,9 +115,12 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
           throw error;
         }
       },
-      [`getDocumentsByInsightIdQuestionId-${insightId}-${limit}-${offset}`],
+      [`getDocumentsByInsightIdSurveyIdQuestionId-${insightId}-${surveyId}-${questionId}-${limit}-${offset}`],
       {
-        tags: [documentCache.tag.bySurveyIdQuestionId(surveyId, questionId)],
+        tags: [
+          documentCache.tag.byInsightIdSurveyIdQuestionId(insightId, surveyId, questionId),
+          insightCache.tag.byId(insightId),
+        ],
       }
     )()
 );

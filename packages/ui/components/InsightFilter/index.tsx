@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
+import { SecondaryNavigation } from "../SecondaryNavigation";
 
 interface InsightFilterProps {
   insights: TInsight[];
@@ -11,25 +11,6 @@ interface InsightFilterProps {
 
 export const InsightFilter = ({ insights, setInsights }: InsightFilterProps) => {
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
-
-  const filters = [
-    {
-      label: "All",
-      value: "all",
-    },
-    {
-      label: "Complaint",
-      value: "complaint",
-    },
-    {
-      label: "Feature Request",
-      value: "featureRequest",
-    },
-    {
-      label: "Praise",
-      value: "praise",
-    },
-  ];
 
   const handleFilterSelect = (filterValue: string) => {
     setSelectedFilter(filterValue);
@@ -40,22 +21,32 @@ export const InsightFilter = ({ insights, setInsights }: InsightFilterProps) => 
     }
   };
 
+  const tabNavigation = [
+    {
+      id: "all",
+      label: "All",
+      onClick: () => handleFilterSelect("all"),
+    },
+    {
+      id: "complaint",
+      label: "Complaint",
+      onClick: () => handleFilterSelect("complaint"),
+    },
+    {
+      id: "featureRequest",
+      label: "Feature Request",
+      onClick: () => handleFilterSelect("featureRequest"),
+    },
+    {
+      id: "praise",
+      label: "Praise",
+      onClick: () => handleFilterSelect("praise"),
+    },
+  ];
+
   return (
-    <div className="flex gap-1">
-      {filters.map((filter) => (
-        <button
-          key={filter.value}
-          type="button"
-          onClick={() => handleFilterSelect(filter.value)}
-          className={cn(
-            selectedFilter === filter.value
-              ? "bg-slate-800 font-semibold text-white"
-              : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
-            "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
-          )}>
-          {filter.label}
-        </button>
-      ))}
+    <div className="mb-2 border-b border-slate-200">
+      <SecondaryNavigation navigation={tabNavigation} activeId={selectedFilter} />
     </div>
   );
 };

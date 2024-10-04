@@ -1,17 +1,12 @@
-import { UserIcon } from "lucide-react";
+import { InsightView } from "@/app/(app)/environments/[environmentId]/components/InsightView";
 import Link from "next/link";
 import { useState } from "react";
-import formbricks from "@formbricks/js/app";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TInsight } from "@formbricks/types/insights";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
-import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
-import { InsightFilter } from "@formbricks/ui/components/InsightFilter";
-import { InsightSheet } from "@formbricks/ui/components/InsightSheet";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 import {
   Table,
@@ -46,9 +41,6 @@ export const OpenTextSummary = ({
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
     isAiEnabled ? "insights" : "responses"
   );
-  const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
-  const [insights, setInsights] = useState<TInsight[]>(questionSummary.insights);
-  const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
 
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
@@ -70,22 +62,6 @@ export const OpenTextSummary = ({
     },
   ];
 
-  const handleFeedback = (feedback: "positive" | "negative") => {
-    formbricks.track("Insight Feedback", {
-      hiddenFields: {
-        feedbackSentiment: feedback,
-        productId,
-        productName,
-        surveyId: survey.id,
-        surveyName: survey.name,
-        insightId: currentInsight?.id,
-        insightCategory: currentInsight?.category,
-        questionId: questionSummary.question.id,
-        environmentId,
-      },
-    });
-  };
-
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -93,67 +69,18 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
-      <InsightSheet
-        isOpen={isInsightSheetOpen}
-        setIsOpen={setIsInsightSheetOpen}
-        insight={currentInsight}
-        surveyId={survey.id}
-        questionId={questionSummary.question.id}
-        handleFeedback={handleFeedback}
-      />
-      {isAiEnabled && (
-        <div className="flex items-center justify-between pr-4">
-          <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />
-          <InsightFilter insights={questionSummary.insights} setInsights={setInsights} />
-        </div>
-      )}
+      {isAiEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
+      <div className="border-t border-slate-200"></div>
       <div className="max-h-[40vh] overflow-y-auto">
         {activeTab === "insights" ? (
-          <Table className="border-t border-slate-200">
-            <TableBody>
-              {questionSummary.insights.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">No insights found for this question.</p>
-                  </TableCell>
-                </TableRow>
-              ) : insights.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">No insights found for this filter.</p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                insights.map((insight) => (
-                  <TableRow
-                    key={insight.id}
-                    className="cursor-pointer hover:bg-slate-50"
-                    onClick={() => {
-                      setCurrentInsight(insight);
-                      setIsInsightSheetOpen(true);
-                    }}>
-                    <TableCell className="flex font-medium">
-                      {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
-                    </TableCell>
-                    <TableCell className="font-medium">{insight.title}</TableCell>
-                    <TableCell>{insight.description}</TableCell>
-                    <TableCell>
-                      {insight.category === "complaint" ? (
-                        <Badge text="Complaint" type="error" size="tiny" />
-                      ) : insight.category === "featureRequest" ? (
-                        <Badge text="Request" type="warning" size="tiny" />
-                      ) : insight.category === "praise" ? (
-                        <Badge text="Praise" type="success" size="tiny" />
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <InsightView
+            insights={questionSummary.insights}
+            questionId={questionSummary.question.id}
+            surveyId={survey.id}
+          />
         ) : activeTab === "responses" ? (
           <>
-            <Table className="border-t border-slate-200">
+            <Table>
               <TableHeader className="bg-slate-100">
                 <TableRow>
                   <TableHead>User</TableHead>

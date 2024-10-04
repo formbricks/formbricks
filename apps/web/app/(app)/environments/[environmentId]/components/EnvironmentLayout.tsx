@@ -2,7 +2,7 @@ import { MainNavigation } from "@/app/(app)/environments/[environmentId]/compone
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import type { Session } from "next-auth";
 import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
@@ -66,6 +66,13 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
+  const isAiEnabled =
+    IS_FORMBRICKS_CLOUD &&
+    (organization.billing.plan === "startup" ||
+      organization.billing.plan === "scale" ||
+      organization.billing.plan === "enterprise") &&
+    IS_AI_ENABLED;
+
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
@@ -96,6 +103,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          isAiEnabled={isAiEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
