@@ -1,8 +1,7 @@
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyType } from "@formbricks/types/surveys/types";
+import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
 import { TooltipRenderer } from "../../Tooltip";
 import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
@@ -11,6 +10,8 @@ interface TemplateTagsProps {
   template: TTemplate;
   selectedFilter: TTemplateFilter[];
 }
+
+type NonNullabeChannel = NonNullable<TProductConfigChannel>;
 
 const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
@@ -27,9 +28,9 @@ const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   }
 };
 
-const getChannelTag = (channels: TSurveyType[] | undefined): string | undefined => {
+const getChannelTag = (channels: NonNullabeChannel[] | undefined): string | undefined => {
   if (!channels) return undefined;
-  const getLabel = (channelValue: TSurveyType) =>
+  const getLabel = (channelValue: NonNullabeChannel) =>
     channelMapping.find((channel) => channel.value === channelValue)?.label;
   const labels = channels.map((channel) => getLabel(channel)).sort();
 
@@ -59,20 +60,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
     [template.role]
   );
 
-  const channelTag = useMemo(
-    () =>
-      getChannelTag(
-        template.channels?.map((channel) => {
-          if (channel === "website") {
-            return "app";
-          }
-
-          return channel;
-        })
-      ),
-    [template.channels]
-  );
-
+  const channelTag = useMemo(() => getChannelTag(template.channels), [template.channels]);
   const getIndustryTag = (industries: TProductConfigIndustry[] | undefined): string | undefined => {
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
     if (selectedFilter[1] !== null)

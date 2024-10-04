@@ -176,9 +176,9 @@ export const SingleResponseCardHeader = ({
 
           {pageType === "people" && (
             <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-              {(survey.type === "link" ||
-                environment.appSetupCompleted ||
-                environment.websiteSetupCompleted) && <SurveyStatusIndicator status={survey.status} />}
+              {(survey.type === "link" || environment.appSetupCompleted) && (
+                <SurveyStatusIndicator status={survey.status} />
+              )}
               <Link
                 className="hover:underline"
                 href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>

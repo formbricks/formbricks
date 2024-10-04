@@ -36,8 +36,8 @@ export const replacePresetPlaceholders = (template: TTemplate, product: any) => 
   return { ...template, preset };
 };
 
-export const channelMapping: { value: TSurveyType; label: string }[] = [
-  // { value: "website", label: "Website Survey" },
+export const channelMapping: { value: "link" | "app" | "website"; label: string }[] = [
+  { value: "website", label: "Website Survey" },
   { value: "app", label: "App Survey" },
   { value: "link", label: "Link Survey" },
 ];

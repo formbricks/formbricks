@@ -6,8 +6,8 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyCreateInput, ZSurveyType } from "@formbricks/types/surveys/types";
+import { type TProduct, ZProductConfigChannel, ZProductConfigIndustry } from "@formbricks/types/product";
+import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
@@ -39,7 +39,7 @@ export const TemplateList = ({
 
   const surveyType = useMemo(() => {
     if (product.config.channel) {
-      return product.config.channel === "website" ? "app" : product.config.channel;
+      return product.config.channel;
     }
 
     return "link";
@@ -49,7 +49,7 @@ export const TemplateList = ({
     setLoading(true);
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
-      type: surveyType,
+      type: surveyType === "website" ? "app" : surveyType,
       createdBy: user.id,
     };
     const createSurveyResponse = await createSurveyAction({
@@ -70,8 +70,9 @@ export const TemplateList = ({
       if (templateSearch) {
         return template.name.toLowerCase().includes(templateSearch.toLowerCase());
       }
+
       // Parse and validate the filters
-      const channelParseResult = ZSurveyType.nullable().safeParse(selectedFilter[0]);
+      const channelParseResult = ZProductConfigChannel.nullable().safeParse(selectedFilter[0]);
       const industryParseResult = ZProductConfigIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
