@@ -1,5 +1,5 @@
 import { TAttributes } from "@formbricks/types/attributes";
-import { type TJsConfig, type TJsConfigInput, ZJsConfig } from "@formbricks/types/js";
+import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { Config } from "./config";
@@ -40,9 +40,8 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
   const oldAppConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
 
   if (oldWebsiteConfig) {
-    // localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
     const parsedOldConfig = JSON.parse(oldWebsiteConfig) as TJsConfig;
-    console.log(ZJsConfig.safeParse(parsedOldConfig));
 
     if (
       parsedOldConfig.environmentId &&
@@ -61,8 +60,8 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
   }
 
   if (oldAppConfig) {
+    localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
     const parsedOldConfig = JSON.parse(oldAppConfig) as TJsConfig;
-    console.log(ZJsConfig.safeParse(parsedOldConfig));
 
     if (
       parsedOldConfig.environmentId &&
@@ -236,9 +235,6 @@ export const initialize = async (
       const filteredSurveys = filterSurveys(environmentState, personState);
 
       // update the appConfig with the new filtered surveys
-      console.log("existingConfig.personState: ", isPersonStateExpired);
-      console.log("right before update: ", existingConfig.personState);
-      console.log("right before update PS: ", personState);
       config.update({
         ...existingConfig,
         environmentState,

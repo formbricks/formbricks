@@ -42,7 +42,7 @@ const AppPage = ({}) => {
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-        // userId,
+        userId,
         attributes: userInitAttributes,
       });
     }
