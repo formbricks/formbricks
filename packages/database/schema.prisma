@@ -100,7 +100,6 @@ model Person {
   responses     Response[]
   attributes    Attribute[]
   displays      Display[]
-  actions       Action[]
 
   @@unique([environmentId, userId])
   @@index([environmentId])
@@ -119,6 +118,9 @@ model Response {
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
   data             Json              @default("{}")
+  /// @zod.custom(imports.ZResponseVariables)
+  /// [ResponseVariables]
+  variables        Json              @default("{}")
   /// @zod.custom(imports.ZResponseTtc)
   /// [ResponseTtc]
   ttc              Json              @default("{}")
@@ -352,28 +354,10 @@ model ActionClass {
   environment    Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId  String
   surveyTriggers SurveyTrigger[]
-  actions        Action[]
 
   @@unique([key, environmentId])
   @@unique([name, environmentId])
   @@index([environmentId, createdAt])
-}
-
-model Action {
-  id            String      @id @default(cuid())
-  createdAt     DateTime    @default(now()) @map(name: "created_at")
-  actionClass   ActionClass @relation(fields: [actionClassId], references: [id], onDelete: Cascade)
-  actionClassId String
-  person        Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId      String
-  /// @zod.custom(imports.ZActionProperties)
-  /// @zod.custom(imports.ZActionProperties)
-  /// [ActionProperties]
-  properties    Json        @default("{}")
-
-  @@index([personId, actionClassId, createdAt])
-  @@index([actionClassId, createdAt])
-  @@index([personId, createdAt])
 }
 
 enum EnvironmentType {

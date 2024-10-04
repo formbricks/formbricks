@@ -192,7 +192,9 @@ export const SurveyMenuBar = ({
 
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
         } else {
-          toast.error(currentError.message);
+          toast.error(currentError.message, {
+            className: "w-fit !max-w-md",
+          });
         }
 
         return false;

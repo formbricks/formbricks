@@ -61,7 +61,7 @@ export const TemplateList = ({
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
       if (templateSearch) {
-        return template.name.toLowerCase().startsWith(templateSearch.toLowerCase());
+        return template.name.toLowerCase().includes(templateSearch.toLowerCase());
       }
       // Parse and validate the filters
       const channelParseResult = ZSurveyType.nullable().safeParse(selectedFilter[0]);

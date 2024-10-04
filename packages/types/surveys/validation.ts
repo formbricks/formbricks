@@ -1,5 +1,13 @@
 import { z } from "zod";
-import type { TI18nString, TSurveyLanguage, TSurveyQuestion } from "./types";
+import type {
+  TActionJumpToQuestion,
+  TConditionGroup,
+  TI18nString,
+  TSingleCondition,
+  TSurveyLanguage,
+  TSurveyLogicAction,
+  TSurveyQuestion,
+} from "./types";
 
 export const FORBIDDEN_IDS = [
   "userId",
@@ -177,7 +185,6 @@ export const findLanguageCodesForDuplicateLabels = (
   return Array.from(duplicateLabels);
 };
 
-// Checks if there is a cycle present in the survey data logic and returns all questions responsible for the cycle.
 export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): string[] => {
   const visited: Record<string, boolean> = {};
   const recStack: Record<string, boolean> = {};
@@ -191,26 +198,25 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
       const question = questions.find((ques) => ques.id === questionId);
       if (question?.logic && question.logic.length > 0) {
         for (const logic of question.logic) {
-          const destination = logic.destination;
-          if (!destination) {
-            continue;
+          const jumpActions = findJumpToQuestionActions(logic.actions);
+          for (const jumpAction of jumpActions) {
+            const destination = jumpAction.target;
+            if (!visited[destination] && checkForCyclicLogic(destination)) {
+              cyclicQuestions.add(questionId);
+              return true;
+            } else if (recStack[destination]) {
+              cyclicQuestions.add(questionId);
+              return true;
+            }
           }
+        }
+      }
 
-          if (!visited[destination] && checkForCyclicLogic(destination)) {
-            cyclicQuestions.add(questionId);
-            return true;
-          } else if (recStack[destination]) {
-            cyclicQuestions.add(questionId);
-            return true;
-          }
-        }
-      } else {
-        // Handle default behavior
-        const nextQuestionIndex = questions.findIndex((ques) => ques.id === questionId) + 1;
-        const nextQuestion = questions[nextQuestionIndex] as TSurveyQuestion | undefined;
-        if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {
-          return true;
-        }
+      // Handle default behavior
+      const nextQuestionIndex = questions.findIndex((ques) => ques.id === questionId) + 1;
+      const nextQuestion = questions[nextQuestionIndex] as TSurveyQuestion | undefined;
+      if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {
+        return true;
       }
     }
 
@@ -223,6 +229,11 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
   }
 
   return Array.from(cyclicQuestions);
+};
+
+// Helper function to find all "jumpToQuestion" actions in the logic
+const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpToQuestion[] => {
+  return actions.filter((action): action is TActionJumpToQuestion => action.objective === "jumpToQuestion");
 };
 
 // function to validate hidden field or question id
@@ -256,4 +267,10 @@ export const validateId = (
   }
 
   return null;
+};
+
+type TCondition = TSingleCondition | TConditionGroup;
+
+export const isConditionGroup = (condition: TCondition): condition is TConditionGroup => {
+  return "conditions" in condition;
 };

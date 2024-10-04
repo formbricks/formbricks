@@ -2,7 +2,6 @@ import {
   FingerprintIcon,
   MonitorSmartphoneIcon,
   MoreVertical,
-  MousePointerClick,
   TagIcon,
   Trash2,
   Users2Icon,
@@ -12,31 +11,24 @@ import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
-  convertMetricToText,
   convertOperatorToText,
   convertOperatorToTitle,
   toggleFilterConnector,
-  updateActionClassIdInFilter,
   updateAttributeClassNameInFilter,
   updateDeviceTypeInFilter,
   updateFilterValue,
-  updateMetricInFilter,
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
 } from "@formbricks/lib/segment/utils";
 import { isCapitalized } from "@formbricks/lib/utils/strings";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
-  TActionMetric,
   TArithmeticOperator,
   TAttributeOperator,
   TBaseFilter,
-  TBaseOperator,
   TDeviceOperator,
   TSegment,
-  TSegmentActionFilter,
   TSegmentAttributeFilter,
   TSegmentConnector,
   TSegmentDeviceFilter,
@@ -47,10 +39,8 @@ import type {
   TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
 import {
-  ACTION_METRICS,
   ARITHMETIC_OPERATORS,
   ATTRIBUTE_OPERATORS,
-  BASE_OPERATORS,
   DEVICE_OPERATORS,
   PERSON_OPERATORS,
 } from "@formbricks/types/segment";
@@ -77,7 +67,6 @@ interface TSegmentFilterProps {
   environmentId: string;
   segment: TSegment;
   segments: TSegment[];
-  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   setSegment: (segment: TSegment) => void;
   handleAddFilterBelow: (resourceId: string, filter: TBaseFilter) => void;
@@ -566,193 +555,6 @@ function PersonSegmentFilter({
   );
 }
 
-type TActionSegmentFilterProps = TSegmentFilterProps & {
-  onAddFilterBelow: () => void;
-  resource: TSegmentActionFilter;
-  updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
-};
-function ActionSegmentFilter({
-  connector,
-  resource,
-  segment,
-  setSegment,
-  onAddFilterBelow,
-  onCreateGroup,
-  onDeleteFilter,
-  onMoveFilter,
-  updateValueInLocalSurvey,
-  actionClasses,
-  viewOnly,
-}: TActionSegmentFilterProps) {
-  const { actionClassId } = resource.root;
-  const operatorText = convertOperatorToText(resource.qualifier.operator);
-  const qualifierMetric = resource.qualifier.metric;
-
-  const [valueError, setValueError] = useState("");
-
-  const operatorArr = BASE_OPERATORS.map((operator) => ({
-    id: operator,
-    name: convertOperatorToText(operator),
-  }));
-
-  const actionMetrics = ACTION_METRICS.map((metric) => ({
-    id: metric,
-    name: convertMetricToText(metric),
-  }));
-
-  const actionClass = actionClasses.find((actionClass) => actionClass.id === actionClassId)?.name;
-
-  const updateOperatorInSegment = (filterId: string, newOperator: TBaseOperator) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
-    }
-
-    setSegment(updatedSegment);
-  };
-
-  const updateActionClassIdInSegment = (filterId: string, actionClassId: string) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateActionClassIdInFilter(updatedSegment.filters, filterId, actionClassId);
-    }
-
-    setSegment(updatedSegment);
-  };
-
-  const updateActionMetricInLocalSurvey = (filterId: string, newMetric: TActionMetric) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateMetricInFilter(updatedSegment.filters, filterId, newMetric);
-    }
-
-    setSegment(updatedSegment);
-  };
-
-  const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    updateValueInLocalSurvey(resource.id, value);
-
-    if (!value) {
-      setValueError("Value cannot be empty");
-      return;
-    }
-
-    const isNumber = z.coerce.number().safeParse(value);
-
-    if (isNumber.success) {
-      setValueError("");
-      updateValueInLocalSurvey(resource.id, parseInt(value, 10));
-    } else {
-      setValueError("Value must be a number");
-      updateValueInLocalSurvey(resource.id, value);
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <SegmentFilterItemConnector
-        connector={connector}
-        filterId={resource.id}
-        key={connector}
-        segment={segment}
-        setSegment={setSegment}
-        viewOnly={viewOnly}
-      />
-
-      <Select
-        disabled={viewOnly}
-        onValueChange={(value) => {
-          updateActionClassIdInSegment(resource.id, value);
-        }}
-        value={actionClass}>
-        <SelectTrigger
-          className="w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
-          hideArrow>
-          <SelectValue>
-            <div className="flex items-center gap-1">
-              <MousePointerClick className="h-4 w-4 text-sm" />
-              <p>{actionClass}</p>
-            </div>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent className="bottom-0">
-          {actionClasses.map((actionClass) => (
-            <SelectItem value={actionClass.id}>{actionClass.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select
-        disabled={viewOnly}
-        onValueChange={(value: TActionMetric) => {
-          updateActionMetricInLocalSurvey(resource.id, value);
-        }}
-        value={qualifierMetric}>
-        <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
-          hideArrow>
-          <SelectValue />
-        </SelectTrigger>
-
-        <SelectContent>
-          {actionMetrics.map((metric) => (
-            <SelectItem value={metric.id}>{metric.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select
-        disabled={viewOnly}
-        onValueChange={(operator: TBaseOperator) => {
-          updateOperatorInSegment(resource.id, operator);
-        }}
-        value={operatorText}>
-        <SelectTrigger
-          className="flex w-full max-w-[40px] items-center justify-center bg-white text-center"
-          hideArrow>
-          <SelectValue>
-            <p>{operatorText}</p>
-          </SelectValue>
-        </SelectTrigger>
-
-        <SelectContent>
-          {operatorArr.map((operator) => (
-            <SelectItem title={convertOperatorToTitle(operator.id)} value={operator.id}>
-              {operator.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <div className="relative flex flex-col gap-1">
-        <Input
-          className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
-          disabled={viewOnly}
-          onChange={(e) => {
-            if (viewOnly) return;
-            checkValueAndUpdate(e);
-          }}
-          value={resource.value}
-        />
-
-        {valueError ? (
-          <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">{valueError}</p>
-        ) : null}
-      </div>
-
-      <SegmentFilterItemContextMenu
-        filterId={resource.id}
-        onAddFilterBelow={onAddFilterBelow}
-        onCreateGroup={onCreateGroup}
-        onDeleteFilter={onDeleteFilter}
-        onMoveFilter={onMoveFilter}
-        viewOnly={viewOnly}
-      />
-    </div>
-  );
-}
-
 type TSegmentSegmentFilterProps = TSegmentFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentSegmentFilter;
@@ -977,7 +779,6 @@ export function SegmentFilter({
   environmentId,
   segment,
   segments,
-  actionClasses,
   attributeClasses,
   setSegment,
   handleAddFilterBelow,
@@ -1003,7 +804,6 @@ export function SegmentFilter({
   function RenderFilterModal() {
     return (
       <AddFilterModal
-        actionClasses={actionClasses}
         attributeClasses={attributeClasses}
         onAddFilter={(filter) => {
           handleAddFilterBelow(resource.id, filter);
@@ -1016,36 +816,10 @@ export function SegmentFilter({
   }
 
   switch (resource.root.type) {
-    case "action":
-      return (
-        <>
-          <ActionSegmentFilter
-            actionClasses={actionClasses}
-            attributeClasses={attributeClasses}
-            connector={connector}
-            environmentId={environmentId}
-            handleAddFilterBelow={handleAddFilterBelow}
-            onAddFilterBelow={onAddFilterBelow}
-            onCreateGroup={onCreateGroup}
-            onDeleteFilter={onDeleteFilter}
-            onMoveFilter={onMoveFilter}
-            resource={resource as TSegmentActionFilter}
-            segment={segment}
-            segments={segments}
-            setSegment={setSegment}
-            updateValueInLocalSurvey={updateFilterValueInSegment}
-            viewOnly={viewOnly}
-          />
-
-          <RenderFilterModal />
-        </>
-      );
-
     case "attribute":
       return (
         <>
           <AttributeSegmentFilter
-            actionClasses={actionClasses}
             attributeClasses={attributeClasses}
             connector={connector}
             environmentId={environmentId}
@@ -1070,7 +844,6 @@ export function SegmentFilter({
       return (
         <>
           <PersonSegmentFilter
-            actionClasses={actionClasses}
             attributeClasses={attributeClasses}
             connector={connector}
             environmentId={environmentId}
@@ -1095,7 +868,6 @@ export function SegmentFilter({
       return (
         <>
           <SegmentSegmentFilter
-            actionClasses={actionClasses}
             attributeClasses={attributeClasses}
             connector={connector}
             environmentId={environmentId}
@@ -1119,7 +891,6 @@ export function SegmentFilter({
       return (
         <>
           <DeviceFilter
-            actionClasses={actionClasses}
             attributeClasses={attributeClasses}
             connector={connector}
             environmentId={environmentId}
