@@ -172,6 +172,10 @@ const nextConfig = {
         destination: "/api/packages/js",
       },
       {
+        source: "/api/packages/app",
+        destination: "/api/packages/js",
+      },
+      {
         source: "/api/v1/client/:environmentId/website/environment",
         destination: "/api/v1/client/:environmentId/environment",
       },
