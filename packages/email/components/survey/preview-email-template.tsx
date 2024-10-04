@@ -201,11 +201,8 @@ export function PreviewEmailTemplate({
               {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
             </Text>
             <Container className="mx-0 mt-4 w-full items-center justify-center">
-              <Section
-                className={cn("rounded-custom w-full overflow-hidden", {
-                  "border border-solid border-gray-200": firstQuestion.scale === "number",
-                })}>
-                <Column className="mb-4 flex w-full justify-around">
+              <Section className="w-full overflow-hidden">
+                <Column className="flex w-full justify-around">
                   {Array.from({ length: firstQuestion.range }, (_, i) => (
                     <EmailButton
                       className={cn(
