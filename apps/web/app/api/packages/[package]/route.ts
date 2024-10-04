@@ -2,9 +2,9 @@ import { responses } from "@/app/lib/api/response";
 import fs from "fs/promises";
 import { NextRequest } from "next/server";
 
-export const GET = async (_: NextRequest, { params }: { params: { slug: string } }) => {
+export const GET = async (_: NextRequest, { params }: { params: { package: string } }) => {
   let path: string;
-  const packageRequested = params["package"];
+  const packageRequested = params.package;
 
   switch (packageRequested) {
     case "app":
@@ -21,7 +21,7 @@ export const GET = async (_: NextRequest, { params }: { params: { slug: string }
         "package",
         packageRequested,
         true,
-        "public, s-maxage=600, max-age=1800, stale-while-revalidate=600, stale-if-error=600"
+        "public, max-age=600, s-maxage=600, stale-while-revalidate=600, stale-if-error=600" // 10 minutes cache for not found
       );
   }
 
@@ -30,16 +30,26 @@ export const GET = async (_: NextRequest, { params }: { params: { slug: string }
     return new Response(packageSrcCode, {
       headers: {
         "Content-Type": "application/javascript",
-        "Cache-Control": "public, s-maxage=600, max-age=1800, stale-while-revalidate=600, stale-if-error=600",
+        "Cache-Control":
+          "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (error) {
-    console.error("Error reading file:", error);
-    return responses.internalServerErrorResponse(
-      "file not found:",
-      true,
-      "public, s-maxage=600, max-age=1800, stale-while-revalidate=600, stale-if-error=600"
-    );
+  } catch (error: any) {
+    if (error.code === "ENOENT") {
+      return responses.notFoundResponse(
+        "package",
+        packageRequested,
+        true,
+        "public, max-age=600, s-maxage=600, stale-while-revalidate=600, stale-if-error=600" // 10 minutes cache for file not found errors
+      );
+    } else {
+      console.error("Error reading file:", error);
+      return responses.internalServerErrorResponse(
+        "internal server error",
+        true,
+        "public, max-age=600, s-maxage=600, stale-while-revalidate=600, stale-if-error=600" // 10 minutes cache for internal errors
+      );
+    }
   }
 };
