@@ -21,7 +21,7 @@ export const GET = async (_: NextRequest, { params }: { params: { package: strin
         "package",
         packageRequested,
         true,
-        "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600"
+        "public, max-age=600, s-maxage=600, stale-while-revalidate=600, stale-if-error=600" // 10 minutes cache for not found
       );
   }
 
@@ -41,14 +41,14 @@ export const GET = async (_: NextRequest, { params }: { params: { package: strin
         "package",
         packageRequested,
         true,
-        "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600"
+        "public, max-age=600, s-maxage=600, stale-while-revalidate=600, stale-if-error=600" // 10 minutes cache for file not found errors
       );
     } else {
       console.error("Error reading file:", error);
       return responses.internalServerErrorResponse(
         "internal server error",
         true,
-        "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600"
+        "public, max-age=600, s-maxage=600, stale-while-revalidate=600, stale-if-error=600" // 10 minutes cache for internal errors
       );
     }
   }
