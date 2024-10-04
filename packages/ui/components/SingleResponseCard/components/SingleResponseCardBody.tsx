@@ -7,6 +7,7 @@ import { isValidValue } from "../util";
 import { HiddenFields } from "./HiddenFields";
 import { QuestionSkip } from "./QuestionSkip";
 import { RenderResponse } from "./RenderResponse";
+import { ResponseVariables } from "./ResponseVariables";
 import { VerifiedEmail } from "./VerifiedEmail";
 
 interface SingleResponseCardBodyProps {
@@ -110,6 +111,9 @@ export const SingleResponseCardBody = ({
           );
         })}
       </div>
+      {survey.variables.length > 0 && (
+        <ResponseVariables variables={survey.variables} variablesData={response.variables} />
+      )}
       {survey.hiddenFields.enabled && survey.hiddenFields.fieldIds && (
         <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
       )}

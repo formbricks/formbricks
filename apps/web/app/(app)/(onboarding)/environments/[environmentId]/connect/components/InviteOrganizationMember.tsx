@@ -102,7 +102,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
             <div className="flex w-full justify-end space-x-2">
               <Button
                 id="onboarding-inapp-invite-have-a-look-first"
-                className="font-normal text-slate-400"
+                className="text-slate-400"
                 variant="minimal"
                 onClick={(e) => {
                   e.preventDefault();

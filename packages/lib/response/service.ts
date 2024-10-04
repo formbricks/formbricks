@@ -59,6 +59,7 @@ export const responseSelection = {
   data: true,
   meta: true,
   ttc: true,
+  variables: true,
   personAttributes: true,
   singleUseId: true,
   language: true,
@@ -260,6 +261,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     data,
     meta,
     singleUseId,
+    variables,
     ttc: initialTtc,
     createdAt,
     updatedAt,
@@ -308,7 +310,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       }),
       ...(meta && ({ meta } as Prisma.JsonObject)),
       singleUseId,
-
+      ...(variables && { variables }),
       ttc: ttc,
       createdAt,
       updatedAt,
@@ -591,7 +593,7 @@ export const getResponseDownloadUrl = async (
     );
     const responses = responsesArray.flat();
 
-    const { metaDataFields, questions, hiddenFields, userAttributes } = extractSurveyDetails(
+    const { metaDataFields, questions, hiddenFields, variables, userAttributes } = extractSurveyDetails(
       survey,
       responses
     );
@@ -608,6 +610,7 @@ export const getResponseDownloadUrl = async (
       "Tags",
       ...metaDataFields,
       ...questions,
+      ...variables,
       ...hiddenFields,
       ...userAttributes,
     ];
@@ -718,6 +721,10 @@ export const updateResponse = async (
         : responseInput.ttc
       : {};
     const language = responseInput.language;
+    const variables = {
+      ...currentResponse.variables,
+      ...responseInput.variables,
+    };
 
     const responsePrisma = await prisma.response.update({
       where: {
@@ -728,6 +735,7 @@ export const updateResponse = async (
         data,
         ttc,
         language,
+        variables,
       },
       select: responseSelection,
     });

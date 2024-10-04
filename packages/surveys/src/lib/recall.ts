@@ -2,13 +2,13 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion, TSurveyVariables } from "@formbricks/types/surveys/types";
+import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 export const replaceRecallInfo = (
   text: string,
   responseData: TResponseData,
-  variables: TSurveyVariables
+  variables: TResponseVariables
 ): string => {
   let modifiedText = text;
 
@@ -23,9 +23,8 @@ export const replaceRecallInfo = (
     let value: string | null = null;
 
     // Fetching value from variables based on recallItemId
-    if (variables.length) {
-      const variable = variables.find((variable) => variable.id === recallItemId);
-      value = variable?.value?.toString() ?? fallback;
+    if (variables[recallItemId] !== undefined) {
+      value = String(variables[recallItemId]) ?? fallback;
     }
 
     // Fetching value from responseData or attributes based on recallItemId
@@ -53,7 +52,7 @@ export const parseRecallInformation = (
   question: TSurveyQuestion,
   languageCode: string,
   responseData: TResponseData,
-  variables: TSurveyVariables
+  variables: TResponseVariables
 ) => {
   const modifiedQuestion = structuredClone(question);
   if (question.headline && question.headline[languageCode]?.includes("recall:")) {
