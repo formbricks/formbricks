@@ -157,8 +157,83 @@ export const surveys = {
       question: "Where do you live?",
       placeholder: "Address Line 1",
     },
+    contactInfo: {
+      question: "Contact Info",
+      placeholder: "First Name",
+    },
     ranking: {
       question: "What is most important for you in life?",
+      choices: ["Work", "Money", "Travel", "Family", "Friends"],
+    },
+    thankYouCard: {
+      headline: "This is my Thank You Card Headline!",
+      description: "This is my Thank you Card Description!",
+    },
+  },
+  createWithLogicAndSubmit: {
+    welcomeCard: {
+      headline: "Welcome to My Testing Survey Welcome Card!",
+      description: "This is the description of my Welcome Card!",
+    },
+    openTextQuestion: {
+      question: "This is my Open Text Question",
+      description: "This is my Open Text Description",
+      placeholder: "This is my Placeholder",
+    },
+    singleSelectQuestion: {
+      question: "This is my Single Select Question",
+      description: "This is my Single Select Description",
+      options: ["Option 1", "Option 2"],
+    },
+    multiSelectQuestion: {
+      question: "This is my Multi Select Question",
+      description: "This is Multi Select Description",
+      options: ["Option 1", "Option 2", "Option 3"],
+    },
+    ratingQuestion: {
+      question: "This is my Rating Question",
+      description: "This is Rating Description",
+      lowLabel: "My Lower Label",
+      highLabel: "My Upper Label",
+    },
+    npsQuestion: {
+      question: "This is my NPS Question",
+      lowLabel: "My Lower Label",
+      highLabel: "My Upper Label",
+    },
+    ctaQuestion: {
+      question: "This is my CTA Question",
+      buttonLabel: "My Button Label",
+    },
+    consentQuestion: {
+      question: "This is my Consent Question",
+      checkboxLabel: "My Checkbox Label",
+    },
+    pictureSelectQuestion: {
+      question: "This is my Picture Select Question",
+      description: "This is Picture Select Description",
+    },
+    fileUploadQuestion: {
+      question: "This is my File Upload Question",
+    },
+    date: {
+      question: "This is my Date Question",
+    },
+    cal: {
+      question: "This is my cal Question",
+    },
+    matrix: {
+      question: "This is my Matrix Question",
+      description: "0: Not at all, 3: Love it",
+      rows: ["Roses", "Trees", "Ocean"],
+      columns: ["0", "1", "2", "3"],
+    },
+    address: {
+      question: "Where do you live?",
+      placeholder: "Address Line 1",
+    },
+    ranking: {
+      question: "This is my Ranking Question",
       choices: ["Work", "Money", "Travel", "Family", "Friends"],
     },
     thankYouCard: {
@@ -240,6 +315,7 @@ export const surveys = {
 };
 
 export type CreateSurveyParams = typeof surveys.createAndSubmit;
+export type CreateSurveyWithLogicParams = typeof surveys.createWithLogicAndSubmit;
 
 export const actions = {
   create: {

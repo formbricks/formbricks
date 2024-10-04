@@ -3,6 +3,9 @@ import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
   CheckIcon,
+  ContactIcon,
+  FileDigitIcon,
+  FileType2Icon,
   Grid3X3Icon,
   HomeIcon,
   ImageIcon,
@@ -21,6 +24,7 @@ import {
   TSurveyCTAQuestion,
   TSurveyCalQuestion,
   TSurveyConsentQuestion,
+  TSurveyContactInfoQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
   TSurveyMatrixQuestion,
@@ -219,13 +223,27 @@ export const questionTypes: TQuestion[] = [
     icon: HomeIcon,
     preset: {
       headline: { default: "Where do you live?" },
-      isAddressLine1Required: false,
-      isAddressLine2Required: false,
-      isCityRequired: false,
-      isStateRequired: false,
-      isZipRequired: false,
-      isCountryRequired: false,
+      addressLine1: { show: true, required: true },
+      addressLine2: { show: true, required: true },
+      city: { show: true, required: true },
+      state: { show: true, required: true },
+      zip: { show: true, required: true },
+      country: { show: true, required: true },
     } as Partial<TSurveyAddressQuestion>,
+  },
+  {
+    id: QuestionId.ContactInfo,
+    label: "Contact Info",
+    description: "Allow respondents to provide their contact info",
+    icon: ContactIcon,
+    preset: {
+      headline: { default: "Contact Info" },
+      firstName: { show: true, required: true },
+      lastName: { show: true, required: true },
+      email: { show: true, required: true },
+      phone: { show: true, required: true },
+      company: { show: true, required: true },
+    } as Partial<TSurveyContactInfoQuestion>,
   },
 ];
 
@@ -256,6 +274,11 @@ export const QUESTIONS_NAME_MAP = questionTypes.reduce(
   }),
   {}
 ) as Record<TSurveyQuestionTypeEnum, string>;
+
+export const VARIABLES_ICON_MAP = {
+  text: <FileType2Icon className="h-4 w-4" />,
+  number: <FileDigitIcon className="h-4 w-4" />,
+};
 
 export const CX_QUESTIONS_NAME_MAP = CXQuestionTypes.reduce(
   (prev, curr) => ({

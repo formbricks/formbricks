@@ -44,6 +44,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
         ],
       },
     ],
@@ -56,7 +57,7 @@ export const navigation: Array<NavGroup> = [
       {
         title: "Features",
         children: [
-          { title: "Actions & Targeting", href: "/website-surveys/actions-and-targeting" },
+          { title: "Actions", href: "/website-surveys/actions" },
           { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
           { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
@@ -68,6 +69,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
         ],
       },
     ],
@@ -91,6 +93,7 @@ export const navigation: Array<NavGroup> = [
           { title: "User Metadata", href: "/global/metadata" },
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" },
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
           { title: "Start & End Dates", href: "/global/custom-start-end-conditions" },
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" },
