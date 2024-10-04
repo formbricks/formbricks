@@ -53,7 +53,6 @@ export const SurveyMigrateForm = ({
         surveyId: survey.id,
         targetEnvironmentId: selectedEnvironmentId,
       });
-
       if (result?.serverError) {
         throw new Error("Server Error while trying to migrate the survey.");
       }
@@ -122,7 +121,8 @@ export const SurveyMigrateForm = ({
                                     value={environment.id}
                                   />
                                   <Label htmlFor={environment.id}>
-                                    <p className="text-sm font-medium capitalize text-slate-900">
+                                    <p
+                                      className={`text-sm font-medium capitalize ${isDisabled ? "text-gray-500" : "text-slate-900"}`}>
                                       {environment.type}
                                     </p>
                                   </Label>

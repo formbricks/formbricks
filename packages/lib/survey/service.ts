@@ -858,7 +858,7 @@ export const migrateSurveyToOtherEnvironment = async (
   validateInputs([environmentId, ZId], [surveyId, ZId], [targetEnvironmentId, ZId], [userId, ZId]);
 
   // Start a transaction
-  return await prisma.$transaction(async (prisma) => {
+  const updatedSurvey = await prisma.$transaction(async (prisma) => {
     try {
       // Fetch required resources
       const existingSurvey = await getSurvey(surveyId);
@@ -933,40 +933,6 @@ export const migrateSurveyToOtherEnvironment = async (
       // Handle triggers separately
       await migrateSurveyTriggers(existingSurvey, targetEnvironmentId, prisma);
 
-      // Revalidate caches
-      surveyCache.revalidate({
-        id: surveyId,
-        environmentId: targetEnvironmentId,
-      });
-
-      surveyCache.revalidate({
-        id: surveyId,
-        environmentId: environmentId,
-      });
-
-      surveyCache.revalidate({
-        environmentId: environmentId,
-      });
-
-      surveyCache.revalidate({
-        environmentId: targetEnvironmentId,
-      });
-
-      productCache.revalidate({
-        environmentId: environmentId,
-      });
-
-      productCache.revalidate({
-        environmentId: targetEnvironmentId,
-      });
-
-      if (updatedSurvey.segment) {
-        segmentCache.revalidate({
-          id: updatedSurvey.segment.id,
-          environmentId: updatedSurvey.environmentId,
-        });
-      }
-
       return updatedSurvey;
     } catch (error) {
       console.error("Error during survey migration", error);
@@ -976,6 +942,42 @@ export const migrateSurveyToOtherEnvironment = async (
       throw error;
     }
   });
+
+  // Revalidate caches
+  surveyCache.revalidate({
+    id: surveyId,
+    environmentId: targetEnvironmentId,
+  });
+
+  surveyCache.revalidate({
+    id: surveyId,
+    environmentId: environmentId,
+  });
+
+  surveyCache.revalidate({
+    environmentId: environmentId,
+  });
+
+  surveyCache.revalidate({
+    environmentId: targetEnvironmentId,
+  });
+
+  productCache.revalidate({
+    environmentId: environmentId,
+  });
+
+  productCache.revalidate({
+    environmentId: targetEnvironmentId,
+  });
+
+  if (updatedSurvey.segment) {
+    segmentCache.revalidate({
+      id: updatedSurvey.segment.id,
+      environmentId: updatedSurvey.environmentId,
+    });
+  }
+
+  return updatedSurvey;
 };
 
 // Separate function for migrating triggers
