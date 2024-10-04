@@ -6,19 +6,19 @@ import {
 } from "@formbricks/types/surveys/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
 
-type ShuffleOptionType = {
+interface ShuffleOptionType {
   id: string;
   label: string;
   show: boolean;
-};
+}
 
-type ShuffleOptionsTypes = {
+interface ShuffleOptionsTypes {
   none?: ShuffleOptionType;
   all?: ShuffleOptionType;
   exceptLast?: ShuffleOptionType;
-};
+}
 
-interface ShuffleOptionSelectInterface {
+interface ShuffleOptionSelectProps {
   shuffleOption: TShuffleOption | undefined;
   updateQuestion: (
     questionIdx: number,
@@ -28,7 +28,7 @@ interface ShuffleOptionSelectInterface {
   shuffleOptionsTypes: ShuffleOptionsTypes;
 }
 
-export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectInterface> = ({
+export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
   questionIdx,
   shuffleOption,
   updateQuestion,

@@ -1,5 +1,4 @@
 import {
-  TI18nString,
   TShuffleOption,
   TSurvey,
   TSurveyLogic,
@@ -18,7 +17,8 @@ const shuffle = (array: any[]) => {
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
-export function getRandomRowIdx(n: number, shuffleOption: TShuffleOption): number[] {
+
+export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption): number[] => {
   // Create an array with numbers from 0 to n-1
   let array = Array.from(Array(n).keys());
 
@@ -32,20 +32,6 @@ export function getRandomRowIdx(n: number, shuffleOption: TShuffleOption): numbe
     }
   }
   return array;
-}
-
-export const getShuffledRows = (rows: TI18nString[], shuffleOption: TShuffleOption): TI18nString[] => {
-  const rowsCopy = [...rows];
-  if (shuffleOption === "all") {
-    shuffle(rowsCopy);
-  } else if (shuffleOption === "exceptLast") {
-    const lastElement = rowsCopy.pop();
-    if (lastElement) {
-      shuffle(rowsCopy);
-      rowsCopy.push(lastElement);
-    }
-  }
-  return rowsCopy;
 };
 
 export const getShuffledChoicesIds = (
