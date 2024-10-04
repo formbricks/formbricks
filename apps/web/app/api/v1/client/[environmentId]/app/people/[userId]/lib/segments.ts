@@ -32,7 +32,6 @@ export const getPersonSegmentIds = (
         const isIncluded = await evaluateSegment(
           {
             attributes,
-            actionIds: [],
             deviceType,
             environmentId,
             personId: person.id,

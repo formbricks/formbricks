@@ -1,7 +1,5 @@
 import {
-  TActionMetric,
   TBaseFilters,
-  TBaseOperator,
   TEvaluateSegmentUserAttributeData,
   TEvaluateSegmentUserData,
   TSegment,
@@ -29,6 +27,7 @@ export const mockFilter3Resource1Id = "evvoaniy0hn7srea7x0yn4vv";
 // filter data:
 export const mockActionClassId = "zg7lojfwnk9ipajgeumfz96t";
 export const mockEmailValue = "example@example.com";
+export const mockEmailFailedValue = "";
 export const mockUserId = "random user id";
 export const mockDeviceTypeValue = "phone";
 
@@ -38,11 +37,24 @@ export const mockEvaluateSegmentUserAttributes: TEvaluateSegmentUserAttributeDat
   email: mockEmailValue,
   userId: mockUserId,
 };
+
+export const mockEvaluateFailedSegmentUserAttributes: TEvaluateSegmentUserAttributeData = {
+  email: mockEmailFailedValue,
+  userId: mockUserId,
+};
+
 export const mockEvaluateSegmentUserData: TEvaluateSegmentUserData = {
   personId: mockPersonId,
   environmentId: mockEnvironmentId,
   attributes: mockEvaluateSegmentUserAttributes,
-  actionIds: [mockActionClassId],
+  deviceType: "phone",
+  userId: mockUserId,
+};
+
+export const mockEvaluateFailedSegmentUserData: TEvaluateSegmentUserData = {
+  personId: mockPersonId,
+  environmentId: mockEnvironmentId,
+  attributes: mockEvaluateFailedSegmentUserAttributes,
   deviceType: "phone",
   userId: mockUserId,
 };
@@ -51,11 +63,7 @@ export const mockSegmentTitle = "Engaged Users with Specific Interests";
 export const mockSegmentDescription =
   "Segment targeting engaged users interested in specific topics and using mobile";
 
-export const getMockSegmentFilters = (
-  actionMetric: TActionMetric,
-  actionValue: string | number,
-  actionOperator: TBaseOperator
-): TBaseFilters => [
+export const getMockSegmentFilters = (): TBaseFilters => [
   {
     id: mockFilterGroupId,
     connector: null,
@@ -107,22 +115,6 @@ export const getMockSegmentFilters = (
       },
     },
   },
-  {
-    id: mockFilter3Id,
-    connector: "and",
-    resource: {
-      id: mockFilter3Resource1Id,
-      root: {
-        type: "action",
-        actionClassId: mockActionClassId,
-      },
-      value: actionValue,
-      qualifier: {
-        metric: actionMetric,
-        operator: actionOperator,
-      },
-    },
-  },
 ];
 
 export const mockSegment: TSegment = {
@@ -130,7 +122,7 @@ export const mockSegment: TSegment = {
   title: mockSegmentTitle,
   description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockSegmentFilters("lastMonthCount", 5, "equals"),
+  filters: getMockSegmentFilters(),
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -141,7 +133,7 @@ export const mockSegmentCreateInput: TSegmentCreateInput = {
   title: mockSegmentTitle,
   description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockSegmentFilters("lastMonthCount", 5, "equals"),
+  filters: getMockSegmentFilters(),
   environmentId: mockEnvironmentId,
   surveyId: mockSurveyId,
 };
@@ -150,7 +142,7 @@ export const mockSegmentUpdateInput: TSegmentUpdateInput = {
   title: mockSegmentTitle,
   description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockSegmentFilters("lastMonthCount", 5, "greaterEqual"),
+  filters: getMockSegmentFilters(),
 };
 
 export const mockSegmentPrisma = {
@@ -158,7 +150,7 @@ export const mockSegmentPrisma = {
   title: mockSegmentTitle,
   description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockSegmentFilters("lastMonthCount", 5, "equals"),
+  filters: getMockSegmentFilters(),
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
