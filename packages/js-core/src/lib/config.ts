@@ -22,6 +22,7 @@ export class Config {
   }
 
   public update(newConfig: TJsConfigUpdateInput): void {
+    console.log("called update");
     if (newConfig) {
       this.config = {
         ...this.config,

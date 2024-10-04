@@ -85,29 +85,6 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
   };
 };
 
-// const checkForOlderAppConfig = (): boolean => {
-//   const oldConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
-
-//   if (oldConfig) {
-//     localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
-
-//     const parsedOldConfig = JSON.parse(oldConfig) as TJsConfig;
-//     console.log(ZJsConfig.safeParse(parsedOldConfig));
-
-//     if (
-//       parsedOldConfig.environmentId &&
-//       parsedOldConfig.apiHost &&
-//       parsedOldConfig.environmentState &&
-//       parsedOldConfig.personState &&
-//       parsedOldConfig.filteredSurveys
-//     ) {
-//       return true;
-//     }
-//   }
-
-//   return false;
-// };
-
 export const initialize = async (
   configInput: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
@@ -120,13 +97,10 @@ export const initialize = async (
   const { changed, newState } = migrateLocalStorage();
 
   if (changed && newState) {
-    console.log({ changed, newState });
     config.resetConfig();
     config = Config.getInstance();
 
     if (!configInput.userId) {
-      config.resetConfig();
-      config = Config.getInstance();
       config.update(newState);
     }
   }
@@ -246,22 +220,25 @@ export const initialize = async (
 
       let { personState } = existingConfig;
 
-      if (configInput.userId) {
-        if (isPersonStateExpired) {
+      if (isPersonStateExpired) {
+        if (configInput.userId) {
           personState = await fetchPersonState({
             apiHost: configInput.apiHost,
             environmentId: configInput.environmentId,
             userId: configInput.userId,
           });
+        } else {
+          personState = DEFAULT_PERSON_STATE_NO_USER_ID;
         }
-      } else {
-        personState = DEFAULT_PERSON_STATE_NO_USER_ID;
       }
 
       // filter the environment state wrt the person state
       const filteredSurveys = filterSurveys(environmentState, personState);
 
       // update the appConfig with the new filtered surveys
+      console.log("existingConfig.personState: ", isPersonStateExpired);
+      console.log("right before update: ", existingConfig.personState);
+      console.log("right before update PS: ", personState);
       config.update({
         ...existingConfig,
         environmentState,
