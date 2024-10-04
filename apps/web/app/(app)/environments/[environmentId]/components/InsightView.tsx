@@ -25,7 +25,7 @@ export const InsightView = ({ insights, questionId, surveyId }: InsightViewProps
   }, [insights]);
 
   const handleFeedback = (feedback: "positive" | "negative") => {
-    formbricks.track("Insight Feedback", {
+    formbricks.track("AI Insight Feedback", {
       hiddenFields: {
         feedbackSentiment: feedback,
         insightId: currentInsight?.id,
