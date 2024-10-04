@@ -206,10 +206,9 @@ export function PreviewEmailTemplate({
                   {Array.from({ length: firstQuestion.range }, (_, i) => (
                     <EmailButton
                       className={cn(
-                        "relative m-0 w-full overflow-hidden p-0 text-center align-middle leading-10 text-slate-800",
-                        {
-                          "border border-solid border-gray-200": firstQuestion.scale === "number",
-                        },
+                        "relative m-0 w-full overflow-hidden border border-l-0 p-0 text-center align-middle leading-10 text-slate-800",
+                        { "rounded-l-lg border-l": i === 0 },
+                        { "rounded-r-lg": i === firstQuestion.range - 1 },
                         firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
                           ? "h-[46px]"
                           : "h-10",
