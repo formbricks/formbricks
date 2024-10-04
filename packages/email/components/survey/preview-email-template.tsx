@@ -114,7 +114,7 @@ export function PreviewEmailTemplate({
             </Text>
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section
-                className={cn("rounded-custom w-full overflow-hidden", {
+                className={cn("w-full overflow-hidden", {
                   "border border-solid border-gray-200": firstQuestion.scale === "number",
                 })}>
                 <Column className="mb-4 flex w-full justify-between gap-0">
@@ -124,7 +124,9 @@ export function PreviewEmailTemplate({
                       key={i}
                       className={cn(
                         firstQuestion.isColorCodingEnabled ? "h-[46px]" : "h-10",
-                        "border-input-border-color relative m-0 w-full overflow-hidden border p-0 text-center align-middle leading-10 text-slate-800"
+                        "relative m-0 w-full overflow-hidden border border-l-0 p-0 text-center align-middle leading-10 text-slate-800",
+                        { "rounded-l-lg border-l": i === 0 },
+                        { "rounded-r-lg": i === 10 }
                       )}>
                       {firstQuestion.isColorCodingEnabled ? (
                         <Section className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`} />
