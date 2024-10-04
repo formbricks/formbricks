@@ -198,22 +198,23 @@ export const SingleResponseCardHeader = ({
           <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString())}>
             {timeSince(response.createdAt.toISOString())}
           </time>
-          {user && !isViewer && (
-            <TooltipRenderer shouldRender={!canResponseBeDeleted} tooltipContent={deleteSubmissionToolTip}>
+          {user &&
+            !isViewer &&
+            (canResponseBeDeleted ? (
               <TrashIcon
-                onClick={() => {
-                  if (canResponseBeDeleted) {
-                    setDeleteDialogOpen(true);
-                  }
-                }}
-                className={`h-4 w-4 ${
-                  canResponseBeDeleted
-                    ? "cursor-pointer text-slate-500 hover:text-red-700"
-                    : "cursor-not-allowed text-slate-400"
-                } `}
+                onClick={() => setDeleteDialogOpen(true)}
+                className="h-4 w-4 cursor-pointer text-slate-500 hover:text-red-700"
               />
-            </TooltipRenderer>
-          )}
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <TrashIcon className="h-4 w-4 cursor-not-allowed text-slate-400" />
+                  </TooltipTrigger>
+                  <TooltipContent side="left">{deleteSubmissionToolTip}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
         </div>
       </div>
     </div>
