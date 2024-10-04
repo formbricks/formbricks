@@ -1,7 +1,7 @@
 "use client";
 
 import { UserIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import formbricks from "@formbricks/js/app";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
@@ -19,6 +19,10 @@ export const InsightView = ({ insights, questionId, surveyId }: InsightViewProps
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
+
+  useEffect(() => {
+    setLocalInsights(insights);
+  }, [insights]);
 
   const handleFeedback = (feedback: "positive" | "negative") => {
     formbricks.track("Insight Feedback", {
@@ -43,7 +47,7 @@ export const InsightView = ({ insights, questionId, surveyId }: InsightViewProps
           {insights.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="py-8 text-center">
-                <p className="text-slate-500">No insights found for this question.</p>
+                <p className="text-slate-500">No insights found.</p>
               </TableCell>
             </TableRow>
           ) : localInsights.length === 0 ? (

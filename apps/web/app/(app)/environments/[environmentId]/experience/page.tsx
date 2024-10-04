@@ -1,6 +1,6 @@
-import { InsightView } from "@/app/(app)/environments/[environmentId]/components/InsightView";
+import { InsightsTable } from "@/app/(app)/environments/[environmentId]/experience/components/InsightsTable";
 import { Metadata } from "next";
-import { getInsights } from "@formbricks/lib/insight/service";
+import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -11,10 +11,9 @@ export const metadata: Metadata = {
 };
 
 const Page = async ({ params }) => {
-  const [product, organization, insights] = await Promise.all([
+  const [product, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
-    getInsights(params.environmentId),
   ]);
 
   if (!product) {
@@ -28,7 +27,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Experience" />
-      <InsightView insights={insights} />
+      <InsightsTable environmentId={params.environmentId} insightsPerPage={INSIGHTS_PER_PAGE} />
     </PageContentWrapper>
   );
 };

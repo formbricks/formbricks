@@ -48,7 +48,6 @@ interface SummaryPageProps {
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
   isAiEnabled: boolean;
-  productName: string;
 }
 
 export const SummaryPage = ({
@@ -59,7 +58,6 @@ export const SummaryPage = ({
   totalResponseCount,
   attributeClasses,
   isAiEnabled,
-  productName,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -179,7 +177,6 @@ export const SummaryPage = ({
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
         isAiEnabled={isAiEnabled}
-        productName={productName}
       />
     </>
   );

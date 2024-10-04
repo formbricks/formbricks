@@ -6,11 +6,10 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TInsight, TInsightCreateInput, ZInsightCreateInput } from "@formbricks/types/insights";
 import { cache } from "../cache";
+import { INSIGHTS_PER_PAGE } from "../constants";
 import { documentCache } from "../document/cache";
 import { validateInputs } from "../utils/validate";
 import { insightCache } from "./cache";
-
-const INSIGHTS_PER_PAGE = 10;
 
 export const getInsight = reactCache(
   (id: string): Promise<TInsight | null> =>
