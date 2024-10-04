@@ -243,7 +243,12 @@ export const SurveyDropDownMenu = ({
         <CopySurveyModal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} survey={survey} />
       )}
       {isMigrateFormOpen && (
-        <SurveyMigrateModal open={isMigrateFormOpen} setOpen={setIsMigrateFormOpen} survey={survey} />
+        <SurveyMigrateModal
+          open={isMigrateFormOpen}
+          setOpen={setIsMigrateFormOpen}
+          survey={survey}
+          onMigrated={deleteSurvey}
+        />
       )}
     </div>
   );

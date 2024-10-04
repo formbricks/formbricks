@@ -11,9 +11,10 @@ interface SurveyMigrateOptionsProps {
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
+  onMigrated: (surveyId: string) => void;
 }
 
-const SurveyMigrateOptions = ({ survey, onCancel, setOpen }: SurveyMigrateOptionsProps) => {
+const SurveyMigrateOptions = ({ survey, onCancel, setOpen, onMigrated }: SurveyMigrateOptionsProps) => {
   const [products, setProducts] = useState<TProduct[]>([]);
   const [productLoading, setProductLoading] = useState(true);
 
@@ -44,7 +45,13 @@ const SurveyMigrateOptions = ({ survey, onCancel, setOpen }: SurveyMigrateOption
   }
 
   return (
-    <SurveyMigrateForm defaultProducts={products} survey={survey} onCancel={onCancel} setOpen={setOpen} />
+    <SurveyMigrateForm
+      defaultProducts={products}
+      survey={survey}
+      onCancel={onCancel}
+      setOpen={setOpen}
+      onMigrated={onMigrated}
+    />
   );
 };
 

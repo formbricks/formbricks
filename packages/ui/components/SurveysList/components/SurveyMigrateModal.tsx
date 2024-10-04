@@ -7,9 +7,10 @@ interface MigrateSurveyModalProps {
   open: boolean;
   setOpen: (value: boolean) => void;
   survey: TSurvey;
+  onMigrated: (surveyId: string) => void;
 }
 
-export const SurveyMigrateModal = ({ open, setOpen, survey }: MigrateSurveyModalProps) => (
+export const SurveyMigrateModal = ({ open, setOpen, survey, onMigrated }: MigrateSurveyModalProps) => (
   <Modal open={open} setOpen={setOpen} noPadding restrictOverflow>
     <div className="flex h-full flex-col rounded-lg">
       <div className="fixed left-0 right-0 z-10 h-24 rounded-t-lg bg-slate-100">
@@ -27,7 +28,12 @@ export const SurveyMigrateModal = ({ open, setOpen, survey }: MigrateSurveyModal
       </div>
 
       <div className="h-full max-h-[500px] overflow-auto pl-4 pt-24">
-        <SurveyMigrateOptions survey={survey} onCancel={() => setOpen(false)} setOpen={setOpen} />
+        <SurveyMigrateOptions
+          survey={survey}
+          onCancel={() => setOpen(false)}
+          setOpen={setOpen}
+          onMigrated={onMigrated}
+        />
       </div>
     </div>
   </Modal>

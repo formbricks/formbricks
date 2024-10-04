@@ -20,11 +20,13 @@ export const SurveyMigrateForm = ({
   survey,
   onCancel,
   setOpen,
+  onMigrated,
 }: {
   defaultProducts: TProduct[];
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
+  onMigrated: (surveyId: string) => void;
 }) => {
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
 
@@ -57,6 +59,7 @@ export const SurveyMigrateForm = ({
         throw new Error("Server Error while trying to migrate the survey.");
       }
       toast.success("Survey migrated successfully!");
+      onMigrated(survey.id);
     } catch (error) {
       toast.error("Failed to migrate survey");
     } finally {
