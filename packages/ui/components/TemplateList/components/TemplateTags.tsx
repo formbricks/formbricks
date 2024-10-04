@@ -59,7 +59,19 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
     [template.role]
   );
 
-  const channelTag = useMemo(() => getChannelTag(template.channels), [template.channels]);
+  const channelTag = useMemo(
+    () =>
+      getChannelTag(
+        template.channels?.map((channel) => {
+          if (channel === "website") {
+            return "app";
+          }
+
+          return channel;
+        })
+      ),
+    [template.channels]
+  );
 
   const getIndustryTag = (industries: TProductConfigIndustry[] | undefined): string | undefined => {
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".

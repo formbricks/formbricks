@@ -42,7 +42,7 @@ export const SettingsView = ({
   isFormbricksCloud,
   product,
 }: SettingsViewProps) => {
-  const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "app";
+  const isAppSurvey = localSurvey.type === "app";
 
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -100,7 +100,7 @@ export const SettingsView = ({
         environmentId={environment.id}
       />
 
-      {isWebSurvey && (
+      {isAppSurvey && (
         <SurveyPlacementCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}

@@ -2,7 +2,6 @@ import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/
 import { EnvironmentIdField } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/EnvironmentIdField";
 import { SetupInstructions } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/SetupInstructions";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import { notFound } from "next/navigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -31,10 +30,6 @@ const Page = async ({ params }) => {
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const currentProductChannel = product?.config.channel ?? null;
 
-  if (currentProductChannel && currentProductChannel !== "app") {
-    return notFound();
-  }
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
@@ -50,7 +45,7 @@ const Page = async ({ params }) => {
         <SettingsCard
           title="App Connection Status"
           description="Check if your app is successfully connected with Formbricks. Reload page to recheck.">
-          {environment && <WidgetStatusIndicator environment={environment} size="large" type="app" />}
+          {environment && <WidgetStatusIndicator environment={environment} size="large" />}
         </SettingsCard>
         <SettingsCard
           title="Your EnvironmentId"
@@ -61,7 +56,7 @@ const Page = async ({ params }) => {
           title="How to setup"
           description="Follow these steps to setup the Formbricks widget within your app"
           noPadding>
-          <SetupInstructions type="app" environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
+          <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
       </div>
     </PageContentWrapper>

@@ -1,12 +1,10 @@
 import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import { type TJsPackageType } from "@formbricks/types/js";
-import { ErrorHandler, type Result } from "../../../js-core/src/shared/errors";
+import { ErrorHandler, type Result } from "../../../js-core/src/lib/errors";
 import { checkInitialized } from "./initialize";
 
 export class CommandQueue {
   private queue: {
     command: (...args: any[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>;
-    packageType: TJsPackageType;
     checkInitialized: boolean;
     commandArgs: any[];
   }[] = [];
@@ -15,12 +13,11 @@ export class CommandQueue {
   private commandPromise: Promise<void> | null = null;
 
   public add<A>(
-    packageType: TJsPackageType,
     command: (...args: A[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>,
     shouldCheckInitialized = true,
     ...args: A[]
   ): void {
-    this.queue.push({ command, checkInitialized: shouldCheckInitialized, commandArgs: args, packageType });
+    this.queue.push({ command, checkInitialized: shouldCheckInitialized, commandArgs: args });
 
     if (!this.running) {
       this.commandPromise = new Promise((resolve) => {

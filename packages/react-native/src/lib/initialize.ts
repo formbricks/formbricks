@@ -1,5 +1,5 @@
 import { type TAttributes } from "@formbricks/types/attributes";
-import { type TJsAppConfigInput, type TJsRNConfig } from "@formbricks/types/js";
+import { type TJsRNConfig, type TJsReactNativeConfigInput } from "@formbricks/types/js";
 import {
   ErrorHandler,
   type MissingFieldError,
@@ -9,8 +9,8 @@ import {
   type Result,
   err,
   okVoid,
-} from "../../../js-core/src/shared/errors";
-import { Logger } from "../../../js-core/src/shared/logger";
+} from "../../../js-core/src/lib/errors";
+import { Logger } from "../../../js-core/src/lib/logger";
 import { trackAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { appConfig } from "./config";
@@ -24,7 +24,7 @@ export const setIsInitialize = (state: boolean): void => {
 };
 
 export const initialize = async (
-  c: TJsAppConfigInput
+  c: TJsReactNativeConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");

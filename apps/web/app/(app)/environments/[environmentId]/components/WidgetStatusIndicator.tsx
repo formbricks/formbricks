@@ -7,26 +7,25 @@ import { Label } from "@formbricks/ui/components/Label";
 interface WidgetStatusIndicatorProps {
   environment: TEnvironment;
   size: "large" | "mini";
-  type: "app" | "website";
 }
 
-export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusIndicatorProps) => {
+export const WidgetStatusIndicator = ({ environment, size }: WidgetStatusIndicatorProps) => {
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: `Your ${type} is not yet connected.`,
+      title: `Your app is not yet connected.`,
       subtitle: ``,
-      shortText: `Connect your ${type} with Formbricks`,
+      shortText: `Connect your app with Formbricks`,
     },
     running: {
       icon: CheckIcon,
       title: "Receiving data 💃🕺",
-      subtitle: `Your ${type} is connected with Formbricks.`,
-      shortText: `${type === "app" ? "App" : "Website"} connected`,
+      subtitle: `Your app is connected with Formbricks.`,
+      shortText: `App connected`,
     },
   };
 
-  const setupStatus = type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+  const setupStatus = environment.appSetupCompleted;
   let status: "notImplemented" | "running" | "issue";
 
   if (setupStatus) {
@@ -61,7 +60,7 @@ export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusI
   if (size === "mini") {
     return (
       <div className="flex gap-2">
-        <Link href={`/environments/${environment.id}/product/${type}-connection`}>
+        <Link href={`/environments/${environment.id}/product/app-connection`}>
           <div className="group flex justify-center">
             <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
               {status === "running" ? (

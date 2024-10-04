@@ -37,9 +37,16 @@ export const TemplateList = ({
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
+  const surveyType = useMemo(() => {
+    if (product.config.channel) {
+      return product.config.channel === "website" ? "app" : product.config.channel;
+    }
+
+    return "link";
+  }, [product.config.channel]);
+
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
-    const surveyType = product.config.channel ?? "link";
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,

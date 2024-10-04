@@ -184,6 +184,9 @@ export const ZJsConfigInput = z.object({
 
 export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 
+export const ZJsReactNativeConfigInput = ZJsConfigInput.omit({ userId: true }).extend({ userId: z.string() });
+export type TJsReactNativeConfigInput = z.infer<typeof ZJsReactNativeConfigInput>;
+
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),
   userId: z.string().min(1).max(255),

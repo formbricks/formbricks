@@ -5,9 +5,9 @@ import {
   type Result,
   err,
   okVoid,
-} from "../../../js-core/src/shared/errors";
-import { Logger } from "../../../js-core/src/shared/logger";
-import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/shared/utils";
+} from "../../../js-core/src/lib/errors";
+import { Logger } from "../../../js-core/src/lib/logger";
+import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/lib/utils";
 import { appConfig } from "./config";
 import { SurveyStore } from "./survey-store";
 

@@ -108,7 +108,7 @@ export const ThemeStylingPreviewSurvey = ({
     setQuestionId(survey?.questions[0]?.id);
   };
 
-  const isAppSurvey = previewType === "app" || previewType === "website";
+  const isAppSurvey = previewType === "app";
 
   const scrollToEditLogoSection = () => {
     const editLogoSection = document.getElementById("edit-logo");

@@ -217,7 +217,7 @@ export const SurveyEditor = ({
             questionId={activeQuestionId}
             product={localProduct}
             environment={environment}
-            previewType={localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"}
+            previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
             onFileUpload={async (file) => file.name}
           />

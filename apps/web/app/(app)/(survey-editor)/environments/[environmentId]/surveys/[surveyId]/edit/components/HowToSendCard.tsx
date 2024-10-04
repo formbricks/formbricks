@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { AlertCircleIcon, BlocksIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon } from "lucide-react";
+import { AlertCircleIcon, BlocksIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -31,12 +31,10 @@ export const HowToSendCard = ({
 }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
 
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);
-      setWebsiteSetupCompleted(environment.websiteSetupCompleted);
     }
   }, [environment]);
 
@@ -82,22 +80,12 @@ export const HowToSendCard = ({
 
   const options = [
     {
-      id: "website",
-      name: "Website Survey",
-      icon: EarthIcon,
-      description: "Run targeted surveys on public websites.",
-      comingSoon: false,
-      alert: !websiteSetupCompleted,
-      hide: product.config.channel && product.config.channel !== "website",
-    },
-    {
       id: "app",
       name: "App Survey",
       icon: MonitorIcon,
       description: "Embed a survey in your web app to collect responses with user identification.",
       comingSoon: false,
       alert: !appSetupCompleted,
-      hide: product.config.channel && product.config.channel !== "app",
     },
     {
       id: "link",

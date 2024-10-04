@@ -50,8 +50,7 @@ export const SummaryList = ({
   attributeClasses,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
-  const widgetSetupCompleted =
-    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+  const widgetSetupCompleted = environment.appSetupCompleted;
 
   const setFilter = (
     questionId: string,
@@ -107,10 +106,8 @@ export const SummaryList = ({
 
   return (
     <div className="mt-10 space-y-8">
-      {(survey.type === "app" || survey.type === "website") &&
-      responseCount === 0 &&
-      !widgetSetupCompleted ? (
-        <EmptyAppSurveys environment={environment} surveyType={survey.type} />
+      {survey.type === "app" && responseCount === 0 && !widgetSetupCompleted ? (
+        <EmptyAppSurveys environment={environment} />
       ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (
