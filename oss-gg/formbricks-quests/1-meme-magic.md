@@ -17,7 +17,7 @@ Your turn 👇
 
 ////////////////////////////
 
-» 01-October-2024 by YOUR NAME
-» Link to Tweet: https://x.com/...
+» 04-October-2024 by @Ionfinisher
+» Link to Tweet: https://x.com/ion_finisher/status/1842301487847706823
 
 ---
