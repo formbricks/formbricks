@@ -204,12 +204,16 @@ export const SingleResponseCardHeader = ({
               <TrashIcon
                 onClick={() => setDeleteDialogOpen(true)}
                 className="h-4 w-4 cursor-pointer text-slate-500 hover:text-red-700"
+                aria-label="Delete response"
               />
             ) : (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <TrashIcon className="h-4 w-4 cursor-not-allowed text-slate-400" />
+                    <TrashIcon
+                      className="h-4 w-4 cursor-not-allowed text-slate-400"
+                      aria-label="Cannot delete response in progress"
+                    />
                   </TooltipTrigger>
                   <TooltipContent side="left">{deleteSubmissionToolTip}</TooltipContent>
                 </Tooltip>
