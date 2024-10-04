@@ -233,7 +233,7 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
 
 // Helper function to find all "jumpToQuestion" actions in the logic
 const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpToQuestion[] => {
-  return actions.filter((action) => action.objective === "jumpToQuestion");
+  return actions.filter((action): action is TActionJumpToQuestion => action.objective === "jumpToQuestion");
 };
 
 // function to validate hidden field or question id
