@@ -373,7 +373,7 @@ export const PreviewSurvey = ({
                     <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                   )}
                 </div>
-                <div className="z-0 w-full max-w-md rounded-lg border-transparent">
+                <div className="z-0 w-full max-w-xl rounded-lg">
                   <SurveyInline
                     survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={product.linkSurveyBranding}
