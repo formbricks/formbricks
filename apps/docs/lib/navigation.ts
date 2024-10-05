@@ -117,6 +117,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Multi Select", href: "/global/question-types/multi-select" },
           { title: "Free Text", href: "/global/question-types/free-text" },
           { title: "Picture Selection", href: "/global/question-types/picture-selection" },
+          { title: "Rating", href: "/global/question-types/rating" },
         ],
       },
     ],
