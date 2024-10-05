@@ -110,6 +110,10 @@ export const navigation: Array<NavGroup> = [
       { title: "Access Roles", href: "/global/access-roles" },
       { title: "Styling Theme", href: "/global/styling-theme" },
       { title: "Logic Editor", href: "/global/logic-editor" },
+      {
+        title: "Question Types",
+        children: [{ title: "Single Select", href: "/global/question-types/single-select" }],
+      },
     ],
   },
   {
