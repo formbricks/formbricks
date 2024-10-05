@@ -112,7 +112,10 @@ export const navigation: Array<NavGroup> = [
       { title: "Logic Editor", href: "/global/logic-editor" },
       {
         title: "Question Types",
-        children: [{ title: "Single Select", href: "/global/question-types/single-select" }],
+        children: [
+          { title: "Single Select", href: "/global/question-types/single-select" },
+          { title: "Multi Select", href: "/global/question-types/multi-select" },
+        ],
       },
     ],
   },
