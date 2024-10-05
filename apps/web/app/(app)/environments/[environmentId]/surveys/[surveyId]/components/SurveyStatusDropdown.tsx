@@ -1,4 +1,3 @@
-import { CheckCircle2Icon, PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
