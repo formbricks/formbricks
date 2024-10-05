@@ -5,7 +5,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn } from "@/lib/utils";
+import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -48,9 +48,18 @@ export const RankingQuestion = ({
       .filter((item): item is TSurveyQuestionChoice => item !== undefined)
   );
 
-  const [unsortedItems, setUnsortedItems] = useState<TSurveyQuestionChoice[]>(
-    question.choices.filter((c) => !value.includes(c.id))
-  );
+  const [unsortedItems, setUnsortedItems] = useState<TSurveyQuestionChoice[]>(() => {
+    if (!question.shuffleOption || question.shuffleOption === "none" || sortedItems.length > 1) {
+      // Return unshuffled items
+      return question.choices.filter((c) => !value.includes(c.id));
+    } else {
+      // Shuffle options
+      const shuffledChoiceIds = getShuffledChoicesIds(question.choices, question.shuffleOption);
+      return shuffledChoiceIds
+        .map((choiceId) => question.choices.find((choice) => choice.id === choiceId))
+        .filter((choice) => choice !== undefined);
+    }
+  });
 
   const [parent] = useAutoAnimate();
 

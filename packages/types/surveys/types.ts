@@ -573,6 +573,7 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZI18nString),
   columns: z.array(ZI18nString),
+  shuffleOption: ZShuffleOption.optional().default("none"),
 });
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;

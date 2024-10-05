@@ -19,13 +19,7 @@ import {
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/components/Select";
+import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface OpenQuestionFormProps {
@@ -290,29 +284,12 @@ export const MultipleChoiceQuestionForm = ({
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">
-              <Select
-                defaultValue={question.shuffleOption}
-                value={question.shuffleOption}
-                onValueChange={(e: TShuffleOption) => {
-                  updateQuestion(questionIdx, { shuffleOption: e });
-                }}>
-                <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
-                  <SelectValue placeholder="Select ordering" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(shuffleOptionsTypes).map(
-                    (shuffleOptionsType) =>
-                      shuffleOptionsType.show && (
-                        <SelectItem
-                          key={shuffleOptionsType.id}
-                          value={shuffleOptionsType.id}
-                          title={shuffleOptionsType.label}>
-                          {shuffleOptionsType.label}
-                        </SelectItem>
-                      )
-                  )}
-                </SelectContent>
-              </Select>
+              <ShuffleOptionSelect
+                questionIdx={questionIdx}
+                shuffleOption={question.shuffleOption}
+                updateQuestion={updateQuestion}
+                shuffleOptionsTypes={shuffleOptionsTypes}
+              />
             </div>
           </div>
         </div>
