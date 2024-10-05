@@ -118,6 +118,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Free Text", href: "/global/question-types/free-text" },
           { title: "Picture Selection", href: "/global/question-types/picture-selection" },
           { title: "Rating", href: "/global/question-types/rating" },
+          { title: "Net Promoter Score", href: "/global/question-types/net-promoter-score" },
         ],
       },
     ],
