@@ -115,6 +115,7 @@ export const navigation: Array<NavGroup> = [
         children: [
           { title: "Single Select", href: "/global/question-types/single-select" },
           { title: "Multi Select", href: "/global/question-types/multi-select" },
+          { title: "Free Text", href: "/global/question-types/free-text" },
         ],
       },
     ],
