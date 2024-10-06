@@ -18,7 +18,6 @@ import {
   ZSurvey,
   ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
-import { getActionsByPersonId } from "../action/service";
 import { actionClassCache } from "../actionClass/cache";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
@@ -36,9 +35,9 @@ import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
-import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -77,6 +76,7 @@ export const selectSurvey = {
   displayPercentage: true,
   autoComplete: true,
   isVerifyEmailEnabled: true,
+  isSingleResponsePerEmailEnabled: true,
   redirectUrl: true,
   productOverwrites: true,
   styling: true,
@@ -277,6 +277,74 @@ export const getSurveysByActionClassId = reactCache(
     )()
 );
 
+export const getSurveysSortedByRelevance = reactCache(
+  (
+    environmentId: string,
+    limit?: number,
+    offset?: number,
+    filterCriteria?: TSurveyFilterCriteria
+  ): Promise<TSurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+
+        try {
+          let surveys: TSurvey[] = [];
+          const inProgressSurveyCount = await getInProgressSurveyCount(environmentId, filterCriteria);
+
+          // Fetch surveys that are in progress first
+          const inProgressSurveys =
+            offset && offset > inProgressSurveyCount
+              ? []
+              : await prisma.survey.findMany({
+                  where: {
+                    environmentId,
+                    status: "inProgress",
+                    ...buildWhereClause(filterCriteria),
+                  },
+                  select: selectSurvey,
+                  orderBy: buildOrderByClause("updatedAt"),
+                  take: limit,
+                  skip: offset,
+                });
+
+          surveys = inProgressSurveys.map(transformPrismaSurvey);
+
+          // Determine if additional surveys are needed
+          if (offset !== undefined && limit && inProgressSurveys.length < limit) {
+            const remainingLimit = limit - inProgressSurveys.length;
+            const newOffset = Math.max(0, offset - inProgressSurveyCount);
+            const additionalSurveys = await prisma.survey.findMany({
+              where: {
+                environmentId,
+                status: { not: "inProgress" },
+                ...buildWhereClause(filterCriteria),
+              },
+              select: selectSurvey,
+              orderBy: buildOrderByClause("updatedAt"),
+              take: remainingLimit,
+              skip: newOffset,
+            });
+
+            surveys = [...surveys, ...additionalSurveys.map(transformPrismaSurvey)];
+          }
+
+          return surveys;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getSurveysSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
 export const getSurveys = reactCache(
   (
     environmentId: string,
@@ -287,35 +355,33 @@ export const getSurveys = reactCache(
     cache(
       async () => {
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
-        let surveysPrisma;
 
         try {
-          surveysPrisma = await prisma.survey.findMany({
+          if (filterCriteria?.sortBy === "relevance") {
+            // Call the sortByRelevance function
+            return await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
+          }
+
+          // Fetch surveys normally with pagination
+          const surveysPrisma = await prisma.survey.findMany({
             where: {
               environmentId,
               ...buildWhereClause(filterCriteria),
             },
             select: selectSurvey,
             orderBy: buildOrderByClause(filterCriteria?.sortBy),
-            take: limit ? limit : undefined,
-            skip: offset ? offset : undefined,
+            take: limit,
+            skip: offset,
           });
+
+          return surveysPrisma.map(transformPrismaSurvey);
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             console.error(error);
             throw new DatabaseError(error.message);
           }
-
           throw error;
         }
-
-        const surveys: TSurvey[] = [];
-
-        for (const surveyPrisma of surveysPrisma) {
-          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
-          surveys.push(transformedSurvey);
-        }
-        return surveys;
       },
       [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
       {
@@ -347,6 +413,37 @@ export const getSurveyCount = reactCache(
         }
       },
       [`getSurveyCount-${environmentId}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
+export const getInProgressSurveyCount = reactCache(
+  (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+        try {
+          const surveyCount = await prisma.survey.count({
+            where: {
+              environmentId: environmentId,
+              status: "inProgress",
+              ...buildWhereClause(filterCriteria),
+            },
+          });
+
+          return surveyCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getInProgressSurveyCount-${environmentId}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }
@@ -473,7 +570,42 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         id: segment.id,
         environmentId: segment.environmentId,
       });
+    } else if (type === "app") {
+      if (!currentSurvey.segment) {
+        await prisma.survey.update({
+          where: {
+            id: surveyId,
+          },
+          data: {
+            segment: {
+              connectOrCreate: {
+                where: {
+                  environmentId_title: {
+                    environmentId,
+                    title: surveyId,
+                  },
+                },
+                create: {
+                  title: surveyId,
+                  isPrivate: true,
+                  filters: [],
+                  environment: {
+                    connect: {
+                      id: environmentId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        segmentCache.revalidate({
+          environmentId,
+        });
+      }
     }
+
     data.questions = questions.map((question) => {
       const { isDraft, ...rest } = question;
       return rest;
@@ -527,7 +659,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       id: modifiedSurvey.id,
       environmentId: modifiedSurvey.environmentId,
       segmentId: modifiedSurvey.segment?.id,
-      resultShareKey: modifiedSurvey.resultShareKey ?? undefined,
+      resultShareKey: currentSurvey.resultShareKey ?? undefined,
     });
 
     return modifiedSurvey;
@@ -775,6 +907,7 @@ export const copySurveyToOtherEnvironment = async (
       welcomeCard: structuredClone(existingSurvey.welcomeCard),
       questions: structuredClone(existingSurvey.questions),
       endings: structuredClone(existingSurvey.endings),
+      variables: structuredClone(existingSurvey.variables),
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
       languages: hasLanguages
         ? {
@@ -963,10 +1096,7 @@ export const getSyncSurveys = reactCache(
   (
     environmentId: string,
     personId: string,
-    deviceType: "phone" | "desktop" = "desktop",
-    options?: {
-      version?: string;
-    }
+    deviceType: "phone" | "desktop" = "desktop"
   ): Promise<TSurvey[]> =>
     cache(
       async () => {
@@ -995,6 +1125,7 @@ export const getSyncSurveys = reactCache(
           }
 
           const displays = await getDisplaysByPersonId(person.id);
+          const responses = await getResponsesByPersonId(person.id);
 
           // filter surveys that meet the displayOption criteria
           surveys = surveys.filter((survey) => {
@@ -1004,20 +1135,18 @@ export const getSyncSurveys = reactCache(
               case "displayOnce":
                 return displays.filter((display) => display.surveyId === survey.id).length === 0;
               case "displayMultiple":
-                return (
-                  displays
-                    .filter((display) => display.surveyId === survey.id)
-                    .filter((display) => display.responseId).length === 0
-                );
+                if (!responses) return true;
+                else {
+                  return responses.filter((response) => response.surveyId === survey.id).length === 0;
+                }
               case "displaySome":
                 if (survey.displayLimit === null) {
                   return true;
                 }
 
                 if (
-                  displays
-                    .filter((display) => display.surveyId === survey.id)
-                    .some((display) => display.responseId)
+                  responses &&
+                  responses.filter((response) => response.surveyId === survey.id).length !== 0
                 ) {
                   return false;
                 }
@@ -1059,11 +1188,6 @@ export const getSyncSurveys = reactCache(
             return surveys;
           }
 
-          const personActions = await getActionsByPersonId(person.id);
-          const personActionClassIds = Array.from(
-            new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
-          );
-
           const attributes = await getAttributes(person.id);
           const personUserId = person.userId;
 
@@ -1075,47 +1199,10 @@ export const getSyncSurveys = reactCache(
               return survey;
             }
 
-            // backwards compatibility for older versions of the js package
-            // if the version is not provided, we will use the old method of evaluating the segment, which is attribute filters
-            // transform the segment filters to attribute filters and evaluate them
-            if (!options?.version) {
-              const attributeFilters = transformSegmentFiltersToAttributeFilters(segment.filters);
-
-              // if the attribute filters are null, it means the segment filters don't match the expected format for attribute filters, so we skip this survey
-              if (attributeFilters === null) {
-                return null;
-              }
-
-              // if there are no attribute filters, we return the survey
-              if (!attributeFilters.length) {
-                return survey;
-              }
-
-              // we check if the person meets the attribute filters for all the attribute filters
-              const isEligible = attributeFilters.every((attributeFilter) => {
-                const personAttributeValue = attributes[attributeFilter.attributeClassName];
-                if (!personAttributeValue) {
-                  return false;
-                }
-
-                if (attributeFilter.operator === "equals") {
-                  return personAttributeValue === attributeFilter.value;
-                } else if (attributeFilter.operator === "notEquals") {
-                  return personAttributeValue !== attributeFilter.value;
-                } else {
-                  // if the operator is not equals or not equals, we skip the survey, this means that new segment filter options are being used
-                  return false;
-                }
-              });
-
-              return isEligible ? survey : null;
-            }
-
             // Evaluate the segment filters
             const result = await evaluateSegment(
               {
                 attributes: attributes ?? {},
-                actionIds: personActionClassIds,
                 deviceType,
                 environmentId,
                 personId: person.id,

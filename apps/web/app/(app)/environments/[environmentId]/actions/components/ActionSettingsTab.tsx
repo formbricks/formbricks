@@ -15,12 +15,12 @@ import { z } from "zod";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { CodeActionForm } from "@formbricks/ui/organisms/CodeActionForm";
-import { NoCodeActionForm } from "@formbricks/ui/organisms/NoCodeActionForm";
+import { Button } from "@formbricks/ui/components/Button";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { CodeActionForm } from "@formbricks/ui/components/organisms/CodeActionForm";
+import { NoCodeActionForm } from "@formbricks/ui/components/organisms/NoCodeActionForm";
 
 interface ActionSettingsTabProps {
   actionClass: TActionClass;

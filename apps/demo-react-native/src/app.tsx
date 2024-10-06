@@ -16,7 +16,7 @@ export default function App(): JSX.Element {
   const config = {
     environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     apiHost: process.env.EXPO_PUBLIC_API_HOST,
-    userId: "random user id",
+    userId: "random-user-id",
     attributes: {
       language: "en",
       testAttr: "attr-test",

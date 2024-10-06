@@ -2,16 +2,37 @@ import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
+import { fetchPersonState } from "../../shared/personState";
+import { filterSurveys } from "../../shared/utils";
 import { AppConfig } from "./config";
 
+const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const updateAttribute = async (
   key: string,
-  value: string,
-  appConfig: AppConfig
-): Promise<Result<void, NetworkError>> => {
-  const { apiHost, environmentId, userId } = appConfig.get();
+  value: string | number
+): Promise<
+  Result<
+    {
+      changed: boolean;
+      message: string;
+    },
+    Error | NetworkError
+  >
+> => {
+  const { apiHost, environmentId } = appConfig.get();
+  const userId = appConfig.get().personState.data.userId;
+
+  if (!userId) {
+    return err({
+      code: "network_error",
+      status: 500,
+      message: "Missing userId",
+      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      responseMessage: "Missing userId",
+    });
+  }
 
   const api = new FormbricksAPI({
     apiHost,
@@ -24,7 +45,13 @@ export const updateAttribute = async (
     // @ts-expect-error
     if (res.error.details?.ignore) {
       logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
-      return okVoid();
+      return {
+        ok: true,
+        value: {
+          changed: false,
+          message: res.error.message,
+        },
+      };
     }
     return err({
       code: "network_error",
@@ -38,23 +65,35 @@ export const updateAttribute = async (
 
   if (res.data.changed) {
     logger.debug("Attribute updated in Formbricks");
+    return {
+      ok: true,
+      value: {
+        changed: true,
+        message: "Attribute updated in Formbricks",
+      },
+    };
   }
 
-  return okVoid();
+  return {
+    ok: true,
+    value: {
+      changed: false,
+      message: "Attribute not updated in Formbricks",
+    },
+  };
 };
 
 export const updateAttributes = async (
   apiHost: string,
   environmentId: string,
   userId: string,
-  attributes: TAttributes,
-  appConfig: AppConfig
+  attributes: TAttributes
 ): Promise<Result<TAttributes, NetworkError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
 
   try {
-    const existingAttributes = appConfig.get()?.state?.attributes;
+    const existingAttributes = appConfig.get().personState.data.attributes;
     if (existingAttributes) {
       for (const [key, value] of Object.entries(existingAttributes)) {
         if (updatedAttributes[key] === value) {
@@ -100,49 +139,63 @@ export const updateAttributes = async (
   }
 };
 
-export const isExistingAttribute = (key: string, value: string, appConfig: AppConfig): boolean => {
-  if (appConfig.get().state.attributes[key] === value) {
+export const isExistingAttribute = (key: string, value: string): boolean => {
+  if (appConfig.get().personState.data.attributes[key] === value) {
     return true;
   }
+
   return false;
 };
 
 export const setAttributeInApp = async (
   key: string,
-  value: any,
-  appConfig: AppConfig
+  value: any
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   if (key === "userId") {
     logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");
     return okVoid();
   }
 
+  const userId = appConfig.get().personState.data.userId;
+
+  if (!userId) {
+    return err({
+      code: "missing_person",
+      message: "Missing userId",
+    });
+  }
+
   logger.debug("Setting attribute: " + key + " to value: " + value);
   // check if attribute already exists with this value
-  if (isExistingAttribute(key, value.toString(), appConfig)) {
+  if (isExistingAttribute(key, value.toString())) {
     logger.debug("Attribute already set to this value. Skipping update.");
     return okVoid();
   }
 
-  const result = await updateAttribute(key, value.toString(), appConfig);
+  const result = await updateAttribute(key, value.toString());
 
   if (result.ok) {
-    // udpdate attribute in config
-    appConfig.update({
-      environmentId: appConfig.get().environmentId,
-      apiHost: appConfig.get().apiHost,
-      userId: appConfig.get().userId,
-      state: {
-        ...appConfig.get().state,
-        attributes: {
-          ...appConfig.get().state.attributes,
-          [key]: value.toString(),
+    if (result.value.changed) {
+      const personState = await fetchPersonState(
+        {
+          apiHost: appConfig.get().apiHost,
+          environmentId: appConfig.get().environmentId,
+          userId,
         },
-      },
-      expiresAt: appConfig.get().expiresAt,
-    });
+        true
+      );
+
+      const filteredSurveys = filterSurveys(appConfig.get().environmentState, personState);
+
+      appConfig.update({
+        ...appConfig.get(),
+        personState,
+        filteredSurveys,
+      });
+    }
+
     return okVoid();
   }
 
-  return err(result.error);
+  return err(result.error as NetworkError);
 };

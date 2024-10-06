@@ -10,8 +10,8 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { EmptySpaceFiller } from "@formbricks/ui/EmptySpaceFiller";
-import { SingleResponseCard } from "@formbricks/ui/SingleResponseCard";
+import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
+import { SingleResponseCard } from "@formbricks/ui/components/SingleResponseCard";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];
@@ -36,8 +36,8 @@ export const ResponseFeed = ({
     setFetchedResponses(responses);
   }, [responses]);
 
-  const deleteResponse = (responseId: string) => {
-    setFetchedResponses(responses.filter((response) => response.id !== responseId));
+  const deleteResponses = (responseIds: string[]) => {
+    setFetchedResponses(responses.filter((response) => !responseIds.includes(response.id)));
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {
@@ -59,7 +59,7 @@ export const ResponseFeed = ({
             user={user}
             environmentTags={environmentTags}
             environment={environment}
-            deleteResponse={deleteResponse}
+            deleteResponses={deleteResponses}
             updateResponse={updateResponse}
             attributeClasses={attributeClasses}
           />
@@ -75,7 +75,7 @@ const ResponseSurveyCard = ({
   user,
   environmentTags,
   environment,
-  deleteResponse,
+  deleteResponses,
   updateResponse,
   attributeClasses,
 }: {
@@ -84,7 +84,7 @@ const ResponseSurveyCard = ({
   user: TUser;
   environmentTags: TTag[];
   environment: TEnvironment;
-  deleteResponse: (responseId: string) => void;
+  deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, response: TResponse) => void;
   attributeClasses: TAttributeClass[];
 }) => {
@@ -105,7 +105,7 @@ const ResponseSurveyCard = ({
           pageType="people"
           environmentTags={environmentTags}
           environment={environment}
-          deleteResponse={deleteResponse}
+          deleteResponses={deleteResponses}
           updateResponse={updateResponse}
           isViewer={isViewer}
         />

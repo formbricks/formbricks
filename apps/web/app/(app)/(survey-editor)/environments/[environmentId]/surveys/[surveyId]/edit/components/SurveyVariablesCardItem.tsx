@@ -1,16 +1,24 @@
 "use client";
 
+import { findVariableUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { TrashIcon } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui/components/Select";
 
 interface SurveyVariablesCardItemProps {
   variable?: TSurveyVariable;
@@ -72,11 +80,19 @@ export const SurveyVariablesCardItem = ({
     return () => subscription.unsubscribe();
   }, [form, mode, editSurveyVariable]);
 
-  const onVaribleDelete = (variable: TSurveyVariable) => {
+  const onVariableDelete = (variable: TSurveyVariable) => {
     const questions = [...localSurvey.questions];
 
-    // find if this variable is used in any question's recall and remove it for every language
+    const quesIdx = findVariableUsedInLogic(localSurvey, variable.id);
 
+    if (quesIdx !== -1) {
+      toast.error(
+        `${variable.name} is used in logic of question ${quesIdx + 1}. Please remove it from logic first.`
+      );
+      return;
+    }
+
+    // find if this variable is used in any question's recall and remove it for every language
     questions.forEach((question) => {
       for (const [languageCode, headline] of Object.entries(question.headline)) {
         if (headline.includes(`recall:${variable.id}`)) {
@@ -210,7 +226,7 @@ export const SurveyVariablesCardItem = ({
                 type="button"
                 size="sm"
                 className="whitespace-nowrap"
-                onClick={() => onVaribleDelete(variable)}>
+                onClick={() => onVariableDelete(variable)}>
                 <TrashIcon className="h-4 w-4" />
               </Button>
             )}

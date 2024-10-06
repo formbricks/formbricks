@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { resetPassword } from "@formbricks/lib/utils/users";
-import { Button } from "@formbricks/ui/Button";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
-import { IsPasswordValid } from "@formbricks/ui/SignupOptions/components/IsPasswordValid";
+import { Button } from "@formbricks/ui/components/Button";
+import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
+import { IsPasswordValid } from "@formbricks/ui/components/SignupOptions/components/IsPasswordValid";
 
 export const ResetPasswordForm = () => {
   const searchParams = useSearchParams();
@@ -69,7 +69,7 @@ export const ResetPasswordForm = () => {
               autoComplete="current-password"
               placeholder="*******"
               required
-              className="focus:border-brand focus:ring-brand mt-2 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+              className="focus:border-brand-dark focus:ring-brand-dark mt-2 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>
           <div>
@@ -84,7 +84,7 @@ export const ResetPasswordForm = () => {
               autoComplete="current-password"
               placeholder="*******"
               required
-              className="focus:border-brand focus:ring-brand mt-2 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+              className="focus:border-brand-dark focus:ring-brand-dark mt-2 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>
 

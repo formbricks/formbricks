@@ -2,27 +2,24 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { TJsTrackProperties } from "@formbricks/types/js";
+import { TJsFileUploadParams, TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ErrorHandler } from "../../shared/errors";
 import { Logger } from "../../shared/logger";
 import {
+  filterSurveys,
   getDefaultLanguageCode,
   getLanguageCode,
   handleHiddenFields,
   shouldDisplayBasedOnPercentage,
 } from "../../shared/utils";
 import { AppConfig } from "./config";
-import { putFormbricksInErrorState } from "./initialize";
-import { sync } from "./sync";
 
 const containerId = "formbricks-app-container";
 
 const appConfig = AppConfig.getInstance();
 const logger = Logger.getInstance();
-const errorHandler = ErrorHandler.getInstance();
 let isSurveyRunning = false;
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
@@ -68,8 +65,8 @@ const renderWidget = async (
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay} seconds.`);
   }
 
-  const product = appConfig.get().state.product;
-  const attributes = appConfig.get().state.attributes;
+  const { product } = appConfig.get().environmentState.data ?? {};
+  const { attributes } = appConfig.get().personState.data ?? {};
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
@@ -85,7 +82,7 @@ const renderWidget = async (
     languageCode = displayLanguage;
   }
 
-  const surveyState = new SurveyState(survey.id, null, null, appConfig.get().userId);
+  const surveyState = new SurveyState(survey.id, null, null, appConfig.get().personState.data.userId);
 
   const responseQueue = new ResponseQueue(
     {
@@ -124,7 +121,12 @@ const renderWidget = async (
         setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
-        const { userId } = appConfig.get();
+        const { userId } = appConfig.get().personState.data;
+
+        if (!userId) {
+          logger.debug("User ID not found. Skipping.");
+          return;
+        }
 
         const api = new FormbricksAPI({
           apiHost: appConfig.get().apiHost,
@@ -144,9 +146,39 @@ const renderWidget = async (
 
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
+
+        const existingDisplays = appConfig.get().personState.data.displays;
+        const newDisplay = { surveyId: survey.id, createdAt: new Date() };
+        const displays = existingDisplays ? [...existingDisplays, newDisplay] : [newDisplay];
+        const previousConfig = appConfig.get();
+
+        const updatedPersonState: TJsPersonState = {
+          ...previousConfig.personState,
+          data: {
+            ...previousConfig.personState.data,
+            displays,
+            lastDisplayAt: new Date(),
+          },
+        };
+
+        const filteredSurveys = filterSurveys(previousConfig.environmentState, updatedPersonState);
+
+        appConfig.update({
+          ...previousConfig,
+          personState: updatedPersonState,
+          filteredSurveys,
+        });
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
-        const { userId } = appConfig.get();
+        const { userId } = appConfig.get().personState.data;
+
+        if (!userId) {
+          logger.debug("User ID not found. Skipping.");
+          return;
+        }
+
+        const isNewResponse = surveyState.responseId === null;
+
         surveyState.updateUserId(userId);
 
         responseQueue.updateSurveyState(surveyState);
@@ -160,14 +192,33 @@ const renderWidget = async (
             url: window.location.href,
             action,
           },
+          variables: responseUpdate.variables,
           hiddenFields,
+          displayId: surveyState.displayId,
         });
+
+        if (isNewResponse) {
+          const responses = appConfig.get().personState.data.responses;
+          const newPersonState: TJsPersonState = {
+            ...appConfig.get().personState,
+            data: {
+              ...appConfig.get().personState.data,
+              responses: [...responses, surveyState.surveyId],
+            },
+          };
+
+          const filteredSurveys = filterSurveys(appConfig.get().environmentState, newPersonState);
+
+          appConfig.update({
+            ...appConfig.get(),
+            environmentState: appConfig.get().environmentState,
+            personState: newPersonState,
+            filteredSurveys,
+          });
+        }
       },
       onClose: closeSurvey,
-      onFileUpload: async (
-        file: { type: string; name: string; base64: string },
-        params: TUploadFileConfig
-      ) => {
+      onFileUpload: async (file: TJsFileUploadParams["file"], params: TUploadFileConfig) => {
         const api = new FormbricksAPI({
           apiHost: appConfig.get().apiHost,
           environmentId: appConfig.get().environmentId,
@@ -196,23 +247,17 @@ export const closeSurvey = async (): Promise<void> => {
   removeWidgetContainer();
   addWidgetContainer();
 
-  // for identified users we sync to get the latest surveys
-  try {
-    await sync(
-      {
-        apiHost: appConfig.get().apiHost,
-        environmentId: appConfig.get().environmentId,
-        userId: appConfig.get().userId,
-        attributes: appConfig.get().state.attributes,
-      },
-      true,
-      appConfig
-    );
-    setIsSurveyRunning(false);
-  } catch (e: any) {
-    errorHandler.handle(e);
-    putFormbricksInErrorState();
-  }
+  const { environmentState, personState } = appConfig.get();
+  const filteredSurveys = filterSurveys(environmentState, personState);
+
+  appConfig.update({
+    ...appConfig.get(),
+    environmentState,
+    personState,
+    filteredSurveys,
+  });
+
+  setIsSurveyRunning(false);
 };
 
 export const addWidgetContainer = (): void => {

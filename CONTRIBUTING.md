@@ -16,9 +16,9 @@ Are you brimming with brilliant ideas? For new features that can elevate Formbri
 
 Ready to dive into the code and make a real impact? Here's your path:
 
-1. **Read our Best Practices**: [It takes 5 minutes](https://formbricks.com/docs/contributing/how-we-code) but will help you save hours 🤓
+1. **Read our Best Practices**: [It takes 5 minutes](https://formbricks.com/docs/developer-docs/contributing/get-started) but will help you save hours 🤓
 
-1. **Fork the Repository:** Fork our repository or use [Gitpod](https://formbricks.com/docs/contributing/gitpod)
+1. **Fork the Repository:** Fork our repository or use [Gitpod](https://formbricks.com/docs/developer-docs/contributing/gitpod) or use [Codespaces](https://formbricks.com/docs/developer-docs/contributing/codespaces)
 
 1. **Tweak and Transform:** Work your coding magic and apply your changes.
 

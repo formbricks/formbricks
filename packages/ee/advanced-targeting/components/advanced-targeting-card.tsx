@@ -8,7 +8,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
   TBaseFilter,
@@ -17,12 +16,12 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { AlertDialog } from "@formbricks/ui/AlertDialog";
-import { Button } from "@formbricks/ui/Button";
-import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
-import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
-import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
-import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
+import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
+import { Button } from "@formbricks/ui/components/Button";
+import { LoadSegmentModal } from "@formbricks/ui/components/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/components/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/components/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/components/TargetingIndicator";
 import {
   cloneSegmentAction,
   createSegmentAction,
@@ -37,7 +36,6 @@ interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
-  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
   initialSegment?: TSegment;
@@ -47,7 +45,6 @@ export function AdvancedTargetingCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
-  actionClasses,
   attributeClasses,
   segments,
   initialSegment,
@@ -213,7 +210,6 @@ export function AdvancedTargetingCard({
                 {Boolean(segment?.filters.length) && (
                   <div className="w-full">
                     <SegmentEditor
-                      actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
                       environmentId={environmentId}
                       group={segment.filters}
@@ -269,7 +265,6 @@ export function AdvancedTargetingCard({
                 </div>
 
                 <AddFilterModal
-                  actionClasses={actionClasses}
                   attributeClasses={attributeClasses}
                   onAddFilter={(filter) => {
                     handleAddFilterInGroup(filter);
@@ -302,7 +297,6 @@ export function AdvancedTargetingCard({
                 {segmentEditorViewOnly && segment ? (
                   <div className="opacity-60">
                     <SegmentEditor
-                      actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
                       environmentId={environmentId}
                       group={segment.filters}

@@ -5,6 +5,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { getShuffledRowIndices } from "@/lib/utils";
 import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -41,6 +42,27 @@ export const MatrixQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+
+  const rowShuffleIdx = useMemo(() => {
+    if (question.shuffleOption) {
+      return getShuffledRowIndices(question.rows.length, question.shuffleOption);
+    } else {
+      return question.rows.map((_, id) => id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.shuffleOption, question.rows.length]);
+
+  const questionRows = useMemo(() => {
+    if (!question.rows) {
+      return [];
+    }
+    if (question.shuffleOption === "none" || question.shuffleOption === undefined) {
+      return question.rows;
+    }
+    return rowShuffleIdx.map((shuffledIdx) => {
+      return question.rows[shuffledIdx];
+    });
+  }, [question.shuffleOption, question.rows, rowShuffleIdx]);
 
   const handleSelect = useCallback(
     (column: string, row: string) => {
@@ -116,11 +138,11 @@ export const MatrixQuestion = ({
                 </tr>
               </thead>
               <tbody>
-                {question.rows.map((row, rowIndex) => (
+                {questionRows.map((row, rowIndex) => (
                   // Table rows
                   <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
                     <td
-                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-px-4 fb-py-2"
+                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
                       dir="auto">
                       {getLocalizedValue(row, languageCode)}
                     </td>
@@ -151,7 +173,7 @@ export const MatrixQuestion = ({
                             dir="auto"
                             type="radio"
                             tabIndex={-1}
-                            required={true}
+                            required={question.required}
                             id={`${row}-${column}`}
                             name={getLocalizedValue(row, languageCode)}
                             value={getLocalizedValue(column, languageCode)}

@@ -4,7 +4,6 @@ import {
   TYPE_MAPPING,
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
-import { questionTypes } from "@/app/lib/questions";
 import NotionLogo from "@/images/notion.png";
 import { PlusIcon, XIcon } from "lucide-react";
 import Image from "next/image";
@@ -13,6 +12,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { questionTypes } from "@formbricks/lib/utils/questions";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TIntegrationInput } from "@formbricks/types/integration";
@@ -22,10 +22,10 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
-import { Label } from "@formbricks/ui/Label";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
+import { Label } from "@formbricks/ui/components/Label";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -118,6 +118,13 @@ export const AddIntegrationModal = ({
         }))
       : [];
 
+    const variables =
+      selectedSurvey?.variables.map((variable) => ({
+        id: variable.id,
+        name: variable.name,
+        type: TSurveyQuestionTypeEnum.OpenText,
+      })) || [];
+
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
           id: fId,
@@ -133,7 +140,7 @@ export const AddIntegrationModal = ({
       },
     ];
 
-    return [...questions, ...hiddenFields, ...Metadata];
+    return [...questions, ...variables, ...hiddenFields, ...Metadata];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 

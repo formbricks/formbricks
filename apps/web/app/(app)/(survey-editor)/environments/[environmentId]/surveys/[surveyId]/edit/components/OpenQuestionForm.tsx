@@ -8,10 +8,10 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { OptionsSwitch } from "@formbricks/ui/OptionsSwitch";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
+import { Button } from "@formbricks/ui/components/Button";
+import { Label } from "@formbricks/ui/components/Label";
+import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 const questionTypes = [
   { value: "text", label: "Text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },

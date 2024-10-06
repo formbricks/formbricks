@@ -6,13 +6,12 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/Button";
-import { ConfirmDeleteSegmentModal } from "@formbricks/ui/ConfirmDeleteSegmentModal";
-import { Input } from "@formbricks/ui/Input";
+import { Button } from "@formbricks/ui/components/Button";
+import { ConfirmDeleteSegmentModal } from "@formbricks/ui/components/ConfirmDeleteSegmentModal";
+import { Input } from "@formbricks/ui/components/Input";
 import { deleteSegmentAction, updateSegmentAction } from "../lib/actions";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
@@ -23,14 +22,12 @@ interface TSegmentSettingsTabProps {
   initialSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
-  actionClasses: TActionClass[];
 }
 
 export function SegmentSettings({
   environmentId,
   initialSegment,
   setOpen,
-  actionClasses,
   attributeClasses,
   segments,
 }: TSegmentSettingsTabProps) {
@@ -182,7 +179,6 @@ export function SegmentSettings({
             )}
 
             <SegmentEditor
-              actionClasses={actionClasses}
               attributeClasses={attributeClasses}
               environmentId={environmentId}
               group={segment.filters}
@@ -203,7 +199,6 @@ export function SegmentSettings({
             </div>
 
             <AddFilterModal
-              actionClasses={actionClasses}
               attributeClasses={attributeClasses}
               onAddFilter={(filter) => {
                 handleAddFilterInGroup(filter);

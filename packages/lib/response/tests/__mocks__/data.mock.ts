@@ -99,6 +99,7 @@ export const mockResponse: ResponseMock = {
   updatedAt: new Date(),
   language: "English",
   ttc: {},
+  variables: {},
 };
 
 const getMockTags = (tags: string[]): { tag: TTag }[] => {
@@ -126,6 +127,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
@@ -150,6 +152,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
@@ -173,6 +176,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
@@ -196,6 +200,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "eight",
@@ -219,6 +224,7 @@ export const mockResponses: ResponseMock[] = [
     },
     meta: mockMeta,
     ttc: {},
+    variables: {},
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "eight",
@@ -476,7 +482,7 @@ export const mockSurvey: TSurvey = {
       subheader: {
         default: "We appreciate your feedback.",
       },
-      buttonLink: "https://formbricks.com/signup",
+      buttonLink: "https://formbricks.com",
       buttonLabel: { default: "Create your own Survey" },
     },
   ],

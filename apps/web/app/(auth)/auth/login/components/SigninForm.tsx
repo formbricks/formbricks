@@ -9,12 +9,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
-import { Button } from "@formbricks/ui/Button";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
-import { AzureButton } from "@formbricks/ui/SignupOptions/components/AzureButton";
-import { GithubButton } from "@formbricks/ui/SignupOptions/components/GithubButton";
-import { GoogleButton } from "@formbricks/ui/SignupOptions/components/GoogleButton";
-import { OpenIdButton } from "@formbricks/ui/SignupOptions/components/OpenIdButton";
+import { Button } from "@formbricks/ui/components/Button";
+import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
+import { AzureButton } from "@formbricks/ui/components/SignupOptions/components/AzureButton";
+import { GithubButton } from "@formbricks/ui/components/SignupOptions/components/GithubButton";
+import { GoogleButton } from "@formbricks/ui/components/SignupOptions/components/GoogleButton";
+import { OpenIdButton } from "@formbricks/ui/components/SignupOptions/components/OpenIdButton";
 
 interface TSigninFormState {
   email: string;
@@ -50,13 +50,13 @@ export const SigninForm = ({
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   const formMethods = useForm<TSigninFormState>();
-
+  const callbackUrl = searchParams?.get("callbackUrl");
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
 
     try {
       const signInResponse = await signIn("credentials", {
-        callbackUrl: searchParams?.get("callbackUrl") || "/",
+        callbackUrl: callbackUrl ?? "/",
         email: data.email.toLowerCase(),
         password: data.password,
         ...(totpLogin && { totpCode: data.totpCode }),
@@ -103,7 +103,6 @@ export const SigninForm = ({
   const [signInError, setSignInError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const error = searchParams?.get("error");
-  const callbackUrl = searchParams?.get("callbackUrl");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
 
   useEffect(() => {
@@ -157,7 +156,7 @@ export const SigninForm = ({
                     required
                     placeholder="work@email.com"
                     defaultValue={searchParams?.get("email") || ""}
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                     {...formMethods.register("email", {
                       required: true,
                       pattern: /\S+@\S+\.\S+/,
@@ -179,7 +178,7 @@ export const SigninForm = ({
                         aria-placeholder="password"
                         onFocus={() => setIsPasswordFocused(true)}
                         required
-                        className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                        className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                         {...field}
                       />
                     )}

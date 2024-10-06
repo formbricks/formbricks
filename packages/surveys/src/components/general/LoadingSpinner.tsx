@@ -6,7 +6,7 @@ export const LoadingSpinner = ({ className }: { className?: string }) => {
       data-testid="loading-spinner"
       className={cn("fb-flex fb-h-full fb-w-full fb-items-center fb-justify-center", className ?? "")}>
       <svg
-        className="fb-m-2 fb-h-6 fb-w-6 fb-animate-spin fb-text-slate-700"
+        className="fb-m-2 fb-h-6 fb-w-6 fb-animate-spin fb-text-brand"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24">

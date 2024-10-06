@@ -246,7 +246,7 @@ export const mockEndings = [
     subheader: {
       default: "We appreciate your feedback.",
     },
-    buttonLink: "https://formbricks.com/signup",
+    buttonLink: "https://formbricks.com",
     buttonLabel: { default: "Create your own Survey" },
   } as TSurveyEndScreenCard,
 ];
@@ -285,7 +285,7 @@ export const mockSurvey: TSurvey = {
       subheader: {
         default: "We appreciate your feedback.",
       },
-      buttonLink: "https://formbricks.com/signup",
+      buttonLink: "https://formbricks.com",
       buttonLabel: { default: "Create your own Survey" },
     },
   ],
@@ -508,51 +508,9 @@ export const mockTranslatedEndings = [
 ];
 
 export const mockLegacyThankYouCard = {
-  buttonLink: "https://formbricks.com/signup",
+  buttonLink: "https://formbricks.com",
   enabled: true,
   headline: "Thank you!",
   subheader: "We appreciate your feedback.",
   buttonLabel: "Create your own Survey",
-};
-
-export const mockTranslatedSurvey = {
-  ...mockSurvey,
-  questions: [
-    mockTranslatedOpenTextQuestion,
-    mockTranslatedSingleSelectQuestion,
-    mockTranslatedMultiSelectQuestion,
-    mockTranslatedPictureSelectQuestion,
-    mockTranslatedRatingQuestion,
-    mockTranslatedNpsQuestion,
-    mockTranslatedCtaQuestion,
-    mockTranslatedConsentQuestion,
-    mockTranslatedDateQuestion,
-    mockTranslatedFileUploadQuestion,
-    mockTranslatedCalQuestion,
-  ],
-  welcomeCard: mockTranslatedWelcomeCard,
-  endings: mockTranslatedEndings,
-};
-
-export const mockLegacySurvey = {
-  ...mockSurvey,
-  createdAt: new Date("2024-02-06T20:12:03.521Z"),
-  updatedAt: new Date("2024-02-06T20:12:03.521Z"),
-  questions: [
-    mockLegacyOpenTextQuestion,
-    mockLegacySingleSelectQuestion,
-    mockLegacyMultiSelectQuestion,
-    mockLegacyPictureSelectQuestion,
-    mockLegacyRatingQuestion,
-    mockLegacyNpsQuestion,
-    mockLegacyCtaQuestion,
-    mockLegacyConsentQuestion,
-    mockLegacyDateQuestion,
-    mockLegacyFileUploadQuestion,
-    mockLegacyCalQuestion,
-  ],
-  welcomeCard: mockLegacyWelcomeCard,
-  thankYouCard: mockLegacyThankYouCard,
-  endings: undefined,
-  redirectUrl: null,
 };

@@ -8,9 +8,9 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import { GoBackButton } from "@formbricks/ui/GoBackButton";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
   const isEnabled = !!AIRTABLE_CLIENT_ID;

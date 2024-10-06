@@ -10,7 +10,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { OTPInput } from "@formbricks/ui/OTPInput";
+import { OTPInput } from "@formbricks/ui/components/OTPInput";
 
 interface PinScreenProps {
   surveyId: string;

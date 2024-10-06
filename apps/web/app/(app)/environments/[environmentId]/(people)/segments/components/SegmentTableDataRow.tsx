@@ -3,7 +3,6 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { UsersIcon } from "lucide-react";
 import { useState } from "react";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { EditSegmentModal } from "./EditSegmentModal";
@@ -12,14 +11,12 @@ type TSegmentTableDataRowProps = {
   currentSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
-  actionClasses: TActionClass[];
   isAdvancedTargetingAllowed: boolean;
   isFormbricksCloud: boolean;
 };
 
 export const SegmentTableDataRow = ({
   currentSegment,
-  actionClasses,
   attributeClasses,
   segments,
   isAdvancedTargetingAllowed,
@@ -65,7 +62,6 @@ export const SegmentTableDataRow = ({
         open={isEditSegmentModalOpen}
         setOpen={setIsEditSegmentModalOpen}
         currentSegment={currentSegment}
-        actionClasses={actionClasses}
         attributeClasses={attributeClasses}
         segments={segments}
         isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}

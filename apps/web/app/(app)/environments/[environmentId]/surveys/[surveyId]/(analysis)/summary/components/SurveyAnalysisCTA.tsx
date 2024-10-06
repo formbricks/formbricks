@@ -3,14 +3,14 @@
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { ShareIcon, SquarePenIcon } from "lucide-react";
+import { ArrowUpRightFromSquareIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/Badge";
-import { Button } from "@formbricks/ui/Button";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
 
 export const SurveyAnalysisCTA = ({
   survey,
@@ -64,23 +64,25 @@ export const SurveyAnalysisCTA = ({
         <SurveyStatusDropdown environment={environment} survey={survey} />
       ) : null}
       {survey.type === "link" && (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            setOpenShareSurveyModal(true);
-          }}>
-          Share
-          <ShareIcon className="ml-1 h-4" />
-        </Button>
+        <>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setOpenShareSurveyModal(true);
+            }}
+            EndIcon={ArrowUpRightFromSquareIcon}>
+            Preview
+          </Button>
+        </>
       )}
       {!isViewer && (
         <Button
           size="sm"
           className="h-full"
-          href={`/environments/${environment.id}/surveys/${survey.id}/edit`}>
+          href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
+          EndIcon={SquarePenIcon}>
           Edit
-          <SquarePenIcon className="ml-1 h-4" />
         </Button>
       )}
       {showShareSurveyModal && user && (

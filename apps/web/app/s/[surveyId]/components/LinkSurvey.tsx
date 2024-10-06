@@ -20,7 +20,7 @@ import {
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { SurveyInline } from "@formbricks/ui/Survey";
+import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
@@ -278,6 +278,8 @@ export const LinkSurvey = ({
                 url: window.location.href,
                 source: sourceParam || "",
               },
+              variables: responseUpdate.variables,
+              displayId: surveyState.displayId,
               ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
             });
         }}

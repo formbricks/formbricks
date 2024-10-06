@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Modal } from "@formbricks/ui/components/Modal";
 import { createSegmentAction } from "../lib/actions";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
@@ -20,15 +19,9 @@ interface TCreateSegmentModalProps {
   environmentId: string;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
-  actionClasses: TActionClass[];
 }
 
-export function CreateSegmentModal({
-  environmentId,
-  actionClasses,
-  attributeClasses,
-  segments,
-}: TCreateSegmentModalProps) {
+export function CreateSegmentModal({ environmentId, attributeClasses, segments }: TCreateSegmentModalProps) {
   const router = useRouter();
   const initialSegmentState = {
     title: "",
@@ -197,7 +190,6 @@ export function CreateSegmentModal({
               )}
 
               <SegmentEditor
-                actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
                 environmentId={environmentId}
                 group={segment.filters}
@@ -217,7 +209,6 @@ export function CreateSegmentModal({
               </Button>
 
               <AddFilterModal
-                actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
                 onAddFilter={(filter) => {
                   handleAddFilterInGroup(filter);

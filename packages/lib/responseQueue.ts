@@ -87,18 +87,10 @@ export class ResponseQueue {
           userId: this.surveyState.userId || null,
           singleUseId: this.surveyState.singleUseId || null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
+          displayId: this.surveyState.displayId,
         });
         if (!response.ok) {
           throw new Error("Could not create response");
-        }
-        if (this.surveyState.displayId) {
-          try {
-            await this.api.client.display.update(this.surveyState.displayId, {
-              responseId: response.data.id,
-            });
-          } catch (error) {
-            console.error(`Failed to update display, proceeding with the response. ${error}`);
-          }
         }
         this.surveyState.updateResponseId(response.data.id);
         if (this.config.setSurveyState) {
