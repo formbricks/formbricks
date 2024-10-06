@@ -57,7 +57,7 @@ export const RankingQuestion = ({
       const shuffledChoiceIds = getShuffledChoicesIds(question.choices, question.shuffleOption);
       return shuffledChoiceIds
         .map((choiceId) => question.choices.find((choice) => choice.id === choiceId))
-        .filter((choice) => choice !== undefined);
+        .filter((choice): choice is TSurveyQuestionChoice => choice !== undefined);
     }
   });
 
