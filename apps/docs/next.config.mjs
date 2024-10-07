@@ -132,6 +132,11 @@ const nextConfig = {
         destination: "/app-surveys/quickstart",
         permanent: true,
       },
+      {
+        source: "/website-surveys/framework-guides",
+        destination: "/app-surveys/framework-guides",
+        permanent: true,
+      },
     ];
   },
 };
