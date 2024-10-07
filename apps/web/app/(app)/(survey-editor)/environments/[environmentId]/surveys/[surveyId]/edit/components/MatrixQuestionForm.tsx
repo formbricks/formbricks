@@ -7,6 +7,7 @@ import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/s
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -76,6 +77,24 @@ export const MatrixQuestionForm = ({
       e.preventDefault();
       handleAddLabel(type);
     }
+  };
+
+  const shuffleOptionsTypes = {
+    none: {
+      id: "none",
+      label: "Keep current order",
+      show: true,
+    },
+    all: {
+      id: "all",
+      label: "Randomize all",
+      show: true,
+    },
+    exceptLast: {
+      id: "exceptLast",
+      label: "Randomize all except last option",
+      show: true,
+    },
   };
 
   return (
@@ -210,6 +229,14 @@ export const MatrixQuestionForm = ({
               }}>
               <span>Add column</span>
             </Button>
+          </div>
+          <div className="mt-3 flex flex-1 items-center justify-end gap-2">
+            <ShuffleOptionSelect
+              shuffleOptionsTypes={shuffleOptionsTypes}
+              questionIdx={questionIdx}
+              updateQuestion={updateQuestion}
+              shuffleOption={question.shuffleOption}
+            />
           </div>
         </div>
       </div>
