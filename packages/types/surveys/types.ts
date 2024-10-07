@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
@@ -2488,3 +2489,14 @@ export const ZSurveyCopyFormValidation = z.object({
 });
 
 export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;
+
+export const ZSurveyMigrateFormValidation = z.object({
+  products: z.array(
+    z.object({
+      product: z.string(),
+      environments: z.array(z.string()),
+    })
+  ),
+});
+
+export type TSurveyMigrateFormData = z.infer<typeof ZSurveyMigrateFormValidation>;
