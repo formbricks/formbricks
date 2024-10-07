@@ -1,136 +1,171 @@
 import { MdxImage } from "@/components/MdxImage";
-
-import StepEight from "./images/StepEight.webp";
-import StepFive from "./images/StepFive.webp";
-import StepFour from "./images/StepFour.webp";
-import StepOne from "./images/StepOne.webp";
-import StepSeven from "./images/StepSeven.webp";
-import StepSix from "./images/StepSix.webp";
-import StepThree from "./images/StepThree.webp";
-import StepTwo from "./images/StepTwo.webp";
+import ActionCalculateOperators from "./images/action-calculate-operators.webp";
+import ActionCalculateValue from "./images/action-calculate-value.webp";
+import ActionCalculateVariables from "./images/action-calculate-variables.webp";
+import ActionCalculate from "./images/action-calculate.webp";
+import ActionJump from "./images/action-jump.webp";
+import ActionOptions from "./images/action-options.webp";
+import ActionRequire from "./images/action-require.webp";
+import AddLogic from "./images/add-logic.webp";
+import ConditionChaining from "./images/condition-chaining.webp";
+import ConditionOperators from "./images/condition-operators.webp";
+import ConditionOptions from "./images/condition-options.webp";
+import ConditionValue from "./images/condition-value.webp";
+import Conditions from "./images/conditions.webp";
+import Editor from "./images/editor.webp";
+import QuestionLogic from "./images/question-logic.webp";
 
 export const metadata = {
-  title: "Conditional Logic in Formbricks Surveys",
+  title: "Conditional Logic",
   description:
-    "Enhance your surveys with Conditional Logic to create a dynamic and responsive survey experience. Guide respondents through different paths based on their answers, ensuring each survey is tailored to the user’s responses. This feature is applicable for all kinds of surveys!",
+    "Create complex survey logic with the Logic Editor. Use conditions, actions, and variables to create a personalized survey experience.",
 };
 
-# Conditional Logic
+# Logic Editor
 
-With Formbricks, enhance your surveys with Conditional Logic to create a dynamic and responsive survey experience. This feature allows you to guide respondents through different paths based on their answers, ensuring each survey is tailored to the user’s responses. This feature is applicable for all kinds of surveys!
+Create complex survey logic with the Logic Editor. Use conditions, actions, and variables to create a personalized survey experience.
 
-### Setting Up Conditional Logic
+<MdxImage src={Editor} alt="Logic Editor" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
-Conditional Logic can be applied to any question within your survey to direct the flow based on specific responses.
+## Terminology
 
-1. **Create or Edit a Question**: Start by adding a new question or editing an existing one within your survey.
+- **Condition**: A rule that determines when an action should be executed.
+- **Action**: A task that is executed when a condition is met.
 
-<MdxImage
-  src={StepOne}
-  alt="Choose a link survey template"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
-/>
+## **Creating Logic**
 
-2. **Access Advanced Settings**: Click on **Advanced Settings** beneath the question setup area to access additional configuration options.
+1. **Add a Logic Block**: Click the `Add logic +` button to add a new logic block.
 
-<MdxImage
-  src={StepTwo}
-  alt="Choose a link survey template"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
-/>
+<MdxImage src={AddLogic} alt="Add Logic" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+<Note>
+  You can add multiple logic blocks to a survey. Logic blocks are executed in the order they are added. You
+  can rearrange the order of logic blocks.
+</Note>
 
-3. **Configure Logic Jumps**: Choose **Logic Jumps** to set up conditions that dictate the survey's progression based on responses.
+2. **Add Conditions**: Add conditions to the logic block. Conditions are rules that determine when an action should be executed.
 
 <MdxImage
-  src={StepThree}
-  alt="Choose a link survey template"
+  src={Conditions}
+  alt="Add Conditions"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-### Configuring Logic Conditions
+Conditons can be based on:
 
-Enhance survey interactivity by setting up triggers based on respondent answers. You can specify different paths for each type of response:
+- **Question**: The answer to a question.
+- **Variable**: A variable value.
+- **Hidden Field**: The value of a hidden field.
 
-**General Conditions (Available in All Question Types):**
+  2.a **Condition Options**: Choose from a list of available conditions.
 
-- **Answer Submitted/Skipped**: Initiate different survey paths based on whether a question is answered or skipped.
   <MdxImage
-    src={StepFour}
-    alt="Choose a link survey template"
+    src={ConditionOptions}
+    alt="Condition Options"
     quality="100"
-    className="max-w-full rounded-lg sm:max-w-3xl "
+    className="max-w-full rounded-lg sm:max-w-3xl"
   />
 
-**Choice-Based Conditions:**
+  2.b **Condition Operators**: Choose an operator to compare the condition value.
+
+  <MdxImage
+    src={ConditionOperators}
+    alt="Condition Operators"
+    quality="100"
+    className="max-w-full rounded-lg sm:max-w-3xl"
+  />
+
+  2.c **Condition Value**: Enter a value to compare the condition against.
+  Comparisons can be made against a fixed value or a dynamic value.
+  Dynamic values can be based on a question, variable, or hidden field.
+
+  <MdxImage
+    src={ConditionValue}
+    alt="Condition Value"
+    quality="100"
+    className="max-w-full rounded-lg sm:max-w-3xl"
+  />
+
+<Note>
+  - Conditions can be grouped. - Conditions can be combined using AND or OR operators. You can add multiple
+  conditions to a logic block. Conditions are evaluated in the order they are added.
+</Note>
 
 <MdxImage
-  src={StepFive}
-  alt="Choose a link survey template"
+  src={ConditionChaining}
+  alt="Condition Chaining"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-- **One of Multiple Choice Values**: Activate if the answer is among selected options. (Single select and Multi select)
-- **Equals: Exactly the Selected Values**: Initiate a jump if the response matches exactly the selected values provided in the options. (Single select and Multi select)
-- **Includes All Selected Values**: Activate if all selected values match those chosen by the survey creator. (Multi select only)
+3. **Add Actions**: Add actions to the logic block. Actions are tasks that are executed when a condition is met.
 
-**Numeric Conditions (Rating & NPS Questions Only)**
+<Note>You can add multiple actions to a logic block. Actions are executed in the order they are added.</Note>
+
+- 3.a **Action Options**: Choose from a list of available actions.
+
+  <MdxImage
+    src={ActionOptions}
+    alt="Add Actions"
+    quality="100"
+    className="max-w-full rounded-lg sm:max-w-3xl"
+  />
+
+  Action is of the following types:
+
+  - **Calculate**: Perform a calculation. These variables are then available for use in other questions.
+
+    - Calculations can be performed on variables.
+    - Calculations can be based on fixed values or dynamic values.
+      <MdxImage
+        src={ActionCalculateVariables}
+        alt="Action Calculate Variables"
+        quality="100"
+        className="max-w-full rounded-lg sm:max-w-3xl"
+      />
+      <MdxImage
+        src={ActionCalculateOperators}
+        alt="Action Calculate Variables"
+        quality="100"
+        className="max-w-full rounded-lg sm:max-w-3xl"
+      />
+      <MdxImage
+        src={ActionCalculateValue}
+        alt="Action Calculate Variables"
+        quality="100"
+        className="max-w-full rounded-lg sm:max-w-3xl"
+      />
+      <MdxImage
+        src={ActionCalculate}
+        alt="Action Calculate"
+        quality="100"
+        className="max-w-full rounded-lg sm:max-w-3xl"
+      />
+
+  - **Require Answer**: Make a question required. Only the optional questions can be marked as required while filling the survey.
+    <MdxImage
+      src={ActionRequire}
+      alt="Action Require"
+      quality="100"
+      className="max-w-full rounded-lg sm:max-w-3xl"
+    />
+  - **Jump to Question**: Skip to a specific question. The user will be redirected to the specified question based on the condition.
+    <MdxImage
+      src={ActionJump}
+      alt="Action Jump"
+      quality="100"
+      className="max-w-full rounded-lg sm:max-w-3xl"
+    />
+
+4. **Save Logic**: Click the `Save` button to save the logic block.
+
+# Question Logic
+
+This logic is executed when the user answers the question. Logic can be as simple as showing a follow-up question based on the answer or as complex as calculating a score based on multiple answers.
 
 <MdxImage
-  src={StepSix}
-  alt="Choose a link survey template"
+  src={QuestionLogic}
+  alt="Question Logic"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
-
-- **Value Comparisons**: Initiate jumps based on numerical criteria—equals, does not equal, less than, less than or equal to, greater than, or greater than equal to.
-
-**Matrix-Specific Conditions**
-
-<MdxImage
-  src={StepSeven}
-  alt="Choose a link survey template"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
-/>
-
-- **Submission Completeness**: Initiate based on whether the response is completely or partially submitted.
-
-### **Specifying Survey Paths**
-
-After setting conditions, you specify the paths to take when those conditions are met:
-
-- **Jump to a Specific Question**: Direct the respondent to a particular question elsewhere in the survey.
-- **Jump to Survey End**: Conclude the survey early based on the respondent's answers.
-
-<MdxImage
-  src={StepEight}
-  alt="Choose a link survey template"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
-/>
-
-### **Multiple Logic Jumps**
-
-You can add multiple Logic Jumps to a single question. These jumps work in an **OR** fashion, meaning any of the conditions can initiate the specified survey path. The logic jumps are evaluated in the **order they are created**, and the first true condition will take precedence.
-
----
-
-### **Example Scenario**
-
-Suppose you’re conducting a survey about technology usage:
-
-1. **Question (Single Select)**: What devices do you use daily?
-2. **Answers**: Smartphone, Laptop, Tablet, None
-
-**Logic Jump Setup**:
-
-- If the respondent selects **None**, jump to the end of the survey.
-- If the respondent selects **Smartphone**, jump to a question specific to smartphone usage.
-
-This setup allows for a tailored survey experience that adapts to the respondent's input, making your data collection more targeted and efficient.
-
-That’s it! Now go and configure your surveys to bring down your survey fatigue to 0% and ask respondents through customized paths. Enhance their relevance and engagement with your survey, leading to higher quality responses and better data.
