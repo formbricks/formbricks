@@ -2009,7 +2009,7 @@ const validateActions = (
     return undefined;
   });
 
-  const filteredActionIssues = actionIssues.filter((issue) => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue) => issue !== undefined) as z.ZodIssue[];
   return filteredActionIssues;
 };
 
