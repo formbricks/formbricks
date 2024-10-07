@@ -1,14 +1,15 @@
+import { copySurveyToOtherEnvironmentAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey, TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@formbricks/types/surveys/types";
-import { Button } from "../../Button";
-import { Checkbox } from "../../Checkbox";
-import { FormControl, FormField, FormItem, FormProvider } from "../../Form";
-import { Label } from "../../Label";
-import { TooltipRenderer } from "../../Tooltip";
-import { copySurveyToOtherEnvironmentAction } from "../actions";
+import { TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@formbricks/types/surveys/types";
+import { Button } from "@formbricks/ui/components/Button";
+import { Checkbox } from "@formbricks/ui/components/Checkbox";
+import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
+import { Label } from "@formbricks/ui/components/Label";
+import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
 export const CopySurveyForm = ({
   defaultProducts,
@@ -17,7 +18,7 @@ export const CopySurveyForm = ({
   setOpen,
 }: {
   defaultProducts: TProduct[];
-  survey: TSurvey;
+  survey: TSurveyListItem;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }) => {

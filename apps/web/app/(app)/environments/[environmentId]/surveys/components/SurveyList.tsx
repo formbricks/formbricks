@@ -1,20 +1,18 @@
 "use client";
 
+import { getSurveyListItemsAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { getFormattedFilters } from "@/app/(app)/environments/[environmentId]/surveys/lib/utils";
+import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  FORMBRICKS_SURVEYS_FILTERS_KEY_LS,
-  FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS,
-} from "@formbricks/lib/localStorage";
+import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { TEnvironment } from "@formbricks/types/environment";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProductConfigChannel } from "@formbricks/types/product";
-import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
-import { Button } from "../Button";
-import { getSurveysAction } from "./actions";
-import { SurveyCard } from "./components/SurveyCard";
-import { SurveyFilters } from "./components/SurveyFilters";
-import { SurveyLoading } from "./components/SurveyLoading";
-import { getFormattedFilters } from "./utils";
+import { TSurveyFilters } from "@formbricks/types/surveys/types";
+import { Button } from "@formbricks/ui/components/Button";
+import { SurveyCard } from "./SurveyCard";
+import { SurveyFilters } from "./SurveyFilters";
+import { SurveyLoading } from "./SurveyLoading";
 
 interface SurveysListProps {
   environment: TEnvironment;
@@ -43,7 +41,7 @@ export const SurveysList = ({
   surveysPerPage: surveysLimit,
   currentProductChannel,
 }: SurveysListProps) => {
-  const [surveys, setSurveys] = useState<TSurvey[]>([]);
+  const [surveys, setSurveys] = useState<TSurveyListItem[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -52,18 +50,8 @@ export const SurveysList = ({
 
   const filters = useMemo(() => getFormattedFilters(surveyFilters, userId), [surveyFilters, userId]);
 
-  const [orientation, setOrientation] = useState("");
-
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const orientationFromLocalStorage = localStorage.getItem(FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS);
-      if (orientationFromLocalStorage) {
-        setOrientation(orientationFromLocalStorage);
-      } else {
-        setOrientation("grid");
-        localStorage.setItem(FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS, "grid");
-      }
-
       const savedFilters = localStorage.getItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
       if (savedFilters) {
         const surveyParseResult = wrapThrows(() => JSON.parse(savedFilters))();
@@ -89,7 +77,7 @@ export const SurveysList = ({
     if (isFilterInitialized) {
       const fetchInitialSurveys = async () => {
         setIsFetching(true);
-        const res = await getSurveysAction({
+        const res = await getSurveyListItemsAction({
           environmentId: environment.id,
           limit: surveysLimit,
           offset: undefined,
@@ -111,7 +99,7 @@ export const SurveysList = ({
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
-    const res = await getSurveysAction({
+    const res = await getSurveyListItemsAction({
       environmentId: environment.id,
       limit: surveysLimit,
       offset: surveys.length,
@@ -134,7 +122,7 @@ export const SurveysList = ({
     setSurveys(newSurveys);
   };
 
-  const handleDuplicateSurvey = async (survey: TSurvey) => {
+  const handleDuplicateSurvey = async (survey: TSurveyListItem) => {
     const newSurveys = [survey, ...surveys];
     setSurveys(newSurveys);
   };
@@ -142,59 +130,37 @@ export const SurveysList = ({
   return (
     <div className="space-y-6">
       <SurveyFilters
-        orientation={orientation}
-        setOrientation={setOrientation}
         surveyFilters={surveyFilters}
         setSurveyFilters={setSurveyFilters}
         currentProductChannel={currentProductChannel}
       />
       {surveys.length > 0 ? (
         <div>
-          {orientation === "list" && (
-            <div className="flex-col space-y-3">
-              <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 text-sm text-slate-800">
-                <div className="col-span-4 place-self-start">Name</div>
-                <div className="col-span-4 grid w-full grid-cols-5 place-items-center">
-                  <div className="col-span-2">Created at</div>
-                  <div className="col-span-2">Updated at</div>
-                </div>
-              </div>
-              {surveys.map((survey) => {
-                return (
-                  <SurveyCard
-                    key={survey.id}
-                    survey={survey}
-                    environment={environment}
-                    otherEnvironment={otherEnvironment}
-                    isViewer={isViewer}
-                    WEBAPP_URL={WEBAPP_URL}
-                    orientation={orientation}
-                    duplicateSurvey={handleDuplicateSurvey}
-                    deleteSurvey={handleDeleteSurvey}
-                  />
-                );
-              })}
+          <div className="flex-col space-y-3">
+            <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 text-sm text-slate-800">
+              <div className="col-span-1 place-self-start">Name</div>
+              <div className="col-span-1">Status</div>
+              <div className="col-span-1">Responses</div>
+              <div className="col-span-1">Type</div>
+              <div className="col-span-1">Created at</div>
+              <div className="col-span-1">Updated at</div>
+              <div className="col-span-1">Created by</div>
             </div>
-          )}
-          {orientation === "grid" && (
-            <div className="grid grid-cols-2 place-content-stretch gap-4 lg:grid-cols-3 2xl:grid-cols-5">
-              {surveys.map((survey) => {
-                return (
-                  <SurveyCard
-                    key={survey.id}
-                    survey={survey}
-                    environment={environment}
-                    otherEnvironment={otherEnvironment}
-                    isViewer={isViewer}
-                    WEBAPP_URL={WEBAPP_URL}
-                    orientation={orientation}
-                    duplicateSurvey={handleDuplicateSurvey}
-                    deleteSurvey={handleDeleteSurvey}
-                  />
-                );
-              })}
-            </div>
-          )}
+            {surveys.map((survey) => {
+              return (
+                <SurveyCard
+                  key={survey.id}
+                  survey={survey}
+                  environment={environment}
+                  otherEnvironment={otherEnvironment}
+                  isViewer={isViewer}
+                  WEBAPP_URL={WEBAPP_URL}
+                  duplicateSurvey={handleDuplicateSurvey}
+                  deleteSurvey={handleDeleteSurvey}
+                />
+              );
+            })}
+          </div>
 
           {hasMore && (
             <div className="flex justify-center py-5">

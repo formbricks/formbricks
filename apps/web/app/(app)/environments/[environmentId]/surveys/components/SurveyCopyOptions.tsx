@@ -1,14 +1,14 @@
+import { getProductsByEnvironmentIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { getProductsByEnvironmentIdAction } from "../actions";
 import { CopySurveyForm } from "./CopySurveyForm";
 
 interface SurveyCopyOptionsProps {
-  survey: TSurvey;
+  survey: TSurveyListItem;
   environmentId: string;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
