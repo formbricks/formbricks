@@ -95,10 +95,10 @@ export const SurveyAnalysisCTA = ({
     return `${surveyUrl}${separator}preview=true`;
   };
 
-  const handleModalState = (modalType: keyof Omit<ModalState, "dropdown">) => {
+  const handleModalState = (modalView: keyof Omit<ModalState, "dropdown">) => {
     return (open: boolean | ((prevState: boolean) => boolean)) => {
-      const newValue = typeof open === "function" ? open(modalState[modalType]) : open;
-      setModalState((prev) => ({ ...prev, [modalType]: newValue }));
+      const newValue = typeof open === "function" ? open(modalState[modalView]) : open;
+      setModalState((prev) => ({ ...prev, [modalView]: newValue }));
     };
   };
 
@@ -133,10 +133,7 @@ export const SurveyAnalysisCTA = ({
       )}
 
       {!isViewer && (
-        <Button
-          size="sm"
-          href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
-          EndIcon={SquarePenIcon}>
+        <Button href={`/environments/${environment.id}/surveys/${survey.id}/edit`} EndIcon={SquarePenIcon}>
           Edit
         </Button>
       )}
@@ -147,8 +144,8 @@ export const SurveyAnalysisCTA = ({
             open={modalState.dropdown}
             onOpenChange={(open) => setModalState((prev) => ({ ...prev, dropdown: open }))}>
             <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-              <Button variant="secondary" size="sm" className="p-2">
-                <MoreVertical className="h-4 w-4" />
+              <Button variant="secondary" className="p-2">
+                <MoreVertical className="h-7 w-4" />
                 <span className="sr-only">Open options</span>
               </Button>
             </DropdownMenuTrigger>
@@ -196,7 +193,7 @@ export const SurveyAnalysisCTA = ({
             setOpen={handleShareModalToggle}
             webAppUrl={webAppUrl}
             user={user}
-            modalType="start"
+            modalView="start"
           />
           <ShareEmbedSurvey
             survey={survey}
@@ -204,7 +201,7 @@ export const SurveyAnalysisCTA = ({
             setOpen={handleModalState("embed")}
             webAppUrl={webAppUrl}
             user={user}
-            modalType="embed"
+            modalView="embed"
           />
           <ShareEmbedSurvey
             survey={survey}
@@ -212,7 +209,7 @@ export const SurveyAnalysisCTA = ({
             setOpen={handleModalState("panel")}
             webAppUrl={webAppUrl}
             user={user}
-            modalType="panel"
+            modalView="panel"
           />
           <SuccessMessage environment={environment} survey={survey} />
         </>

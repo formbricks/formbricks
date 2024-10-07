@@ -23,7 +23,7 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
   open: boolean;
-  modalType: "start" | "embed" | "panel";
+  modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   webAppUrl: string;
   user: TUser;
@@ -32,7 +32,7 @@ interface ShareEmbedSurveyProps {
 export const ShareEmbedSurvey = ({
   survey,
   open,
-  modalType,
+  modalView,
   setOpen,
   webAppUrl,
   user,
@@ -50,13 +50,13 @@ export const ShareEmbedSurvey = ({
   ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
-  const [showView, setShowView] = useState(modalType);
+  const [showView, setShowView] = useState(modalView);
   const [surveyUrl, setSurveyUrl] = useState("");
 
   const handleOpenChange = (open: boolean) => {
     setActiveId(tabs[0].id);
     setOpen(open);
-    setShowView(open ? modalType : "start");
+    setShowView(open ? modalView : "start");
     router.refresh();
   };
 
