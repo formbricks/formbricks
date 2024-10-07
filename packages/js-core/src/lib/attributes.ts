@@ -1,6 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
-import { TJsPersonState } from "@formbricks/types/js";
 import { Config } from "./config";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
