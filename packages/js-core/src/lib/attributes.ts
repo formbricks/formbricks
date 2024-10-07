@@ -167,24 +167,9 @@ export const setAttributeInApp = async (
   }
 
   if (!userId) {
-    logger.debug("UserId not provided, attribute will not be sent to the backend.");
-    const personState = config.get().personState;
-    const updatedPersonState: TJsPersonState = {
-      ...personState,
-      data: {
-        ...personState.data,
-        attributes: {
-          ...personState.data.attributes,
-          [key]: value.toString(),
-        },
-      },
-    };
-
-    config.update({
-      ...config.get(),
-      personState: updatedPersonState,
-    });
-
+    logger.error(
+      "UserId not provided, please provide a userId in the init method before setting attributes."
+    );
     return okVoid();
   }
 
