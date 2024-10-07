@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
+import { TDocument } from "@formbricks/types/documents";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
@@ -23,6 +24,7 @@ import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplay, getDisplayCountBySurveyId } from "../display/service";
+import { createDocument, doesDocumentExistForResponseId } from "../document/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
@@ -37,6 +39,7 @@ import { responseCache } from "./cache";
 import {
   buildWhereClause,
   calculateTtcTotal,
+  doesThisResponseHasAnyOpenTextAnswer,
   extractSurveyDetails,
   getQuestionWiseSummary,
   getResponseHiddenFields,
@@ -912,3 +915,70 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
       }
     )()
 );
+
+export const generateInsightsForSurveyResponses = async (surveyId: string): Promise<void> => {
+  validateInputs([surveyId, ZId]);
+  try {
+    const survey = await getSurvey(surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    const openTextQuestions = survey.questions.filter(
+      (question) => question.type === TSurveyQuestionTypeEnum.OpenText
+    );
+
+    const openTextQuestionIds = openTextQuestions.map((question) => question.id);
+
+    const batchSize = 3000;
+    const totalResponseCount = await getResponseCountBySurveyId(surveyId);
+
+    const pages = Math.ceil(totalResponseCount / batchSize);
+
+    const responsesArray = await Promise.all(
+      Array.from({ length: pages }, (_, i) => {
+        return getResponses(surveyId, batchSize, i * batchSize);
+      })
+    );
+    const responses = responsesArray.flat();
+
+    const insightsPromises: Promise<TDocument>[] = [];
+
+    for (let response of responses) {
+      const hasOpenTextResponse = doesThisResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data);
+
+      if (!hasOpenTextResponse) {
+        continue;
+      }
+
+      if (!doesDocumentExistForResponseId(response.id)) {
+        for (let question of openTextQuestions) {
+          const responseText = response.data[question.id] as string;
+          if (!responseText) {
+            continue;
+          }
+
+          const text = `**${question.headline.default}**\n${responseText}`;
+
+          insightsPromises.push(
+            createDocument({
+              environmentId: survey.environmentId,
+              surveyId,
+              responseId: response.id,
+              questionId: question.id,
+              text,
+            })
+          );
+
+          await Promise.all(insightsPromises);
+        }
+      }
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

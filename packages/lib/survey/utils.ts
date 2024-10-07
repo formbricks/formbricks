@@ -86,3 +86,7 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
     return false;
   });
 };
+
+export const doesSurveyHasOpenTextQuestion = (survey: TSurvey): boolean => {
+  return survey.questions.some((question) => question.type === "openText");
+};

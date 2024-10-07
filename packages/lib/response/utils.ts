@@ -1542,3 +1542,13 @@ const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
   findSubsets(0, []);
   return subsets;
 };
+
+export const doesThisResponseHasAnyOpenTextAnswer = (
+  openTextQuestionIds: string[],
+  response: TResponse["data"]
+): boolean => {
+  return openTextQuestionIds.some((questionId) => {
+    const answer = response[questionId];
+    return typeof answer === "string" && answer.length > 0;
+  });
+};
