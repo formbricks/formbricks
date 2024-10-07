@@ -48,7 +48,7 @@ export const RankingQuestion = ({
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
     } else return question.choices.map((choice) => choice.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
+  }, [question.shuffleOption, question.choices.length]);
 
   const [parent] = useAutoAnimate();
 
@@ -95,7 +95,7 @@ export const RankingQuestion = ({
         direction === "up" ? Math.max(0, index - 1) : Math.min(newSortedItems.length, index + 1);
 
       newSortedItems.splice(newIndex, 0, movedItem);
-      onChange({ [question.id]: newSortedItems.map((item) => item.id) });
+      onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
       setError(null);
     },
     [sortedItems, onChange, question.id]
