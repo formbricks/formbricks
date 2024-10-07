@@ -70,11 +70,8 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
       parsedOldConfig.personState &&
       parsedOldConfig.filteredSurveys
     ) {
-      const newLocalStorageConfig = { ...parsedOldConfig };
-
       return {
         changed: true,
-        newState: newLocalStorageConfig,
       };
     }
   }
@@ -95,11 +92,13 @@ export const initialize = async (
 
   const { changed, newState } = migrateLocalStorage();
 
-  if (changed && newState) {
+  if (changed) {
     config.resetConfig();
     config = Config.getInstance();
 
-    if (!configInput.userId) {
+    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
+    // otherwise, we just sync again!
+    if (!configInput.userId && newState) {
       config.update(newState);
     }
   }
