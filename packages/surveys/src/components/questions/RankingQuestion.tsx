@@ -78,7 +78,6 @@ export const RankingQuestion = ({
       const newSortedItems = isAlreadySorted
         ? sortedItems.filter((sortedItem) => sortedItem.id !== item.id)
         : [...sortedItems, item];
-      console.log({ newSortedItems });
       onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
       setError(null);
     },
