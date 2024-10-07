@@ -81,8 +81,8 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
           [insightId, ZId],
           [surveyId, ZId],
           [questionId, ZId],
-          [limit, z.number()],
-          [offset, z.number()]
+          [limit, z.number().optional()],
+          [offset, z.number().optional()]
         );
 
         limit = limit ?? DOCUMENTS_PER_PAGE;
@@ -296,4 +296,24 @@ export const findNearestDocuments = async (
   });
 
   return documents;
+};
+
+export const doesDocumentExistForResponseId = async (responseId: string): Promise<boolean> => {
+  validateInputs([responseId, ZId]);
+
+  try {
+    const document = await prisma.document.findFirst({
+      where: {
+        responseId,
+      },
+    });
+
+    return !!document;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error);
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };
