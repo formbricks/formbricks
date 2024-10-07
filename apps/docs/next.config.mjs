@@ -121,6 +121,17 @@ const nextConfig = {
         destination: "/developer-docs/integrations/:path",
         permanent: true,
       },
+
+      {
+        source: "/developer-docs/website-survey-sdk",
+        destination: "/developer-docs/js-sdk",
+        permanent: true,
+      },
+      {
+        source: "/website-surveys/quickstart",
+        destination: "/app-surveys/quickstart",
+        permanent: true,
+      },
     ];
   },
 };

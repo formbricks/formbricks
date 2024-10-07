@@ -5,18 +5,18 @@ import I2 from "./images/2-micro-survey-pop-up-in-app.webp";
 import I3 from "./images/3-survey-logs-in-app-survey-popup.webp";
 
 export const metadata = {
-  title: "Formbricks App Survey SDK",
+  title: "Formbricks JS SDK",
   description:
-    "Integrate Formbricks App Surveys into your web apps with the Formbricks JS SDK for App Surveys. Learn how to initialize Formbricks, set attributes, track actions, and troubleshoot common issues.",
+    "Integrate Formbricks App Surveys into your web apps and websites with the Formbricks JS SDK. Learn how to initialize Formbricks, set attributes, track actions, and troubleshoot common issues.",
 };
 
 #### Developer Docs
 
-# SDK: Run Surveys Inside Your Web Apps
+# SDK: Run Surveys Inside Your Web Apps and Websites
 
 ### Overview
 
-The Formbricks JS SDK is a 2-in-1 SDK for seamlessly integrating both App Surveys and Website Surveys into your projects. In this section, we'll explore how to leverage the SDK specifically for **app** surveys. It’s available on npm [here](https://www.npmjs.com/package/@formbricks/js/).
+The Formbricks JS SDK is a versatile solution for integrating surveys into both web apps and websites. It adapts based on the presence of a `userId`. If a `userId` is provided, the SDK handles authenticated surveys for logged-in users in web apps. If no `userId` is provided, the SDK can still seamlessly run surveys on public-facing websites. The SDK is available on npm [here](https://www.npmjs.com/package/@formbricks/js/).
 
 ### Install
 
@@ -42,7 +42,7 @@ pnpm add @formbricks/js
 
 ### Initialize Formbricks
 
-Initialize the Formbricks JS Client for app surveys where you pass the userId (creates a user if not existing in Formbricks) to attribute & target the user based on their actions.
+Initialize the Formbricks JS Client for surveys. When used in a web app, pass a `userId` to create and target a specific user. When using it on a website without authentication, simply omit the `userId`.
 
 <Col>
 <CodeGroup title="Initialize Formbricks">
@@ -53,7 +53,7 @@ import formbricks from "@formbricks/js/app";
 formbricks.init({
   environmentId: "<your-environment-id>", // required
   apiHost: "<your-api-host>", // required
-  userId: "<user-id>", // required
+  userId: "<user-id>", // optional
 });
 ```
 
@@ -73,7 +73,7 @@ if (window !== undefined) {
   formbricks.init({
     environmentId: "<your-environment-id>",
     apiHost: "<your-api-host>",
-    userId: "<user-id>",
+    userId: "<user-id>", //optional
   });
 } else {
   console.error("Window object not accessible to init Formbricks");
@@ -87,7 +87,7 @@ if (window !== undefined) {
 
 ### Set Attribute
 
-You can set custom attributes for the identified user. This can be helpful for segmenting users based on specific characteristics or properties. To learn how to set custom user attributes, please check out our [User Attributes Guide](/app-surveys/user-identification).
+Set custom attributes for the identified user to help segment them based on specific characteristics. This method only works when a `userId` is provided during initialization, allowing for targeted surveys in web apps. To learn how to set custom user attributes, refer to our [User Attributes Guide](/app-surveys/user-identification).
 
 <Col>
 <CodeGroup>
