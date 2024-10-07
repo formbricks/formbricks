@@ -59,6 +59,11 @@ export const Survey = ({
 }: SurveyBaseProps) => {
   const [localSurvey, setlocalSurvey] = useState<TSurvey>(survey);
 
+  // Update localSurvey when the survey prop changes (it changes in case of survey editor)
+  useEffect(() => {
+    setlocalSurvey(survey);
+  }, [survey]);
+
   const autoFocusEnabled = autoFocus !== undefined ? autoFocus : window.self === window.top;
 
   const [questionId, setQuestionId] = useState(() => {

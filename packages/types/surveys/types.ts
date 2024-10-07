@@ -589,6 +589,7 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZI18nString),
   columns: z.array(ZI18nString),
+  shuffleOption: ZShuffleOption.optional().default("none"),
 });
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
@@ -2039,7 +2040,8 @@ const validateActions = (
     return undefined;
   });
 
-  return actionIssues.filter((issue) => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue) => issue !== undefined);
+  return filteredActionIssues;
 };
 
 const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLogic[]): z.ZodIssue[] => {

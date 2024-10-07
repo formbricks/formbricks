@@ -105,29 +105,36 @@ export function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.NPS:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Section>
-            <Text className="text-question-color m-0 block text-base font-semibold leading-6">
+          <Section className="w-full justify-center">
+            <Text className="text-question-color m-0 block w-full text-base font-semibold leading-6">
               {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
             </Text>
-            <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
+            <Text className="text-question-color m-0 block w-full p-0 text-sm font-normal leading-6">
               {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
             </Text>
-            <Container className="mx-0 mt-4 flex w-max flex-col">
-              <Section className="border-input-border-color rounded-custom block overflow-hidden border">
-                {Array.from({ length: 11 }, (_, i) => (
-                  <EmailButton
-                    href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
-                    key={i}
-                    className={cn(
-                      firstQuestion.isColorCodingEnabled ? "h-[46px]" : "h-10",
-                      "border-input-border-color relative m-0 inline-flex w-10 items-center justify-center border p-0 text-slate-800"
-                    )}>
-                    {firstQuestion.isColorCodingEnabled ? (
-                      <Section className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`} />
-                    ) : null}
-                    {i}
-                  </EmailButton>
-                ))}
+            <Container className="mx-0 mt-4 w-full items-center justify-center">
+              <Section
+                className={cn("w-full overflow-hidden", {
+                  "border border-solid border-gray-200": firstQuestion.scale === "number",
+                })}>
+                <Column className="mb-4 flex w-full justify-between gap-0">
+                  {Array.from({ length: 11 }, (_, i) => (
+                    <EmailButton
+                      href={`${urlWithPrefilling}${firstQuestion.id}=${i.toString()}`}
+                      key={i}
+                      className={cn(
+                        firstQuestion.isColorCodingEnabled ? "h-[46px]" : "h-10",
+                        "relative m-0 w-full overflow-hidden border border-l-0 p-0 text-center align-middle leading-10 text-slate-800",
+                        { "rounded-l-lg border-l": i === 0 },
+                        { "rounded-r-lg": i === 10 }
+                      )}>
+                      {firstQuestion.isColorCodingEnabled ? (
+                        <Section className={`absolute left-0 top-0 h-[6px] w-full ${getNPSOptionColor(i)}`} />
+                      ) : null}
+                      {i}
+                    </EmailButton>
+                  ))}
+                </Column>
               </Section>
               <Section className="text-question-color mt-2 px-1.5 text-xs leading-6">
                 <Row>
@@ -214,18 +221,14 @@ export function PreviewEmailTemplate({
               {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
             </Text>
             <Container className="mx-0 mt-4 w-full items-center justify-center">
-              <Section
-                className={cn("rounded-custom w-full overflow-hidden", {
-                  "border border-solid border-gray-200": firstQuestion.scale === "number",
-                })}>
-                <Column className="mb-4 flex w-full justify-around">
+              <Section className="w-full overflow-hidden">
+                <Column className="flex w-full justify-around">
                   {Array.from({ length: firstQuestion.range }, (_, i) => (
                     <EmailButton
                       className={cn(
-                        "relative m-0 w-full overflow-hidden p-0 text-center align-middle leading-10 text-slate-800",
-                        {
-                          "border border-solid border-gray-200": firstQuestion.scale === "number",
-                        },
+                        "relative m-0 w-full overflow-hidden border border-l-0 p-0 text-center align-middle leading-10 text-slate-800",
+                        { "rounded-l-lg border-l": i === 0 },
+                        { "rounded-r-lg": i === firstQuestion.range - 1 },
                         firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
                           ? "h-[46px]"
                           : "h-10",
