@@ -76,7 +76,10 @@ export const SurveyMigrateForm = ({
           <RadioGroup>
             {formFields.fields.map((field, productIndex) => {
               const product = defaultProducts.find((product) => product.id === field.product);
-              const isDisabled = survey.type !== "link" && product?.config.channel !== survey.type;
+              const isDisabled =
+                survey.type !== "link" &&
+                product?.config.channel !== survey.type &&
+                product?.config.channel !== null;
 
               return (
                 <div key={product?.id}>
