@@ -1,4 +1,3 @@
-import { CheckCircle2Icon, PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -81,16 +80,22 @@ export const SurveyStatusDropdown = ({
               </TooltipTrigger>
               <SelectContent className="bg-white">
                 <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
-                  <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                  In-progress
+                  <div className="flex w-full items-center justify-center gap-4">
+                    <SurveyStatusIndicator status={"inProgress"} />
+                    In-progress
+                  </div>
                 </SelectItem>
                 <SelectItem className="group font-normal hover:text-slate-900" value="paused">
-                  <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                  Paused
+                  <div className="flex w-full items-center justify-center gap-2">
+                    <SurveyStatusIndicator status={"paused"} />
+                    Paused
+                  </div>
                 </SelectItem>
                 <SelectItem className="group font-normal hover:text-slate-900" value="completed">
-                  <CheckCircle2Icon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                  Completed
+                  <div className="flex w-full items-center justify-center gap-2">
+                    <SurveyStatusIndicator status={"completed"} />
+                    Completed
+                  </div>
                 </SelectItem>
               </SelectContent>
 
