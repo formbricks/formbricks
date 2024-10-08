@@ -1,7 +1,7 @@
 "use client";
 
 import { UserIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import formbricks from "@formbricks/js/app";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
@@ -19,10 +19,6 @@ export const InsightView = ({ insights, questionId, surveyId }: InsightViewProps
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
-
-  useEffect(() => {
-    setLocalInsights(insights);
-  }, [insights]);
 
   const handleFeedback = (feedback: "positive" | "negative") => {
     formbricks.track("AI Insight Feedback", {
@@ -57,7 +53,7 @@ export const InsightView = ({ insights, questionId, surveyId }: InsightViewProps
               </TableCell>
             </TableRow>
           ) : (
-            insights.map((insight) => (
+            localInsights.map((insight) => (
               <TableRow
                 key={insight.id}
                 className="cursor-pointer hover:bg-slate-50"

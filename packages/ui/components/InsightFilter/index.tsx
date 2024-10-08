@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
 import { SecondaryNavigation } from "../SecondaryNavigation";
 
@@ -12,14 +12,21 @@ interface InsightFilterProps {
 export const InsightFilter = ({ insights, setInsights }: InsightFilterProps) => {
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
 
-  const handleFilterSelect = (filterValue: string) => {
-    setSelectedFilter(filterValue);
-    if (filterValue === "all") {
-      setInsights(insights);
-    } else {
-      setInsights(insights.filter((insight) => insight.category === (filterValue as TInsightCategory)));
-    }
-  };
+  const handleFilterSelect = useCallback(
+    (filterValue: string) => {
+      setSelectedFilter(filterValue);
+      if (filterValue === "all") {
+        setInsights(insights);
+      } else {
+        setInsights(insights.filter((insight) => insight.category === (filterValue as TInsightCategory)));
+      }
+    },
+    [insights]
+  );
+
+  useEffect(() => {
+    handleFilterSelect(selectedFilter);
+  }, [insights]);
 
   const tabNavigation = [
     {

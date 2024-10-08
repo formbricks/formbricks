@@ -159,7 +159,7 @@ export const POST = async (request: Request) => {
           organization.billing.plan === "startup"
         ) {
           for (const question of survey.questions) {
-            if (question.type === "openText") {
+            if (question.type === "openText" && question.insightsEnabled) {
               const isQuestionAnswered = response.data[question.id] !== undefined;
               if (!isQuestionAnswered) {
                 continue;

@@ -474,6 +474,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
+  insightsEnabled: z.boolean().default(false).optional(),
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
@@ -2096,6 +2097,7 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
     })
   ),
   insights: z.array(ZInsight),
+  insightsEnabled: z.boolean().default(false),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;

@@ -33,9 +33,10 @@ export const OpenTextSummary = ({
   attributeClasses,
   isAiEnabled,
 }: OpenTextSummaryProps) => {
+  const isInsightsEnabled = isAiEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
-    isAiEnabled ? "insights" : "responses"
+    isInsightsEnabled ? "insights" : "responses"
   );
 
   const handleLoadMore = () => {
@@ -65,7 +66,7 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
-      {isAiEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
+      {isInsightsEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
       <div className="border-t border-slate-200"></div>
       <div className="max-h-[40vh] overflow-y-auto">
         {activeTab === "insights" ? (

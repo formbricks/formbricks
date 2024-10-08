@@ -5,7 +5,6 @@ import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { TDocument } from "@formbricks/types/documents";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
@@ -924,11 +923,11 @@ export const generateInsightsForSurveyResponses = async (surveyId: string): Prom
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const openTextQuestions = survey.questions.filter(
-      (question) => question.type === TSurveyQuestionTypeEnum.OpenText
+    const openTextQuestionsWithInsights = survey.questions.filter(
+      (question) => question.type === TSurveyQuestionTypeEnum.OpenText && question.insightsEnabled
     );
 
-    const openTextQuestionIds = openTextQuestions.map((question) => question.id);
+    const openTextQuestionIds = openTextQuestionsWithInsights.map((question) => question.id);
 
     const batchSize = 3000;
     const totalResponseCount = await getResponseCountBySurveyId(surveyId);
@@ -950,7 +949,7 @@ export const generateInsightsForSurveyResponses = async (surveyId: string): Prom
       }
 
       if (!doesDocumentExistForResponseId(response.id)) {
-        for (let question of openTextQuestions) {
+        for (let question of openTextQuestionsWithInsights) {
           const responseText = response.data[question.id] as string;
           if (!responseText) {
             continue;

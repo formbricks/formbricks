@@ -1,7 +1,10 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { generateObject } from "ai";
+import { z } from "zod";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyFilterCriteria, TSurveyQuestions } from "@formbricks/types/surveys/types";
+import { llmModel } from "../ai";
 
 export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
   let segment: TSegment | null = null;
@@ -87,6 +90,27 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
   });
 };
 
-export const doesSurveyHasOpenTextQuestion = (survey: TSurvey): boolean => {
-  return survey.questions.some((question) => question.type === "openText");
+export const doesSurveyHasOpenTextQuestion = (questions: TSurveyQuestions): boolean => {
+  return questions.some((question) => question.type === "openText");
+};
+
+export const getInsightEnabledQuestionIds = async (questions: TSurveyQuestions): Promise<string[]> => {
+  const insightsEnabledQuestionIds: string[] = [];
+
+  for (const question of questions) {
+    const { object } = await generateObject({
+      model: llmModel,
+      schema: z.object({
+        data: z.enum(["Yes", "No"]),
+      }),
+      system: `We are generating insights from survey responses categorized into Complaint, Feature Request, and Praise. Please evaluate the following survey question to determine if it is suitable for generating insights. Does it make sense to generate insights for this question? Answer with "Yes" or "No" only.`,
+      prompt: `Survey Question: "${question.headline.default}"`,
+      experimental_telemetry: { isEnabled: true },
+    });
+    if (object.data === "Yes") {
+      insightsEnabledQuestionIds.push(question.id);
+    }
+  }
+
+  return insightsEnabledQuestionIds;
 };
