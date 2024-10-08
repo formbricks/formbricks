@@ -50,6 +50,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-highlight-words": "^0.20.0",
+    "react-icons": "^5.3.0",
     "react-markdown": "^9.0.1",
     "react-responsive-embed": "^2.1.0",
     "remark": "^15.0.1",
@@ -66,8 +67,8 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
     "@types/dompurify": "^3.0.5",
-    "@types/react-highlight-words": "^0.20.0",
-    "@formbricks/eslint-config": "workspace:*"
+    "@types/react-highlight-words": "^0.20.0"
   }
 }

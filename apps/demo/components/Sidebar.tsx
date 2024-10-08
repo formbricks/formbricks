@@ -9,6 +9,7 @@ import {
   ShieldCheckIcon,
   UsersIcon,
 } from "lucide-react";
+import DiscordIcon from "../components/icons/DiscordIcon";
 import { classNames } from "../lib/utils";
 
 const navigation = [
@@ -19,10 +20,12 @@ const navigation = [
   { name: "Recipients", href: "#", icon: UsersIcon, current: false },
   { name: "Reports", href: "#", icon: FileBarChartIcon, current: false },
 ];
+
 const secondaryNavigation = [
   { name: "Settings", href: "#", icon: CogIcon },
   { name: "Help", href: "#", icon: HelpCircleIcon },
   { name: "Privacy", href: "#", icon: ShieldCheckIcon },
+  { name: "Join Discord", href: "#", icon: DiscordIcon }, // Updated to use custom icon
 ];
 
 export const Sidebar = () => {

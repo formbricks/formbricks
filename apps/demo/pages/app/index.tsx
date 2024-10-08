@@ -1,7 +1,7 @@
+import formbricks from "@/formbricks/js/app";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import formbricks from "@formbricks/js/app";
 import { SurveySwitch } from "../../components/SurveySwitch";
 import fbsetup from "../../public/fb-setup.png";
 
