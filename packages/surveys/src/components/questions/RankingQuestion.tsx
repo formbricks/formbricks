@@ -42,24 +42,13 @@ export const RankingQuestion = ({
   currentQuestionId,
 }: RankingQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-  const [sortedItems, setSortedItems] = useState<TSurveyQuestionChoice[]>(
-    value
-      .map((id) => question.choices.find((c) => c.id === id))
-      .filter((item): item is TSurveyQuestionChoice => item !== undefined)
-  );
 
-  const [unsortedItems, setUnsortedItems] = useState<TSurveyQuestionChoice[]>(() => {
-    if (!question.shuffleOption || question.shuffleOption === "none" || sortedItems.length > 1) {
-      // Return unshuffled items
-      return question.choices.filter((c) => !value.includes(c.id));
-    } else {
-      // Shuffle options
-      const shuffledChoiceIds = getShuffledChoicesIds(question.choices, question.shuffleOption);
-      return shuffledChoiceIds
-        .map((choiceId) => question.choices.find((choice) => choice.id === choiceId))
-        .filter((choice) => choice !== undefined);
-    }
-  });
+  const shuffledChoicesIds = useMemo(() => {
+    if (question.shuffleOption) {
+      return getShuffledChoicesIds(question.choices, question.shuffleOption);
+    } else return question.choices.map((choice) => choice.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.shuffleOption, question.choices.length]);
 
   const [parent] = useAutoAnimate();
 
@@ -69,28 +58,27 @@ export const RankingQuestion = ({
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
-  const questionChoices = useMemo(
-    () => question.choices.map((choice) => ({ id: choice.id, label: choice.label })),
-    [question.choices]
-  );
+  const sortedItems = useMemo(() => {
+    return value
+      .map((id) => question.choices.find((c) => c.id === id))
+      .filter((item): item is TSurveyQuestionChoice => item !== undefined);
+  }, [value, question.choices]);
+
+  const unsortedItems = useMemo(() => {
+    if (question.shuffleOption === "all" && sortedItems.length === 0) {
+      return shuffledChoicesIds.map((id) => question.choices.find((c) => c.id === id));
+    } else {
+      return question.choices.filter((c) => !value.includes(c.id));
+    }
+  }, [question.choices, value, question.shuffleOption]);
 
   const handleItemClick = useCallback(
     (item: TSurveyQuestionChoice) => {
-      setSortedItems((prev) => {
-        const isAlreadySorted = prev.some((sortedItem) => sortedItem.id === item.id);
-        const newSortedItems = isAlreadySorted
-          ? prev.filter((sortedItem) => sortedItem.id !== item.id)
-          : [...prev, item];
-
-        onChange({ [question.id]: newSortedItems.map((item) => item.id) });
-        return newSortedItems;
-      });
-
-      setUnsortedItems((prev) => {
-        const isAlreadySorted = sortedItems.some((sortedItem) => sortedItem.id === item.id);
-        return isAlreadySorted ? [...prev, item] : prev.filter((unsortedItem) => unsortedItem.id !== item.id);
-      });
-
+      const isAlreadySorted = sortedItems.some((sortedItem) => sortedItem.id === item.id);
+      const newSortedItems = isAlreadySorted
+        ? sortedItems.filter((sortedItem) => sortedItem.id !== item.id)
+        : [...sortedItems, item];
+      onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
       setError(null);
     },
     [onChange, question.id, sortedItems]
@@ -107,9 +95,7 @@ export const RankingQuestion = ({
         direction === "up" ? Math.max(0, index - 1) : Math.min(newSortedItems.length, index + 1);
 
       newSortedItems.splice(newIndex, 0, movedItem);
-
-      setSortedItems(newSortedItems);
-      onChange({ [question.id]: newSortedItems.map((item) => item.id) });
+      onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
       setError(null);
     },
     [sortedItems, onChange, question.id]
@@ -119,8 +105,8 @@ export const RankingQuestion = ({
     e.preventDefault();
 
     const hasIncompleteRanking =
-      (question.required && sortedItems.length !== questionChoices.length) ||
-      (!question.required && sortedItems.length > 0 && sortedItems.length < questionChoices.length);
+      (question.required && sortedItems.length !== question.choices.length) ||
+      (!question.required && sortedItems.length > 0 && sortedItems.length < question.choices.length);
 
     if (hasIncompleteRanking) {
       setError("Please rank all items before submitting.");
@@ -250,7 +236,7 @@ export const RankingQuestion = ({
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            tabIndex={questionChoices.length + 3}
+            tabIndex={question.choices.length + 3}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -260,7 +246,7 @@ export const RankingQuestion = ({
         )}
         <div></div>
         <SubmitButton
-          tabIndex={questionChoices.length + 2}
+          tabIndex={question.choices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
