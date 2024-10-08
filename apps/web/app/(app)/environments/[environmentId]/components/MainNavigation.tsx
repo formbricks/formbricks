@@ -31,6 +31,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { FaDiscord } from "react-icons/fa";
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -67,26 +68,6 @@ interface NavigationProps {
   isFormbricksCloud?: boolean;
   membershipRole?: TMembershipRole;
 }
-
-const discordIcon = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 32 32"
-      fill="#57534e"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round">
-      <g>
-        <path d="M9.82 17.41a3.1 3.1 0 0 0 2.9 3.26 3.1 3.1 0 0 0 2.89-3.26 3.11 3.11 0 0 0-2.89-3.27 3.11 3.11 0 0 0-2.9 3.27zm3.79 0c0 .68-.41 1.26-.89 1.26s-.9-.58-.9-1.26.41-1.27.9-1.27.89.58.89 1.27zm5.67-3.27a3.11 3.11 0 0 0-2.89 3.27 3.1 3.1 0 0 0 2.89 3.26 3.1 3.1 0 0 0 2.9-3.26 3.11 3.11 0 0 0-2.9-3.27zm0 4.53c-.48 0-.89-.58-.89-1.26s.41-1.27.89-1.27.9.58.9 1.27-.41 1.26-.9 1.26z"></path>
-        <path d="m26.63 10.53-.07-.09v-.1a12.15 12.15 0 0 0-6.8-4.15 1 1 0 1 0-.48 1.94 10.19 10.19 0 0 1 5.65 3.39A24.87 24.87 0 0 1 27 21.33a10 10 0 0 1-5 2.52v-.51a13.48 13.48 0 0 0 3.43-1.95 1 1 0 0 0-1.25-1.57 12.83 12.83 0 0 1-8.18 2.6 12.83 12.83 0 0 1-8.11-2.6 1 1 0 0 0-1.25 1.57 13.36 13.36 0 0 0 3.41 1.95v.51a10 10 0 0 1-5-2.52 24.87 24.87 0 0 1 2.09-9.81 10.19 10.19 0 0 1 5.65-3.39 1 1 0 0 0-.48-1.94 12.15 12.15 0 0 0-6.8 4.15s0 .07 0 .1l-.07.09c-1.94 4-2.16 7.65-2.37 11.14a1 1 0 0 0 .29.77A12 12 0 0 0 11 26a1 1 0 0 0 .7-.29A1 1 0 0 0 12 25v-1a17.56 17.56 0 0 0 8 0v1a1 1 0 0 0 .3.71 1 1 0 0 0 .7.29 12 12 0 0 0 7.74-3.51 1 1 0 0 0 .29-.77c-.24-3.54-.46-7.15-2.4-11.19Z"></path>
-        <path d="M23.49 11.72a1 1 0 0 0-.43-1.35A15.47 15.47 0 0 0 16 8.87a15.47 15.47 0 0 0-7.06 1.5 1 1 0 0 0-.43 1.35 1 1 0 0 0 1.35.42A13.55 13.55 0 0 1 16 10.87a13.55 13.55 0 0 1 6.14 1.27 1 1 0 0 0 .46.12 1 1 0 0 0 .89-.54Z"></path>
-      </g>
-    </svg>
-  );
-};
 
 export const MainNavigation = ({
   environment,
@@ -251,7 +232,7 @@ export const MainNavigation = ({
       label: "Join Discord",
       href: "https://formbricks.com/discord",
       target: "_blank",
-      icon: discordIcon,
+      icon: FaDiscord,
     },
   ];
 
