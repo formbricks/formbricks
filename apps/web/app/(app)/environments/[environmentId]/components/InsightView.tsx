@@ -2,7 +2,7 @@
 
 import { UserIcon } from "lucide-react";
 import { useState } from "react";
-import formbricks from "@formbricks/js/app";
+import formbricks from "@formbricks/js";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { InsightFilter } from "@formbricks/ui/components/InsightFilter";
