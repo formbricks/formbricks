@@ -83,7 +83,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       id: "app",
       name: "Website & App Survey",
       icon: MonitorIcon,
-      description: "Embed a survey in your web app or website to collect responses with user identification.",
+      description: "Embed a survey in your web app or website to collect responses.",
       comingSoon: false,
       alert: !appSetupCompleted,
     },
@@ -159,7 +159,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                         )}
                       </div>
                       <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                      {option.alert && (
+                      {localSurvey.type === option.id && option.alert && (
                         <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
                           <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                           <div className="text-amber-800">

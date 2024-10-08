@@ -443,7 +443,14 @@ export const TargetingCard = ({
           <Alert className="flex items-center rounded-none bg-slate-50">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
-                User targeting is currently only available when identifying users with the Formbricks SDK.
+                User targeting is currently only available when{" "}
+                <Link
+                  href="https://formbricks.com//docs/app-surveys/user-identification"
+                  target="blank"
+                  className="underline">
+                  identifying users
+                </Link>{" "}
+                with the Formbricks SDK.
               </span>
             </AlertDescription>
           </Alert>
