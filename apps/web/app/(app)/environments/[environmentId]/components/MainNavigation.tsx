@@ -11,6 +11,7 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
+  GaugeIcon,
   GlobeIcon,
   GlobeLockIcon,
   KeyIcon,
@@ -162,7 +163,7 @@ export const MainNavigation = ({
       {
         name: "Experience",
         href: `/environments/${environment.id}/experience`,
-        icon: GlobeIcon,
+        icon: GaugeIcon,
         isActive: pathname?.includes("/experience"),
         isHidden: !isAiEnabled,
       },
