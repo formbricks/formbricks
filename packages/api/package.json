@@ -40,7 +40,7 @@
     "@rollup/plugin-inject": "^5.0.5",
     "buffer": "^6.0.3",
     "terser": "^5.31.6",
-    "vite": "^5.4.1",
+    "vite": "^5.4.6",
     "vite-plugin-dts": "^3.9.1",
     "vite-plugin-node-polyfills": "^0.22.0"
   }
