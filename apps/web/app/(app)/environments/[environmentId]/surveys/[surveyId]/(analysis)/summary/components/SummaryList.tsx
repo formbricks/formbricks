@@ -50,7 +50,6 @@ export const SummaryList = ({
   attributeClasses,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
-  const widgetSetupCompleted = environment.appSetupCompleted;
 
   const setFilter = (
     questionId: string,
@@ -106,7 +105,7 @@ export const SummaryList = ({
 
   return (
     <div className="mt-10 space-y-8">
-      {survey.type === "app" && responseCount === 0 && !widgetSetupCompleted ? (
+      {survey.type === "app" && responseCount === 0 && !environment.appSetupCompleted ? (
         <EmptyAppSurveys environment={environment} />
       ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
@@ -116,7 +115,6 @@ export const SummaryList = ({
           environment={environment}
           noWidgetRequired={survey.type === "link"}
           emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
-          widgetSetupCompleted={widgetSetupCompleted}
         />
       ) : (
         summary.map((questionSummary) => {

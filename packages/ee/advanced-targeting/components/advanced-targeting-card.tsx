@@ -16,6 +16,7 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
 import { LoadSegmentModal } from "@formbricks/ui/components/LoadSegmentModal";
@@ -161,7 +162,7 @@ export function AdvancedTargetingCard({
 
   return (
     <Collapsible.Root
-      className="w-full rounded-lg border border-slate-300 bg-white"
+      className="w-full overflow-hidden rounded-lg border border-slate-300 bg-white"
       onOpenChange={setOpen}
       open={open}>
       <Collapsible.CollapsibleTrigger
@@ -414,6 +415,16 @@ export function AdvancedTargetingCard({
               setOpen={setResetAllFiltersModalOpen}
             />
           </div>
+        </div>
+
+        <div>
+          <Alert className="flex items-center rounded-none bg-slate-50">
+            <AlertDescription className="ml-2">
+              <span className="mr-1 text-slate-600">
+                User targeting is currently only available when identifying users with the Formbricks SDK.
+              </span>
+            </AlertDescription>
+          </Alert>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

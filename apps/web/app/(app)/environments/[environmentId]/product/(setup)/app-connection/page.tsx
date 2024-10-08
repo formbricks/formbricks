@@ -6,16 +6,14 @@ import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { EnvironmentNotice } from "@formbricks/ui/components/EnvironmentNotice";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../../settings/components/SettingsCard";
 
 const Page = async ({ params }) => {
-  const [environment, product, organization] = await Promise.all([
+  const [environment, organization] = await Promise.all([
     getEnvironment(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
@@ -28,7 +26,6 @@ const Page = async ({ params }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -37,15 +34,14 @@ const Page = async ({ params }) => {
           environmentId={params.environmentId}
           activeId="app-connection"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
-          productChannel={currentProductChannel}
         />
       </PageHeader>
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/app-connection" />
         <SettingsCard
-          title="App Connection Status"
+          title="Website & App Connection Status"
           description="Check if your app is successfully connected with Formbricks. Reload page to recheck.">
-          {environment && <WidgetStatusIndicator environment={environment} size="large" />}
+          {environment && <WidgetStatusIndicator environment={environment} />}
         </SettingsCard>
         <SettingsCard
           title="Your EnvironmentId"

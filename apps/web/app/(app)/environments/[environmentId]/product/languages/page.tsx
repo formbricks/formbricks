@@ -26,7 +26,6 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   if (!isMultiLanguageAllowed) {
     notFound();
   }
-  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -35,7 +34,6 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="languages"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
-          productChannel={currentProductChannel}
         />
       </PageHeader>
       <SettingsCard

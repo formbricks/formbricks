@@ -17,7 +17,9 @@ export const EmptyAppSurveys = ({ environment }: TEmptyAppSurveysProps) => {
       <div className="flex flex-col">
         <h1 className="text-xl font-semibold text-slate-900">You&apos;re not plugged in yet!</h1>
 
-        <p className="mt-2 text-sm text-slate-600">Connect your app with Formbricks to run app surveys.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          Connect your website or app with Formbricks to get started.
+        </p>
 
         <Link className="mt-2" href={`/environments/${environment.id}/product/app-connection`}>
           <Button size="sm" className="flex w-[120px] justify-center">

@@ -1,6 +1,6 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TProduct, TProductConfigIndustry } from "@formbricks/types/product";
+import { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 
@@ -36,7 +36,7 @@ export const replacePresetPlaceholders = (template: TTemplate, product: any) => 
   return { ...template, preset };
 };
 
-export const channelMapping: { value: "link" | "app" | "website"; label: string }[] = [
+export const channelMapping: { value: TProductConfigChannel; label: string }[] = [
   { value: "website", label: "Website Survey" },
   { value: "app", label: "App Survey" },
   { value: "link", label: "Link Survey" },

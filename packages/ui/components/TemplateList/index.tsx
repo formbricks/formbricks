@@ -7,7 +7,7 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProduct, ZProductConfigChannel, ZProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
@@ -37,8 +37,12 @@ export const TemplateList = ({
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
-  const surveyType = useMemo(() => {
+  const surveyType: TSurveyType = useMemo(() => {
     if (product.config.channel) {
+      if (product.config.channel === "website") {
+        return "app";
+      }
+
       return product.config.channel;
     }
 
@@ -49,7 +53,7 @@ export const TemplateList = ({
     setLoading(true);
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
-      type: surveyType === "website" ? "app" : surveyType,
+      type: surveyType,
       createdBy: user.id,
     };
     const createSurveyResponse = await createSurveyAction({
