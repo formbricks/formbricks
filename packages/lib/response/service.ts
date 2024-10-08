@@ -3,9 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/common";
-import { TDocument } from "@formbricks/types/documents";
+import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
