@@ -12,7 +12,7 @@ import { ClientLogout } from "@formbricks/ui/components/ClientLogout";
 const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);
   const isFreshInstance = await getIsFreshInstance();
-  console.log(session);
+
   if (!session) {
     if (isFreshInstance) {
       redirect("/setup/intro");
