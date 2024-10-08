@@ -849,6 +849,15 @@ export const createSurvey = async (
   }
 };
 
+/**
+ * Migrate / Move a survey to a different environment
+ *
+ * @param surveyId
+ * @param environmentId
+ * @param targetEnvironmentId
+ * @param userId
+ * @returns
+ */
 export const migrateSurveyToOtherEnvironment = async (
   surveyId: string,
   environmentId: string,
@@ -895,34 +904,42 @@ export const migrateSurveyToOtherEnvironment = async (
             enabled: surveyLanguage.enabled,
           })),
         },
-        segment: existingSurvey.segment
-          ? existingSurvey.segment.isPrivate
-            ? {
-                create: {
-                  title: existingSurvey.segment.title,
-                  isPrivate: true,
-                  filters: existingSurvey.segment.filters,
-                  environment: { connect: { id: targetEnvironmentId } },
-                },
-              }
-            : {
-                connectOrCreate: {
-                  where: {
-                    title_environmentId: {
-                      title: existingSurvey.segment.title,
-                      environmentId: targetEnvironmentId,
-                    },
-                  },
-                  create: {
-                    title: existingSurvey.segment.title,
-                    isPrivate: false,
-                    filters: existingSurvey.segment.filters,
-                    environment: { connect: { id: targetEnvironmentId } },
-                  },
-                },
-              }
-          : undefined,
       };
+
+      // Handle segment
+      if (existingSurvey.segment) {
+        if (existingSurvey.segment.isPrivate) {
+          surveyUpdateData.segment = {
+            create: {
+              title: surveyId,
+              isPrivate: true,
+              filters: existingSurvey.segment.filters,
+              environment: { connect: { id: targetEnvironmentId } },
+            },
+          };
+        } else if (surveyUpdateData) {
+          surveyUpdateData.segment = { connect: { id: existingSurvey.segment.id } };
+        } else {
+          const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
+            where: {
+              title: existingSurvey.segment.title,
+              isPrivate: false,
+              environmentId: targetEnvironmentId,
+            },
+          });
+
+          surveyUpdateData.segment = {
+            create: {
+              title: existingSegmentInTargetEnvironment
+                ? `${existingSurvey.segment.title}-${Date.now()}`
+                : existingSurvey.segment.title,
+              isPrivate: false,
+              filters: existingSurvey.segment.filters,
+              environment: { connect: { id: targetEnvironmentId } },
+            },
+          };
+        }
+      }
 
       // Update the survey
       const updatedSurvey = await prisma.survey.update({
