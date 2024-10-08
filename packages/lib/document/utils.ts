@@ -24,6 +24,7 @@ export const handleInsightAssignments = async (
   const { embedding } = await embed({
     model: embeddingsModel,
     value: getInsightVectorText(insight.title, insight.description),
+    experimental_telemetry: { isEnabled: true },
   });
   // find close insight to merge it with
   const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.35);

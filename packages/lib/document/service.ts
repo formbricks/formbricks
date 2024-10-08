@@ -133,6 +133,7 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
     const { embedding } = await embed({
       model: embeddingsModel,
       value: documentInput.text,
+      experimental_telemetry: { isEnabled: true },
     });
 
     // generate sentiment and insights
@@ -150,6 +151,7 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
       }),
       system: `You are an XM researcher. You analyse user feedback and extract insights and the sentiment from it. You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. An insight consist of a title and description (e.g. title: "Interactive charts and graphics", description: "Users would love to see a visualization of the analytics data") as well as tag it with the right category and tries to give insights while being not too specific as it might hold multiple documents.`,
       prompt: `Analyze this feedback: "${documentInput.text}"`,
+      experimental_telemetry: { isEnabled: true },
     });
 
     const sentiment = object.sentiment;
