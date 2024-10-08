@@ -15,7 +15,6 @@ import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
@@ -35,7 +34,6 @@ const Page = async ({ params }) => {
     zapierWebhookCount,
     makeWebhookCount,
     n8nwebhookCount,
-    product,
   ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
@@ -45,7 +43,6 @@ const Page = async ({ params }) => {
     getWebhookCountBySource(environmentId, "zapier"),
     getWebhookCountBySource(environmentId, "make"),
     getWebhookCountBySource(environmentId, "n8n"),
-    getProductByEnvironmentId(environmentId),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
@@ -67,11 +64,7 @@ const Page = async ({ params }) => {
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
 
-  const widgetSetupCompleted = !!environment?.appSetupCompleted || !!environment?.websiteSetupCompleted;
-  const bothSetupCompleted = environment?.appSetupCompleted && environment?.websiteSetupCompleted;
-  const productChannel =
-    product?.config.channel === "website" || !product?.config.channel ? "website" : product?.config.channel;
-
+  const widgetSetupCompleted = !!environment?.appSetupCompleted;
   const integrationCards = [
     {
       docsHref: "https://formbricks.com/docs/integrations/zapier",
@@ -199,27 +192,19 @@ const Page = async ({ params }) => {
     },
   ];
 
-  if (productChannel !== "link") {
-    integrationCards.unshift({
-      docsHref: "https://formbricks.com/docs/getting-started/framework-guides#next-js",
-      docsText: "Docs",
-      docsNewTab: true,
-      connectHref: `/environments/${environmentId}/product/${productChannel}-connection`,
-      connectText: "Connect",
-      connectNewTab: false,
-      label: "Javascript Widget",
-      description: "Integrate Formbricks into your Webapp",
-      icon: <Image src={JsLogo} alt="Javascript Logo" />,
-      connected: widgetSetupCompleted,
-      statusText: bothSetupCompleted
-        ? "app & website connected"
-        : environment?.appSetupCompleted
-          ? "app Connected"
-          : environment?.websiteSetupCompleted
-            ? "website connected"
-            : "Not Connected",
-    });
-  }
+  integrationCards.unshift({
+    docsHref: "https://formbricks.com/docs/getting-started/framework-guides#next-js",
+    docsText: "Docs",
+    docsNewTab: true,
+    connectHref: `/environments/${environmentId}/product/app-connection`,
+    connectText: "Connect",
+    connectNewTab: false,
+    label: "Javascript SDK",
+    description: "Integrate Formbricks into your Website or App",
+    icon: <Image src={JsLogo} alt="Javascript Logo" />,
+    connected: widgetSetupCompleted,
+    statusText: widgetSetupCompleted ? "App Connected" : "Not Connected",
+  });
 
   if (isViewer) return <ErrorComponent />;
 

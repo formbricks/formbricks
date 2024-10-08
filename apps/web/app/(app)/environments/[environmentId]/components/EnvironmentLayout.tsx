@@ -53,9 +53,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
 
-  const currentProductChannel =
-    products.find((product) => product.id === environment.productId)?.config.channel ?? null;
-
   let peopleCount = 0;
   let responseCount = 0;
 
@@ -109,7 +106,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           <TopControlBar
             environment={environment}
             environments={environments}
-            currentProductChannel={currentProductChannel}
             membershipRole={currentUserMembership?.role}
           />
           <div className="mt-14">{children}</div>

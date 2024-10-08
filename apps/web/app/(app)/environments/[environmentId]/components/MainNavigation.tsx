@@ -188,7 +188,6 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
-        isHidden: product?.config.channel === "link",
       },
       {
         name: "Integrations",
@@ -205,7 +204,7 @@ export const MainNavigation = ({
         isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, product?.config.channel, isViewer]
+    [environment.id, pathname, isViewer]
   );
 
   const dropdownNavigation = [

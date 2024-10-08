@@ -3,10 +3,9 @@
 import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import formbricks from "@formbricks/js/app";
+import formbricks from "@formbricks/js";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { TProductConfigChannel } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/components/Button";
 
 interface TopControlButtonsProps {
@@ -14,7 +13,6 @@ interface TopControlButtonsProps {
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
-  currentProductChannel: TProductConfigChannel;
 }
 
 export const TopControlButtons = ({
@@ -22,13 +20,11 @@ export const TopControlButtons = ({
   environments,
   isFormbricksCloud,
   membershipRole,
-  currentProductChannel,
 }: TopControlButtonsProps) => {
   const router = useRouter();
-  const showEnvironmentSwitch = currentProductChannel !== "link";
   return (
     <div className="z-50 flex items-center space-x-2">
-      {showEnvironmentSwitch && <EnvironmentSwitch environment={environment} environments={environments} />}
+      <EnvironmentSwitch environment={environment} environments={environments} />
       {isFormbricksCloud && (
         <Button
           variant="minimal"

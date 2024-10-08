@@ -9,7 +9,6 @@ type EmptySpaceFillerProps = {
   environment: TEnvironment;
   noWidgetRequired?: boolean;
   emptyMessage?: string;
-  widgetSetupCompleted?: boolean;
 };
 
 export const EmptySpaceFiller = ({
@@ -17,7 +16,6 @@ export const EmptySpaceFiller = ({
   environment,
   noWidgetRequired,
   emptyMessage,
-  widgetSetupCompleted = false,
 }: EmptySpaceFillerProps) => {
   if (type === "table") {
     return (
@@ -25,7 +23,7 @@ export const EmptySpaceFiller = ({
         <div className="w-full space-y-3">
           <div className="h-16 w-full rounded-lg bg-slate-50"></div>
           <div className="flex h-16 w-full flex-col items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-100">
-            {!widgetSetupCompleted && !noWidgetRequired && (
+            {!environment.appSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex w-full items-center justify-center"
                 href={`/environments/${environment.id}/product/app-connection`}>
@@ -34,7 +32,8 @@ export const EmptySpaceFiller = ({
                 </span>
               </Link>
             )}
-            {((widgetSetupCompleted || noWidgetRequired) && emptyMessage) || "Waiting for a response 🧘‍♂️"}
+            {((environment.appSetupCompleted || noWidgetRequired) && emptyMessage) ||
+              "Waiting for a response 🧘‍♂️"}
           </div>
 
           <div className="h-16 w-full rounded-lg bg-slate-50"></div>
@@ -53,7 +52,7 @@ export const EmptySpaceFiller = ({
         <div className="space-y-4">
           <div className="h-12 w-full rounded-full bg-slate-100"></div>
           <div className="flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500 hover:bg-slate-100">
-            {!widgetSetupCompleted && !noWidgetRequired && (
+            {!environment.appSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
                 href={`/environments/${environment.id}/product/app-connection`}>
@@ -62,7 +61,7 @@ export const EmptySpaceFiller = ({
                 </span>
               </Link>
             )}
-            {(widgetSetupCompleted || noWidgetRequired) && (
+            {(environment.appSetupCompleted || noWidgetRequired) && (
               <span className="bg-light-background-primary-500 text-center">
                 {emptyMessage ?? "Waiting for a response"} 🧘‍♂️
               </span>
@@ -84,7 +83,7 @@ export const EmptySpaceFiller = ({
         <div className="space-y-4">
           <div className="h-12 w-full rounded-full bg-slate-100"></div>
           <div className="flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500 hover:bg-slate-100">
-            {!widgetSetupCompleted && !noWidgetRequired && (
+            {!environment.appSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
                 href={`/environments/${environment.id}/product/app-connection`}>
@@ -93,7 +92,7 @@ export const EmptySpaceFiller = ({
                 </span>
               </Link>
             )}
-            {(widgetSetupCompleted || noWidgetRequired) && (
+            {(environment.appSetupCompleted || noWidgetRequired) && (
               <span className="text-center">Tag a submission to find your list of tags here.</span>
             )}
           </div>
@@ -132,7 +131,7 @@ export const EmptySpaceFiller = ({
       <div className="space-y-4">
         <div className="h-12 w-full rounded-full bg-slate-100"></div>
         <div className="flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500 hover:bg-slate-100">
-          {!widgetSetupCompleted && !noWidgetRequired && (
+          {!environment.appSetupCompleted && !noWidgetRequired && (
             <Link
               className="flex h-full w-full items-center justify-center"
               href={`/environments/${environment.id}/product/app-connection`}>
@@ -141,7 +140,7 @@ export const EmptySpaceFiller = ({
               </span>
             </Link>
           )}
-          {(widgetSetupCompleted || noWidgetRequired) && (
+          {(environment.appSetupCompleted || noWidgetRequired) && (
             <span className="text-center">Waiting for a response 🧘‍♂️</span>
           )}
         </div>
