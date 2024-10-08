@@ -1,3 +1,4 @@
+import { copyFileSync, readdirSync } from "fs";
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
@@ -13,10 +14,29 @@ const config = () => {
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricksJsWrapper",
         formats: ["es", "cjs"],
-        fileName: "index",
+        fileName: "js",
       },
     },
-    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] })],
+    plugins: [
+      dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] }),
+      {
+        name: "copy-output",
+        closeBundle() {
+          const outputDir = resolve(__dirname, "../../apps/web/public/js");
+          const distDir = resolve(__dirname, "dist");
+
+          const filesToCopy = readdirSync(distDir);
+
+          filesToCopy.forEach((file) => {
+            const srcFile = `${distDir}/${file}`;
+            const destFile = `${outputDir}/${file}`;
+            copyFileSync(srcFile, destFile);
+          });
+
+          console.log(`Copied ${filesToCopy.length} files to ${outputDir}`);
+        },
+      },
+    ],
   });
 };
 
