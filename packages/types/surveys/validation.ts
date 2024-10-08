@@ -122,7 +122,8 @@ export const validateCardFieldsForAllLanguages = (
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
   const cardTypeLabel =
-    cardType === "welcome" ? "Welcome card" : `Redirect to Url ${((endingCardIndex ?? -1) + 1).toString()}`;
+    cardType === "welcome" ? "Welcome card" : `Ending card ${((endingCardIndex ?? -1) + 1).toString()}`; // Ensure 1-based indexing
+
   const path = cardType === "welcome" ? ["welcomeCard", field] : ["endings", endingCardIndex ?? -1, field];
 
   for (const language of languages) {
@@ -148,7 +149,7 @@ export const validateCardFieldsForAllLanguages = (
 
   const message = isDefaultOnly
     ? `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix}`
-    : `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+    : `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix} -fLang- ${invalidLanguageCodes.join(", ")}`;
 
   if (invalidLanguageCodes.length) {
     return {
@@ -233,7 +234,7 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
 
 // Helper function to find all "jumpToQuestion" actions in the logic
 const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpToQuestion[] => {
-  return actions.filter((action) => action.objective === "jumpToQuestion");
+  return actions.filter((action): action is TActionJumpToQuestion => action.objective === "jumpToQuestion");
 };
 
 // function to validate hidden field or question id

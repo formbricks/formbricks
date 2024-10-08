@@ -62,11 +62,12 @@ export const OpenTextQuestion = ({
 
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      if (question.id && currentElement && autoFocusEnabled) {
+      // will focus on current element when the question ID matches the current question
+      if (question.id && currentElement && autoFocusEnabled && question.id === currentQuestionId) {
         currentElement.focus();
       }
     },
-    [question.id, autoFocusEnabled]
+    [question.id, autoFocusEnabled, currentQuestionId]
   );
 
   return (
