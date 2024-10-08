@@ -43,7 +43,7 @@ export const MultipleChoiceMultiQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-
+  const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
@@ -165,7 +165,7 @@ export const MultipleChoiceMultiQuestion = ({
                   return (
                     <label
                       key={choice.id}
-                      tabIndex={idx + 1}
+                      tabIndex={isCurrent ? 0 : -1}
                       className={cn(
                         value.includes(getLocalizedValue(choice.label, languageCode))
                           ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
@@ -216,7 +216,7 @@ export const MultipleChoiceMultiQuestion = ({
                 })}
                 {otherOption && (
                   <label
-                    tabIndex={questionChoices.length + 1}
+                    tabIndex={isCurrent ? 0 : -1}
                     className={cn(
                       value.includes(getLocalizedValue(otherOption.label, languageCode))
                         ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
@@ -260,7 +260,7 @@ export const MultipleChoiceMultiQuestion = ({
                         dir="auto"
                         id={`${otherOption.id}-label`}
                         name={question.id}
-                        tabIndex={questionChoices.length + 1}
+                        tabIndex={isCurrent ? 0 : -1}
                         value={otherValue}
                         onChange={(e) => {
                           setOtherValue(e.currentTarget.value);
@@ -282,10 +282,15 @@ export const MultipleChoiceMultiQuestion = ({
         </div>
       </ScrollableContainer>
 
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
         {!isFirstQuestion && (
           <BackButton
-            tabIndex={questionChoices.length + 3}
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -294,12 +299,6 @@ export const MultipleChoiceMultiQuestion = ({
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          tabIndex={questionChoices.length + 2}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
       </div>
     </form>
   );

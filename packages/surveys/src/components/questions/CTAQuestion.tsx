@@ -41,8 +41,8 @@ export const CTAQuestion = ({
 }: CTAQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+  const isCurrent = question.id === currentQuestionId;
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   return (
     <div key={question.id}>
@@ -73,7 +73,7 @@ export const CTAQuestion = ({
           {!question.required && (
             <button
               dir="auto"
-              tabIndex={0}
+              tabIndex={isCurrent ? 0 : -1}
               type="button"
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -88,7 +88,7 @@ export const CTAQuestion = ({
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            focus={autoFocusEnabled}
+            focus={isCurrent ? autoFocusEnabled : false}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();

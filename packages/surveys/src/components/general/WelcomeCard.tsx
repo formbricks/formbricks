@@ -161,7 +161,7 @@ export const WelcomeCard = ({
         <SubmitButton
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}
-          focus={autoFocusEnabled}
+          focus={isCurrent ? autoFocusEnabled : false}
           onClick={handleSubmit}
           type="button"
           onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
