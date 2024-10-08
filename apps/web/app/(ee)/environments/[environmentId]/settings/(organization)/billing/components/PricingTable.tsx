@@ -1,14 +1,14 @@
 "use client";
 
+import { CLOUD_PRICING_DATA } from "@/app/(ee)/api/billing/stripe-webhook/lib/constants";
 import {
   isSubscriptionCancelledAction,
   manageSubscriptionAction,
   upgradePlanAction,
-} from "@/app/(app)/environments/[environmentId]/settings/(organization)/billing/actions";
+} from "@/app/(ee)/environments/[environmentId]/settings/(organization)/billing/actions";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { CLOUD_PRICING_DATA } from "@formbricks/ee/billing/lib/constants";
 import { cn } from "@formbricks/lib/cn";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
