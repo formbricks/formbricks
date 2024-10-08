@@ -942,8 +942,6 @@ export const generateInsightsForSurveyResponses = async (surveyId: string): Prom
     );
     const responses = responsesArray.flat();
 
-    const insightsPromises: Promise<TDocument>[] = [];
-
     for (let response of responses) {
       const hasOpenTextResponse = doesThisResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data);
 
@@ -960,17 +958,13 @@ export const generateInsightsForSurveyResponses = async (surveyId: string): Prom
 
           const text = `**${question.headline.default}**\n${responseText}`;
 
-          insightsPromises.push(
-            createDocument({
-              environmentId: survey.environmentId,
-              surveyId,
-              responseId: response.id,
-              questionId: question.id,
-              text,
-            })
-          );
-
-          await Promise.all(insightsPromises);
+          await createDocument({
+            environmentId: survey.environmentId,
+            surveyId,
+            responseId: response.id,
+            questionId: question.id,
+            text,
+          });
         }
       }
     }

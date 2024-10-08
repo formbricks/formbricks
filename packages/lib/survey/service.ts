@@ -1397,11 +1397,9 @@ export const generateInsightsForSurveys = async (environmentId: string) => {
 
     const filteredSurveys = surveys.filter(doesSurveyHasOpenTextQuestion);
 
-    const surveyPromises = filteredSurveys.map((survey) => {
-      return generateInsightsForSurveyResponses(survey.id);
-    });
-
-    await Promise.all(surveyPromises);
+    for (const survey of filteredSurveys) {
+      await generateInsightsForSurveyResponses(survey.id);
+    }
   } catch (error) {
     throw error;
   }
