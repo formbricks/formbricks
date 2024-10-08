@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { type ZodIssue, z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
@@ -2009,7 +2009,7 @@ const validateActions = (
     return undefined;
   });
 
-  const filteredActionIssues = actionIssues.filter((issue) => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 

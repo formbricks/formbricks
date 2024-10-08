@@ -75,11 +75,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   };
 
   return (
-    <div
-      className={cn(
-        "flex h-14 w-full items-center justify-center rounded-t-md border border-slate-200 bg-slate-100",
-        className
-      )}>
+    <div className={cn("flex h-14 w-full items-center justify-center rounded-t-md bg-slate-100", className)}>
       <Nav />
     </div>
   );
