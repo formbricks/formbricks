@@ -1,4 +1,4 @@
-import { Code, EarthIcon, Link2Icon } from "lucide-react";
+import { Code, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -6,7 +6,7 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { generateSingleUseIdAction } from "../actions";
 import { SurveyDropDownMenu } from "./SurveyDropdownMenu";
@@ -70,19 +70,12 @@ export const SurveyCard = ({
       : `/environments/${environment.id}/surveys/${survey.id}/summary`;
   }, [survey.status, survey.id, environment.id]);
 
-  const SurveyTypeIndicator = ({ type }: { type: TSurvey["type"] }) => (
+  const SurveyTypeIndicator = ({ type }: { type: TSurveyType }) => (
     <div className="flex items-center space-x-2 text-sm text-slate-600">
       {type === "app" && (
         <>
           <Code className="h-4 w-4" />
           <span>App</span>
-        </>
-      )}
-
-      {type === "website" && (
-        <>
-          <EarthIcon className="h-4 w-4" />
-          <span> Website</span>
         </>
       )}
 

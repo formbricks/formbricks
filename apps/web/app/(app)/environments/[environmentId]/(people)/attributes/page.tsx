@@ -1,7 +1,6 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { Button } from "@formbricks/ui/components/Button";
@@ -20,12 +19,6 @@ const Page = async ({ params }) => {
 
   if (!product) {
     throw new Error("Product not found");
-  }
-
-  const currentProductChannel = product.config.channel ?? null;
-
-  if (currentProductChannel && currentProductChannel !== "app") {
-    return notFound();
   }
 
   const HowToAddAttributesButton = (
