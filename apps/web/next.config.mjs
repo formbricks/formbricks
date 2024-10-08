@@ -179,6 +179,14 @@ const nextConfig = {
         source: "/api/v1/client/:environmentId/website/environment",
         destination: "/api/v1/client/:environmentId/environment",
       },
+      {
+        source: "/api/v1/client/:environmentId/app/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+      {
+        source: "/api/v1/client/:environmentId/app/people/:userId",
+        destination: "/api/v1/client/:environmentId/identify/people/:userId",
+      },
     ];
   },
   env: {
