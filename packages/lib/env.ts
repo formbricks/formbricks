@@ -93,6 +93,9 @@ export const env = createEnv({
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
+    LANGFUSE_SECRET_KEY: z.string().optional(),
+    LANGFUSE_PUBLIC_KEY: z.string().optional(),
+    LANGFUSE_BASEURL: z.string().optional(),
   },
 
   /*
@@ -125,6 +128,9 @@ export const env = createEnv({
     AI_AZURE_LLM_DEPLOYMENT_ID: process.env.AI_AZURE_LLM_DEPLOYMENT_ID,
     AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: process.env.AI_AZURE_EMBEDDINGS_RESSOURCE_NAME,
     AI_AZURE_LLM_RESSOURCE_NAME: process.env.AI_AZURE_LLM_RESSOURCE_NAME,
+    LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
+    LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
+    LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,

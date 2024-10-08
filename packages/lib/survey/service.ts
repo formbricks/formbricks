@@ -35,13 +35,19 @@ import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { getResponsesByPersonId } from "../response/service";
+import { generateInsightsForSurveyResponses, getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./utils";
+import {
+  anySurveyHasFilters,
+  buildOrderByClause,
+  buildWhereClause,
+  doesSurveyHasOpenTextQuestion,
+  transformPrismaSurvey,
+} from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -1375,3 +1381,26 @@ export const getSurveysBySegmentId = reactCache(
       }
     )()
 );
+
+export const generateInsightsForSurveys = async (environmentId: string) => {
+  validateInputs([environmentId, ZId]);
+  try {
+    const surveys = await prisma.survey.findMany({
+      where: {
+        environmentId,
+      },
+      select: {
+        id: true,
+        questions: true,
+      },
+    });
+
+    const filteredSurveys = surveys.filter(doesSurveyHasOpenTextQuestion);
+
+    for (const survey of filteredSurveys) {
+      await generateInsightsForSurveyResponses(survey.id);
+    }
+  } catch (error) {
+    throw error;
+  }
+};
