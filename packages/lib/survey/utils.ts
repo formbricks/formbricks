@@ -101,13 +101,13 @@ export const getInsightEnabledQuestionIds = async (questions: TSurveyQuestions):
     const { object } = await generateObject({
       model: llmModel,
       schema: z.object({
-        data: z.enum(["Yes", "No"]),
+        data: z.boolean(),
       }),
-      system: `We are generating insights from survey responses categorized into Complaint, Feature Request, and Praise. Please evaluate the following survey question to determine if it is suitable for generating insights. Does it make sense to generate insights for this question? Answer with "Yes" or "No" only.`,
-      prompt: `Survey Question: "${question.headline.default}"`,
+      prompt: `Please evaluate the following survey question to determine if it is suitable for generating insights. Does it make sense to generate insights for this question: ${question.headline.default}`,
       experimental_telemetry: { isEnabled: true },
     });
-    if (object.data === "Yes") {
+
+    if (object.data) {
       insightsEnabledQuestionIds.push(question.id);
     }
   }
