@@ -1,86 +1,52 @@
-import clsx from "clsx";
 import { AlertTriangleIcon, CheckIcon } from "lucide-react";
-import Link from "next/link";
+import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface WidgetStatusIndicatorProps {
   environment: TEnvironment;
-  size: "large" | "mini";
-  type: "app" | "website";
 }
 
-export const WidgetStatusIndicator = ({ environment, size, type }: WidgetStatusIndicatorProps) => {
+export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProps) => {
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: `Your ${type} is not yet connected.`,
-      subtitle: ``,
-      shortText: `Connect your ${type} with Formbricks`,
+      title: `Formbricks SDK is not yet connected.`,
+      subtitle: `Connect your website or app with Formbricks`,
     },
     running: {
       icon: CheckIcon,
       title: "Receiving data 💃🕺",
-      subtitle: `Your ${type} is connected with Formbricks.`,
-      shortText: `${type === "app" ? "App" : "Website"} connected`,
+      subtitle: `Formbricks SDK is connected`,
     },
   };
 
-  const setupStatus = type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
-  let status: "notImplemented" | "running" | "issue";
+  let status: "notImplemented" | "running";
 
-  if (setupStatus) {
+  if (environment.appSetupCompleted) {
     status = "running";
   } else {
     status = "notImplemented";
   }
 
-  const currentStatus = stati[status];
+  const currentStatus: { icon: React.ExoticComponent; title: string; subtitle: string } = stati[status];
 
-  if (size === "large") {
-    return (
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center space-y-2 rounded-lg border py-6 text-center",
+        status === "notImplemented" && "border-slate-200 bg-slate-100",
+        status === "running" && "border-emerald-200 bg-emerald-100"
+      )}>
       <div
-        className={clsx(
-          "flex flex-col items-center justify-center space-y-2 rounded-lg border py-6 text-center",
-          status === "notImplemented" && "border-slate-200 bg-slate-100",
-          status === "running" && "border-emerald-200 bg-emerald-100"
+        className={cn(
+          "flex h-12 w-12 items-center justify-center rounded-full border bg-white p-2",
+          status === "notImplemented" && "border-slate-200 text-slate-700",
+          status === "running" && "border-emerald-200 text-emerald-700"
         )}>
-        <div
-          className={clsx(
-            "flex h-12 w-12 items-center justify-center rounded-full border bg-white p-2",
-            status === "notImplemented" && "border-slate-200 text-slate-700",
-            status === "running" && "border-emerald-200 text-emerald-700"
-          )}>
-          <currentStatus.icon />
-        </div>
-        <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
-        <p className="w-2/3 text-balance text-sm text-slate-600">{currentStatus.subtitle}</p>
+        <currentStatus.icon />
       </div>
-    );
-  }
-  if (size === "mini") {
-    return (
-      <div className="flex gap-2">
-        <Link href={`/environments/${environment.id}/product/${type}-connection`}>
-          <div className="group flex justify-center">
-            <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-              {status === "running" ? (
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
-                </span>
-              ) : (
-                <AlertTriangleIcon className="h-[14px] w-[14px] text-amber-600" />
-              )}
-              <Label className="group-hover:cursor-pointer group-hover:underline">
-                {currentStatus.shortText}
-              </Label>
-            </div>
-          </div>
-        </Link>
-      </div>
-    );
-  } else {
-    return null;
-  }
+      <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
+      <p className="w-2/3 text-balance text-sm text-slate-600">{currentStatus.subtitle}</p>
+    </div>
+  );
 };

@@ -1,4 +1,5 @@
 import {
+  TShuffleOption,
   TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,
@@ -17,7 +18,26 @@ const shuffle = (array: any[]) => {
   }
 };
 
-export const getShuffledChoicesIds = (choices: TSurveyQuestionChoice[], shuffleOption: string): string[] => {
+export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption): number[] => {
+  // Create an array with numbers from 0 to n-1
+  let array = Array.from(Array(n).keys());
+
+  if (shuffleOption === "all") {
+    shuffle(array);
+  } else if (shuffleOption === "exceptLast") {
+    const lastElement = array.pop();
+    if (lastElement) {
+      shuffle(array);
+      array.push(lastElement);
+    }
+  }
+  return array;
+};
+
+export const getShuffledChoicesIds = (
+  choices: TSurveyQuestionChoice[],
+  shuffleOption: TShuffleOption
+): string[] => {
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });

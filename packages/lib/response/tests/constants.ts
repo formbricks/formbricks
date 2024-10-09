@@ -18,5 +18,4 @@ export const mockEnvironment: TEnvironment = {
   type: "production",
   productId: mockId,
   appSetupCompleted: false,
-  websiteSetupCompleted: false,
 };

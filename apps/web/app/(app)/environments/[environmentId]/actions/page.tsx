@@ -3,10 +3,8 @@ import { ActionClassDataRow } from "@/app/(app)/environments/[environmentId]/act
 import { ActionTableHeading } from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
@@ -15,19 +13,13 @@ export const metadata: Metadata = {
 };
 
 const Page = async ({ params }) => {
-  const [actionClasses, product, organization] = await Promise.all([
+  const [actionClasses, organization] = await Promise.all([
     getActionClasses(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
   if (!organization) {
     throw new Error("Organization not found");
-  }
-
-  const currentProductChannel = product?.config.channel ?? null;
-  if (currentProductChannel === "link") {
-    return notFound();
   }
 
   const renderAddActionButton = () => (
