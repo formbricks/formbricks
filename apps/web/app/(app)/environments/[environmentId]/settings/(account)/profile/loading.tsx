@@ -1,22 +1,7 @@
+import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { cn } from "@formbricks/lib/cn";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-
-const LoadingCard = ({ title, description, skeletonLines }) => {
-  return (
-    <SettingsCard title={title} description={description}>
-      <div className="w-full space-y-4">
-        {skeletonLines.map((line, index) => (
-          <div key={index}>
-            <div className={cn("animate-pulse rounded-full bg-slate-200", line.classes)}></div>
-          </div>
-        ))}
-      </div>
-    </SettingsCard>
-  );
-};
 
 const Loading = () => {
   const cards = [
