@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import webPackageJson from "../../apps/web/package.json";
 
+
 const config = () => {
   return defineConfig({
     define: {
@@ -19,8 +20,8 @@ const config = () => {
       lib: {
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricks",
-        formats: ["umd"],
-        fileName: "js-core",
+        formats: ["umd", "iife"],
+        fileName: "index",
       },
     },
     plugins: [
@@ -38,7 +39,7 @@ const config = () => {
 
           filesToCopy.forEach((file) => {
             const srcFile = `${distDir}/${file}`;
-            const destFile = `${outputDir}/${file}`;
+            const destFile = `${outputDir}/${file.replace("index", "formbricks-core")}`;
             copyFileSync(srcFile, destFile);
           });
 

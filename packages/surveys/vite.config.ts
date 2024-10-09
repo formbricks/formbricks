@@ -23,8 +23,8 @@ const config = ({ mode }) => {
       lib: {
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricksSurveys",
-        formats: ["es", "umd"],
-        fileName: "surveys",
+        formats: ["es", "umd", "iife"],
+        fileName: "index",
       },
     },
     plugins: [
@@ -41,7 +41,7 @@ const config = ({ mode }) => {
 
           filesToCopy.forEach((file) => {
             const srcFile = `${distDir}/${file}`;
-            const destFile = `${outputDir}/${file}`;
+            const destFile = `${outputDir}/${file.replace("index", "surveys")}`;
             copyFileSync(srcFile, destFile);
           });
 

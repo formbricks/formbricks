@@ -24,26 +24,6 @@ declare class Client {
     constructor(options: ApiConfig);
 }
 
-declare const _default: {
-    init: (initConfig: {
-        environmentId: string;
-        apiHost: string;
-        userId?: string | undefined;
-        attributes?: Record<string, string> | undefined;
-        errorHandler?: ((args_0: any, ...args_1: unknown[]) => void) | undefined;
-    }) => Promise<void>;
-    setEmail: (email: string) => Promise<void>;
-    setAttribute: (key: string, value: any) => Promise<void>;
-    track: (name: string, properties?: {
-        hiddenFields?: Record<string, string | number | string[]> | undefined;
-    } | undefined) => Promise<void>;
-    logout: () => Promise<void>;
-    reset: () => Promise<void>;
-    registerRouteChange: () => Promise<void>;
-    getApi: () => FormbricksAPI;
-};
-export default _default;
-
 declare class DisplayAPI {
     private apiHost;
     private environmentId;
@@ -68,6 +48,9 @@ declare class FormbricksAPI {
     client: Client;
     constructor(options: ApiConfig);
 }
+
+declare const formbricksApp: TFormbricksApp;
+export default formbricksApp;
 
 declare interface NetworkError {
     code: "network_error";
@@ -112,7 +95,7 @@ declare type TAttributeUpdateInput = z.infer<typeof ZAttributeUpdateInput>;
 
 declare type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
 
-export declare type TFormbricksApp = typeof formbricks;
+declare type TFormbricksApp = typeof formbricks;
 
 declare type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 
@@ -197,3 +180,11 @@ declare const ZUploadFileConfig = z.object({
 });
 
 export { }
+
+
+declare global {
+    interface Window {
+        formbricks: TFormbricksApp | undefined;
+    }
+}
+

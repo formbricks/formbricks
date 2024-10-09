@@ -13,8 +13,8 @@ const config = () => {
         // Could also be a dictionary or array of multiple entry points
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricksJsWrapper",
-        formats: ["es", "cjs"],
-        fileName: "js",
+        formats: ["es", "cjs", "iife"],
+        fileName: "index",
       },
     },
     plugins: [
@@ -29,7 +29,7 @@ const config = () => {
 
           filesToCopy.forEach((file) => {
             const srcFile = `${distDir}/${file}`;
-            const destFile = `${outputDir}/${file}`;
+            const destFile = `${outputDir}/${file.replace("index", "formbricks")}`;
             copyFileSync(srcFile, destFile);
           });
 
