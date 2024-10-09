@@ -39,7 +39,7 @@
     "lucide-react": "^0.451.0",
     "mdast-util-to-string": "^4.0.0",
     "mdx-annotations": "^0.1.4",
-    "next": "14.2.15",
+    "next": "14.2.10",
     "next-plausible": "^3.12.2",
     "next-seo": "^6.6.0",
     "next-sitemap": "^4.2.3",
