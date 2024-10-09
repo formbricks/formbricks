@@ -1,10 +1,13 @@
 import { copySurveyToOtherEnvironmentAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
+import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
+import {
+  TSurveyCopyFormData,
+  ZSurveyCopyFormValidation,
+} from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyCopyFormData, ZSurveyCopyFormValidation } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";

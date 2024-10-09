@@ -3,7 +3,7 @@
 import {
   getSurveyListItem,
   getSurveyListItems,
-} from "@/app/(app)/environments/[environmentId]/surveys/lib/surveys";
+} from "@/app/(app)/environments/[environmentId]/surveys/lib/surveyListItem";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";

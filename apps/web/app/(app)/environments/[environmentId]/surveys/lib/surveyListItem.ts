@@ -1,5 +1,5 @@
 import "server-only";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
+import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";

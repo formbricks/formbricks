@@ -1,5 +1,7 @@
+"use client";
+
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
+import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
 import { Code, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";

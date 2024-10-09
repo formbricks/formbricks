@@ -24,3 +24,14 @@ export const ZSurveyListItem = z.object({
 });
 
 export type TSurveyListItem = z.infer<typeof ZSurveyListItem>;
+
+export const ZSurveyCopyFormValidation = z.object({
+  products: z.array(
+    z.object({
+      product: z.string(),
+      environments: z.array(z.string()),
+    })
+  ),
+});
+
+export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;

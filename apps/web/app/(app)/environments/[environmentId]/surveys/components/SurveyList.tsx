@@ -2,7 +2,7 @@
 
 import { getSurveyListItemsAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { getFormattedFilters } from "@/app/(app)/environments/[environmentId]/surveys/lib/utils";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
+import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { TEnvironment } from "@formbricks/types/environment";
