@@ -40,7 +40,7 @@ const Loading = () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Organization Settings">
-        <OrganizationSettingsNavbar isFormbricksCloud={IS_FORMBRICKS_CLOUD} activeId="members" />
+        <OrganizationSettingsNavbar isFormbricksCloud={IS_FORMBRICKS_CLOUD} activeId="members" loading />
       </PageHeader>
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />

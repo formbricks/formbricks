@@ -50,7 +50,7 @@ const Loading = () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Account Settings">
-        <AccountSettingsNavbar activeId="profile" />
+        <AccountSettingsNavbar activeId="profile" loading />
       </PageHeader>
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />

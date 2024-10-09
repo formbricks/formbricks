@@ -11,11 +11,13 @@ export const OrganizationSettingsNavbar = ({
   isFormbricksCloud,
   membershipRole,
   activeId,
+  loading,
 }: {
   environmentId?: string;
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
   activeId: string;
+  loading?: boolean;
 }) => {
   const pathname = usePathname();
   const { isAdmin, isOwner } = getAccessFlags(membershipRole);
@@ -48,5 +50,5 @@ export const OrganizationSettingsNavbar = ({
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
 };

@@ -35,7 +35,7 @@ const Loading = () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Account Settings">
-        <AccountSettingsNavbar activeId="notifications" />
+        <AccountSettingsNavbar activeId="notifications" loading />
       </PageHeader>
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />
