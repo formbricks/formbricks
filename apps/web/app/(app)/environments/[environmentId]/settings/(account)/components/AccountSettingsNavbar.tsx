@@ -8,7 +8,7 @@ export const AccountSettingsNavbar = ({
   environmentId,
   activeId,
 }: {
-  environmentId: string;
+  environmentId?: string;
   activeId: string;
 }) => {
   const pathname = usePathname();
