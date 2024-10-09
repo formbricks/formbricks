@@ -3,6 +3,7 @@ import { MdxImage } from "@/components/MdxImage";
 import I1 from "./images/I1.webp";
 import I2 from "./images/I2.webp";
 import I3 from "./images/I3.webp";
+import I3_1 from "./images/I3_1.webp";
 import I4 from "./images/I4.webp";
 import I5 from "./images/I5.webp";
 import I6 from "./images/I6.webp";
@@ -15,44 +16,41 @@ export const metadata = {
     "Formbricks is the easiest way to create and manage app surveys. This quickstart guide will show you how to create your first app survey in under 5 minutes.",
 };
 
-#### App Surveys
-
 # Quickstart
 
 App surveys have 6-10x better conversion rates than emailed surveys. This tutorial explains how to run a survey in both your web app and mobile app (React Native) in just 10 to 15 minutes. Let’s go!
 
-<Note>
-  App Surveys are ideal for websites that **have a user authentication** system. If you are looking to run
-  surveys on your public facing website, head over to the [Website Surveys Quickstart
-  Guide](/website-surveys/quickstart).
-</Note>
-
-1. **Create a free Formbricks Cloud account**: While you can [self-host](/self-hosting/deployment) Formbricks, but the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and you'll be guided to our onboarding like below:
-
-<Note>
-  Website & App Surveys have the same integration process. The difference will come when we setup our survey.
-</Note>
+1. **Create a free Formbricks Cloud account**: While you can [self-host](/self-hosting/deployment) Formbricks, but the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and you'll be guided to our onboarding like below, choose the "Formbricks Surveys" option:
 
 <MdxImage
   src={I1}
-  alt="Choose website survey from survey type"
+  alt="Choose Formbricks Surveys"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-2. **Connect your App/Website**: Once you get through a couple of onboarding steps, you’ll be asked to connect your app or website. This is where you’ll find the code snippet for both HTML as well as the npm package which you need to embed in your app:
+2. **Choose your Product Channel**: On this step, you have to choose between the various channels that you want your product to be created in, you can create both app and link surveys from all the channels, but for the onboarding, please choose between the app surveys or the public website options, upon doing this, you'll be prompted to connect your app / website to formbricks.
 
 <MdxImage
   src={I2}
+  alt="Choose between app and website surveys product channels"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. **Connect your App/Website**: Once you get through a couple of onboarding steps, you’ll be asked to connect your app or website. This is where you’ll find the code snippet for both HTML as well as the npm package which you need to embed in your app:
+
+<MdxImage
+  src={I3}
   alt="Code snippet for connecting app with Formbricks"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Paste the code snippet in your app and reload the page. You should now see the Formbricks widget in the lower right corner of your app! The integration is now complete.
+Paste the code snippet in your app and reload the page. You should now see a message being displayed that your app or website is now connected with formbricks.
 
 <MdxImage
-  src={I3}
+  src={I3_1}
   alt="App connected with Formbricks"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
@@ -67,7 +65,7 @@ Onboarding is complete! Now let’s create our first survey as you should see te
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-3. **Create your first survey**: To be able to see a survey in your app, you need to create one. We’ll choose one of the templates and head over to the survey settings:
+4. **Create your first survey**: To be able to see a survey in your app, you need to create one. We’ll choose one of the templates and head over to the survey settings:
 
 Pick the Survey Type as **App Survey**.
 
@@ -78,7 +76,7 @@ Pick the Survey Type as **App Survey**.
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-4. **Set Trigger for the Survey**: Scroll down to Survey Trigger and click on **+ Add action**, choose **New Session**. This will cause this survey to appear when the Formbricks Widget tracks a new user session:
+5. **Set Trigger for the Survey**: Scroll down to Survey Trigger and click on **+ Add action**, choose **New Session**. This will cause this survey to appear when the Formbricks Widget tracks a new user session:
 
 <MdxImage
   src={I6}
@@ -87,7 +85,7 @@ Pick the Survey Type as **App Survey**.
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-5. **Set Recontact Options for debugging**: In Recontact Options we choose the following settings, so that we can play around with the survey more easily. By default, each survey will be shown only once to each user to prevent survey fatigue:
+6. **Set Recontact Options for debugging**: In Recontact Options we choose the following settings, so that we can play around with the survey more easily. By default, each survey will be shown only once to each user to prevent survey fatigue:
 
 <Note>
   Please change this setting later on after testing your survey to prevent survey fatigue for your users.
@@ -100,7 +98,7 @@ Pick the Survey Type as **App Survey**.
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-6. **Publish your survey**: Now hit **Publish** and you’ll be forwarded to the Summary Page. This is where you’ll find the responses to this survey.
+7. **Publish your survey**: Now hit **Publish** and you’ll be forwarded to the Summary Page. This is where you’ll find the responses to this survey.
 
 <MdxImage
   src={I8}
@@ -111,7 +109,7 @@ Pick the Survey Type as **App Survey**.
 
 ---
 
-- We offer framework guides for various frontend tech, head over to the the [App Survey Framework Guides](/app-survey/framework-guides) to get started with your app survey.
-- Head over to our App Survey SDK documentation to get started with the [App Survey JS SDK](/developer-docs/app-survey-sdk).
+- We offer framework guides for various frontend tech, head over to the the [App Survey Framework Guides](/app-surveys/framework-guides) to get started with your app survey.
+- Head over to our JS SDK documentation to get started with the [JS SDK](/developer-docs/js-sdk).
 
 Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

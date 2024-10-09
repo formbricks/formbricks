@@ -8,7 +8,7 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Loading = () => {
   const cards = [
     {
-      title: "App Connection Status",
+      title: "Website & App Connection Status",
       description: "Check if your app is successfully connected with Formbricks. Reload page to recheck.",
       skeletonLines: [{ classes: " h-44 max-w-full rounded-lg" }],
     },
@@ -32,17 +32,15 @@ const Loading = () => {
   ];
 
   return (
-    <div>
-      <PageContentWrapper>
-        <PageHeader pageTitle="Configuration">
-          <ProductConfigNavigation activeId="app-connection" loading />
-        </PageHeader>
-        <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
-        {cards.map((card, index) => (
-          <LoadingCard key={index} {...card} />
-        ))}
-      </PageContentWrapper>
-    </div>
+    <PageContentWrapper>
+      <PageHeader pageTitle="Configuration">
+        <ProductConfigNavigation activeId="app-connection" loading />
+      </PageHeader>
+      <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
+      {cards.map((card, index) => (
+        <LoadingCard key={index} {...card} />
+      ))}
+    </PageContentWrapper>
   );
 };
 

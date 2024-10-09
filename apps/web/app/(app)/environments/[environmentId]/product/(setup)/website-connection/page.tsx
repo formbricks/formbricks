@@ -42,7 +42,6 @@ const Page = async ({ params }) => {
           environmentId={params.environmentId}
           activeId="website-connection"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
-          productChannel={currentProductChannel}
         />
       </PageHeader>
       <div className="space-y-4">
@@ -50,13 +49,13 @@ const Page = async ({ params }) => {
         <SettingsCard
           title="Website Connection Status"
           description="Check if your website is successfully connected with Formbricks. Reload page to recheck.">
-          {environment && <WidgetStatusIndicator environment={environment} size="large" type="website" />}
+          {environment && <WidgetStatusIndicator environment={environment} />}
         </SettingsCard>
         <SettingsCard
           title="How to setup"
           description="Follow these steps to setup the Formbricks widget within your website."
           noPadding>
-          <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} type="website" />
+          <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
         <SettingsCard
           title="Your EnvironmentId"

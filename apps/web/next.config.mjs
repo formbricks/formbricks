@@ -165,6 +165,30 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/packages/website",
+        destination: "/api/packages/js",
+      },
+      {
+        source: "/api/packages/app",
+        destination: "/api/packages/js",
+      },
+      {
+        source: "/api/v1/client/:environmentId/website/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+      {
+        source: "/api/v1/client/:environmentId/app/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+      {
+        source: "/api/v1/client/:environmentId/app/people/:userId",
+        destination: "/api/v1/client/:environmentId/identify/people/:userId",
+      },
+    ];
+  },
   env: {
     NEXTAUTH_URL: process.env.WEBAPP_URL,
   },
