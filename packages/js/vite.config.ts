@@ -13,30 +13,11 @@ const config = () => {
         // Could also be a dictionary or array of multiple entry points
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricksJsWrapper",
-        formats: ["es", "cjs", "iife"],
+        formats: ["es", "cjs"],
         fileName: "index",
       },
     },
-    plugins: [
-      dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] }),
-      {
-        name: "copy-output",
-        closeBundle() {
-          const outputDir = resolve(__dirname, "../../apps/web/public/js");
-          const distDir = resolve(__dirname, "dist");
-
-          const filesToCopy = readdirSync(distDir);
-
-          filesToCopy.forEach((file) => {
-            const srcFile = `${distDir}/${file}`;
-            const destFile = `${outputDir}/${file.replace("index", "formbricks")}`;
-            copyFileSync(srcFile, destFile);
-          });
-
-          console.log(`Copied ${filesToCopy.length} files to ${outputDir}`);
-        },
-      },
-    ],
+    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] })],
   });
 };
 

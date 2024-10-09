@@ -23,7 +23,7 @@ const config = ({ mode }) => {
       lib: {
         entry: resolve(__dirname, "src/index.ts"),
         name: "formbricksSurveys",
-        formats: ["es", "umd", "iife"],
+        formats: ["es", "umd"],
         fileName: "index",
       },
     },
