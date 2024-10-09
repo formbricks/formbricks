@@ -9,7 +9,7 @@ import {
   type TSurveyQuestionType,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { EmailButton } from "../general/email-button";
+import { EmailButton } from "../../components/email-button";
 
 export const renderEmailResponseValue = (
   response: string | string[],
@@ -54,7 +54,7 @@ export const renderEmailResponseValue = (
               response.map(
                 (item, index) =>
                   item && (
-                    <Row key={index} className="mb-1 flex items-center">
+                    <Row key={item} className="mb-1 flex items-center">
                       <Column className="w-6 text-gray-400">#{index + 1}</Column>
                       <Column className="rounded bg-gray-100 px-2 py-1">{item}</Column>
                     </Row>

@@ -2,7 +2,7 @@ import { Container, Text } from "@react-email/components";
 import React from "react";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
-import { EmailButton } from "../general/email-button";
+import { EmailButton } from "../../components/email-button";
 import { NotificationFooter } from "./notification-footer";
 
 interface CreateReminderNotificationBodyProps {

@@ -18,7 +18,7 @@ import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { RatingSmiley } from "@formbricks/ui/components/RatingSmiley";
-import { getNPSOptionColor, getRatingNumberOptionColor } from "../../lib/utils";
+import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
@@ -26,11 +26,11 @@ interface PreviewEmailTemplateProps {
   styling: TSurveyStyling;
 }
 
-export const getPreviewEmailTemplateHtml = (
+export const getPreviewEmailTemplateHtml = async (
   survey: TSurvey,
   surveyUrl: string,
   styling: TSurveyStyling
-): string => {
+): Promise<string> => {
   return render(<PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} />, {
     pretty: true,
   });
