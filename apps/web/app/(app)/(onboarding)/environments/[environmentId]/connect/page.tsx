@@ -28,10 +28,7 @@ const Page = async ({ params }: ConnectPageProps) => {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center py-10">
-      <Header
-        title={`Let's connect your product with Formbricks`}
-        subtitle="It takes less than 4 minutes, pinky promise!"
-      />
+      <Header title={`Let's connect your product with Formbricks`} subtitle="It takes less than 4 minutes." />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>
         <p className="text-sm text-slate-500"></p>
@@ -39,9 +36,7 @@ const Page = async ({ params }: ConnectPageProps) => {
       <ConnectWithFormbricks
         environment={environment}
         webAppUrl={WEBAPP_URL}
-        widgetSetupCompleted={
-          channel === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted
-        }
+        widgetSetupCompleted={environment.appSetupCompleted}
         channel={channel}
       />
       <Button

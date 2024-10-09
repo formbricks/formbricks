@@ -42,7 +42,7 @@ export const OnboardingOptionsContainer = ({ options }: OnboardingOptionsContain
   return (
     <div
       className={cn({
-        "grid w-5/6 grid-cols-3 gap-8 text-center lg:w-2/3": options.length >= 3,
+        "flex w-5/6 justify-center gap-8 text-center md:flex-row lg:w-2/3": options.length >= 3,
         "flex justify-center gap-8": options.length < 3,
       })}>
       {options.map((option) =>

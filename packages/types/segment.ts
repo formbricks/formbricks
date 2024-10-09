@@ -31,17 +31,6 @@ export const ATTRIBUTE_OPERATORS = [
 // but we might want to add more operators in the future, so we keep it separated
 export const PERSON_OPERATORS = ATTRIBUTE_OPERATORS;
 
-// A metric is always only associated with an action filter
-// Metrics are used to evaluate the value of an action filter, from the database
-export const ACTION_METRICS = [
-  "lastQuarterCount",
-  "lastMonthCount",
-  "lastWeekCount",
-  "occuranceCount",
-  "lastOccurranceDaysAgo",
-  "firstOccurranceDaysAgo",
-] as const;
-
 // operators for segment filters
 export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
 
@@ -65,18 +54,14 @@ export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
 
 export type TAllOperators = (typeof ALL_OPERATORS)[number];
 
-export const ZActionMetric = z.enum(ACTION_METRICS);
-export type TActionMetric = z.infer<typeof ZActionMetric>;
-
 export const ZSegmentFilterValue = z.union([z.string(), z.number()]);
 export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
 // the type of the root of a filter
-export const ZSegmentFilterRootType = z.enum(["attribute", "action", "segment", "device", "person"]);
+export const ZSegmentFilterRootType = z.enum(["attribute", "segment", "device", "person"]);
 
 // Root of the filter, this defines the type of the filter and the metadata associated with it
 // For example, if the root is "attribute", the attributeClassName is required
-// if the root is "action", the actionClassId is required.
 export const ZSegmentFilterRoot = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(ZSegmentFilterRootType.Enum.attribute),
@@ -85,10 +70,6 @@ export const ZSegmentFilterRoot = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(ZSegmentFilterRootType.Enum.person),
     userId: z.string(),
-  }),
-  z.object({
-    type: z.literal(ZSegmentFilterRootType.Enum.action),
-    actionClassId: z.string(),
   }),
   z.object({
     type: z.literal(ZSegmentFilterRootType.Enum.segment),
@@ -101,8 +82,6 @@ export const ZSegmentFilterRoot = z.discriminatedUnion("type", [
 ]);
 
 // Each filter has a qualifier, which usually contains the operator for evaluating the filter.
-// Only in the case of action filters, the metric is also included in the qualifier
-
 // Attribute filter -> root will always have type "attribute"
 export const ZSegmentAttributeFilter = z.object({
   id: z.string().cuid2(),
@@ -130,41 +109,6 @@ export const ZSegmentPersonFilter = z.object({
   }),
 });
 export type TSegmentPersonFilter = z.infer<typeof ZSegmentPersonFilter>;
-
-// Action filter -> root will always have type "action"
-// Action filters also have the metric along with the operator in the qualifier of the filter
-export const ZSegmentActionFilter = z
-  .object({
-    id: z.string().cuid2(),
-    root: z.object({
-      type: z.literal("action"),
-      actionClassId: z.string(),
-    }),
-    value: ZSegmentFilterValue,
-    qualifier: z.object({
-      metric: z.enum(ACTION_METRICS),
-      operator: ZBaseOperator,
-    }),
-  })
-  .refine(
-    (actionFilter) => {
-      const { value } = actionFilter;
-
-      // if the value is not type of number, it's invalid
-
-      const isValueNumber = typeof value === "number";
-
-      if (!isValueNumber) {
-        return false;
-      }
-
-      return true;
-    },
-    {
-      message: "Value must be a number for action filters",
-    }
-  );
-export type TSegmentActionFilter = z.infer<typeof ZSegmentActionFilter>;
 
 // Segment filter -> root will always have type "segment"
 export const ZSegmentSegmentFilter = z.object({
@@ -197,28 +141,8 @@ export type TSegmentDeviceFilter = z.infer<typeof ZSegmentDeviceFilter>;
 
 // A segment filter is a union of all the different filter types
 export const ZSegmentFilter = z
-  .union([
-    ZSegmentActionFilter,
-    ZSegmentAttributeFilter,
-    ZSegmentPersonFilter,
-    ZSegmentSegmentFilter,
-    ZSegmentDeviceFilter,
-  ])
+  .union([ZSegmentAttributeFilter, ZSegmentPersonFilter, ZSegmentSegmentFilter, ZSegmentDeviceFilter])
   // we need to refine the filter to make sure that the filter is valid
-  .refine(
-    (filter) => {
-      if (filter.root.type === "action") {
-        if (!("metric" in filter.qualifier)) {
-          return false;
-        }
-      }
-
-      return true;
-    },
-    {
-      message: "Metric operator must be specified for action filters",
-    }
-  )
   .refine(
     (filter) => {
       // if the operator is an arithmentic operator, the value must be a number
@@ -371,6 +295,5 @@ export interface TEvaluateSegmentUserData {
   userId: string;
   environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;
-  actionIds: string[];
   deviceType: "phone" | "desktop";
 }

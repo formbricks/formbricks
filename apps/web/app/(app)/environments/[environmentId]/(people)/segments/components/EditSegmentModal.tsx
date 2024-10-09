@@ -2,7 +2,6 @@
 
 import { UsersIcon } from "lucide-react";
 import { SegmentSettings } from "@formbricks/ee/advanced-targeting/components/segment-settings";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
@@ -16,7 +15,6 @@ interface EditSegmentModalProps {
   currentSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
-  actionClasses: TActionClass[];
   isAdvancedTargetingAllowed: boolean;
   isFormbricksCloud: boolean;
 }
@@ -26,7 +24,6 @@ export const EditSegmentModal = ({
   open,
   setOpen,
   currentSegment,
-  actionClasses,
   attributeClasses,
   segments,
   isAdvancedTargetingAllowed,
@@ -36,7 +33,6 @@ export const EditSegmentModal = ({
     if (isAdvancedTargetingAllowed) {
       return (
         <SegmentSettings
-          actionClasses={actionClasses}
           attributeClasses={attributeClasses}
           environmentId={environmentId}
           initialSegment={currentSegment}

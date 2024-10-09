@@ -1,8 +1,8 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "2.2.0",
-  "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
+  "version": "3.0.0",
+  "description": "Formbricks-js allows you to connect your index to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
   "repository": {
     "type": "git",
@@ -19,25 +19,14 @@
   ],
   "type": "module",
   "exports": {
-    "./app": {
-      "import": "./dist/app.js",
-      "require": "./dist/app.cjs",
-      "types": "./dist/app.d.ts"
-    },
-    "./website": {
-      "import": "./dist/website.js",
-      "require": "./dist/website.cjs",
-      "types": "./dist/website.d.ts"
-    },
-    "./*": "./dist/*"
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs",
+    "types": "./dist/index.d.ts"
   },
   "typesVersions": {
     "*": {
-      "app": [
-        "./dist/app.d.ts"
-      ],
-      "website": [
-        "./dist/website.d.ts"
+      "*": [
+        "./dist/index.d.ts"
       ]
     }
   },

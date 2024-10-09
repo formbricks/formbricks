@@ -3,7 +3,7 @@ import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
-import { AddressResponse } from "@formbricks/ui/components/AddressResponse";
+import { ArrayResponse } from "@formbricks/ui/components/ArrayResponse";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -27,7 +27,7 @@ export const AddressSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
       />
-      <div className="">
+      <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">User</div>
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
@@ -60,11 +60,9 @@ export const AddressSummary = ({
                     </div>
                   )}
                 </div>
-                {
-                  <div className="ph-no-capture col-span-2 pl-6 font-semibold">
-                    <AddressResponse value={response.value} />
-                  </div>
-                }
+                <div className="ph-no-capture col-span-2 pl-6 font-semibold">
+                  <ArrayResponse value={response.value} />
+                </div>
 
                 <div className="px-4 text-slate-500 md:px-6">
                   {timeSince(new Date(response.updatedAt).toISOString())}
