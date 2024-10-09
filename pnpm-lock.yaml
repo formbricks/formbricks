@@ -691,8 +691,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
       react-hook-form:
-        specifier: ^7.52.2
-        version: 7.52.2(react@19.0.0-rc-935180c7e0-20240524)
+        specifier: ^7.53.0
+        version: 7.53.0(react@19.0.0-rc-935180c7e0-20240524)
       react-hot-toast:
         specifier: ^2.4.1
         version: 2.4.1(csstype@3.1.3)(react-dom@19.0.0-rc-935180c7e0-20240524(react@19.0.0-rc-935180c7e0-20240524))(react@19.0.0-rc-935180c7e0-20240524)
@@ -11808,12 +11808,6 @@ packages:
     resolution: {integrity: sha512-asCxy+jCehDVhusNmCBoxDf2mm1AJ//D+EzDx1m5K7EqsMBIHdZ5G4LdwbSEXqZq1Ros0G0UySWmAtntSph7XA==}
     peerDependencies:
       react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
-
-  react-hook-form@7.52.2:
-    resolution: {integrity: sha512-pqfPEbERnxxiNMPd0bzmt1tuaPcVccywFDpyk2uV5xCIBphHV5T8SVnX9/o3kplPE1zzKt77+YIoq+EMwJp56A==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      react: ^16.8.0 || ^17 || ^18 || ^19
 
   react-hook-form@7.53.0:
     resolution: {integrity: sha512-M1n3HhqCww6S2hxLxciEXy2oISPnAzxY7gvwVPrtlczTM/1dDadXgUxDpHMrMTblDOcm/AXtXxHwZ3jpg1mqKQ==}
@@ -27692,13 +27686,13 @@ snapshots:
       prop-types: 15.8.1
       react: 18.3.1
 
-  react-hook-form@7.52.2(react@19.0.0-rc-935180c7e0-20240524):
-    dependencies:
-      react: 19.0.0-rc-935180c7e0-20240524
-
   react-hook-form@7.53.0(react@18.3.1):
     dependencies:
       react: 18.3.1
+
+  react-hook-form@7.53.0(react@19.0.0-rc-935180c7e0-20240524):
+    dependencies:
+      react: 19.0.0-rc-935180c7e0-20240524
 
   react-hot-toast@2.4.1(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
