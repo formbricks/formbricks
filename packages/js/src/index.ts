@@ -1,4 +1,3 @@
- 
 import { type TFormbricksApp } from "@formbricks/js-core";
 import { loadFormbricksToProxy } from "./lib/load-formbricks";
 
