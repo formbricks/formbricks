@@ -12,7 +12,7 @@ export const OrganizationSettingsNavbar = ({
   membershipRole,
   activeId,
 }: {
-  environmentId: string;
+  environmentId?: string;
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
   activeId: string;
