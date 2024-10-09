@@ -42,7 +42,7 @@ const Loading = () => {
       skeletonLines: [{ classes: "h-6 w-4/6 rounded-full" }],
     },
     {
-      title: "How to setup",
+      title: "How To Setup",
       description: "Follow these steps to setup the Formbricks widget within your app",
       skeletonLines: [
         { classes: "h-6 w-24 rounded-full" },

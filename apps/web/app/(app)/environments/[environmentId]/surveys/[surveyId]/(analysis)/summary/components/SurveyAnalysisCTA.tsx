@@ -30,9 +30,7 @@ export const SurveyAnalysisCTA = ({
   const router = useRouter();
 
   const [showShareSurveyModal, setShowShareSurveyModal] = useState(searchParams.get("share") === "true");
-
-  const widgetSetupCompleted =
-    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+  const widgetSetupCompleted = environment.appSetupCompleted;
 
   useEffect(() => {
     if (searchParams.get("share") === "true") {

@@ -17,6 +17,7 @@ import {
   LinkIcon,
   LogOutIcon,
   MessageCircle,
+  MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
@@ -175,6 +176,12 @@ export const MainNavigation = ({
       },
       {
         name: t("common.integrations"),
+        href: `/environments/${environment.id}/actions`,
+        icon: MousePointerClick,
+        isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
+      },
+      {
+        name: "Integrations",
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),
@@ -188,7 +195,7 @@ export const MainNavigation = ({
         isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, product?.config.channel, isViewer]
+    [environment.id, pathname, isViewer]
   );
 
   const dropdownNavigation = [

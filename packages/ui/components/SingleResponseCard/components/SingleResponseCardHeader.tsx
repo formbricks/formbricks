@@ -176,9 +176,9 @@ export const SingleResponseCardHeader = ({
 
           {pageType === "people" && (
             <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-              {(survey.type === "link" ||
-                environment.appSetupCompleted ||
-                environment.websiteSetupCompleted) && <SurveyStatusIndicator status={survey.status} />}
+              {(survey.type === "link" || environment.appSetupCompleted) && (
+                <SurveyStatusIndicator status={survey.status} />
+              )}
               <Link
                 className="hover:underline"
                 href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
@@ -198,22 +198,27 @@ export const SingleResponseCardHeader = ({
           <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString())}>
             {timeSince(response.createdAt.toISOString())}
           </time>
-          {user && !isViewer && (
-            <TooltipRenderer shouldRender={!canResponseBeDeleted} tooltipContent={deleteSubmissionToolTip}>
+          {user &&
+            !isViewer &&
+            (canResponseBeDeleted ? (
               <TrashIcon
-                onClick={() => {
-                  if (canResponseBeDeleted) {
-                    setDeleteDialogOpen(true);
-                  }
-                }}
-                className={`h-4 w-4 ${
-                  canResponseBeDeleted
-                    ? "cursor-pointer text-slate-500 hover:text-red-700"
-                    : "cursor-not-allowed text-slate-400"
-                } `}
+                onClick={() => setDeleteDialogOpen(true)}
+                className="h-4 w-4 cursor-pointer text-slate-500 hover:text-red-700"
+                aria-label="Delete response"
               />
-            </TooltipRenderer>
-          )}
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <TrashIcon
+                      className="h-4 w-4 cursor-not-allowed text-slate-400"
+                      aria-label="Cannot delete response in progress"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="left">{deleteSubmissionToolTip}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
         </div>
       </div>
     </div>

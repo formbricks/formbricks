@@ -3,7 +3,6 @@ import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId
 import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
 import { CreateSegmentModal } from "@formbricks/ee/advanced-targeting/components/create-segment-modal";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -13,11 +12,10 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
-  const [environment, segments, attributeClasses, actionClasses, organization] = await Promise.all([
+  const [environment, segments, attributeClasses, organization] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
     getAttributeClasses(params.environmentId),
-    getActionClasses(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
@@ -41,7 +39,6 @@ const Page = async ({ params }) => {
     isAdvancedTargetingAllowed ? (
       <CreateSegmentModal
         environmentId={params.environmentId}
-        actionClasses={actionClasses}
         attributeClasses={attributeClasses}
         segments={filteredSegments}
       />
@@ -60,7 +57,6 @@ const Page = async ({ params }) => {
       </PageHeader>
       <SegmentTable
         segments={filteredSegments}
-        actionClasses={actionClasses}
         attributeClasses={attributeClasses}
         isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
       />

@@ -41,7 +41,7 @@ const Page = async ({ params }: ChannelPageProps) => {
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header
-        title="Where do you want to survey people?"
+        title="Where do you mainly want to survey people?"
         subtitle="Run surveys on public websites, in your app, or with shareable links & emails."
       />
       <OnboardingOptionsContainer options={channelOptions} />

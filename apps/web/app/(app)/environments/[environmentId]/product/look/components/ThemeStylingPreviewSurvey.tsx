@@ -108,7 +108,7 @@ export const ThemeStylingPreviewSurvey = ({
     setQuestionId(survey?.questions[0]?.id);
   };
 
-  const isAppSurvey = previewType === "app" || previewType === "website";
+  const isAppSurvey = previewType === "app";
 
   const scrollToEditLogoSection = () => {
     const editLogoSection = document.getElementById("edit-logo");
@@ -116,8 +116,6 @@ export const ThemeStylingPreviewSurvey = ({
       editLogoSection.scrollIntoView({ behavior: "smooth" });
     }
   };
-
-  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center overflow-hidden">
@@ -210,13 +208,11 @@ export const ThemeStylingPreviewSurvey = ({
           Link survey
         </div>
 
-        {currentProductChannel !== "link" && (
-          <div
-            className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-            onClick={() => setPreviewType("app")}>
-            App / Website survey
-          </div>
-        )}
+        <div
+          className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+          onClick={() => setPreviewType("app")}>
+          App survey
+        </div>
       </div>
     </div>
   );
