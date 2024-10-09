@@ -174,15 +174,18 @@ export const ZJsWebsiteConfigInput = z.object({
 
 export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;
 
-export const ZJsAppConfigInput = z.object({
+export const ZJsConfigInput = z.object({
   environmentId: z.string().cuid2(),
   apiHost: z.string(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
-  userId: z.string(),
+  userId: z.string().optional(),
   attributes: z.record(z.string()).optional(),
 });
 
-export type TJsAppConfigInput = z.infer<typeof ZJsAppConfigInput>;
+export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
+
+export const ZJsReactNativeConfigInput = ZJsConfigInput.omit({ userId: true }).extend({ userId: z.string() });
+export type TJsReactNativeConfigInput = z.infer<typeof ZJsReactNativeConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),
@@ -233,10 +236,6 @@ export type TJsPersonSyncParams = z.infer<typeof ZJsPersonSyncParams>;
 export const ZJsWebsiteSyncParams = ZJsPersonSyncParams.omit({ userId: true });
 
 export type TJsWebsiteSyncParams = z.infer<typeof ZJsWebsiteSyncParams>;
-
-export const ZJsPackageType = z.union([z.literal("app"), z.literal("website")]);
-
-export type TJsPackageType = z.infer<typeof ZJsPackageType>;
 
 export const ZJsTrackProperties = z.object({
   hiddenFields: ZResponseHiddenFieldValue.optional(),

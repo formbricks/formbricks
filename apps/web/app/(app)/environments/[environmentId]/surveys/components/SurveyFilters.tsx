@@ -109,7 +109,7 @@ export const SurveyFilters = ({
   };
 
   const handleTypeChange = (value: string) => {
-    if (value === "link" || value === "app" || value === "website") {
+    if (value === "link" || value === "app") {
       if (type.includes(value)) {
         setSurveyFilters((prev) => ({ ...prev, type: prev.type.filter((v) => v !== value) }));
       } else {

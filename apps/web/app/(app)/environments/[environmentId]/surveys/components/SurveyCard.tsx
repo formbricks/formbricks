@@ -1,6 +1,6 @@
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
-import { Code, EarthIcon, Link2Icon } from "lucide-react";
+import { Code, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -76,14 +76,6 @@ export const SurveyCard = ({
           <span>App</span>
         </>
       )}
-
-      {type === "website" && (
-        <>
-          <EarthIcon className="h-4 w-4" />
-          <span> Website</span>
-        </>
-      )}
-
       {type === "link" && (
         <>
           <Link2Icon className="h-4 w-4" />

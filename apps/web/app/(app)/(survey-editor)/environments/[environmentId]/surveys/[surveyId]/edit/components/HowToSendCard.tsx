@@ -1,13 +1,12 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { AlertCircleIcon, BlocksIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon } from "lucide-react";
+import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { Badge } from "@formbricks/ui/components/Badge";
@@ -18,25 +17,15 @@ interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
-  organizationId: string;
-  product: TProduct;
 }
 
-export const HowToSendCard = ({
-  localSurvey,
-  setLocalSurvey,
-  environment,
-  product,
-  organizationId,
-}: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
 
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);
-      setWebsiteSetupCompleted(environment.websiteSetupCompleted);
     }
   }, [environment]);
 
@@ -82,24 +71,6 @@ export const HowToSendCard = ({
 
   const options = [
     {
-      id: "website",
-      name: "Website Survey",
-      icon: EarthIcon,
-      description: "Run targeted surveys on public websites.",
-      comingSoon: false,
-      alert: !websiteSetupCompleted,
-      hide: product.config.channel && product.config.channel !== "website",
-    },
-    {
-      id: "app",
-      name: "App Survey",
-      icon: MonitorIcon,
-      description: "Embed a survey in your web app to collect responses with user identification.",
-      comingSoon: false,
-      alert: !appSetupCompleted,
-      hide: product.config.channel && product.config.channel !== "app",
-    },
-    {
       id: "link",
       name: "Link survey",
       icon: LinkIcon,
@@ -109,24 +80,14 @@ export const HowToSendCard = ({
       hide: false,
     },
     {
-      id: "headless",
-      name: "Headless Survey",
-      icon: BlocksIcon,
-      description: "Use Formbricks API only and create your own frontend experience.",
-      comingSoon: true,
-      alert: false,
-      hide: false,
+      id: "app",
+      name: "Website & App Survey",
+      icon: MonitorIcon,
+      description: "Embed a survey in your web app or website to collect responses.",
+      comingSoon: false,
+      alert: !appSetupCompleted,
     },
   ];
-
-  const promotedFeaturesString =
-    product.config.channel === "website"
-      ? "app"
-      : product.config.channel === "app"
-        ? "website"
-        : product.config.channel === "link"
-          ? "app or website"
-          : "";
 
   return (
     <Collapsible.Root
@@ -198,13 +159,11 @@ export const HowToSendCard = ({
                         )}
                       </div>
                       <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                      {option.alert && (
+                      {localSurvey.type === option.id && option.alert && (
                         <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
                           <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                           <div className="text-amber-800">
-                            <p className="text-xs font-semibold">
-                              Your {option.id} is not yet connected to Formbricks.
-                            </p>
+                            <p className="text-xs font-semibold">Formbricks SDK is not connected</p>
                             <p className="text-xs font-normal">
                               <Link
                                 href={`/environments/${environment.id}/product/${option.id}-connection`}
@@ -212,7 +171,7 @@ export const HowToSendCard = ({
                                 target="_blank">
                                 Connect Formbricks
                               </Link>{" "}
-                              and launch surveys in your {option.id}.
+                              and launch surveys in your website or app.
                             </p>
                           </div>
                         </div>
@@ -223,23 +182,6 @@ export const HowToSendCard = ({
               ))}
           </RadioGroup>
         </div>
-        {promotedFeaturesString && (
-          <div className="mt-2 flex items-center space-x-3 rounded-b-lg border border-slate-200 bg-slate-100 px-4 py-2">
-            🤓
-            <div className="ml-2 text-slate-500">
-              <p className="text-xs">
-                You can also use Formbricks to run {promotedFeaturesString} surveys.{" "}
-                <Link
-                  target="_blank"
-                  href={`/organizations/${organizationId}/products/new/mode`}
-                  className="font-medium underline decoration-slate-400 underline-offset-2">
-                  Create a new product
-                </Link>{" "}
-                for your {promotedFeaturesString} to use this feature.
-              </p>
-            </div>
-          </div>
-        )}
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

@@ -4,7 +4,7 @@ import { formbricksEnabled } from "@/app/lib/formbricks";
 import type { Session } from "next-auth";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
-import formbricks from "@formbricks/js/app";
+import formbricks from "@formbricks/js";
 import { env } from "@formbricks/lib/env";
 
 type UsageAttributesUpdaterProps = {

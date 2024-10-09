@@ -34,8 +34,8 @@ export const CardStylingSettings = ({
   setOpen,
   form,
 }: CardStylingSettingsProps) => {
-  const isAppSurvey = surveyType === "app" || surveyType === "website";
-  const surveyTypeDerived = isAppSurvey ? "App / Website" : "Link";
+  const isAppSurvey = surveyType === "app";
+  const surveyTypeDerived = isAppSurvey ? "App" : "Link";
   const isLogoVisible = !!product.logo?.url;
 
   const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "simple";

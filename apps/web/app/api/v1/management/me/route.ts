@@ -24,7 +24,6 @@ export const GET = async () => {
               },
             },
             appSetupCompleted: true,
-            websiteSetupCompleted: true,
           },
         },
       },
