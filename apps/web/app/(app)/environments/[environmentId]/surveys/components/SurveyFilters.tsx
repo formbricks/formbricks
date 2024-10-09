@@ -1,3 +1,5 @@
+"use client";
+
 import { SortOption } from "@/app/(app)/environments/[environmentId]/surveys/components/SortOption";
 import { initialFilters } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
 import { ChevronDownIcon, X } from "lucide-react";
@@ -67,16 +69,7 @@ export const SurveyFilters = ({
   const typeOptions: TFilterOption[] = [
     { label: "Link", value: "link" },
     { label: "App", value: "app" },
-    { label: "Website", value: "website" },
-  ].filter((option) => {
-    if (currentProductChannel === "website") {
-      return option.value !== "app";
-    } else if (currentProductChannel === "app") {
-      return option.value !== "website";
-    } else {
-      return option;
-    }
-  });
+  ];
 
   const toggleDropdown = (id: string) => {
     setDropdownOpenStates(new Map(dropdownOpenStates).set(id, !dropdownOpenStates.get(id)));

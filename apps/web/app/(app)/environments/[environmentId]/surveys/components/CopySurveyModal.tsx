@@ -1,4 +1,6 @@
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
+"use client";
+
+import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { MousePointerClickIcon } from "lucide-react";
 import { Modal } from "@formbricks/ui/components/Modal";
 import SurveyCopyOptions from "./SurveyCopyOptions";
@@ -6,7 +8,7 @@ import SurveyCopyOptions from "./SurveyCopyOptions";
 interface CopySurveyModalProps {
   open: boolean;
   setOpen: (value: boolean) => void;
-  survey: TSurveyListItem;
+  survey: TSurvey;
 }
 
 export const CopySurveyModal = ({ open, setOpen, survey }: CopySurveyModalProps) => (

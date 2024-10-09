@@ -1,7 +1,7 @@
 "use client";
 
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
+import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { Code, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -14,12 +14,12 @@ import { SurveyStatusIndicator } from "@formbricks/ui/components/SurveyStatusInd
 import { SurveyDropDownMenu } from "./SurveyDropdownMenu";
 
 interface SurveyCardProps {
-  survey: TSurveyListItem;
+  survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
   isViewer: boolean;
   WEBAPP_URL: string;
-  duplicateSurvey: (survey: TSurveyListItem) => void;
+  duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
 }
 export const SurveyCard = ({

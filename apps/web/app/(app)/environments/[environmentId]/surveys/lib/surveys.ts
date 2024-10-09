@@ -1,9 +1,9 @@
 import "server-only";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { responseCache } from "@formbricks/lib/response/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getInProgressSurveyCount } from "@formbricks/lib/survey/service";
 import { buildOrderByClause, buildWhereClause } from "@formbricks/lib/survey/utils";
@@ -12,8 +12,9 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { TSurvey } from "../types/surveys";
 
-export const selectSurveyListItem: Prisma.SurveySelect = {
+export const surveySelect: Prisma.SurveySelect = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -32,13 +33,13 @@ export const selectSurveyListItem: Prisma.SurveySelect = {
   },
 };
 
-export const getSurveyListItems = reactCache(
+export const getSurveys = reactCache(
   (
     environmentId: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
-  ): Promise<TSurveyListItem[]> =>
+  ): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
@@ -46,12 +47,7 @@ export const getSurveyListItems = reactCache(
         try {
           if (filterCriteria?.sortBy === "relevance") {
             // Call the sortByRelevance function
-            return await getSurveyListItemsSortedByRelevance(
-              environmentId,
-              limit,
-              offset ?? 0,
-              filterCriteria
-            );
+            return await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
           }
 
           // Fetch surveys normally with pagination and include response count
@@ -60,7 +56,7 @@ export const getSurveyListItems = reactCache(
               environmentId,
               ...buildWhereClause(filterCriteria),
             },
-            select: selectSurveyListItem,
+            select: surveySelect,
             orderBy: buildOrderByClause(filterCriteria?.sortBy),
             take: limit,
             skip: offset,
@@ -80,26 +76,29 @@ export const getSurveyListItems = reactCache(
           throw error;
         }
       },
-      [`getSurveyListItems-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
       {
-        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+        tags: [
+          surveyCache.tag.byEnvironmentId(environmentId),
+          responseCache.tag.byEnvironmentId(environmentId),
+        ],
       }
     )()
 );
 
-export const getSurveyListItemsSortedByRelevance = reactCache(
+export const getSurveysSortedByRelevance = reactCache(
   (
     environmentId: string,
     limit?: number,
     offset?: number,
     filterCriteria?: TSurveyFilterCriteria
-  ): Promise<TSurveyListItem[]> =>
+  ): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
         try {
-          let surveys: TSurveyListItem[] = [];
+          let surveys: TSurvey[] = [];
           const inProgressSurveyCount = await getInProgressSurveyCount(environmentId, filterCriteria);
 
           // Fetch surveys that are in progress first
@@ -112,12 +111,7 @@ export const getSurveyListItemsSortedByRelevance = reactCache(
                     status: "inProgress",
                     ...buildWhereClause(filterCriteria),
                   },
-                  select: {
-                    ...selectSurveyListItem,
-                    _count: {
-                      select: { responses: true },
-                    },
-                  },
+                  select: surveySelect,
                   orderBy: buildOrderByClause("updatedAt"),
                   take: limit,
                   skip: offset,
@@ -140,12 +134,7 @@ export const getSurveyListItemsSortedByRelevance = reactCache(
                 status: { not: "inProgress" },
                 ...buildWhereClause(filterCriteria),
               },
-              select: {
-                ...selectSurveyListItem,
-                _count: {
-                  select: { responses: true },
-                },
-              },
+              select: surveySelect,
               orderBy: buildOrderByClause("updatedAt"),
               take: remainingLimit,
               skip: newOffset,
@@ -171,17 +160,18 @@ export const getSurveyListItemsSortedByRelevance = reactCache(
           throw error;
         }
       },
-      [
-        `getSurveyListItemsSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`,
-      ],
+      [`getSurveysSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
       {
-        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+        tags: [
+          surveyCache.tag.byEnvironmentId(environmentId),
+          responseCache.tag.byEnvironmentId(environmentId),
+        ],
       }
     )()
 );
 
-export const getSurveyListItem = reactCache(
-  (surveyId: string): Promise<TSurveyListItem | null> =>
+export const getSurvey = reactCache(
+  (surveyId: string): Promise<TSurvey | null> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId]);
@@ -192,7 +182,7 @@ export const getSurveyListItem = reactCache(
             where: {
               id: surveyId,
             },
-            select: selectSurveyListItem,
+            select: surveySelect,
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -208,9 +198,9 @@ export const getSurveyListItem = reactCache(
 
         return { ...surveyPrisma, responseCount: surveyPrisma?._count.responses };
       },
-      [`getSurveyListItem-${surveyId}`],
+      [`getSurvey-${surveyId}`],
       {
-        tags: [surveyCache.tag.byId(surveyId)],
+        tags: [surveyCache.tag.byId(surveyId), responseCache.tag.bySurveyId(surveyId)],
       }
     )()
 );

@@ -1,3 +1,5 @@
+"use client";
+
 import { TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { DropdownMenuItem } from "@formbricks/ui/components/DropdownMenu";
 

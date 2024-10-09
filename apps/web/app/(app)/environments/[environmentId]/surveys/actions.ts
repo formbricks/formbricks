@@ -1,9 +1,6 @@
 "use server";
 
-import {
-  getSurveyListItem,
-  getSurveyListItems,
-} from "@/app/(app)/environments/[environmentId]/surveys/lib/surveyListItem";
+import { getSurvey, getSurveys } from "@/app/(app)/environments/[environmentId]/surveys/lib/surveys";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -21,7 +18,7 @@ const ZGetSurveyAction = z.object({
   surveyId: ZId,
 });
 
-export const getSurveyListItemAction = authenticatedActionClient
+export const getSurveyAction = authenticatedActionClient
   .schema(ZGetSurveyAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
@@ -30,7 +27,7 @@ export const getSurveyListItemAction = authenticatedActionClient
       rules: ["survey", "read"],
     });
 
-    return await getSurveyListItem(parsedInput.surveyId);
+    return await getSurvey(parsedInput.surveyId);
   });
 
 const ZCopySurveyToOtherEnvironmentAction = z.object({
@@ -129,7 +126,7 @@ const ZGetSurveysAction = z.object({
   filterCriteria: ZSurveyFilterCriteria.optional(),
 });
 
-export const getSurveyListItemsAction = authenticatedActionClient
+export const getSurveysAction = authenticatedActionClient
   .schema(ZGetSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
@@ -140,7 +137,7 @@ export const getSurveyListItemsAction = authenticatedActionClient
       rules: ["survey", "read"],
     });
 
-    return await getSurveyListItems(
+    return await getSurveys(
       parsedInput.environmentId,
       parsedInput.limit,
       parsedInput.offset,

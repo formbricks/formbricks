@@ -1,5 +1,7 @@
+"use client";
+
 import { getProductsByEnvironmentIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
+import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -8,7 +10,7 @@ import { TProduct } from "@formbricks/types/product";
 import { CopySurveyForm } from "./CopySurveyForm";
 
 interface SurveyCopyOptionsProps {
-  survey: TSurveyListItem;
+  survey: TSurvey;
   environmentId: string;
   onCancel: () => void;
   setOpen: (value: boolean) => void;

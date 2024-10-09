@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDownIcon } from "lucide-react";
 import { TFilterOption } from "@formbricks/types/surveys/types";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";

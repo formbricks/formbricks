@@ -3,9 +3,9 @@
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
-  getSurveyListItemAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/survey";
+import { getSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
@@ -26,13 +26,13 @@ import { CopySurveyModal } from "./CopySurveyModal";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
-  survey: TSurveyListItem;
+  survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
   webAppUrl: string;
   singleUseId?: string;
   isSurveyCreationDeletionDisabled?: boolean;
-  duplicateSurvey: (survey: TSurveyListItem) => void;
+  duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
 }
 
@@ -78,7 +78,7 @@ export const SurveyDropDownMenu = ({
       router.refresh();
 
       if (duplicatedSurveyResponse?.data) {
-        const transformedDuplicatedSurvey = await getSurveyListItemAction({
+        const transformedDuplicatedSurvey = await getSurveyAction({
           surveyId: duplicatedSurveyResponse.data.id,
         });
         if (transformedDuplicatedSurvey?.data) duplicateSurvey(transformedDuplicatedSurvey.data);

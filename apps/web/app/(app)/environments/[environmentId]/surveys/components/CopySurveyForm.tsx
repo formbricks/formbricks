@@ -1,9 +1,11 @@
+"use client";
+
 import { copySurveyToOtherEnvironmentAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
+import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import {
   TSurveyCopyFormData,
   ZSurveyCopyFormValidation,
-} from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
+} from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -21,7 +23,7 @@ export const CopySurveyForm = ({
   setOpen,
 }: {
   defaultProducts: TProduct[];
-  survey: TSurveyListItem;
+  survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }) => {

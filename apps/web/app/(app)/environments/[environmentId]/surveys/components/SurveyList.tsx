@@ -1,8 +1,8 @@
 "use client";
 
-import { getSurveyListItemsAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { getSurveysAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { getFormattedFilters } from "@/app/(app)/environments/[environmentId]/surveys/lib/utils";
-import { TSurveyListItem } from "@/app/(app)/environments/[environmentId]/surveys/types/surveyListItem";
+import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -41,7 +41,7 @@ export const SurveysList = ({
   surveysPerPage: surveysLimit,
   currentProductChannel,
 }: SurveysListProps) => {
-  const [surveys, setSurveys] = useState<TSurveyListItem[]>([]);
+  const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -77,7 +77,7 @@ export const SurveysList = ({
     if (isFilterInitialized) {
       const fetchInitialSurveys = async () => {
         setIsFetching(true);
-        const res = await getSurveyListItemsAction({
+        const res = await getSurveysAction({
           environmentId: environment.id,
           limit: surveysLimit,
           offset: undefined,
@@ -99,7 +99,7 @@ export const SurveysList = ({
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
-    const res = await getSurveyListItemsAction({
+    const res = await getSurveysAction({
       environmentId: environment.id,
       limit: surveysLimit,
       offset: surveys.length,
@@ -122,7 +122,7 @@ export const SurveysList = ({
     setSurveys(newSurveys);
   };
 
-  const handleDuplicateSurvey = async (survey: TSurveyListItem) => {
+  const handleDuplicateSurvey = async (survey: TSurvey) => {
     const newSurveys = [survey, ...surveys];
     setSurveys(newSurveys);
   };

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
-export const ZSurveyListItem = z.object({
+export const ZSurvey = z.object({
   id: z.string(),
   name: z.string(),
   environmentId: z.string(),
@@ -23,7 +23,7 @@ export const ZSurveyListItem = z.object({
     .nullable(),
 });
 
-export type TSurveyListItem = z.infer<typeof ZSurveyListItem>;
+export type TSurvey = z.infer<typeof ZSurvey>;
 
 export const ZSurveyCopyFormValidation = z.object({
   products: z.array(
