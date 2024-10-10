@@ -67,7 +67,7 @@ const DropdownMenuContent: React.ComponentType<DropdownMenuPrimitive.DropdownMen
           ref={ref}
           sideOffset={sideOffset}
           className={cn(
-            "animate-in data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-56 min-w-[8rem] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 text-slate-700 shadow-sm",
+            "animate-in data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 text-slate-700 shadow-sm",
             className
           )}
           {...props}
@@ -80,13 +80,15 @@ DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 const DropdownMenuItem: React.ForwardRefExoticComponent<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
+    icon?: React.ReactNode;
   } & React.RefAttributes<React.ElementRef<typeof DropdownMenuPrimitive.Item>>
 > = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
+    icon?: React.ReactNode;
   }
->(({ className, inset, ...props }, ref) => (
+>(({ className, children, inset, icon, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
@@ -94,8 +96,10 @@ const DropdownMenuItem: React.ForwardRefExoticComponent<
       inset && "pl-8",
       className
     )}
-    {...props}
-  />
+    {...props}>
+    {icon}
+    {children}
+  </DropdownMenuPrimitive.Item>
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 

@@ -323,7 +323,10 @@ export const MainNavigation = ({
             )}
 
             <DropdownMenu>
-              <DropdownMenuTrigger asChild id="productDropdownTrigger">
+              <DropdownMenuTrigger
+                asChild
+                id="productDropdownTrigger"
+                className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
                 <div
                   tabIndex={0}
                   className={cn(
@@ -403,8 +406,9 @@ export const MainNavigation = ({
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 {isOwnerOrAdmin && (
-                  <DropdownMenuItem onClick={() => handleAddProduct(organization.id)}>
-                    <PlusIcon className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem
+                    onClick={() => handleAddProduct(organization.id)}
+                    icon={<PlusIcon className="mr-2 h-4 w-4" />}>
                     <span>Add product</span>
                   </DropdownMenuItem>
                 )}
@@ -463,8 +467,9 @@ export const MainNavigation = ({
                           target={link.target}
                           key={link.label}
                           className="flex items-center">
-                          <DropdownMenuItem key={link.label}>
-                            <link.icon className="h-4 w-4" strokeWidth={1.5} />
+                          <DropdownMenuItem
+                            key={link.label}
+                            icon={<link.icon className="h-4 w-4" strokeWidth={1.5} />}>
                             {link.label}
                           </DropdownMenuItem>
                         </Link>
@@ -477,8 +482,8 @@ export const MainNavigation = ({
                     onClick={async () => {
                       await signOut({ callbackUrl: "/auth/login" });
                       await formbricksLogout();
-                    }}>
-                    <LogOutIcon className="h-4 w-4" strokeWidth={1.5} />
+                    }}
+                    icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
                     Logout
                   </DropdownMenuItem>
 
@@ -510,8 +515,9 @@ export const MainNavigation = ({
                           </DropdownMenuRadioGroup>
                           <DropdownMenuSeparator />
                           {isMultiOrgEnabled && (
-                            <DropdownMenuItem onClick={() => setShowCreateOrganizationModal(true)}>
-                              <PlusIcon className="mr-2 h-4 w-4" />
+                            <DropdownMenuItem
+                              onClick={() => setShowCreateOrganizationModal(true)}
+                              icon={<PlusIcon className="mr-2 h-4 w-4" />}>
                               <span>Create new organization</span>
                             </DropdownMenuItem>
                           )}

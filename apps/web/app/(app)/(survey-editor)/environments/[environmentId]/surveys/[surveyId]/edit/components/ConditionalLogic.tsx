@@ -141,37 +141,33 @@ export function ConditionalLogic({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     onClick={() => {
                       duplicateLogic(logicItemIdx);
-                    }}>
-                    <CopyIcon className="h-4 w-4" />
+                    }}
+                    icon={<CopyIcon className="h-4 w-4" />}>
                     Duplicate
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     disabled={logicItemIdx === 0}
                     onClick={() => {
                       moveLogic(logicItemIdx, logicItemIdx - 1);
-                    }}>
-                    <ArrowUpIcon className="h-4 w-4" />
+                    }}
+                    icon={<ArrowUpIcon className="h-4 w-4" />}>
                     Move up
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     disabled={logicItemIdx === (question.logic ?? []).length - 1}
                     onClick={() => {
                       moveLogic(logicItemIdx, logicItemIdx + 1);
-                    }}>
-                    <ArrowDownIcon className="h-4 w-4" />
+                    }}
+                    icon={<ArrowDownIcon className="h-4 w-4" />}>
                     Move down
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="flex items-center gap-2"
                     onClick={() => {
                       handleRemoveLogic(logicItemIdx);
-                    }}>
-                    <TrashIcon className="h-4 w-4" />
+                    }}
+                    icon={<TrashIcon className="h-4 w-4" />}>
                     Remove
                   </DropdownMenuItem>
                 </DropdownMenuContent>
