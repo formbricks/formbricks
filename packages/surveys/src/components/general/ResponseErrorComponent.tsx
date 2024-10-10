@@ -11,7 +11,7 @@ type ResponseErrorComponentProps = {
 
 export const ResponseErrorComponent = ({ questions, responseData, onRetry }: ResponseErrorComponentProps) => {
   return (
-    <div className={"fb-flex fb-flex-col fb-bg-white fb-p-4s"}>
+    <div className={"fb-flex fb-flex-col fb-bg-white fb-p-4"}>
       <span className={"fb-mb-1.5 fb-text-base fb-font-bold fb-leading-6 fb-text-slate-900"}>
         {"Your feedback is stuck :("}
       </span>
