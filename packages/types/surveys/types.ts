@@ -2486,6 +2486,7 @@ export const ZSurveyFilterCriteria = z.object({
   name: z.string().optional(),
   status: z.array(ZSurveyStatus).optional(),
   type: z.array(ZSurveyType).optional(),
+  tag: z.array(ZTag).optional(),
   createdBy: z
     .object({
       userId: z.string(),
@@ -2502,6 +2503,7 @@ const ZSurveyFilters = z.object({
   createdBy: z.array(z.enum(["you", "others"])),
   status: z.array(ZSurveyStatus),
   type: z.array(ZSurveyType),
+  tag: z.array(ZTag),
   sortBy: z.enum(["createdAt", "updatedAt", "name", "relevance"]),
 });
 

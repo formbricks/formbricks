@@ -126,7 +126,7 @@ export function SurveyGeneralSettings({
     const fetchedTags = await getTagsForSurveyAction({ surveyId: localSurvey.id });
     setLocalSurvey((prevState) => ({
       ...prevState,
-      tags: fetchedTags.data,
+      tags: fetchedTags?.data ?? [],
     }));
   };
 
