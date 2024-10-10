@@ -219,11 +219,11 @@ export const SigninForm = ({
                     formRef.current.requestSubmit();
                   }
                 }}
-                className={`relative w-full ${lastLoggedInWith != "Email" ? "justify-center" : "justify-start"}`}
+                className={`relative w-full justify-center`}
                 loading={loggingIn}>
                 {totpLogin ? "Submit" : "Login with Email"}
                 {lastLoggedInWith && lastLoggedInWith === "Email" ? (
-                  <i className="absolute right-5">Last Used</i>
+                  <i className="absolute right-3 text-xs">Last Used</i>
                 ) : null}
               </Button>
             )}

@@ -35,9 +35,9 @@ export const OpenIdButton = ({
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
-      className={`relative w-full ${!lastUsed ? "justify-center" : "justify-start"}`}>
+      className={`relative w-full justify-center`}>
       {text}
-      {lastUsed && <i className="absolute right-5">Last Used</i>}
+      {lastUsed && <i className="absolute right-3 text-xs">Last Used</i>}
     </Button>
   );
 };
