@@ -96,7 +96,7 @@ export const OpenTextQuestion = ({
             {question.longAnswer === false ? (
               <input
                 ref={openTextRef}
-                tabIndex={isCurrent ? 1 : -1}
+                tabIndex={isCurrent ? 0 : -1}
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
@@ -115,7 +115,7 @@ export const OpenTextQuestion = ({
                 ref={openTextRef}
                 rows={3}
                 name={question.id}
-                tabIndex={isCurrent ? 1 : -1}
+                tabIndex={isCurrent ? 0 : -1}
                 aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
@@ -137,12 +137,14 @@ export const OpenTextQuestion = ({
       </ScrollableContainer>
       <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
         <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />
         {!isFirstQuestion && (
           <BackButton
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
