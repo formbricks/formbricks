@@ -47,7 +47,7 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
       <Collapsible.CollapsibleContent className="justify-left flex flex-col">
         {/* <hr className="py-1 text-slate-600" /> */}
         {availableQuestionTypes.map((questionType) => (
-          <TooltipProvider delayDuration={50}>
+          <TooltipProvider key={questionType.id} delayDuration={50}>
             <Tooltip>
               <TooltipContent align="start">
                 <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
