@@ -12,6 +12,7 @@ import {
   universalQuestionPresets,
 } from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
@@ -46,22 +47,33 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
       <Collapsible.CollapsibleContent className="justify-left flex flex-col">
         {/* <hr className="py-1 text-slate-600" /> */}
         {availableQuestionTypes.map((questionType) => (
-          <button
-            type="button"
-            key={questionType.id}
-            className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
-            onClick={() => {
-              addQuestion({
-                ...universalQuestionPresets,
-                ...getQuestionDefaults(questionType.id, product),
-                id: createId(),
-                type: questionType.id,
-              });
-              setOpen(false);
-            }}>
-            <questionType.icon className="text-brand-dark -ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
-            {questionType.label}
-          </button>
+          <TooltipProvider delayDuration={50}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  key={questionType.id}
+                  className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
+                  onClick={() => {
+                    addQuestion({
+                      ...universalQuestionPresets,
+                      ...getQuestionDefaults(questionType.id, product),
+                      id: createId(),
+                      type: questionType.id,
+                    });
+                    setOpen(false);
+                  }}>
+                  <questionType.icon className="text-brand-dark -ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
+                  {questionType.label}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent align="start">
+                <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                  {questionType.description}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         ))}
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
