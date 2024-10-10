@@ -192,7 +192,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }: any) {
       // Update the cookie based on the sign-in method
       const userCookies = cookies();
-      userCookies.set("lastLoginMethod", account.provider);
+      userCookies.set("lastLoginMethod", account.provider, { maxAge: 60 * 60 * 24 * 365 * 5 });
 
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
