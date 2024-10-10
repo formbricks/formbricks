@@ -1,8 +1,8 @@
 "use client";
 
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { SurveyTypeIndicator } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyTypeIndicator";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
-import { Code, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -48,7 +48,7 @@ export const SurveyCard = ({
       if (survey.singleUse?.enabled) {
         const generateSingleUseIdResponse = await generateSingleUseIdAction({
           surveyId: survey.id,
-          isEncrypted: survey.singleUse?.isEncrypted ? true : false,
+          isEncrypted: !!survey.singleUse?.isEncrypted,
         });
         if (generateSingleUseIdResponse?.data) {
           setSingleUseId(generateSingleUseIdResponse.data);
@@ -69,23 +69,6 @@ export const SurveyCard = ({
       ? `/environments/${environment.id}/surveys/${survey.id}/edit`
       : `/environments/${environment.id}/surveys/${survey.id}/summary`;
   }, [survey.status, survey.id, environment.id]);
-
-  const SurveyTypeIndicator = ({ type }: { type: string }) => (
-    <div className="flex items-center space-x-2 text-sm text-slate-600">
-      {type === "app" && (
-        <>
-          <Code className="h-4 w-4" />
-          <span>App</span>
-        </>
-      )}
-      {type === "link" && (
-        <>
-          <Link2Icon className="h-4 w-4" />
-          <span> Link</span>
-        </>
-      )}
-    </div>
-  );
 
   return (
     <Link
