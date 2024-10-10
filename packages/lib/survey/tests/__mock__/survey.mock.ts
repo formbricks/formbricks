@@ -204,6 +204,7 @@ const baseSurveyProperties = {
     enabled: false,
   },
   countries: [],
+  tags: [],
   limitedCountries: false,
   ...commonMockProperties,
 };

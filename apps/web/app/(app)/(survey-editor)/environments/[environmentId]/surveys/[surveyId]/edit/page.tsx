@@ -12,6 +12,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
@@ -33,6 +34,7 @@ const Page = async ({ params, searchParams }) => {
     organization,
     session,
     segments,
+    environmentTags,
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getProductByEnvironmentId(params.environmentId),
@@ -43,6 +45,7 @@ const Page = async ({ params, searchParams }) => {
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
     getSegments(params.environmentId),
+    getTagsByEnvironmentId(params.environmentId),
   ]);
   if (!session) {
     throw new Error("Session not found");
@@ -77,6 +80,7 @@ const Page = async ({ params, searchParams }) => {
       survey={survey}
       product={product}
       environment={environment}
+      environmentTags={environmentTags}
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
       responseCount={responseCount}

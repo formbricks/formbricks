@@ -8,10 +8,12 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { SurveyTagsWrapper } from "@formbricks/ui/components/SurveysList/components/SurveyTagsWrapper";
 import { Switch } from "@formbricks/ui/components/Switch";
 
 interface SurveyGeneralSettingsProps {
@@ -22,6 +24,8 @@ interface SurveyGeneralSettingsProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   attributeClasses: TAttributeClass[];
+  environmentTags: TTag[];
+  environmentId: string;
 }
 
 const SURVEY_FAILED_HEADLINE = "Survey Failed";
@@ -35,6 +39,8 @@ export function SurveyGeneralSettings({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  environmentTags,
+  environmentId,
 }: SurveyGeneralSettingsProps) {
   const [open, setOpen] = useState(true);
   const [customReward, setCustomReward] = useState(localSurvey.reward);
@@ -208,6 +214,13 @@ export function SurveyGeneralSettings({
     } else {
       setUrlError(false);
     }
+  };
+
+  const updateFetchedSurveys = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      tags: localSurvey.tags,
+    });
   };
 
   return (
@@ -438,6 +451,7 @@ export function SurveyGeneralSettings({
                 id="limitedToCountries"
                 checked={limitedToCountries}
                 onCheckedChange={toggleLimitedToCountries}
+                className={"mr-2"}
               />
               <Label htmlFor="countries" className="cursor-pointer">
                 <div className="ml-2">
@@ -467,6 +481,19 @@ export function SurveyGeneralSettings({
                 />
               </div>
             )}
+          </div>
+          <div className="p-3">
+            <SurveyTagsWrapper
+              environmentId={environmentId}
+              surveyId={localSurvey.id}
+              tags={localSurvey.tags.map((tag) => ({
+                tagId: tag.id,
+                tagName: tag.name,
+              }))}
+              environmentTags={environmentTags}
+              updateFetchedSurveys={updateFetchedSurveys}
+              isViewer={false}
+            />
           </div>
         </div>
       </Collapsible.CollapsibleContent>

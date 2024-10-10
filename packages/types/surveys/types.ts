@@ -5,6 +5,7 @@ import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
+import { ZTag } from "../tags";
 import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
@@ -804,6 +805,7 @@ export const ZSurvey = z
     reward: z.number(),
     failureChance: z.number(),
     countries: z.array(ZCountry),
+    tags: z.array(ZTag),
     limitedCountries: z.boolean(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),

@@ -106,6 +106,7 @@ export const PREVIEW_SURVEY = {
   failureChance: 0,
   redirectOnFailUrl: null,
   countries: [],
+  tags: [],
   limitedCountries: false,
   reward: 0,
   hiddenFields: {

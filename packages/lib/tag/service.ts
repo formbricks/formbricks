@@ -256,3 +256,42 @@ export const mergeTags = async (originalTagId: string, newTagId: string): Promis
     throw error;
   }
 };
+
+export const deleteTagFromSurvey = async (surveyId: string, tagId: string): Promise<void> => {
+  validateInputs([surveyId, ZId], [tagId, ZId]);
+
+  try {
+    await prisma.survey.update({
+      where: { id: surveyId },
+      data: {
+        tags: {
+          disconnect: { id: tagId },
+        },
+      },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addTagToSurvey = async (surveyId: string, tagId: string): Promise<any> => {
+  validateInputs([surveyId, ZId], [tagId, ZId]);
+  console.log("addTagToSurvey - surveyId:", surveyId, "tagId:", tagId);
+  try {
+    const updatedSurvey = await prisma.survey.update({
+      where: { id: surveyId },
+      data: {
+        tags: {
+          connect: { id: tagId },
+        },
+      },
+      include: {
+        tags: true, // Include tags in the returned survey
+      },
+    });
+    return { data: updatedSurvey };
+  } catch (error) {
+    console.error("addTagToSurvey - error:", error);
+    throw error;
+  }
+};

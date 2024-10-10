@@ -89,6 +89,7 @@ export const selectSurvey = {
   reward: true,
   failureChance: true,
   countries: true,
+  tags: true,
   limitedCountries: true,
   showLanguageSwitch: true,
   languages: {
@@ -469,8 +470,14 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { countries, triggers, environmentId, segment, questions, languages, type, ...surveyData } =
+    const { tags, countries, triggers, environmentId, segment, questions, languages, type, ...surveyData } =
       updatedSurvey;
+
+    if (tags) {
+      data.tags = {
+        set: tags.map((tag) => ({ name: tag.name })),
+      };
+    }
 
     if (countries) {
       data.countries = {
@@ -1016,6 +1023,9 @@ export const copySurveyToOtherEnvironment = async (
       segment: undefined,
       countries: {
         connect: existingSurvey.countries,
+      },
+      tags: {
+        connect: existingSurvey.tags,
       },
     };
 
