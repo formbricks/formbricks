@@ -49,7 +49,7 @@ const Page = async ({ params }) => {
     <PageContentWrapper>
       <div className="container mx-auto space-y-6 p-4">
         <Greeting userName={user.name} />
-        <ExperiencePageStats />
+        <ExperiencePageStats environmentId={params.environmentId} />
         <InsightsTable environmentId={params.environmentId} insightsPerPage={INSIGHTS_PER_PAGE} />
         <SurveyTemplates
           environment={environment}
