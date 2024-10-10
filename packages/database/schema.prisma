@@ -59,11 +59,11 @@ model Attribute {
   updatedAt        DateTime       @updatedAt @map(name: "updated_at")
   attributeClass   AttributeClass @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
   attributeClassId String
-  person           Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId         String
+  contact          Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId        String
   value            String
 
-  @@unique([personId, attributeClassId])
+  @@unique([contactId, attributeClassId])
 }
 
 enum AttributeType {
@@ -90,7 +90,7 @@ model AttributeClass {
   @@index([environmentId, archived])
 }
 
-model Person {
+model Contact {
   id            String      @id @default(cuid())
   userId        String
   createdAt     DateTime    @default(now()) @map(name: "created_at")
@@ -112,8 +112,8 @@ model Response {
   finished         Boolean           @default(false)
   survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
-  person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId         String?
+  contact          Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId        String?
   notes            ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
@@ -139,7 +139,7 @@ model Response {
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
-  @@index([personId, createdAt]) // to determine monthly identified users (persons)
+  @@index([contactId, createdAt]) // to determine monthly identified users (persons)
   @@index([surveyId])
 }
 
@@ -200,14 +200,14 @@ model Display {
   updatedAt  DateTime       @updatedAt @map(name: "updated_at")
   survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId   String
-  person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId   String?
+  contact    Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId  String?
   responseId String?        @unique //deprecated
   status     DisplayStatus?
   response   Response?
 
   @@index([surveyId])
-  @@index([personId, createdAt])
+  @@index([contactId, createdAt])
 }
 
 model SurveyTrigger {
@@ -395,7 +395,7 @@ model Environment {
   widgetSetupCompleted Boolean          @default(false)
   appSetupCompleted    Boolean          @default(false)
   surveys              Survey[]
-  people               Person[]
+  contacts             Contact[]
   actionClasses        ActionClass[]
   attributeClasses     AttributeClass[]
   apiKeys              ApiKey[]
