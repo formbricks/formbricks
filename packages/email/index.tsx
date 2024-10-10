@@ -215,8 +215,9 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
     }
     return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };
+  const surveyLink = getSurveyLink();
 
-  const html = await render(LinkSurveyEmail({ surveyName, getSurveyLink }));
+  const html = await render(LinkSurveyEmail({ surveyName, surveyLink }));
   await sendEmail({
     to: data.email,
     subject: "Your survey is ready to be filled out.",

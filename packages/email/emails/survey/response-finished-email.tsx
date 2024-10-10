@@ -10,6 +10,7 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { EmailButton } from "../../components/email-button";
+import { EmailTemplate } from "../../components/email-template";
 
 export const renderEmailResponseValue = (
   response: string | string[],
@@ -89,96 +90,100 @@ export function ResponseFinishedEmail({
   const questions = getQuestionResponseMapping(survey, response);
 
   return (
-    <Container>
-      <Row>
-        <Column>
-          <Text className="mb-4 text-3xl font-bold">Hey 👋</Text>
-          <Text className="mb-4">
-            Congrats, you received a new response to your survey! Someone just completed your survey{" "}
-            <strong>{survey.name}</strong>:
-          </Text>
-          <Hr />
-          {questions.map((question) => {
-            if (!question.response) return;
-            return (
-              <Row key={question.question}>
-                <Column className="w-full">
-                  <Text className="mb-2 font-medium">{question.question}</Text>
-                  {renderEmailResponseValue(question.response, question.type)}
-                </Column>
-              </Row>
-            );
-          })}
-          {survey.variables.map((variable) => {
-            const variableResponse = response.variables[variable.id];
-            if (variableResponse && ["number", "string"].includes(typeof variable)) {
+    <EmailTemplate>
+      <Container>
+        <Row>
+          <Column>
+            <Text className="mb-4 text-3xl font-bold">Hey 👋</Text>
+            <Text className="mb-4">
+              Congrats, you received a new response to your survey! Someone just completed your survey{" "}
+              <strong>{survey.name}</strong>:
+            </Text>
+            <Hr />
+            {questions.map((question) => {
+              if (!question.response) return;
               return (
-                <Row key={variable.id}>
+                <Row key={question.question}>
                   <Column className="w-full">
-                    <Text className="mb-2 flex items-center gap-2 font-medium">
-                      {variable.type === "number" ? (
-                        <FileDigitIcon className="h-4 w-4" />
-                      ) : (
-                        <FileType2Icon className="h-4 w-4" />
-                      )}
-                      {variable.name}
-                    </Text>
-                    <Text className="mt-0 whitespace-pre-wrap break-words font-bold">{variableResponse}</Text>
+                    <Text className="mb-2 font-medium">{question.question}</Text>
+                    {renderEmailResponseValue(question.response, question.type)}
                   </Column>
                 </Row>
               );
-            }
-            return null;
-          })}
-          {survey.hiddenFields.fieldIds?.map((hiddenFieldId) => {
-            const hiddenFieldResponse = response.data[hiddenFieldId];
-            if (hiddenFieldResponse && typeof hiddenFieldResponse === "string") {
-              return (
-                <Row key={hiddenFieldId}>
-                  <Column className="w-full">
-                    <Text className="mb-2 flex items-center gap-2 font-medium">
-                      {hiddenFieldId} <EyeOffIcon />
-                    </Text>
-                    <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
-                      {hiddenFieldResponse}
-                    </Text>
-                  </Column>
-                </Row>
-              );
-            }
-            return null;
-          })}
-          <EmailButton
-            href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
-            label={
-              responseCount > 1
-                ? `View ${String(responseCount - 1).toString()} more ${responseCount === 2 ? "response" : "responses"}`
-                : `View survey summary`
-            }
-          />
-          <Hr />
-          <Section className="mt-4 text-center text-sm">
-            <Text className="font-bold">Don&apos;t want to get these notifications?</Text>
-            <Text className="mb-0">
-              Turn off notifications for{" "}
-              <Link
-                className="text-black underline"
-                href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
-                this form
-              </Link>
-            </Text>
-            <Text className="mt-0">
-              Turn off notifications for{" "}
-              <Link
-                className="text-black underline"
-                href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
-                all newly created forms{" "}
-              </Link>
-            </Text>
-          </Section>
-        </Column>
-      </Row>
-    </Container>
+            })}
+            {survey.variables.map((variable) => {
+              const variableResponse = response.variables[variable.id];
+              if (variableResponse && ["number", "string"].includes(typeof variable)) {
+                return (
+                  <Row key={variable.id}>
+                    <Column className="w-full">
+                      <Text className="mb-2 flex items-center gap-2 font-medium">
+                        {variable.type === "number" ? (
+                          <FileDigitIcon className="h-4 w-4" />
+                        ) : (
+                          <FileType2Icon className="h-4 w-4" />
+                        )}
+                        {variable.name}
+                      </Text>
+                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                        {variableResponse}
+                      </Text>
+                    </Column>
+                  </Row>
+                );
+              }
+              return null;
+            })}
+            {survey.hiddenFields.fieldIds?.map((hiddenFieldId) => {
+              const hiddenFieldResponse = response.data[hiddenFieldId];
+              if (hiddenFieldResponse && typeof hiddenFieldResponse === "string") {
+                return (
+                  <Row key={hiddenFieldId}>
+                    <Column className="w-full">
+                      <Text className="mb-2 flex items-center gap-2 font-medium">
+                        {hiddenFieldId} <EyeOffIcon />
+                      </Text>
+                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                        {hiddenFieldResponse}
+                      </Text>
+                    </Column>
+                  </Row>
+                );
+              }
+              return null;
+            })}
+            <EmailButton
+              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
+              label={
+                responseCount > 1
+                  ? `View ${String(responseCount - 1).toString()} more ${responseCount === 2 ? "response" : "responses"}`
+                  : `View survey summary`
+              }
+            />
+            <Hr />
+            <Section className="mt-4 text-center text-sm">
+              <Text className="font-bold">Don&apos;t want to get these notifications?</Text>
+              <Text className="mb-0">
+                Turn off notifications for{" "}
+                <Link
+                  className="text-black underline"
+                  href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
+                  this form
+                </Link>
+              </Text>
+              <Text className="mt-0">
+                Turn off notifications for{" "}
+                <Link
+                  className="text-black underline"
+                  href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
+                  all newly created forms{" "}
+                </Link>
+              </Text>
+            </Section>
+          </Column>
+        </Row>
+      </Container>
+    </EmailTemplate>
   );
 }
 
