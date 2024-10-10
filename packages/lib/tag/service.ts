@@ -3,6 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -274,7 +275,7 @@ export const deleteTagFromSurvey = async (surveyId: string, tagId: string): Prom
   }
 };
 
-export const addTagToSurvey = async (surveyId: string, tagId: string): Promise<any> => {
+export const addTagToSurvey = async (surveyId: string, tagId: string): Promise<TSurvey> => {
   validateInputs([surveyId, ZId], [tagId, ZId]);
   console.log("addTagToSurvey - surveyId:", surveyId, "tagId:", tagId);
   try {
@@ -289,9 +290,28 @@ export const addTagToSurvey = async (surveyId: string, tagId: string): Promise<a
         tags: true, // Include tags in the returned survey
       },
     });
-    return { data: updatedSurvey };
+    return updatedSurvey;
   } catch (error) {
     console.error("addTagToSurvey - error:", error);
+    throw error;
+  }
+};
+
+export const getTagsBySurveyId = async (surveyId: string): Promise<TTag[]> => {
+  validateInputs([surveyId, ZId]);
+
+  try {
+    const survey = await prisma.survey.findUnique({
+      where: { id: surveyId },
+      include: { tags: true },
+    });
+
+    if (!survey) {
+      throw new Error("Survey not found");
+    }
+
+    return survey.tags;
+  } catch (error) {
     throw error;
   }
 };

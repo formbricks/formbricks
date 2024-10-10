@@ -13,6 +13,7 @@ import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionTo
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { getTagsForSurveyAction } from "@formbricks/ui/components/SurveysList/actions";
 import { SurveyTagsWrapper } from "@formbricks/ui/components/SurveysList/components/SurveyTagsWrapper";
 import { Switch } from "@formbricks/ui/components/Switch";
 
@@ -105,6 +106,7 @@ export function SurveyGeneralSettings({
     };
 
     fetchCountries();
+    updateFetchedSurveys();
   }, []);
 
   const handleCountryChange = (selectedCountries) => {
@@ -117,6 +119,14 @@ export function SurveyGeneralSettings({
       ...prevState,
       countries: updatedCountries,
       limitedCountries: updatedCountries.length > 0,
+    }));
+  };
+
+  const updateFetchedSurveys = async () => {
+    const fetchedTags = await getTagsForSurveyAction({ surveyId: localSurvey.id });
+    setLocalSurvey((prevState) => ({
+      ...prevState,
+      tags: fetchedTags.data,
     }));
   };
 
@@ -214,13 +224,6 @@ export function SurveyGeneralSettings({
     } else {
       setUrlError(false);
     }
-  };
-
-  const updateFetchedSurveys = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      tags: localSurvey.tags,
-    });
   };
 
   return (

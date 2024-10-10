@@ -475,7 +475,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     if (tags) {
       data.tags = {
-        set: tags.map((tag) => ({ name: tag.name })),
+        set: tags.map((tag) => ({ id: tag.id })),
       };
     }
 

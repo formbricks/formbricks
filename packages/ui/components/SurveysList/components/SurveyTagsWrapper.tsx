@@ -9,7 +9,12 @@ import { TTag } from "@formbricks/types/tags";
 import { Button } from "../../Button";
 import { Tag } from "../../Tag";
 import { TagsCombobox } from "../../TagsCombobox";
-import { createTagAction, createTagToSurveyAction, deleteTagOnSurveyAction } from "../actions";
+import {
+  createTagAction,
+  createTagToSurveyAction,
+  deleteTagOnSurveyAction,
+  getTagsForSurveyAction,
+} from "../actions";
 
 interface SurveyTagsWrapperProps {
   tags: {
@@ -47,6 +52,22 @@ export const SurveyTagsWrapper: React.FC<SurveyTagsWrapperProps> = ({
   };
 
   useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const fetchedTags = await getTagsForSurveyAction({ surveyId });
+        if (fetchedTags && fetchedTags.data) {
+          setTagsState(fetchedTags.data.map((tag) => ({ tagId: tag.id, tagName: tag.name })));
+        }
+      } catch (error) {
+        console.error("Error fetching tags:", error);
+      }
+    };
+
+    fetchTags();
+  }, [surveyId]);
+
+  useEffect(() => {
+    console.log("unutra tagovi su", tags);
     const timeoutId = setTimeout(() => {
       if (tagIdToHighlight) {
         setTagIdToHighlight("");
