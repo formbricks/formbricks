@@ -246,7 +246,10 @@ export const authOptions: NextAuthOptions = {
         const existingUserWithEmail = await getUserByEmail(user.email);
 
         if (existingUserWithEmail) {
-          throw new Error("A user with this email exists already.");
+          // This error is only relavent for making new accounts and not when signing in
+
+          // throw new Error("A user with this email exists already.");
+          return true;
         }
 
         const userProfile = await createUser({
