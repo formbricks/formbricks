@@ -1,5 +1,6 @@
 import React from "react";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
+import { EmailTemplate } from "../../components/email-template";
 import { LiveSurveyNotification } from "./live-survey-notification";
 import { NotificationFooter } from "./notification-footer";
 import { NotificationHeader } from "./notification-header";
@@ -21,7 +22,7 @@ export function WeeklySummaryNotificationEmail({
   endYear,
 }: WeeklySummaryNotificationEmailProps): React.JSX.Element {
   return (
-    <div>
+    <EmailTemplate>
       <NotificationHeader
         endDate={endDate}
         endYear={endYear}
@@ -35,6 +36,6 @@ export function WeeklySummaryNotificationEmail({
         surveys={notificationData.surveys}
       />
       <NotificationFooter environmentId={notificationData.environmentId} />
-    </div>
+    </EmailTemplate>
   );
 }

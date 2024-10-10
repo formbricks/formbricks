@@ -1,10 +1,6 @@
 import { Body, Column, Container, Html, Img, Link, Row, Section, Tailwind } from "@react-email/components";
 
-interface EmailTemplateProps {
-  content: JSX.Element;
-}
-
-export function EmailTemplate({ content }: EmailTemplateProps): React.JSX.Element {
+export function EmailTemplate({ children }): React.JSX.Element {
   return (
     <Html>
       <Tailwind>
@@ -22,7 +18,7 @@ export function EmailTemplate({ content }: EmailTemplateProps): React.JSX.Elemen
               />
             </Link>
           </Section>
-          <Container className="mx-auto my-8 max-w-xl bg-white p-4 text-left">{content}</Container>
+          <Container className="mx-auto my-8 max-w-xl bg-white p-4 text-left">{children}</Container>
 
           <Section>
             <Row>

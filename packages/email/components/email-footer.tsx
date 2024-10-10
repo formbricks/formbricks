@@ -8,3 +8,5 @@ export function EmailFooter(): React.JSX.Element {
     </Text>
   );
 }
+
+export default EmailFooter;
