@@ -49,6 +49,11 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
         {availableQuestionTypes.map((questionType) => (
           <TooltipProvider delayDuration={50}>
             <Tooltip>
+              <TooltipContent align="start">
+                <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                  {questionType.description}
+                </p>
+              </TooltipContent>
               <TooltipTrigger asChild>
                 <button
                   type="button"
@@ -67,11 +72,6 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
                   {questionType.label}
                 </button>
               </TooltipTrigger>
-              <TooltipContent align="start">
-                <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                  {questionType.description}
-                </p>
-              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ))}
