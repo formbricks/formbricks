@@ -24,7 +24,7 @@ export const constructToastMessage = (
 export const getIsInsightGenerationAllowed = (survey: TSurvey) => {
   const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
   const questionWithoutInsightsEnabled = openTextQuestions.some(
-    (question) => question.insightsEnabled === undefined
+    (question) => question.type === "openText" && question.insightsEnabled === undefined
   );
 
   return openTextQuestions.length > 0 && questionWithoutInsightsEnabled;

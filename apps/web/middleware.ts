@@ -20,7 +20,7 @@ import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
 export const middleware = async (request: NextRequest) => {
-  // TODO: any type because of conflict between nextjs and next-auth types. Will likely be solved with future packae updates
+  // issue with next auth types; let's review when new fixes are available
   const token = await getToken({ req: request as any });
 
   if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {

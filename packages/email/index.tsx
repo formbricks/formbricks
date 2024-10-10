@@ -18,18 +18,17 @@ import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
-import { ForgotPasswordEmail } from "./components/auth/forgot-password-email";
-import { PasswordResetNotifyEmail } from "./components/auth/password-reset-notify-email";
-import { VerificationEmail } from "./components/auth/verification-email";
-import { EmailTemplate } from "./components/general/email-template";
-import { InviteAcceptedEmail } from "./components/invite/invite-accepted-email";
-import { InviteEmail } from "./components/invite/invite-email";
-import { OnboardingInviteEmail } from "./components/invite/onboarding-invite-email";
-import { EmbedSurveyPreviewEmail } from "./components/survey/embed-survey-preview-email";
-import { LinkSurveyEmail } from "./components/survey/link-survey-email";
-import { ResponseFinishedEmail } from "./components/survey/response-finished-email";
-import { NoLiveSurveyNotificationEmail } from "./components/weekly-summary/no-live-survey-notification-email";
-import { WeeklySummaryNotificationEmail } from "./components/weekly-summary/weekly-summary-notification-email";
+import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
+import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
+import { VerificationEmail } from "./emails/auth/verification-email";
+import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
+import { InviteEmail } from "./emails/invite/invite-email";
+import { OnboardingInviteEmail } from "./emails/invite/onboarding-invite-email";
+import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
+import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
+import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
+import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
+import { WeeklySummaryNotificationEmail } from "./emails/weekly-summary/weekly-summary-notification-email";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -81,10 +80,11 @@ export const sendVerificationEmail = async (user: TEmailUser): Promise<void> => 
   const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?email=${encodeURIComponent(
     user.email
   )}`;
+  const html = await render(VerificationEmail({ verificationRequestLink, verifyLink }));
   await sendEmail({
     to: user.email,
     subject: "Please verify your email to use Formbricks",
-    html: render(EmailTemplate({ content: VerificationEmail({ verificationRequestLink, verifyLink }) })),
+    html,
   });
 };
 
@@ -93,18 +93,20 @@ export const sendForgotPasswordEmail = async (user: TEmailUser): Promise<void> =
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
+  const html = await render(ForgotPasswordEmail({ verifyLink }));
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
-    html: render(EmailTemplate({ content: ForgotPasswordEmail({ verifyLink }) })),
+    html,
   });
 };
 
 export const sendPasswordResetNotifyEmail = async (user: TEmailUser): Promise<void> => {
+  const html = await render(PasswordResetNotifyEmail());
   await sendEmail({
     to: user.email,
     subject: "Your Formbricks password has been changed",
-    html: render(EmailTemplate({ content: PasswordResetNotifyEmail() })),
+    html,
   });
 };
 
@@ -123,18 +125,18 @@ export const sendInviteMemberEmail = async (
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
   if (isOnboardingInvite && inviteMessage) {
+    const html = await render(OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName }));
     await sendEmail({
       to: email,
       subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
-      html: render(
-        EmailTemplate({ content: OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName }) })
-      ),
+      html,
     });
   } else {
+    const html = await render(InviteEmail({ inviteeName, inviterName, verifyLink }));
     await sendEmail({
       to: email,
       subject: `You're invited to collaborate on Formbricks!`,
-      html: render(EmailTemplate({ content: InviteEmail({ inviteeName, inviterName, verifyLink }) })),
+      html,
     });
   }
 };
@@ -144,10 +146,11 @@ export const sendInviteAcceptedEmail = async (
   inviteeName: string,
   email: string
 ): Promise<void> => {
+  const html = await render(InviteAcceptedEmail({ inviteeName, inviterName }));
   await sendEmail({
     to: email,
     subject: `You've got a new organization member!`,
-    html: render(EmailTemplate({ content: InviteAcceptedEmail({ inviteeName, inviterName }) })),
+    html,
   });
 };
 
@@ -165,37 +168,38 @@ export const sendResponseFinishedEmail = async (
     throw new Error("Organization not found");
   }
 
+  const html = await render(
+    ResponseFinishedEmail({
+      survey,
+      responseCount,
+      response,
+      WEBAPP_URL,
+      environmentId,
+      organization,
+    })
+  );
+
   await sendEmail({
     to: email,
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
     replyTo: personEmail?.toString() ?? MAIL_FROM,
-    html: render(
-      EmailTemplate({
-        content: ResponseFinishedEmail({
-          survey,
-          responseCount,
-          response,
-          WEBAPP_URL,
-          environmentId,
-          organization,
-        }),
-      })
-    ),
+    html,
   });
 };
 
 export const sendEmbedSurveyPreviewEmail = async (
   to: string,
   subject: string,
-  html: string,
+  innerHtml: string,
   environmentId: string
 ): Promise<void> => {
+  const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId }));
   await sendEmail({
     to,
     subject,
-    html: render(EmailTemplate({ content: EmbedSurveyPreviewEmail({ html, environmentId }) })),
+    html,
   });
 };
 
@@ -211,10 +215,13 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
     }
     return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };
+  const surveyLink = getSurveyLink();
+
+  const html = await render(LinkSurveyEmail({ surveyName, surveyLink }));
   await sendEmail({
     to: data.email,
     subject: "Your survey is ready to be filled out.",
-    html: render(EmailTemplate({ content: LinkSurveyEmail({ surveyName, getSurveyLink }) })),
+    html,
   });
 };
 
@@ -232,20 +239,19 @@ export const sendWeeklySummaryNotificationEmail = async (
   )}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
+  const html = await render(
+    WeeklySummaryNotificationEmail({
+      notificationData,
+      startDate,
+      endDate,
+      startYear,
+      endYear,
+    })
+  );
   await sendEmail({
     to: email,
     subject: getEmailSubject(notificationData.productName),
-    html: render(
-      EmailTemplate({
-        content: WeeklySummaryNotificationEmail({
-          notificationData,
-          startDate,
-          endDate,
-          startYear,
-          endYear,
-        }),
-      })
-    ),
+    html,
   });
 };
 
@@ -263,19 +269,18 @@ export const sendNoLiveSurveyNotificationEmail = async (
   )}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
+  const html = await render(
+    NoLiveSurveyNotificationEmail({
+      notificationData,
+      startDate,
+      endDate,
+      startYear,
+      endYear,
+    })
+  );
   await sendEmail({
     to: email,
     subject: getEmailSubject(notificationData.productName),
-    html: render(
-      EmailTemplate({
-        content: NoLiveSurveyNotificationEmail({
-          notificationData,
-          startDate,
-          endDate,
-          startYear,
-          endYear,
-        }),
-      })
-    ),
+    html,
   });
 };

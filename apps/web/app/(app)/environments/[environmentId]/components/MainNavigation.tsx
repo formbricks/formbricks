@@ -32,6 +32,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { AiOutlineDiscord } from "react-icons/ai";
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -240,7 +241,7 @@ export const MainNavigation = ({
       label: "Join Discord",
       href: "https://formbricks.com/discord",
       target: "_blank",
-      icon: ArrowUpRightIcon,
+      icon: AiOutlineDiscord,
     },
   ];
 
