@@ -3,7 +3,7 @@ on:
   workflow_call:
 jobs:
   build:
-    name: Build Formbricks-web
+    name: Build Docs
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
