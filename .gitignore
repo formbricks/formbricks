@@ -58,3 +58,5 @@ packages/lib/uploads
 # Vite Timestamps
 *vite.config.*.timestamp-*
 
+# js compiled assets
+apps/web/public/js
