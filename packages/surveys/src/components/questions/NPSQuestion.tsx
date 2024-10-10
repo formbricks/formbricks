@@ -42,7 +42,7 @@ export const NPSQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
+  const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleClick = (number: number) => {
@@ -92,7 +92,7 @@ export const NPSQuestion = ({
                   return (
                     <label
                       key={number}
-                      tabIndex={idx + 1}
+                      tabIndex={isCurrent ? 0 : -1}
                       onMouseOver={() => setHoveredNumber(number)}
                       onMouseLeave={() => setHoveredNumber(-1)}
                       onKeyDown={(e) => {
@@ -127,6 +127,7 @@ export const NPSQuestion = ({
                         className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
                         onClick={() => handleClick(number)}
                         required={question.required}
+                        tabIndex={-1}
                       />
                       {number}
                     </label>
@@ -141,24 +142,23 @@ export const NPSQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        {!question.required && (
+          <SubmitButton
+            tabIndex={isCurrent ? 0 : -1}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
+          />
+        )}
         {!isFirstQuestion && (
           <BackButton
-            tabIndex={isLastQuestion ? 12 : 13}
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
               onBack();
             }}
-          />
-        )}
-        <div></div>
-        {!question.required && (
-          <SubmitButton
-            tabIndex={12}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
           />
         )}
       </div>
