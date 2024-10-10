@@ -5,9 +5,11 @@ import { Button } from "../../Button";
 import { GithubIcon } from "../../icons";
 
 export const GithubButton = ({
+  lastUsed,
   text = "Continue with Github",
   inviteUrl,
 }: {
+  lastUsed?: boolean;
   text?: string;
   inviteUrl?: string | null;
 }) => {
@@ -25,8 +27,9 @@ export const GithubButton = ({
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
-      className="w-full justify-center">
+      className="relative w-full justify-center">
       {text}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };

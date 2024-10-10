@@ -4,10 +4,12 @@ import { Button } from "../../Button";
 import { MicrosoftIcon } from "../../icons";
 
 export const AzureButton = ({
+  lastUsed,
   text = "Continue with Azure",
   inviteUrl,
   directRedirect = false,
 }: {
+  lastUsed?: boolean;
   text?: string;
   inviteUrl?: string | null;
   directRedirect?: boolean;
@@ -32,8 +34,9 @@ export const AzureButton = ({
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
-      className="w-full justify-center">
+      className="relative w-full justify-center">
       {text}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };

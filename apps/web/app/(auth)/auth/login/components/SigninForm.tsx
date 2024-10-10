@@ -95,6 +95,7 @@ export const SigninForm = ({
     }
   };
 
+  const [lastLogin, setLastLogin] = useState<String | null>("");
   const [loggingIn, setLoggingIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
@@ -105,10 +106,20 @@ export const SigninForm = ({
   const error = searchParams?.get("error");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
 
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+    if (match) {
+      return match[2];
+    } else {
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (error) {
       setSignInError(error);
     }
+    setLastLogin(getCookie("lastLoginMethod"));
   }, [error]);
 
   const formLabel = useMemo(() => {
@@ -209,34 +220,41 @@ export const SigninForm = ({
                     formRef.current.requestSubmit();
                   }
                 }}
-                className="w-full justify-center"
+                className="relative w-full justify-center"
                 loading={loggingIn}>
                 {totpLogin ? "Submit" : "Login with Email"}
+                {lastLogin == "credentials" && (
+                  <span className="absolute right-3 text-xs opacity-50">Last Used</span>
+                )}
               </Button>
             )}
           </form>
 
           {googleOAuthEnabled && !totpLogin && (
             <>
-              <GoogleButton inviteUrl={callbackUrl} />
+              <GoogleButton inviteUrl={callbackUrl} lastUsed={lastLogin == "google"} />
             </>
           )}
 
           {githubOAuthEnabled && !totpLogin && (
             <>
-              <GithubButton inviteUrl={callbackUrl} />
+              <GithubButton inviteUrl={callbackUrl} lastUsed={lastLogin == "github"} />
             </>
           )}
 
           {azureOAuthEnabled && !totpLogin && (
             <>
-              <AzureButton inviteUrl={callbackUrl} />
+              <AzureButton inviteUrl={callbackUrl} lastUsed={lastLogin == "azure-ad"} />
             </>
           )}
 
           {oidcOAuthEnabled && !totpLogin && (
             <>
-              <OpenIdButton inviteUrl={callbackUrl} text={`Continue with ${oidcDisplayName}`} />
+              <OpenIdButton
+                inviteUrl={callbackUrl}
+                text={`Continue with ${oidcDisplayName}`}
+                lastUsed={lastLogin == "openid"}
+              />
             </>
           )}
         </div>

@@ -3,10 +3,12 @@ import { useCallback, useEffect } from "react";
 import { Button } from "../../Button";
 
 export const OpenIdButton = ({
+  lastUsed,
   text = "Continue with OpenId Connect",
   inviteUrl,
   directRedirect = false,
 }: {
+  lastUsed?: boolean;
   text?: string;
   inviteUrl?: string | null;
   directRedirect?: boolean;
@@ -30,8 +32,9 @@ export const OpenIdButton = ({
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
-      className="w-full justify-center">
+      className="relative w-full justify-center">
       {text}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };

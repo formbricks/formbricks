@@ -4,6 +4,7 @@ import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { createAccount } from "./account/service";
@@ -189,6 +190,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: any) {
+      // Update the cookie based on the sign-in method
+      const userCookies = cookies();
+      userCookies.set("lastLoginMethod", account.provider);
+
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");

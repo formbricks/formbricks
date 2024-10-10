@@ -5,9 +5,11 @@ import { Button } from "../../Button";
 import { GoogleIcon } from "../../icons";
 
 export const GoogleButton = ({
+  lastUsed,
   text = "Continue with Google",
   inviteUrl,
 }: {
+  lastUsed?: boolean;
   text?: string;
   inviteUrl?: string | null;
 }) => {
@@ -25,8 +27,9 @@ export const GoogleButton = ({
       startIconClassName="ml-3"
       onClick={handleLogin}
       variant="secondary"
-      className="w-full justify-center">
+      className="relative w-full justify-center">
       {text}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };
