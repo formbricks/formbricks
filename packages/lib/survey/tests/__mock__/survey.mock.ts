@@ -95,7 +95,6 @@ export const mockEnvironment: TEnvironment = {
   type: "production",
   productId: mockId,
   appSetupCompleted: false,
-  websiteSetupCompleted: false,
 };
 
 export const mockUser: TUser = {
@@ -237,7 +236,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
 };
 
 export const mockSurveyOutput: SurveyMock = {
-  type: "website",
+  type: "link",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -256,7 +255,6 @@ export const mockSurveyOutput: SurveyMock = {
 };
 
 export const createSurveyInput: TSurveyCreateInput = {
-  type: "website",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
@@ -264,7 +262,7 @@ export const createSurveyInput: TSurveyCreateInput = {
 };
 
 export const updateSurveyInput: TSurvey = {
-  type: "website",
+  type: "link",
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
