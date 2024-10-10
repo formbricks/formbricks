@@ -4,13 +4,13 @@ interface SurveyTypeIndicatorProps {
   type: string;
 }
 
-const surveyTypeConfig = {
+const surveyTypeMapping = {
   app: { icon: Code, label: "App" },
   link: { icon: Link2Icon, label: "Link" },
 };
 
 export const SurveyTypeIndicator = ({ type }: SurveyTypeIndicatorProps) => {
-  const { icon: Icon, label } = surveyTypeConfig[type] || { icon: HelpCircle, label: "Unknown" };
+  const { icon: Icon, label } = surveyTypeMapping[type] || { icon: HelpCircle, label: "Unknown" };
 
   return (
     <div className="flex items-center space-x-2 text-sm text-slate-600">
