@@ -11,6 +11,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
+import { getPromptText } from "@formbricks/lib/utils/ai";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
 import { TWebhook } from "@formbricks/types/webhooks";
@@ -164,7 +165,7 @@ export const POST = async (request: Request) => {
               if (!isQuestionAnswered) {
                 continue;
               }
-              const text = `**${question.headline.default}**\n${response.data[question.id]}`;
+              const text = getPromptText(question.headline.default, response.data[question.id] as string);
               // TODO: check if subheadline gives more context and better embeddings
               await createDocument({
                 environmentId,

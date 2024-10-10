@@ -47,7 +47,7 @@ import {
   buildOrderByClause,
   buildWhereClause,
   doesSurveyHasOpenTextQuestion,
-  getInsightEnabledQuestionIds,
+  getInsightsEnabled,
   transformPrismaSurvey,
 } from "./utils";
 
@@ -636,7 +636,17 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         }
       }
 
-      const insightsEnabledQuestionIds = await getInsightEnabledQuestionIds(questionsToCheckForInsights);
+      const insightsEnabledValues = await Promise.all(
+        openTextQuestions.map(async (question) => {
+          const insightsEnabled = await getInsightsEnabled(question);
+
+          return { id: question.id, insightsEnabled };
+        })
+      );
+
+      const insightsEnabledQuestionIds = insightsEnabledValues
+        .filter((value) => value.insightsEnabled)
+        .map((value) => value.id);
 
       if (insightsEnabledQuestionIds.length > 0) {
         data.questions = data.questions?.map((question) => {
@@ -814,7 +824,17 @@ export const createSurvey = async (
 
     if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
       const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-      const insightsEnabledQuestionIds = await getInsightEnabledQuestionIds(openTextQuestions);
+      const insightsEnabledValues = await Promise.all(
+        openTextQuestions.map(async (question) => {
+          const insightsEnabled = await getInsightsEnabled(question);
+
+          return { id: question.id, insightsEnabled };
+        })
+      );
+
+      const insightsEnabledQuestionIds = insightsEnabledValues
+        .filter((value) => value.insightsEnabled)
+        .map((value) => value.id);
 
       console.log(insightsEnabledQuestionIds);
       if (insightsEnabledQuestionIds.length > 0) {
@@ -1436,12 +1456,12 @@ export const getSurveysBySegmentId = reactCache(
     )()
 );
 
-export const generateInsightsForSurveys = async (environmentId: string) => {
-  validateInputs([environmentId, ZId]);
+export const generateInsightsForSurvey = async (surveyId: string) => {
+  validateInputs([surveyId, ZId]);
   try {
-    const surveys = await prisma.survey.findMany({
+    const survey = await prisma.survey.findUnique({
       where: {
-        environmentId,
+        id: surveyId,
       },
       select: {
         id: true,
@@ -1449,53 +1469,61 @@ export const generateInsightsForSurveys = async (environmentId: string) => {
       },
     });
 
-    const filteredSurveys = surveys.filter((survey) => doesSurveyHasOpenTextQuestion(survey.questions));
-
-    let surveyPromises: Promise<{ id: string }>[] = [];
-
-    const AIEnabledSurveyIds: string[] = [];
-
-    for (const survey of filteredSurveys) {
-      const openTextQuestions = survey.questions.filter((question) => question.type === "openText") ?? [];
-
-      const insightsEnabledQuestionIds = await getInsightEnabledQuestionIds(openTextQuestions);
-
-      if (insightsEnabledQuestionIds.length > 0) {
-        AIEnabledSurveyIds.push(survey.id);
-
-        const updatedQuestions = survey.questions.map((question) => {
-          if (insightsEnabledQuestionIds.includes(question.id)) {
-            return {
-              ...question,
-              insightsEnabled: true,
-            };
-          }
-
-          return question;
-        });
-
-        const surveyUpdatePromise = prisma.survey.update({
-          where: {
-            id: survey.id,
-          },
-          data: {
-            questions: updatedQuestions,
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        surveyPromises.push(surveyUpdatePromise);
-      }
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    await Promise.all(surveyPromises);
+    if (!doesSurveyHasOpenTextQuestion(survey.questions)) {
+      return;
+    }
 
-    for (const surveyId of AIEnabledSurveyIds) {
-      await generateInsightsForSurveyResponses(surveyId);
+    const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
+
+    // ? We could modify this check to generate the `insightsEnabled` key only for open-text questions where `insightsEnabled` is undefined. However, this might lead to inconsistent results in environments where plan changes have occurred, or if the question headlines were updated during that time.
+    const insightsEnabledValues = await Promise.all(
+      openTextQuestions.map(async (question) => {
+        const insightsEnabled = await getInsightsEnabled(question);
+
+        return { id: question.id, insightsEnabled };
+      })
+    );
+
+    const insightsEnabledQuestionIds = insightsEnabledValues
+      .filter((value) => value.insightsEnabled)
+      .map((value) => value.id);
+
+    const updatedQuestions = survey.questions.map((question) => {
+      if (question.type === "openText") {
+        const areInsightsEnabled = insightsEnabledQuestionIds.includes(question.id);
+        return {
+          ...question,
+          insightsEnabled: areInsightsEnabled,
+        };
+      }
+
+      return question;
+    });
+    const updatedSurvey = await prisma.survey.update({
+      where: {
+        id: survey.id,
+      },
+      data: {
+        questions: updatedQuestions,
+      },
+      select: {
+        id: true,
+        environmentId: true,
+        questions: true,
+      },
+    });
+
+    surveyCache.revalidate({ id: surveyId });
+
+    if (insightsEnabledQuestionIds.length > 0) {
+      await generateInsightsForSurveyResponses(updatedSurvey);
     }
   } catch (error) {
+    console.error("Error generating insights for surveys:", error);
     throw error;
   }
 };

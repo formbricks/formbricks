@@ -82,6 +82,7 @@ const Page = async ({ params }) => {
             isViewer={isViewer}
             webAppUrl={WEBAPP_URL}
             user={user}
+            surveyResponseCount={totalResponseCount}
           />
         }>
         <SurveyAnalysisNavigation

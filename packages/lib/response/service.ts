@@ -15,7 +15,13 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum, TSurveySummary } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyQuestionTypeEnum,
+  TSurveyQuestions,
+  TSurveySummary,
+  ZSurveyQuestions,
+} from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
@@ -31,6 +37,7 @@ import { getResponseNotes } from "../responseNote/service";
 import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
+import { getPromptText } from "../utils/ai";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
@@ -914,55 +921,75 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
     )()
 );
 
-export const generateInsightsForSurveyResponses = async (surveyId: string): Promise<void> => {
-  validateInputs([surveyId, ZId]);
-  try {
-    const survey = await getSurvey(surveyId);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", surveyId);
-    }
+export const generateInsightsForSurveyResponses = async (surveyData: {
+  id: string;
+  environmentId: string;
+  questions: TSurveyQuestions;
+}): Promise<void> => {
+  const { id: surveyId, environmentId, questions } = surveyData;
 
-    const openTextQuestionsWithInsights = survey.questions.filter(
+  validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
+  try {
+    const openTextQuestionsWithInsights = questions.filter(
       (question) => question.type === TSurveyQuestionTypeEnum.OpenText && question.insightsEnabled
     );
 
     const openTextQuestionIds = openTextQuestionsWithInsights.map((question) => question.id);
 
+    if (openTextQuestionIds.length === 0) {
+      return;
+    }
+
+    // Fetching responses
     const batchSize = 3000;
     const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-
     const pages = Math.ceil(totalResponseCount / batchSize);
 
-    const responsesArray = await Promise.all(
-      Array.from({ length: pages }, (_, i) => {
-        return getResponses(surveyId, batchSize, i * batchSize);
-      })
-    );
-    const responses = responsesArray.flat();
+    for (let i = 0; i < pages; i++) {
+      const responses = await prisma.response.findMany({
+        where: {
+          surveyId,
+          documents: {
+            none: {},
+          },
+        },
+        select: {
+          id: true,
+          data: true,
+        },
+        take: batchSize,
+        skip: i * batchSize,
+      });
 
-    for (let response of responses) {
-      const hasOpenTextResponse = doesThisResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data);
+      for (let response of responses) {
+        const hasOpenTextResponse = doesThisResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data);
 
-      if (!hasOpenTextResponse) {
-        continue;
-      }
+        if (!hasOpenTextResponse) {
+          continue;
+        }
 
-      if (!doesDocumentExistForResponseId(response.id)) {
-        for (let question of openTextQuestionsWithInsights) {
-          const responseText = response.data[question.id] as string;
-          if (!responseText) {
-            continue;
+        // Check if a document already exists for the response
+        const documentExists = await doesDocumentExistForResponseId(response.id);
+        if (!documentExists) {
+          // Iterate over each open text question with insights enabled
+          for (let question of openTextQuestionsWithInsights) {
+            // Get the response text for the current question
+            const responseText = response.data[question.id] as string;
+            if (!responseText) {
+              // Skip if there is no response text for the question
+              continue;
+            }
+
+            const text = getPromptText(question.headline.default, responseText);
+
+            await createDocument({
+              environmentId,
+              surveyId,
+              responseId: response.id,
+              questionId: question.id,
+              text,
+            });
           }
-
-          const text = `**${question.headline.default}**\n${responseText}`;
-
-          await createDocument({
-            environmentId: survey.environmentId,
-            surveyId,
-            responseId: response.id,
-            questionId: question.id,
-            text,
-          });
         }
       }
     }

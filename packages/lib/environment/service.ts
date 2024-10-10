@@ -19,7 +19,6 @@ import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { getProducts } from "../product/service";
-import { generateInsightsForSurveys } from "../survey/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
@@ -202,21 +201,6 @@ export const createEnvironment = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
-    throw error;
-  }
-};
-
-export const generateInsightsForEnvironment = async (environmentId: string): Promise<void> => {
-  validateInputs([environmentId, ZId]);
-
-  try {
-    const environment = await getEnvironment(environmentId);
-    if (!environment) {
-      throw new ResourceNotFoundError("Environment", environmentId);
-    }
-
-    await generateInsightsForSurveys(environmentId);
-  } catch (error) {
     throw error;
   }
 };

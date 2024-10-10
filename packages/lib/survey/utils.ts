@@ -3,7 +3,12 @@ import { Prisma } from "@prisma/client";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria, TSurveyQuestions } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyFilterCriteria,
+  TSurveyQuestion,
+  TSurveyQuestions,
+} from "@formbricks/types/surveys/types";
 import { llmModel } from "../ai";
 
 export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
@@ -94,23 +99,15 @@ export const doesSurveyHasOpenTextQuestion = (questions: TSurveyQuestions): bool
   return questions.some((question) => question.type === "openText");
 };
 
-export const getInsightEnabledQuestionIds = async (questions: TSurveyQuestions): Promise<string[]> => {
-  const insightsEnabledQuestionIds: string[] = [];
+export const getInsightsEnabled = async (question: TSurveyQuestion): Promise<boolean> => {
+  const { object } = await generateObject({
+    model: llmModel,
+    schema: z.object({
+      insightsEnabled: z.boolean(),
+    }),
+    prompt: `Please evaluate the following survey question to determine if it is suitable for generating insights. Does it make sense to generate insights for this question: ${question.headline.default}`,
+    experimental_telemetry: { isEnabled: true },
+  });
 
-  for (const question of questions) {
-    const { object } = await generateObject({
-      model: llmModel,
-      schema: z.object({
-        data: z.boolean(),
-      }),
-      prompt: `Please evaluate the following survey question to determine if it is suitable for generating insights. Does it make sense to generate insights for this question: ${question.headline.default}`,
-      experimental_telemetry: { isEnabled: true },
-    });
-
-    if (object.data) {
-      insightsEnabledQuestionIds.push(question.id);
-    }
-  }
-
-  return insightsEnabledQuestionIds;
+  return object.insightsEnabled;
 };

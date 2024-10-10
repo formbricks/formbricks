@@ -17,6 +17,9 @@ export const documentCache = {
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-documents`;
     },
+    byResponseId(responseId: string) {
+      return `responses-${responseId}-documents`;
+    },
     byResponseIdQuestionId(responseId: string, questionId: string) {
       return `responses-${responseId}-questions-${questionId}-documents`;
     },
@@ -39,6 +42,9 @@ export const documentCache = {
     }
     if (environmentId) {
       revalidateTag(this.tag.byEnvironmentId(environmentId));
+    }
+    if (responseId) {
+      revalidateTag(this.tag.byResponseId(responseId));
     }
     if (surveyId) {
       revalidateTag(this.tag.bySurveyId(surveyId));

@@ -6,6 +6,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
+import { generateInsightsForSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 
@@ -69,4 +70,20 @@ export const getResponseCountAction = authenticatedActionClient
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
+  });
+
+const ZGenerateInsightsForSurveyAction = z.object({
+  surveyId: ZId,
+});
+
+export const generateInsightsForSurveyAction = authenticatedActionClient
+  .schema(ZGenerateInsightsForSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    return generateInsightsForSurvey(parsedInput.surveyId);
   });

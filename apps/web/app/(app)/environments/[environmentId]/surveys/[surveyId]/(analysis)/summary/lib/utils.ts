@@ -20,3 +20,12 @@ export const constructToastMessage = (
     return `Added filter for responses where answer to question ${questionIdx + 1} ${filterValue} ${Array.isArray(filterComboBoxValue) ? filterComboBoxValue.join(",") : filterComboBoxValue}`;
   }
 };
+
+export const getIsInsightGenerationAllowed = (survey: TSurvey) => {
+  const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
+  const questionWithoutInsightsEnabled = openTextQuestions.some(
+    (question) => question.insightsEnabled === undefined
+  );
+
+  return openTextQuestions.length > 0 && questionWithoutInsightsEnabled;
+};
