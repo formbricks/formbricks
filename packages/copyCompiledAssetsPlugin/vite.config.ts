@@ -23,10 +23,8 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
       const distDir = path.resolve(config.root, options.distDir);
 
       // Create the output directory if it doesn't exist
-      if (!fs.existsSync(outputDir)) {
-        fs.ensureDirSync(outputDir);
-        console.log(`Created directory: ${outputDir}`);
-      }
+      fs.ensureDirSync(outputDir);
+      console.log(`Ensured directory exists: ${outputDir}`);
 
       // Copy files from distDir to outputDir
       const filesToCopy = fs.readdirSync(distDir);
