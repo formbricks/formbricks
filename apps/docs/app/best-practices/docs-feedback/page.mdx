@@ -57,7 +57,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-4. Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
+4. Change the Question ID of the first question to **“isHelpful”** to make your life easier 😉
 
 <MdxImage
   src={ChangeId}
@@ -66,14 +66,14 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-5. In the same way, you can change the Internal Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
+5. In the same way, you can change the Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
 
 <Note>
   Answers need to be identical If you want different answers than “Yes 👍” and “No 👎” you need to update the
   choices accordingly. They have to be identical to the frontend we're building in the next step.
 </Note>
 
-6. Click on “Continue to Settings or select the audience tab manually. Scroll down to “Survey Trigger” and create a new Action:
+6. Click on “Settings" tab to configure Response Options such as response limits, redirections and more:
 
 <MdxImage
   src={SurveyTrigger}
@@ -82,18 +82,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-7. Our goal is to create an event that never fires. This is a bit nonsensical because it is a workaround. Stick with me 😃 Fill the action out like on the screenshot:
-
-<MdxImage src={AddAction} alt="add action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
-
-8. Select the Non-Event in the dropdown. Now you see that the “Publish survey” button is active. Publish your survey 🤝
-
-<MdxImage
-  src={SelectAction}
-  alt="select nonevent"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
+7. Once you're happy with your Response Options configuration, publish your survey 🤝 
 
 **You’re all setup in Formbricks Cloud for now 👍**
 
