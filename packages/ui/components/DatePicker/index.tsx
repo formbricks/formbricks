@@ -1,29 +1,23 @@
 "use client";
 
 import { format } from "date-fns";
-import { addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useRef } from "react";
-import { SelectSingleEventHandler } from "react-day-picker";
+import { useRef, useState } from "react";
+import Calendar from "react-calendar";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "../Button";
-import { Calendar } from "../Calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
+import "./styles.css";
 
-export const DatePicker = ({
-  date,
-  handleDateChange,
-}: {
-  date?: Date | null;
-  handleDateChange: (date?: Date) => void;
-}) => {
-  let formattedDate = date ? new Date(date) : undefined;
+export const DatePicker = ({ date }: { date?: Date | null }) => {
+  const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
+
+  var formattedDate = date ? new Date(date) : undefined;
 
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const handleDateSelect: SelectSingleEventHandler = (date) => {
-    btnRef?.current?.click();
-    handleDateChange(date);
+  const handleDateChange = (date: Date) => {
+    onChange(date);
   };
 
   return (
@@ -40,15 +34,12 @@ export const DatePicker = ({
           {formattedDate ? format(formattedDate, "PPP") : <span>Pick a date</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent className="min-w-1/3 rounded-lg p-0">
         <Calendar
-          autoFocus
-          mode="single"
-          selected={formattedDate}
-          disabled={{
-            before: addDays(new Date(), 1),
-          }}
-          onSelect={handleDateSelect}
+          defaultValue={undefined}
+          value={value}
+          onChange={(date) => handleDateChange(date as Date)}
+          defaultActiveStartDate={undefined}
         />
       </PopoverContent>
     </Popover>
