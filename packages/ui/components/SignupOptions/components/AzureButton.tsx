@@ -7,12 +7,18 @@ export const AzureButton = ({
   text = "Continue with Azure",
   inviteUrl,
   directRedirect = false,
+  lastUsed,
 }: {
   text?: string;
   inviteUrl?: string | null;
   directRedirect?: boolean;
+  lastUsed?: boolean;
 }) => {
   const handleLogin = useCallback(async () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("loggedInWith", "Azure");
+    }
+
     await signIn("azure-ad", {
       redirect: true,
       callbackUrl: inviteUrl ? inviteUrl : "/",
@@ -32,8 +38,9 @@ export const AzureButton = ({
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
-      className="w-full justify-center">
+      className={`relative w-full ${!lastUsed ? "justify-center" : "justify-start"}`}>
       {text}
+      {lastUsed && <i className="absolute right-5">Last Used</i>}
     </Button>
   );
 };

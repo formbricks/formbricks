@@ -53,7 +53,9 @@ export const SigninForm = ({
   const callbackUrl = searchParams?.get("callbackUrl");
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
-
+    if (typeof window !== "undefined") {
+      localStorage.setItem("loggedInWith", "Email");
+    }
     try {
       const signInResponse = await signIn("credentials", {
         callbackUrl: callbackUrl ?? "/",
@@ -104,6 +106,13 @@ export const SigninForm = ({
   const formRef = useRef<HTMLFormElement>(null);
   const error = searchParams?.get("error");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
+  const [lastLoggedInWith, setLastLoginWith] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLastLoginWith(localStorage.getItem("loggedInWith") || "");
+    }
+  }, []);
 
   useEffect(() => {
     if (error) {
@@ -139,6 +148,7 @@ export const SigninForm = ({
     <FormProvider {...formMethods}>
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">{formLabel}</h1>
+
         <div className="space-y-2">
           <form onSubmit={formMethods.handleSubmit(onSubmit)} className="space-y-2">
             {TwoFactorComponent}
@@ -209,34 +219,41 @@ export const SigninForm = ({
                     formRef.current.requestSubmit();
                   }
                 }}
-                className="w-full justify-center"
+                className={`relative w-full ${lastLoggedInWith != "Email" ? "justify-center" : "justify-start"}`}
                 loading={loggingIn}>
                 {totpLogin ? "Submit" : "Login with Email"}
+                {lastLoggedInWith && lastLoggedInWith === "Email" ? (
+                  <i className="absolute right-5">Last Used</i>
+                ) : null}
               </Button>
             )}
           </form>
 
           {googleOAuthEnabled && !totpLogin && (
             <>
-              <GoogleButton inviteUrl={callbackUrl} />
+              <GoogleButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Google"} />
             </>
           )}
 
           {githubOAuthEnabled && !totpLogin && (
             <>
-              <GithubButton inviteUrl={callbackUrl} />
+              <GithubButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Github"} />
             </>
           )}
 
           {azureOAuthEnabled && !totpLogin && (
             <>
-              <AzureButton inviteUrl={callbackUrl} />
+              <AzureButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Azure"} />
             </>
           )}
 
           {oidcOAuthEnabled && !totpLogin && (
             <>
-              <OpenIdButton inviteUrl={callbackUrl} text={`Continue with ${oidcDisplayName}`} />
+              <OpenIdButton
+                inviteUrl={callbackUrl}
+                text={`Continue with ${oidcDisplayName}`}
+                lastUsed={lastLoggedInWith === "OpenID"}
+              />
             </>
           )}
         </div>
