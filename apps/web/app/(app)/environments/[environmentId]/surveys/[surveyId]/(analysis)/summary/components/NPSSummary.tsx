@@ -5,7 +5,7 @@ import {
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { HalfCircle, ProgressBar } from "@formbricks/ui/ProgressBar";
+import { HalfCircle, ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

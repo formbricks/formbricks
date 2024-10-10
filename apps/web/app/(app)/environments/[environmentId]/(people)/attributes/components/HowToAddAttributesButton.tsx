@@ -1,5 +1,5 @@
 import { HelpCircleIcon } from "lucide-react";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 export const HowToAddAttributesButton = () => {
   return (

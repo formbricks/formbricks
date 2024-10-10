@@ -26,12 +26,14 @@ export class ResponseAPI {
     failed,
     data,
     ttc,
+    variables,
     language,
   }: TResponseUpdateInputWithResponseId): Promise<Result<object, NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
       data,
       ttc,
+      variables,
       failed,
       language,
     });

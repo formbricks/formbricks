@@ -4,11 +4,11 @@ import { cn } from "@formbricks/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/Button";
-import { FileInput } from "@formbricks/ui/FileInput";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { Switch } from "@formbricks/ui/Switch";
+import { Button } from "@formbricks/ui/components/Button";
+import { FileInput } from "@formbricks/ui/components/FileInput";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
@@ -39,22 +39,10 @@ export const PictureSelectionForm = ({
     // Filter out the deleted choice from the choices array
     const newChoices = question.choices?.filter((choice) => choice.id !== choiceValue) || [];
 
-    // Update the logic, removing the deleted choice value
-    const newLogic =
-      question.logic?.map((logic) => {
-        let updatedValue = logic.value;
-
-        if (Array.isArray(logic.value)) {
-          updatedValue = logic.value.filter((value) => value !== choiceValue);
-        } else if (logic.value === choiceValue) {
-          updatedValue = undefined;
-        }
-
-        return { ...logic, value: updatedValue };
-      }) || [];
-
     // Update the question with new choices and logic
-    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+    updateQuestion(questionIdx, {
+      choices: newChoices,
+    });
   };
 
   const handleFileInputChanges = (urls: string[]) => {

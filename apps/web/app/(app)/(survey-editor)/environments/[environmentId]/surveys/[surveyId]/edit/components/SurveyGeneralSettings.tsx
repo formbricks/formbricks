@@ -8,11 +8,11 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
-import { Switch } from "@formbricks/ui/Switch";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 interface SurveyGeneralSettingsProps {
   localSurvey: TSurvey;
@@ -438,7 +438,6 @@ export function SurveyGeneralSettings({
                 id="limitedToCountries"
                 checked={limitedToCountries}
                 onCheckedChange={toggleLimitedToCountries}
-                className={"mr-2"}
               />
               <Label htmlFor="countries" className="cursor-pointer">
                 <div className="ml-2">

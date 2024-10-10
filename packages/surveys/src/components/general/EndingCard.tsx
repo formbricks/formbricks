@@ -7,7 +7,7 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { replaceRecallInfo } from "@/lib/recall";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface EndingCardProps {
@@ -19,6 +19,7 @@ interface EndingCardProps {
   isCurrent: boolean;
   languageCode: string;
   responseData: TResponseData;
+  variablesData: TResponseVariables;
   panelistId: string | null;
 }
 
@@ -32,6 +33,7 @@ export const EndingCard = ({
   languageCode,
   responseData,
   panelistId,
+  variablesData,
 }: EndingCardProps) => {
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl || endingCard.videoUrl) ? (
@@ -112,7 +114,7 @@ export const EndingCard = ({
                     ? replaceRecallInfo(
                         getLocalizedValue(endingCard.headline, languageCode),
                         responseData,
-                        survey.variables
+                        variablesData
                       )
                     : "Respondants will not see this card"
                 }
@@ -124,7 +126,7 @@ export const EndingCard = ({
                     ? replaceRecallInfo(
                         getLocalizedValue(endingCard.subheader, languageCode),
                         responseData,
-                        survey.variables
+                        variablesData
                       )
                     : "They will be forwarded immediately"
                 }
@@ -136,7 +138,7 @@ export const EndingCard = ({
                     buttonLabel={replaceRecallInfo(
                       getLocalizedValue(endingCard.buttonLabel, languageCode),
                       responseData,
-                      survey.variables
+                      variablesData
                     )}
                     isLastQuestion={false}
                     focus={autoFocusEnabled}

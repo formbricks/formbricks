@@ -4,11 +4,11 @@ import { Variants, motion } from "framer-motion";
 import { useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
-import { ClientLogo } from "@formbricks/ui/ClientLogo";
-import { MediaBackground } from "@formbricks/ui/MediaBackground";
-import { Modal } from "@formbricks/ui/PreviewSurvey/components/Modal";
-import { ResetProgressButton } from "@formbricks/ui/ResetProgressButton";
-import { SurveyInline } from "@formbricks/ui/Survey";
+import { ClientLogo } from "@formbricks/ui/components/ClientLogo";
+import { MediaBackground } from "@formbricks/ui/components/MediaBackground";
+import { Modal } from "@formbricks/ui/components/PreviewSurvey/components/Modal";
+import { ResetProgressButton } from "@formbricks/ui/components/ResetProgressButton";
+import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
@@ -108,7 +108,7 @@ export const ThemeStylingPreviewSurvey = ({
     setQuestionId(survey?.questions[0]?.id);
   };
 
-  const isAppSurvey = previewType === "app" || previewType === "website";
+  const isAppSurvey = previewType === "app";
 
   const scrollToEditLogoSection = () => {
     const editLogoSection = document.getElementById("edit-logo");
@@ -116,8 +116,6 @@ export const ThemeStylingPreviewSurvey = ({
       editLogoSection.scrollIntoView({ behavior: "smooth" });
     }
   };
-
-  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center overflow-hidden">
@@ -210,13 +208,11 @@ export const ThemeStylingPreviewSurvey = ({
           Link survey
         </div>
 
-        {currentProductChannel !== "link" && (
-          <div
-            className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
-            onClick={() => setPreviewType("app")}>
-            App / Website survey
-          </div>
-        )}
+        <div
+          className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
+          onClick={() => setPreviewType("app")}>
+          App survey
+        </div>
       </div>
     </div>
   );

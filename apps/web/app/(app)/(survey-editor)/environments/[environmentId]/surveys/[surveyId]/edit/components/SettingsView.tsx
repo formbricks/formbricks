@@ -15,7 +15,6 @@ import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;
-  organizationId: string;
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
@@ -48,7 +47,7 @@ export const SettingsView = ({
   setSelectedLanguageCode,
   selectedLanguageCode,
 }: SettingsViewProps) => {
-  const isWebSurvey = localSurvey.type === "website" || localSurvey.type === "app";
+  const isAppSurvey = localSurvey.type === "app";
 
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -63,29 +62,30 @@ export const SettingsView = ({
       />
 
       {localSurvey.type === "app" ? (
-        !isUserTargetingAllowed ? (
-          <TargetingCard
-            key={localSurvey.segment?.id}
-            localSurvey={localSurvey}
-            setLocalSurvey={setLocalSurvey}
-            environmentId={environment.id}
-            attributeClasses={attributeClasses}
-            segments={segments}
-            initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
-            isFormbricksCloud={isFormbricksCloud}
-          />
-        ) : (
-          <AdvancedTargetingCard
-            key={localSurvey.segment?.id}
-            localSurvey={localSurvey}
-            setLocalSurvey={setLocalSurvey}
-            environmentId={environment.id}
-            attributeClasses={attributeClasses}
-            actionClasses={actionClasses}
-            segments={segments}
-            initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
-          />
-        )
+        <div>
+          {!isUserTargetingAllowed ? (
+            <TargetingCard
+              key={localSurvey.segment?.id}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              environmentId={environment.id}
+              attributeClasses={attributeClasses}
+              segments={segments}
+              initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
+              isFormbricksCloud={isFormbricksCloud}
+            />
+          ) : (
+            <AdvancedTargetingCard
+              key={localSurvey.segment?.id}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              environmentId={environment.id}
+              attributeClasses={attributeClasses}
+              segments={segments}
+              initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
+            />
+          )}
+        </div>
       ) : null}
 
       <WhenToSendCard
@@ -108,7 +108,7 @@ export const SettingsView = ({
         environmentId={environment.id}
       />
 
-      {isWebSurvey && (
+      {isAppSurvey && (
         <SurveyPlacementCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}

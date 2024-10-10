@@ -32,7 +32,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { FORMBRICKS_PRODUCT_ID_LS, FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -40,9 +39,9 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import { Button } from "@formbricks/ui/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/CreateOrganizationModal";
+import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
+import { Button } from "@formbricks/ui/components/Button";
+import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,8 +54,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import { version } from "../../../../../package.json";
+} from "@formbricks/ui/components/DropdownMenu";
+import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -119,16 +118,6 @@ export const MainNavigation = ({
     }
   }, [organization]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const productId = localStorage.getItem(FORMBRICKS_PRODUCT_ID_LS);
-    const targetProduct = products.find((product) => product.id === productId);
-    if (targetProduct && productId && product && product.id !== targetProduct.id) {
-      router.push(`/products/${targetProduct.id}/`);
-    }
-  }, []);
-
   const sortedOrganizations = useMemo(() => {
     return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
   }, [organizations]);
@@ -155,12 +144,6 @@ export const MainNavigation = ({
   }, [products]);
 
   const handleEnvironmentChangeByProduct = (productId: string) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_PRODUCT_ID_LS, productId);
-
-      // Remove filters when switching products
-      localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-    }
     router.push(`/products/${productId}/`);
   };
 
@@ -169,7 +152,7 @@ export const MainNavigation = ({
   };
 
   const handleAddProduct = (organizationId: string) => {
-    router.push(`/organizations/${organizationId}/products/new/channel`);
+    router.push(`/organizations/${organizationId}/products/new/mode`);
   };
 
   const mainNavigation = useMemo(
@@ -195,7 +178,6 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
-        isHidden: product?.config.channel === "link",
       },
       {
         name: "Integrations",
@@ -212,7 +194,7 @@ export const MainNavigation = ({
         isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, product?.config.channel, isViewer]
+    [environment.id, pathname, isViewer]
   );
 
   const dropdownNavigation = [
@@ -257,7 +239,7 @@ export const MainNavigation = ({
       const res = await getLatestStableFbReleaseAction();
       if (res?.data) {
         const latestVersionTag = res.data;
-        const currentVersionTag = `v${version}`;
+        const currentVersionTag = `v${packageJson.version}`;
 
         if (currentVersionTag !== latestVersionTag) {
           setLatestVersion(latestVersionTag);

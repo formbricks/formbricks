@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/Badge";
-import { Button } from "@formbricks/ui/Button";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
 
 export const SurveyAnalysisCTA = ({
   survey,
@@ -30,9 +30,7 @@ export const SurveyAnalysisCTA = ({
   const router = useRouter();
 
   const [showShareSurveyModal, setShowShareSurveyModal] = useState(searchParams.get("share") === "true");
-
-  const widgetSetupCompleted =
-    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+  const widgetSetupCompleted = environment.appSetupCompleted;
 
   useEffect(() => {
     if (searchParams.get("share") === "true") {

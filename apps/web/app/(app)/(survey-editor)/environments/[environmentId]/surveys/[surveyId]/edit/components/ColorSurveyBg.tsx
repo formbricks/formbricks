@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
 
 interface ColorSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;

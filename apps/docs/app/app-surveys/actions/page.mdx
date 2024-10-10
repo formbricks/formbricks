@@ -4,25 +4,18 @@ import I1 from "./images/I1.webp";
 import I2 from "./images/I2.webp";
 
 export const metadata = {
-  title: "Using Actions in Formbricks | Fine-tuning User Moments",
+  title: "Using Actions in Formbricks",
   description:
     "Dive deep into how actions in Formbricks help products and organizations to engage users at precise moments in their journey. Discover the power of actions, from coding to no-code setups, to refine user targeting and generate richer, more detailed user insights.",
 };
 
-#### App Surveys
+# Actions
 
-# Actions & Targeting
-
-Understanding user thoughts and feelings at critical moments in their journey is pivotal. To achieve this, Formbricks uses user-centric actions that trigger surveys at precisely the right time. Actions are essentially notifications sent from your application to Formbricks when predefined user activities occur, making it possible to gather insights during key interactions.
-
-<Note>
-  Ensure that you’ve **initialized Formbricks with a userId** to fully utilize this feature along with other
-  app survey capabilities.
-</Note>
+Actions are predefined events within your app that prompt Formbricks to display a survey when triggered. These are detected by the Formbricks widget, which then presents the appropriate survey based on your predefined settings.
 
 ## **How Do Actions Work?**
 
-Actions in Formbricks App Surveys are deeply integrated with user activities within your app. When a user performs a specified action, the Formbricks widget detects this activity and can present a survey to that specific user if the trigger conditions match of that survey, while also recording the event. This capability ensures that surveys are not only triggered at the right time but are also tailored to the user’s recent interactions within the app. You can set up these actions through a user-friendly No-Code interface within the Formbricks dashboard.
+Actions in Formbricks App Surveys are deeply integrated with user activities within your app. When a user performs a specified action, the Formbricks widget detects this activity and can present a survey to that specific user if the trigger conditions match for that survey. This capability ensures that surveys are triggered at the right time. You can set up these actions through a user-friendly No-Code interface within the Formbricks dashboard.
 
 ## **Why Are Actions Useful?**
 
@@ -30,8 +23,7 @@ Actions are invaluable for enhancing survey relevance and effectiveness:
 
 - **Personalized Engagement**: Surveys triggered by user actions ensure content is highly relevant and engaging, matching each user’s current context.
 - **User Attributes**: By tying surveys to specific user attributes, such as activity levels or feature usage, you can customize the survey experience to reflect individual user profiles.
-- **User Segments**: Analyze action data to create detailed user segments, targeting specific groups with surveys that are pertinent to their behaviors or interactions within the app.
-- **User Targeting**: Precise targeting based on user actions and attributes ensures that surveys are shown only to users who meet certain criteria, enhancing the relevance and effectiveness of each survey.
+- **User Targeting**: Precise targeting based on user attributes ensures that surveys are shown only to users who meet certain criteria, enhancing the relevance and effectiveness of each survey.
 
 ## **Setting Up No-Code Actions**
 
@@ -127,5 +119,3 @@ return <button onClick={handleClick}>Click Me</button>;
 
 </CodeGroup>
 </Col>
-
-This documentation frames actions around user interactions, emphasizing the connection between the user's activities and the survey experience. By leveraging user-centric actions, you can create highly targeted and timely surveys that resonate with users and yield valuable insights.

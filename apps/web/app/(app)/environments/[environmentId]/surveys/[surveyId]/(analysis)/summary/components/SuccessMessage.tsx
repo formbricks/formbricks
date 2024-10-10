@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Confetti } from "@formbricks/ui/Confetti";
+import { Confetti } from "@formbricks/ui/components/Confetti";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;
@@ -16,9 +16,8 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
   const searchParams = useSearchParams();
   const [confetti, setConfetti] = useState(false);
 
-  const isAppSurvey = survey.type === "app" || survey.type === "website";
-  const widgetSetupCompleted =
-    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+  const isAppSurvey = survey.type === "app";
+  const widgetSetupCompleted = environment.appSetupCompleted;
 
   useEffect(() => {
     const newSurveyParam = searchParams?.get("success");
@@ -29,6 +28,7 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
           ? "Almost there! Install widget to start receiving responses."
           : "Congrats! Your survey is live.",
         {
+          id: "survey-publish-success-toast",
           icon: isAppSurvey && !widgetSetupCompleted ? "🤏" : "🎉",
           duration: 5000,
           position: "bottom-right",

@@ -11,16 +11,15 @@ import {
   moveResource,
   toggleGroupConnector,
 } from "@formbricks/lib/segment/utils";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentFilter } from "./segment-filter";
 
@@ -29,7 +28,6 @@ interface TSegmentEditorProps {
   environmentId: string;
   segment: TSegment;
   segments: TSegment[];
-  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   setSegment: React.Dispatch<React.SetStateAction<TSegment | null>>;
   viewOnly?: boolean;
@@ -40,7 +38,6 @@ export function SegmentEditor({
   environmentId,
   setSegment,
   segment,
-  actionClasses,
   attributeClasses,
   segments,
   viewOnly = false,
@@ -122,7 +119,6 @@ export function SegmentEditor({
         if (isResourceFilter(resource)) {
           return (
             <SegmentFilter
-              actionClasses={actionClasses}
               attributeClasses={attributeClasses}
               connector={connector}
               environmentId={environmentId}
@@ -165,7 +161,6 @@ export function SegmentEditor({
 
               <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
                 <SegmentEditor
-                  actionClasses={actionClasses}
                   attributeClasses={attributeClasses}
                   environmentId={environmentId}
                   group={resource}
@@ -189,7 +184,6 @@ export function SegmentEditor({
                 </div>
 
                 <AddFilterModal
-                  actionClasses={actionClasses}
                   attributeClasses={attributeClasses}
                   onAddFilter={(filter) => {
                     if (addFilterModalOpenedFromBelow) {

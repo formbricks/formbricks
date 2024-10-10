@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
 import { createRequire } from "node:module";
@@ -107,6 +106,22 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.(mp4|webm|ogg|swf|ogv)$/,
+      use: [
+        {
+          loader: "file-loader",
+          options: {
+            publicPath: "/_next/static/videos/",
+            outputPath: "static/videos/",
+            name: "[name].[hash].[ext]",
+          },
+        },
+      ],
+    });
+    return config;
+  },
   async headers() {
     return [
       {
@@ -163,6 +178,30 @@ const nextConfig = {
             value: "nosniff",
           },
         ],
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/packages/website",
+        destination: "/api/packages/js",
+      },
+      {
+        source: "/api/packages/app",
+        destination: "/api/packages/js",
+      },
+      {
+        source: "/api/v1/client/:environmentId/website/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+      {
+        source: "/api/v1/client/:environmentId/app/environment",
+        destination: "/api/v1/client/:environmentId/environment",
+      },
+      {
+        source: "/api/v1/client/:environmentId/app/people/:userId",
+        destination: "/api/v1/client/:environmentId/identify/people/:userId",
       },
     ];
   },

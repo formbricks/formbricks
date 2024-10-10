@@ -1,12 +1,10 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
-import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { XIcon } from "lucide-react";
-import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { Button } from "@formbricks/ui/Button";
-import { Header } from "@formbricks/ui/Header";
+import { Button } from "@formbricks/ui/components/Button";
+import { Header } from "@formbricks/ui/components/Header";
 
 interface ConnectPageProps {
   params: {
@@ -26,20 +24,11 @@ const Page = async ({ params }: ConnectPageProps) => {
     throw new Error("Product not found");
   }
 
-  const channel = product.config.channel;
-  const industry = product.config.industry;
-
-  if (!channel || !industry) {
-    return notFound();
-  }
-  const customHeadline = getCustomHeadline(channel, industry);
+  const channel = product.config.channel || null;
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center py-10">
-      <Header
-        title={`Let's connect your ${customHeadline} with Formbricks`}
-        subtitle="It takes less than 4 minutes, pinky promise!"
-      />
+      <Header title={`Let's connect your product with Formbricks`} subtitle="It takes less than 4 minutes." />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>
         <p className="text-sm text-slate-500"></p>
@@ -47,9 +36,7 @@ const Page = async ({ params }: ConnectPageProps) => {
       <ConnectWithFormbricks
         environment={environment}
         webAppUrl={WEBAPP_URL}
-        widgetSetupCompleted={
-          channel === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted
-        }
+        widgetSetupCompleted={environment.appSetupCompleted}
         channel={channel}
       />
       <Button

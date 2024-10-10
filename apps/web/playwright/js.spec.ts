@@ -59,7 +59,7 @@ test.describe("JS Package Test", async () => {
       // Formbricks In App Sync has happened
       const syncApi = await page.waitForResponse(
         (response) => {
-          return response.url().includes("/app/environment");
+          return response.url().includes("/environment");
         },
         {
           timeout: 120000,

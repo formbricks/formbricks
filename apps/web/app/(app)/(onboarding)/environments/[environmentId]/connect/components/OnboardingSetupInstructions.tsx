@@ -4,10 +4,10 @@ import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TProductConfigChannel } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { CodeBlock } from "@formbricks/ui/CodeBlock";
-import { TabBar } from "@formbricks/ui/TabBar";
-import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
+import { Button } from "@formbricks/ui/components/Button";
+import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
+import { TabBar } from "@formbricks/ui/components/TabBar";
+import { Html5Icon, NpmIcon } from "@formbricks/ui/components/icons";
 
 const tabs = [
   { id: "html", label: "HTML", icon: <Html5Icon /> },
@@ -34,7 +34,7 @@ export const OnboardingSetupInstructions = ({
       var apiHost = "${webAppUrl}";
       var environmentId = "${environmentId}";
       var userId = "testUser";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/app";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -44,13 +44,13 @@ export const OnboardingSetupInstructions = ({
   !function(){
     var apiHost = "${webAppUrl}";
     var environmentId = "${environmentId}";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/website";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
 
   const npmSnippetForAppSurveys = `
-  import formbricks from "@formbricks/js/app";
+  import formbricks from "@formbricks/js";
   
   if (typeof window !== "undefined") {
     formbricks.init({
@@ -69,7 +69,7 @@ export const OnboardingSetupInstructions = ({
 
   const npmSnippetForWebsiteSurveys = `
   // other imports
-  import formbricks from "@formbricks/js/website";
+  import formbricks from "@formbricks/js";
   
   if (typeof window !== "undefined") {
     formbricks.init({

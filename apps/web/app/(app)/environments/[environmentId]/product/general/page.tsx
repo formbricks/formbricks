@@ -8,10 +8,10 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
-import { SettingsId } from "@formbricks/ui/SettingsId";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { SettingsId } from "@formbricks/ui/components/SettingsId";
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { DeleteProduct } from "./components/DeleteProduct";
 import { EditDefaultReward } from "./components/EditDefaultReward";
@@ -45,7 +45,6 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const currentProductChannel = product?.config.channel ?? null;
 
   return (
     <PageContentWrapper>
@@ -54,20 +53,17 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="general"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
-          productChannel={currentProductChannel}
         />
       </PageHeader>
 
       <SettingsCard title="Product Name" description="Change your products name.">
         <EditProductNameForm product={product} isProductNameEditDisabled={isProductNameEditDisabled} />
       </SettingsCard>
-      {currentProductChannel !== "link" && (
-        <SettingsCard
-          title="Recontact Waiting Time"
-          description="Control how frequently users can be surveyed across all surveys.">
-          <EditWaitingTimeForm product={product} />
-        </SettingsCard>
-      )}
+      <SettingsCard
+        title="Recontact Waiting Time"
+        description="Control how frequently users can be surveyed across all app surveys.">
+        <EditWaitingTimeForm product={product} />
+      </SettingsCard>
       <SettingsCard
         title="Edit Default Reward"
         description="Define the default reward for a survey in dollars.">

@@ -43,7 +43,7 @@ import {
   updateResponse,
 } from "../service";
 import { buildWhereClause } from "../utils";
-import { constantsForTests } from "./constants";
+import { constantsForTests, mockEnvironment } from "./constants";
 
 // vitest.mock("../../organization/service", async (methods) => {
 //   return {
@@ -206,6 +206,7 @@ describe("Tests for createResponse service", () => {
   describe("Happy Path", () => {
     it("Creates a response linked to an existing user", async () => {
       prisma.attribute.findMany.mockResolvedValue([]);
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       const response = await createResponse(mockResponseInputWithUserId);
       expect(response).toEqual(expectedResponseWithPerson);
     });
@@ -217,6 +218,7 @@ describe("Tests for createResponse service", () => {
 
     it("Creates a new person and response when the person does not exist", async () => {
       prisma.person.findFirst.mockResolvedValue(null);
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       prisma.person.create.mockResolvedValue(mockPerson);
       prisma.attribute.findMany.mockResolvedValue([]);
 
@@ -247,6 +249,7 @@ describe("Tests for createResponse service", () => {
         clientVersion: "0.0.1",
       });
 
+      prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       prisma.response.create.mockRejectedValue(errToThrow);
       prisma.attribute.findMany.mockResolvedValue([]);
 

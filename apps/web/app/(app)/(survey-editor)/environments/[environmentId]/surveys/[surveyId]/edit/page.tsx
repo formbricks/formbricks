@@ -12,7 +12,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
 export const generateMetadata = async ({ params }) => {
@@ -22,7 +22,7 @@ export const generateMetadata = async ({ params }) => {
   };
 };
 
-const Page = async ({ params }) => {
+const Page = async ({ params, searchParams }) => {
   const [
     survey,
     product,
@@ -70,6 +70,8 @@ const Page = async ({ params }) => {
     return <ErrorComponent />;
   }
 
+  const isCxMode = searchParams.mode === "cx";
+
   return (
     <SurveyEditor
       survey={survey}
@@ -79,7 +81,6 @@ const Page = async ({ params }) => {
       attributeClasses={attributeClasses}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
-      organizationId={organization.id}
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
@@ -87,6 +88,7 @@ const Page = async ({ params }) => {
       plan={organization.billing.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
+      isCxMode={isCxMode}
     />
   );
 };

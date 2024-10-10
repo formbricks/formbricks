@@ -7,9 +7,9 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/Form";
-import { Input } from "@formbricks/ui/Input";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
 
 interface InviteOrganizationMemberProps {
   organization: TOrganization;
@@ -102,7 +102,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
             <div className="flex w-full justify-end space-x-2">
               <Button
                 id="onboarding-inapp-invite-have-a-look-first"
-                className="font-normal text-slate-400"
+                className="text-slate-400"
                 variant="minimal"
                 onClick={(e) => {
                   e.preventDefault();

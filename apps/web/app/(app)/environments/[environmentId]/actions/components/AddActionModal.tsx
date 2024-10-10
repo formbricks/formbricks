@@ -6,9 +6,9 @@ import { useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { Button } from "@formbricks/ui/Button";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddActionModalProps {
   environmentId: string;

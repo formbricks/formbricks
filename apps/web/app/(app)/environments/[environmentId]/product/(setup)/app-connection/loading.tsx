@@ -3,8 +3,8 @@
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@formbricks/lib/cn";
-import { PageContentWrapper } from "@formbricks/ui/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/PageHeader";
+import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
+import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const LoadingCard = ({ title, description, skeletonLines }) => {
   return (
@@ -42,7 +42,7 @@ const Loading = () => {
       skeletonLines: [{ classes: "h-6 w-4/6 rounded-full" }],
     },
     {
-      title: "How to setup",
+      title: "How To Setup",
       description: "Follow these steps to setup the Formbricks widget within your app",
       skeletonLines: [
         { classes: "h-6 w-24 rounded-full" },

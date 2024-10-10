@@ -6,15 +6,15 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import type { TMembershipRole } from "@formbricks/types/memberships";
-import { Badge } from "@formbricks/ui/Badge";
-import { Button } from "@formbricks/ui/Button";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui/components/DropdownMenu";
 import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
 import { TransferOwnershipModal } from "./transfer-ownership-modal";
 

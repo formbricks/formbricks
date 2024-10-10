@@ -13,15 +13,16 @@ import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AlertDialog } from "@formbricks/ui/AlertDialog";
-import { BasicAddFilterModal } from "@formbricks/ui/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/BasicSegmentEditor";
-import { Button } from "@formbricks/ui/Button";
-import { LoadSegmentModal } from "@formbricks/ui/LoadSegmentModal";
-import { SaveAsNewSegmentModal } from "@formbricks/ui/SaveAsNewSegmentModal";
-import { SegmentTitle } from "@formbricks/ui/SegmentTitle";
-import { TargetingIndicator } from "@formbricks/ui/TargetingIndicator";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
+import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
+import { BasicAddFilterModal } from "@formbricks/ui/components/BasicAddFilterModal";
+import { BasicSegmentEditor } from "@formbricks/ui/components/BasicSegmentEditor";
+import { Button } from "@formbricks/ui/components/Button";
+import { LoadSegmentModal } from "@formbricks/ui/components/LoadSegmentModal";
+import { SaveAsNewSegmentModal } from "@formbricks/ui/components/SaveAsNewSegmentModal";
+import { SegmentTitle } from "@formbricks/ui/components/SegmentTitle";
+import { TargetingIndicator } from "@formbricks/ui/components/TargetingIndicator";
+import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import {
   cloneBasicSegmentAction,
   createBasicSegmentAction,
@@ -158,7 +159,7 @@ export const TargetingCard = ({
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full rounded-lg border border-slate-300 bg-white">
+      className="w-full overflow-hidden rounded-lg border border-slate-300 bg-white">
       <Collapsible.CollapsibleTrigger
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
@@ -437,6 +438,23 @@ export const TargetingCard = ({
             }
           }}
         />
+
+        <div>
+          <Alert className="flex items-center rounded-none bg-slate-50">
+            <AlertDescription className="ml-2">
+              <span className="mr-1 text-slate-600">
+                User targeting is currently only available when{" "}
+                <Link
+                  href="https://formbricks.com//docs/app-surveys/user-identification"
+                  target="blank"
+                  className="underline">
+                  identifying users
+                </Link>{" "}
+                with the Formbricks SDK.
+              </span>
+            </AlertDescription>
+          </Alert>
+        </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

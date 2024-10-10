@@ -23,7 +23,37 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "App Surveys",
+    title: "Link Surveys",
+    links: [
+      { title: "Quickstart", href: "/link-surveys/quickstart" },
+      {
+        title: "Features",
+        children: [
+          { title: "Data Prefilling", href: "/link-surveys/data-prefilling" },
+          { title: "Identify Users", href: "/link-surveys/user-identification" },
+          { title: "Single Use Links", href: "/link-surveys/single-use-links" },
+          { title: "Source Tracking", href: "/link-surveys/source-tracking" },
+          { title: "Hidden Fields", href: "/link-surveys/hidden-fields" },
+          { title: "Start At Question", href: "/link-surveys/start-at-question" },
+          { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
+          { title: "Market Research Panel", href: "/link-surveys/market-research-panel" },
+          { title: "Multi Language Surveys", href: "/global/multi-language-surveys" },
+          { title: "User Metadata", href: "/global/metadata" },
+          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
+          { title: "Conditional Logic", href: "/global/conditional-logic" },
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
+          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" },
+          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
+          { title: "Recall Functionality", href: "/global/recall" },
+          { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
+          { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },
+          { title: "Partial Submissions", href: "/global/partial-submissions" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Website & App Surveys",
     links: [
       { title: "Quickstart", href: "/app-surveys/quickstart" },
       { title: "Framework Guides", href: "/app-surveys/framework-guides" },
@@ -44,59 +74,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
-        ],
-      },
-    ],
-  },
-  {
-    title: "Website Surveys",
-    links: [
-      { title: "Quickstart", href: "/website-surveys/quickstart" },
-      { title: "Framework Guides", href: "/website-surveys/framework-guides" },
-      {
-        title: "Features",
-        children: [
-          { title: "Actions & Targeting", href: "/website-surveys/actions-and-targeting" },
-          { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
-          { title: "Recontact Options", href: "/app-surveys/recontact" },
-          { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
-          { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
-          { title: "User Metadata", href: "/global/metadata" }, // global
-          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
-          { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
-          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" }, // global
-          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
-          { title: "Recall Functionality", href: "/global/recall" }, // global
-          { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
-        ],
-      },
-    ],
-  },
-  {
-    title: "Link Surveys",
-    links: [
-      { title: "Quickstart", href: "/link-surveys/quickstart" },
-      {
-        title: "Features",
-        children: [
-          { title: "Data Prefilling", href: "/link-surveys/data-prefilling" },
-          { title: "Identify Users", href: "/link-surveys/user-identification" },
-          { title: "Single Use Links", href: "/link-surveys/single-use-links" },
-          { title: "Source Tracking", href: "/link-surveys/source-tracking" },
-          { title: "Hidden Fields", href: "/link-surveys/hidden-fields" },
-          { title: "Start At Question", href: "/link-surveys/start-at-question" },
-          { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
-          { title: "Market Research Panel", href: "/link-surveys/market-research-panel" },
-          { title: "Multi Language Surveys", href: "/global/multi-language-surveys" },
-          { title: "User Metadata", href: "/global/metadata" },
-          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
-          { title: "Conditional Logic", href: "/global/conditional-logic" },
-          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" },
-          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
-          { title: "Recall Functionality", href: "/global/recall" },
-          { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
-          { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },
-          { title: "Partial Submissions", href: "/global/partial-submissions" },
+          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
         ],
       },
     ],
@@ -139,8 +117,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Zapier", href: "/developer-docs/integrations/zapier" },
         ],
       },
-      { title: "SDK: Web Apps", href: "/developer-docs/app-survey-sdk" },
-      { title: "SDK: Public Websites", href: "/developer-docs/website-survey-sdk" },
+      { title: "SDK: Formbricks JS", href: "/developer-docs/js-sdk" },
       { title: "SDK: React Native", href: "/developer-docs/react-native-in-app-surveys" },
       { title: "SDK: Formbricks API", href: "/developer-docs/api-sdk" },
       { title: "REST API", href: "/developer-docs/rest-api" },

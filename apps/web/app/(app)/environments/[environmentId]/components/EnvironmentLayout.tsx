@@ -13,9 +13,9 @@ import {
 } from "@formbricks/lib/organization/service";
 import { getProducts } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { DevEnvironmentBanner } from "@formbricks/ui/DevEnvironmentBanner";
-import { LimitsReachedBanner } from "@formbricks/ui/LimitsReachedBanner";
-import { PendingDowngradeBanner } from "@formbricks/ui/PendingDowngradeBanner";
+import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
+import { LimitsReachedBanner } from "@formbricks/ui/components/LimitsReachedBanner";
+import { PendingDowngradeBanner } from "@formbricks/ui/components/PendingDowngradeBanner";
 
 interface EnvironmentLayoutProps {
   environmentId: string;
@@ -52,9 +52,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
-
-  const currentProductChannel =
-    products.find((product) => product.id === environment.productId)?.config.channel ?? null;
 
   let peopleCount = 0;
   let responseCount = 0;
@@ -101,7 +98,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           <TopControlBar
             environment={environment}
             environments={environments}
-            currentProductChannel={currentProductChannel}
             membershipRole={currentUserMembership?.role}
           />
           <div className="mt-14">{children}</div>

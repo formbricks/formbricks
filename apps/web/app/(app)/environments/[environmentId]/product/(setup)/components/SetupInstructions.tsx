@@ -3,9 +3,9 @@
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
-import { CodeBlock } from "@formbricks/ui/CodeBlock";
-import { TabBar } from "@formbricks/ui/TabBar";
-import { Html5Icon, NpmIcon } from "@formbricks/ui/icons";
+import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
+import { TabBar } from "@formbricks/ui/components/TabBar";
+import { Html5Icon, NpmIcon } from "@formbricks/ui/components/icons";
 
 const tabs = [
   {
@@ -19,10 +19,9 @@ const tabs = [
 interface SetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
-  type: "app" | "website";
 }
 
-export const SetupInstructions = ({ environmentId, webAppUrl, type }: SetupInstructionsProps) => {
+export const SetupInstructions = ({ environmentId, webAppUrl }: SetupInstructionsProps) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   return (
@@ -39,14 +38,13 @@ export const SetupInstructions = ({ environmentId, webAppUrl, type }: SetupInstr
             <CodeBlock language="sh">yarn add @formbricks/js</CodeBlock>
             <h4>Step 2: Initialize widget</h4>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
-            <CodeBlock language="js">{`import formbricks from "@formbricks/js/${type}";
+            <CodeBlock language="js">{`import formbricks from "@formbricks/js";
 if (typeof window !== "undefined") {
   formbricks.init({
-    environmentId: "${environmentId}", ${type === "app" ? `\n    userId: "<user-id>",` : ""}
+    environmentId: "${environmentId}", 
     apiHost: "${webAppUrl}",
   });
 }`}</CodeBlock>
-
             <ul className="list-disc text-sm">
               <li>
                 <span className="font-semibold">environmentId:</span> Used to identify the correct
@@ -56,6 +54,17 @@ if (typeof window !== "undefined") {
                 <span className="font-semibold">apiHost:</span> This is the URL of your Formbricks backend.
               </li>
             </ul>
+            <span className="text-sm text-slate-600">
+              If you are planning to{" "}
+              <Link
+                href="https://formbricks.com//docs/app-surveys/user-identification"
+                target="blank"
+                className="underline">
+                identifying your users
+              </Link>{" "}
+              you also need to pass a <span className="font-semibold">userId</span> to the{" "}
+              <span className="font-semibold">init</span> function.
+            </span>
             <h4>Step 3: Debug mode</h4>
             <p>
               Switch on the debug mode by appending <i>?formbricksDebug=true</i> to the URL where you load the
@@ -69,10 +78,8 @@ if (typeof window !== "undefined") {
             </p>
             <h4>You&apos;re done 🎉</h4>
             <p>
-              Your {type} now communicates with Formbricks - sending events, and loading surveys
-              automatically!
+              Your app now communicates with Formbricks - sending events, and loading surveys automatically!
             </p>
-
             <ul className="list-disc text-sm text-slate-700">
               <li>
                 <span>Need a more detailed setup guide for React, Next.js or Vue.js?</span>{" "}
@@ -111,11 +118,11 @@ if (typeof window !== "undefined") {
           <div className="prose prose-slate prose-p:my-2 prose-p:text-sm prose-p:text-slate-600 prose-h4:text-slate-800 prose-h4:pt-2">
             <h4>Step 1: Copy and paste code</h4>
             <p>
-              Insert this code into the <code>{`<head>`}</code> tag of your {type}:
+              Insert this code into the <code>{`<head>`}</code> tag of your app
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/api/packages/${type}";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", ${type === "app" ? `\n    userId: "<user-id>",` : ""} apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/api/packages/js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <h4>Step 2: Debug mode</h4>
@@ -131,8 +138,7 @@ if (typeof window !== "undefined") {
             </p>
             <h4>You&apos;re done 🎉</h4>
             <p>
-              Your {type} now communicates with Formbricks - sending events, and loading surveys
-              automatically!
+              Your app now communicates with Formbricks - sending events, and loading surveys automatically!
             </p>
             <ul className="list-disc text-sm text-slate-700">
               <li>

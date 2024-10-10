@@ -4,13 +4,13 @@ import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import {TSurvey, TSurveyLogic, TSurveyLogicAction, TSurveyQuestion} from "@formbricks/types/surveys/types";
 
 function calculateElementIdx(survey: TSurvey, currentQustionIdx: number): number {
   const currentQuestion = survey.questions[currentQustionIdx];
   const surveyLength = survey.questions.length;
   const middleIdx = Math.floor(surveyLength / 2);
-  const possibleNextQuestions = currentQuestion?.logic?.map((l) => l.destination) || [];
+  const possibleNextQuestions = getPossibleNextQuestions(currentQuestion);
 
   const getLastQuestionIndex = () => {
     const lastQuestion = survey.questions
@@ -26,7 +26,23 @@ function calculateElementIdx(survey: TSurvey, currentQustionIdx: number): number
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
   if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
   return elementIdx;
-}
+};
+
+const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
+  if (!question.logic) return [];
+
+  const possibleDestinations: string[] = [];
+
+  question.logic.forEach((logic: TSurveyLogic) => {
+    logic.actions.forEach((action: TSurveyLogicAction) => {
+      if (action.objective === "jumpToQuestion") {
+        possibleDestinations.push(action.target);
+      }
+    });
+  });
+
+  return possibleDestinations;
+};
 
 function calculateTimeToComplete(survey: TSurvey): number {
   let idx = calculateElementIdx(survey, 0);

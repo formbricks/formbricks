@@ -31,6 +31,7 @@ const convertMetaObjectToString = (metadata: TResponseMeta): string => {
 const processDataForIntegration = async (
   data: TPipelineInput,
   survey: TSurvey,
+  includeVariables: boolean,
   includeMetadata: boolean,
   includeHiddenFields: boolean,
   questionIds: string[]
@@ -44,6 +45,16 @@ const processDataForIntegration = async (
     values[0].push(convertMetaObjectToString(data.response.meta));
     values[1].push("Metadata");
   }
+  if (includeVariables) {
+    survey.variables.forEach((variable) => {
+      const value = data.response.variables[variable.id];
+      if (value !== undefined) {
+        values[0].push(String(data.response.variables[variable.id]));
+        values[1].push(variable.name);
+      }
+    });
+  }
+
   return values;
 };
 
@@ -102,6 +113,7 @@ const handleAirtableIntegration = async (
           const values = await processDataForIntegration(
             data,
             survey,
+            !!element.includeVariables,
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             element.questionIds
@@ -135,6 +147,7 @@ const handleGoogleSheetsIntegration = async (
           const values = await processDataForIntegration(
             data,
             survey,
+            !!element.includeVariables,
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             element.questionIds
@@ -173,6 +186,7 @@ const handleSlackIntegration = async (
           const values = await processDataForIntegration(
             data,
             survey,
+            !!element.includeVariables,
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             element.questionIds

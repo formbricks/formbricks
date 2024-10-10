@@ -4,7 +4,7 @@ import { XCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { forgotPassword } from "@formbricks/lib/utils/users";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 export const PasswordResetForm = ({}) => {
   const router = useRouter();
@@ -53,7 +53,7 @@ export const PasswordResetForm = ({}) => {
               type="email"
               autoComplete="email"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+              className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>
         </div>

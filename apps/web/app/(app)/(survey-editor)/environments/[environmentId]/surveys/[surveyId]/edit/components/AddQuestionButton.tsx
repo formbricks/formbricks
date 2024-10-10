@@ -1,20 +1,28 @@
 "use client";
 
-import { getQuestionDefaults, questionTypes, universalQuestionPresets } from "@/app/lib/questions";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
+import {
+  CXQuestionTypes,
+  getQuestionDefaults,
+  questionTypes,
+  universalQuestionPresets,
+} from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
   product: TProduct;
+  isCxMode: boolean;
 }
 
-export const AddQuestionButton = ({ addQuestion, product }: AddQuestionButtonProps) => {
+export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestionButtonProps) => {
   const [open, setOpen] = useState(false);
+
+  const availableQuestionTypes = isCxMode ? CXQuestionTypes : questionTypes;
 
   return (
     <Collapsible.Root
@@ -37,7 +45,7 @@ export const AddQuestionButton = ({ addQuestion, product }: AddQuestionButtonPro
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="justify-left flex flex-col">
         {/* <hr className="py-1 text-slate-600" /> */}
-        {questionTypes.map((questionType) => (
+        {availableQuestionTypes.map((questionType) => (
           <button
             type="button"
             key={questionType.id}

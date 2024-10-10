@@ -21,6 +21,7 @@ interface QuestionsDraggableProps {
   attributeClasses: TAttributeClass[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
+  isCxMode: boolean;
 }
 
 export const QuestionsDroppable = ({
@@ -40,6 +41,7 @@ export const QuestionsDroppable = ({
   attributeClasses,
   addQuestion,
   isFormbricksCloud,
+  isCxMode,
 }: QuestionsDraggableProps) => {
   return (
     <div className="group mb-5 flex w-full flex-col gap-5">
@@ -65,6 +67,7 @@ export const QuestionsDroppable = ({
             attributeClasses={attributeClasses}
             addQuestion={addQuestion}
             isFormbricksCloud={isFormbricksCloud}
+            isCxMode={isCxMode}
           />
         ))}
       </SortableContext>

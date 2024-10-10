@@ -14,9 +14,10 @@ import type { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { Logger } from "../../js-core/src/shared/logger";
-import { getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/shared/utils";
+import { Logger } from "../../js-core/src/lib/logger";
+import { getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
 import { appConfig } from "./lib/config";
+import { StorageAPI } from "./lib/storage";
 import { SurveyStore } from "./lib/survey-store";
 import { sync } from "./lib/sync";
 
@@ -97,6 +98,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
       failed: responseUpdate.failed,
       language:
         responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
+      displayId: surveyState.displayId,
     });
   };
 
@@ -134,12 +136,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     file: TJsFileUploadParams["file"],
     params?: TUploadFileConfig
   ): Promise<string> => {
-    const api = new FormbricksAPI({
-      apiHost: appConfig.get().apiHost,
-      environmentId: appConfig.get().environmentId,
-    });
-
-    return await api.client.storage.uploadFile(file, params);
+    const storage = new StorageAPI(appConfig.get().apiHost, appConfig.get().environmentId);
+    return await storage.uploadFile(file, params);
   };
 
   return (
