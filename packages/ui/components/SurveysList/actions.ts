@@ -6,6 +6,7 @@ import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
+  getOrganizationIdFromTagId,
 } from "@formbricks/lib/organization/utils";
 import { getProducts } from "@formbricks/lib/product/service";
 import {
@@ -14,6 +15,12 @@ import {
   getSurvey,
   getSurveys,
 } from "@formbricks/lib/survey/service";
+import {
+  addTagToSurvey,
+  createTag,
+  deleteTagFromSurvey,
+  getTagsBySurveyId,
+} from "@formbricks/lib/tag/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
@@ -147,4 +154,79 @@ export const getSurveysAction = authenticatedActionClient
       parsedInput.offset,
       parsedInput.filterCriteria
     );
+  });
+
+const ZDeleteTagOnSurveyAction = z.object({
+  surveyId: ZId,
+  tagId: ZId,
+});
+
+export const deleteTagOnSurveyAction = authenticatedActionClient
+  .schema(ZDeleteTagOnSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    return await deleteTagFromSurvey(parsedInput.surveyId, parsedInput.tagId);
+  });
+
+const ZCreateTagAction = z.object({
+  environmentId: ZId,
+  tagName: z.string(),
+});
+
+export const createTagAction = authenticatedActionClient
+  .schema(ZCreateTagAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["tag", "create"],
+    });
+
+    return await createTag(parsedInput.environmentId, parsedInput.tagName);
+  });
+
+const ZCreateTagToSurveyAction = z.object({
+  surveyId: ZId,
+  tagId: ZId,
+});
+
+export const createTagToSurveyAction = authenticatedActionClient
+  .schema(ZCreateTagToSurveyAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
+      rules: ["tag", "read"],
+    });
+
+    const result = await addTagToSurvey(parsedInput.surveyId, parsedInput.tagId);
+
+    return result;
+  });
+
+const ZGetTagsForSurveyAction = z.object({
+  surveyId: z.string(),
+});
+
+export const getTagsForSurveyAction = authenticatedActionClient
+  .schema(ZGetTagsForSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "read"],
+    });
+
+    return await getTagsBySurveyId(parsedInput.surveyId);
   });

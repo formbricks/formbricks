@@ -5,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 interface SurveyFilterDropdownProps {
   title: string;
-  id: "createdBy" | "status" | "type";
+  id: "createdBy" | "status" | "type" | "tags";
   options: TFilterOption[];
   selectedOptions: string[];
   setSelectedOptions: (value: string) => void;

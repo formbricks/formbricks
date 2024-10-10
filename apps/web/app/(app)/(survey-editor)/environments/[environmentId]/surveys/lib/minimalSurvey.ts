@@ -44,6 +44,7 @@ export const minimalSurvey: TSurvey = {
   isSingleResponsePerEmailEnabled: false,
   variables: [],
   countries: [],
+  tags: [],
   limitedCountries: false,
   reward: 0,
   failureChance: 0,

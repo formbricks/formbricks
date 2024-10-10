@@ -5,6 +5,7 @@ import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
+import { ZTag } from "../tags";
 import {
   FORBIDDEN_IDS,
   findLanguageCodesForDuplicateLabels,
@@ -804,6 +805,7 @@ export const ZSurvey = z
     reward: z.number(),
     failureChance: z.number(),
     countries: z.array(ZCountry),
+    tags: z.array(ZTag),
     limitedCountries: z.boolean(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
@@ -2484,6 +2486,7 @@ export const ZSurveyFilterCriteria = z.object({
   name: z.string().optional(),
   status: z.array(ZSurveyStatus).optional(),
   type: z.array(ZSurveyType).optional(),
+  tag: z.array(ZTag).optional(),
   createdBy: z
     .object({
       userId: z.string(),
@@ -2500,6 +2503,7 @@ const ZSurveyFilters = z.object({
   createdBy: z.array(z.enum(["you", "others"])),
   status: z.array(ZSurveyStatus),
   type: z.array(ZSurveyType),
+  tag: z.array(ZTag),
   sortBy: z.enum(["createdAt", "updatedAt", "name", "relevance"]),
 });
 

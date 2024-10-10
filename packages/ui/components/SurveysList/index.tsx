@@ -9,6 +9,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
 import { Button } from "../Button";
 import { getSurveysAction } from "./actions";
 import { SurveyCard } from "./components/SurveyCard";
@@ -24,6 +25,7 @@ interface SurveysListProps {
   userId: string;
   surveysPerPage: number;
   currentProductChannel: TProductConfigChannel;
+  environmentTags: TTag[];
 }
 
 export const initialFilters: TSurveyFilters = {
@@ -31,6 +33,7 @@ export const initialFilters: TSurveyFilters = {
   createdBy: [],
   status: [],
   type: [],
+  tag: [],
   sortBy: "relevance",
 };
 
@@ -42,6 +45,7 @@ export const SurveysList = ({
   userId,
   surveysPerPage: surveysLimit,
   currentProductChannel,
+  environmentTags,
 }: SurveysListProps) => {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -147,6 +151,7 @@ export const SurveysList = ({
         surveyFilters={surveyFilters}
         setSurveyFilters={setSurveyFilters}
         currentProductChannel={currentProductChannel}
+        environmentTags={environmentTags}
       />
       {surveys.length > 0 ? (
         <div>

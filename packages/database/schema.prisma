@@ -166,6 +166,7 @@ model Tag {
   updatedAt     DateTime          @updatedAt @map(name: "updated_at")
   name          String
   responses     TagsOnResponses[]
+  surveys       Survey[]
   environmentId String
   environment   Environment       @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
@@ -336,6 +337,7 @@ model Survey {
   reward                          Float            @default(0)
   failureChance                   Float            @default(0)
   countries                       Country[]        @relation("SurveyCountries")
+  tags                            Tag[]
   limitedCountries                Boolean          @default(false)
 
   @@index([environmentId, updatedAt])

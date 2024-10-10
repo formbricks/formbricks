@@ -15,6 +15,10 @@ export const getFormattedFilters = (surveyFilters: TSurveyFilters, userId: strin
     filters.type = surveyFilters.type;
   }
 
+  if (surveyFilters.tag && surveyFilters.tag.length) {
+    filters.tag = surveyFilters.tag;
+  }
+
   if (surveyFilters.createdBy && surveyFilters.createdBy.length) {
     filters.createdBy = {
       userId: userId,

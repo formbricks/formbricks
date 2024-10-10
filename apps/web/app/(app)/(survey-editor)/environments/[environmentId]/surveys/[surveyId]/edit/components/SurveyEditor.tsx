@@ -12,6 +12,7 @@ import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
 import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
 import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
@@ -37,6 +38,7 @@ interface SurveyEditorProps {
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
+  environmentTags: TTag[];
 }
 
 export const SurveyEditor = ({
@@ -44,6 +46,7 @@ export const SurveyEditor = ({
   product,
   environment,
   actionClasses,
+  environmentTags,
   attributeClasses,
   segments,
   responseCount,
@@ -194,6 +197,7 @@ export const SurveyEditor = ({
           {activeView === "settings" && (
             <SettingsView
               environment={environment}
+              environmentTags={environmentTags}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               actionClasses={actionClasses}

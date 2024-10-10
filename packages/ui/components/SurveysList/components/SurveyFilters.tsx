@@ -4,6 +4,7 @@ import { useDebounce } from "react-use";
 import { FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS } from "@formbricks/lib/localStorage";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
 import { initialFilters } from "..";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
@@ -18,6 +19,7 @@ interface SurveyFilterProps {
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
   currentProductChannel: TProductConfigChannel;
+  environmentTags: TTag[];
 }
 
 const creatorOptions: TFilterOption[] = [
@@ -62,8 +64,9 @@ export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
   currentProductChannel,
+  environmentTags,
 }: SurveyFilterProps) => {
-  const { createdBy, sortBy, status, type } = surveyFilters;
+  const { createdBy, sortBy, status, type, tag } = surveyFilters;
   const [name, setName] = useState("");
 
   useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 800, [name]);
@@ -124,6 +127,25 @@ export const SurveyFilters = ({
     }
   };
 
+  const handleTagChange = (value: string) => {
+    const isTagSelected = tag.map((t) => t.id).includes(value);
+
+    const updatedTags = isTagSelected
+      ? tag.filter((t) => t.id !== value)
+      : [
+          ...tag,
+          environmentTags.find((t) => t.id === value) as {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            environmentId: string;
+          },
+        ];
+
+    setSurveyFilters((prev) => ({ ...prev, tag: updatedTags }));
+  };
+
   const handleSortChange = (option: TSortOption) => {
     setSurveyFilters((prev) => ({ ...prev, sortBy: option.value }));
   };
@@ -142,6 +164,17 @@ export const SurveyFilters = ({
           placeholder={"Search by survey name"}
           className="border-slate-700"
         />
+        <div>
+          <SurveyFilterDropdown
+            title="Tags"
+            id="tags"
+            options={environmentTags.map((tag) => ({ label: tag.name, value: tag.id }))}
+            selectedOptions={tag.map((t) => t.id)}
+            setSelectedOptions={handleTagChange}
+            isOpen={dropdownOpenStates.get("tags")}
+            toggleDropdown={toggleDropdown}
+          />
+        </div>
         <div>
           <SurveyFilterDropdown
             title="Created By"
@@ -178,7 +211,7 @@ export const SurveyFilters = ({
           </div>
         )}
 
-        {(createdBy.length > 0 || status.length > 0 || type.length > 0) && (
+        {(createdBy.length > 0 || status.length > 0 || type.length > 0 || tag.length > 0) && (
           <Button
             size="sm"
             onClick={() => {

@@ -7,6 +7,7 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TTag } from "@formbricks/types/tags";
 import { RecontactOptionsCard } from "./RecontactOptionsCard";
 import { ResponseOptionsCard } from "./ResponseOptionsCard";
 import { SurveyPlacementCard } from "./SurveyPlacementCard";
@@ -29,6 +30,7 @@ interface SettingsViewProps {
   setInvalidQuestions: (invalidQuestions: string[] | null) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
+  environmentTags: TTag[];
 }
 
 export const SettingsView = ({
@@ -46,6 +48,7 @@ export const SettingsView = ({
   invalidQuestions,
   setSelectedLanguageCode,
   selectedLanguageCode,
+  environmentTags,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -59,6 +62,8 @@ export const SettingsView = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         selectedLanguageCode={selectedLanguageCode}
         attributeClasses={attributeClasses}
+        environmentTags={environmentTags}
+        environmentId={environment.id}
       />
 
       {localSurvey.type === "app" ? (

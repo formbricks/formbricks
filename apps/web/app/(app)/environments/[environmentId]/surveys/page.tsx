@@ -9,6 +9,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/components/Button";
@@ -62,6 +63,11 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     throw new Error("Environment not found");
   }
 
+  const environmentTags = await getTagsByEnvironmentId(params.environmentId);
+  if (!environmentTags) {
+    throw new Error("Environment tags not found");
+  }
+
   const surveyCount = await getSurveyCount(params.environmentId);
 
   const environments = await getEnvironments(product.id);
@@ -82,6 +88,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
           <PageHeader pageTitle="Surveys" cta={isViewer ? <></> : CreateSurveyButton} />
           <SurveysList
             environment={environment}
+            environmentTags={environmentTags}
             otherEnvironment={otherEnvironment}
             isViewer={isViewer}
             WEBAPP_URL={WEBAPP_URL}

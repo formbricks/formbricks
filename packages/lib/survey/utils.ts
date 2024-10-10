@@ -40,6 +40,20 @@ export const buildWhereClause = (filterCriteria?: TSurveyFilterCriteria) => {
     whereClause.push({ type: { in: filterCriteria.type } });
   }
 
+  // for tags
+  if (filterCriteria?.tag && filterCriteria?.tag?.length) {
+    const tagIds = filterCriteria.tag.map((tag) => tag.id);
+    whereClause.push({
+      tags: {
+        some: {
+          id: {
+            in: tagIds,
+          },
+        },
+      },
+    });
+  }
+
   // for createdBy
   if (filterCriteria?.createdBy?.value && filterCriteria?.createdBy?.value?.length) {
     if (filterCriteria.createdBy.value.length === 1) {
