@@ -1416,3 +1416,24 @@ export async function getAllDbCountries() {
     throw error;
   }
 }
+
+export const addTagToSurvey = async (surveyId: string, tagId: string): Promise<TSurvey> => {
+  validateInputs([surveyId, ZId], [tagId, ZId]);
+  try {
+    const updatedSurvey = await prisma.survey.update({
+      where: { id: surveyId },
+      data: {
+        tags: {
+          connect: { id: tagId },
+        },
+      },
+      select: selectSurvey,
+    });
+    return transformPrismaSurvey(updatedSurvey);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};

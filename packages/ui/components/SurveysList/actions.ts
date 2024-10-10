@@ -10,17 +10,13 @@ import {
 } from "@formbricks/lib/organization/utils";
 import { getProducts } from "@formbricks/lib/product/service";
 import {
+  addTagToSurvey,
   copySurveyToOtherEnvironment,
   deleteSurvey,
   getSurvey,
   getSurveys,
 } from "@formbricks/lib/survey/service";
-import {
-  addTagToSurvey,
-  createTag,
-  deleteTagFromSurvey,
-  getTagsBySurveyId,
-} from "@formbricks/lib/tag/service";
+import { createTag, deleteTagFromSurvey, getTagsBySurveyId } from "@formbricks/lib/tag/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
