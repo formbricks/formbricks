@@ -66,13 +66,11 @@ export const CopySurveyForm = ({
         <div className="space-y-8 pb-12">
           {formFields.fields.map((field, productIndex) => {
             const product = defaultProducts.find((product) => product.id === field.product);
-            const isDisabled = survey.type !== "link" && product?.config.channel !== survey.type;
 
             return (
               <div key={product?.id}>
                 <div className="flex flex-col gap-4">
                   <TooltipRenderer
-                    shouldRender={isDisabled}
                     tooltipContent={
                       <span>
                         This product is not compatible with the survey type. Please select a different
@@ -80,10 +78,7 @@ export const CopySurveyForm = ({
                       </span>
                     }>
                     <div className="w-fit">
-                      <p className="text-base font-semibold text-slate-900">
-                        {product?.name}
-                        {isDisabled && <span className="ml-2 mr-11 text-sm text-gray-500">(Disabled)</span>}
-                      </p>
+                      <p className="text-base font-semibold text-slate-900">{product?.name}</p>
                     </div>
                   </TooltipRenderer>
 
@@ -103,11 +98,6 @@ export const CopySurveyForm = ({
                                       <Checkbox
                                         {...field}
                                         type="button"
-                                        onClick={(e) => {
-                                          if (isDisabled) {
-                                            e.preventDefault();
-                                          }
-                                        }}
                                         onCheckedChange={() => {
                                           if (field.value.includes(environment.id)) {
                                             field.onChange(
@@ -118,7 +108,6 @@ export const CopySurveyForm = ({
                                           }
                                         }}
                                         className="mr-2 h-4 w-4 appearance-none border-gray-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
-                                        disabled={isDisabled}
                                         id={environment.id}
                                       />
                                       <Label htmlFor={environment.id}>

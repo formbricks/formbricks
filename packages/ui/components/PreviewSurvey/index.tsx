@@ -72,7 +72,6 @@ export const PreviewSurvey = ({
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
 
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
@@ -122,7 +121,7 @@ export const PreviewSurvey = ({
   const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
   const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
 
-  const widgetSetupCompleted = appSetupCompleted || websiteSetupCompleted;
+  const widgetSetupCompleted = appSetupCompleted;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
     // allow style overwrite is disabled from the product
@@ -167,7 +166,7 @@ export const PreviewSurvey = ({
 
   const onFinished = () => {
     // close modal if there are no questions left
-    if ((survey.type === "website" || survey.type === "app") && survey.endings.length === 0) {
+    if (survey.type === "app" && survey.endings.length === 0) {
       setIsModalOpen(false);
       setTimeout(() => {
         setQuestionId(survey.questions[0]?.id);
@@ -198,7 +197,6 @@ export const PreviewSurvey = ({
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);
-      setWebsiteSetupCompleted(environment.websiteSetupCompleted);
     }
   }, [environment]);
 

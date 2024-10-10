@@ -13,7 +13,7 @@ interface AutoCloseProps {
 export const AutoCloseWrapper = ({ survey, onClose, children, offset }: AutoCloseProps) => {
   const [countDownActive, setCountDownActive] = useState(true);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isAppSurvey = survey.type === "app" || survey.type === "website";
+  const isAppSurvey = survey.type === "app";
   const showAutoCloseProgressBar = countDownActive && isAppSurvey && offset === 0;
 
   const startCountdown = () => {

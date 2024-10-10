@@ -20,10 +20,8 @@ npm install @formbricks/js
 
 1. Import Formbricks and initialize the widget in your main component (e.g., App.tsx or App.js):
 
-For `Website` surveys:
-
 ```javascript
-import formbricks from "@formbricks/js/website";
+import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -33,20 +31,6 @@ if (typeof window !== "undefined") {
 }
 ```
 
-For `App` surveys:
-
-```javascript
-import formbricks from "@formbricks/js/app";
-
-if (typeof window !== "undefined") {
-  formbricks.init({
-    environmentId: "your-environment-id",
-    apiHost: "https://app.formbricks.com",
-    userId: "REPLACE_WITH_DYNAMIC_ID",
-  });
-}
-```
-
-Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings. If you are using `App` surveys please make sure to pass a unique user identifier to the Formbricks SDK.
+Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings. If you want to use the user identification feature, please check out [our docs for details](https://formbricks.com/docs/app-surveys/user-identification).
 
 For more detailed guides for different frameworks, check out our [Framework Guides](https://formbricks.com/docs/getting-started/framework-guides).

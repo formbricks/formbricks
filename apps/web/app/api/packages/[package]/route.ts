@@ -7,11 +7,8 @@ export const GET = async (_: NextRequest, { params }: { params: { package: strin
   const packageRequested = params.package;
 
   switch (packageRequested) {
-    case "app":
-      path = `../../packages/js-core/dist/app.umd.cjs`;
-      break;
-    case "website":
-      path = `../../packages/js-core/dist/website.umd.cjs`;
+    case "js":
+      path = `../../packages/js-core/dist/index.umd.cjs`;
       break;
     case "surveys":
       path = `../../packages/surveys/dist/index.umd.cjs`;

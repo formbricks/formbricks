@@ -21,7 +21,9 @@ export const TemplateFilters = ({
     newFilter[index] = filterValue;
     setSelectedFilter(newFilter);
   };
+
   const allFilters = [channelMapping, industryMapping, roleMapping];
+
   return (
     <div className="mb-6 gap-3">
       {allFilters.map((filters, index) => {
