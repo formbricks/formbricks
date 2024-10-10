@@ -216,18 +216,16 @@ export function LogicEditorConditions({
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem
-                  className="flex items-center gap-2"
                   onClick={() => {
                     handleAddConditionBelow(condition.id);
-                  }}>
-                  <PlusIcon className="h-4 w-4" />
+                  }}
+                  icon={<PlusIcon className="h-4 w-4" />}>
                   Add condition below
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="flex items-center gap-2"
                   disabled={depth === 0 && conditions.conditions.length === 1}
-                  onClick={() => handleRemoveCondition(condition.id)}>
-                  <TrashIcon className="h-4 w-4" />
+                  onClick={() => handleRemoveCondition(condition.id)}
+                  icon={<TrashIcon className="h-4 w-4" />}>
                   Remove
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -307,30 +305,26 @@ export function LogicEditorConditions({
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
-              className="flex items-center gap-2"
               onClick={() => {
                 handleAddConditionBelow(condition.id);
-              }}>
-              <PlusIcon className="h-4 w-4" />
+              }}
+              icon={<PlusIcon className="h-4 w-4" />}>
               Add condition below
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2"
               disabled={depth === 0 && conditions.conditions.length === 1}
-              onClick={() => handleRemoveCondition(condition.id)}>
-              <TrashIcon className="h-4 w-4" />
+              onClick={() => handleRemoveCondition(condition.id)}
+              icon={<TrashIcon className="h-4 w-4" />}>
               Remove
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2"
-              onClick={() => handleDuplicateCondition(condition.id)}>
-              <CopyIcon className="h-4 w-4" />
+              onClick={() => handleDuplicateCondition(condition.id)}
+              icon={<CopyIcon className="h-4 w-4" />}>
               Duplicate
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2"
-              onClick={() => handleCreateGroup(condition.id)}>
-              <WorkflowIcon className="h-4 w-4" />
+              onClick={() => handleCreateGroup(condition.id)}
+              icon={<WorkflowIcon className="h-4 w-4" />}>
               Create group
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -23,15 +23,17 @@ export const ColumnSettingsDropdown = <T,>({
           className="capitalize"
           onClick={() => {
             column.toggleVisibility(false);
-          }}>
+          }}
+          icon={<EyeOffIcon className="h-4 w-4" />}>
           <div className="flex items-center space-x-2">
-            <EyeOffIcon className="h-4 w-4" />
             <span>Hide column</span>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem className="capitalize" onClick={() => setIsTableSettingsModalOpen(true)}>
+        <DropdownMenuItem
+          className="capitalize"
+          onClick={() => setIsTableSettingsModalOpen(true)}
+          icon={<SettingsIcon className="h-4 w-4" />}>
           <div className="flex items-center space-x-2">
-            <SettingsIcon className="h-4 w-4" />
             <span>Table settings</span>
           </div>
         </DropdownMenuItem>

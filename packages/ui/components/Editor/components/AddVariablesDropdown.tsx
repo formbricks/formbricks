@@ -35,7 +35,7 @@ export const AddVariablesDropdown: React.FC<IAddVariablesDropdown> = (props) => 
           </div>
           <div className="h-64 overflow-scroll md:h-80">
             {props.variables.map((variable) => (
-              <DropdownMenuItem key={variable} className="hover:ring-0">
+              <DropdownMenuItem key={variable}>
                 <button
                   key={variable}
                   type="button"
