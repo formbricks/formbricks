@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  copySurveyToOtherEnvironmentAction,
+  deleteSurveyAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { getSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
@@ -8,16 +14,14 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TSurvey } from "@formbricks/types/surveys/types";
-import { DeleteDialog } from "../../DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../../DropdownMenu";
-import { copySurveyToOtherEnvironmentAction, deleteSurveyAction, getSurveyAction } from "../actions";
+} from "@formbricks/ui/components/DropdownMenu";
 import { CopySurveyModal } from "./CopySurveyModal";
 
 interface SurveyDropDownMenuProps {
@@ -49,11 +53,11 @@ export const SurveyDropDownMenu = ({
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
 
-  const handleDeleteSurvey = async (survey: TSurvey) => {
+  const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
     try {
-      await deleteSurveyAction({ surveyId: survey.id });
-      deleteSurvey(survey.id);
+      await deleteSurveyAction({ surveyId });
+      deleteSurvey(surveyId);
       router.refresh();
       setDeleteDialogOpen(false);
       toast.success("Survey deleted successfully.");
@@ -206,7 +210,7 @@ export const SurveyDropDownMenu = ({
           deleteWhat="Survey"
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
-          onDelete={() => handleDeleteSurvey(survey)}
+          onDelete={() => handleDeleteSurvey(survey.id)}
           text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
         />
       )}

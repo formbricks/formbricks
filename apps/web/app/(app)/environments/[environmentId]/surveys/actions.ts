@@ -1,5 +1,6 @@
 "use server";
 
+import { getSurvey, getSurveys } from "@/app/(app)/environments/[environmentId]/surveys/lib/surveys";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -8,12 +9,7 @@ import {
   getOrganizationIdFromSurveyId,
 } from "@formbricks/lib/organization/utils";
 import { getProducts } from "@formbricks/lib/product/service";
-import {
-  copySurveyToOtherEnvironment,
-  deleteSurvey,
-  getSurvey,
-  getSurveys,
-} from "@formbricks/lib/survey/service";
+import { copySurveyToOtherEnvironment, deleteSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
