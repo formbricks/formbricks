@@ -76,7 +76,7 @@ export const getSurveys = reactCache(
           throw error;
         }
       },
-      [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      [`surveyList-getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [
           surveyCache.tag.byEnvironmentId(environmentId),
@@ -160,7 +160,9 @@ export const getSurveysSortedByRelevance = reactCache(
           throw error;
         }
       },
-      [`getSurveysSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      [
+        `surveyList-getSurveysSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`,
+      ],
       {
         tags: [
           surveyCache.tag.byEnvironmentId(environmentId),
@@ -198,7 +200,7 @@ export const getSurvey = reactCache(
 
         return { ...surveyPrisma, responseCount: surveyPrisma?._count.responses };
       },
-      [`getSurvey-${surveyId}`],
+      [`surveyList-getSurvey-${surveyId}`],
       {
         tags: [surveyCache.tag.byId(surveyId), responseCache.tag.bySurveyId(surveyId)],
       }
