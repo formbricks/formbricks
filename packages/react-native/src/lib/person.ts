@@ -1,5 +1,5 @@
-import { type NetworkError, type Result, err, okVoid } from "../../../js-core/src/shared/errors";
-import { Logger } from "../../../js-core/src/shared/logger";
+import { type NetworkError, type Result, err, okVoid } from "../../../js-core/src/lib/errors";
+import { Logger } from "../../../js-core/src/lib/logger";
 import { appConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 

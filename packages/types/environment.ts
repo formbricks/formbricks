@@ -7,7 +7,6 @@ export const ZEnvironment = z.object({
   type: z.enum(["development", "production"]),
   productId: z.string(),
   appSetupCompleted: z.boolean(),
-  websiteSetupCompleted: z.boolean(),
 });
 
 export type TEnvironment = z.infer<typeof ZEnvironment>;
@@ -22,13 +21,11 @@ export const ZEnvironmentUpdateInput = z.object({
   type: z.enum(["development", "production"]),
   productId: z.string(),
   appSetupCompleted: z.boolean(),
-  websiteSetupCompleted: z.boolean(),
 });
 
 export const ZEnvironmentCreateInput = z.object({
   type: z.enum(["development", "production"]).optional(),
   appSetupCompleted: z.boolean().optional(),
-  websiteSetupCompleted: z.boolean().optional(),
 });
 
 export type TEnvironmentCreateInput = z.infer<typeof ZEnvironmentCreateInput>;
