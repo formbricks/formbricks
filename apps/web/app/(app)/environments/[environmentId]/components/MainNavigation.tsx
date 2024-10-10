@@ -323,10 +323,7 @@ export const MainNavigation = ({
             )}
 
             <DropdownMenu>
-              <DropdownMenuTrigger
-                asChild
-                id="productDropdownTrigger"
-                className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
+              <DropdownMenuTrigger asChild id="productDropdownTrigger">
                 <div
                   tabIndex={0}
                   className={cn(
@@ -376,7 +373,6 @@ export const MainNavigation = ({
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-fit space-y-1 rounded-xl border border-slate-200 shadow-sm"
                 id="userDropdownInnerContentWrapper"
                 side="right"
                 sideOffset={10}
@@ -407,9 +403,7 @@ export const MainNavigation = ({
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 {isOwnerOrAdmin && (
-                  <DropdownMenuItem
-                    onClick={() => handleAddProduct(organization.id)}
-                    className="rounded-lg font-normal">
+                  <DropdownMenuItem onClick={() => handleAddProduct(organization.id)}>
                     <PlusIcon className="mr-2 h-4 w-4" />
                     <span>Add product</span>
                   </DropdownMenuItem>
@@ -454,7 +448,6 @@ export const MainNavigation = ({
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent
-                  className="w-56 rounded-xl border border-slate-200 shadow-sm"
                   id="userDropdownInnerContentWrapper"
                   side="right"
                   sideOffset={10}
@@ -470,9 +463,7 @@ export const MainNavigation = ({
                           target={link.target}
                           key={link.label}
                           className="flex items-center">
-                          <DropdownMenuItem
-                            className="w-full gap-x-2 rounded-lg font-normal"
-                            key={link.label}>
+                          <DropdownMenuItem key={link.label}>
                             <link.icon className="h-4 w-4" strokeWidth={1.5} />
                             {link.label}
                           </DropdownMenuItem>
@@ -483,7 +474,6 @@ export const MainNavigation = ({
                   {/* Logout */}
 
                   <DropdownMenuItem
-                    className="w-full gap-x-2 rounded-lg font-normal"
                     onClick={async () => {
                       await signOut({ callbackUrl: "/auth/login" });
                       await formbricksLogout();
@@ -503,10 +493,7 @@ export const MainNavigation = ({
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
-                        <DropdownMenuSubContent
-                          className="rounded-xl border border-slate-200 shadow-sm"
-                          sideOffset={10}
-                          alignOffset={5}>
+                        <DropdownMenuSubContent sideOffset={10} alignOffset={5}>
                           <DropdownMenuRadioGroup
                             value={currentOrganizationId}
                             onValueChange={(organizationId) =>
@@ -523,9 +510,7 @@ export const MainNavigation = ({
                           </DropdownMenuRadioGroup>
                           <DropdownMenuSeparator />
                           {isMultiOrgEnabled && (
-                            <DropdownMenuItem
-                              onClick={() => setShowCreateOrganizationModal(true)}
-                              className="rounded-lg">
+                            <DropdownMenuItem onClick={() => setShowCreateOrganizationModal(true)}>
                               <PlusIcon className="mr-2 h-4 w-4" />
                               <span>Create new organization</span>
                             </DropdownMenuItem>
