@@ -6,7 +6,7 @@ import type {
   TWeeklySummaryNotificationDataSurvey,
   TWeeklySummarySurveyResponseData,
 } from "@formbricks/types/weekly-summary";
-import { EmailButton } from "../general/email-button";
+import { EmailButton } from "../../components/email-button";
 import { renderEmailResponseValue } from "../survey/response-finished-email";
 
 const getButtonLabel = (count: number): string => {

@@ -13,3 +13,5 @@ export function EmailButton({ label, href }: EmailButtonProps): React.JSX.Elemen
     </Button>
   );
 }
+
+export default EmailButton;
