@@ -32,7 +32,7 @@ export const GithubButton = ({
       variant="secondary"
       className={`relative w-full justify-center`}>
       {text}
-      {lastUsed && <i className="absolute right-3 text-xs">Last Used</i>}
+      {lastUsed && <span className="absolute right-3 text-xs italic">Last Used</span>}
     </Button>
   );
 };

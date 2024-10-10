@@ -223,7 +223,7 @@ export const SigninForm = ({
                 loading={loggingIn}>
                 {totpLogin ? "Submit" : "Login with Email"}
                 {lastLoggedInWith && lastLoggedInWith === "Email" ? (
-                  <i className="absolute right-3 text-xs">Last Used</i>
+                  <span className="absolute right-3 text-xs italic">Last Used</span>
                 ) : null}
               </Button>
             )}
