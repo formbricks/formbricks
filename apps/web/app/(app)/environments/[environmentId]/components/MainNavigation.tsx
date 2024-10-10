@@ -11,6 +11,7 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
+  GaugeIcon,
   GlobeIcon,
   GlobeLockIcon,
   KeyIcon,
@@ -67,6 +68,7 @@ interface NavigationProps {
   isMultiOrgEnabled: boolean;
   isFormbricksCloud?: boolean;
   membershipRole?: TMembershipRole;
+  isAiEnabled?: boolean;
 }
 
 export const MainNavigation = ({
@@ -78,6 +80,7 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   isFormbricksCloud = true,
   membershipRole,
+  isAiEnabled = false,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -158,6 +161,13 @@ export const MainNavigation = ({
 
   const mainNavigation = useMemo(
     () => [
+      {
+        name: "Experience",
+        href: `/environments/${environment.id}/experience`,
+        icon: GaugeIcon,
+        isActive: pathname?.includes("/experience"),
+        isHidden: !isAiEnabled,
+      },
       {
         name: "Surveys",
         href: `/environments/${environment.id}/surveys`,
@@ -322,7 +332,6 @@ export const MainNavigation = ({
                 </p>
               </Link>
             )}
-
             <DropdownMenu>
               <DropdownMenuTrigger
                 asChild

@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_AI_ENABLED, IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -60,6 +60,16 @@ const Page = async ({ params }) => {
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  // I took this out cause it's cloud only right?
+  // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+
+  const isAiEnabled =
+    // isEnterpriseEdition &&
+    IS_FORMBRICKS_CLOUD &&
+    (organization.billing.plan === "startup" ||
+      organization.billing.plan === "scale" ||
+      organization.billing.plan === "enterprise") &&
+    IS_AI_ENABLED;
 
   return (
     <PageContentWrapper>
@@ -72,6 +82,7 @@ const Page = async ({ params }) => {
             isViewer={isViewer}
             webAppUrl={WEBAPP_URL}
             user={user}
+            surveyResponseCount={totalResponseCount}
           />
         }>
         <SurveyAnalysisNavigation
@@ -89,6 +100,7 @@ const Page = async ({ params }) => {
         user={user}
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
+        isAiEnabled={isAiEnabled}
       />
     </PageContentWrapper>
   );

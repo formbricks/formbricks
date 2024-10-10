@@ -4,11 +4,14 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { cache } from "@formbricks/lib/cache";
-import { CRON_SECRET } from "@formbricks/lib/constants";
+import { CRON_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { createDocument } from "@formbricks/lib/document/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
+import { getPromptText } from "@formbricks/lib/utils/ai";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
 import { TWebhook } from "@formbricks/types/webhooks";
@@ -139,6 +142,43 @@ export const POST = async (request: Request) => {
         console.error("Promise rejected:", result.reason);
       }
     });
+
+    // generate embeddings for all open text question responses for all paid plans
+    // TODO: check longer surveys if documents get created multiple times
+    const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
+    if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD) {
+      // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+      const isAiEnabled = IS_AI_ENABLED;
+      if (hasSurveyOpenTextQuestions && isAiEnabled) {
+        const organization = await getOrganizationByEnvironmentId(environmentId);
+        if (!organization) {
+          throw new Error("Organization not found");
+        }
+        if (
+          organization.billing.plan === "enterprise" ||
+          organization.billing.plan === "scale" ||
+          organization.billing.plan === "startup"
+        ) {
+          for (const question of survey.questions) {
+            if (question.type === "openText" && question.insightsEnabled) {
+              const isQuestionAnswered = response.data[question.id] !== undefined;
+              if (!isQuestionAnswered) {
+                continue;
+              }
+              const text = getPromptText(question.headline.default, response.data[question.id] as string);
+              // TODO: check if subheadline gives more context and better embeddings
+              await createDocument({
+                environmentId,
+                surveyId,
+                responseId: response.id,
+                questionId: question.id,
+                text,
+              });
+            }
+          }
+        }
+      }
+    }
   } else {
     // Await webhook promises if no emails are sent (with allSettled to prevent early rejection)
     const results = await Promise.allSettled(webhookPromises);
