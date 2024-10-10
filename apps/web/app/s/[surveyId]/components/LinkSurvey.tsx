@@ -72,6 +72,10 @@ export const LinkSurvey = ({
     return surveyLanguage.default === true;
   })?.language.code;
 
+  useEffect(() => {
+    document.documentElement.lang = languageCode === "default" ? "en" : languageCode;
+  }, [languageCode]);
+
   const startAt = searchParams?.get("startAt");
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
