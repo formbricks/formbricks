@@ -190,6 +190,7 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
+        // check if user's email is verified or not
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");
         }
