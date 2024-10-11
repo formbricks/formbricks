@@ -199,6 +199,23 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/api/js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
+          },
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=UTF-8",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
     ];
   },
   async rewrites() {
@@ -218,6 +235,10 @@ const nextConfig = {
       {
         source: "/api/packages/surveys",
         destination: "/js/surveys.umd.cjs",
+      },
+      {
+        source: "/api/js",
+        destination: "/js/formbricks.umd.cjs",
       },
       {
         source: "/api/v1/client/:environmentId/website/environment",
