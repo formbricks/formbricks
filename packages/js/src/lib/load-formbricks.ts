@@ -10,7 +10,7 @@ let isInitialized = false;
 // Load the SDK, return the result
 const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> => {
   if (!window.formbricks) {
-    const res = await fetch(`${apiHostParam}/api/packages/js`);
+    const res = await fetch(`${apiHostParam}/js/formbricks.umd.cjs`);
 
     // Failed to fetch the app package
     if (!res.ok) {
