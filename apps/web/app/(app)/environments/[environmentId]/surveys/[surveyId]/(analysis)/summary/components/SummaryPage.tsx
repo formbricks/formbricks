@@ -5,6 +5,7 @@ import {
   getResponseCountAction,
   getSurveySummaryAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
@@ -23,7 +24,6 @@ import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
-import { ScrollToTopUi } from "@formbricks/ui/components/ScrollToTopUi";
 
 const initialSurveySummary: TSurveySummary = {
   meta: {
@@ -156,28 +156,27 @@ export const SummaryPage = ({
   }, [searchParams, resetState]);
 
   return (
-    <ScrollToTopUi>
-     <SummaryMetadata
-       surveySummary={surveySummary.meta}
-       showDropOffs={showDropOffs}
-       setShowDropOffs={setShowDropOffs}
-       isLoading={isLoading}
-     />
-     {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
-     <div className="flex gap-1.5">
-       <CustomFilter survey={surveyMemoized} />
-       {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />}
-     </div>
-    
-     <SummaryList
-       summary={surveySummary.summary}
-       responseCount={responseCount}
-       survey={surveyMemoized}
-       environment={environment}
-       totalResponseCount={totalResponseCount}
-       attributeClasses={attributeClasses}
-     />
-     </ScrollToTopUi>
- 
- );
+    <>
+      <SummaryMetadata
+        surveySummary={surveySummary.meta}
+        showDropOffs={showDropOffs}
+        setShowDropOffs={setShowDropOffs}
+        isLoading={isLoading}
+      />
+      {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
+      <div className="flex gap-1.5">
+        <CustomFilter survey={surveyMemoized} />
+        {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />}
+      </div>
+      <ScrollToTop containerId="mainContent" />
+      <SummaryList
+        summary={surveySummary.summary}
+        responseCount={responseCount}
+        survey={surveyMemoized}
+        environment={environment}
+        totalResponseCount={totalResponseCount}
+        attributeClasses={attributeClasses}
+      />
+    </>
+  );
 };
