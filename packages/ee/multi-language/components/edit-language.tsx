@@ -1,6 +1,6 @@
 "use client";
 
-import { InfoIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
@@ -8,14 +8,13 @@ import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/components/Button";
 import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
-import { Label } from "@formbricks/ui/components/Label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import {
   createLanguageAction,
   deleteLanguageAction,
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
+import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
@@ -210,35 +209,6 @@ export function EditLanguage({ product }: EditLanguageProps) {
         text={confirmationModal.text}
         title="Remove Language"
       />
-    </div>
-  );
-}
-
-function AliasTooltip() {
-  return (
-    <TooltipProvider delayDuration={80}>
-      <Tooltip>
-        <TooltipTrigger tabIndex={-1}>
-          <div>
-            <InfoIcon className="h-4 w-4 text-slate-400" />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          The alias is an alternate name to identify the language in link surveys and the SDK (optional)
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-function LanguageLabels() {
-  return (
-    <div className="mb-2 grid w-full grid-cols-4 gap-4">
-      <Label htmlFor="languagesId">Language</Label>
-      <Label htmlFor="languagesId">Identifier (ISO)</Label>
-      <Label className="flex items-center space-x-2" htmlFor="Alias">
-        <span>Alias</span> <AliasTooltip />
-      </Label>
     </div>
   );
 }
