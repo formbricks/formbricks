@@ -128,7 +128,7 @@ export const EndingCard = ({
                       variablesData
                     )}
                     isLastQuestion={false}
-                    focus={autoFocusEnabled}
+                    focus={isCurrent ? autoFocusEnabled : false}
                     onClick={handleSubmit}
                   />
                 </div>

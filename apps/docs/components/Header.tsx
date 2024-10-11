@@ -3,7 +3,7 @@
 import { Logo } from "@/components/Logo";
 import { Search } from "@/components/Search";
 import clsx from "clsx";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { type MotionStyle, motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { forwardRef } from "react";
 import { Button } from "./Button";
@@ -46,7 +46,7 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
         {
           "--bg-opacity-light": bgOpacityLight,
           "--bg-opacity-dark": bgOpacityDark,
-        } as React.CSSProperties
+        } as MotionStyle
       }>
       <div
         className={clsx(

@@ -42,7 +42,7 @@ export const RankingQuestion = ({
   currentQuestionId,
 }: RankingQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-
+  const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
@@ -148,7 +148,12 @@ export const RankingQuestion = ({
                   return (
                     <div
                       key={item.id}
-                      tabIndex={idx + 1}
+                      tabIndex={isCurrent ? 0 : -1}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          handleItemClick(item);
+                        }
+                      }}
                       className={cn(
                         "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer focus:fb-outline-none fb-transform fb-duration-500 fb-ease-in-out",
                         isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
@@ -173,6 +178,7 @@ export const RankingQuestion = ({
                       {isSorted && (
                         <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
                           <button
+                            tabIndex={-1}
                             type="button"
                             onClick={() => handleMove(item.id, "up")}
                             className={cn(
@@ -197,6 +203,7 @@ export const RankingQuestion = ({
                             </svg>
                           </button>
                           <button
+                            tabIndex={-1}
                             type="button"
                             onClick={() => handleMove(item.id, "down")}
                             className={cn(
@@ -232,11 +239,16 @@ export const RankingQuestion = ({
         </div>
       </ScrollableContainer>
 
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            tabIndex={question.choices.length + 3}
+            tabIndex={isCurrent ? 0 : -1}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -244,12 +256,6 @@ export const RankingQuestion = ({
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          tabIndex={question.choices.length + 2}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
       </div>
     </form>
   );
