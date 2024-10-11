@@ -1,20 +1,22 @@
-import { ChevronDownIcon, Equal, Grid2X2, X } from "lucide-react";
+"use client";
+
+import { SortOption } from "@/app/(app)/environments/[environmentId]/surveys/components/SortOption";
+import { initialFilters } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
+import { ChevronDownIcon, X } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "react-use";
-import { FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS } from "@formbricks/lib/localStorage";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
-import { initialFilters } from "..";
-import { Button } from "../../Button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
-import { SearchBar } from "../../SearchBar";
-import { TooltipRenderer } from "../../Tooltip";
-import { SortOption } from "./SortOption";
+import { Button } from "@formbricks/ui/components/Button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@formbricks/ui/components/DropdownMenu";
+import { SearchBar } from "@formbricks/ui/components/SearchBar";
 import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
 
 interface SurveyFilterProps {
-  orientation: string;
-  setOrientation: (orientation: string) => void;
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
   currentProductChannel: TProductConfigChannel;
@@ -52,13 +54,7 @@ const sortOptions: TSortOption[] = [
   },
 ];
 
-const getToolTipContent = (orientation: string) => {
-  return <div>{orientation} View</div>;
-};
-
 export const SurveyFilters = ({
-  orientation,
-  setOrientation,
   surveyFilters,
   setSurveyFilters,
   currentProductChannel,
@@ -73,16 +69,7 @@ export const SurveyFilters = ({
   const typeOptions: TFilterOption[] = [
     { label: "Link", value: "link" },
     { label: "App", value: "app" },
-    { label: "Website", value: "website" },
-  ].filter((option) => {
-    if (currentProductChannel === "website") {
-      return option.value !== "app";
-    } else if (currentProductChannel === "app") {
-      return option.value !== "website";
-    } else {
-      return option;
-    }
-  });
+  ];
 
   const toggleDropdown = (id: string) => {
     setDropdownOpenStates(new Map(dropdownOpenStates).set(id, !dropdownOpenStates.get(id)));
@@ -126,11 +113,6 @@ export const SurveyFilters = ({
 
   const handleSortChange = (option: TSortOption) => {
     setSurveyFilters((prev) => ({ ...prev, sortBy: option.value }));
-  };
-
-  const handleOrientationChange = (value: string) => {
-    setOrientation(value);
-    localStorage.setItem(FORMBRICKS_SURVEYS_ORIENTATION_KEY_LS, value);
   };
 
   return (
@@ -193,32 +175,6 @@ export const SurveyFilters = ({
         )}
       </div>
       <div className="flex space-x-2">
-        <TooltipRenderer
-          shouldRender={true}
-          tooltipContent={getToolTipContent("List")}
-          className="bg-slate-900 text-white">
-          <div
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${
-              orientation === "list" ? "bg-slate-900 text-white" : "bg-white"
-            }`}
-            onClick={() => handleOrientationChange("list")}>
-            <Equal className="h-5 w-5" />
-          </div>
-        </TooltipRenderer>
-
-        <TooltipRenderer
-          shouldRender={true}
-          tooltipContent={getToolTipContent("Grid")}
-          className="bg-slate-900 text-white">
-          <div
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border p-1 ${
-              orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"
-            }`}
-            onClick={() => handleOrientationChange("grid")}>
-            <Grid2X2 className="h-5 w-5" />
-          </div>
-        </TooltipRenderer>
-
         <DropdownMenu>
           <DropdownMenuTrigger
             asChild
