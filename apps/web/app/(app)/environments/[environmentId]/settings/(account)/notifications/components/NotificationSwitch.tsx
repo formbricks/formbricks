@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -22,7 +23,7 @@ export const NotificationSwitch = ({
   autoDisableNotificationElementId,
 }: NotificationSwitchProps) => {
   const [isLoading, setIsLoading] = useState(false);
-
+  const t = useTranslations();
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
       ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)
@@ -63,18 +64,26 @@ export const NotificationSwitch = ({
         case "alert":
           if (notificationSettings[notificationType][surveyOrProductOrOrganizationId] === true) {
             handleSwitchChange();
-            toast.success("You will not receive any more emails for responses on this survey!", {
-              id: "notification-switch",
-            });
+            toast.success(
+              t("settings.notifications.you_will_not_receive_any_more_emails_for_responses_on_this_survey"),
+              {
+                id: "notification-switch",
+              }
+            );
           }
           break;
 
         case "unsubscribedOrganizationIds":
           if (!notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)) {
             handleSwitchChange();
-            toast.success("You will not be auto-subscribed to this organization's surveys anymore!", {
-              id: "notification-switch",
-            });
+            toast.success(
+              t(
+                "settings.notifications.you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore"
+              ),
+              {
+                id: "notification-switch",
+              }
+            );
           }
           break;
 
@@ -93,7 +102,9 @@ export const NotificationSwitch = ({
       disabled={isLoading}
       onCheckedChange={async () => {
         await handleSwitchChange();
-        toast.success("Notification settings updated", { id: "notification-switch" });
+        toast.success(t("settings.notifications.notification_settings_updated"), {
+          id: "notification-switch",
+        });
       }}
     />
   );

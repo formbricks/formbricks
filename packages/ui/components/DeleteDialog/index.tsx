@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 
@@ -30,8 +31,9 @@ export const DeleteDialog = ({
   children,
   disabled,
 }: DeleteDialogProps) => {
+  const t = useTranslations();
   return (
-    <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
+    <Modal open={open} setOpen={setOpen} title={`${t("common.delete")} ${deleteWhat}`}>
       <p>{text || "Are you sure? This action cannot be undone."}</p>
       <div>{children}</div>
       <div className="mt-4 space-x-2 text-right">
@@ -44,10 +46,10 @@ export const DeleteDialog = ({
             }
             setOpen(false);
           }}>
-          {useSaveInsteadOfCancel ? "Save" : "Cancel"}
+          {useSaveInsteadOfCancel ? t("common.save") : t("common.cancel")}
         </Button>
         <Button variant="warn" onClick={onDelete} loading={isDeleting} disabled={disabled}>
-          Delete
+          {t("common.delete")}
         </Button>
       </div>
     </Modal>

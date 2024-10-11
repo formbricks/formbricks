@@ -289,7 +289,7 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
 };
 
 export const getUserLanguage = reactCache(
-  (id: string): Promise<string | null> =>
+  (id: string): Promise<string | undefined> =>
     cache(
       async () => {
         validateInputs([id, ZId]);
@@ -303,7 +303,7 @@ export const getUserLanguage = reactCache(
           });
 
           if (!user) {
-            return null;
+            return undefined;
           }
           return user.locale;
         } catch (error) {

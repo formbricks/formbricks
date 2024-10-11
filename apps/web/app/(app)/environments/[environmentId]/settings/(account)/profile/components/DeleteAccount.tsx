@@ -33,10 +33,10 @@ export const DeleteAccount = ({
         formbricksLogout={formbricksLogout}
       />
       <p className="text-sm text-slate-700">
-        <strong>{t("this_cannot_be_undone!")}</strong>
+        <strong>{t("warning_cannot_undo")}</strong>
       </p>
       <Button className="mt-4" variant="warn" size="sm" onClick={() => setModalOpen(!isModalOpen)}>
-        {t("delete_my_account")}
+        {t("confirm_delete_my_account")}
       </Button>
     </div>
   );

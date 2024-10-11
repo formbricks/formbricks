@@ -30,12 +30,10 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         <div>
           <SettingsCard
             title="settings.profile.personal_information"
-            description="settings.profile.update_your_personal_information">
+            description="settings.profile.update_personal_info">
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
-          <SettingsCard
-            title="common.avatar"
-            description="settings.profile.assist_your_organization_in_identifying_you_on_Formbricks">
+          <SettingsCard title="common.avatar" description="settings.profile.organization_identification">
             {user && (
               <EditProfileAvatarForm
                 session={session}
@@ -52,7 +50,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
 
           <SettingsCard
             title="settings.profile.delete_account"
-            description="settings.profile.delete_your_account_with_all_of_your_personal_information_and_data">
+            description="settings.profile.confirm_delete_account">
             <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
           </SettingsCard>
           <SettingsId title="Profile" id={user.id}></SettingsId>

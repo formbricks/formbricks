@@ -1,25 +1,27 @@
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
+import { useTranslations } from "next-intl";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = () => {
+  const t = useTranslations();
   const cards = [
     {
-      title: "Email alerts (Surveys)",
-      description: "Set up an alert to get an email on new responses.",
+      title: t("settings.notifications.email_alerts_surveys"),
+      description: t("settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses"),
       skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
     },
     {
-      title: "Weekly summary (Products)",
-      description: "Stay up-to-date with a Weekly every Monday.",
+      title: t("settings.notifications.weekly_summary_products"),
+      description: t("settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday"),
       skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
     },
   ];
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Account Settings">
+      <PageHeader pageTitle={t("common.account_settings")}>
         <AccountSettingsNavbar activeId="notifications" loading />
       </PageHeader>
       {cards.map((card, index) => (

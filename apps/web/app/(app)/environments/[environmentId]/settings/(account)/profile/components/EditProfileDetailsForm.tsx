@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { appLanguages } from "@formbricks/lib/i18n/utils";
 import { TUser, ZUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -43,11 +44,11 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
       const name = data.name.trim();
       const locale = data.locale;
       await updateUserAction({ name, locale });
-      toast.success("Your profile was updated successfully");
-
+      toast.success(t("common.profile_updated_successfully"));
+      window.location.reload();
       form.reset({ name, locale });
     } catch (error) {
-      toast.error(`Error: ${error.message}`);
+      toast.error(`${t("common.error")}: ${error.message}`);
     }
   };
 
@@ -91,21 +92,23 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
                   <DropdownMenuTrigger asChild>
                     <Button
                       type="button"
-                      className="w-full border border-slate-300 text-left"
+                      className="w-full border border-slate-300 px-2 text-left"
                       variant="minimal">
-                      {field.value === "de" ? "German" : "English"}
+                      {appLanguages.find((language) => language.code === field.value)?.label || "NA"}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     className="w-40 bg-slate-50 text-slate-700"
                     align="start"
                     side="bottom">
-                    <DropdownMenuItem onClick={() => field.onChange("en")} className="min-h-8 cursor-pointer">
-                      English
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => field.onChange("de")} className="min-h-8 cursor-pointer">
-                      German
-                    </DropdownMenuItem>
+                    {appLanguages.map((language) => (
+                      <DropdownMenuItem
+                        key={language.code}
+                        onClick={() => field.onChange(language.code)}
+                        className="min-h-8 cursor-pointer">
+                        {language.label}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </FormControl>

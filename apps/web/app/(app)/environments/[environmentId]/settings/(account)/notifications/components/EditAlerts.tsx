@@ -48,16 +48,16 @@ export const EditAlerts = ({
           </div>
           <div className="mb-6 rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-3 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2 flex items-center">Survey</div>
+              <div className="col-span-2 flex items-center">{t("common.surveys")}</div>
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
-                      <span>Every Response</span>
+                      <span>{t("settings.notifications.every_response")}</span>
                       <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>Sends complete responses, no partials.</TooltipContent>
+                  <TooltipContent>{t("settings.notifications.every_response_tooltip")}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
@@ -100,7 +100,7 @@ export const EditAlerts = ({
               </div>
             )}
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              {t("settings.notifications.want_to_loop_in_organization_mates?")}
+              {t("settings.notifications.want_to_loop_in_organization_mates")}?
               <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
                 {t("common.invite_them")}
               </Link>

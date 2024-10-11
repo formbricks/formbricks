@@ -1,0 +1,61 @@
+{
+  "common": {
+    "account_settings": "खाता सेटिंग्स",
+    "avatar": "अवतार",
+    "configuration": "कॉन्फ़िगरेशन",
+    "email": "ईमेल",
+    "full_name": "पूरा नाम",
+    "integrations": "एकीकरण",
+    "invite_them": "उन्हें आमंत्रित करें",
+    "language": "भाषा",
+    "new_survey": "नया सर्वेक्षण",
+    "notifications": "सूचनाएं",
+    "people": "लोग",
+    "product": "उत्पाद",
+    "profile": "प्रोफ़ाइल",
+    "surveys": "सर्वेक्षण",
+    "update": "अपडेट करें",
+    "weekly_summary": "साप्ताहिक सारांश",
+    "account": "खाता",
+    "delete": "हटाएं",
+    "cancel": "रद्द करें",
+    "save": "सहेजें"
+  },
+  "settings": {
+    "notifications": {
+      "auto_subscribe_to_new_surveys": "नई सर्वेक्षणों के लिए स्वचालित सदस्यता",
+      "email_alerts_surveys": "ईमेल अलर्ट्स (सर्वेक्षण)",
+      "every_response": "हर प्रतिक्रिया",
+      "every_response_tooltip": "पूर्ण प्रतिक्रियाएँ भेजता है, कोई आंशिक नहीं।",
+      "manage_email_preferences": "अपनी ईमेल प्राथमिकताएँ प्रबंधित करें",
+      "need_slack_or_discord_notifications": "Slack या Discord सूचनाओं की आवश्यकता है",
+      "notification_settings": "सूचना सेटिंग्स",
+      "set_up_an_alert_to_get_an_email_on_new_responses": "नए उत्तरों पर ईमेल प्राप्त करने के लिए एक अलर्ट सेट करें",
+      "stay_up_to_date_with_a_Weekly_every_Monday": "हर सोमवार साप्ताहिक के साथ अद्यतित रहें",
+      "use_the_integration": "इंटीग्रेशन का उपयोग करें",
+      "want_to_loop_in_organization_mates": "संगठन के साथियों को शामिल करना चाहते हैं",
+      "weekly_summary_products": "साप्ताहिक सारांश (उत्पाद)",
+      "notification_settings_updated": "सूचना सेटिंग्स अपडेट हो गई",
+      "you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore": "आप अब इस संगठन के सर्वेक्षणों के लिए स्वचालित रूप से सदस्यता नहीं लेंगे!",
+      "you_will_not_receive_any_more_emails_for_responses_on_this_survey": "आप अब इस सर्वेक्षण पर उत्तरों के लिए अधिक ईमेल नहीं प्राप्त करेंगे!"
+    },
+    "profile": {
+      "change_image": "छवि बदलें",
+      "confirm_delete_account": "अपने सभी व्यक्तिगत जानकारी और डेटा के साथ अपना खाता हटाएं",
+      "confirm_delete_my_account": "मेरा खाता हटाएं",
+      "delete_account": "खाता हटाएं",
+      "organization_identification": "Formbricks पर आपकी पहचान करने में अपने संगठन की सहायता करें",
+      "personal_information": "व्यक्तिगत जानकारी",
+      "remove_image": "छवि हटाएं",
+      "update_personal_info": "अपनी व्यक्तिगत जानकारी अपडेट करें",
+      "upload_image": "छवि अपलोड करें",
+      "warning_cannot_undo": "इसे पूर्ववत नहीं किया जा सकता!",
+      "profile_updated_successfully": "आपका प्रोफ़ाइल सफलतापूर्वक अपडेट हो गया",
+      "please_enter_email_to_confirm_account_deletion": "कृपया {email} को निम्नलिखित फ़ील्ड में इनपुट करें, जिससे आपके खाते की निश्चित हटाव को स्वीकार करने की प्रक्रिया को स्वीकार करें:",
+      "permanent_removal_of_all_of_your_personal_information_and_data": "सभी व्यक्तिगत जानकारी और डेटा की स्थायी हटाव",
+      "org_ownership_transfer": "यदि आप एक संगठन का मालिक है जिसमें अन्य प्रबंधक हैं, तो उस संगठन की स्वामित्व को दूसरे प्रबंधक को स्थानांतरित किया जाएगा।",
+      "org_deletion_warning": "यदि आप एक संगठन का केवल सदस्य हैं या कोई अन्य प्रबंधक मौजूद नहीं है, तो उस संगठन को अप्रत्यावर्तनीय रूप से हटाया जाएगा और सभी संबंधित डेटा को हटाया जाएगा।",
+      "account_deletion_consequences_warning": "खाते को हटाने के परिणाम"
+    }
+  }
+}
