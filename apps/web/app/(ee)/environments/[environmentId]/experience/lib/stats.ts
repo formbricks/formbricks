@@ -88,8 +88,10 @@ export const getStats = reactCache(
               sentimentCounts.positive >= sentimentCounts.negative &&
               sentimentCounts.positive >= sentimentCounts.neutral
             ) {
+              const sentimentPercent = ((sentimentCounts.positive / analysedFeedbacks) * 100).toFixed(2);
               overallSentiment = `positive(${sentimentPercent} %)`;
             }
+
             if (!overallSentiment && analysedFeedbacks > 0) {
               const sentimentPercent = ((sentimentCounts.neutral / analysedFeedbacks) * 100).toFixed(2);
               overallSentiment = `neutral(${sentimentPercent} %)`;
