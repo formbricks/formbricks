@@ -56,7 +56,6 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
-  console.log(args);
   // all of this should happen when not initialized:
   if (!isInitialized) {
     if (prop === "init") {
