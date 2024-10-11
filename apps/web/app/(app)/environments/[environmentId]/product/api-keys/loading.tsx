@@ -1,8 +1,6 @@
 "use client";
 
-import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { cn } from "@formbricks/lib/cn";
+import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
@@ -26,7 +24,7 @@ const LoadingCard = () => {
             </div>
           </div>
           <div className="flex justify-start">
-            <div className="mt-4 flex h-7 w-44 animate-pulse flex-col items-center justify-center rounded-md bg-black text-sm text-white">
+            <div className="mt-4 flex h-8 w-44 animate-pulse flex-col items-center justify-center rounded-md bg-black text-sm text-white">
               Loading
             </div>
           </div>
@@ -37,60 +35,10 @@ const LoadingCard = () => {
 };
 
 const Loading = () => {
-  const pathname = usePathname();
-
-  let navigation = [
-    {
-      id: "general",
-      label: "General",
-      icon: <UsersIcon className="h-5 w-5" />,
-      current: pathname?.includes("/general"),
-    },
-    {
-      id: "look",
-      label: "Look & Feel",
-      icon: <BrushIcon className="h-5 w-5" />,
-      current: pathname?.includes("/look"),
-    },
-    {
-      id: "languages",
-      label: "Survey Languages",
-      icon: <LanguagesIcon className="h-5 w-5" />,
-      hidden: true,
-      current: pathname?.includes("/languages"),
-    },
-    {
-      id: "tags",
-      label: "Tags",
-      icon: <TagIcon className="h-5 w-5" />,
-      current: pathname?.includes("/tags"),
-    },
-    {
-      id: "api-keys",
-      label: "API Keys",
-      icon: <KeyIcon className="h-5 w-5" />,
-      current: pathname?.includes("/api-keys"),
-    },
-    {
-      id: "website-connection",
-      label: "Website Connection",
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/website-connection"),
-      hidden: true,
-    },
-    {
-      id: "app-connection",
-      label: "App Connection",
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      current: pathname?.includes("/app-connection"),
-      hidden: true,
-    },
-  ];
-
   return (
     <div>
       <PageContentWrapper>
-        <PageHeader pageTitle="common.configuration">
+        <PageHeader pageTitle="Configuration">
           <div className="grid h-10 w-full grid-cols-[auto,1fr]">
             <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
               {navigation.map((navElem) => (
