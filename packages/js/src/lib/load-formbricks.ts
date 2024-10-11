@@ -10,32 +10,27 @@ let isInitialized = false;
 // Load the SDK, return the result
 const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> => {
   if (!window.formbricks) {
-    const res = await fetch(`${apiHostParam}/api/packages/js`);
-
-    // Failed to fetch the app package
-    if (!res.ok) {
-      return { ok: false, error: new Error(`Failed to load Formbricks SDK`) };
-    }
-
-    const sdkScript = await res.text();
     const scriptTag = document.createElement("script");
-    scriptTag.innerHTML = sdkScript;
-    document.head.appendChild(scriptTag);
+    scriptTag.type = "text/javascript";
+    scriptTag.src = `${apiHostParam}/js/formbricks.umd.cjs`;
+    scriptTag.async = true;
 
     const getFormbricks = async (): Promise<void> =>
       new Promise<void>((resolve, reject) => {
-        const checkInterval = setInterval(() => {
-          if (window.formbricks) {
-            clearInterval(checkInterval);
-            resolve();
-          }
-        }, 100);
-
-        setTimeout(() => {
-          clearInterval(checkInterval);
+        const timeoutId = setTimeout(() => {
           reject(new Error(`Formbricks SDK loading timed out`));
         }, 10000);
+        scriptTag.onload = () => {
+          clearTimeout(timeoutId);
+          resolve();
+        };
+        scriptTag.onerror = () => {
+          clearTimeout(timeoutId);
+          reject(new Error(`Failed to load Formbricks SDK`));
+        };
       });
+
+    document.head.appendChild(scriptTag);
 
     try {
       await getFormbricks();
@@ -56,7 +51,6 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
-  console.log(args);
   // all of this should happen when not initialized:
   if (!isInitialized) {
     if (prop === "init") {
