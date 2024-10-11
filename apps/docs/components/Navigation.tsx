@@ -159,7 +159,6 @@ const NavigationGroup = ({
   const isInsideMobileNavigation = useIsInsideMobileNavigation();
   const pathname = usePathname();
 
-  // const isActiveGroup = activeGroup?.title === group.title;
   const [isActiveGroup, setIsActiveGroup] = useState<boolean>(false);
 
   useEffect(() => {
