@@ -66,16 +66,16 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!user || !credentials) {
-          throw new Error("No user matches the provided credentials");
+          throw new Error("Invalid credentials");
         }
         if (!user.password) {
-          throw new Error("No user matches the provided credentials");
+          throw new Error("Invalid credentials");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error("No user matches the provided credentials");
+          throw new Error("Invalid credentials");
         }
 
         return {
@@ -246,9 +246,7 @@ export const authOptions: NextAuthOptions = {
         const existingUserWithEmail = await getUserByEmail(user.email);
 
         if (existingUserWithEmail) {
-          // This error is only relavent for making new accounts and not when signing in
-
-          // throw new Error("A user with this email exists already.");
+          // Sign in the user with the existing account
           return true;
         }
 
