@@ -1,0 +1,61 @@
+.fb-editor-text-bold {
+  font-weight: bold !important;
+}
+
+.fb-editor-text-italic {
+  font-style: italic !important;
+}
+
+.fb-editor-link {
+  text-decoration: underline !important;
+}
+
+.editor-tokenFunction {
+  color: #dd4a68 !important;
+}
+
+.fb-editor-paragraph {
+  margin: 0 !important;
+  position: relative !important;
+}
+
+.fb-editor-paragraph:last-child {
+  margin-bottom: 0 !important;
+}
+
+.fb-editor-heading-h1 {
+  font-size: 25px !important;
+  font-weight: 400 !important;
+  margin-bottom: 20px !important;
+  font-weight: bold !important;
+}
+
+.fb-editor-heading-h2 {
+  font-size: 20px !important;
+  font-weight: bold !important;
+  margin-bottom: 20px !important;
+}
+
+.fb-editor-list-ul {
+  margin-bottom: 12px !important;
+}
+
+.fb-editor-list-ol {
+  margin-bottom: 12px !important;
+}
+
+.fb-editor-listitem {
+  margin: 0px 32px !important;
+}
+
+.fb-editor-nested-listitem {
+  list-style-type: none !important;
+}
+
+.fb-editor-rtl {
+  text-align: right !important;
+}
+
+.fb-editor-ltr {
+  text-align: left !important;
+}

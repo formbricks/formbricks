@@ -1,0 +1,25 @@
+{
+  "name": "@formbricks/demo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "rimraf .turbo node_modules .next",
+    "dev": "next dev -p 3002 --turbo",
+    "go": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@formbricks/js": "workspace:*",
+    "@formbricks/ui": "workspace:*",
+    "lucide-react": "0.418.0",
+    "next": "14.2.10",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@formbricks/eslint-config": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "extends": "@formbricks/config-typescript/nextjs.json",
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../../packages/types/*.d.ts"],
+  "exclude": ["../../.env", "node_modules"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@prisma/client/*": ["@formbricks/database/client/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true
+  }
+}

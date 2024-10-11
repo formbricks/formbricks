@@ -1,0 +1,60 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.pnp
+.pnp.js
+.pnpm-store/
+
+# testing
+coverage
+
+# next.js
+.next/
+out/
+build
+
+# node
+dist/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!packages/database/.env
+!apps/web/.env
+
+# Prisma generated files
+packages/database/zod
+
+# turbo
+.turbo
+
+# nixos stuff
+.direnv
+
+Zone.Identifier
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# uploads
+packages/lib/uploads
+
+# Vite Timestamps
+*vite.config.*.timestamp-*
+

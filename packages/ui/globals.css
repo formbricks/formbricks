@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand Colors */
+  --formbricks-brand: #038178;
+
+  /* Fill Colors */
+  --formbricks-fill-primary: #fefefe;
+  --formbricks-fill-secondary: #0f172a;
+  --formbricks-fill-disabled: #e0e0e0;
+
+  /* Label Colors */
+  --formbricks-label-primary: #0f172a;
+  --formbricks-label-secondary: #384258;
+  --formbricks-label-disabled: #bdbdbd;
+
+  /* Border Colors */
+  --formbricks-border-primary: #e0e0e0;
+  --formbricks-border-secondary: #0f172a;
+  --formbricks-border-disabled: #ececec;
+
+  /* Functional Colors */
+  --formbricks-focus: #1982fc;
+  --formbricks-error: #d13a3a;
+}
+
+.dark {
+  /* Brand Colors */
+  --formbricks-brand: #038178;
+
+  /* Fill Colors */
+  --formbricks-fill-primary: #0f172a;
+  --formbricks-fill-secondary: #e0e0e0;
+  --formbricks-fill-disabled: #394258;
+
+  /* Label Colors */
+  --formbricks-label-primary: #fefefe;
+  --formbricks-label-secondary: #f2f2f2;
+  --formbricks-label-disabled: #bdbdbd;
+
+  /* Border Colors */
+  --formbricks-border-primary: #394258;
+  --formbricks-border-secondary: #e0e0e0;
+  --formbricks-border-disabled: #394258;
+
+  /* Functional Colors */
+  --formbricks-focus: #1982fc;
+  --formbricks-error: #d13a3a;
+}
+
+@layer base {
+  [data-nextjs-scroll-focus-boundary] {
+    display: contents;
+  }
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border: 3px solid #cbd5e1;
+}
+
+.filter-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-track {
+  border-radius: 8px;
+}
+
+input:focus {
+  --tw-ring-color: none;
+  --tw-ring-offset-color: none;
+  --tw-ring-shadow: 0 0 #000 !important;
+  box-shadow: none;
+}
+
+@layer utilities {
+  @layer responsive {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+  }
+}
+
+/* Hide the clear button for input type "search" */
+input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+}
+
+input[type="search"]::-ms-clear {
+  display: none;
+}
+
+input[type="search"]::-ms-reveal {
+  display: none;
+}
+
+.surveyFilterDropdown[data-state="open"] {
+  background-color: #0f172a;
+  color: white;
+}
+.surveyFilterDropdown:hover * {
+  background-color: #0f172a;
+  color: white;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  background: #0f172a;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  -webkit-appearance: none;
+}

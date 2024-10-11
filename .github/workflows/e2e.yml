@@ -1,0 +1,93 @@
+name: E2E Tests
+on:
+  workflow_call:
+  workflow_dispatch:
+env:
+  TELEMETRY_DISABLED: 1
+jobs:
+  build:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U testuser"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --config.platform=linux --config.architecture=x64
+        shell: bash
+
+      - name: create .env
+        run: cp .env.example .env
+        shell: bash
+
+      - name: Fill ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
+        run: |
+          RANDOM_KEY=$(openssl rand -hex 32)
+          sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
+          sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
+          echo "E2E_TESTING=1" >> .env
+        shell: bash
+
+      - name: Build App
+        run: |
+          pnpm build --filter=@formbricks/web...
+
+      - name: Apply Prisma Migrations
+        run: |
+          pnpm prisma migrate deploy
+
+      - name: Run App
+        run: |
+          NODE_ENV=test pnpm start --filter=@formbricks/web &
+          sleep 10  # Optional: gives some buffer for the app to start
+          for attempt in {1..10}; do
+            if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
+              echo "Application is ready."
+              break
+            fi
+            if [ $attempt -eq 10 ]; then
+              echo "Application failed to start in time."
+              exit 1
+            fi
+            echo "Still waiting for the application to be ready..."
+            sleep 10
+          done
+
+      - name: Install Playwright
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run E2E Tests
+        run: |
+          pnpm test:e2e
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

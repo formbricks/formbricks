@@ -1,0 +1,15 @@
+{
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "../types/surveys.d.ts"],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "emitDeclarationOnly": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

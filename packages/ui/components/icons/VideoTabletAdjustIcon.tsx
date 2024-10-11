@@ -1,0 +1,71 @@
+export const VideoTabletAdjustIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+      <defs />
+      <rect x={0.5} y={0.5} width={23} height={18} rx={1.5} fill="#00e6ca" />
+      <path
+        d="M22,.5H2A1.5,1.5,0,0,0,.5,2V17A1.5,1.5,0,0,0,2,18.5H4.249L22.226.523A1.407,1.407,0,0,0,22,.5Z"
+        fill="#c4f0eb"
+      />
+      <path
+        d="M22.5,23.5V20.832A3.333,3.333,0,0,0,19.167,17.5H17.5V13a1.5,1.5,0,0,0-3,0v7l-1.289-1.08a1.25,1.25,0,1,0-1.922,1.6L13.768,23.5"
+        fill="#c4f0eb"
+      />
+      <path
+        d="M9,18.5H2A1.546,1.546,0,0,1,.5,16.911V2.089A1.546,1.546,0,0,1,2,.5H22a1.546,1.546,0,0,1,1.5,1.589V16.911"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={19.5}
+        y1={14.5}
+        x2={20.5}
+        y2={14.5}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={3.5}
+        y1={14.5}
+        x2={12.5}
+        y2={14.5}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={5.5}
+        y1={13.5}
+        x2={5.5}
+        y2={15.5}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8,7.125V4.395a.645.645,0,0,1,.977-.553l5.91,2.73a.645.645,0,0,1,0,1.106l-5.91,2.73A.645.645,0,0,1,8,9.855Z"
+        fill="#f8fafc"
+      />
+      <path
+        d="M22.5,23.5V20.832A3.333,3.333,0,0,0,19.167,17.5H17.5V13a1.5,1.5,0,0,0-3,0v7l-1.289-1.08a1.25,1.25,0,1,0-1.922,1.6L13.768,23.5"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8,7.125V4.395a.645.645,0,0,1,.977-.553l5.91,2.73a.645.645,0,0,1,0,1.106l-5.91,2.73A.645.645,0,0,1,8,9.855Z"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};

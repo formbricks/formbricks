@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions
+    url: https://formbricks.com/discord
+    about: Ask a general question about the project on our Discord server

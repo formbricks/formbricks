@@ -1,0 +1,188 @@
+version: "3.3"
+x-environment: &environment
+  environment:
+    ######################################################## REQUIRED ########################################################
+
+    # The url of your Formbricks instance used in the admin panel
+    # Set this to your public-facing URL, e.g., https://example.com
+    WEBAPP_URL:
+
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
+    # PostgreSQL DB for Formbricks to connect to
+    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+
+    # NextJS Auth
+    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+    # You can use: `openssl rand -hex 32` to generate one
+    NEXTAUTH_SECRET:
+
+    # Encryption Key is used for 2FA & Single use URLs for Link Surveys
+    # You can use: $(openssl rand -hex 32) to generate one
+    ENCRYPTION_KEY:
+
+    # API Secret for running cron jobs.
+    # You can use: $(openssl rand -hex 32) to generate a secure one
+    CRON_SECRET:
+
+    ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
+
+    # Enterprise License Key (More info at: https://formbricks.com/docs/self-hosting/license)
+    # Required to access Enterprise-only features
+    # ENTERPRISE_LICENSE_KEY:
+
+    ############################################# OPTIONAL (EMAIL CONFIGURATION) #############################################
+
+    # Email Configuration
+    # MAIL_FROM:
+    # SMTP_HOST:
+    # SMTP_PORT:
+    # SMTP_USER:
+    # SMTP_PASSWORD:
+
+    # (Additional option for TLS (port 465) only)
+    # SMTP_SECURE_ENABLED: 1
+
+    # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs (default is 1).
+    # SMTP_REJECT_UNAUTHORIZED_TLS: 0
+
+    ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
+
+    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
+    # SHORT_URL_BASE:
+
+    # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
+    EMAIL_VERIFICATION_DISABLED: 1
+
+    # Set the below to 0 to enable Password Reset (will required Email Configuration)
+    PASSWORD_RESET_DISABLED: 1
+
+    # Set the below to 1 to disable logins with email
+    # EMAIL_AUTH_DISABLED:
+
+    # Set the below to 1 to disable invites
+    # INVITE_DISABLED:
+
+    # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
+    # ASSET_PREFIX_URL:
+
+    # Set the below to your Unsplash API Key for their Survey Backgrounds
+    # UNSPLASH_ACCESS_KEY:
+
+    ################################################### OPTIONAL (STORAGE) ###################################################
+
+    # Set the below to set a custom Upload Directory
+    # UPLOADS_DIR:
+
+    # Set S3 Storage configuration (required for the file upload in serverless environments like Vercel)
+    # S3_ACCESS_KEY:
+    # S3_SECRET_KEY:
+    # S3_REGION:
+    # S3_BUCKET_NAME:
+
+    # Set a third party S3 compatible storage service endpoint like StorJ leave empty if you use Amazon S3
+    # S3_ENDPOINT_URL=
+
+    # Force path style for S3 compatible storage (0 for disabled, 1 for enabled)
+    S3_FORCE_PATH_STYLE: 0
+
+    ############################################# OPTIONAL (OAUTH CONFIGURATION) #############################################
+
+    # Set the below from GitHub if you want to enable GitHub OAuth
+    # GITHUB_ID:
+    # GITHUB_SECRET:
+
+    # Set the below from Google if you want to enable Google OAuth
+    # GOOGLE_CLIENT_ID:
+    # GOOGLE_CLIENT_SECRET:
+
+    # Set the below from Azure Active Directory Login if you want to enable Azure AD OAuth
+    # AZUREAD_CLIENT_ID:
+    # AZUREAD_CLIENT_SECRET:
+    # AZUREAD_TENANT_ID:
+
+    # Set the below to OpenID Connect Provider if you want to enable OIDC
+    # OIDC_CLIENT_ID:
+    # OIDC_CLIENT_SECRET:
+    # OIDC_ISSUER:
+    # OIDC_DISPLAY_NAME:
+    # OIDC_SIGNING_ALGORITHM:
+
+    ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
+
+    # Oauth credentials for Notion Integration
+    # NOTION_OAUTH_CLIENT_ID:
+    # NOTION_OAUTH_CLIENT_SECRET:
+
+    # Oauth credentials for Google Sheet Integration
+    # GOOGLE_SHEETS_CLIENT_ID:
+    # GOOGLE_SHEETS_CLIENT_SECRET:
+    # GOOGLE_SHEETS_REDIRECT_URL:
+
+    # Oauth credentials for Airtable Integration
+    # AIRTABLE_CLIENT_ID:
+
+    # Oauth credentials for Slack Integration
+    # SLACK_CLIENT_ID:
+    # SLACK_CLIENT_SECRET:
+
+    ############################################### OPTIONAL (LEGAL INFORMATION) ################################################
+
+    # Set the below to have your own Privacy Page URL on auth & link survey page
+    # PRIVACY_URL:
+
+    # Set the below to have your own Terms Page URL on auth & link survey page
+    # TERMS_URL:
+
+    # Set the below to have your own Imprint Page URL on auth & link survey page
+    # IMPRINT_URL:
+
+    ########################################## OPTIONAL (SERVER CONFIGURATION) ###########################################
+
+    # Set the below to 1 to disable Rate Limiting across Formbricks
+    # RATE_LIMITING_DISABLED: 1
+
+    # Set the below to send OpenTelemetry data for tracing
+    # OPENTELEMETRY_LISTENER_URL: http://localhost:4318/v1/traces
+
+    # Set the below to use Redis for Next Caching (default is In-Memory from Next Cache)
+    # REDIS_URL:
+
+    # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
+    # REDIS_HTTP_URL:
+
+    ############################################# OPTIONAL (OTHER) #############################################
+
+    # Set the below to automatically assign new users to a specific organization and role within that organization
+    # Insert an existing organization id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
+    # (Role Management is an Enterprise feature)
+    # DEFAULT_ORGANIZATION_ID:
+    # DEFAULT_ORGANIZATION_ROLE: admin
+
+services:
+  postgres:
+    restart: always
+    image: postgres:15-alpine
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      # Postgres DB Super User Password
+      # Replace the below with your own secure password & Make sure the password matches the password field in DATABASE_URL above
+      - POSTGRES_PASSWORD=postgres
+
+  formbricks:
+    restart: always
+    image: ghcr.io/formbricks/formbricks:latest
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
+    volumes:
+      - uploads:/home/nextjs/apps/web/uploads/
+    <<: *environment
+
+volumes:
+  postgres:
+    driver: local
+  uploads:

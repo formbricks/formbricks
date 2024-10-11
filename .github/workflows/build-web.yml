@@ -1,0 +1,18 @@
+name: Build Web
+on:
+  workflow_call:
+jobs:
+  build:
+    name: Build Formbricks-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
+
+      - name: Build & Cache Web Binaries
+        uses: ./.github/actions/cache-build-web
+        id: cache-build-web
+        with:
+          e2e_testing_mode: "0"

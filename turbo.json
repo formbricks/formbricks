@@ -1,0 +1,226 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "@formbricks/web#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"]
+    },
+    "@formbricks/demo#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/js#build"]
+    },
+    "@formbricks/api#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/js#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/js#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
+    },
+    "@formbricks/surveys#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/surveys#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
+    },
+    "@formbricks/surveys#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/surveys#build"]
+    },
+    "@formbricks/js#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/js#build"]
+    },
+    "@formbricks/api#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/react-native#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/react-native#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"]
+    },
+    "@formbricks/react-native#lint": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/js#lint": {
+      "dependsOn": ["@formbricks/js-core#build"]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"],
+      "env": [
+        "AIRTABLE_CLIENT_ID",
+        "ASSET_PREFIX_URL",
+        "AZUREAD_CLIENT_ID",
+        "AZUREAD_CLIENT_SECRET",
+        "AZUREAD_TENANT_ID",
+        "DEFAULT_ORGANIZATION_ID",
+        "DEFAULT_ORGANIZATION_ROLE",
+        "CRON_SECRET",
+        "CUSTOM_CACHE_DISABLED",
+        "CUSTOMER_IO_API_KEY",
+        "CUSTOMER_IO_SITE_ID",
+        "DATABASE_URL",
+        "DEBUG",
+        "E2E_TESTING",
+        "EMAIL_AUTH_DISABLED",
+        "EMAIL_VERIFICATION_DISABLED",
+        "ENCRYPTION_KEY",
+        "ENTERPRISE_LICENSE_KEY",
+        "FORMBRICKS_ENCRYPTION_KEY",
+        "GITHUB_ID",
+        "GITHUB_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_SHEETS_CLIENT_ID",
+        "GOOGLE_SHEETS_CLIENT_SECRET",
+        "GOOGLE_SHEETS_REDIRECT_URL",
+        "NOTION_OAUTH_CLIENT_ID",
+        "NOTION_OAUTH_CLIENT_SECRET",
+        "HEROKU_APP_NAME",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "IMPRINT_URL",
+        "INVITE_DISABLED",
+        "IS_FORMBRICKS_CLOUD",
+        "MAIL_FROM",
+        "NEXT_PUBLIC_DOCSEARCH_APP_ID",
+        "NEXT_PUBLIC_DOCSEARCH_API_KEY",
+        "NEXT_PUBLIC_DOCSEARCH_INDEX_NAME",
+        "NEXT_PUBLIC_FORMBRICKS_API_HOST",
+        "NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID",
+        "NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID",
+        "NEXT_PUBLIC_FORMBRICKS_PMF_FORM_ID",
+        "NEXT_PUBLIC_FORMBRICKS_URL",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_POSTHOG_API_HOST",
+        "NEXT_PUBLIC_POSTHOG_API_KEY",
+        "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
+        "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
+        "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
+        "OPENTELEMETRY_LISTENER_URL",
+        "NEXT_RUNTIME",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL",
+        "NODE_ENV",
+        "OIDC_CLIENT_ID",
+        "OIDC_CLIENT_SECRET",
+        "OIDC_DISPLAY_NAME",
+        "OIDC_ISSUER",
+        "OIDC_SIGNING_ALGORITHM",
+        "PASSWORD_RESET_DISABLED",
+        "PLAYWRIGHT_CI",
+        "PRIVACY_URL",
+        "RATE_LIMITING_DISABLED",
+        "REDIS_HTTP_URL",
+        "REDIS_URL",
+        "S3_ACCESS_KEY",
+        "S3_BUCKET_NAME",
+        "S3_ENDPOINT_URL",
+        "S3_FORCE_PATH_STYLE",
+        "S3_REGION",
+        "S3_SECRET_KEY",
+        "SENTRY_DSN",
+        "SHORT_URL_BASE",
+        "SIGNUP_DISABLED",
+        "SLACK_CLIENT_ID",
+        "SLACK_CLIENT_SECRET",
+        "SMTP_HOST",
+        "SMTP_PASSWORD",
+        "SMTP_PORT",
+        "SMTP_SECURE_ENABLED",
+        "SMTP_USER",
+        "SMTP_REJECT_UNAUTHORIZED_TLS",
+        "STRAPI_API_KEY",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "SURVEYS_PACKAGE_MODE",
+        "SURVEYS_PACKAGE_BUILD",
+        "TELEMETRY_DISABLED",
+        "TERMS_URL",
+        "UPLOADS_DIR",
+        "VERCEL",
+        "VERCEL_URL",
+        "VERSION",
+        "WEBAPP_URL",
+        "UNSPLASH_ACCESS_KEY"
+      ]
+    },
+    "build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "db:setup": {
+      "cache": false,
+      "outputs": []
+    },
+    "db:down": {
+      "cache": false,
+      "outputs": []
+    },
+    "go": {
+      "persistent": true,
+      "cache": false
+    },
+    "db:migrate:dev": {
+      "outputs": []
+    },
+    "db:migrate:deploy": {
+      "outputs": []
+    },
+    "db:migrate:vercel": {
+      "env": ["MIGRATE_DATABASE_URL", "DATABASE_URL"],
+      "outputs": []
+    },
+    "db:push": {
+      "outputs": []
+    },
+    "db:seed": {
+      "outputs": []
+    },
+    "db:start": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "outputs": []
+    },
+    "test": {
+      "outputs": []
+    },
+    "generate": {
+      "dependsOn": ["^generate"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "clean": {
+      "outputs": [],
+      "cache": false
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

@@ -1,0 +1,115 @@
+.dp-input-root {
+  width: 100%;
+}
+
+.dp-input-root [class$="wrapper"] {
+  height: 160px;
+  display: flex;
+  background: rgb(248 250 252);
+  background: var(--fb-survey-background-color);
+  flex-direction: row-reverse;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid rgb(203 213 225) !important;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.dp-input-root [class$="inputGroup"] {
+  flex: none;
+  font-size: 16px;
+}
+
+.wrapper-hide .react-date-picker__inputGroup {
+  display: none;
+}
+
+.dp-input-root .react-date-picker__inputGroup__input {
+  background: #f1f5f9 !important;
+  border-radius: 2px;
+}
+
+.dp-input-root .react-date-picker__inputGroup__input:invalid {
+  background: #fecaca !important;
+  border-radius: 2px;
+}
+
+.hide-invalid .react-date-picker__inputGroup__input:invalid {
+  background: #f1f5f9 !important;
+}
+
+.wrapper-hide .react-date-picker__wrapper {
+  display: none;
+}
+
+.react-date-picker__calendar--open {
+  position: absolute !important;
+  top: 0 !important;
+  width: 100% !important;
+}
+
+.calendar-root {
+  position: absolute !important;
+  top: 0 !important;
+  background: var(--fb-survey-background-color) !important;
+  width: 100% !important;
+}
+
+.calendar-root [class$="navigation"] {
+  height: 36px;
+margin-bottom: 0px;
+}
+
+.calendar-root [class$="navigation"] button {
+  border-radius: 8px;
+}
+
+.calendar-root [class$="navigation"] button:hover {
+  background: rgb(226 232 240) !important;
+}
+
+.calendar-root [class$="navigation"] button:focus {
+  background: #e2e8f0 !important;
+  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+}
+
+.calendar-root [class$="navigation"] [class$="navigation__label"] {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  color: rgb(100, 116, 139);
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+.react-calendar__month-view__weekdays__weekday > abbr {
+  text-decoration: none;
+}
+
+.react-calendar{
+  width: 100%;
+  line-height: 2rem;
+}
+
+.react-calendar__tile--active{
+  background: var(--fb-brand-color) !important;
+  border-radius: 6px;
+}
+
+.react-calendar button:hover{
+  background: rgb(226 232 240) !important;
+  border-radius: 10%;
+}
+
+.react-calendar button:focus{
+  outline: 2px solid rgb(226 232 240) !important;
+  border-radius: 6px;
+}

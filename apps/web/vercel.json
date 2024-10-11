@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "app/api/cron/**/*.ts": {
+      "maxDuration": 180,
+      "memory": 512
+    },
+    "app/api/v1/client/**/*.ts": {
+      "maxDuration": 10,
+      "memory": 200
+    },
+    "app/**/*.ts": {
+      "maxDuration": 10,
+      "memory": 512
+    }
+  }
+}

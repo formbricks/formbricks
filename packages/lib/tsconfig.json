@@ -1,0 +1,18 @@
+{
+  "extends": "@formbricks/config-typescript/nextjs.json",
+  "include": [".", "../types/*.d.ts"],
+  "exclude": ["dist", "build", "node_modules", "../../packages/types/surveys.d.ts"],
+  "compilerOptions": {
+    "downlevelIteration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@prisma/client/*": ["@formbricks/database/client/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true
+  }
+}
