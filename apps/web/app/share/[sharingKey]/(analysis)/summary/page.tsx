@@ -56,7 +56,7 @@ const Page = async ({ params }) => {
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
           attributeClasses={attributeClasses}
-          isAiEnabled={false} // Disable AI for sharing page for now
+          isAIEnabled={false} // Disable AI for sharing page for now
         />
       </PageContentWrapper>
     </div>

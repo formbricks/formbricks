@@ -20,6 +20,7 @@ interface TemplateListProps {
   environment: TEnvironment;
   product: TProduct;
   templateSearch?: string;
+  showFilters?: boolean;
   prefilledFilters: TTemplateFilter[];
   onTemplateClick?: (template: TTemplate) => void;
 }
@@ -28,6 +29,7 @@ export const TemplateList = ({
   user,
   product,
   environment,
+  showFilters = true,
   templateSearch,
   prefilledFilters,
   onTemplateClick = () => {},
@@ -102,7 +104,7 @@ export const TemplateList = ({
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 focus:outline-none">
-      {!templateSearch && (
+      {showFilters && !templateSearch && (
         <TemplateFilters
           selectedFilter={selectedFilter}
           setSelectedFilter={setSelectedFilter}

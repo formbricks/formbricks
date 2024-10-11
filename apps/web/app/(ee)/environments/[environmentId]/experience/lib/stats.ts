@@ -1,5 +1,4 @@
 import "server-only";
-import { getDateFromTimeRange } from "@/app/(ee)/environments/[environmentId]/experience/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -8,16 +7,14 @@ import { environmentCache } from "@formbricks/lib/environment/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TStats, TStatsPeriod } from "../types/stats";
+import { TStats } from "../types/stats";
 
 export const getStats = reactCache(
-  (environmentId: string, timeRange: TStatsPeriod): Promise<TStats> =>
+  (environmentId: string, statsFrom?: Date): Promise<TStats> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
         try {
-          const timeRangeValue = getDateFromTimeRange(timeRange);
-
           const environmentSurveys = await prisma.survey.findMany({
             where: {
               environmentId,
@@ -37,7 +34,7 @@ export const getStats = reactCache(
                 in: environmentSurveys.map((survey) => survey.id),
               },
               createdAt: {
-                gte: timeRangeValue,
+                gte: statsFrom,
               },
             },
           });
@@ -56,7 +53,7 @@ export const getStats = reactCache(
                 environmentId,
               },
               createdAt: {
-                gte: timeRangeValue,
+                gte: statsFrom,
               },
             },
           });
@@ -76,18 +73,27 @@ export const getStats = reactCache(
           // analysed feedbacks is the sum of all the sentiments
           const analysedFeedbacks = Object.values(sentimentCounts).reduce((acc, count) => acc + count, 0);
 
-          let overallSentiment: TStats["overallSentiment"] = "neutral";
+          let overallSentiment: TStats["overallSentiment"];
 
-          if (
-            sentimentCounts.positive > sentimentCounts.negative &&
-            sentimentCounts.positive > sentimentCounts.neutral
-          ) {
-            overallSentiment = "positive";
-          } else if (
-            sentimentCounts.negative > sentimentCounts.positive &&
-            sentimentCounts.negative > sentimentCounts.neutral
-          ) {
-            overallSentiment = "negative";
+          if (analysedFeedbacks > 0) {
+            if (
+              sentimentCounts.negative >= sentimentCounts.positive &&
+              sentimentCounts.negative >= sentimentCounts.neutral
+            ) {
+              const sentimentPercent = ((sentimentCounts.negative / analysedFeedbacks) * 100).toFixed(2);
+              overallSentiment = `negative(${sentimentPercent} %)`;
+            }
+
+            if (
+              sentimentCounts.positive >= sentimentCounts.negative &&
+              sentimentCounts.positive >= sentimentCounts.neutral
+            ) {
+              overallSentiment = `positive(${sentimentPercent} %)`;
+            }
+            if (!overallSentiment && analysedFeedbacks > 0) {
+              const sentimentPercent = ((sentimentCounts.neutral / analysedFeedbacks) * 100).toFixed(2);
+              overallSentiment = `neutral(${sentimentPercent} %)`;
+            }
           }
 
           return { newResponses, activeSurveys, analysedFeedbacks, overallSentiment };
@@ -99,7 +105,7 @@ export const getStats = reactCache(
           throw error;
         }
       },
-      [`stats-${environmentId}`],
+      [`stats-${environmentId}-${statsFrom}`],
       {
         tags: [environmentCache.tag.byId(environmentId)],
       }

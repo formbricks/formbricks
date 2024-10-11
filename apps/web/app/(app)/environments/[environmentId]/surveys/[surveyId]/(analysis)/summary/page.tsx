@@ -1,11 +1,12 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
+import { getIsAIEnabled } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_AI_ENABLED, IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -63,13 +64,7 @@ const Page = async ({ params }) => {
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
-  const isAiEnabled =
-    // isEnterpriseEdition &&
-    IS_FORMBRICKS_CLOUD &&
-    (organization.billing.plan === "startup" ||
-      organization.billing.plan === "scale" ||
-      organization.billing.plan === "enterprise") &&
-    IS_AI_ENABLED;
+  const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
 
   return (
     <PageContentWrapper>
@@ -100,7 +95,7 @@ const Page = async ({ params }) => {
         user={user}
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
-        isAiEnabled={isAiEnabled}
+        isAIEnabled={isAIEnabled}
       />
     </PageContentWrapper>
   );

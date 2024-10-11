@@ -68,7 +68,7 @@ interface NavigationProps {
   isMultiOrgEnabled: boolean;
   isFormbricksCloud?: boolean;
   membershipRole?: TMembershipRole;
-  isAiEnabled?: boolean;
+  isAIEnabled?: boolean;
 }
 
 export const MainNavigation = ({
@@ -80,7 +80,7 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   isFormbricksCloud = true,
   membershipRole,
-  isAiEnabled = false,
+  isAIEnabled = false,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -166,7 +166,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/experience`,
         icon: GaugeIcon,
         isActive: pathname?.includes("/experience"),
-        isHidden: !isAiEnabled,
+        isHidden: !isAIEnabled,
       },
       {
         name: "Surveys",

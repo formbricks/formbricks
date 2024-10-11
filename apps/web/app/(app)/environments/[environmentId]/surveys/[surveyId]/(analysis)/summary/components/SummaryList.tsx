@@ -39,7 +39,7 @@ interface SummaryListProps {
   survey: TSurvey;
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
-  isAiEnabled: boolean;
+  isAIEnabled: boolean;
 }
 
 export const SummaryList = ({
@@ -49,7 +49,7 @@ export const SummaryList = ({
   survey,
   totalResponseCount,
   attributeClasses,
-  isAiEnabled,
+  isAIEnabled,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
 
@@ -128,7 +128,7 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
-                isAiEnabled={isAiEnabled}
+                isAIEnabled={isAIEnabled}
               />
             );
           }

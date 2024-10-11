@@ -29,3 +29,14 @@ export const ZInsightCreateInput = z.object({
 });
 
 export type TInsightCreateInput = z.infer<typeof ZInsightCreateInput>;
+
+export const ZInsightFilterCriteria = z.object({
+  documentCreatedAt: z
+    .object({
+      min: z.date().optional(),
+      max: z.date().optional(),
+    })
+    .optional(),
+});
+
+export type TInsightFilterCriteria = z.infer<typeof ZInsightFilterCriteria>;

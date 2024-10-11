@@ -23,7 +23,7 @@ interface OpenTextSummaryProps {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
-  isAiEnabled: boolean;
+  isAIEnabled: boolean;
 }
 
 export const OpenTextSummary = ({
@@ -31,9 +31,9 @@ export const OpenTextSummary = ({
   environmentId,
   survey,
   attributeClasses,
-  isAiEnabled,
+  isAIEnabled,
 }: OpenTextSummaryProps) => {
-  const isInsightsEnabled = isAiEnabled && questionSummary.insightsEnabled;
+  const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
     isInsightsEnabled ? "insights" : "responses"

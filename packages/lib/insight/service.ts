@@ -2,9 +2,15 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/common";
+import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TInsight, TInsightCreateInput, ZInsightCreateInput } from "@formbricks/types/insights";
+import {
+  TInsight,
+  TInsightCreateInput,
+  TInsightFilterCriteria,
+  ZInsightCreateInput,
+  ZInsightFilterCriteria,
+} from "@formbricks/types/insights";
 import { cache } from "../cache";
 import { INSIGHTS_PER_PAGE } from "../constants";
 import { documentCache } from "../document/cache";
@@ -48,16 +54,36 @@ export const getInsight = reactCache(
 );
 
 export const getInsights = reactCache(
-  (environmentId: string, limit?: number, offset?: number): Promise<TInsight[]> =>
+  (
+    environmentId: string,
+    limit?: number,
+    offset?: number,
+    filterCriteria?: TInsightFilterCriteria
+  ): Promise<TInsight[]> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId]);
+        validateInputs(
+          [environmentId, ZId],
+          [limit, ZOptionalNumber],
+          [offset, ZOptionalNumber],
+          [filterCriteria, ZInsightFilterCriteria.optional()]
+        );
 
         limit = limit ?? INSIGHTS_PER_PAGE;
         try {
           const insights = await prisma.insight.findMany({
             where: {
               environmentId,
+              documentInsights: {
+                some: {
+                  document: {
+                    createdAt: {
+                      gte: filterCriteria?.documentCreatedAt?.min,
+                      lte: filterCriteria?.documentCreatedAt?.max,
+                    },
+                  },
+                },
+              },
             },
             include: {
               _count: {
@@ -84,7 +110,7 @@ export const getInsights = reactCache(
           throw error;
         }
       },
-      [`getInsights-${environmentId}-${limit}-${offset}`],
+      [`getInsights-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [insightCache.tag.byEnvironmentId(environmentId)],
       }

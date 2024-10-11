@@ -25,6 +25,7 @@ export const SurveyTemplates = ({ environment, product, user, prefilledFilters }
         <TemplateList
           environment={environment}
           product={product}
+          showFilters={false}
           user={user}
           prefilledFilters={prefilledFilters}
         />

@@ -1,18 +1,19 @@
 "use server";
 
 import { getStats } from "@/app/(ee)/environments/[environmentId]/experience/lib/stats";
-import { ZStatsPeriod } from "@/app/(ee)/environments/[environmentId]/experience/types/stats";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getInsights } from "@formbricks/lib/insight/service";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
+import { ZInsightFilterCriteria } from "@formbricks/types/insights";
 
 const ZGetInsightsAction = z.object({
   environmentId: ZId,
   limit: z.number().optional(),
   offset: z.number().optional(),
+  insightsFilter: ZInsightFilterCriteria.optional(),
 });
 
 export const getInsightsAction = authenticatedActionClient
@@ -24,12 +25,17 @@ export const getInsightsAction = authenticatedActionClient
       rules: ["response", "read"],
     });
 
-    return await getInsights(parsedInput.environmentId, parsedInput.limit, parsedInput.offset);
+    return await getInsights(
+      parsedInput.environmentId,
+      parsedInput.limit,
+      parsedInput.offset,
+      parsedInput.insightsFilter
+    );
   });
 
 const ZGetStatsAction = z.object({
   environmentId: ZId,
-  timeRange: ZStatsPeriod,
+  statsFrom: z.date().optional(),
 });
 
 export const getStatsAction = authenticatedActionClient
@@ -41,5 +47,5 @@ export const getStatsAction = authenticatedActionClient
       rules: ["response", "read"],
     });
 
-    return await getStats(parsedInput.environmentId, parsedInput.timeRange);
+    return await getStats(parsedInput.environmentId, parsedInput.statsFrom);
   });

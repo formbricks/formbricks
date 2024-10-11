@@ -1,11 +1,9 @@
-import { Greeting } from "@/app/(ee)/environments/[environmentId]/experience/components/Greeting";
-import { InsightsTable } from "@/app/(ee)/environments/[environmentId]/experience/components/InsightsTable";
-import { ExperiencePageStats } from "@/app/(ee)/environments/[environmentId]/experience/components/Stats";
-import { SurveyTemplates } from "@/app/(ee)/environments/[environmentId]/experience/components/SurveyTemplates";
+import { ExperiencePage } from "@/app/(ee)/environments/[environmentId]/experience/components/ExperiencePage";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
+import { INSIGHTS_PER_PAGE, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -17,6 +15,10 @@ export const metadata: Metadata = {
 };
 
 const Page = async ({ params }) => {
+  if (!IS_FORMBRICKS_CLOUD) {
+    notFound();
+  }
+
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session not found");
@@ -47,17 +49,12 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <div className="container mx-auto space-y-6 p-4">
-        <Greeting userName={user.name} />
-        <ExperiencePageStats environmentId={params.environmentId} />
-        <InsightsTable environmentId={params.environmentId} insightsPerPage={INSIGHTS_PER_PAGE} />
-        <SurveyTemplates
-          environment={environment}
-          product={product}
-          user={user}
-          prefilledFilters={[product.config.channel, product.config.industry]}
-        />
-      </div>
+      <ExperiencePage
+        environment={environment}
+        insightsPerPage={INSIGHTS_PER_PAGE}
+        product={product}
+        user={user}
+      />
     </PageContentWrapper>
   );
 };

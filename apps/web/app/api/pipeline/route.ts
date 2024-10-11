@@ -1,10 +1,11 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getIsAIEnabled } from "@/app/lib/utils";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { cache } from "@formbricks/lib/cache";
-import { CRON_SECRET, IS_AI_ENABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
 import { createDocument } from "@formbricks/lib/document/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -146,19 +147,17 @@ export const POST = async (request: Request) => {
     // generate embeddings for all open text question responses for all paid plans
     // TODO: check longer surveys if documents get created multiple times
     const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
-    if (hasSurveyOpenTextQuestions && IS_FORMBRICKS_CLOUD) {
-      // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
-      const isAiEnabled = IS_AI_ENABLED;
-      if (hasSurveyOpenTextQuestions && isAiEnabled) {
+    if (hasSurveyOpenTextQuestions) {
+      const isAICofigured = IS_AI_CONFIGURED;
+      if (hasSurveyOpenTextQuestions && isAICofigured) {
         const organization = await getOrganizationByEnvironmentId(environmentId);
         if (!organization) {
           throw new Error("Organization not found");
         }
-        if (
-          organization.billing.plan === "enterprise" ||
-          organization.billing.plan === "scale" ||
-          organization.billing.plan === "startup"
-        ) {
+
+        const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+
+        if (isAIEnabled) {
           for (const question of survey.questions) {
             if (question.type === "openText" && question.insightsEnabled) {
               const isQuestionAnswered = response.data[question.id] !== undefined;
