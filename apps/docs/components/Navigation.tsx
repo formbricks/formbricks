@@ -7,7 +7,7 @@ import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./Button";
 import { useIsInsideMobileNavigation } from "./MobileNavigation";
 import { useSectionStore } from "./SectionProvider";
@@ -158,7 +158,13 @@ const NavigationGroup = ({
 }) => {
   const isInsideMobileNavigation = useIsInsideMobileNavigation();
   const pathname = usePathname();
-  const isActiveGroup = activeGroup?.title === group.title;
+
+  // const isActiveGroup = activeGroup?.title === group.title;
+  const [isActiveGroup, setIsActiveGroup] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsActiveGroup(activeGroup?.title === group.title);
+  }, [activeGroup?.title, group.title]);
 
   const toggleParentTitle = (title: string) => {
     if (openGroups.includes(title)) {
@@ -193,7 +199,11 @@ const NavigationGroup = ({
         </AnimatePresence>
         <ul role="list" className="border-l border-transparent">
           {sortedLinks.map((link) => (
-            <motion.li key={link.title} layout="position" className="relative">
+            <motion.li
+              key={link.title}
+              layout="position"
+              className="relative"
+              onClick={() => setIsActiveGroup(true)}>
               {link.href ? (
                 <NavLink
                   href={isMobile && link.children ? "" : link.href}
