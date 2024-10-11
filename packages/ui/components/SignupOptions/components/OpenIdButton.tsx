@@ -1,5 +1,6 @@
 import { signIn } from "next-auth/react";
 import { useCallback, useEffect } from "react";
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { Button } from "../../Button";
 
 export const OpenIdButton = ({
@@ -15,7 +16,7 @@ export const OpenIdButton = ({
 }) => {
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("loggedInWith", "OpenID");
+      localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "OpenID");
     }
     await signIn("openid", {
       redirect: true,
@@ -35,9 +36,9 @@ export const OpenIdButton = ({
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
-      className={`relative w-full justify-center`}>
+      className="relative w-full justify-center">
       {text}
-      {lastUsed && <span className="absolute right-3 text-xs italic">Last Used</span>}
+      {lastUsed && <span className="absolute right-3 text-xs">Last Used</span>}
     </Button>
   );
 };

@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
+import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { Button } from "@formbricks/ui/components/Button";
 import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 import { AzureButton } from "@formbricks/ui/components/SignupOptions/components/AzureButton";
@@ -54,7 +55,7 @@ export const SigninForm = ({
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
     if (typeof window !== "undefined") {
-      localStorage.setItem("loggedInWith", "Email");
+      localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Email");
     }
     try {
       const signInResponse = await signIn("credentials", {
@@ -110,7 +111,7 @@ export const SigninForm = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setLastLoginWith(localStorage.getItem("loggedInWith") || "");
+      setLastLoginWith(localStorage.getItem(FORMBRICKS_LOGGED_IN_WITH_LS) || "");
     }
   }, []);
 
@@ -219,11 +220,11 @@ export const SigninForm = ({
                     formRef.current.requestSubmit();
                   }
                 }}
-                className={`relative w-full justify-center`}
+                className="relative w-full justify-center"
                 loading={loggingIn}>
                 {totpLogin ? "Submit" : "Login with Email"}
                 {lastLoggedInWith && lastLoggedInWith === "Email" ? (
-                  <span className="absolute right-3 text-xs italic">Last Used</span>
+                  <span className="absolute right-3 text-xs">Last Used</span>
                 ) : null}
               </Button>
             )}
