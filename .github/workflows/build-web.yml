@@ -1,4 +1,4 @@
-name: Build web
+name: Build Web
 on:
   workflow_call:
 jobs:
