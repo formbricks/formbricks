@@ -12,7 +12,7 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
   if (!window.formbricks) {
     const scriptTag = document.createElement("script");
     scriptTag.type = "text/javascript";
-    scriptTag.src = `${apiHostParam}/api/packages/js`;
+    scriptTag.src = `${apiHostParam}/js/formbricks.umd.cjs`;
     scriptTag.async = true;
 
     const getFormbricks = async (): Promise<void> =>
@@ -51,7 +51,6 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
-  console.log(args);
   // all of this should happen when not initialized:
   if (!isInitialized) {
     if (prop === "init") {

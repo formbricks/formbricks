@@ -282,6 +282,7 @@ export const QuestionConditional = ({
       ttc={ttc}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
     <RankingQuestion
@@ -311,6 +312,7 @@ export const QuestionConditional = ({
       ttc={ttc}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
     />
   ) : null;
 };

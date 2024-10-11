@@ -54,7 +54,7 @@ export const RatingQuestion = ({
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
+  const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleSelect = (number: number) => {
@@ -138,7 +138,7 @@ export const RatingQuestion = ({
                     className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
                     {question.scale === "number" ? (
                       <label
-                        tabIndex={i + 1}
+                        tabIndex={isCurrent ? 0 : -1}
                         onKeyDown={(e) => {
                           // Accessibility: if spacebar was pressed pass this down to the input
                           if (e.key === " ") {
@@ -167,7 +167,7 @@ export const RatingQuestion = ({
                       </label>
                     ) : question.scale === "star" ? (
                       <label
-                        tabIndex={i + 1}
+                        tabIndex={isCurrent ? 0 : -1}
                         onKeyDown={(e) => {
                           // Accessibility: if spacebar was pressed pass this down to the input
                           if (e.key === " ") {
@@ -197,13 +197,13 @@ export const RatingQuestion = ({
                       </label>
                     ) : (
                       <label
+                        tabIndex={isCurrent ? 0 : -1}
                         className={cn(
                           "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-w-full fb-cursor-pointer fb-justify-center",
                           value === number || hoveredNumber === number
                             ? "fb-stroke-rating-selected fb-text-rating-selected"
                             : "fb-stroke-heading fb-text-heading focus:fb-border-accent-bg focus:fb-border-2 focus:fb-outline-none"
                         )}
-                        tabIndex={i + 1}
                         onKeyDown={(e) => {
                           // Accessibility: if spacebar was pressed pass this down to the input
                           if (e.key === " ") {
@@ -240,24 +240,24 @@ export const RatingQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        {!question.required && (
+          <SubmitButton
+            tabIndex={isCurrent ? 0 : -1}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
+          />
+        )}
+        <div></div>
         {!isFirstQuestion && (
           <BackButton
-            tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
               onBack();
             }}
-          />
-        )}
-        <div></div>
-        {!question.required && (
-          <SubmitButton
-            tabIndex={question.range + 1}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
           />
         )}
       </div>

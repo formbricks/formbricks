@@ -16,7 +16,7 @@ export const replaceAttributeRecall = (survey: TSurvey, attributes: TAttributes)
 
       return null;
     })
-    .filter((language) => language !== null);
+    .filter((language): language is string => language !== null);
 
   surveyTemp.questions.forEach((question) => {
     languages.forEach((language) => {
