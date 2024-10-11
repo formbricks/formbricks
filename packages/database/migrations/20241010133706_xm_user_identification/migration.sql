@@ -2,7 +2,6 @@
 ALTER TABLE "Person" RENAME TO "Contact";
 ALTER TABLE "Contact" RENAME CONSTRAINT "Person_pkey" TO "Contact_pkey";
 ALTER TABLE "Contact" RENAME CONSTRAINT "Person_environmentId_fkey" TO "Contact_environmentId_fkey";
-
 -- Rename column "personId" to "contactId" in "Attribute" table
 ALTER TABLE "Attribute" RENAME COLUMN "personId" TO "contactId";
 
@@ -86,5 +85,14 @@ DROP INDEX "ContactAttributeKey_name_environmentId_key";
 -- Step 11: Create a new unique index on 'key' and 'environmentId'
 CREATE UNIQUE INDEX "ContactAttributeKey_key_environmentId_key" ON "ContactAttributeKey"("key", "environmentId");
 
+DROP INDEX "Contact_environmentId_userId_key";
+ALTER TABLE "Contact" DROP COLUMN "userId";
+
 -- Step 12: Remove the default value from 'key' column
 ALTER TABLE "ContactAttributeKey" ALTER COLUMN "key" DROP DEFAULT;
+
+DROP INDEX "ContactAttributeKey_environmentId_archived_idx";
+ALTER TABLE "ContactAttributeKey" DROP COLUMN "archived";
+
+ALTER TABLE "ContactAttributeKey" ADD COLUMN "isUnique" BOOLEAN NOT NULL DEFAULT false;
+CREATE INDEX "ContactAttribute_attributeKeyId_value_idx" ON "ContactAttribute"("attributeKeyId", "value");

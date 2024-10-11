@@ -64,6 +64,7 @@ model ContactAttribute {
   value          String
 
   @@unique([contactId, attributeKeyId])
+  @@index([attributeKeyId, value])
 }
 
 enum ContactAttributeType {
@@ -75,10 +76,10 @@ model ContactAttributeKey {
   id               String                  @id @default(cuid())
   createdAt        DateTime                @default(now()) @map(name: "created_at")
   updatedAt        DateTime                @updatedAt @map(name: "updated_at")
+  isUnique         Boolean                 @default(false)
   key              String
   name             String?
   description      String?
-  archived         Boolean                 @default(false)
   type             ContactAttributeType    @default(default)
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
@@ -87,12 +88,10 @@ model ContactAttributeKey {
 
   @@unique([key, environmentId])
   @@index([environmentId, createdAt])
-  @@index([environmentId, archived])
 }
 
 model Contact {
   id            String             @id @default(cuid())
-  userId        String
   createdAt     DateTime           @default(now()) @map(name: "created_at")
   updatedAt     DateTime           @updatedAt @map(name: "updated_at")
   environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
@@ -101,7 +100,6 @@ model Contact {
   attributes    ContactAttribute[]
   displays      Display[]
 
-  @@unique([environmentId, userId])
   @@index([environmentId])
 }
 
