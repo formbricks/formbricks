@@ -42,8 +42,8 @@ All you need to do is copy a `<script>` tag to your HTML head, and that’s abou
 !function(){
     var apiHost = "https://app.formbricks.com";
     var environmentId = "<your-environment-id>";
-    var userId = "<your-user-id>";
-    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/app";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+    var userId = "<your-user-id>"; //optional
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/api/packages/js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```
@@ -57,9 +57,6 @@ All you need to do is copy a `<script>` tag to your HTML head, and that’s abou
   </Property>
   <Property name="api-host" type="string">
     URL of the hosted Formbricks instance.
-  </Property>
-  <Property name="userId" type="string">
-    User ID of the user who has active session.
   </Property>
 </Properties>
 
@@ -91,13 +88,13 @@ Now, update your App.js/ts file to initialise Formbricks.
 
 ```js
 // other imports
-import formbricks from "@formbricks/js/app";
+import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "<environment-id>",
     apiHost: "<api-host>",
-    userId: "<user-id>",
+    userId: "<user-id>", //optional
   });
 }
 
@@ -118,9 +115,6 @@ export default App;
   </Property>
   <Property name="api-host" type="string">
     URL of the hosted Formbricks instance.
-  </Property>
-  <Property name="userId" type="string">
-    User ID of the user who has active session.
   </Property>
 </Properties>
 
@@ -164,7 +158,7 @@ yarn add @formbricks/js zod
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import formbricks from "@formbricks/js/app";
+import formbricks from "@formbricks/js";
 
 export default function FormbricksProvider() {
   const pathname = usePathname();
@@ -174,7 +168,7 @@ export default function FormbricksProvider() {
     formbricks.init({
       environmentId: "<environment-id>",
       apiHost: "<api-host>",
-      userId: "<user-id>",
+      userId: "<user-id>", //optional
     });
   }, []);
 
@@ -217,13 +211,13 @@ Refer to our [Example NextJS App Directory project](https://github.com/formbrick
 // other import
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import formbricks from "@formbricks/js/app";
+import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "<environment-id>",
     apiHost: "<api-host>",
-    userId: "<user-id>",
+    userId: "<user-id>", //optional
   });
 }
 
@@ -255,9 +249,6 @@ Refer to our [Example NextJS Pages Directory project](https://github.com/formbri
   </Property>
   <Property name="api-host" type="string">
     URL of the hosted Formbricks instance.
-  </Property>
-  <Property name="userId" type="string">
-    User ID of the user who has active session.
   </Property>
 </Properties>
 
@@ -292,13 +283,13 @@ yarn add @formbricks/js
 <CodeGroup title="src/formbricks.js">
 
 ```js
-import formbricks from "@formbricks/js/app";
+import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "<environment-id>",
     apiHost: "<api-host>",
-    userId: "<user-id>",
+    userId: "<user-id>", //optional
   });
 }
 
@@ -338,9 +329,6 @@ router.afterEach((to, from) => {
 <Properties>
   <Property name="api-host" type="string">
     URL of the hosted Formbricks instance.
-  </Property>
-  <Property name="userId" type="string">
-    User ID of the user who has active session.
   </Property>
 </Properties>
 
@@ -398,9 +386,6 @@ export default function App() {
   </Property>
   <Property name="api-host" type="string">
     URL of the hosted Formbricks instance.
-  </Property>
-  <Property name="userId" type="string">
-    User ID of the user who has active session.
   </Property>
 </Properties>
 

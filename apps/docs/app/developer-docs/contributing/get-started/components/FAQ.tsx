@@ -43,7 +43,7 @@ const FAQ_DATA = [
         Absolutely! We provide an option for users to host Formbricks on their own server, ensuring even more
         control over data and compliance. And the best part? Self-hosting is available for free, always. For
         documentation on self hosting, click{" "}
-        <a href="/docs/self-hosting/deployment" className="text-brand-dark dark:text-brand-light">
+        <a href="/self-hosting/deployment" className="text-brand-dark dark:text-brand-light">
           here
         </a>
         .

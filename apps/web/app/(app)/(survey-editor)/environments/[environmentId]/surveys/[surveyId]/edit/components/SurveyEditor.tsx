@@ -25,7 +25,6 @@ interface SurveyEditorProps {
   survey: TSurvey;
   product: TProduct;
   environment: TEnvironment;
-  organizationId: string;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
@@ -44,7 +43,6 @@ export const SurveyEditor = ({
   survey,
   product,
   environment,
-  organizationId,
   actionClasses,
   attributeClasses,
   segments,
@@ -196,7 +194,6 @@ export const SurveyEditor = ({
           {activeView === "settings" && (
             <SettingsView
               environment={environment}
-              organizationId={organizationId}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               actionClasses={actionClasses}
@@ -206,7 +203,6 @@ export const SurveyEditor = ({
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
               isFormbricksCloud={isFormbricksCloud}
-              product={localProduct}
             />
           )}
         </main>
@@ -217,7 +213,7 @@ export const SurveyEditor = ({
             questionId={activeQuestionId}
             product={localProduct}
             environment={environment}
-            previewType={localSurvey.type === "app" || localSurvey.type === "website" ? "modal" : "fullwidth"}
+            previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
             onFileUpload={async (file) => file.name}
           />

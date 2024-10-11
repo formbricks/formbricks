@@ -5,7 +5,7 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn } from "@/lib/utils";
+import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -42,15 +42,13 @@ export const RankingQuestion = ({
   currentQuestionId,
 }: RankingQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-  const [sortedItems, setSortedItems] = useState<TSurveyQuestionChoice[]>(
-    value
-      .map((id) => question.choices.find((c) => c.id === id))
-      .filter((item): item is TSurveyQuestionChoice => item !== undefined)
-  );
-
-  const [unsortedItems, setUnsortedItems] = useState<TSurveyQuestionChoice[]>(
-    question.choices.filter((c) => !value.includes(c.id))
-  );
+  const isCurrent = question.id === currentQuestionId;
+  const shuffledChoicesIds = useMemo(() => {
+    if (question.shuffleOption) {
+      return getShuffledChoicesIds(question.choices, question.shuffleOption);
+    } else return question.choices.map((choice) => choice.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.shuffleOption, question.choices.length]);
 
   const [parent] = useAutoAnimate();
 
@@ -60,28 +58,27 @@ export const RankingQuestion = ({
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
-  const questionChoices = useMemo(
-    () => question.choices.map((choice) => ({ id: choice.id, label: choice.label })),
-    [question.choices]
-  );
+  const sortedItems = useMemo(() => {
+    return value
+      .map((id) => question.choices.find((c) => c.id === id))
+      .filter((item): item is TSurveyQuestionChoice => item !== undefined);
+  }, [value, question.choices]);
+
+  const unsortedItems = useMemo(() => {
+    if (question.shuffleOption === "all" && sortedItems.length === 0) {
+      return shuffledChoicesIds.map((id) => question.choices.find((c) => c.id === id));
+    } else {
+      return question.choices.filter((c) => !value.includes(c.id));
+    }
+  }, [question.choices, value, question.shuffleOption]);
 
   const handleItemClick = useCallback(
     (item: TSurveyQuestionChoice) => {
-      setSortedItems((prev) => {
-        const isAlreadySorted = prev.some((sortedItem) => sortedItem.id === item.id);
-        const newSortedItems = isAlreadySorted
-          ? prev.filter((sortedItem) => sortedItem.id !== item.id)
-          : [...prev, item];
-
-        onChange({ [question.id]: newSortedItems.map((item) => item.id) });
-        return newSortedItems;
-      });
-
-      setUnsortedItems((prev) => {
-        const isAlreadySorted = sortedItems.some((sortedItem) => sortedItem.id === item.id);
-        return isAlreadySorted ? [...prev, item] : prev.filter((unsortedItem) => unsortedItem.id !== item.id);
-      });
-
+      const isAlreadySorted = sortedItems.some((sortedItem) => sortedItem.id === item.id);
+      const newSortedItems = isAlreadySorted
+        ? sortedItems.filter((sortedItem) => sortedItem.id !== item.id)
+        : [...sortedItems, item];
+      onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
       setError(null);
     },
     [onChange, question.id, sortedItems]
@@ -98,9 +95,7 @@ export const RankingQuestion = ({
         direction === "up" ? Math.max(0, index - 1) : Math.min(newSortedItems.length, index + 1);
 
       newSortedItems.splice(newIndex, 0, movedItem);
-
-      setSortedItems(newSortedItems);
-      onChange({ [question.id]: newSortedItems.map((item) => item.id) });
+      onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
       setError(null);
     },
     [sortedItems, onChange, question.id]
@@ -110,8 +105,8 @@ export const RankingQuestion = ({
     e.preventDefault();
 
     const hasIncompleteRanking =
-      (question.required && sortedItems.length !== questionChoices.length) ||
-      (!question.required && sortedItems.length > 0 && sortedItems.length < questionChoices.length);
+      (question.required && sortedItems.length !== question.choices.length) ||
+      (!question.required && sortedItems.length > 0 && sortedItems.length < question.choices.length);
 
     if (hasIncompleteRanking) {
       setError("Please rank all items before submitting.");
@@ -153,7 +148,12 @@ export const RankingQuestion = ({
                   return (
                     <div
                       key={item.id}
-                      tabIndex={idx + 1}
+                      tabIndex={isCurrent ? 0 : -1}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          handleItemClick(item);
+                        }
+                      }}
                       className={cn(
                         "fb-flex fb-h-12 fb-items-center fb-mb-2 fb-border fb-border-border fb-transition-all fb-text-heading focus-within:fb-border-brand hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-cursor-pointer focus:fb-outline-none fb-transform fb-duration-500 fb-ease-in-out",
                         isSorted ? "fb-bg-input-bg-selected" : "fb-bg-input-bg"
@@ -178,6 +178,7 @@ export const RankingQuestion = ({
                       {isSorted && (
                         <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
                           <button
+                            tabIndex={-1}
                             type="button"
                             onClick={() => handleMove(item.id, "up")}
                             className={cn(
@@ -202,6 +203,7 @@ export const RankingQuestion = ({
                             </svg>
                           </button>
                           <button
+                            tabIndex={-1}
                             type="button"
                             onClick={() => handleMove(item.id, "down")}
                             className={cn(
@@ -237,11 +239,16 @@ export const RankingQuestion = ({
         </div>
       </ScrollableContainer>
 
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            tabIndex={questionChoices.length + 3}
+            tabIndex={isCurrent ? 0 : -1}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -249,12 +256,6 @@ export const RankingQuestion = ({
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          tabIndex={questionChoices.length + 2}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
       </div>
     </form>
   );

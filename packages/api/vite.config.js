@@ -1,7 +1,6 @@
 import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
-import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
   build: {
@@ -17,13 +16,5 @@ export default defineConfig({
       fileName: "index",
     },
   },
-  plugins: [
-    dts({ rollupTypes: true }),
-    nodePolyfills({
-      include: ["buffer"],
-      globals: {
-        Buffer: true,
-      },
-    }),
-  ],
+  plugins: [dts({ rollupTypes: true })],
 });

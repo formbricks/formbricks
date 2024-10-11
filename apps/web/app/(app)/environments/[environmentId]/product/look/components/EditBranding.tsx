@@ -9,7 +9,7 @@ import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { updateProductAction } from "../../actions";
 
 interface EditFormbricksBrandingProps {
-  type: "linkSurvey" | "inAppSurvey";
+  type: "linkSurvey" | "appSurvey";
   product: TProduct;
   canRemoveBranding: boolean;
   environmentId: string;
@@ -53,7 +53,7 @@ export const EditFormbricksBranding = ({
           disabled={!canRemoveBranding || updatingBranding}
         />
         <Label htmlFor={`branding-${type}`}>
-          Show Formbricks Branding in {type === "linkSurvey" ? "Link" : "In-App"} Surveys
+          Show Formbricks Branding in {type === "linkSurvey" ? "Link" : "App"} Surveys
         </Label>
       </div>
       {!canRemoveBranding && (

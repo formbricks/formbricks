@@ -41,8 +41,8 @@ export const PictureSelectionQuestion = ({
 }: PictureSelectionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+  const isCurrent = question.id === currentQuestionId;
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
   const addItem = (item: string) => {
     let values: string[] = [];
@@ -111,10 +111,10 @@ export const PictureSelectionQuestion = ({
             <fieldset>
               <legend className="fb-sr-only">Options</legend>
               <div className="fb-bg-survey-bg fb-relative fb-grid fb-grid-cols-2 fb-gap-4">
-                {questionChoices.map((choice, idx) => (
+                {questionChoices.map((choice) => (
                   <label
                     key={choice.id}
-                    tabIndex={idx + 1}
+                    tabIndex={isCurrent ? 0 : -1}
                     htmlFor={choice.id}
                     onKeyDown={(e) => {
                       // Accessibility: if spacebar was pressed pass this down to the input
@@ -196,10 +196,15 @@ export const PictureSelectionQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
         {!isFirstQuestion && (
           <BackButton
-            tabIndex={questionChoices.length + 3}
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -208,12 +213,6 @@ export const PictureSelectionQuestion = ({
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          tabIndex={questionChoices.length + 2}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
       </div>
     </form>
   );
