@@ -163,17 +163,61 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/js/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
+          },
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=UTF-8",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
+
+      // headers for /api/packages/(.*) -- the api route does not exist, but we still need the headers for the rewrites to work correctly!
+      {
+        source: "/api/packages/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, s-maxage=604800, stale-while-revalidate=3600, stale-if-error=3600",
+          },
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=UTF-8",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
+        ],
+      },
     ];
   },
   async rewrites() {
     return [
       {
         source: "/api/packages/website",
-        destination: "/api/packages/js",
+        destination: "/js/formbricks.umd.cjs",
       },
       {
         source: "/api/packages/app",
-        destination: "/api/packages/js",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/js",
+        destination: "/js/formbricks.umd.cjs",
+      },
+      {
+        source: "/api/packages/surveys",
+        destination: "/js/surveys.umd.cjs",
       },
       {
         source: "/api/v1/client/:environmentId/website/environment",
