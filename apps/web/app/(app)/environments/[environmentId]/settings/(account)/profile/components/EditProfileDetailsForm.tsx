@@ -92,7 +92,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
                   <DropdownMenuTrigger asChild>
                     <Button
                       type="button"
-                      className="w-full border border-slate-300 px-2 text-left"
+                      className="w-full border border-slate-300 px-3 text-left"
                       variant="minimal">
                       {appLanguages.find((language) => language.code === field.value)?.label || "NA"}
                     </Button>
