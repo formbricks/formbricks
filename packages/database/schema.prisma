@@ -79,7 +79,7 @@ model ContactAttributeKey {
   name             String?
   description      String?
   archived         Boolean                 @default(false)
-  attributeType    ContactAttributeType    @default(default)
+  type             ContactAttributeType    @default(default)
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
   attributes       ContactAttribute[]
