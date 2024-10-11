@@ -1,8 +1,8 @@
 "use client";
 
 import { copySurveyToOtherEnvironmentAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import {
+  TSurvey,
   TSurveyCopyFormData,
   ZSurveyCopyFormValidation,
 } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
@@ -14,7 +14,6 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
 import { Label } from "@formbricks/ui/components/Label";
-import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
 export const CopySurveyForm = ({
   defaultProducts,
