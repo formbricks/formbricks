@@ -61,8 +61,6 @@ export const fetchPersonState = async (
   const data = await response.json();
   const { data: state } = data;
 
-  console.log("Person state fetched", state);
-
   const defaultPersonState: TJsPersonState = {
     expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
     data: {
