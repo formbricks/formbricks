@@ -1,8 +1,8 @@
 "use client";
 
 import { copySurveyToOtherEnvironmentAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import {
+  TSurvey,
   TSurveyCopyFormData,
   ZSurveyCopyFormValidation,
 } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
@@ -14,7 +14,6 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
 import { Label } from "@formbricks/ui/components/Label";
-import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
 export const CopySurveyForm = ({
   defaultProducts,
@@ -76,17 +75,9 @@ export const CopySurveyForm = ({
             return (
               <div key={product?.id}>
                 <div className="flex flex-col gap-4">
-                  <TooltipRenderer
-                    tooltipContent={
-                      <span>
-                        This product is not compatible with the survey type. Please select a different
-                        product.
-                      </span>
-                    }>
-                    <div className="w-fit">
-                      <p className="text-base font-semibold text-slate-900">{product?.name}</p>
-                    </div>
-                  </TooltipRenderer>
+                  <div className="w-fit">
+                    <p className="text-base font-semibold text-slate-900">{product?.name}</p>
+                  </div>
 
                   <div className="flex flex-col gap-4">
                     {product?.environments.map((environment) => {
