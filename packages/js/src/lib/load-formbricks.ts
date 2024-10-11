@@ -10,7 +10,7 @@ let isInitialized = false;
 // Load the SDK, return the result
 const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> => {
   if (!window.formbricks) {
-    const res = await fetch(`${apiHostParam}/api/packages/js`);
+    const res = await fetch(`${apiHostParam}/js/formbricks.umd.cjs`);
 
     // Failed to fetch the app package
     if (!res.ok) {
@@ -56,7 +56,6 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
-  console.log(args);
   // all of this should happen when not initialized:
   if (!isInitialized) {
     if (prop === "init") {
