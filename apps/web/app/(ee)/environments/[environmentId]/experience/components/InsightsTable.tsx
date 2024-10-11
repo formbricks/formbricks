@@ -79,25 +79,22 @@ export const InsightsTable = ({
   }, [environmentId, insights, insightsLimit, insightsFilter]);
 
   return (
-    !isFetching &&
-    insights.length > 0 && (
-      <Card>
-        <CardHeader>
-          <CardTitle>Insights for {productName}</CardTitle>
-          <CardDescription>All the insights generated from responses across all your surveys</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {insights.length > 0 && <InsightView insights={insights} />}
-          {isFetching && <InsightLoading />}
-          {hasMore && (
-            <div className="flex justify-center py-5">
-              <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
-                Load more
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    )
+    <Card>
+      <CardHeader>
+        <CardTitle>Insights for {productName}</CardTitle>
+        <CardDescription>All the insights generated from responses across all your surveys</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {insights.length > 0 && <InsightView insights={insights} />}
+        {isFetching && <InsightLoading />}
+        {hasMore && (
+          <div className="flex justify-center py-5">
+            <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
+              Load more
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
