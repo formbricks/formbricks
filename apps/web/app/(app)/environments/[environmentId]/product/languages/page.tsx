@@ -37,7 +37,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         />
       </PageHeader>
       <SettingsCard
-        title="Multi-language surveys"
+        title="Multi-Language Surveys"
         description="Add languages to create multi-language surveys.">
         <EditLanguage product={product} />
       </SettingsCard>

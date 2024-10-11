@@ -10,9 +10,6 @@ tasks:
       gp sync-await init && 
       turbo --filter "@formbricks/demo" go
 
-  - name: website
-    command: gp sync-await init && turbo --filter "@formbricks/formbricks-com" dev
-
   - name: Init Formbricks
     init: |
       cp .env.example .env &&
