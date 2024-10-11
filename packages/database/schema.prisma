@@ -593,7 +593,7 @@ model User {
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
-  locale                    String           @default("en")
+  locale                    String           @default("en-US")
   surveys                   Survey[]
 
   @@index([email])
