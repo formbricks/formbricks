@@ -1,3 +1,47 @@
+.react-calendar {
+  min-width: 350px !important;
+  max-width: 100%;
+  background: white;
+  border: 1px solid #a0a096;
+  font-family: "Arial", "Helvetica", sans-serif;
+  line-height: 1.125em;
+  border-radius: 2% !important;
+  padding: 2% !important;
+}
+
+.react-calendar--doubleView {
+  width: 700px;
+}
+
+.react-calendar--doubleView .react-calendar__viewContainer {
+  display: flex;
+  margin: -0.5em;
+}
+
+.react-calendar--doubleView .react-calendar__viewContainer > * {
+  width: 50%;
+  margin: 0.5em;
+}
+
+.react-calendar,
+.react-calendar *,
+.react-calendar *:before,
+.react-calendar *:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.react-calendar button {
+  margin: 0;
+  border: 0;
+  outline: none;
+}
+
+.react-calendar button:enabled:hover {
+  cursor: pointer;
+}
+
 .react-calendar__navigation {
   display: flex;
   height: 44px;
@@ -7,15 +51,17 @@
 .react-calendar__navigation button {
   min-width: 44px;
   background: none;
+  margin: 2% !important ;
+  border-radius: 8% !important;
 }
 
 .react-calendar__navigation button:disabled {
-  background-color: #f0f0f0;
+  background-color: var(--slate-100) !important;
 }
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-  background-color: #e6e6e6;
+  background-color: var(--slate-100) !important;
 }
 
 .react-calendar__month-view__weekdays {
@@ -23,17 +69,13 @@
   text-transform: uppercase;
   font: inherit;
   font-size: 0.75em;
-  font-weight: bold;
+  font-weight: 400 !important;
+  text-decoration-style: dotted !important;
+  text-decoration: underline;
 }
 
 .react-calendar__month-view__weekdays__weekday {
   padding: 0.5em;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-}
-
-.react-calendar__month-view__weekdays__weekday > abbr {
-  font-weight: 800;
 }
 
 .react-calendar__month-view__weekNumbers .react-calendar__tile {
@@ -52,7 +94,13 @@
 .react-calendar__month-view__days__day--neighboringMonth,
 .react-calendar__decade-view__years__year--neighboringDecade,
 .react-calendar__century-view__decades__decade--neighboringCentury {
-  color: var(--fb-brand) !important;
+  color: #757575;
+}
+
+.react-calendar__year-view .react-calendar__tile,
+.react-calendar__decade-view .react-calendar__tile,
+.react-calendar__century-view .react-calendar__tile {
+  padding: 2em 0.5em;
 }
 
 .react-calendar__tile {
@@ -65,61 +113,52 @@
 }
 
 .react-calendar__tile:disabled {
-  background-color: #f0f0f0;
+  background-color: var(--slate-100) !important;
   color: #ababab;
+  border-radius: 6% !important;
 }
 
 .react-calendar__month-view__days__day--neighboringMonth:disabled,
 .react-calendar__decade-view__years__year--neighboringDecade:disabled,
 .react-calendar__century-view__decades__decade--neighboringCentury:disabled {
-  color: #cdcdcd;
+  color: var(--fb-brand);
 }
 
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-  background-color: #e6e6e6;
+  background-color: var(--slate-200) !important;
 }
 
 .react-calendar__tile--now {
   background: none !important;
+  border-radius: 6% !important;
 }
 
 .react-calendar__tile--now:enabled:hover,
 .react-calendar__tile--now:enabled:focus {
-  background: black;
+  background: none !important;
 }
 
 .react-calendar__tile--hasActive {
   background: var(--fb-brand-color) !important;
-  border-radius: 8%;
+  border-radius: 6% !important;
 }
 
 .react-calendar__tile--hasActive:enabled:hover,
 .react-calendar__tile--hasActive:enabled:focus {
   background: var(--fb-brand-color) !important;
-  border-radius: 8%;
+  border-radius: 6% !important;
 }
 
 .react-calendar__tile--active {
   background: var(--fb-brand-color) !important;
-  color: white;
 }
 
 .react-calendar__tile--active:enabled:hover,
 .react-calendar__tile--active:enabled:focus {
-  background: var(--fb-brand-color) !important;
+  background: #1087ff;
 }
 
 .react-calendar--selectRange .react-calendar__tile--hover {
   background-color: #e6e6e6;
-}
-
-.react-calendar button:hover {
-  background: rgb(226 232 240) !important;
-  border-radius: 10%;
-}
-
-.react-calendar button:focus {
-  outline: 2px solid rgb(226 232 240) !important;
-  border-radius: 6px;
 }
