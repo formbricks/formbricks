@@ -26,6 +26,7 @@ Ready to dive into the code and make a real impact? Here's your path:
 
 Would you prefer a chat before you dive into a lot of work? Our [Discord server](https://formbricks.com/discord) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
 
+
 ## 🚀 Aspiring Features
 
 If you spot a feature that isn't part of our official plan but could propel Formbricks forward, don't hesitate. Raise it as an enhancement issue, and let us know you're ready to take the lead. We'll be quick to respond.
