@@ -2,12 +2,12 @@ import { slugifyWithCounter } from "@sindresorhus/slugify";
 import * as acorn from "acorn";
 import { toString } from "mdast-util-to-string";
 import { mdxAnnotations } from "mdx-annotations";
-import { visit } from "unist-util-visit";
 import { createCssVariablesTheme, createHighlighter } from "shiki";
+import { visit } from "unist-util-visit";
 
 const myTheme = createCssVariablesTheme({
-  name: 'css-variables',
-  variablePrefix: '--shiki-', // Ensure this matches your CSS variable definitions
+  name: "css-variables",
+  variablePrefix: "--shiki-",
   variableDefaults: {},
   fontStyle: true,
 });
@@ -26,18 +26,23 @@ let highlighter;
 
 const rehypeShiki = () => {
   return async (tree) => {
-    highlighter = highlighter ?? (await createHighlighter({ langs: ['javascript', "html", "shell", "tsx", "json", "yml", "ts"], themes: [myTheme] }));
+    highlighter =
+      highlighter ??
+      (await createHighlighter({
+        langs: ["javascript", "html", "shell", "tsx", "json", "yml", "ts"],
+        themes: [myTheme],
+      }));
 
     visit(tree, "element", (node) => {
       if (node.tagName === "pre" && node.children[0]?.tagName === "code") {
         let codeNode = node.children[0];
         let textNode = codeNode.children[0];
-        if (!codeNode || !textNode) return
+        if (!codeNode || !textNode) return;
         node.properties.code = textNode.value;
         if (codeNode.properties.className && codeNode.properties.className.length > 0) {
-          let lang = (codeNode.properties.className[0].replace("language-", ""));
-          const code = highlighter.codeToHtml(textNode.value, { lang, theme: "css-variables" })
-          textNode.value = code
+          let lang = codeNode.properties.className[0].replace("language-", "");
+          const code = highlighter.codeToHtml(textNode.value, { lang, theme: "css-variables" });
+          textNode.value = code;
         }
       }
     });
