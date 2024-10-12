@@ -23,7 +23,12 @@ const getOrdinalSuffix = (day: number) => {
   }
 };
 
-export const DatePicker = ({ date }: { date?: Date | null }) => {
+interface DatePickerProps {
+  date: Date | null;
+  updateSurveyDate: (date: Date) => void;
+}
+
+export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
   const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
   const [formattedDate, setFormattedDate] = useState<string | undefined>(
     date ? format(new Date(date), "do MMM, yyyy") : undefined
@@ -32,13 +37,16 @@ export const DatePicker = ({ date }: { date?: Date | null }) => {
 
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const handleDateChange = (date: Date) => {
-    const day = date.getDate();
-    const ordinalSuffix = getOrdinalSuffix(day);
-    const formatted = format(date, `d'${ordinalSuffix}' MMM, yyyy`);
-    setFormattedDate(formatted);
-    onChange(date);
-    setIsOpen(false);
+  const onDateChange = (date: Date) => {
+    if (date) {
+      updateSurveyDate(date);
+      const day = date.getDate();
+      const ordinalSuffix = getOrdinalSuffix(day);
+      const formatted = format(date, `d'${ordinalSuffix}' MMM, yyyy`);
+      setFormattedDate(formatted);
+      onChange(date);
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -69,13 +77,35 @@ export const DatePicker = ({ date }: { date?: Date | null }) => {
           </Button>
         )}
       </PopoverTrigger>
-      <PopoverContent className="min-w-1/3 rounded-lg p-0">
+      <PopoverContent align="start" className="min-w-96 rounded-lg px-4 py-3">
         <Calendar
-          defaultValue={undefined}
           value={value}
-          onChange={(date) => handleDateChange(date as Date)}
-          defaultActiveStartDate={undefined}
+          onChange={(date) => onDateChange(date as Date)}
           minDate={new Date()}
+          className="!border-0"
+          tileClassName={({ date }: { date: Date }) => {
+            const baseClass =
+              "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
+            // today's date class
+            if (
+              date.getDate() === new Date().getDate() &&
+              date.getMonth() === new Date().getMonth() &&
+              date.getFullYear() === new Date().getFullYear()
+            ) {
+              return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
+            }
+            // active date class
+            if (
+              date.getDate() === value?.getDate() &&
+              date.getMonth() === value?.getMonth() &&
+              date.getFullYear() === value?.getFullYear()
+            ) {
+              return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
+            }
+
+            return baseClass;
+          }}
+          showNeighboringMonth={false}
         />
       </PopoverContent>
     </Popover>

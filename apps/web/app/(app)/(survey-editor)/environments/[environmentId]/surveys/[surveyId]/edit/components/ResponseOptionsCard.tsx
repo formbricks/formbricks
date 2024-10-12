@@ -192,7 +192,7 @@ export const ResponseOptionsCard = ({
   };
 
   const hangleSingleUseEncryptionToggle = () => {
-    if (!singleUseEncryption) {
+    if (!singleUseEnuryption) {
       setSingleUseEncryption(true);
       setLocalSurvey({
         ...localSurvey,
