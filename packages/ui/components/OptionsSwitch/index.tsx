@@ -37,7 +37,7 @@ export const OptionsSwitch = ({
   return (
     <div
       ref={containerRef}
-      className="relative flex w-full items-center justify-between rounded-md border bg-white p-1">
+      className="relative flex w-full flex-wrap items-center justify-between rounded-md border bg-white p-1">
       <div
         className="absolute bottom-1 top-1 rounded-md bg-slate-100 transition-all duration-300 ease-in-out"
         style={highlightStyle}
