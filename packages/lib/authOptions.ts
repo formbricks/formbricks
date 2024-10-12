@@ -1,4 +1,5 @@
-import type { IdentityProvider } from "@prisma/client";
+import type { $Enums, IdentityProvider } from "@prisma/client";
+import { JsonValue } from "@prisma/client/runtime/library";
 import type { NextAuthOptions } from "next-auth";
 import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -53,7 +54,25 @@ export const authOptions: NextAuthOptions = {
         },
       },
       async authorize(credentials, _req) {
-        let user;
+        let user: {
+          id: string;
+          name: string;
+          email: string;
+          password: string | null;
+          emailVerified: Date | null;
+          imageUrl: string | null;
+          createdAt: Date;
+          updatedAt: Date;
+          twoFactorSecret: string | null;
+          twoFactorEnabled: boolean;
+          backupCodes: string | null;
+          identityProvider: $Enums.IdentityProvider;
+          identityProviderAccountId: string | null;
+          groupId: string | null;
+          role: $Enums.Role | null;
+          objective: $Enums.Objective | null;
+          notificationSettings: JsonValue;
+        } | null;
         try {
           user = await prisma.user.findUnique({
             where: {
@@ -131,30 +150,30 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     GitHubProvider({
-      clientId: GITHUB_ID || "",
-      clientSecret: GITHUB_SECRET || "",
+      clientId: GITHUB_ID ?? "",
+      clientSecret: GITHUB_SECRET ?? "",
     }),
     GoogleProvider({
-      clientId: GOOGLE_CLIENT_ID || "",
-      clientSecret: GOOGLE_CLIENT_SECRET || "",
+      clientId: GOOGLE_CLIENT_ID ?? "",
+      clientSecret: GOOGLE_CLIENT_SECRET ?? "",
       allowDangerousEmailAccountLinking: true,
     }),
     AzureAD({
-      clientId: AZUREAD_CLIENT_ID || "",
-      clientSecret: AZUREAD_CLIENT_SECRET || "",
-      tenantId: AZUREAD_TENANT_ID || "",
+      clientId: AZUREAD_CLIENT_ID ?? "",
+      clientSecret: AZUREAD_CLIENT_SECRET ?? "",
+      tenantId: AZUREAD_TENANT_ID ?? "",
     }),
     {
       id: "openid",
-      name: OIDC_DISPLAY_NAME || "OpenId",
+      name: OIDC_DISPLAY_NAME ?? "OpenId",
       type: "oauth",
-      clientId: OIDC_CLIENT_ID || "",
-      clientSecret: OIDC_CLIENT_SECRET || "",
+      clientId: OIDC_CLIENT_ID ?? "",
+      clientSecret: OIDC_CLIENT_SECRET ?? "",
       wellKnown: `${OIDC_ISSUER}/.well-known/openid-configuration`,
       authorization: { params: { scope: "openid email profile" } },
       idToken: true,
       client: {
-        id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM || "RS256",
+        id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM ?? "RS256",
       },
       checks: ["pkce", "state"],
       profile: (profile) => {
@@ -246,7 +265,6 @@ export const authOptions: NextAuthOptions = {
         const existingUserWithEmail = await getUserByEmail(user.email);
 
         if (existingUserWithEmail) {
-          // Sign in the user with the existing account
           return true;
         }
 
