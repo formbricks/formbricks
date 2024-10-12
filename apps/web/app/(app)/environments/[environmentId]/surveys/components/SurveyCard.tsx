@@ -89,20 +89,20 @@ export const SurveyCard = ({
         )}>
         <SurveyStatusIndicator status={survey.status} /> {surveyStatusLabel}{" "}
       </div>
-      <div className="col-span-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+      <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
         {survey.responseCount}
       </div>
       <div className="col-span-1 flex justify-between">
         <SurveyTypeIndicator type={survey.type} />
       </div>
 
-      <div className="col-span-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+      <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
         {convertDateString(survey.createdAt.toString())}
       </div>
-      <div className="col-span-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+      <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
         {timeSince(survey.updatedAt.toString())}
       </div>
-      <div className="col-span-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+      <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
         {survey.creator ? survey.creator.name : "-"}
       </div>
       <div className="col-span-1 place-self-end">
