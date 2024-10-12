@@ -19,13 +19,13 @@ export const LegalFooter = ({
     <div className="absolute bottom-0 z-[1500] h-10 w-full">
       <div className="mx-auto flex h-full max-w-lg items-center justify-center p-2 text-center text-sm text-black">
         {IMPRINT_URL && (
-          <Link href={IMPRINT_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+          <Link href={IMPRINT_URL} target="_blank" className="hover:underline">
             Imprint
           </Link>
         )}
         {IMPRINT_URL && PRIVACY_URL && <span className="px-2">|</span>}
         {PRIVACY_URL && (
-          <Link href={PRIVACY_URL} target="_blank" className="hover:underline" tabIndex={-1}>
+          <Link href={PRIVACY_URL} target="_blank" className="hover:underline">
             Privacy Policy
           </Link>
         )}
@@ -34,8 +34,7 @@ export const LegalFooter = ({
           <Link
             href={`https://app.formbricks.com/s/clxbivtla014iye2vfrn436xd?surveyUrl=${surveyUrl}`}
             target="_blank"
-            className="hover:underline"
-            tabIndex={-1}>
+            className="hover:underline">
             Report Survey
           </Link>
         )}
