@@ -1,0 +1,144 @@
+import { MdxImage } from "@/components/MdxImage";
+import AddQuestion from "./images/add-question.webp";
+import EmailField from "./images/email-field.webp";
+import MessageField from "./images/message-field.webp";
+import NameField from "./images/name-field.webp";
+import QueryImage from "./images/query-form.webp";
+import SingleSelect from "./images/single-select-questionare.webp";
+import ToggleButton from "./images/welcome1.webp";
+
+export const metadata = {
+  title: "Creating a Contact Form with Formbricks: A Step-by-Step Guide",
+  description:
+    "Learn how to easily create a professional contact form using Formbricks, perfect for beginners and experts alike.",
+};
+
+# Creating a Contact Form with Formbricks: A Step-by-Step Guide
+
+Welcome to this comprehensive guide on creating a contact form using Formbricks. Whether you're a beginner or an experienced user, this tutorial will walk you through each step of creating an engaging and effective contact form.
+
+### What We’ll Build
+
+We'll be building a simple contact form with the following features:
+
+1. A welcoming contact page.
+2. Fields to collect the user's name and email address.
+3. A question asking the reason for contacting.
+4. A message field for users to share their queries.
+
+### Step 1: Setting Up Your Form
+
+To begin, let's create the structure for your form:
+
+1. Head to the Surveys page and click on "New Survey."
+2. Select "Start from Scratch" to begin a new form.
+3. In the form editor, click the three dots next to a question, then select "Change Question Type" and choose Statement (Call to Action).
+
+<MdxImage
+  src={ToggleButton}
+  alt="Toggle button for Statement (Call to Action)"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. This will let you add a welcoming statement that greets the user and briefly explains the form’s purpose.
+5. Personalize the greeting to make it inviting and encourage users to start.
+
+<Note>
+  The welcome sets the tone for your form. Make it friendly and inviting to encourage users to engage with
+  your form.
+</Note>
+
+### Step 2: Adding the Name Field
+
+Next, let’s add a field to capture the user’s name:
+
+1. Click the Add Question button.
+   <MdxImage
+     src={AddQuestion}
+     alt="Adding a question in Formbricks"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />
+2. Fills the prompts.
+3. In the right-bottom, off the long-answer button.
+4. Configure any additional settings for this field, such as making it required.
+
+<MdxImage
+  src={NameField}
+  alt="Name field configuration"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+### Step 3: Adding the Email Field
+
+Next, we'll add a field to collect the user's email address.
+
+1. Click "Add Question" again.
+2. This time, choose "Email" as the input type.
+3. Enter your text to ask for the user email in your way.
+
+<MdxImage
+  src={EmailField}
+  alt="Email field configuration"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+### Step 4: Reason for Contact
+
+Now, let's add a question to understand why the user is contacting you.
+
+1. Click "Add Question" once more.
+2. In the form editor, click the three dots next to a question, then select "Change Question Type" and choose single-select option.
+3. Enter "Why are you contacting us today?" as the question.
+
+<MdxImage
+  src={SingleSelect}
+  alt="Single Select question configuration"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+<Note>Providing predefined options helps categorize inquiries and can streamline your response process.</Note>
+
+4. Add relevant options such as "General Inquiry", "Support", "Feedback", etc.
+
+<MdxImage
+  src={QueryImage}
+  alt="Single Select question configuration"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+### Step 5: Message Field
+
+Finally, let's add a field for the user's message.
+
+1. Click "Add Question" for the last time.
+2. Enter "Your Message" as the question.
+3. Enter "Please write your message here..." as the placeholder area.
+
+<MdxImage
+  src={MessageField}
+  alt="Message field configuration"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. You might want to set a minimum character count to ensure you receive substantial messages.
+
+### Finalizing Your Form
+
+Once you've added all the elements, your contact form is almost ready. Follow these final steps:
+
+1. Review and rearrange the questions if needed.
+2. Test the form by going through it as a user.
+3. Customize the "Thank You" message for form submissions.
+4. Publish the form to get a shareable link that you can use across platforms.
+5. You'll be notified each time a user submits the form.
+
+Congratulations! You've successfully created a comprehensive contact form with Formbricks. This form will help you gather valuable information from your visitors in a user-friendly way.
+
+Remember, a good contact form strikes the right balance—enough details to be useful, but simple enough to encourage submissions. Happy form building!
