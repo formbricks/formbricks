@@ -192,7 +192,7 @@ export const ResponseOptionsCard = ({
   };
 
   const hangleSingleUseEncryptionToggle = () => {
-    if (!singleUseEnuryption) {
+    if (!singleUseEncryption) {
       setSingleUseEncryption(true);
       setLocalSurvey({
         ...localSurvey,
@@ -332,7 +332,7 @@ export const ResponseOptionsCard = ({
             description="Automatically release the survey at the beginning of the day (UTC)."
             childBorder={true}>
             <div className="p-4">
-              <DatePicker date={runOnDate} handleDateChange={handleRunOnDateChange} />
+              <DatePicker date={runOnDate} updateSurveyDate={handleRunOnDateChange} />
             </div>
           </AdvancedOptionToggle>
           {/* Close Survey on Date */}
@@ -344,7 +344,7 @@ export const ResponseOptionsCard = ({
             description="Automatically closes the survey at the beginning of the day (UTC)."
             childBorder={true}>
             <div className="p-4">
-              <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
+              <DatePicker date={closeOnDate} updateSurveyDate={handleCloseOnDateChange} />
             </div>
           </AdvancedOptionToggle>
 
