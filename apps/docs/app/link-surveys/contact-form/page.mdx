@@ -6,6 +6,7 @@ import NameField from "./images/name-field.webp";
 import QueryImage from "./images/query-form.webp";
 import SingleSelect from "./images/single-select-questionare.webp";
 import ToggleButton from "./images/welcome1.webp";
+import EmbedImage from "./images/embed.png";
 
 export const metadata = {
   title: "Creating a Contact Form with Formbricks: A Step-by-Step Guide",
@@ -17,7 +18,7 @@ export const metadata = {
 
 Welcome to this comprehensive guide on creating a contact form using Formbricks. Whether you're a beginner or an experienced user, this tutorial will walk you through each step of creating an engaging and effective contact form.
 
-### What We’ll Build
+## What We’ll Build
 
 We'll be building a simple contact form with the following features:
 
@@ -138,7 +139,37 @@ Once you've added all the elements, your contact form is almost ready. Follow th
 3. Customize the "Thank You" message for form submissions.
 4. Publish the form to get a shareable link that you can use across platforms.
 5. You'll be notified each time a user submits the form.
+   - Go to your Formbricks account settings
+   - Verify your email address is correct
+   - Check the notification preferences to ensure "Form Submission" notifications are enabled
 
-Congratulations! You've successfully created a comprehensive contact form with Formbricks. This form will help you gather valuable information from your visitors in a user-friendly way.
+### Integrating the Contact Form into Website
+
+After finalizing and publishing your form, follow these steps to display it on your website:
+
+1. **Copy the Shareable Link**  
+   - Navigate to the Formbricks dashboard, find your form, and click the "Share" button.
+   - In the pop-up menu, select **Embed in a Web Page** from the options on the left.
+
+   <MdxImage
+     src={EmbedImage}
+     alt="Embed Image configuration"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />
+
+2. **Embed the Code**  
+   - Copy the provided embed code and paste it where you want the form to appear. This will allow users to access the form directly from your site.
+
+3. **Optional: Customize the Embed Styling**  
+   - You can adjust the styling of the embedded form by modifying the `width`, `height`, and other properties of the `<iframe>` tag to better fit your site's design.
+
+4. **Test the Integration**  
+   - Visit your website to check if the form displays correctly.
+   - Submit a test entry to ensure everything is functioning properly and that you receive notifications for submissions.
+
+By completing these steps, your contact form will be live on your website, ready to collect submissions. Enjoy engaging with your visitors!
+
+Congratulations! You've successfully created a comprehensive contact form with Formbricks and integrated in the website. This form will help you gather valuable information from your visitors in a user-friendly way.
 
 Remember, a good contact form strikes the right balance—enough details to be useful, but simple enough to encourage submissions. Happy form building!
