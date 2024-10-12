@@ -14,7 +14,7 @@ const myTheme = createCssVariablesTheme({
 
 const rehypeParseCodeBlocks = () => {
   return (tree) => {
-    visit(tree, "eleme  nt", (node, _nodeIndex, parentNode) => {
+    visit(tree, "element", (node, _nodeIndex, parentNode) => {
       if (node.tagName === "code" && node.properties.className) {
         parentNode.properties.language = node.properties.className[0]?.replace(/^language-/, "");
       }
@@ -32,8 +32,9 @@ const rehypeShiki = () => {
       if (node.tagName === "pre" && node.children[0]?.tagName === "code") {
         let codeNode = node.children[0];
         let textNode = codeNode.children[0];
+        if (!codeNode || !textNode) return
         node.properties.code = textNode.value;
-        if (codeNode.properties.className) {
+        if (codeNode.properties.className && codeNode.properties.className.length > 0) {
           let lang = (codeNode.properties.className[0].replace("language-", ""));
           const code = highlighter.codeToHtml(textNode.value, { lang, theme: "css-variables" })
           textNode.value = code
