@@ -23,14 +23,16 @@ export const StartFromScratchTemplate = ({
   createSurvey,
   loading,
 }: StartFromScratchTemplateProps) => {
+  const generateTemplateAndCreateSurvey = async () => {
+    const newTemplate = replacePresetPlaceholders(customSurvey, product);
+    onTemplateClick(newTemplate);
+    setActiveTemplate(newTemplate);
+    createSurvey(newTemplate);
+  };
   return (
     <button
       type="button"
-      onClick={() => {
-        const newTemplate = replacePresetPlaceholders(customSurvey, product);
-        onTemplateClick(newTemplate);
-        setActiveTemplate(newTemplate);
-      }}
+      onClick={generateTemplateAndCreateSurvey}
       className={cn(
         activeTemplate?.name === customSurvey.name
           ? "ring-brand-dark border-transparent ring-2"
@@ -40,17 +42,6 @@ export const StartFromScratchTemplate = ({
       <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
       <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{customSurvey.name}</h3>
       <p className="text-left text-xs text-slate-600">{customSurvey.description}</p>
-      {activeTemplate?.name === customSurvey.name && (
-        <div className="text-left">
-          <Button
-            className="mt-6 px-6 py-3"
-            disabled={activeTemplate === null}
-            loading={loading}
-            onClick={() => createSurvey(activeTemplate)}>
-            Create survey
-          </Button>
-        </div>
-      )}
     </button>
   );
 };
