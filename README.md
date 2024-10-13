@@ -1,9 +1,10 @@
-> [!TIP]
-> Help us grow and star us on Github! ⭐️
-
 <div id="top"></div>
 
 <p align="center">
+
+<div style="background-color:#f8fafc; border-radius:5px;">
+<p align="center">Help us grow and star us on Github! ⭐️</p>
+</div>
 
 <a href="https://formbricks.com">
 
