@@ -2,8 +2,6 @@
 
 <p align="center">Help us grow and star us on Github! ⭐️</p>
 
-<hr />
-
 <p align="center">
 
 <a href="https://formbricks.com">
