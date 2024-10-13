@@ -1,6 +1,8 @@
 <div id="top"></div>
 
-<p align="center" style="background-color:#fcfbde; border-radius:5px;">Help us grow and star us on Github! ⭐️</p>
+<p align="center">Help us grow and star us on Github! ⭐️</p>
+
+<hr />
 
 <p align="center">
 
