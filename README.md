@@ -1,10 +1,10 @@
 <div id="top"></div>
 
-<p align="center">
-
-<div style="background-color:#f8fafc; border-radius:5px;">
+<div style="background-color:#fcfbde; border-radius:5px;">
 <p align="center">Help us grow and star us on Github! ⭐️</p>
 </div>
+
+<p align="center">
 
 <a href="https://formbricks.com">
 
