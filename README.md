@@ -1,3 +1,6 @@
+> [!TIP]
+> Help us grow and star us on Github! ⭐️
+
 <div id="top"></div>
 
 <p align="center">
