@@ -56,8 +56,7 @@ export const SurveyAnalysisCTA = ({
 
   const surveyUrl = useMemo(() => `${webAppUrl}/s/${survey.id}`, [survey.id, webAppUrl]);
 
-  const widgetSetupCompleted =
-    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
+  const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
   useEffect(() => {
     setModalState((prev) => ({
@@ -101,6 +100,12 @@ export const SurveyAnalysisCTA = ({
       setModalState((prev) => ({ ...prev, [modalView]: newValue }));
     };
   };
+
+  const shareEmbedViews = [
+    { key: "share", modalView: "start" as const, setOpen: handleShareModalToggle },
+    { key: "embed", modalView: "embed" as const, setOpen: handleModalState("embed") },
+    { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
+  ];
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
@@ -187,30 +192,17 @@ export const SurveyAnalysisCTA = ({
 
       {user && (
         <>
-          <ShareEmbedSurvey
-            survey={survey}
-            open={modalState.share}
-            setOpen={handleShareModalToggle}
-            webAppUrl={webAppUrl}
-            user={user}
-            modalView="start"
-          />
-          <ShareEmbedSurvey
-            survey={survey}
-            open={modalState.embed}
-            setOpen={handleModalState("embed")}
-            webAppUrl={webAppUrl}
-            user={user}
-            modalView="embed"
-          />
-          <ShareEmbedSurvey
-            survey={survey}
-            open={modalState.panel}
-            setOpen={handleModalState("panel")}
-            webAppUrl={webAppUrl}
-            user={user}
-            modalView="panel"
-          />
+          {shareEmbedViews.map(({ key, modalView, setOpen }) => (
+            <ShareEmbedSurvey
+              key={key}
+              survey={survey}
+              open={modalState[key as keyof ModalState]}
+              setOpen={setOpen}
+              webAppUrl={webAppUrl}
+              user={user}
+              modalView={modalView}
+            />
+          ))}
           <SuccessMessage environment={environment} survey={survey} />
         </>
       )}

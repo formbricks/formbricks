@@ -47,7 +47,7 @@ export const ShareEmbedSurvey = ({
     { id: "webpage", label: "Embed on website", icon: Code2Icon },
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single use links" : "Share the link"}`, icon: LinkIcon },
     { id: "app", label: "Embed in app", icon: SmartphoneIcon },
-  ];
+  ].filter((tab) => !(survey.type === "link" && tab.id === "app"));
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
