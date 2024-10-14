@@ -2,7 +2,7 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import webPackageJson from "../../apps/web/package.json";
-import { copyCompiledAssetsPlugin } from "../copyCompiledAssetsPlugin/vite.config";
+import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
 const config = () => {
   return defineConfig({
