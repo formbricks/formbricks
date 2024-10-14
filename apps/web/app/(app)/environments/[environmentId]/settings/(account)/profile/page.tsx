@@ -36,9 +36,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             description="Assist your organization in identifying you on Formbricks.">
             {user && (
               <EditProfileAvatarForm
-                session={session}
                 environmentId={environmentId}
                 imageUrl={user.imageUrl}
+                email={user.email}
               />
             )}
           </SettingsCard>
