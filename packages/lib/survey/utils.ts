@@ -9,7 +9,7 @@ import {
   TSurveyQuestion,
   TSurveyQuestions,
 } from "@formbricks/types/surveys/types";
-import { llmModel } from "../ai";
+import { llmModel } from "../aiModels";
 
 export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
   let segment: TSegment | null = null;

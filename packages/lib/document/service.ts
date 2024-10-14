@@ -13,7 +13,7 @@ import {
 } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZInsightCategory } from "@formbricks/types/insights";
-import { embeddingsModel, llmModel } from "../ai";
+import { embeddingsModel, llmModel } from "../aiModels";
 import { cache } from "../cache";
 import { insightCache } from "../insight/cache";
 import { validateInputs } from "../utils/validate";
