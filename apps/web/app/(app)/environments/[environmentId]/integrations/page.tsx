@@ -193,7 +193,7 @@ const Page = async ({ params }) => {
   ];
 
   integrationCards.unshift({
-    docsHref: "https://formbricks.com/docs/getting-started/framework-guides#next-js",
+    docsHref: "https://formbricks.com/docs/app-surveys/quickstart",
     docsText: "Docs",
     docsNewTab: true,
     connectHref: `/environments/${environmentId}/product/app-connection`,

@@ -26,7 +26,7 @@
     "@radix-ui/react-collapsible": "1.1.0",
     "https-proxy-agent": "7.0.5",
     "lucide-react": "0.427.0",
-    "next": "14.2.10",
+    "next": "14.2.15",
     "next-auth": "4.24.7",
     "node-fetch": "3.3.2",
     "react-hook-form": "7.53.0",

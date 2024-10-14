@@ -71,7 +71,7 @@ if (typeof window !== "undefined") {
               Formbricks SDK. Open the browser console to see the logs.{" "}
               <Link
                 className="decoration-brand-dark"
-                href="https://formbricks.com/docs/developer-docs/app-survey-sdk#debug-mode"
+                href="https://formbricks.com/docs/developer-docs/js-sdk#debug-mode"
                 target="_blank">
                 Read docs.
               </Link>{" "}
@@ -122,7 +122,7 @@ if (typeof window !== "undefined") {
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/api/packages/js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <h4>Step 2: Debug mode</h4>
@@ -131,7 +131,7 @@ if (typeof window !== "undefined") {
               Formbricks SDK. Open the browser console to see the logs.{" "}
               <Link
                 className="decoration-brand-dark"
-                href="https://formbricks.com/docs/developer-docs/app-survey-sdk#debug-mode"
+                href="https://formbricks.com/docs/developer-docs/js-sdk#debug-mode"
                 target="_blank">
                 Read docs.
               </Link>{" "}

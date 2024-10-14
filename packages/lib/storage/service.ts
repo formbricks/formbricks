@@ -126,7 +126,8 @@ export const getS3File = async (fileKey: string): Promise<string> => {
 
 export const getLocalFile = async (filePath: string): Promise<TGetFileResponse> => {
   try {
-    const file = await readFile(filePath);
+    const safeFilePath = path.resolve(process.cwd(), filePath);
+    const file = await readFile(safeFilePath);
     let contentType = "";
 
     try {
