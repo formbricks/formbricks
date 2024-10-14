@@ -28,7 +28,10 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { getEnvironment } from "../environment/service";
-import { subscribeOrganizationMembersToSurveyResponses } from "../organization/service";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "../organization/service";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -546,46 +549,59 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     });
 
     // AI Insights
-    if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-      const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-      const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
-        (question) => question.type === "openText"
-      );
+    const isAIEnabled = true;
+    if (isAIEnabled) {
+      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
+        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
+        const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
+          (question) => question.type === "openText"
+        );
 
-      const questionsToCheckForInsights: TSurveyQuestions = [];
-      for (const question of openTextQuestions) {
-        const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id);
+        // find the questions that have been updated or added
+        const questionsToCheckForInsights: TSurveyQuestions = [];
 
-        if (existingQuestion && question.headline.default === existingQuestion.headline.default) {
-          continue;
-        } else {
-          questionsToCheckForInsights.push(question);
+        for (const question of openTextQuestions) {
+          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id);
+          const isExistingQuestion = !!existingQuestion;
+
+          if (isExistingQuestion && question.headline.default === existingQuestion.headline.default) {
+            continue;
+          } else {
+            questionsToCheckForInsights.push(question);
+          }
         }
-      }
 
-      const insightsEnabledValues = await Promise.all(
-        openTextQuestions.map(async (question) => {
-          const insightsEnabled = await getInsightsEnabled(question);
+        const insightsEnabledValues = await Promise.all(
+          questionsToCheckForInsights.map(async (question) => {
+            const insightsEnabled = await getInsightsEnabled(question);
 
-          return { id: question.id, insightsEnabled };
-        })
-      );
+            return { id: question.id, insightsEnabled };
+          })
+        );
 
-      const insightsEnabledQuestionIds = insightsEnabledValues
-        .filter((value) => value.insightsEnabled)
-        .map((value) => value.id);
-
-      if (insightsEnabledQuestionIds.length > 0) {
         data.questions = data.questions?.map((question) => {
-          if (insightsEnabledQuestionIds.includes(question.id)) {
+          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
+          if (index !== -1) {
             return {
               ...question,
-              insightsEnabled: true,
+              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
             };
           }
 
           return question;
         });
+      }
+    } else {
+      // check if an existing question got changed that had insights enabled
+      const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
+        (question) => question.type === "openText" && question.insightsEnabled
+      );
+      // if question headline changed, remove insightsEnabled
+      for (const question of insightsEnabledOpenTextQuestions) {
+        const updatedQuestion = data.questions?.find((q) => q.id === question.id);
+        if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
+          updatedQuestion.insightsEnabled = undefined;
+        }
       }
     }
 
