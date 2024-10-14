@@ -545,6 +545,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       return rest;
     });
 
+    // AI Insights
     if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
       const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
       const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
