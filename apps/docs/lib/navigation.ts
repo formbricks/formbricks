@@ -18,6 +18,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Feedback Box", href: "/best-practices/feedback-box" },
           { title: "Docs Feedback", href: "/best-practices/docs-feedback" },
           { title: "Improve Email Content", href: "/best-practices/improve-email-content" },
+          { title: "Contact Form", href: "/best-practices/contact-form" },
         ],
       },
     ],
