@@ -34,7 +34,6 @@ export const TemplateList = ({
 }: TemplateListProps) => {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
-  const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
   const surveyType: TSurveyType = useMemo(() => {
@@ -50,7 +49,6 @@ export const TemplateList = ({
   }, [product.config.channel]);
 
   const createSurvey = async (activeTemplate: TTemplate) => {
-    setLoading(true);
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,
@@ -112,12 +110,10 @@ export const TemplateList = ({
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StartFromScratchTemplate
-          activeTemplate={activeTemplate}
           setActiveTemplate={setActiveTemplate}
           onTemplateClick={onTemplateClick}
           product={product}
           createSurvey={createSurvey}
-          loading={loading}
         />
         {(process.env.NODE_ENV === "development" ? [...filteredTemplates] : filteredTemplates).map(
           (template: TTemplate) => {
@@ -125,11 +121,7 @@ export const TemplateList = ({
               <Template
                 template={template}
                 activeTemplate={activeTemplate}
-                setActiveTemplate={setActiveTemplate}
-                onTemplateClick={onTemplateClick}
-                product={product}
                 createSurvey={createSurvey}
-                loading={loading}
                 selectedFilter={selectedFilter}
               />
             );
