@@ -11,6 +11,7 @@ export const actionClient = createSafeActionClient({
     } else if (e instanceof AuthorizationError) {
       return e.message;
     }
+    console.error("SERVER ERROR: ", e);
 
     return DEFAULT_SERVER_ERROR_MESSAGE;
   },
