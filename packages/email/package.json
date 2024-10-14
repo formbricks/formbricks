@@ -15,7 +15,7 @@
     "@formbricks/ui": "workspace:*",
     "@react-email/components": "0.0.25",
     "@react-email/render": "1.0.1",
-    "lucide-react": "0.451.0",
+    "lucide-react": "0.452.0",
     "nodemailer": "6.9.15"
   },
   "devDependencies": {
