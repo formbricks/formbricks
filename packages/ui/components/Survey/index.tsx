@@ -21,7 +21,7 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
 
   const loadSurveyScript: () => Promise<void> = async () => {
     try {
-      const response = await fetch("/api/packages/surveys");
+      const response = await fetch("/js/surveys.umd.cjs");
 
       if (!response.ok) {
         throw new Error("Failed to load the surveys package");

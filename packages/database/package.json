@@ -52,7 +52,8 @@
     "data-migration:address-question": "ts-node ./data-migrations/20240924123456_migrate_address_question/data-migration.ts",
     "data-migration:advanced-logic": "ts-node ./data-migrations/20240828122408_advanced_logic_editor/data-migration.ts",
     "data-migration:segments-actions-cleanup": "ts-node ./data-migrations/20240904091113_removed_actions_table/data-migration.ts",
-    "data-migration:migrate-survey-types": "ts-node ./data-migrations/20241002123456_migrate_survey_types/data-migration.ts"
+    "data-migration:migrate-survey-types": "ts-node ./data-migrations/20241002123456_migrate_survey_types/data-migration.ts",
+    "data-migration:v2.6": "pnpm data-migration:add-display-id-to-response && pnpm data-migration:address-question && pnpm data-migration:advanced-logic && pnpm data-migration:segments-actions-cleanup && pnpm data-migration:migrate-survey-types"
   },
   "dependencies": {
     "@prisma/client": "5.20.0",
