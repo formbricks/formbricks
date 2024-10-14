@@ -8,6 +8,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "./Button";
 import { useIsInsideMobileNavigation } from "./MobileNavigation";
 import { useSectionStore } from "./SectionProvider";
@@ -247,6 +248,25 @@ interface NavigationProps extends React.ComponentPropsWithoutRef<"nav"> {
 export const Navigation = ({ isMobile, ...props }: NavigationProps) => {
   const [activeGroup, setActiveGroup] = useState<NavGroup | null>(navigation[0]);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Check the current pathname and set the active group
+    navigation.forEach((group) => {
+      group.links.forEach((link) => {
+        if (link.href && pathname.startsWith(link.href)) {
+          setActiveGroup(group);
+        } else if (link.children) {
+          link.children.forEach((child) => {
+            if (pathname.startsWith(child.href)) {
+              setActiveGroup(group);
+              setOpenGroups([`${group.title}-${link.title}`]); // Ensure parent is open
+            }
+          });
+        }
+      });
+    });
+  }, [pathname]);
 
   return (
     <nav {...props}>
