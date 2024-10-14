@@ -1,9 +1,7 @@
 "use client";
 
-import { CogIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 
 export const AppTab = ({ environmentId }) => {
@@ -43,12 +41,9 @@ const MobileAppTab = () => {
           to connect your app with Formbricks
         </li>
       </ol>
-      <Alert variant="default" className="mt-4">
-        <AlertDescription className="flex gap-x-2">
-          <CogIcon className="h-5 w-5 animate-spin" />
-          <div>We&apos;re working on SDKs for Flutter, Swift and Kotlin.</div>
-        </AlertDescription>
-      </Alert>
+      <div className="mt-2 text-sm italic text-slate-700">
+        We&apos;re working on SDKs for Flutter, Swift and Kotlin.
+      </div>
     </div>
   );
 };
