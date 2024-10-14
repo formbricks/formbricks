@@ -18,8 +18,7 @@ export const LegalFooter = ({
   return (
     <div className="absolute bottom-0 z-[1500] h-10 w-full">
       <div className="mx-auto flex h-full max-w-lg items-center justify-center p-2 text-center text-xs text-[#6e737a]">
-        {" "}
-        {/* Update color */}
+        {/* Updated text color to #6e737a for improved contrast (4.78:1 ratio) and better accessibility */}
         {IMPRINT_URL && (
           <Link href={IMPRINT_URL} target="_blank" className="hover:underline" tabIndex={-1}>
             Imprint
