@@ -38,3 +38,8 @@
   margin: 20px !important;
   background: black !important;
 }
+
+.react-calendar__tile--hasActive {
+  background: var(--fb-brand-color) !important;
+  border-radius: 6% !important;
+}
