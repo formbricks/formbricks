@@ -1,5 +1,7 @@
 <div id="top"></div>
 
+<p align="center">Help us grow and star us on Github! ⭐️</p>
+
 <p align="center">
 
 <a href="https://formbricks.com">
