@@ -2,6 +2,7 @@ import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { getIsAIEnabled } from "utils/ai";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
@@ -548,8 +549,13 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       return rest;
     });
 
-    // AI Insights
-    const isAIEnabled = true;
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", null);
+    }
+
+    //AI Insights
+    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
     if (isAIEnabled) {
       if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
         const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
@@ -765,8 +771,13 @@ export const createSurvey = async (
       };
     }
 
+    const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", null);
+    }
+
     //AI Insights
-    const isAIEnabled = true;
+    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
     if (isAIEnabled) {
       if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
         const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
