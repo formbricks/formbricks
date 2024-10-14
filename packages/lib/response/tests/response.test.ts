@@ -23,7 +23,7 @@ import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, TResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { selectPerson } from "../../person/service";
+import { selectContact } from "../../person/service";
 import {
   mockAttributeClass,
   mockOrganizationOutput,
@@ -230,7 +230,7 @@ describe("Tests for createResponse service", () => {
           environment: { connect: { id: mockEnvironmentId } },
           userId: mockUserId,
         },
-        select: selectPerson,
+        select: selectContact,
       });
     });
   });

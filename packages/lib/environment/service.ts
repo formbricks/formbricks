@@ -179,15 +179,32 @@ export const createEnvironment = async (
         },
         attributeKeys: {
           create: [
-            { key: "userId", name: "User Id", description: "The user id of a contact", type: "default" },
-            { key: "email", name: "Name", description: "The email of a contact", type: "default" },
+            {
+              key: "userId",
+              name: "User Id",
+              description: "The user id of a contact",
+              type: "default",
+              isUnique: true,
+            },
+            {
+              key: "email",
+              name: "Name",
+              description: "The email of a contact",
+              type: "default",
+              isUnique: true,
+            },
             {
               key: "firstName",
               name: "First Name",
               description: "Your contact's first name",
               type: "default",
             },
-            { key: "lastName", name: "Last Name", description: "Your contact's last name", type: "default" },
+            {
+              key: "lastName",
+              name: "Last Name",
+              description: "Your contact's last name",
+              type: "default",
+            },
           ],
         },
       },

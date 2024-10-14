@@ -11,32 +11,34 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
 
-export const selectPerson = {
+export const selectContact = {
   id: true,
-  userId: true,
   createdAt: true,
   updatedAt: true,
   environmentId: true,
   attributes: {
     select: {
       value: true,
-      attributeClass: {
+      attributeKey: {
         select: {
+          key: true,
           name: true,
+          description: true
         },
       },
     },
   },
-};
+} satisfies Prisma.ContactSelect;
 
 type TransformPersonInput = {
   id: string;
-  userId: string;
   environmentId: string;
   attributes: {
     value: string;
-    attributeClass: {
-      name: string;
+    attributeKey: {
+      key: string;
+      name: string | null;
+      description: string | null;
     };
   }[];
   createdAt: Date;
@@ -46,7 +48,7 @@ type TransformPersonInput = {
 export const transformPrismaPerson = (person: TransformPersonInput): TPersonWithAttributes => {
   const attributes = person.attributes.reduce(
     (acc, attr) => {
-      acc[attr.attributeClass.name] = attr.value;
+      acc[attr.attributeKey.key] = attr.value;
       return acc;
     },
     {} as Record<string, string | number>
@@ -54,8 +56,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPersonWith
 
   return {
     id: person.id,
-    userId: person.userId,
-    attributes: attributes,
+    attributes,
     environmentId: person.environmentId,
     createdAt: new Date(person.createdAt),
     updatedAt: new Date(person.updatedAt),
@@ -73,7 +74,7 @@ export const getPerson = reactCache(
             where: {
               id: personId,
             },
-            select: selectPerson,
+            select: selectContact,
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -90,46 +91,43 @@ export const getPerson = reactCache(
     )()
 );
 
-const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.PersonWhereInput => ({
-  environmentId: environmentId,
-  OR: [
-    {
-      userId: {
-        contains: search,
-        mode: "insensitive",
-      },
-    },
-    {
-      attributes: {
-        some: {
-          value: {
-            contains: search,
-            mode: "insensitive",
+const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => ({
+  environmentId,
+        OR: [
+          {
+            attributes: {
+              some: {
+                value: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+            },
           },
-        },
-      },
-    },
-    {
-      id: {
-        contains: search,
-        mode: "insensitive",
-      },
-    },
-  ],
+          {
+            id: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
 });
+
 
 export const getPeople = reactCache(
   (environmentId: string, offset?: number, searchValue?: string): Promise<TPersonWithAttributes[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
+
         try {
-          const persons = await prisma.person.findMany({
+          const persons = await prisma.contact.findMany({
             where: buildPersonWhereClause(environmentId, searchValue),
-            select: selectPerson,
+            select: selectContact,
             take: ITEMS_PER_PAGE,
             skip: offset,
           });
+          console.log(JSON.stringify(persons, null, 2))
 
           return persons.map((person) => transformPrismaPerson(person));
         } catch (error) {
@@ -185,7 +183,7 @@ export const createPerson = async (environmentId: string, userId: string): Promi
         },
         userId,
       },
-      select: selectPerson,
+      select: selectContact,
     });
 
     personCache.revalidate({
@@ -206,7 +204,7 @@ export const createPerson = async (environmentId: string, userId: string): Promi
             environmentId,
             userId,
           },
-          select: selectPerson,
+          select: selectContact,
         });
 
         if (existingPerson) {
@@ -228,7 +226,7 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
       where: {
         id: personId,
       },
-      select: selectPerson,
+      select: selectContact,
     });
 
     personCache.revalidate({
@@ -269,7 +267,7 @@ export const getPersonByUserId = reactCache(
             environmentId,
             userId,
           },
-          select: selectPerson,
+          select: selectContact,
         });
 
         if (personWithUserId) {

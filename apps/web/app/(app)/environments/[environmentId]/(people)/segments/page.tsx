@@ -1,6 +1,6 @@
+import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId]/(contact)/segments/components/BasicCreateSegmentModal";
+import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(contact)/segments/components/SegmentTable";
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
-import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/BasicCreateSegmentModal";
-import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
 import { CreateSegmentModal } from "@formbricks/ee/advanced-targeting/components/create-segment-modal";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
