@@ -40,7 +40,8 @@ Harvest user-insights, build irresistible experiences.
 <a href="https://trendshift.io/repositories/2570" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2570" alt="Trendshift Badge for formbricks/formbricks" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </p>
 
-## ✨ About Formbricks
+## ✨ About Formbricks 1
+
 
 <img width="1527" alt="formbricks-sneak" src="https://github-production-user-asset-6210df.s3.amazonaws.com/675065/249441967-ccb89ea3-82b4-4bf2-8d2c-528721ec313b.png">
 
