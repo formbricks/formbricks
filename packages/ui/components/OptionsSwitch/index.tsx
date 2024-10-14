@@ -25,10 +25,12 @@ export const OptionsSwitch = ({
     if (containerRef.current) {
       const activeElement = containerRef.current.querySelector(`[data-value="${currentOption}"]`);
       if (activeElement) {
-        const { offsetLeft, offsetWidth } = activeElement as HTMLElement;
+        const { offsetLeft, offsetWidth, offsetTop, offsetHeight } = activeElement as HTMLElement;
         setHighlightStyle({
           left: `${offsetLeft}px`,
+          top: `${offsetTop}px`,
           width: `${offsetWidth}px`,
+          height: `${offsetHeight}px`,
         });
       }
     }
