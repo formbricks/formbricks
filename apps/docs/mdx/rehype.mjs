@@ -5,6 +5,9 @@ import { mdxAnnotations } from "mdx-annotations";
 import { createCssVariablesTheme, createHighlighter } from "shiki";
 import { visit } from "unist-util-visit";
 
+let highlighterPromise;
+const supportedLanguages = ["javascript", "html", "shell", "tsx", "json", "yml", "ts"];
+
 const myTheme = createCssVariablesTheme({
   name: "css-variables",
   variablePrefix: "--shiki-",
@@ -22,16 +25,20 @@ const rehypeParseCodeBlocks = () => {
   };
 };
 
-let highlighter;
 
+const getHighlighter = async () => {
+  if (!highlighterPromise) {
+    highlighterPromise = createHighlighter({
+      langs: supportedLanguages,
+      themes: [myTheme],
+    })
+  }
+
+  return highlighterPromise;
+}
 const rehypeShiki = () => {
   return async (tree) => {
-    highlighter =
-      highlighter ??
-      (await createHighlighter({
-        langs: ["javascript", "html", "shell", "tsx", "json", "yml", "ts"],
-        themes: [myTheme],
-      }));
+    const highlighter = await getHighlighter();
 
     visit(tree, "element", (node) => {
       if (node.tagName === "pre" && node.children[0]?.tagName === "code") {
