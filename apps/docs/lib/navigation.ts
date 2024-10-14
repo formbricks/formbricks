@@ -18,6 +18,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Feedback Box", href: "/best-practices/feedback-box" },
           { title: "Docs Feedback", href: "/best-practices/docs-feedback" },
           { title: "Improve Email Content", href: "/best-practices/improve-email-content" },
+          { title: "Contact Form", href: "/best-practices/contact-form" },
         ],
       },
     ],
@@ -82,6 +83,20 @@ export const navigation: Array<NavGroup> = [
   {
     title: "Core Features",
     links: [
+      {
+        title: "Integrations",
+        children: [
+          { title: "Overview", href: "/developer-docs/integrations/overview" },
+          { title: "Airtable", href: "/developer-docs/integrations/airtable" },
+          { title: "Google Sheets", href: "/developer-docs/integrations/google-sheets" },
+          { title: "Make", href: "/developer-docs/integrations/make" },
+          { title: "n8n", href: "/developer-docs/integrations/n8n" },
+          { title: "Notion", href: "/developer-docs/integrations/notion" },
+          { title: "Slack", href: "/developer-docs/integrations/slack" },
+          { title: "Wordpress", href: "/developer-docs/integrations/wordpress" },
+          { title: "Zapier", href: "/developer-docs/integrations/zapier" },
+        ],
+      },
       { title: "Access Roles", href: "/global/access-roles" },
       { title: "Styling Theme", href: "/global/styling-theme" },
     ],
@@ -103,20 +118,6 @@ export const navigation: Array<NavGroup> = [
     title: "Developer Docs",
     links: [
       { title: "Overview", href: "/developer-docs/overview" },
-      {
-        title: "Integrations",
-        children: [
-          { title: "Overview", href: "/developer-docs/integrations/overview" },
-          { title: "Airtable", href: "/developer-docs/integrations/airtable" },
-          { title: "Google Sheets", href: "/developer-docs/integrations/google-sheets" },
-          { title: "Make", href: "/developer-docs/integrations/make" },
-          { title: "n8n", href: "/developer-docs/integrations/n8n" },
-          { title: "Notion", href: "/developer-docs/integrations/notion" },
-          { title: "Slack", href: "/developer-docs/integrations/slack" },
-          { title: "Wordpress", href: "/developer-docs/integrations/wordpress" },
-          { title: "Zapier", href: "/developer-docs/integrations/zapier" },
-        ],
-      },
       { title: "SDK: Formbricks JS", href: "/developer-docs/js-sdk" },
       { title: "SDK: React Native", href: "/developer-docs/react-native-in-app-surveys" },
       { title: "SDK: Formbricks API", href: "/developer-docs/api-sdk" },
