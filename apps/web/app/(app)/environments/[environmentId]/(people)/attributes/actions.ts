@@ -21,12 +21,6 @@ export const getSegmentsByAttributeClassAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromAttributeClassId(parsedInput.attributeClass.id),
-      rules: ["attributeClass", "read"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       rules: ["environment", "read"],
     });
