@@ -3,10 +3,7 @@
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import {
-  getOrganizationIdFromAttributeClassId,
-  getOrganizationIdFromEnvironmentId,
-} from "@formbricks/lib/organization/utils";
+import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
 import { ZAttributeClass } from "@formbricks/types/attribute-classes";
 import { ZId } from "@formbricks/types/common";
