@@ -41,7 +41,10 @@ export const ManageIntegration = ({
   const handleDeleteIntegration = async () => {
     try {
       setisDeleting(true);
-      await deleteIntegrationAction({ integrationId: slackIntegration.id });
+      await deleteIntegrationAction({
+        integrationId: slackIntegration.id,
+        environmentId: environment.id,
+      });
       setIsConnected(false);
       toast.success("Integration removed successfully");
     } catch (error) {
