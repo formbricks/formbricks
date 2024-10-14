@@ -765,27 +765,25 @@ export const createSurvey = async (
       };
     }
 
-    if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-      const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-      const insightsEnabledValues = await Promise.all(
-        openTextQuestions.map(async (question) => {
-          const insightsEnabled = await getInsightsEnabled(question);
+    //AI Insights
+    const isAIEnabled = true;
+    if (isAIEnabled) {
+      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
+        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
+        const insightsEnabledValues = await Promise.all(
+          openTextQuestions.map(async (question) => {
+            const insightsEnabled = await getInsightsEnabled(question);
 
-          return { id: question.id, insightsEnabled };
-        })
-      );
+            return { id: question.id, insightsEnabled };
+          })
+        );
 
-      const insightsEnabledQuestionIds = insightsEnabledValues
-        .filter((value) => value.insightsEnabled)
-        .map((value) => value.id);
-
-      console.log(insightsEnabledQuestionIds);
-      if (insightsEnabledQuestionIds.length > 0) {
         data.questions = data.questions?.map((question) => {
-          if (insightsEnabledQuestionIds.includes(question.id)) {
+          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
+          if (index !== -1) {
             return {
               ...question,
-              insightsEnabled: true,
+              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
             };
           }
 
