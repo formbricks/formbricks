@@ -1,5 +1,5 @@
 import Avatar from "boring-avatars";
-import { sha256 } from "js-sha256";
+import { createHash } from "crypto";
 import Image from "next/image";
 
 const colors = ["#00C4B8", "#ccfbf1", "#334155"];
@@ -18,7 +18,8 @@ interface ProfileAvatar {
 }
 
 export const ProfileAvatar: React.FC<ProfileAvatar> = ({ imageUrl, email }) => {
-  const imageSrc = imageUrl || `https://www.gravatar.com/avatar/${sha256(email)}?d=retro`;
+  const hashedEmail = createHash("sha256").update(email).digest("hex");
+  const imageSrc = imageUrl || `https://www.gravatar.com/avatar/${hashedEmail}?d=retro`;
 
   return (
     <Image
