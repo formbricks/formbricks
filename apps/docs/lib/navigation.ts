@@ -43,7 +43,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" },
           { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
-          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" },
+          { title: "Start & End Dates", href: "/global/schedule-start-end-dates" },
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" },
           { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
@@ -71,7 +71,7 @@ export const navigation: Array<NavGroup> = [
           { title: "User Metadata", href: "/global/metadata" }, // global
           { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
-          { title: "Start & End Dates", href: "/global/custom-start-end-conditions" }, // global
+          { title: "Start & End Dates", href: "/global/schedule-start-end-dates" }, // global
           { title: "Limit submissions", href: "/global/limit-submissions" }, // global
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
