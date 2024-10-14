@@ -1,7 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
-import { surveyCache } from "survey/cache";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -36,6 +35,7 @@ import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { deleteFile, putFile } from "../storage/service";
+import { surveyCache } from "../survey/cache";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { getPromptText } from "../utils/ai";

@@ -65,6 +65,13 @@ export const OpenTextSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        insights={
+          isAIEnabled && !questionSummary.insightsEnabled ? (
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center rounded-lg bg-slate-100 p-2">Insights disabled</div>
+            </div>
+          ) : undefined
+        }
       />
       {isInsightsEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
       <div className="border-t border-slate-200"></div>
