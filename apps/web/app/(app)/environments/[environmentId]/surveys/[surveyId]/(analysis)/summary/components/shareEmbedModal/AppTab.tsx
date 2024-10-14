@@ -1,6 +1,5 @@
 "use client";
 
-import ChangeSurveyTypeTip from "@/images/tooltips/change-survey-type-app.mp4";
 import { CogIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -86,7 +85,7 @@ const WebAppTab = ({ environmentId }) => {
       </ol>
       <div className="mt-4">
         <video autoPlay loop muted className="w-full rounded-xl border border-slate-200">
-          <source src={ChangeSurveyTypeTip} type="video/mp4" />
+          <source src="/video/tooltips/change-survey-type-app.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>
