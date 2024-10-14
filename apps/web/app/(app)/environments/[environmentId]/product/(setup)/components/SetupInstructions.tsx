@@ -71,7 +71,7 @@ if (typeof window !== "undefined") {
               Formbricks SDK. Open the browser console to see the logs.{" "}
               <Link
                 className="decoration-brand-dark"
-                href="https://formbricks.com/docs/developer-docs/app-survey-sdk#debug-mode"
+                href="https://formbricks.com/docs/developer-docs/js-sdk#debug-mode"
                 target="_blank">
                 Read docs.
               </Link>{" "}
@@ -131,7 +131,7 @@ if (typeof window !== "undefined") {
               Formbricks SDK. Open the browser console to see the logs.{" "}
               <Link
                 className="decoration-brand-dark"
-                href="https://formbricks.com/docs/developer-docs/app-survey-sdk#debug-mode"
+                href="https://formbricks.com/docs/developer-docs/js-sdk#debug-mode"
                 target="_blank">
                 Read docs.
               </Link>{" "}
