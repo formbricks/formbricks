@@ -13,9 +13,10 @@ export const metadata = {
 Formbricks v2.6 introduces advanced logic jumps for surveys, allowing you to add more advanced branching logic to your surveys including variables, and/or conditions and many more. This release also includes a lot of bug fixes, big performance improvements to website and app surveys and a lot of stability improvements.
 
 <Note>
-  This release includes the last step of the serverside actions deprecation. The migrations included in this
-  release will delete all actions from the database. If you still need the actions, please make sure to export
-  them before upgrading.
+  This release includes the last step of the server-side action tracking deprecation (previously used for
+  segment filtering by performed actions). The migrations included in this release will delete all tracked
+  actions from the database. If you still need these action records, please make sure to export them before
+  upgrading.
 </Note>
 
 ### Steps to Migrate
