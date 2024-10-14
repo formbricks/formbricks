@@ -51,6 +51,9 @@ CREATE INDEX "DocumentInsight_insightId_idx" ON "DocumentInsight"("insightId");
 -- CreateIndex
 CREATE UNIQUE INDEX "Document_responseId_questionId_key" ON "Document"("responseId", "questionId");
 
+-- CreateIndex
+CREATE INDEX "Document_created_at_idx" ON "Document"("created_at");
+
 -- AddForeignKey
 ALTER TABLE "Insight" ADD CONSTRAINT "Insight_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

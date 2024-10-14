@@ -1405,7 +1405,6 @@ export const generateInsightsForSurvey = async (surveyId: string) => {
 
     const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
 
-    // ? We could modify this check to generate the `insightsEnabled` key only for open-text questions where `insightsEnabled` is undefined. However, this might lead to inconsistent results in environments where plan changes have occurred, or if the question headlines were updated during that time.
     const insightsEnabledValues = await Promise.all(
       openTextQuestions.map(async (question) => {
         const insightsEnabled = await getInsightsEnabled(question);

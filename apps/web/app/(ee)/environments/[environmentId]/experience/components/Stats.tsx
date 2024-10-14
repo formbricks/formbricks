@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
+import { Badge } from "@formbricks/ui/components/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import type { TStats } from "../types/stats";
 
@@ -41,24 +42,28 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
 
   const statsData = [
     {
-      title: "Overall Sentiment",
-      value: stats.overallSentiment,
+      key: "sentimentScore",
+      title: "Sentiment Score",
+      value: `${(stats.sentimentScore || 0 * 100).toFixed(2)}%`,
       icon: GaugeIcon,
       width: "w-20",
     },
     {
+      key: "activeSurveys",
       title: "Active Surveys",
       value: stats.activeSurveys,
       icon: MessageCircleIcon,
       width: "w-10",
     },
     {
+      key: "newResponses",
       title: "New Responses",
       value: stats.newResponses,
       icon: InboxIcon,
       width: "w-10",
     },
     {
+      key: "analysedFeedbacks",
       title: "Analysed Feedbacks",
       value: stats.analysedFeedbacks,
       icon: ActivityIcon,
@@ -74,7 +79,7 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
             <stat.icon className="text-muted-foreground h-4 w-4" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex items-center justify-between">
             <div className="text-2xl font-bold capitalize">
               {isLoading ? (
                 <div className={cn("h-8 animate-pulse rounded bg-gray-200", stat.width)}></div>
@@ -82,6 +87,15 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
                 (stat.value ?? "-")
               )}
             </div>
+            {stat.key === "sentimentScore" && stats.overallSentiment && (
+              <div>
+                {stats.overallSentiment === "positive" ? (
+                  <Badge text="Positive" type="success" size="tiny" />
+                ) : (
+                  <Badge text="Negative" type="error" size="tiny" />
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

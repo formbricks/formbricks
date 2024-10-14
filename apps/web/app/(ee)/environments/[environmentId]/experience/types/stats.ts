@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 export const ZStats = z.object({
-  overallSentiment: z.string().optional(),
+  sentimentScore: z.number().optional(),
+  overallSentiment: z.enum(["positive", "negative"]).optional(),
   activeSurveys: z.number(),
   newResponses: z.number(),
   analysedFeedbacks: z.number(),

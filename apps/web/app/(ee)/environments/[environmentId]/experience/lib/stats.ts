@@ -15,23 +15,14 @@ export const getStats = reactCache(
       async () => {
         validateInputs([environmentId, ZId]);
         try {
-          const environmentSurveys = await prisma.survey.findMany({
-            where: {
-              environmentId,
-            },
-            select: {
-              id: true,
-            },
-          });
-
-          const groupedRespones = await prisma.response.groupBy({
+          const groupedResponesPromise = prisma.response.groupBy({
             by: ["surveyId"],
             _count: {
               surveyId: true,
             },
             where: {
-              surveyId: {
-                in: environmentSurveys.map((survey) => survey.id),
+              survey: {
+                environmentId,
               },
               createdAt: {
                 gte: statsFrom,
@@ -39,11 +30,7 @@ export const getStats = reactCache(
             },
           });
 
-          const activeSurveys = groupedRespones.length;
-
-          const newResponses = groupedRespones.reduce((acc, { _count }) => acc + _count.surveyId, 0);
-
-          const groupedSentiments = await prisma.document.groupBy({
+          const groupedSentimentsPromise = prisma.document.groupBy({
             by: ["sentiment"],
             _count: {
               sentiment: true,
@@ -57,6 +44,15 @@ export const getStats = reactCache(
               },
             },
           });
+
+          const [groupedRespones, groupedSentiments] = await Promise.all([
+            groupedResponesPromise,
+            groupedSentimentsPromise,
+          ]);
+
+          const activeSurveys = groupedRespones.length;
+
+          const newResponses = groupedRespones.reduce((acc, { _count }) => acc + _count.surveyId, 0);
 
           const sentimentCounts = groupedSentiments.reduce(
             (acc, { sentiment, _count }) => {
@@ -73,32 +69,27 @@ export const getStats = reactCache(
           // analysed feedbacks is the sum of all the sentiments
           const analysedFeedbacks = Object.values(sentimentCounts).reduce((acc, count) => acc + count, 0);
 
-          let overallSentiment: TStats["overallSentiment"];
+          let positivePercentage: number = 0,
+            negativePercentage: number = 0,
+            overallSentiment: TStats["overallSentiment"];
 
-          if (analysedFeedbacks > 0) {
-            if (
-              sentimentCounts.negative >= sentimentCounts.positive &&
-              sentimentCounts.negative >= sentimentCounts.neutral
-            ) {
-              const sentimentPercent = ((sentimentCounts.negative / analysedFeedbacks) * 100).toFixed(2);
-              overallSentiment = `negative(${sentimentPercent} %)`;
-            }
+          if (sentimentCounts.positive || sentimentCounts.negative) {
+            positivePercentage =
+              sentimentCounts.positive / (sentimentCounts.positive + sentimentCounts.negative);
 
-            if (
-              sentimentCounts.positive >= sentimentCounts.negative &&
-              sentimentCounts.positive >= sentimentCounts.neutral
-            ) {
-              const sentimentPercent = ((sentimentCounts.positive / analysedFeedbacks) * 100).toFixed(2);
-              overallSentiment = `positive(${sentimentPercent} %)`;
-            }
+            negativePercentage =
+              sentimentCounts.negative / (sentimentCounts.positive + sentimentCounts.negative);
 
-            if (!overallSentiment && analysedFeedbacks > 0) {
-              const sentimentPercent = ((sentimentCounts.neutral / analysedFeedbacks) * 100).toFixed(2);
-              overallSentiment = `neutral(${sentimentPercent} %)`;
-            }
+            overallSentiment = positivePercentage >= negativePercentage ? "positive" : "negative";
           }
 
-          return { newResponses, activeSurveys, analysedFeedbacks, overallSentiment };
+          return {
+            newResponses,
+            activeSurveys,
+            analysedFeedbacks,
+            sentimentScore: Math.max(positivePercentage, negativePercentage),
+            overallSentiment,
+          };
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             console.error(error);

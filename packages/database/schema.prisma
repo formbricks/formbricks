@@ -706,4 +706,5 @@ model Document {
   documentInsights DocumentInsight[]
 
   @@unique([responseId, questionId])
+  @@index([createdAt])
 }

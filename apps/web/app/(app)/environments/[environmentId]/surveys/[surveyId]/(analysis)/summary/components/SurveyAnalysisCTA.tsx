@@ -3,7 +3,7 @@
 import { generateInsightsForSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
-import { getIsInsightGenerationAllowed } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { ArrowUpRightFromSquareIcon, SparklesIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -33,7 +33,7 @@ export const SurveyAnalysisCTA = ({
   const pathname = usePathname();
   const router = useRouter();
 
-  const isInsightGenerationAllowed = getIsInsightGenerationAllowed(survey);
+  const shouldGenerateInsights = needsInsightsGeneration(survey);
 
   const [showShareSurveyModal, setShowShareSurveyModal] = useState(searchParams.get("share") === "true");
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
@@ -64,18 +64,13 @@ export const SurveyAnalysisCTA = ({
 
   const handleInsightGeneration = async () => {
     setIsGeneratingInsights(true);
-    const res = await generateInsightsForSurveyAction({ surveyId: survey.id });
-    if (res?.data) {
-      console.log(res.data);
-    } else {
-      console.log(res);
-    }
+    await generateInsightsForSurveyAction({ surveyId: survey.id });
     setIsGeneratingInsights(false);
   };
 
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
-      {isInsightGenerationAllowed && (
+      {shouldGenerateInsights && (
         <Button
           variant="secondary"
           EndIcon={SparklesIcon}
