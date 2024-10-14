@@ -1,11 +1,9 @@
 "use client";
 
-import { generateInsightsForSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
-import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { ArrowUpRightFromSquareIcon, SparklesIcon, SquarePenIcon } from "lucide-react";
+import { ArrowUpRightFromSquareIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -20,23 +18,18 @@ export const SurveyAnalysisCTA = ({
   isViewer,
   webAppUrl,
   user,
-  surveyResponseCount,
 }: {
   survey: TSurvey;
   environment: TEnvironment;
   isViewer: boolean;
   webAppUrl: string;
   user: TUser;
-  surveyResponseCount: number;
 }) => {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
 
-  const shouldGenerateInsights = needsInsightsGeneration(survey);
-
   const [showShareSurveyModal, setShowShareSurveyModal] = useState(searchParams.get("share") === "true");
-  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   const widgetSetupCompleted = environment.appSetupCompleted;
 
@@ -62,29 +55,8 @@ export const SurveyAnalysisCTA = ({
     router.push(`${pathname}?${searchParams.toString()}`);
   };
 
-  const handleInsightGeneration = async () => {
-    setIsGeneratingInsights(true);
-    await generateInsightsForSurveyAction({ surveyId: survey.id });
-    setIsGeneratingInsights(false);
-  };
-
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
-      {shouldGenerateInsights && (
-        <Button
-          variant="secondary"
-          EndIcon={SparklesIcon}
-          onClick={handleInsightGeneration}
-          loading={isGeneratingInsights}
-          disabled={surveyResponseCount > 10000}
-          tooltip={
-            surveyResponseCount > 10000
-              ? "Kindly contact us at hola@formbricks.com to generate insights for this survey"
-              : undefined
-          }>
-          Generate insights
-        </Button>
-      )}
       {survey.resultShareKey && (
         <Badge text="Results are public" type="warning" size="normal" className="rounded-lg"></Badge>
       )}

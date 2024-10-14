@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { surveyCache } from "survey/cache";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -569,7 +570,11 @@ export const getSurveySummary = reactCache(
       },
       [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
       {
-        tags: [responseCache.tag.bySurveyId(surveyId), displayCache.tag.bySurveyId(surveyId)],
+        tags: [
+          surveyCache.tag.byId(surveyId),
+          responseCache.tag.bySurveyId(surveyId),
+          displayCache.tag.bySurveyId(surveyId),
+        ],
       }
     )()
 );

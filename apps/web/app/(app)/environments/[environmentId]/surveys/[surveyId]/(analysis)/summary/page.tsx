@@ -1,6 +1,8 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
+import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EnableInsightsBanner";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
+import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { getIsAIEnabled } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
@@ -65,6 +67,7 @@ const Page = async ({ params }) => {
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
   const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+  const shouldGenerateInsights = needsInsightsGeneration(survey);
 
   return (
     <PageContentWrapper>
@@ -77,9 +80,11 @@ const Page = async ({ params }) => {
             isViewer={isViewer}
             webAppUrl={WEBAPP_URL}
             user={user}
-            surveyResponseCount={totalResponseCount}
           />
         }>
+        {isAIEnabled && shouldGenerateInsights && (
+          <EnableInsightsBanner surveyId={survey.id} surveyResponseCount={totalResponseCount} />
+        )}
         <SurveyAnalysisNavigation
           environmentId={environment.id}
           survey={survey}

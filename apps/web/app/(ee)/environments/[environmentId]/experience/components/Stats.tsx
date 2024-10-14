@@ -44,7 +44,7 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
     {
       key: "sentimentScore",
       title: "Sentiment Score",
-      value: `${(stats.sentimentScore || 0 * 100).toFixed(2)}%`,
+      value: stats.sentimentScore ? `${Math.round(stats.sentimentScore * 100)}%` : "-",
       icon: GaugeIcon,
       width: "w-20",
     },

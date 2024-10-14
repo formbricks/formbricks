@@ -594,7 +594,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     } else {
       // check if an existing question got changed that had insights enabled
       const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
-        (question) => question.type === "openText" && question.insightsEnabled
+        (question) => question.type === "openText" && question.insightsEnabled !== undefined
       );
       // if question headline changed, remove insightsEnabled
       for (const question of insightsEnabledOpenTextQuestions) {

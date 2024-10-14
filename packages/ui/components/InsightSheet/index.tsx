@@ -54,7 +54,6 @@ export const InsightSheet = ({
         });
       }
 
-      console.log(documentsResponse);
       if (!documentsResponse?.data) {
         const errorMessage = getFormattedErrorMessage(documentsResponse);
         console.error(errorMessage);
