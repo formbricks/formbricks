@@ -68,7 +68,7 @@ ALTER TABLE "ContactAttributeKey" RENAME COLUMN "type_new" TO "type";
 
 -- AlterTable
 ALTER TABLE "ContactAttributeKey" ALTER COLUMN "type" SET NOT NULL,
-ALTER COLUMN "type" SET DEFAULT 'default';
+ALTER COLUMN "type" SET DEFAULT 'custom';
 
 -- Step 7: Add the new 'key' column with a default value
 ALTER TABLE "ContactAttributeKey" ADD COLUMN "key" TEXT NOT NULL DEFAULT '';

@@ -80,7 +80,7 @@ model ContactAttributeKey {
   key              String
   name             String?
   description      String?
-  type             ContactAttributeType    @default(default)
+  type             ContactAttributeType    @default(custom)
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
   attributes       ContactAttribute[]
