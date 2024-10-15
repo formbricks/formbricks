@@ -463,13 +463,12 @@ export const MainNavigation = ({
                   {dropdownNavigation.map(
                     (link) =>
                       !link.hidden && (
-                        <DropdownMenuItem
-                          key={link.label}
-                          icon={<link.icon className="h-4 w-4" strokeWidth={1.5} />}>
-                          <Link href={link.href} target={link.target} className="flex items-center">
+                        <Link href={link.href} target={link.target} className="flex w-full items-center">
+                          <DropdownMenuItem>
+                            <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             {link.label}
-                          </Link>
-                        </DropdownMenuItem>
+                          </DropdownMenuItem>
+                        </Link>
                       )
                   )}
 
