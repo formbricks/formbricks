@@ -156,14 +156,16 @@ export const SurveyAnalysisCTA = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mr-8 w-40">
               <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                  <button onClick={handleCopyLink} className="flex w-full items-center">
-                    <LinkIcon className="mr-2 h-4 w-4" />
-                    Copy Link
-                  </button>
-                </DropdownMenuItem>
+                {survey.type === "link" && (
+                  <DropdownMenuItem>
+                    <button onClick={handleCopyLink} className="flex w-full items-center">
+                      <LinkIcon className="mr-2 h-4 w-4" />
+                      Copy Link
+                    </button>
+                  </DropdownMenuItem>
+                )}
 
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem>
                   <button
                     onClick={() => {
                       handleModalState("panel")(true);
@@ -175,7 +177,7 @@ export const SurveyAnalysisCTA = ({
                   </button>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem>
                   <Link
                     href={`/environments/${survey.environmentId}/settings/notifications`}
                     className="flex w-full items-center"
