@@ -36,9 +36,7 @@ const Page = async ({ params }: ConnectPageProps) => {
       <ConnectWithFormbricks
         environment={environment}
         webAppUrl={WEBAPP_URL}
-        widgetSetupCompleted={
-          channel === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted
-        }
+        widgetSetupCompleted={environment.appSetupCompleted}
         channel={channel}
       />
       <Button

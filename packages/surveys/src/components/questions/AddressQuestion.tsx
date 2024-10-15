@@ -7,6 +7,7 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useMemo, useRef, useState } from "preact/hooks";
+import { useCallback } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
@@ -23,6 +24,7 @@ interface AddressQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: string;
+  autoFocusEnabled: boolean;
 }
 
 export const AddressQuestion = ({
@@ -37,15 +39,16 @@ export const AddressQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
+  autoFocusEnabled,
 }: AddressQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-
   const safeValue = useMemo(() => {
     return Array.isArray(value) ? value : ["", "", "", "", "", ""];
   }, [value]);
+  const isCurrent = question.id === currentQuestionId;
 
   const fields = [
     {
@@ -103,6 +106,16 @@ export const AddressQuestion = ({
     }
   };
 
+  const addressRef = useCallback(
+    (currentElement: HTMLInputElement | null) => {
+      // will focus on current element when the question ID matches the current question
+      if (question.id && currentElement && autoFocusEnabled && question.id === currentQuestionId) {
+        currentElement.focus();
+      }
+    },
+    [question.id, autoFocusEnabled, currentQuestionId]
+  );
+
   return (
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <ScrollableContainer>
@@ -146,6 +159,8 @@ export const AddressQuestion = ({
                     className="fb-py-3"
                     type={field.id === "email" ? "email" : "text"}
                     onChange={(e) => handleChange(field.id, e?.currentTarget?.value ?? "")}
+                    ref={index === 0 ? addressRef : null}
+                    tabIndex={isCurrent ? 0 : -1}
                   />
                 )
               );
@@ -153,10 +168,17 @@ export const AddressQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+        />
+        <div></div>
         {!isFirstQuestion && (
           <BackButton
-            tabIndex={8}
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -165,13 +187,6 @@ export const AddressQuestion = ({
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          tabIndex={7}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-          onClick={() => {}}
-        />
       </div>
     </form>
   );

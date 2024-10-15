@@ -1,3 +1,4 @@
+import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
@@ -14,7 +15,6 @@ import { TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/components/Button";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { SurveysList } from "@formbricks/ui/components/SurveysList";
 import { TemplateList } from "@formbricks/ui/components/TemplateList";
 
 export const metadata: Metadata = {

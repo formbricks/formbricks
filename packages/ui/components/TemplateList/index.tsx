@@ -6,8 +6,8 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import { type TProduct, ZProductConfigIndustry } from "@formbricks/types/product";
-import { TSurveyCreateInput, ZSurveyType } from "@formbricks/types/surveys/types";
+import { type TProduct, ZProductConfigChannel, ZProductConfigIndustry } from "@formbricks/types/product";
+import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
@@ -37,9 +37,20 @@ export const TemplateList = ({
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
+  const surveyType: TSurveyType = useMemo(() => {
+    if (product.config.channel) {
+      if (product.config.channel === "website") {
+        return "app";
+      }
+
+      return product.config.channel;
+    }
+
+    return "link";
+  }, [product.config.channel]);
+
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
-    const surveyType = product.config.channel ?? "link";
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,
@@ -63,8 +74,9 @@ export const TemplateList = ({
       if (templateSearch) {
         return template.name.toLowerCase().includes(templateSearch.toLowerCase());
       }
+
       // Parse and validate the filters
-      const channelParseResult = ZSurveyType.nullable().safeParse(selectedFilter[0]);
+      const channelParseResult = ZProductConfigChannel.nullable().safeParse(selectedFilter[0]);
       const industryParseResult = ZProductConfigIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
@@ -111,6 +123,7 @@ export const TemplateList = ({
           (template: TTemplate) => {
             return (
               <Template
+                key={template.name}
                 template={template}
                 activeTemplate={activeTemplate}
                 setActiveTemplate={setActiveTemplate}

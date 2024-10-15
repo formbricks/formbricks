@@ -12,6 +12,6 @@
     "@formbricks/config-typescript": "workspace:*"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "zod": "3.23.8"
   }
 }
