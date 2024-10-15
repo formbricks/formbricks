@@ -73,7 +73,7 @@ export const CreateOrganization = () => {
             className="flex w-80 justify-center"
             loading={isSubmitting}
             disabled={isSubmitting || organizationName.trim() === ""}>
-            Continue
+            {isSubmitting ? "" : "Continue"}
           </Button>
         </div>
       </form>
