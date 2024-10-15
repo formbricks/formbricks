@@ -20,13 +20,18 @@ const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk"],
+    serverComponentsExternalPackages: [
+      "@aws-sdk",
+      "@opentelemetry/auto-instrumentations-node",
+      "@opentelemetry/sdk-node",
+    ],
     staleTimes: {
       dynamic: 0,
     },
     outputFileTracingIncludes: {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },
+    instrumentationHook: true,
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
