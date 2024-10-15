@@ -388,7 +388,7 @@ export const MainNavigation = ({
                   {sortedProducts.map((product) => (
                     <DropdownMenuRadioItem
                       value={product.id}
-                      className="cursor-pointer break-all rounded-lg font-normal"
+                      className="cursor-pointer break-all"
                       key={product.id}>
                       <div>
                         {product.config.channel === "website" ? (
@@ -463,17 +463,13 @@ export const MainNavigation = ({
                   {dropdownNavigation.map(
                     (link) =>
                       !link.hidden && (
-                        <Link
-                          href={link.href}
-                          target={link.target}
+                        <DropdownMenuItem
                           key={link.label}
-                          className="flex items-center">
-                          <DropdownMenuItem
-                            key={link.label}
-                            icon={<link.icon className="h-4 w-4" strokeWidth={1.5} />}>
+                          icon={<link.icon className="h-4 w-4" strokeWidth={1.5} />}>
+                          <Link href={link.href} target={link.target} className="flex items-center">
                             {link.label}
-                          </DropdownMenuItem>
-                        </Link>
+                          </Link>
+                        </DropdownMenuItem>
                       )
                   )}
 

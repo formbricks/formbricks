@@ -206,9 +206,7 @@ export const EditorCardMenu = ({
 
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer text-sm text-slate-600 hover:text-slate-700">
-                  Add question below
-                </DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger className="cursor-pointer">Add question below</DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
                   {Object.entries(availableQuestionTypes).map(([type, name]) => {
