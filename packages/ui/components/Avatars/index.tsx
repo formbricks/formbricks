@@ -18,7 +18,7 @@ interface ProfileAvatar {
 }
 
 export const ProfileAvatar: React.FC<ProfileAvatar> = ({ imageUrl, email }) => {
-  const hashedEmail = createHash("sha256").update(email).digest("hex");
+  const hashedEmail = createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
   const imageSrc = imageUrl || `https://www.gravatar.com/avatar/${hashedEmail}?d=retro`;
 
   return (
