@@ -1,6 +1,7 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { Button } from "@formbricks/ui/components/Button";
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 
 const Page = async ({ params }) => {
   let attributeClasses = await getAttributeClasses(params.environmentId);
-
+  const t = await getTranslations();
   const product = await getProductByEnvironmentId(params.environmentId);
 
   if (!product) {
@@ -28,7 +29,7 @@ const Page = async ({ params }) => {
       variant="secondary"
       target="_blank"
       EndIcon={CircleHelpIcon}>
-      How to add attributes
+      {t("environments.attributes.how_to_add_attributes")}
     </Button>
   );
 

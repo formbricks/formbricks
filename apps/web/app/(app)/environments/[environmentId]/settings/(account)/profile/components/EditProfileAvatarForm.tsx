@@ -27,7 +27,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const t = useTranslations("settings.profile");
+  const t = useTranslations("environments.settings.profile");
   const fileSchema =
     typeof window !== "undefined"
       ? z

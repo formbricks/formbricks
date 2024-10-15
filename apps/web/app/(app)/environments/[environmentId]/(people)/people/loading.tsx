@@ -1,8 +1,10 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
+import { getTranslations } from "next-intl/server";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Loading = () => {
+const Loading = async () => {
+  const t = await getTranslations();
   return (
     <>
       <PageContentWrapper>
@@ -11,9 +13,9 @@ const Loading = () => {
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-3 pl-6">User</div>
-            <div className="col-span-2 text-center">User ID</div>
-            <div className="col-span-2 text-center">Email</div>
+            <div className="col-span-3 pl-6">{t("common.user")}</div>
+            <div className="col-span-2 text-center">{t("common.user_id")}</div>
+            <div className="col-span-2 text-center">{t("common.email")}</div>
           </div>
           <div className="w-full">
             {[...Array(3)].map((_, index) => (

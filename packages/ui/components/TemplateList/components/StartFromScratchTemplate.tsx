@@ -1,4 +1,5 @@
 import { PlusCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { customSurvey } from "@formbricks/lib/templates";
 import { TProduct } from "@formbricks/types/product";
@@ -23,6 +24,7 @@ export const StartFromScratchTemplate = ({
   createSurvey,
   loading,
 }: StartFromScratchTemplateProps) => {
+  const t = useTranslations();
   return (
     <button
       type="button"
@@ -47,7 +49,7 @@ export const StartFromScratchTemplate = ({
             disabled={activeTemplate === null}
             loading={loading}
             onClick={() => createSurvey(activeTemplate)}>
-            Create survey
+            {t("common.create_survey")}
           </Button>
         </div>
       )}

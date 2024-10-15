@@ -2,7 +2,7 @@ import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/co
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -35,6 +35,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
+  const t = await getTranslations("environments.surveys");
   if (!session) {
     throw new Error("Session not found");
   }
@@ -70,7 +71,6 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const currentProductChannel = product.config.channel ?? null;
 
   const CreateSurveyButton = () => {
-    const t = useTranslations();
     return (
       <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
         {t("new_survey")}
@@ -95,17 +95,16 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
         </>
       ) : isViewer ? (
         <>
-          <h1 className="px-6 text-3xl font-extrabold text-slate-700">No surveys created yet.</h1>
+          <h1 className="px-6 text-3xl font-extrabold text-slate-700">{t("no_surveys_created_yet")}</h1>
 
           <h2 className="px-6 text-lg font-medium text-slate-500">
-            As a Viewer you are not allowed to create surveys. Please ask an Editor to create a survey or an
-            Admin to upgrade your role.
+            {t("viewer_not_allowed_to_create_survey_warning")}
           </h2>
         </>
       ) : (
         <>
           <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-            You&apos;re all set! Time to create your first survey.
+            {t("all_set_time_to_create_first_survey")}
           </h1>
           <TemplateList
             environment={environment}

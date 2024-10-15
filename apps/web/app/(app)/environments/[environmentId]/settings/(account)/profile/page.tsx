@@ -29,11 +29,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       {user && (
         <div>
           <SettingsCard
-            title="settings.profile.personal_information"
-            description="settings.profile.update_personal_info">
+            title="environments.settings.profile.personal_information"
+            description="environments.settings.profile.update_personal_info">
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
-          <SettingsCard title="common.avatar" description="settings.profile.organization_identification">
+          <SettingsCard
+            title="common.avatar"
+            description="environments.settings.profile.organization_identification">
             {user && (
               <EditProfileAvatarForm
                 session={session}
@@ -49,8 +51,8 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           )}
 
           <SettingsCard
-            title="settings.profile.delete_account"
-            description="settings.profile.confirm_delete_account">
+            title="environments.settings.profile.delete_account"
+            description="environments.settings.profile.confirm_delete_account">
             <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
           </SettingsCard>
           <SettingsId title="Profile" id={user.id}></SettingsId>

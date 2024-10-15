@@ -1,5 +1,6 @@
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -37,6 +38,7 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
+  const t = useTranslations();
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
@@ -178,12 +180,12 @@ export const CreateNewActionTab = ({
                 control={control}
                 render={({ field }) => (
                   <div>
-                    <Label className="font-semibold">Action Type</Label>
+                    <Label className="font-semibold">{t("environments.actions.action_type")}</Label>
                     <TabToggle
                       id="type"
                       options={[
-                        { value: "noCode", label: "No code" },
-                        { value: "code", label: "Code" },
+                        { value: "noCode", label: t("environments.actions.no_code") },
+                        { value: "code", label: t("environments.actions.code") },
                       ]}
                       {...field}
                       defaultSelected={field.value}
@@ -200,14 +202,16 @@ export const CreateNewActionTab = ({
                   name="name"
                   render={({ field, fieldState: { error } }) => (
                     <FormItem>
-                      <FormLabel htmlFor="actionNameInput">What did your user do?</FormLabel>
+                      <FormLabel htmlFor="actionNameInput">
+                        {t("environments.actions.what_did_your_user_do")}
+                      </FormLabel>
 
                       <FormControl>
                         <Input
                           type="text"
                           id="actionNameInput"
                           {...field}
-                          placeholder="E.g. Clicked Download"
+                          placeholder={t("environments.actions.eg_clicked_download")}
                           isInvalid={!!error?.message}
                         />
                       </FormControl>
@@ -223,14 +227,14 @@ export const CreateNewActionTab = ({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel htmlFor="actionDescriptionInput">Description</FormLabel>
+                      <FormLabel htmlFor="actionDescriptionInput">{t("common.description")}</FormLabel>
 
                       <FormControl>
                         <Input
                           type="text"
                           id="actionDescriptionInput"
                           {...field}
-                          placeholder="User clicked Download Button"
+                          placeholder={t("environments.actions.eg_user_clicked_download_button")}
                           value={field.value ?? ""}
                         />
                       </FormControl>
@@ -251,10 +255,10 @@ export const CreateNewActionTab = ({
           <div className="flex justify-end pt-6">
             <div className="flex space-x-2">
               <Button type="button" variant="minimal" onClick={resetAllStates}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" loading={isSubmitting}>
-                Create action
+                {t("environments.actions.create_action")}
               </Button>
             </div>
           </div>

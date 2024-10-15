@@ -35,7 +35,7 @@ export const EditAlerts = ({
 
             <div className="col-span-3 flex items-center justify-end pr-2">
               <p className="pr-4 text-sm text-slate-600">
-                {t("settings.notifications.auto_subscribe_to_new_surveys")}
+                {t("environments.settings.notifications.auto_subscribe_to_new_surveys")}
               </p>
               <NotificationSwitch
                 surveyOrProductOrOrganizationId={membership.organization.id}
@@ -53,11 +53,13 @@ export const EditAlerts = ({
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
-                      <span>{t("settings.notifications.every_response")}</span>
+                      <span>{t("environments.settings.notifications.every_response")}</span>
                       <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>{t("settings.notifications.every_response_tooltip")}</TooltipContent>
+                  <TooltipContent>
+                    {t("environments.settings.notifications.every_response_tooltip")}
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
@@ -100,7 +102,7 @@ export const EditAlerts = ({
               </div>
             )}
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              {t("settings.notifications.want_to_loop_in_organization_mates")}?
+              {t("environments.settings.notifications.want_to_loop_in_organization_mates")}?
               <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
                 {t("common.invite_them")}
               </Link>

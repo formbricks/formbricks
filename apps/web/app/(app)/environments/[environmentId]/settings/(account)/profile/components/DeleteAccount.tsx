@@ -18,7 +18,7 @@ export const DeleteAccount = ({
   user: TUser;
 }) => {
   const [isModalOpen, setModalOpen] = useState(false);
-  const t = useTranslations("settings.profile");
+  const t = useTranslations("environments.settings.profile");
   if (!session) {
     return null;
   }

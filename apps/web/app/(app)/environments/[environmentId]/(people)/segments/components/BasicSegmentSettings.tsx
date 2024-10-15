@@ -1,6 +1,7 @@
 "use client";
 
 import { FilterIcon, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -32,7 +33,7 @@ export const BasicSegmentSettings = ({
   isFormbricksCloud,
 }: TBasicSegmentSettingsTabProps) => {
   const router = useRouter();
-
+  const t = useTranslations();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegment);
 
@@ -145,11 +146,11 @@ export const BasicSegmentSettings = ({
           <div className="flex flex-col overflow-auto rounded-lg bg-white">
             <div className="flex w-full items-center gap-4">
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Title</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.title")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
                     value={segment.title}
-                    placeholder="Ex. Power Users"
+                    placeholder={t("environments.segments.ex_power_users")}
                     onChange={(e) => {
                       setSegment((prev) => ({
                         ...prev,
@@ -162,11 +163,11 @@ export const BasicSegmentSettings = ({
               </div>
 
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Description</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.description")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
                     value={segment.description ?? ""}
-                    placeholder="Ex. Power Users"
+                    placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                     onChange={(e) => {
                       setSegment((prev) => ({
                         ...prev,
@@ -179,12 +180,14 @@ export const BasicSegmentSettings = ({
               </div>
             </div>
 
-            <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
+            <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
             <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment?.filters?.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
                   <FilterIcon className="h-5 w-5 text-slate-700" />
-                  <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
+                  <h3 className="text-sm font-medium text-slate-700">
+                    {t("environments.segments.add_your_first_filter_to_get_started")}
+                  </h3>
                 </div>
               )}
 
@@ -198,7 +201,7 @@ export const BasicSegmentSettings = ({
 
               <div>
                 <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
-                  Add Filter
+                  {t("common.add_filter")}
                 </Button>
               </div>
 
@@ -214,14 +217,14 @@ export const BasicSegmentSettings = ({
 
             {isFormbricksCloud ? (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="upgrade your plan."
+                message={t("environments.segments.for_advanced_targeting_please")}
+                textForUrl={t("environments.segments.upgrade_your_plan")}
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="request an Enterprise License."
+                message={t("environments.segments.for_advanced_targeting_please")}
+                textForUrl={t("environments.segments.request_an_enterprise_license")}
                 url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
@@ -236,7 +239,7 @@ export const BasicSegmentSettings = ({
                 }}
                 EndIcon={Trash2}
                 endIconClassName="p-0.5">
-                Delete
+                {t("common.delete")}
               </Button>
               <Button
                 type="submit"
@@ -245,7 +248,7 @@ export const BasicSegmentSettings = ({
                   handleUpdateSegment();
                 }}
                 disabled={isSaveDisabled}>
-                Save changes
+                {t("common.save_changes")}
               </Button>
             </div>
 

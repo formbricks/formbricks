@@ -61,7 +61,7 @@ export const Button: React.ForwardRefExoticComponent<
       ref: forwardedRef,
       className: cn(
         // base styles independent what type of button it is
-        "inline-flex items-center appearance-none capitalize",
+        "inline-flex items-center appearance-none",
         // different styles depending on size
         size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-md",
         size === "base" && "px-6 py-3 text-sm font-medium rounded-md",

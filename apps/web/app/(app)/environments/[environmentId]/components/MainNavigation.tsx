@@ -176,13 +176,13 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
-        name: t("common.integrations"),
+        name: t("common.actions"),
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
       },
       {
-        name: "Integrations",
+        name: t("common.integrations"),
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),

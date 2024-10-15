@@ -100,8 +100,8 @@ const Page = async ({ params, searchParams }) => {
         <AccountSettingsNavbar environmentId={params.environmentId} activeId="notifications" />
       </PageHeader>
       <SettingsCard
-        title="settings.notifications.email_alerts_surveys"
-        description="settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses">
+        title="environments.settings.notifications.email_alerts_surveys"
+        description="environments.settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses">
         <EditAlerts
           memberships={memberships}
           user={user}
@@ -112,8 +112,8 @@ const Page = async ({ params, searchParams }) => {
       </SettingsCard>
       <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard
-        title="settings.notifications.weekly_summary_products"
-        description="settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday">
+        title="environments.settings.notifications.weekly_summary_products"
+        description="environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday">
         <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
     </PageContentWrapper>

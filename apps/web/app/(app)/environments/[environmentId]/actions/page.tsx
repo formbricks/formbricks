@@ -28,7 +28,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Actions" cta={renderAddActionButton()} />
+      <PageHeader pageTitle="common.actions" cta={renderAddActionButton()} />
       <ActionClassesTable environmentId={params.environmentId} actionClasses={actionClasses}>
         <ActionTableHeading />
         {actionClasses.map((actionClass) => (

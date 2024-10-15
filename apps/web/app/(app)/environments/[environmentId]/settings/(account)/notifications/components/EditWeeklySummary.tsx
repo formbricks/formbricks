@@ -44,7 +44,7 @@ export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAler
               ))}
             </div>
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              {t("settings.notifications.want_to_loop_in_organization_mates")}?{" "}
+              {t("environments.settings.notifications.want_to_loop_in_organization_mates")}?{" "}
               <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
                 {t("common.invite_them")}
               </Link>

@@ -6,7 +6,7 @@ interface IntegrationsTipProps {
 }
 
 export const IntegrationsTip = ({ environmentId }: IntegrationsTipProps) => {
-  const t = useTranslations("settings.notifications");
+  const t = useTranslations("environments.settings.notifications");
   return (
     <div>
       <div className="flex max-w-4xl items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
