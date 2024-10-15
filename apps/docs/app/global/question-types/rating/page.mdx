@@ -1,0 +1,44 @@
+import { MdxImage } from "@/components/MdxImage";
+import RatingPerview from "./images/rating-preview.webp";
+import Rating from "./images/rating.webp";
+
+export const metadata = {
+  title: "Rating",
+  description: "Rating questions allow respondents to rate questions on a scale",
+};
+
+#### Question Types
+
+# Rating
+
+Rating questions allow respondents to rate questions on a scale. Displays a title and a rating scale consisting of a number of images and labels for the lower and upper ends of the scale.
+
+<MdxImage
+  src={Rating}
+  alt="Overview of Rating question type"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+# Configuration
+
+## Scale
+
+Select the icon to be used for the rating scale. The options include: stars, numbers or smileys. The default is stars.
+
+## Range
+
+Select the range of the rating scale. the options include: 3, 4, 5, 7 or 10. The default is 5.
+
+## Labels
+
+Add labels for the lower and upper bounds of the rating scale. The default is "Not good" and "Very good".
+
+# Preview
+
+<MdxImage
+  src={RatingPerview}
+  alt="Overview of Rating question type"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-lg"
+/>
