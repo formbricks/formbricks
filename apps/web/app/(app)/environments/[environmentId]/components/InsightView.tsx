@@ -3,6 +3,7 @@
 import { UserIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
+import { cn } from "@formbricks/lib/cn";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { InsightSheet } from "@formbricks/ui/components/InsightSheet";
@@ -20,9 +21,10 @@ interface InsightViewProps {
   insights: TInsight[];
   questionId?: string;
   surveyId?: string;
+  isSummaryPage?: boolean;
 }
 
-export const InsightView = ({ insights, questionId, surveyId }: InsightViewProps) => {
+export const InsightView = ({ insights, questionId, surveyId, isSummaryPage = false }: InsightViewProps) => {
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
@@ -62,9 +64,9 @@ export const InsightView = ({ insights, questionId, surveyId }: InsightViewProps
   }, [insights]);
 
   return (
-    <div>
+    <div className={cn({ "mt-2": isSummaryPage })}>
       <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
-        <TabsList>
+        <TabsList className={cn({ "ml-2": isSummaryPage })}>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="complaint">Complaint</TabsTrigger>
           <TabsTrigger value="request">Feature Request</TabsTrigger>
