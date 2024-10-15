@@ -168,7 +168,7 @@ const NavigationGroup = ({
     if (openGroups.includes(title)) {
       setOpenGroups(openGroups.filter((t) => t !== title));
     } else {
-      setOpenGroups([...openGroups, title]);
+      setOpenGroups([title]);
     }
     setActiveGroup(group);
   };
@@ -209,19 +209,19 @@ const NavigationGroup = ({
                   {link.title}
                 </NavLink>
               ) : (
-                <div onClick={() => toggleParentTitle(link.title)}>
+                <div onClick={() => toggleParentTitle(`${group.title}-${link.title}`)}>
                   <NavLink
                     href={!isMobile ? link.children?.[0]?.href || "" : undefined}
                     active={
                       !!(
-                        isParentOpen(link.title) &&
+                        isParentOpen(`${group.title}-${link.title}`) &&
                         link.children &&
                         link.children.some((child) => pathname.startsWith(child.href))
                       )
                     }>
                     <span className="flex w-full justify-between">
                       {link.title}
-                      {isParentOpen(link.title) ? (
+                      {isParentOpen(`${group.title}-${link.title}`) ? (
                         <ChevronUpIcon className="my-1 h-4" />
                       ) : (
                         <ChevronDownIcon className="my-1 h-4" />
@@ -231,7 +231,7 @@ const NavigationGroup = ({
                 </div>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
-                {isActiveGroup && link.children && isParentOpen(link.title) && (
+                {isActiveGroup && link.children && isParentOpen(`${group.title}-${link.title}`) && (
                   <motion.ul
                     role="list"
                     initial={{ opacity: 0 }}
