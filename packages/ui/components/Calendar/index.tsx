@@ -35,7 +35,7 @@ export const Calendar = ({ className, classNames, showOutsideDays = true, ...pro
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
         ),
         day_selected: "bg-black text-white aria-selected:bg-black aria-selected:text-white",
-        day_today: "bg-slate-200 aria-selected:bg-black aria-selected:text-white",
+        day_today: "hover:bg-slate-200 bg-slate-200 aria-selected:bg-black aria-selected:text-white",
         day_outside: "text-slate-500 opacity-50",
         day_disabled: "text-slate-500 opacity-50 cursor-not-allowed",
         day_range_middle: "aria-selected:bg-slate-200",
