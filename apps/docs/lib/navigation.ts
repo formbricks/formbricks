@@ -78,6 +78,11 @@ export const navigation: Array<NavGroup> = [
           { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
         ],
       },
+    ],
+  },
+  {
+    title: "Core Features",
+    links: [
       {
         title: "Question Types",
         children: [
@@ -99,11 +104,6 @@ export const navigation: Array<NavGroup> = [
           { title: "Advanced Setting", href: "/global/question-types/advanced-setting" },
         ],
       },
-    ],
-  },
-  {
-    title: "Core Features",
-    links: [
       {
         title: "Integrations",
         children: [
