@@ -30,6 +30,7 @@
     "mime-types": "2.1.35",
     "nanoid": "5.0.7",
     "next-auth": "4.24.7",
+    "next-safe-action": "7.9.3",
     "posthog-node": "4.1.0",
     "qrcode": "1.5.4",
     "server-only": "0.0.1",
@@ -38,11 +39,11 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
     "@types/jsonwebtoken": "9.0.6",
     "@types/mime-types": "2.1.4",
     "@types/ungap__structured-clone": "1.2.0",
     "dotenv": "16.4.5",
-    "@formbricks/eslint-config": "workspace:*",
     "ts-node": "10.9.2",
     "vitest": "2.0.5",
     "vitest-mock-extended": "2.0.0"
