@@ -161,6 +161,12 @@ const nextConfig = {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
+          {
+            key: "Content-Security-Policy",
+            // 'unsafe-inline' and 'unsafe-eval' are used for the moment as Next.js uses them for hydration, but we should remove them in the future, and use nonce instead
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https:; frame-src 'self' https:; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';",
+          },
         ],
       },
       {
