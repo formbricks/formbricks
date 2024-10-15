@@ -4,6 +4,7 @@ import { InsightView } from "@/app/(app)/environments/[environmentId]/components
 import { getInsightsAction } from "@/app/(ee)/environments/[environmentId]/experience/actions";
 import { InsightLoading } from "@/app/(ee)/environments/[environmentId]/experience/components/InsightLoading";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
@@ -28,6 +29,15 @@ export const InsightsTable = ({
   const insightsFilter: TInsightFilterCriteria = useMemo(
     () => ({
       documentCreatedAt: {
+        min: statsFrom,
+      },
+    }),
+    [statsFrom]
+  );
+
+  const documentsFilter: TDocumentFilterCriteria = useMemo(
+    () => ({
+      createdAt: {
         min: statsFrom,
       },
     }),
@@ -85,7 +95,7 @@ export const InsightsTable = ({
         <CardDescription>All the insights generated from responses across all your surveys</CardDescription>
       </CardHeader>
       <CardContent>
-        <InsightView insights={insights} />
+        <InsightView insights={insights} documentsFilter={documentsFilter} />
         {isFetching && <InsightLoading />}
         {hasMore && (
           <div className="flex justify-center py-5">

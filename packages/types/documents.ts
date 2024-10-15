@@ -27,3 +27,14 @@ export const ZDocumentCreateInput = z.object({
 });
 
 export type TDocumentCreateInput = z.infer<typeof ZDocumentCreateInput>;
+
+export const ZDocumentFilterCriteria = z.object({
+  createdAt: z
+    .object({
+      min: z.date().optional(),
+      max: z.date().optional(),
+    })
+    .optional(),
+});
+
+export type TDocumentFilterCriteria = z.infer<typeof ZDocumentFilterCriteria>;

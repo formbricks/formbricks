@@ -8,7 +8,9 @@ import { ZId } from "@formbricks/types/common";
 import {
   TDocument,
   TDocumentCreateInput,
+  TDocumentFilterCriteria,
   ZDocumentCreateInput,
+  ZDocumentFilterCriteria,
   ZDocumentSentiment,
 } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -27,10 +29,20 @@ export type TPrismaDocument = Omit<TDocument, "vector"> & {
 };
 
 export const getDocumentsByInsightId = reactCache(
-  (insightId: string, limit?: number, offset?: number): Promise<TDocument[]> =>
+  (
+    insightId: string,
+    limit?: number,
+    offset?: number,
+    filterCriteria?: TDocumentFilterCriteria
+  ): Promise<TDocument[]> =>
     cache(
       async () => {
-        validateInputs([insightId, ZId]);
+        validateInputs(
+          [insightId, ZId],
+          [limit, z.number().optional()],
+          [offset, z.number().optional()],
+          [filterCriteria, ZDocumentFilterCriteria.optional()]
+        );
 
         limit = limit ?? DOCUMENTS_PER_PAGE;
         try {
@@ -40,6 +52,10 @@ export const getDocumentsByInsightId = reactCache(
                 some: {
                   insightId,
                 },
+              },
+              createdAt: {
+                gte: filterCriteria?.createdAt?.min,
+                lte: filterCriteria?.createdAt?.max,
               },
             },
             orderBy: [

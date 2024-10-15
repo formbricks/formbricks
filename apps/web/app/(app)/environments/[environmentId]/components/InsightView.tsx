@@ -4,6 +4,7 @@ import { UserIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
+import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { InsightSheet } from "@formbricks/ui/components/InsightSheet";
@@ -22,9 +23,16 @@ interface InsightViewProps {
   questionId?: string;
   surveyId?: string;
   isSummaryPage?: boolean;
+  documentsFilter?: TDocumentFilterCriteria;
 }
 
-export const InsightView = ({ insights, questionId, surveyId, isSummaryPage = false }: InsightViewProps) => {
+export const InsightView = ({
+  insights,
+  questionId,
+  surveyId,
+  isSummaryPage = false,
+  documentsFilter,
+}: InsightViewProps) => {
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
@@ -133,6 +141,7 @@ export const InsightView = ({ insights, questionId, surveyId, isSummaryPage = fa
         surveyId={surveyId}
         questionId={questionId}
         handleFeedback={handleFeedback}
+        documentsFilter={documentsFilter}
       />
     </div>
   );

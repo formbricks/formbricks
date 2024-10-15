@@ -9,6 +9,7 @@ import {
 } from "@formbricks/lib/document/service";
 import { getOrganizationIdFromInsightId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
+import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
@@ -34,6 +35,7 @@ export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActi
 
 const ZGetDocumentsByInsightIdAction = z.object({
   insightId: ZId,
+  filterCriteria: ZDocumentFilterCriteria.optional(),
 });
 
 export const getDocumentsByInsightIdAction = authenticatedActionClient
@@ -45,5 +47,10 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
       rules: ["response", "read"],
     });
 
-    return await getDocumentsByInsightId(parsedInput.insightId);
+    return await getDocumentsByInsightId(
+      parsedInput.insightId,
+      undefined,
+      undefined,
+      parsedInput.filterCriteria
+    );
   });

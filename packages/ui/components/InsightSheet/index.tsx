@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
-import { TDocument } from "@formbricks/types/documents";
+import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "../Badge";
 import { Card, CardContent, CardFooter } from "../Card";
@@ -19,6 +19,7 @@ interface InsightSheetProps {
   surveyId?: string;
   questionId?: string;
   handleFeedback: (feedback: "positive" | "negative") => void;
+  documentsFilter?: TDocumentFilterCriteria;
 }
 
 export const InsightSheet = ({
@@ -28,6 +29,7 @@ export const InsightSheet = ({
   surveyId,
   questionId,
   handleFeedback,
+  documentsFilter,
 }: InsightSheetProps) => {
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
@@ -51,6 +53,7 @@ export const InsightSheet = ({
       } else {
         documentsResponse = await getDocumentsByInsightIdAction({
           insightId: insight.id,
+          filterCriteria: documentsFilter,
         });
       }
 
