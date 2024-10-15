@@ -96,6 +96,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Schedule a Meeting", href: "/global/question-types/schedule" },
           { title: "Address", href: "/global/question-types/address" },
           { title: "Contact Info", href: "/global/question-types/contact" },
+          { title: "Advanced Setting", href: "/global/question-types/advanced-setting" },
         ],
       },
     ],
