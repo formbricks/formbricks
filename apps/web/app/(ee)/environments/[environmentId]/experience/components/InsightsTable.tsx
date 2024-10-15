@@ -14,6 +14,7 @@ interface InsightsTableProps {
   insightsPerPage: number;
   productName: string;
   statsFrom?: Date;
+  documentsPerPage?: number;
 }
 
 export const InsightsTable = ({
@@ -21,6 +22,7 @@ export const InsightsTable = ({
   environmentId,
   productName,
   insightsPerPage: insightsLimit,
+  documentsPerPage,
 }: InsightsTableProps) => {
   const [insights, setInsights] = useState<TInsight[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -95,7 +97,12 @@ export const InsightsTable = ({
         <CardDescription>All the insights generated from responses across all your surveys</CardDescription>
       </CardHeader>
       <CardContent>
-        <InsightView insights={insights} documentsFilter={documentsFilter} isFetching={isFetching} />
+        <InsightView
+          insights={insights}
+          documentsFilter={documentsFilter}
+          isFetching={isFetching}
+          documentsPerPage={documentsPerPage}
+        />
         {isFetching && <InsightLoading />}
         {hasMore && (
           <div className="flex justify-center py-5">

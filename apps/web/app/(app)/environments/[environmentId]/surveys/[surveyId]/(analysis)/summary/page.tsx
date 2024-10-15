@@ -8,7 +8,7 @@ import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { DOCUMENTS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -101,6 +101,7 @@ const Page = async ({ params }) => {
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
+        documentsPerPage={DOCUMENTS_PER_PAGE}
       />
     </PageContentWrapper>
   );

@@ -17,9 +17,16 @@ interface ExperiencePageProps {
   environment: TEnvironment;
   product: TProduct;
   insightsPerPage: number;
+  documentsPerPage: number;
 }
 
-export const ExperiencePage = ({ environment, product, user, insightsPerPage }: ExperiencePageProps) => {
+export const ExperiencePage = ({
+  environment,
+  product,
+  user,
+  insightsPerPage,
+  documentsPerPage,
+}: ExperiencePageProps) => {
   const [statsPeriod, setStatsPeriod] = useState<TStatsPeriod>("week");
   const statsFrom = getDateFromTimeRange(statsPeriod);
   return (
@@ -51,6 +58,7 @@ export const ExperiencePage = ({ environment, product, user, insightsPerPage }: 
         productName={product.name}
         environmentId={environment.id}
         insightsPerPage={insightsPerPage}
+        documentsPerPage={documentsPerPage}
       />
       <SurveyTemplates
         environment={environment}

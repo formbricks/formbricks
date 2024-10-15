@@ -1,12 +1,13 @@
 "use client";
 
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
+import { Button } from "@formbricks/ui/components/Button";
 import { Badge } from "../Badge";
 import { Card, CardContent, CardFooter } from "../Card";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "../Sheet";
@@ -20,6 +21,7 @@ interface InsightSheetProps {
   questionId?: string;
   handleFeedback: (feedback: "positive" | "negative") => void;
   documentsFilter?: TDocumentFilterCriteria;
+  documentsPerPage?: number;
 }
 
 export const InsightSheet = ({
@@ -30,50 +32,76 @@ export const InsightSheet = ({
   questionId,
   handleFeedback,
   documentsFilter,
+  documentsPerPage = 10,
 }: InsightSheetProps) => {
   const [documents, setDocuments] = useState<TDocument[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchDocuments = useCallback(async () => {
+    if (!insight) return;
+
+    let documentsResponse;
+    if (questionId && surveyId) {
+      documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
+        insightId: insight.id,
+        surveyId,
+        questionId,
+        limit: documentsPerPage,
+        offset: (page - 1) * documentsPerPage,
+      });
+    } else {
+      documentsResponse = await getDocumentsByInsightIdAction({
+        insightId: insight.id,
+        filterCriteria: documentsFilter,
+        limit: documentsPerPage,
+        offset: (page - 1) * documentsPerPage,
+      });
+    }
+
+    if (!documentsResponse?.data) {
+      const errorMessage = getFormattedErrorMessage(documentsResponse);
+      console.error(errorMessage);
+      return;
+    }
+
+    const fetchedDocuments = documentsResponse.data;
+
+    if (fetchedDocuments.length < documentsPerPage) {
+      setHasMore(false); // No more documents to fetch
+    }
+
+    setDocuments((prevDocuments) => [...prevDocuments, ...fetchedDocuments]);
+  }, [insight, page, surveyId, questionId, documentsFilter]);
 
   useEffect(() => {
     if (insight) {
       fetchDocuments();
     }
+  }, [fetchDocuments]);
 
-    async function fetchDocuments() {
-      if (!insight) {
-        throw Error("Insight is required to fetch documents");
-      }
-
-      let documentsResponse;
-      if (questionId && surveyId) {
-        documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
-          insightId: insight.id,
-          surveyId,
-          questionId,
-        });
-      } else {
-        documentsResponse = await getDocumentsByInsightIdAction({
-          insightId: insight.id,
-          filterCriteria: documentsFilter,
-        });
-      }
-
-      if (!documentsResponse?.data) {
-        const errorMessage = getFormattedErrorMessage(documentsResponse);
-        console.error(errorMessage);
-        return;
-      }
-      setDocuments(documentsResponse.data);
+  useEffect(() => {
+    if (isOpen) {
+      setDocuments([]);
+      setPage(1);
+      setHasMore(true);
     }
-  }, [insight]);
-
-  if (!insight) {
-    return null;
-  }
+  }, [insight?.id]);
 
   const handleFeedbackClick = (feedback: "positive" | "negative") => {
     setIsOpen(false);
     handleFeedback(feedback);
   };
+
+  const loadMoreDocuments = () => {
+    if (hasMore) {
+      setPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  if (!insight) {
+    return null;
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
@@ -105,7 +133,7 @@ export const InsightSheet = ({
 
         <div className="flex flex-1 flex-col space-y-2 overflow-auto pt-4">
           {documents.map((document) => (
-            <Card>
+            <Card key={document.id}>
               <CardContent className="p-4 text-sm">
                 <Markdown className="whitespace-pre-wrap">{document.text}</Markdown>
               </CardContent>
@@ -125,6 +153,14 @@ export const InsightSheet = ({
             </Card>
           ))}
         </div>
+
+        {hasMore && (
+          <div className="flex justify-center py-5">
+            <Button onClick={loadMoreDocuments} variant="secondary" size="sm">
+              Load more
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );

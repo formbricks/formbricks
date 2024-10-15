@@ -15,6 +15,8 @@ const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
   surveyId: ZId,
   questionId: ZId,
+  limit: z.number().optional(),
+  offset: z.number().optional(),
 });
 
 export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActionClient
@@ -29,12 +31,16 @@ export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActi
     return await getDocumentsByInsightIdSurveyIdQuestionId(
       parsedInput.insightId,
       parsedInput.surveyId,
-      parsedInput.questionId
+      parsedInput.questionId,
+      parsedInput.limit,
+      parsedInput.offset
     );
   });
 
 const ZGetDocumentsByInsightIdAction = z.object({
   insightId: ZId,
+  limit: z.number().optional(),
+  offset: z.number().optional(),
   filterCriteria: ZDocumentFilterCriteria.optional(),
 });
 
@@ -49,8 +55,8 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
 
     return await getDocumentsByInsightId(
       parsedInput.insightId,
-      undefined,
-      undefined,
+      parsedInput.limit,
+      parsedInput.offset,
       parsedInput.filterCriteria
     );
   });

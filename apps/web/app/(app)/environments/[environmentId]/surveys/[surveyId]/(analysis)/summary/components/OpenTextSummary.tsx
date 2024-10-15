@@ -24,6 +24,7 @@ interface OpenTextSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const OpenTextSummary = ({
@@ -32,6 +33,7 @@ export const OpenTextSummary = ({
   survey,
   attributeClasses,
   isAIEnabled,
+  documentsPerPage,
 }: OpenTextSummaryProps) => {
   const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
@@ -82,6 +84,7 @@ export const OpenTextSummary = ({
             questionId={questionSummary.question.id}
             surveyId={survey.id}
             isSummaryPage={true}
+            documentsPerPage={documentsPerPage}
           />
         ) : activeTab === "responses" ? (
           <>

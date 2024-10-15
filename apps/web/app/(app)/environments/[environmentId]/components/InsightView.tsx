@@ -25,6 +25,7 @@ interface InsightViewProps {
   isSummaryPage?: boolean;
   documentsFilter?: TDocumentFilterCriteria;
   isFetching?: boolean;
+  documentsPerPage?: number;
 }
 
 export const InsightView = ({
@@ -34,6 +35,7 @@ export const InsightView = ({
   isSummaryPage = false,
   documentsFilter,
   isFetching,
+  documentsPerPage,
 }: InsightViewProps) => {
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
@@ -147,6 +149,7 @@ export const InsightView = ({
         questionId={questionId}
         handleFeedback={handleFeedback}
         documentsFilter={documentsFilter}
+        documentsPerPage={documentsPerPage}
       />
     </div>
   );

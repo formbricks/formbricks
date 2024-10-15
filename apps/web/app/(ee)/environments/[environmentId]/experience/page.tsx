@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { INSIGHTS_PER_PAGE, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { DOCUMENTS_PER_PAGE, INSIGHTS_PER_PAGE, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -54,6 +54,7 @@ const Page = async ({ params }) => {
         insightsPerPage={INSIGHTS_PER_PAGE}
         product={product}
         user={user}
+        documentsPerPage={DOCUMENTS_PER_PAGE}
       />
     </PageContentWrapper>
   );
