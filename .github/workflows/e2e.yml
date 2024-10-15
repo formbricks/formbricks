@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: postgres:latest
+        image: pgvector/pgvector:pg15
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
