@@ -2,12 +2,30 @@ import { MdxImage } from "@/components/MdxImage";
 import AddressPreview from "./images/address-preview.webp";
 import Address from "./images/address.webp";
 
+#### Question Type
+
+# Address
+
+The Address question type allows respondents to input their address details, including multiple fields such as address lines, city, state, and country. You can configure the form by adding a title, an optional description, and toggling specific fields to be required.
+
 <MdxImage
   src={Address}
   alt="Overview of Free Text question type"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
+
+1. **Title:** Provide a title to describe the address information you are requesting (e.g., "Enter Your Shipping Address").
+2. **Description:** Optionally, add a description to guide the user (e.g., "Please fill in your complete address for delivery purposes.").
+3. **Toggle Fields:** You can choose to show and require any or all of the following fields in the form:
+   - Address Line 1
+   - Address Line 2
+   - City
+   - State
+   - Zip Code
+   - Country
+
+# Preview
 
 <MdxImage
   src={AddressPreview}

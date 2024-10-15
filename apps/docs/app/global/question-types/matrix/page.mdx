@@ -2,12 +2,25 @@ import { MdxImage } from "@/components/MdxImage";
 import MatrixPreview from "./images/matrix-preview.webp";
 import Matrix from "./images/matrix.webp";
 
+#### Question Type
+
+# Matrix
+
+Matrix questions allow respondents to select a value for each option presented in rows. The values range from 0 to a user-defined maximum (e.g., 0 to X). The selection is made using radio buttons, and users can choose any value within the defined range, including 0.
+
 <MdxImage
   src={Matrix}
   alt="Overview of Free Text question type"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
+
+# Configuration
+
+## Rows and Columns
+
+- **Rows:** Define the options shown on the left side of the matrix. These represent the items for which users will select a value.
+- **Columns:** Represent the range of values from 0 to X (right side of the screen). Users can choose any value, including 0, using radio buttons.
 
 <MdxImage
   src={MatrixPreview}

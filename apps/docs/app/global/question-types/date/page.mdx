@@ -3,6 +3,12 @@ import DatePreviewSelected from "./images/date-preview-selected.webp";
 import DatePreview from "./images/date-preview.webp";
 import Date from "./images/date.webp";
 
+#### Question Type
+
+# Date
+
+The Date question type allows respondents to provide a date, such as when they are available or when an event is scheduled. It features a title to guide the respondent on what date to enter, and an optional description to provide further details or context.
+
 <MdxImage
   src={Date}
   alt="Overview of Free Text question type"
@@ -10,12 +16,27 @@ import Date from "./images/date.webp";
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
+# Configuration
+
+## Options
+
+1. **Title:** Add a clear title to inform the respondent what date you are asking for, such as "Select Your Availability."
+2. **Description:** Provide an optional description with further instructions, such as "Please select a date when you will be available for the meeting."
+3. **Date Format:** Choose from multiple date formats for the input:
+   - MM-DD-YYYY
+   - DD-MM-YYYY
+   - YYYY-MM-DD
+
+# Preview
+
 <MdxImage
   src={DatePreview}
   alt="Overview of Free Text question type"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-lg"
 />
+
+# Preview When Date Is Selected
 
 <MdxImage
   src={DatePreviewSelected}

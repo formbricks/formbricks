@@ -2,12 +2,28 @@ import { MdxImage } from "@/components/MdxImage";
 import ConsentPreview from "./images/consent-preview.webp";
 import Consent from "./images/consent.webp";
 
+#### Question Type
+
+# Consent
+
+The Consent card is used to obtain user agreement regarding a product, service, or policy. It features a bold statement or question as the title, followed by a brief description. At the end of the card, users can confirm their consent by checking a checkbox to indicate their agreement.
+
 <MdxImage
   src={Consent}
   alt="Overview of Free Text question type"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
+
+# Configuration
+
+## Title and Description
+
+- **Title:** A bold statement or question asking for user consent, displayed prominently at the top of the card.
+- **Description:** A short explanation or additional context for the consent request, displayed below the title. The text can be formatted, and hyperlinks are allowed within the description.
+- **Checkbox:** At the bottom of the card, users confirm their agreement by checking the box, signaling their consent to the question or statement above.
+
+# Preview
 
 <MdxImage
   src={ConsentPreview}
