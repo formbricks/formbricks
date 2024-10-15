@@ -5,7 +5,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
-import { getContacts } from "./lib/contacts";
+import { getContactAttributeKeys, getContacts } from "./lib/contacts";
 
 const ZGetContactsAction = z.object({
   environmentId: ZId,
@@ -23,6 +23,18 @@ export const getContactsAction = authenticatedActionClient
     });
 
     return getContacts(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
+  });
+
+export const getContactAttributeKeysAction = authenticatedActionClient
+  .schema(z.object({ environmentId: ZId }))
+  .action(async ({ ctx, parsedInput: { environmentId } }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(environmentId),
+      rules: ["environment", "read"],
+    });
+
+    return getContactAttributeKeys(environmentId);
   });
 
 // const ZGetPersonAttributesAction = z.object({

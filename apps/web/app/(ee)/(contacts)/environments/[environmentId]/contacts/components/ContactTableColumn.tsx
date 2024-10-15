@@ -1,16 +1,17 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { cn } from "@formbricks/lib/cn";
 import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
 import { HighlightedText } from "@formbricks/ui/components/HighlightedText";
 import { TContactTableData } from "../types/contact";
 
 export const generateContactTableColumns = (
   isExpanded: boolean,
-  searchValue: string
+  searchValue: string,
+  data: TContactTableData[]
 ): ColumnDef<TContactTableData>[] => {
   const userColumn: ColumnDef<TContactTableData> = {
+    id: "user",
     accessorKey: "user",
     header: "User",
     cell: ({ row }) => {
@@ -20,6 +21,7 @@ export const generateContactTableColumns = (
   };
 
   const userIdColumn: ColumnDef<TContactTableData> = {
+    id: "userId",
     accessorKey: "userId",
     header: "User ID",
     cell: ({ row }) => {
@@ -29,10 +31,11 @@ export const generateContactTableColumns = (
   };
 
   const emailColumn: ColumnDef<TContactTableData> = {
+    id: "email",
     accessorKey: "email",
     header: "Email",
     cell: ({ row }) => {
-      const email = row.original.attributes.email;
+      const email = row.original.email;
       if (email) {
         return <HighlightedText value={email} searchValue={searchValue} />;
       }
@@ -40,6 +43,7 @@ export const generateContactTableColumns = (
   };
 
   const firstNameColumn: ColumnDef<TContactTableData> = {
+    id: "firstName",
     accessorKey: "firstName",
     header: "First Name",
     cell: ({ row }) => {
@@ -49,6 +53,7 @@ export const generateContactTableColumns = (
   };
 
   const lastNameColumn: ColumnDef<TContactTableData> = {
+    id: "lastName",
     accessorKey: "lastName",
     header: "Last Name",
     cell: ({ row }) => {
@@ -57,27 +62,19 @@ export const generateContactTableColumns = (
     },
   };
 
-  const attributesColumn: ColumnDef<TContactTableData> = {
-    accessorKey: "attributes",
-    header: "Attributes",
-    cell: ({ row }) => {
-      const attributes = row.original.attributes;
-
-      // Handle cases where attributes are missing or empty
-      if (!attributes || Object.keys(attributes).length === 0) return null;
-
-      return (
-        <div className={cn(!isExpanded && "flex space-x-2")}>
-          {Object.entries(attributes).map(([key, value]) => (
-            <div key={key} className="flex space-x-2">
-              <div className="font-semibold">{key}</div> :{" "}
-              <HighlightedText value={value} searchValue={searchValue} />
-            </div>
-          ))}
-        </div>
-      );
-    },
-  };
+  const restCols = data[0]?.attributes
+    ? data[0].attributes.map((attr) => {
+        return {
+          id: attr.key,
+          accessorKey: attr.key,
+          header: attr.name ?? attr.key,
+          cell: ({ row }) => {
+            const attribute = row.original.attributes.find((a) => a.key === attr.key);
+            return <HighlightedText value={attribute?.value} searchValue={searchValue} />;
+          },
+        };
+      })
+    : [];
 
   return [
     getSelectionColumn(),
@@ -86,6 +83,6 @@ export const generateContactTableColumns = (
     emailColumn,
     firstNameColumn,
     lastNameColumn,
-    attributesColumn,
+    ...restCols,
   ];
 };

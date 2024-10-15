@@ -1,11 +1,12 @@
 "use client";
 
 import { debounce } from "lodash";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { getContactsAction } from "../actions";
-import { TContactWithAttributes } from "../types/contact";
+import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
+import { getContactAttributeKeysAction, getContactsAction } from "../actions";
+import { TContactTableData, TContactWithAttributes } from "../types/contact";
 import { ContactTable } from "./ContactTable";
 
 interface ContactDataViewProps {
@@ -15,85 +16,132 @@ interface ContactDataViewProps {
 
 export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewProps) => {
   const [contacts, setContacts] = useState<TContactWithAttributes[]>([]);
-  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
+  const [isContactsLoaded, setIsContactsLoaded] = useState<boolean>(false);
+  const [isAttributesLoaded, setIsAttributesLoaded] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
+  const [environmentAttributes, setEnvironmentAttributes] = useState([]);
 
+  // Fetch environment attributes
   useEffect(() => {
-    const fetchData = async () => {
-      setIsDataLoaded(false);
+    const fetchAttributes = async () => {
+      setIsAttributesLoaded(false);
       try {
+        console.log("Fetching attributes for environment", environment.id);
+        const environmentAttributesResponse = await getContactAttributeKeysAction({
+          environmentId: environment.id,
+        });
+        const attrs = environmentAttributesResponse?.data || [];
+
+        const restAttributes = attrs.filter(
+          (attr) => !["userId", "email", "firstName", "lastName"].includes(attr.key)
+        );
+
+        setEnvironmentAttributes(restAttributes);
+      } catch (err) {
+        console.error("Error fetching environment attributes:", err);
+        setEnvironmentAttributes([]);
+      } finally {
+        setIsAttributesLoaded(true);
+      }
+    };
+
+    fetchAttributes();
+  }, [environment.id]);
+
+  // Fetch contacts
+  useEffect(() => {
+    const fetchContacts = async () => {
+      setIsContactsLoaded(false);
+      try {
+        console.log("Fetching contacts for environment", environment.id);
         setHasMore(true);
-        const contactsActionData = await getContactsAction({
+        const contactsResponse = await getContactsAction({
           environmentId: environment.id,
           offset: 0,
           searchValue,
         });
-        if (contactsActionData?.data) {
-          setContacts(contactsActionData.data);
-        }
-        if (contactsActionData?.data && contactsActionData.data.length < itemsPerPage) {
+        const contactsData = contactsResponse?.data || [];
+        setContacts(contactsData);
+
+        if (contactsData.length < itemsPerPage) {
           setHasMore(false);
         }
       } catch (error) {
-        console.error("Error fetching people data:", error);
+        console.error("Error fetching contacts:", error);
+        setContacts([]);
+        setHasMore(false);
       } finally {
-        setIsDataLoaded(true);
+        setIsContactsLoaded(true);
       }
     };
 
-    const debouncedFetchData = debounce(fetchData, 300);
-    debouncedFetchData();
+    const debouncedFetchContacts = debounce(fetchContacts, 300);
+    debouncedFetchContacts();
 
     return () => {
-      debouncedFetchData.cancel();
+      debouncedFetchContacts.cancel();
     };
-  }, [searchValue]);
+  }, [searchValue, environment.id, itemsPerPage]);
 
+  // Fetch next page of contacts
   const fetchNextPage = async () => {
     if (hasMore && !loadingNextPage) {
       setLoadingNextPage(true);
       try {
-        const getPersonsActionData = await getContactsAction({
+        const contactsResponse = await getContactsAction({
           environmentId: environment.id,
           offset: contacts.length,
           searchValue,
         });
-        const personData = getPersonsActionData?.data;
-        if (personData) {
-          setContacts((prevPersonsData) => [...prevPersonsData, ...personData]);
-          if (personData.length === 0 || personData.length < itemsPerPage) {
-            setHasMore(false);
-          }
+        const contactsData = contactsResponse?.data || [];
+
+        setContacts((prevContacts) => [...prevContacts, ...contactsData]);
+
+        if (contactsData.length < itemsPerPage) {
+          setHasMore(false);
         }
       } catch (error) {
-        console.error("Error fetching next page of people data:", error);
+        console.error("Error fetching next page of contacts:", error);
       } finally {
         setLoadingNextPage(false);
       }
     }
   };
 
+  // Delete selected contacts
   const deletePersons = (personIds: string[]) => {
-    setContacts((prevPersons) => prevPersons.filter((p) => !personIds.includes(p.id)));
+    setContacts((prevContacts) => prevContacts.filter((p) => !personIds.includes(p.id)));
   };
 
-  const contactsTableData = contacts.map((person) => ({
-    id: person.id,
-    userId: person.attributes.userId,
-    email: person.attributes.email,
-    firstName: person.attributes.firstName,
-    lastName: person.attributes.lastName,
-    attributes: person.attributes,
-  }));
+  // Prepare data for the ContactTable component
+  const contactsTableData: TContactTableData[] = useMemo(() => {
+    return contacts.map((person) => ({
+      id: person.id,
+      userId: person.attributes.userId ?? "",
+      email: person.attributes.email ?? "",
+      firstName: person.attributes.firstName ?? "",
+      lastName: person.attributes.lastName ?? "",
+      attributes: (environmentAttributes ?? []).map((attr) => ({
+        key: attr.key,
+        name: attr.name,
+        value: person.attributes[attr.key] ?? "",
+      })),
+    }));
+  }, [contacts, environmentAttributes]);
+
+  // Show a loading indicator until both contacts and attributes are loaded
+  if (!isContactsLoaded || !isAttributesLoaded) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <ContactTable
       data={contactsTableData}
       fetchNextPage={fetchNextPage}
       hasMore={hasMore}
-      isDataLoaded={isDataLoaded}
+      isDataLoaded={isContactsLoaded && isAttributesLoaded}
       deletePersons={deletePersons}
       environmentId={environment.id}
       searchValue={searchValue}

@@ -85,8 +85,11 @@ DROP INDEX "ContactAttributeKey_name_environmentId_key";
 -- Step 11: Create a new unique index on 'key' and 'environmentId'
 CREATE UNIQUE INDEX "ContactAttributeKey_key_environmentId_key" ON "ContactAttributeKey"("key", "environmentId");
 
-DROP INDEX "Contact_environmentId_userId_key";
-ALTER TABLE "Contact" DROP COLUMN "userId";
+-- Testing this rn
+-- DROP INDEX "Contact_environmentId_userId_key";
+-- ALTER TABLE "Contact" DROP COLUMN "userId";
+
+ALTER TABLE "Contact" ALTER COLUMN "userId" DROP NOT NULL;
 
 -- Step 12: Remove the default value from 'key' column
 ALTER TABLE "ContactAttributeKey" ALTER COLUMN "key" DROP DEFAULT;

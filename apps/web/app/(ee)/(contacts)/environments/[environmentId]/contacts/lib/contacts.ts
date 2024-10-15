@@ -22,7 +22,6 @@ export const selectContact = {
         select: {
           key: true,
           name: true,
-          description: true,
         },
       },
     },
@@ -37,7 +36,6 @@ type TransformPersonInput = {
     attributeKey: {
       key: string;
       name: string | null;
-      description: string | null;
     };
   }[];
   createdAt: Date;
@@ -112,4 +110,16 @@ export const getContacts = reactCache(
         tags: [contactCache.tag.byEnvironmentId(environmentId)],
       }
     )()
+);
+
+export const getContactAttributeKeys = reactCache((environmentId: string) =>
+  cache(
+    async () => {
+      return await prisma.contactAttributeKey.findMany({
+        where: { environmentId },
+      });
+    },
+    [],
+    {}
+  )()
 );

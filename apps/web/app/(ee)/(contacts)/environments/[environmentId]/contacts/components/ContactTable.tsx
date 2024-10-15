@@ -57,8 +57,8 @@ export const ContactTable = ({
 
   // Generate columns
   const columns = useMemo(
-    () => generateContactTableColumns(isExpanded ?? false, searchValue),
-    [isExpanded, searchValue]
+    () => generateContactTableColumns(isExpanded ?? false, searchValue, data),
+    [isExpanded, searchValue, data]
   );
 
   // Load saved settings from localStorage

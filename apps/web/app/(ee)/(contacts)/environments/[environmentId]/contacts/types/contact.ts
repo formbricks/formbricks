@@ -8,13 +8,19 @@ export const ZContact = z.object({
   environmentId: z.string().cuid2(),
 });
 
+const ZContactTableAttributeData = z.object({
+  key: z.string(),
+  name: z.string().optional(),
+  value: z.string().optional(),
+});
+
 export const ZContactTableData = z.object({
   id: z.string(),
   userId: z.string(),
   email: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-  attributes: ZAttributes,
+  attributes: z.array(ZContactTableAttributeData),
 });
 
 export const ZPersonWithAttributes = ZContact.extend({

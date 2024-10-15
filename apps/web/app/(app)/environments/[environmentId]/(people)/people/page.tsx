@@ -1,4 +1,4 @@
-import { PersonDataView } from "@/app/(app)/environments/[environmentId]/(contact)/contacts/components/PersonDataView";
+import { PersonDataView } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonDataView";
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { CircleHelpIcon } from "lucide-react";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
