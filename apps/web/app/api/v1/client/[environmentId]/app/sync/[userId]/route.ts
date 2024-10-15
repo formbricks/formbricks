@@ -65,10 +65,6 @@ export const GET = async (
       throw new Error("Product not found");
     }
 
-    if (product.config.channel && product.config.channel !== "app") {
-      return responses.forbiddenResponse("Product channel is not app", true);
-    }
-
     if (!environment.appSetupCompleted) {
       await Promise.all([
         updateEnvironment(environment.id, { appSetupCompleted: true }),

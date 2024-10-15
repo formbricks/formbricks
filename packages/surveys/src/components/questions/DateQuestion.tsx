@@ -92,7 +92,7 @@ export const DateQuestion = ({
   const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-
+  const isCurrent = question.id === currentQuestionId;
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
   const [hideInvalid, setHideInvalid] = useState(!selectedDate);
@@ -162,7 +162,7 @@ export const DateQuestion = ({
               {!datePickerOpen && (
                 <div
                   onClick={() => setDatePickerOpen(true)}
-                  tabIndex={0}
+                  tabIndex={isCurrent ? 0 : -1}
                   onKeyDown={(e) => {
                     if (e.key === " ") setDatePickerOpen(true);
                   }}
@@ -253,25 +253,23 @@ export const DateQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        <div>
-          {!isFirstQuestion && (
-            <BackButton
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onBack();
-              }}
-            />
-          )}
-        </div>
-
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
         <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
           isLastQuestion={isLastQuestion}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          tabIndex={0}
         />
+        {!isFirstQuestion && (
+          <BackButton
+            tabIndex={isCurrent ? 0 : -1}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onBack();
+            }}
+          />
+        )}
       </div>
     </form>
   );

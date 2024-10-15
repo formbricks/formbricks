@@ -216,6 +216,15 @@ export const PreviewSurvey = ({
     }
   }
 
+  const handlePreviewModeChange = (mode: "mobile" | "desktop") => {
+    setPreviewMode(mode);
+    requestAnimationFrame(() => {
+      if (questionId) {
+        setQuestionId(questionId);
+      }
+    });
+  };
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center py-4" id="survey-preview">
       <motion.div
@@ -396,12 +405,12 @@ export const PreviewSurvey = ({
         <TabOption
           active={previewMode === "mobile"}
           icon={<SmartphoneIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
-          onClick={() => setPreviewMode("mobile")}
+          onClick={() => handlePreviewModeChange("mobile")}
         />
         <TabOption
           active={previewMode === "desktop"}
           icon={<MonitorIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
-          onClick={() => setPreviewMode("desktop")}
+          onClick={() => handlePreviewModeChange("desktop")}
         />
       </div>
     </div>
