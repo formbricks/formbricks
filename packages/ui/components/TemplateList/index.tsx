@@ -123,6 +123,7 @@ export const TemplateList = ({
           (template: TTemplate) => {
             return (
               <Template
+                key={template.name}
                 template={template}
                 activeTemplate={activeTemplate}
                 setActiveTemplate={setActiveTemplate}

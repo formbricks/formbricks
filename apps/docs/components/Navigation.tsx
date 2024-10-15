@@ -164,19 +164,12 @@ const NavigationGroup = ({
     if (openGroups.includes(title)) {
       setOpenGroups(openGroups.filter((t) => t !== title));
     } else {
-      setOpenGroups([...openGroups, title]);
+      setOpenGroups([title]);
     }
     setActiveGroup(group);
   };
 
   const isParentOpen = (title: string) => openGroups.includes(title);
-
-  const sortedLinks = group.links.map((link) => {
-    if (link.children) {
-      link.children.sort((a, b) => a.title.localeCompare(b.title));
-    }
-    return link;
-  });
 
   return (
     <li className={clsx("relative mt-6", className)}>
@@ -192,8 +185,8 @@ const NavigationGroup = ({
           {isActiveGroup && <ActivePageMarker group={group} pathname={pathname || "/docs"} />}
         </AnimatePresence>
         <ul role="list" className="border-l border-transparent">
-          {sortedLinks.map((link) => (
-            <motion.li key={link.title} layout="position" className="relative">
+          {group.links.map((link) => (
+            <motion.li key={`${group.title}-${link.title}`} layout="position" className="relative">
               {link.href ? (
                 <NavLink
                   href={isMobile && link.children ? "" : link.href}
@@ -201,19 +194,19 @@ const NavigationGroup = ({
                   {link.title}
                 </NavLink>
               ) : (
-                <div onClick={() => toggleParentTitle(link.title)}>
+                <div onClick={() => toggleParentTitle(`${group.title}-${link.title}`)}>
                   <NavLink
                     href={!isMobile ? link.children?.[0]?.href || "" : undefined}
                     active={
                       !!(
-                        isParentOpen(link.title) &&
+                        isParentOpen(`${group.title}-${link.title}`) &&
                         link.children &&
                         link.children.some((child) => pathname.startsWith(child.href))
                       )
                     }>
                     <span className="flex w-full justify-between">
                       {link.title}
-                      {isParentOpen(link.title) ? (
+                      {isParentOpen(`${group.title}-${link.title}`) ? (
                         <ChevronUpIcon className="my-1 h-4" />
                       ) : (
                         <ChevronDownIcon className="my-1 h-4" />
@@ -223,7 +216,7 @@ const NavigationGroup = ({
                 </div>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
-                {isActiveGroup && link.children && isParentOpen(link.title) && (
+                {isActiveGroup && link.children && isParentOpen(`${group.title}-${link.title}`) && (
                   <motion.ul
                     role="list"
                     initial={{ opacity: 0 }}

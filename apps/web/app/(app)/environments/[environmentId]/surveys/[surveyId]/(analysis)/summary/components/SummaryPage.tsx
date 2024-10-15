@@ -5,6 +5,7 @@ import {
   getResponseCountAction,
   getSurveySummaryAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
@@ -167,6 +168,7 @@ export const SummaryPage = ({
         <CustomFilter survey={surveyMemoized} />
         {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />}
       </div>
+      <ScrollToTop containerId="mainContent" />
       <SummaryList
         summary={surveySummary.summary}
         responseCount={responseCount}

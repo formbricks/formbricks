@@ -166,7 +166,9 @@ export const EditorCardMenu = ({
           <div className="flex flex-col">
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer text-sm text-slate-600 hover:text-slate-700">
+                <DropdownMenuSubTrigger
+                  className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"
+                  onClick={(e) => e.preventDefault()}>
                   Change question type
                 </DropdownMenuSubTrigger>
 
@@ -206,7 +208,9 @@ export const EditorCardMenu = ({
 
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer">Add question below</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
+                  Add question below
+                </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
                   {Object.entries(availableQuestionTypes).map(([type, name]) => {

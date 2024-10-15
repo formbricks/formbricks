@@ -2,6 +2,7 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import webPackageJson from "../../apps/web/package.json";
+import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
 const config = () => {
   return defineConfig({
@@ -27,6 +28,7 @@ const config = () => {
         rollupTypes: true,
         bundledPackages: ["@formbricks/api", "@formbricks/types"],
       }),
+      copyCompiledAssetsPlugin({ filename: "formbricks", distDir: resolve(__dirname, "dist") }),
     ],
   });
 };
