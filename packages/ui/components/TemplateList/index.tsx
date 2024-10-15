@@ -23,6 +23,7 @@ interface TemplateListProps {
   showFilters?: boolean;
   prefilledFilters: TTemplateFilter[];
   onTemplateClick?: (template: TTemplate) => void;
+  noPreview?: boolean; // single click to create survey
 }
 
 export const TemplateList = ({
@@ -33,6 +34,7 @@ export const TemplateList = ({
   templateSearch,
   prefilledFilters,
   onTemplateClick = () => {},
+  noPreview,
 }: TemplateListProps) => {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
@@ -103,7 +105,7 @@ export const TemplateList = ({
   }, [selectedFilter, templateSearch]);
 
   return (
-    <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 focus:outline-none">
+    <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-2 focus:outline-none">
       {showFilters && !templateSearch && (
         <TemplateFilters
           selectedFilter={selectedFilter}
@@ -120,6 +122,7 @@ export const TemplateList = ({
           product={product}
           createSurvey={createSurvey}
           loading={loading}
+          noPreview={noPreview}
         />
         {(process.env.NODE_ENV === "development" ? [...filteredTemplates] : filteredTemplates).map(
           (template: TTemplate) => {
@@ -134,6 +137,7 @@ export const TemplateList = ({
                 createSurvey={createSurvey}
                 loading={loading}
                 selectedFilter={selectedFilter}
+                noPreview={noPreview}
               />
             );
           }

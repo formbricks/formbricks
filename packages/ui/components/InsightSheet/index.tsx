@@ -81,7 +81,7 @@ export const InsightSheet = ({
             {insight.category === "complaint" ? (
               <Badge text="Complaint" type="error" size="tiny" />
             ) : insight.category === "featureRequest" ? (
-              <Badge text="Request" type="warning" size="tiny" />
+              <Badge text="Feature Request" type="warning" size="tiny" />
             ) : insight.category === "praise" ? (
               <Badge text="Praise" type="success" size="tiny" />
             ) : null}
