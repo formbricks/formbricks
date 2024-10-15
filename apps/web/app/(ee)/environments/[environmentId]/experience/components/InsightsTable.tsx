@@ -85,7 +85,7 @@ export const InsightsTable = ({
         <CardDescription>All the insights generated from responses across all your surveys</CardDescription>
       </CardHeader>
       <CardContent>
-        {insights.length > 0 && <InsightView insights={insights} />}
+        <InsightView insights={insights} />
         {isFetching && <InsightLoading />}
         {hasMore && (
           <div className="flex justify-center py-5">
