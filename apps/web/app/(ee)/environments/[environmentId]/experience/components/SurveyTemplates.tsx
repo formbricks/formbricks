@@ -28,6 +28,7 @@ export const SurveyTemplates = ({ environment, product, user, prefilledFilters }
           showFilters={false}
           user={user}
           prefilledFilters={prefilledFilters}
+          noPreview={true}
         />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"></div>
       </CardContent>

@@ -24,6 +24,7 @@ interface InsightViewProps {
   surveyId?: string;
   isSummaryPage?: boolean;
   documentsFilter?: TDocumentFilterCriteria;
+  isFetching?: boolean;
 }
 
 export const InsightView = ({
@@ -32,6 +33,7 @@ export const InsightView = ({
   surveyId,
   isSummaryPage = false,
   documentsFilter,
+  isFetching,
 }: InsightViewProps) => {
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
@@ -77,7 +79,7 @@ export const InsightView = ({
         <TabsList className={cn({ "ml-2": isSummaryPage })}>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="complaint">Complaint</TabsTrigger>
-          <TabsTrigger value="request">Feature Request</TabsTrigger>
+          <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>
           <TabsTrigger value="praise">Praise</TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab}>
@@ -91,10 +93,13 @@ export const InsightView = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {insights.length === 0 ? (
+              {isFetching ? null : insights.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">No insights found.</p>
+                    <p className="text-slate-500">
+                      No insights found. Collect more survey responses or enable insights for your existing
+                      surveys to get started.
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : localInsights.length === 0 ? (
@@ -121,7 +126,7 @@ export const InsightView = ({
                       {insight.category === "complaint" ? (
                         <Badge text="Complaint" type="error" size="tiny" />
                       ) : insight.category === "featureRequest" ? (
-                        <Badge text="Request" type="warning" size="tiny" />
+                        <Badge text="Feature Request" type="warning" size="tiny" />
                       ) : insight.category === "praise" ? (
                         <Badge text="Praise" type="success" size="tiny" />
                       ) : null}

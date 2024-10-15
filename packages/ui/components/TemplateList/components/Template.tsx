@@ -14,6 +14,7 @@ interface TemplateProps {
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   selectedFilter: TTemplateFilter[];
+  noPreview?: boolean;
 }
 
 export const Template = ({
@@ -25,10 +26,15 @@ export const Template = ({
   createSurvey,
   loading,
   selectedFilter,
+  noPreview,
 }: TemplateProps) => {
   return (
     <div
       onClick={() => {
+        if (noPreview) {
+          createSurvey(template);
+          return;
+        }
         const newTemplate = replacePresetPlaceholders(template, product);
         onTemplateClick(newTemplate);
         setActiveTemplate(newTemplate);
