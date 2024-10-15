@@ -7,7 +7,7 @@ import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./Button";
 import { useIsInsideMobileNavigation } from "./MobileNavigation";
 import { useSectionStore } from "./SectionProvider";
@@ -158,7 +158,11 @@ const NavigationGroup = ({
 }) => {
   const isInsideMobileNavigation = useIsInsideMobileNavigation();
   const pathname = usePathname();
-  const isActiveGroup = activeGroup?.title === group.title;
+  const [isActiveGroup, setIsActiveGroup] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsActiveGroup(activeGroup?.title === group.title);
+  }, [activeGroup?.title, group.title]);
 
   const toggleParentTitle = (title: string) => {
     if (openGroups.includes(title)) {
@@ -170,6 +174,13 @@ const NavigationGroup = ({
   };
 
   const isParentOpen = (title: string) => openGroups.includes(title);
+
+  const sortedLinks = group.links.map((link) => {
+    if (link.children) {
+      link.children.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return link;
+  });
 
   return (
     <li className={clsx("relative mt-6", className)}>
@@ -185,8 +196,12 @@ const NavigationGroup = ({
           {isActiveGroup && <ActivePageMarker group={group} pathname={pathname || "/docs"} />}
         </AnimatePresence>
         <ul role="list" className="border-l border-transparent">
-          {group.links.map((link) => (
-            <motion.li key={`${group.title}-${link.title}`} layout="position" className="relative">
+          {sortedLinks.map((link) => (
+            <motion.li
+              key={link.title}
+              layout="position"
+              className="relative"
+              onClick={() => setIsActiveGroup(true)}>
               {link.href ? (
                 <NavLink
                   href={isMobile && link.children ? "" : link.href}
