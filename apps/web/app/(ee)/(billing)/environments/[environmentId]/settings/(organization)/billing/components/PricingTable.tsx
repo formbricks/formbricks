@@ -213,7 +213,7 @@ export const PricingTable = ({
 
         <div className="mx-auto mb-12">
           <div className="flex gap-x-2">
-            <div className="mb-4 flex w-fit max-w-xs cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
+            <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
               <div
                 className={`flex-1 rounded-md px-4 py-0.5 text-center ${
                   planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
@@ -222,11 +222,14 @@ export const PricingTable = ({
                 Monthly
               </div>
               <div
-                className={`flex-1 rounded-md px-4 py-0.5 text-center ${
+                className={`items-centerrounded-md flex-1 whitespace-nowrap py-0.5 pl-4 pr-2 text-center ${
                   planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                 }`}
                 onClick={() => handleMonthlyToggle("yearly")}>
-                Yearly
+                Annually
+                <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  Get 2 months free 🔥
+                </span>
               </div>
             </div>
           </div>
