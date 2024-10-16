@@ -178,8 +178,6 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
       experimental_telemetry: { isEnabled: true },
     });
 
-    console.log("Object", JSON.stringify(object, null, 2));
-
     const sentiment = object.sentiment;
     const isSpam = object.isSpam;
     const insights = object.insights;
