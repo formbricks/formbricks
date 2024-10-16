@@ -153,7 +153,6 @@ export const MultipleChoiceSingleQuestion = ({
                         <input
                           tabIndex={-1}
                           type="radio"
-                          aria-label="Select this option to give 5 stars"
                           id={choice.id}
                           name={question.id}
                           value={getLocalizedValue(choice.label, languageCode)}
@@ -197,7 +196,6 @@ export const MultipleChoiceSingleQuestion = ({
                         tabIndex={-1}
                         dir="auto"
                         type="radio"
-                        aria-label="Select this option to give 5 stars"
                         id={otherOption.id}
                         name={question.id}
                         value={getLocalizedValue(otherOption.label, languageCode)}

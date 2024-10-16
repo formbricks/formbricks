@@ -179,7 +179,6 @@ export const PictureSelectionQuestion = ({
                       <input
                         id={`${choice.id}-radio`}
                         name={`${choice.id}-radio`}
-                        type="radio"
                         aria-label="Select this option to give 5 stars"
                         tabIndex={-1}
                         checked={value.includes(choice.id)}

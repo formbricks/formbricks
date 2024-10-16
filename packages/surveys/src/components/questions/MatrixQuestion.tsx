@@ -173,7 +173,6 @@ export const MatrixQuestion = ({
                             dir="auto"
                             type="radio"
                             tabIndex={-1}
-                            aria-label="Select this option to give 5 stars"
                             required={question.required}
                             id={`${row}-${column}`}
                             name={getLocalizedValue(row, languageCode)}
