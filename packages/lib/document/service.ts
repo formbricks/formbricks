@@ -159,8 +159,8 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
         sentiment: ZDocumentSentiment,
         insights: z.array(
           z.object({
-            title: z.string(),
-            description: z.string(),
+            title: z.string().describe("summary of the insight"),
+            description: z.string().describe("one sentence description of the insight"),
             category: ZInsightCategory,
           })
         ),

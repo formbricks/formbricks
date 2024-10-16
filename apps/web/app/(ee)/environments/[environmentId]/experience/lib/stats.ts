@@ -69,25 +69,21 @@ export const getStats = reactCache(
           // analysed feedbacks is the sum of all the sentiments
           const analysedFeedbacks = Object.values(sentimentCounts).reduce((acc, count) => acc + count, 0);
 
-          let positivePercentage: number = 0,
-            negativePercentage: number = 0,
+          // the sentiment score is the ratio of positive to total (positive + negative) sentiment counts. For this we ignore neutral sentiment counts.
+          let sentimentScore: number = 0,
             overallSentiment: TStats["overallSentiment"];
 
           if (sentimentCounts.positive || sentimentCounts.negative) {
-            positivePercentage =
-              sentimentCounts.positive / (sentimentCounts.positive + sentimentCounts.negative);
+            sentimentScore = sentimentCounts.positive / (sentimentCounts.positive + sentimentCounts.negative);
 
-            negativePercentage =
-              sentimentCounts.negative / (sentimentCounts.positive + sentimentCounts.negative);
-
-            overallSentiment = positivePercentage >= negativePercentage ? "positive" : "negative";
+            overallSentiment = sentimentScore > 0.5 ? "positive" : "negative";
           }
 
           return {
             newResponses,
             activeSurveys,
             analysedFeedbacks,
-            sentimentScore: Math.max(positivePercentage, negativePercentage),
+            sentimentScore,
             overallSentiment,
           };
         } catch (error) {

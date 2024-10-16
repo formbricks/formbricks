@@ -75,18 +75,15 @@ export const InsightSheet = ({
   }, [insight, page, surveyId, questionId, documentsFilter]);
 
   useEffect(() => {
-    if (insight) {
-      fetchDocuments();
-    }
-  }, [fetchDocuments]);
-
-  useEffect(() => {
     if (isOpen) {
       setDocuments([]);
       setPage(1);
       setHasMore(true);
     }
-  }, [insight?.id]);
+    if (insight) {
+      fetchDocuments();
+    }
+  }, [fetchDocuments, isOpen]);
 
   const handleFeedbackClick = (feedback: "positive" | "negative") => {
     setIsOpen(false);
