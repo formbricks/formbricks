@@ -173,7 +173,7 @@ export const CreateNewActionTab = ({
     <div>
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(submitHandler)}>
-          <div className="max-h-[500px] w-full space-y-4 overflow-y-auto pr-4">
+          <div className="max-h-[400px] w-full space-y-4 overflow-y-auto pr-4">
             <div className="w-3/5">
               <FormField
                 name={`type`}

@@ -378,7 +378,6 @@ export const MainNavigation = ({
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-fit space-y-1 rounded-xl border border-slate-200 shadow-sm"
                 id="userDropdownInnerContentWrapper"
                 side="right"
                 sideOffset={10}
@@ -390,7 +389,7 @@ export const MainNavigation = ({
                   {sortedProducts.map((product) => (
                     <DropdownMenuRadioItem
                       value={product.id}
-                      className="cursor-pointer break-all rounded-lg font-normal"
+                      className="cursor-pointer break-all"
                       key={product.id}>
                       <div>
                         {product.config.channel === "website" ? (
@@ -411,8 +410,7 @@ export const MainNavigation = ({
                 {isOwnerOrAdmin && (
                   <DropdownMenuItem
                     onClick={() => handleAddProduct(organization.id)}
-                    className="rounded-lg font-normal">
-                    <PlusIcon className="mr-2 h-4 w-4" />
+                    icon={<PlusIcon className="mr-2 h-4 w-4" />}>
                     <span>Add product</span>
                   </DropdownMenuItem>
                 )}
@@ -456,7 +454,6 @@ export const MainNavigation = ({
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent
-                  className="w-56 rounded-xl border border-slate-200 shadow-sm"
                   id="userDropdownInnerContentWrapper"
                   side="right"
                   sideOffset={10}
@@ -467,15 +464,9 @@ export const MainNavigation = ({
                   {dropdownNavigation.map(
                     (link) =>
                       !link.hidden && (
-                        <Link
-                          href={link.href}
-                          target={link.target}
-                          key={link.label}
-                          className="flex items-center">
-                          <DropdownMenuItem
-                            className="w-full gap-x-2 rounded-lg font-normal"
-                            key={link.label}>
-                            <link.icon className="h-4 w-4" strokeWidth={1.5} />
+                        <Link href={link.href} target={link.target} className="flex w-full items-center">
+                          <DropdownMenuItem>
+                            <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             {link.label}
                           </DropdownMenuItem>
                         </Link>
@@ -485,12 +476,11 @@ export const MainNavigation = ({
                   {/* Logout */}
 
                   <DropdownMenuItem
-                    className="w-full gap-x-2 rounded-lg font-normal"
                     onClick={async () => {
                       await signOut({ callbackUrl: "/auth/login" });
                       await formbricksLogout();
-                    }}>
-                    <LogOutIcon className="h-4 w-4" strokeWidth={1.5} />
+                    }}
+                    icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
                     Logout
                   </DropdownMenuItem>
 
@@ -505,10 +495,7 @@ export const MainNavigation = ({
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
-                        <DropdownMenuSubContent
-                          className="rounded-xl border border-slate-200 shadow-sm"
-                          sideOffset={10}
-                          alignOffset={5}>
+                        <DropdownMenuSubContent sideOffset={10} alignOffset={5}>
                           <DropdownMenuRadioGroup
                             value={currentOrganizationId}
                             onValueChange={(organizationId) =>
@@ -527,8 +514,7 @@ export const MainNavigation = ({
                           {isMultiOrgEnabled && (
                             <DropdownMenuItem
                               onClick={() => setShowCreateOrganizationModal(true)}
-                              className="rounded-lg">
-                              <PlusIcon className="mr-2 h-4 w-4" />
+                              icon={<PlusIcon className="mr-2 h-4 w-4" />}>
                               <span>Create new organization</span>
                             </DropdownMenuItem>
                           )}

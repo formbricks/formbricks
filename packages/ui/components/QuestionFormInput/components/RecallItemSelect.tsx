@@ -213,7 +213,6 @@ export const RecallItemSelect = ({
                     setShowRecallItemSelect(false);
                   }}
                   autoFocus={false}
-                  className="flex w-full cursor-pointer rounded-md p-2 focus:bg-slate-200 focus:outline-none"
                   onKeyDown={(e) => {
                     if (e.key === "ArrowUp" && index === 0) {
                       document.getElementById("recallItemSearchInput")?.focus();
