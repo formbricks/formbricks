@@ -86,10 +86,10 @@ DROP INDEX "ContactAttributeKey_name_environmentId_key";
 CREATE UNIQUE INDEX "ContactAttributeKey_key_environmentId_key" ON "ContactAttributeKey"("key", "environmentId");
 
 -- Testing this rn
--- DROP INDEX "Contact_environmentId_userId_key";
 -- ALTER TABLE "Contact" DROP COLUMN "userId";
 
 ALTER TABLE "Contact" ALTER COLUMN "userId" DROP NOT NULL;
+DROP INDEX "Contact_environmentId_userId_key";
 
 -- Step 12: Remove the default value from 'key' column
 ALTER TABLE "ContactAttributeKey" ALTER COLUMN "key" DROP DEFAULT;

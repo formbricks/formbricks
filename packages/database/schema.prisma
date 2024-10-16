@@ -101,7 +101,6 @@ model Contact {
   attributes    ContactAttribute[]
   displays      Display[]
 
-  @@unique([environmentId, userId])
   @@index([environmentId])
 }
 
