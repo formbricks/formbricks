@@ -113,7 +113,7 @@ export function ConditionalLogic({
   };
 
   return (
-    <div className="mt-2">
+    <div className="mt-4">
       <Label className="flex gap-2">
         Conditional Logic
         <SplitIcon className="h-4 w-4 rotate-90" />
