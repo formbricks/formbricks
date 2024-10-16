@@ -122,7 +122,9 @@ export const Button: React.ForwardRefExoticComponent<
           <svg
             className={cn(
               "mx-4 h-5 w-5 animate-spin",
-              variant === "primary" ? "text-white dark:text-slate-900" : "text-slate-900"
+              variant === "primary" || variant === "secondary"
+                ? "text-white dark:text-slate-900"
+                : "text-slate-900"
             )}
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
