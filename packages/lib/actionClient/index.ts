@@ -5,12 +5,13 @@ import { authOptions } from "../authOptions";
 import { getUser } from "../user/service";
 
 export const actionClient = createSafeActionClient({
-  handleReturnedServerError(e) {
+  handleServerError(e) {
     if (e instanceof ResourceNotFoundError) {
       return e.message;
     } else if (e instanceof AuthorizationError) {
       return e.message;
     }
+    console.error("SERVER ERROR: ", e);
 
     return DEFAULT_SERVER_ERROR_MESSAGE;
   },

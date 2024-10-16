@@ -7,6 +7,7 @@ import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/s
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
+import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -78,6 +79,24 @@ export const MatrixQuestionForm = ({
     }
   };
 
+  const shuffleOptionsTypes = {
+    none: {
+      id: "none",
+      label: "Keep current order",
+      show: true,
+    },
+    all: {
+      id: "all",
+      label: "Randomize all",
+      show: true,
+    },
+    exceptLast: {
+      id: "exceptLast",
+      label: "Randomize all except last option",
+      show: true,
+    },
+  };
+
   return (
     <form>
       <QuestionFormInput
@@ -135,7 +154,7 @@ export const MatrixQuestionForm = ({
             {question.rows.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "row")}>
                 <QuestionFormInput
-                  key={`row-${index}`}
+                  key={`row-${index}-${question.rows.length}`}
                   id={`row-${index}`}
                   label={""}
                   localSurvey={localSurvey}
@@ -177,7 +196,7 @@ export const MatrixQuestionForm = ({
             {question.columns.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "column")}>
                 <QuestionFormInput
-                  key={`column-${index}`}
+                  key={`column-${index}-${question.columns.length}`}
                   id={`column-${index}`}
                   label={""}
                   localSurvey={localSurvey}
@@ -210,6 +229,14 @@ export const MatrixQuestionForm = ({
               }}>
               <span>Add column</span>
             </Button>
+          </div>
+          <div className="mt-3 flex flex-1 items-center justify-end gap-2">
+            <ShuffleOptionSelect
+              shuffleOptionsTypes={shuffleOptionsTypes}
+              questionIdx={questionIdx}
+              updateQuestion={updateQuestion}
+              shuffleOption={question.shuffleOption}
+            />
           </div>
         </div>
       </div>

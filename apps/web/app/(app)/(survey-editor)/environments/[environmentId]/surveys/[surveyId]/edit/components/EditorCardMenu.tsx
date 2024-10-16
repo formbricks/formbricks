@@ -162,21 +162,22 @@ export const EditorCardMenu = ({
           <EllipsisIcon className="h-4 w-4 text-slate-500 hover:text-slate-600" />
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="border border-slate-200">
+        <DropdownMenuContent>
           <div className="flex flex-col">
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer text-sm text-slate-600 hover:text-slate-700">
+                <DropdownMenuSubTrigger
+                  className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"
+                  onClick={(e) => e.preventDefault()}>
                   Change question type
                 </DropdownMenuSubTrigger>
 
-                <DropdownMenuSubContent className="ml-2 border border-slate-200 text-slate-600 hover:text-slate-700">
+                <DropdownMenuSubContent className="ml-2">
                   {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     if (type === card.type) return null;
                     return (
                       <DropdownMenuItem
                         key={type}
-                        className="min-h-8 cursor-pointer"
                         onClick={() => {
                           setChangeToType(type as TSurveyQuestionTypeEnum);
                           if ((card as TSurveyQuestion).logic) {
@@ -185,8 +186,8 @@ export const EditorCardMenu = ({
                           }
 
                           changeQuestionType(type as TSurveyQuestionTypeEnum);
-                        }}>
-                        {QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}
+                        }}
+                        icon={QUESTIONS_ICON_MAP[type as TSurveyQuestionTypeEnum]}>
                         <span className="ml-2">{name}</span>
                       </DropdownMenuItem>
                     );
@@ -196,7 +197,7 @@ export const EditorCardMenu = ({
             )}
             {cardType === "ending" && (
               <DropdownMenuItem
-                className="flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700"
+                className="min-h-8 justify-between"
                 onClick={(e) => {
                   e.preventDefault();
                   addEndingCardBelow();
@@ -207,16 +208,16 @@ export const EditorCardMenu = ({
 
             {cardType === "question" && (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer text-sm text-slate-600 hover:text-slate-700">
+                <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
                   Add question below
                 </DropdownMenuSubTrigger>
 
-                <DropdownMenuSubContent className="ml-4 border border-slate-200">
+                <DropdownMenuSubContent className="ml-2">
                   {Object.entries(availableQuestionTypes).map(([type, name]) => {
                     return (
                       <DropdownMenuItem
                         key={type}
-                        className="min-h-8 cursor-pointer"
+                        className="min-h-8"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (cardType === "question") {
@@ -232,33 +233,27 @@ export const EditorCardMenu = ({
               </DropdownMenuSub>
             )}
             <DropdownMenuItem
-              className={`flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700 ${
-                cardIdx === 0 ? "opacity-50" : ""
-              }`}
               onClick={(e) => {
                 if (cardIdx !== 0) {
                   e.stopPropagation();
                   moveCard(cardIdx, true);
                 }
               }}
+              icon={<ArrowUpIcon className="h-4 w-4" />}
               disabled={cardIdx === 0}>
-              <span className="text-sm">Move up</span>
-              <ArrowUpIcon className="h-4 w-4" />
+              <span>Move up</span>
             </DropdownMenuItem>
 
             <DropdownMenuItem
-              className={`flex min-h-8 cursor-pointer justify-between text-slate-600 hover:text-slate-700 ${
-                lastCard ? "opacity-50" : ""
-              }`}
               onClick={(e) => {
                 if (!lastCard) {
                   e.stopPropagation();
                   moveCard(cardIdx, false);
                 }
               }}
+              icon={<ArrowDownIcon className="h-4 w-4" />}
               disabled={lastCard}>
-              <span className="text-sm text-slate-600 hover:text-slate-700">Move down</span>
-              <ArrowDownIcon className="h-4 w-4" />
+              <span>Move down</span>
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>

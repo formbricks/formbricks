@@ -29,8 +29,8 @@ test.describe("Invite, accept and remove organization member", async () => {
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
       // Add member button
-      await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
-      await page.getByRole("button", { name: "Add Member" }).click();
+      await expect(page.getByRole("button", { name: "Add member" })).toBeVisible();
+      await page.getByRole("button", { name: "Add member" }).click();
 
       // Fill the member name and email form
       await expect(page.getByLabel("Email")).toBeVisible();

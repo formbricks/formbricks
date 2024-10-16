@@ -98,34 +98,29 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
         <DropdownMenuContent align="start">
           {survey.resultShareKey ? (
             <DropdownMenuItem
-              className="hover:ring-0"
               onClick={() => {
                 navigator.clipboard.writeText(surveyUrl);
                 toast.success("Link to public results copied");
-              }}>
-              <p className="text-slate-700">
-                Copy link to public results <CopyIcon className="ml-1.5 inline h-4 w-4" />
-              </p>
+              }}
+              icon={<CopyIcon className="ml-1.5 inline h-4 w-4" />}>
+              <p className="text-slate-700">Copy link to public results</p>
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
-              className="text-slate-700 hover:ring-0"
               onClick={() => {
                 copyUrlToClipboard();
-              }}>
-              <p className="flex items-center text-slate-700">
-                Copy link <CopyIcon className="ml-1.5 h-4 w-4" />
-              </p>
+              }}
+              icon={<CopyIcon className="ml-1.5 h-4 w-4" />}>
+              <p className="flex items-center text-slate-700">Copy link</p>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
-            className="hover:ring-0"
             onClick={() => {
               setShowResultsLinkModal(true);
-            }}>
+            }}
+            icon={<GlobeIcon className="ml-1.5 h-4 w-4" />}>
             <p className="flex items-center text-slate-700">
               {survey.resultShareKey ? "Unpublish from web" : "Publish to web"}
-              <GlobeIcon className="ml-1.5 h-4 w-4" />
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>

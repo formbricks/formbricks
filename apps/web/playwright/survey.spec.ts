@@ -247,47 +247,47 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByText("Welcome CardShownOn").click();
 
     // Add questions in default language
-    await page.getByText("Add Question").click();
+    await page.getByText("Add question").click();
     await page.getByRole("button", { name: "Single-Select" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Multi-Select" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Picture Selection" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Rating" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Date" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "File Upload" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
 
@@ -295,13 +295,13 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "Matrix" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Address" }).click();
     await page
       .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
+      .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Ranking" }).click();
