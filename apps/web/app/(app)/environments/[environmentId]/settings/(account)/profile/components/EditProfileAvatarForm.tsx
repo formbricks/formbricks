@@ -6,7 +6,6 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
 import { handleFileUpload } from "@/app/lib/fileUpload";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -17,12 +16,12 @@ import { Button } from "@formbricks/ui/components/Button";
 import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
 
 interface EditProfileAvatarFormProps {
-  session: Session;
   environmentId: string;
   imageUrl: string | null;
+  email: string;
 }
 
-export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: EditProfileAvatarFormProps) => {
+export const EditProfileAvatarForm = ({ environmentId, imageUrl, email }: EditProfileAvatarFormProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -116,7 +115,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
           </div>
         )}
 
-        <ProfileAvatar userId={session.user.id} imageUrl={imageUrl} />
+        <ProfileAvatar imageUrl={imageUrl} email={email} />
       </div>
 
       <FormProvider {...form}>
