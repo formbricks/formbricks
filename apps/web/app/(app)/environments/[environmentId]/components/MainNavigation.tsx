@@ -3,6 +3,7 @@
 import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
+import FBLogoSmall from "@/images/formbricks-wordmark-small.svg";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import {
   ArrowUpRightIcon,
@@ -262,17 +263,20 @@ export const MainNavigation = ({
           <div>
             {/* Logo and Toggle */}
 
-            <div className="flex items-center justify-between px-3 pb-4">
-              {!isCollapsed && (
-                <Link
-                  href={`/environments/${environment.id}/surveys/`}
-                  className={cn(
-                    "flex items-center justify-center transition-opacity duration-100",
-                    isTextVisible ? "opacity-0" : "opacity-100"
-                  )}>
+            <div
+              className={cn(
+                "flex items-center justify-between px-3 pb-4",
+                isCollapsed ? "flex-col" : "flex-row"
+              )}>
+              <Link
+                href={`/environments/${environment.id}/surveys/`}
+                className={cn("mb-2 flex items-center justify-center")}>
+                {isCollapsed ? (
+                  <Image src={FBLogoSmall} width={30} height={30} alt="Formbricks Logo" />
+                ) : (
                   <Image src={FBLogo} width={160} height={30} alt="Formbricks Logo" />
-                </Link>
-              )}
+                )}
+              </Link>
               <Button
                 variant="minimal"
                 size="icon"
