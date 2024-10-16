@@ -35,7 +35,7 @@ export const Button: React.ForwardRefExoticComponent<
   const {
     loading = false,
     variant = "primary",
-    size = "base",
+    size = "sm",
     StartIcon,
     startIconClassName,
     endIconClassName,
