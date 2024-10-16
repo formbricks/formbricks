@@ -1,6 +1,8 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -15,6 +17,7 @@ interface IndividualInviteTabProps {
   isFormbricksCloud: boolean;
   environmentId: string;
 }
+
 export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
@@ -22,18 +25,28 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
 }: IndividualInviteTabProps) => {
+  const ZFormSchema = z.object({
+    name: z
+      .string()
+      .regex(/^[a-zA-Z\s-']+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
+    email: z.string().email("Invalid email address"),
+    role: z.nativeEnum(MembershipRole),
+  });
+
+  type TFormData = z.infer<typeof ZFormSchema>;
   const {
     register,
     getValues,
     handleSubmit,
     reset,
     control,
-    formState: { isSubmitting },
-  } = useForm<{
-    name: string;
-    email: string;
-    role: MembershipRole;
-  }>();
+    formState: { isSubmitting, errors },
+  } = useForm<TFormData>({
+    resolver: zodResolver(ZFormSchema),
+    defaultValues: {
+      role: MembershipRole.Admin,
+    },
+  });
 
   const submitEventClass = async () => {
     const data = getValues();
@@ -48,11 +61,8 @@ export const IndividualInviteTab = ({
         <div className="w-full space-y-4">
           <div>
             <Label htmlFor="memberNameInput">Full Name</Label>
-            <Input
-              id="memberNameInput"
-              placeholder="e.g. Hans Wurst"
-              {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
-            />
+            <Input id="memberNameInput" placeholder="e.g. Hans Wurst" {...register("name")} />
+            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
           </div>
           <div>
             <Label htmlFor="memberEmailInput">Email Address</Label>

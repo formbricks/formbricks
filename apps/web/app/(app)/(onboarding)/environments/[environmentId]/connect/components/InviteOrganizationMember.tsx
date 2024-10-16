@@ -18,7 +18,11 @@ interface InviteOrganizationMemberProps {
 
 const ZInviteOrganizationMemberDetails = z.object({
   email: z.string().email(),
-  inviteMessage: z.string().trim().min(1),
+  inviteMessage: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(/^[a-zA-Z\s-']+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
 });
 type TInviteOrganizationMemberDetails = z.infer<typeof ZInviteOrganizationMemberDetails>;
 

@@ -17,7 +17,9 @@ export type TInvite = z.infer<typeof ZInvite>;
 
 export const ZInvitee = z.object({
   email: z.string().email(),
-  name: z.string(),
+  name: z
+    .string()
+    .regex(/^[a-zA-Z\s-']+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
   role: ZMembershipRole,
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
