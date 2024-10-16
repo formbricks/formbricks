@@ -179,6 +179,7 @@ export const PictureSelectionQuestion = ({
                       <input
                         id={`${choice.id}-radio`}
                         name={`${choice.id}-radio`}
+                        type="radio"
                         tabIndex={-1}
                         checked={value.includes(choice.id)}
                         className={cn(
