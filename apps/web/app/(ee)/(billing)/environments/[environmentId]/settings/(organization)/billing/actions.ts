@@ -1,8 +1,8 @@
 "use server";
 
-import { createCustomerPortalSession } from "@/app/(ee)/api/billing/stripe-webhook/lib/createCustomerPortalSession";
-import { createSubscription } from "@/app/(ee)/api/billing/stripe-webhook/lib/createSubscription";
-import { isSubscriptionCancelled } from "@/app/(ee)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
+import { createCustomerPortalSession } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createCustomerPortalSession";
+import { createSubscription } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createSubscription";
+import { isSubscriptionCancelled } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";

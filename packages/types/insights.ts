@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "./common";
 
-export const ZInsightCategory = z.enum(["featureRequest", "complaint", "praise"]);
+export const ZInsightCategory = z.enum(["featureRequest", "complaint", "praise", "other"]);
 
 export type TInsightCategory = z.infer<typeof ZInsightCategory>;
 

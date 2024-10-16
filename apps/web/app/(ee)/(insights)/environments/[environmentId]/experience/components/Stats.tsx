@@ -1,13 +1,13 @@
 "use client";
 
-import { getStatsAction } from "@/app/(ee)/environments/[environmentId]/experience/actions";
+import { getStatsAction } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/actions";
 import { ActivityIcon, GaugeIcon, InboxIcon, MessageCircleIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
+import { cn } from "@formbricks/ui/lib/utils";
 import type { TStats } from "../types/stats";
 
 interface ExperiencePageStatsProps {

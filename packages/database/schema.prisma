@@ -658,6 +658,7 @@ enum InsightCategory {
   featureRequest
   complaint
   praise
+  other
 }
 
 model Insight {
@@ -701,6 +702,7 @@ model Document {
   response         Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
   questionId       String?
   sentiment        Sentiment
+  isSpam           Boolean
   text             String
   vector           Unsupported("vector(512)")?
   documentInsights DocumentInsight[]

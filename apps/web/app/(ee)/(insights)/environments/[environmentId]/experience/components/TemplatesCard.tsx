@@ -14,7 +14,7 @@ interface SurveyTemplatesProps {
   prefilledFilters: TTemplateFilter[];
 }
 
-export const SurveyTemplates = ({ environment, product, user, prefilledFilters }: SurveyTemplatesProps) => {
+export const TemplatesCard = ({ environment, product, user, prefilledFilters }: SurveyTemplatesProps) => {
   return (
     <Card>
       <CardHeader>

@@ -39,6 +39,7 @@ CREATE TABLE "Document" (
     "responseId" TEXT,
     "questionId" TEXT,
     "sentiment" "Sentiment" NOT NULL,
+    "isSpam" BOOLEAN NOT NULL,
     "text" TEXT NOT NULL,
     "vector" vector(512),
 
@@ -49,10 +50,10 @@ CREATE TABLE "Document" (
 CREATE INDEX "DocumentInsight_insightId_idx" ON "DocumentInsight"("insightId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Document_responseId_questionId_key" ON "Document"("responseId", "questionId");
+CREATE INDEX "Document_created_at_idx" ON "Document"("created_at");
 
 -- CreateIndex
-CREATE INDEX "Document_created_at_idx" ON "Document"("created_at");
+CREATE UNIQUE INDEX "Document_responseId_questionId_key" ON "Document"("responseId", "questionId");
 
 -- AddForeignKey
 ALTER TABLE "Insight" ADD CONSTRAINT "Insight_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;

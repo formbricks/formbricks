@@ -1,6 +1,6 @@
 "use server";
 
-import { getStats } from "@/app/(ee)/environments/[environmentId]/experience/lib/stats";
+import { getStats } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/lib/stats";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";

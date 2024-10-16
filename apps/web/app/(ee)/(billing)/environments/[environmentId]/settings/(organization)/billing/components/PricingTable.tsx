@@ -1,11 +1,11 @@
 "use client";
 
-import { CLOUD_PRICING_DATA } from "@/app/(ee)/api/billing/stripe-webhook/lib/constants";
+import { CLOUD_PRICING_DATA } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/constants";
 import {
   isSubscriptionCancelledAction,
   manageSubscriptionAction,
   upgradePlanAction,
-} from "@/app/(ee)/environments/[environmentId]/settings/(organization)/billing/actions";
+} from "@/app/(ee)/(billing)/environments/[environmentId]/settings/(organization)/billing/actions";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";

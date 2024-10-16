@@ -17,7 +17,7 @@ interface InsightsTableProps {
   documentsPerPage?: number;
 }
 
-export const InsightsTable = ({
+export const InsightsCard = ({
   statsFrom,
   environmentId,
   productName,

@@ -1,4 +1,4 @@
-import { TStatsPeriod } from "@/app/(ee)/environments/[environmentId]/experience/types/stats";
+import { TStatsPeriod } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/types/stats";
 
 export const getDateFromTimeRange = (timeRange: TStatsPeriod): Date | undefined => {
   if (timeRange === "all") {

@@ -83,6 +83,7 @@ export const InsightView = ({
           <TabsTrigger value="complaint">Complaint</TabsTrigger>
           <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>
           <TabsTrigger value="praise">Praise</TabsTrigger>
+          <TabsTrigger value="other">Other</TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab}>
           <Table>
@@ -131,6 +132,8 @@ export const InsightView = ({
                         <Badge text="Feature Request" type="warning" size="tiny" />
                       ) : insight.category === "praise" ? (
                         <Badge text="Praise" type="success" size="tiny" />
+                      ) : insight.category === "other" ? (
+                        <Badge text="Other" type="gray" size="tiny" />
                       ) : null}
                     </TableCell>
                   </TableRow>

@@ -1,4 +1,4 @@
-import { ExperiencePage } from "@/app/(ee)/environments/[environmentId]/experience/components/ExperiencePage";
+import { ExperiencePage } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/components/ExperiencePage";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";

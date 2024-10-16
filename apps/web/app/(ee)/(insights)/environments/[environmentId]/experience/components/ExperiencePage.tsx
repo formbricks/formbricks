@@ -1,11 +1,11 @@
 "use client";
 
-import { Greeting } from "@/app/(ee)/environments/[environmentId]/experience/components/Greeting";
-import { InsightsTable } from "@/app/(ee)/environments/[environmentId]/experience/components/InsightsTable";
-import { ExperiencePageStats } from "@/app/(ee)/environments/[environmentId]/experience/components/Stats";
-import { SurveyTemplates } from "@/app/(ee)/environments/[environmentId]/experience/components/SurveyTemplates";
-import { getDateFromTimeRange } from "@/app/(ee)/environments/[environmentId]/experience/lib/utils";
-import { TStatsPeriod } from "@/app/(ee)/environments/[environmentId]/experience/types/stats";
+import { Greeting } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/components/Greeting";
+import { InsightsCard } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/components/InsightsCard";
+import { ExperiencePageStats } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/components/Stats";
+import { TemplatesCard } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/components/TemplatesCard";
+import { getDateFromTimeRange } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/lib/utils";
+import { TStatsPeriod } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/types/stats";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -53,14 +53,14 @@ export const ExperiencePage = ({
         </ToggleGroupItem>
       </ToggleGroup>
       <ExperiencePageStats statsFrom={statsFrom} environmentId={environment.id} />
-      <InsightsTable
+      <InsightsCard
         statsFrom={statsFrom}
         productName={product.name}
         environmentId={environment.id}
         insightsPerPage={insightsPerPage}
         documentsPerPage={documentsPerPage}
       />
-      <SurveyTemplates
+      <TemplatesCard
         environment={environment}
         product={product}
         user={user}
