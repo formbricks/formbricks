@@ -120,6 +120,7 @@ export const NPSQuestion = ({
                       )}
                       <input
                         type="radio"
+                        aria-label="Select this option to give 5 stars"
                         id={number.toString()}
                         name="nps"
                         value={number}

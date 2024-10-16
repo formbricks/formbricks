@@ -42,6 +42,7 @@ export const TabToggle = <T extends string | number>({
             <input
               type="radio"
               name={id}
+              aria-label="Select this option to give 5 stars"
               id={option.value.toString()}
               value={option.value.toString()}
               checked={selectedOption === option.value}
