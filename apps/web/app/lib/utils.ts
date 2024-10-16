@@ -12,6 +12,7 @@ export const isInviteExpired = (invite: TInvite) => {
 export const getIsAIEnabled = async (billingPlan: TOrganizationBillingPlan) => {
   const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
+  // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
   return Boolean(
     IS_AI_CONFIGURED &&
       IS_FORMBRICKS_CLOUD &&
