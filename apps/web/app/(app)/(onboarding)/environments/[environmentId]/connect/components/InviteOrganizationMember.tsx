@@ -22,7 +22,7 @@ const ZInviteOrganizationMemberDetails = z.object({
     .string()
     .trim()
     .min(1)
-    .regex(/^[a-zA-Z\s-']+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
+    .refine((value) => !/https?:\/\/|<script/i.test(value), "Invite message cannot contain URLs or scripts"),
 });
 type TInviteOrganizationMemberDetails = z.infer<typeof ZInviteOrganizationMemberDetails>;
 
