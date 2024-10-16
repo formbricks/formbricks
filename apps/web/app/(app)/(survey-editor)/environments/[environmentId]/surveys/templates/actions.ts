@@ -11,12 +11,7 @@ import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization
 import { createSurvey } from "@formbricks/lib/survey/service";
 import { getIsAIEnabled } from "@formbricks/lib/utils/ai";
 import { ZId, ZString } from "@formbricks/types/common";
-import {
-  TSurveyOpenTextQuestion,
-  TSurveyQuestionTypeEnum,
-  ZSurveyOpenTextQuestion,
-  ZSurveyQuestion,
-} from "@formbricks/types/surveys/types";
+import { ZSurveyQuestion } from "@formbricks/types/surveys/types";
 
 const ZCreateAISurveyAction = z.object({
   environmentId: ZId,
