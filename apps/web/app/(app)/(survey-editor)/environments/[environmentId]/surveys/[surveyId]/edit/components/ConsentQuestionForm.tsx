@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -29,12 +30,12 @@ export const ConsentQuestionForm = ({
   attributeClasses,
 }: ConsentQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
-
+  const t = useTranslations();
   return (
     <form>
       <QuestionFormInput
         id="headline"
-        label="Question*"
+        label={t("environments.surveys.edit.question") + "*"}
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -46,7 +47,7 @@ export const ConsentQuestionForm = ({
       />
 
       <div className="mt-3">
-        <Label htmlFor="subheader">Description</Label>
+        <Label htmlFor="subheader">{t("common.description")}</Label>
         <div className="mt-2">
           <LocalizedEditor
             id="subheader"
@@ -65,7 +66,7 @@ export const ConsentQuestionForm = ({
 
       <QuestionFormInput
         id="label"
-        label="Checkbox Label*"
+        label={t("environments.surveys.edit.checkbox_label") + "*"}
         placeholder="I agree to the terms and conditions"
         value={question.label}
         localSurvey={localSurvey}

@@ -6,6 +6,7 @@ import {
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import {
   addConditionBelow,
@@ -52,6 +53,7 @@ export function LogicEditorConditions({
   updateQuestion,
   depth = 0,
 }: LogicEditorConditionsProps) {
+  const t = useTranslations();
   const handleAddConditionBelow = (resourceId: string) => {
     const operator = getDefaultOperatorForQuestion(question);
 
@@ -187,7 +189,7 @@ export function LogicEditorConditions({
       return (
         <div key={condition.id} className="flex items-start justify-between gap-4">
           {index === 0 ? (
-            <div>When</div>
+            <div>{t("environments.surveys.edit.when")}</div>
           ) : (
             <div
               className={cn("w-14", index === 1 && "cursor-pointer underline")}
@@ -220,13 +222,13 @@ export function LogicEditorConditions({
                     handleAddConditionBelow(condition.id);
                   }}
                   icon={<PlusIcon className="h-4 w-4" />}>
-                  Add condition below
+                  {t("environments.surveys.edit.add_condition_below")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={depth === 0 && conditions.conditions.length === 1}
                   onClick={() => handleRemoveCondition(condition.id)}
                   icon={<TrashIcon className="h-4 w-4" />}>
-                  Remove
+                  {t("common.remove")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -244,7 +246,7 @@ export function LogicEditorConditions({
       <div key={condition.id} className="flex items-center gap-x-2">
         <div className="w-10 shrink-0">
           {index === 0 ? (
-            "When"
+            t("environments.surveys.edit.when")
           ) : (
             <div
               className={cn("w-14", index === 1 && "cursor-pointer underline")}
@@ -309,23 +311,23 @@ export function LogicEditorConditions({
                 handleAddConditionBelow(condition.id);
               }}
               icon={<PlusIcon className="h-4 w-4" />}>
-              Add condition below
+              {t("environments.surveys.edit.add_condition_below")}
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={depth === 0 && conditions.conditions.length === 1}
               onClick={() => handleRemoveCondition(condition.id)}
               icon={<TrashIcon className="h-4 w-4" />}>
-              Remove
+              {t("common.remove")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => handleDuplicateCondition(condition.id)}
               icon={<CopyIcon className="h-4 w-4" />}>
-              Duplicate
+              {t("common.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => handleCreateGroup(condition.id)}
               icon={<WorkflowIcon className="h-4 w-4" />}>
-              Create group
+              {t("environments.surveys.edit.create_group")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

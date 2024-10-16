@@ -7,6 +7,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
@@ -81,7 +82,7 @@ export const QuestionCard = ({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
-
+  const t = useTranslations();
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
@@ -414,7 +415,9 @@ export const QuestionCard = ({
                 ) : (
                   <ChevronRightIcon className="mr-2 h-4 w-3" />
                 )}
-                {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
+                {openAdvanced
+                  ? t("environments.surveys.edit.hide_advanced_settings")
+                  : t("environments.surveys.edit.show_advanced_settings")}
               </Collapsible.CollapsibleTrigger>
 
               <Collapsible.CollapsibleContent className="space-y-4">

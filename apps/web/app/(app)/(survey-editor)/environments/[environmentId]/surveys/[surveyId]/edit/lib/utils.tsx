@@ -140,9 +140,9 @@ export const replaceEndingCardHeadlineRecall = (
 };
 
 export const actionObjectiveOptions: TComboboxOption[] = [
-  { label: "Calculate", value: "calculate" },
-  { label: "Require Answer", value: "requireAnswer" },
-  { label: "Jump to question", value: "jumpToQuestion" },
+  { label: "environments.surveys.edit.calculate", value: "calculate" },
+  { label: "environments.surveys.edit.require_answer", value: "requireAnswer" },
+  { label: "environments.surveys.edit.jump_to_question", value: "jumpToQuestion" },
 ];
 
 const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {

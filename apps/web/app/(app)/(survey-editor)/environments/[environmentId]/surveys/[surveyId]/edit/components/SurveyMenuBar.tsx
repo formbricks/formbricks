@@ -3,6 +3,7 @@
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -55,13 +56,14 @@ export const SurveyMenuBar = ({
   selectedLanguageCode,
   isCxMode,
 }: SurveyMenuBarProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isLinkSurvey, setIsLinkSurvey] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const cautionText = "This survey received responses.";
+  const cautionText = t("environments.surveys.edit.caution_text");
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -74,7 +76,7 @@ export const SurveyMenuBar = ({
   }, [localSurvey.type]);
 
   useEffect(() => {
-    const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
+    const warningText = t("environments.surveys.edit.unsaved_changes_warning");
     const handleWindowClose = (e: BeforeUnloadEvent) => {
       if (!isEqual(localSurvey, survey)) {
         e.preventDefault();
@@ -318,7 +320,7 @@ export const SurveyMenuBar = ({
               onClick={() => {
                 handleBack();
               }}>
-              Back
+              {t("common.back")}
             </Button>
           )}
           <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
@@ -339,7 +341,9 @@ export const SurveyMenuBar = ({
                   <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {t(cautionText)}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -365,7 +369,7 @@ export const SurveyMenuBar = ({
               loading={isSurveySaving}
               onClick={() => handleSurveySave()}
               type="submit">
-              Save
+              {t("common.save")}
             </Button>
           )}
 
@@ -376,7 +380,7 @@ export const SurveyMenuBar = ({
               size="sm"
               loading={isSurveySaving}
               onClick={() => handleSaveAndGoBack()}>
-              Save & Close
+              {t("environments.surveys.edit.save_and_close")}
             </Button>
           )}
           {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
@@ -387,7 +391,7 @@ export const SurveyMenuBar = ({
                 setActiveId("settings");
               }}
               EndIcon={SettingsIcon}>
-              Continue to Settings
+              {t("environments.surveys.edit.continue_to_settings")}
             </Button>
           )}
           {/* Always display Publish button for link surveys for better CR */}
@@ -397,17 +401,19 @@ export const SurveyMenuBar = ({
               disabled={isSurveySaving || containsEmptyTriggers}
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>
-              {isCxMode ? "Save & Close" : "Publish"}
+              {isCxMode
+                ? t("environments.surveys.edit.save_changes")
+                : t("environments.surveys.edit.publish")}
             </Button>
           )}
         </div>
         <AlertDialog
-          headerText="Confirm Survey Changes"
+          headerText={t("environments.surveys.edit.confirm_survey_changes")}
           open={isConfirmDialogOpen}
           setOpen={setConfirmDialogOpen}
-          mainText="You have unsaved changes in your survey. Would you like to save them before leaving?"
-          confirmBtnLabel="Save"
-          declineBtnLabel="Discard"
+          mainText={t("environments.surveys.edit.unsaved_changes_warning")}
+          confirmBtnLabel={t("common.save")}
+          declineBtnLabel={t("common.discard")}
           declineBtnVariant="warn"
           onDecline={() => {
             setConfirmDialogOpen(false);

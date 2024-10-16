@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -48,6 +49,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   isFormbricksCloud,
   setSelectedLanguageCode,
 }) => {
+  const t = useTranslations();
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);
@@ -147,9 +149,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       if (localSurvey.languages.length > 0) {
         setConfirmationModalInfo({
           open: true,
-          title: "Remove translations",
-          text: "This action will remove all the translations from this survey.",
-          buttonText: "Remove translations",
+          title: t("environments.surveys.edit.remove_translations"),
+          text: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
+          buttonText: t("environments.surveys.edit.remove_translations"),
           buttonVariant: "warn",
           onConfirm: () => {
             updateSurveyTranslations(localSurvey, []);
@@ -194,12 +196,14 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Multiple languages</p>
+                <p className="text-sm font-semibold">{t("common.multiple_languages")}</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Label htmlFor="multi-lang-toggle">{isMultiLanguageActivated ? "On" : "Off"}</Label>
+              <Label htmlFor="multi-lang-toggle">
+                {isMultiLanguageActivated ? t("common.on") : t("common.off")}
+              </Label>
 
               <Switch
                 checked={isMultiLanguageActivated}
@@ -216,14 +220,14 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           <div className="space-y-4">
             {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
-                message="To enable multi-language surveys, you need an active"
-                textForUrl="Enterprise License."
+                message={t("environments.surveys.edit.to_enable_multi_language_surveys_you_need_an_active")}
+                textForUrl={t("common.enterprise_license")}
                 url={`/environments/${environmentId}/settings/enterprise`}
               />
             ) : !isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
-                message="To enable multi-language surveys,"
-                textForUrl="please upgrade your plan."
+                message={t("environments.surveys.edit.to_enable_multi_language_surveys_you_need_an_active")}
+                textForUrl={t("common.enterprise_license")}
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
@@ -231,8 +235,10 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 {product.languages.length <= 1 && (
                   <div className="mb-4 text-sm italic text-slate-500">
                     {product.languages.length === 0
-                      ? "No languages found. Add the first one to get started:"
-                      : "You need to have two or more languages set up in your product to work with translations."}
+                      ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
+                      : t(
+                          "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_product_to_work_with_translations"
+                        )}
                   </div>
                 )}
                 {product.languages.length > 1 && (
@@ -240,7 +246,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                     <div>
                       {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
                         <div className="text-sm italic text-slate-500">
-                          Switch multi-lanugage on to get started 👉
+                          {t("environments.surveys.edit.switch_multi_lanugage_on_to_get_started")}
                         </div>
                       ) : null}
                     </div>
@@ -270,7 +276,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
                 <Link href={`/environments/${environmentId}/product/languages`} target="_blank">
                   <Button className="mt-2" size="sm" variant="secondary">
-                    Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
+                    {t("environments.surveys.edit.manage_languages")}{" "}
+                    <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 {isMultiLanguageActivated && (
@@ -279,8 +286,10 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                     htmlId="languageSwitch"
                     isChecked={!!localSurvey.showLanguageSwitch}
                     onToggle={handleLanguageSwitchToggle}
-                    title="Show language switch"
-                    description="Enable participants to switch the survey language at any point during the survey."
+                    title={t("environments.surveys.edit.show_language_switch")}
+                    description={t(
+                      "environments.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
+                    )}
                     childBorder={true}></AdvancedOptionToggle>
                 )}
               </>

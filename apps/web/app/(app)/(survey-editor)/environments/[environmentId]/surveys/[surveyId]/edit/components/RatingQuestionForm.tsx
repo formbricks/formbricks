@@ -1,4 +1,5 @@
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
@@ -30,6 +31,7 @@ export const RatingQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: RatingQuestionFormProps) => {
+  const t = useTranslations();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   return (
@@ -37,7 +39,7 @@ export const RatingQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -54,7 +56,7 @@ export const RatingQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -78,14 +80,14 @@ export const RatingQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
-          <Label htmlFor="subheader">Scale</Label>
+          <Label htmlFor="subheader">{t("environments.surveys.edit.scale")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
@@ -105,7 +107,7 @@ export const RatingQuestionForm = ({
           </div>
         </div>
         <div className="flex-1">
-          <Label htmlFor="subheader">Range</Label>
+          <Label htmlFor="subheader">{t("environments.surveys.edit.range")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
@@ -129,7 +131,7 @@ export const RatingQuestionForm = ({
             id="lowerLabel"
             placeholder="Not good"
             value={question.lowerLabel}
-            label={"Lower Label"}
+            label={t("environments.surveys.edit.lower_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -144,7 +146,7 @@ export const RatingQuestionForm = ({
             id="upperLabel"
             placeholder="Very satisfied"
             value={question.upperLabel}
-            label={"Upper Label"}
+            label={t("environments.surveys.edit.upper_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -162,7 +164,7 @@ export const RatingQuestionForm = ({
             <QuestionFormInput
               id="buttonLabel"
               value={question.buttonLabel}
-              label={`"Next" Button Label`}
+              label={t("environments.surveys.edit.next_button_label")}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}
@@ -183,8 +185,8 @@ export const RatingQuestionForm = ({
             updateQuestion(questionIdx, { isColorCodingEnabled: !question.isColorCodingEnabled })
           }
           htmlId="isColorCodingEnabled"
-          title="Add color coding"
-          description="Add red, orange and green color codes to the options."
+          title={t("environments.surveys.edit.add_color_coding")}
+          description={t("environments.surveys.edit.add_color_coding_description")}
           childBorder
           customContainerClass="p-0 mt-4"
         />

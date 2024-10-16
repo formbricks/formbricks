@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
@@ -31,13 +32,14 @@ export const NPSQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: NPSQuestionFormProps): JSX.Element => {
+  const t = useTranslations();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   return (
     <form>
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -54,7 +56,7 @@ export const NPSQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -79,7 +81,7 @@ export const NPSQuestionForm = ({
             }}>
             {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -89,7 +91,7 @@ export const NPSQuestionForm = ({
           <QuestionFormInput
             id="lowerLabel"
             value={question.lowerLabel}
-            label={"Lower Label"}
+            label={t("environments.surveys.edit.lower_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -103,7 +105,7 @@ export const NPSQuestionForm = ({
           <QuestionFormInput
             id="upperLabel"
             value={question.upperLabel}
-            label={"Upper Label"}
+            label={t("environments.surveys.edit.upper_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             isInvalid={isInvalid}
@@ -120,7 +122,7 @@ export const NPSQuestionForm = ({
           <QuestionFormInput
             id="buttonLabel"
             value={question.buttonLabel}
-            label={`"Next" Button Label`}
+            label={t("environments.surveys.edit.next_button_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             maxLength={48}
@@ -138,8 +140,8 @@ export const NPSQuestionForm = ({
         isChecked={question.isColorCodingEnabled}
         onToggle={() => updateQuestion(questionIdx, { isColorCodingEnabled: !question.isColorCodingEnabled })}
         htmlId="isColorCodingEnabled"
-        title="Add color coding"
-        description="Add red, orange and green color codes to the options."
+        title={t("environments.surveys.edit.add_color_coding")}
+        description={t("environments.surveys.edit.add_color_coding_description")}
         childBorder
         customContainerClass="p-0 mt-4"
       />

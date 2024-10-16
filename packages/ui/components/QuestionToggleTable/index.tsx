@@ -1,4 +1,4 @@
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
+import { useTranslations } from "next-intl";
 import { Switch } from "../Switch";
 
 interface QuestionToggleTableProps {
@@ -33,13 +33,18 @@ export const QuestionToggleTable = ({
   onShowToggle,
   onRequiredToggle,
 }: QuestionToggleTableProps) => {
+  const t = useTranslations();
   return (
     <table className="mt-4 w-1/2 table-fixed">
       <thead>
         <tr className="text-left text-slate-800">
-          <th className="w-1/2 text-sm font-semibold">{capitalizeFirstLetter(type)} Fields</th>
-          <th className="w-1/4 text-sm font-semibold">Show</th>
-          <th className="w-1/4 text-sm font-semibold">Required</th>
+          <th className="w-1/2 text-sm font-semibold">
+            {type === "address"
+              ? t("environments.surveys.edit.address_fields")
+              : t("environments.surveys.edit.contact_fields")}
+          </th>
+          <th className="w-1/4 text-sm font-semibold">{t("common.show")}</th>
+          <th className="w-1/4 text-sm font-semibold">{t("common.required")}</th>
         </tr>
       </thead>
       <tbody>
