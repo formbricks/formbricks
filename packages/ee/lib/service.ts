@@ -1,6 +1,7 @@
 import "server-only";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache, revalidateTag } from "@formbricks/lib/cache";
 import {
@@ -184,53 +185,55 @@ export const getLicenseFeatures = async (): Promise<TEnterpriseLicenseFeatures |
   }
 };
 
-export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> =>
-  await cache(
-    async () => {
-      if (!env.ENTERPRISE_LICENSE_KEY) return null;
-      try {
-        const now = new Date();
-        const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
-        const endOfYear = new Date(now.getFullYear() + 1, 0, 0); // December 31st of the current year
+export const fetchLicense = reactCache(
+  (): Promise<TEnterpriseLicenseDetails | null> =>
+    cache(
+      async () => {
+        if (!env.ENTERPRISE_LICENSE_KEY) return null;
+        try {
+          const now = new Date();
+          const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
+          const endOfYear = new Date(now.getFullYear() + 1, 0, 0); // December 31st of the current year
 
-        const responseCount = await prisma.response.count({
-          where: {
-            createdAt: {
-              gte: startOfYear,
-              lt: endOfYear,
+          const responseCount = await prisma.response.count({
+            where: {
+              createdAt: {
+                gte: startOfYear,
+                lt: endOfYear,
+              },
             },
-          },
-        });
+          });
 
-        const proxyUrl = env.HTTPS_PROXY || env.HTTP_PROXY;
-        const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+          const proxyUrl = env.HTTPS_PROXY || env.HTTP_PROXY;
+          const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 
-        const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
-          body: JSON.stringify({
-            licenseKey: ENTERPRISE_LICENSE_KEY,
-            usage: { responseCount: responseCount },
-          }),
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-          agent,
-        });
+          const res = await fetch("https://ee.formbricks.com/api/licenses/check", {
+            body: JSON.stringify({
+              licenseKey: ENTERPRISE_LICENSE_KEY,
+              usage: { responseCount: responseCount },
+            }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
+            agent,
+          });
 
-        if (res.ok) {
-          const responseJson = (await res.json()) as {
-            data: TEnterpriseLicenseDetails;
-          };
-          return responseJson.data;
+          if (res.ok) {
+            const responseJson = (await res.json()) as {
+              data: TEnterpriseLicenseDetails;
+            };
+            return responseJson.data;
+          }
+
+          return null;
+        } catch (error) {
+          console.error("Error while checking license: ", error);
+          return null;
         }
-
-        return null;
-      } catch (error) {
-        console.error("Error while checking license: ", error);
-        return null;
-      }
-    },
-    [`fetchLicense-${hashedKey}`],
-    { revalidate: 60 * 60 * 24 }
-  )();
+      },
+      [`fetchLicense-${hashedKey}`],
+      { revalidate: 60 * 60 * 24 }
+    )()
+);
 
 export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;

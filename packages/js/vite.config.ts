@@ -10,12 +10,10 @@ const config = () => {
       sourcemap: true,
       lib: {
         // Could also be a dictionary or array of multiple entry points
-        entry: {
-          app: resolve(__dirname, "src/app.ts"),
-          website: resolve(__dirname, "src/website.ts"),
-        },
+        entry: resolve(__dirname, "src/index.ts"),
         name: "formbricksJsWrapper",
         formats: ["es", "cjs"],
+        fileName: "index",
       },
     },
     plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] })],

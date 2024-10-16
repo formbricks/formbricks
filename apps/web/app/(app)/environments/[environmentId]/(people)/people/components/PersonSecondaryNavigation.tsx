@@ -1,5 +1,5 @@
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface PersonSecondaryNavigationProps {
@@ -13,16 +13,14 @@ export const PersonSecondaryNavigation = async ({
   environmentId,
   loading,
 }: PersonSecondaryNavigationProps) => {
-  let currentProductChannel: TProductConfigChannel = null;
+  let product: TProduct | null = null;
 
   if (!loading && environmentId) {
-    const product = await getProductByEnvironmentId(environmentId);
+    product = await getProductByEnvironmentId(environmentId);
 
     if (!product) {
       throw new Error("Product not found");
     }
-
-    currentProductChannel = product.config.channel ?? null;
   }
 
   const navigation = [
@@ -40,8 +38,6 @@ export const PersonSecondaryNavigation = async ({
       id: "attributes",
       label: "Attributes",
       href: `/environments/${environmentId}/attributes`,
-      // hide attributes tab if it's being used in the loading state or if the product's channel is website or link
-      hidden: loading || !!(currentProductChannel && currentProductChannel !== "app"),
     },
   ];
 

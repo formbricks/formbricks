@@ -20,8 +20,8 @@ import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
 export const middleware = async (request: NextRequest) => {
-  // issue with next auth types & Next 15; let's review when new fixes are available
-  const token = await getToken({ req: request });
+  // issue with next auth types; let's review when new fixes are available
+  const token = await getToken({ req: request as any });
 
   if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {
     const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;

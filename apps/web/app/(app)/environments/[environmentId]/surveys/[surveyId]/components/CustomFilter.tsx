@@ -223,7 +223,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.ALL_TIME);
                   setDateRange({ from: undefined, to: getTodayDate() });
@@ -231,7 +230,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                 <p className="text-slate-700">All time</p>
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_7_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
@@ -239,7 +237,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                 <p className="text-slate-700">Last 7 days</p>
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_30_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
@@ -247,7 +244,6 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                 <p className="text-slate-700">Last 30 days</p>
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="hover:ring-0"
                 onClick={() => {
                   setIsDatePickerOpen(true);
                   setFilterRange(FilterDropDownLabels.CUSTOM_RANGE);
@@ -274,28 +270,24 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
 
               <DropdownMenuContent align="start">
                 <DropdownMenuItem
-                  className="hover:ring-0"
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.ALL, "csv");
                   }}>
                   <p className="text-slate-700">All responses (CSV)</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="hover:ring-0"
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.ALL, "xlsx");
                   }}>
                   <p className="text-slate-700">All responses (Excel)</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="hover:ring-0"
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "csv");
                   }}>
                   <p className="text-slate-700">Current selection (CSV)</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="hover:ring-0"
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                   }}>
