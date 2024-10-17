@@ -5,5 +5,11 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami
   version: 20.1.5
-digest: sha256:e619abb446a6491057e46310c25b32377a1c05f25b98e96c14a1d08a5667e64c
-generated: "2024-10-16T11:21:52.475746+03:00"
+- name: nginx
+  repository: https://charts.bitnami.com/bitnami
+  version: 18.2.3
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.16.1
+digest: sha256:9d631d3b9ca31d77e962ede816e65a1b83ffab995df23309bcbfd5e82df24f8d
+generated: "2024-10-17T15:26:54.377021+03:00"

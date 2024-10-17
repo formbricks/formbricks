@@ -1,0 +1,6 @@
+{{- if .Values.certmanager.enabled -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.certmanager.namespace }}
+{{- end }}

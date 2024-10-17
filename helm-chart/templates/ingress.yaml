@@ -1,23 +1,37 @@
-{{- if .Values.traefik.enabled  -}}
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: {{ include "formbricks.fullname" . }}
   labels:
     {{- include "formbricks.labels" . | nindent 4 }}
-  {{- with .Values.traefik.ingressRoute.annotations }}
+  {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`{{ .Values.hostname }}`)
-      kind: Rule
-      services:
-        - name: {{ include "formbricks.fullname" . }}
-          port: {{ .Values.service.port }}
+  ingressClassName: {{ .Values.ingress.className }}
   tls:
-    certResolver: letsencrypt
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "formbricks.fullname" $ }}
+                port: 
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
 {{- end }}
