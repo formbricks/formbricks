@@ -19,16 +19,13 @@ import {
   TSurvey,
   TSurveyQuestionTypeEnum,
   TSurveyQuestions,
-  TSurveySummary,
   ZSurveyQuestions,
 } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
-import { displayCache } from "../display/cache";
-import { deleteDisplay, getDisplayCountBySurveyId } from "../display/service";
-import { documentCache } from "../document/cache";
+import { deleteDisplay } from "../display/service";
 import { createDocument, doesDocumentExistForResponseId } from "../document/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
@@ -36,7 +33,6 @@ import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { deleteFile, putFile } from "../storage/service";
-import { surveyCache } from "../survey/cache";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { getPromptText } from "../utils/ai";
@@ -48,14 +44,11 @@ import {
   calculateTtcTotal,
   doesThisResponseHasAnyOpenTextAnswer,
   extractSurveyDetails,
-  getQuestionWiseSummary,
   getResponseHiddenFields,
   getResponseMeta,
   getResponsePersonAttributes,
   getResponsesFileName,
   getResponsesJson,
-  getSurveySummaryDropOff,
-  getSurveySummaryMeta,
 } from "./utils";
 
 const RESPONSES_PER_PAGE = 10;
@@ -518,65 +511,6 @@ export const getResponses = reactCache(
       [`getResponses-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
-      }
-    )()
-);
-
-export const getSurveySummary = reactCache(
-  (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<TSurveySummary> =>
-    cache(
-      async () => {
-        validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
-
-        try {
-          const survey = await getSurvey(surveyId);
-          if (!survey) {
-            throw new ResourceNotFoundError("Survey", surveyId);
-          }
-
-          const batchSize = 3000;
-          const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-          const filteredResponseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-
-          const hasFilter = totalResponseCount !== filteredResponseCount;
-
-          const pages = Math.ceil(filteredResponseCount / batchSize);
-
-          const responsesArray = await Promise.all(
-            Array.from({ length: pages }, (_, i) => {
-              return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
-            })
-          );
-          const responses = responsesArray.flat();
-
-          const responseIds = hasFilter ? responses.map((response) => response.id) : [];
-
-          const displayCount = await getDisplayCountBySurveyId(surveyId, {
-            createdAt: filterCriteria?.createdAt,
-            ...(hasFilter && { responseIds }),
-          });
-
-          const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
-          const meta = getSurveySummaryMeta(responses, displayCount);
-          const questionWiseSummary = await getQuestionWiseSummary(survey, responses, dropOff);
-
-          return { meta, dropOff, summary: questionWiseSummary };
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
-      {
-        tags: [
-          surveyCache.tag.byId(surveyId),
-          responseCache.tag.bySurveyId(surveyId),
-          displayCache.tag.bySurveyId(surveyId),
-          documentCache.tag.bySurveyId(surveyId),
-        ],
       }
     )()
 );

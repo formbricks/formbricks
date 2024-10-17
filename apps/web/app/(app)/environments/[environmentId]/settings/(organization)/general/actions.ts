@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
