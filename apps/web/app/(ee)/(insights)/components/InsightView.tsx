@@ -7,6 +7,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
 import { InsightSheet } from "@formbricks/ui/components/InsightSheet";
 import {
   Table,
@@ -39,6 +40,7 @@ export const InsightView = ({
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [visibleInsights, setVisibleInsights] = useState(10);
 
   const handleFeedback = (feedback: "positive" | "negative") => {
     formbricks.track("AI Insight Feedback", {
@@ -72,6 +74,10 @@ export const InsightView = ({
   useEffect(() => {
     handleFilterSelect(activeTab);
   }, [insights]);
+
+  const handleLoadMore = () => {
+    setVisibleInsights((prevVisibleInsights) => Math.min(prevVisibleInsights + 10, insights.length));
+  };
 
   return (
     <div className={cn("mt-2")}>
@@ -110,7 +116,7 @@ export const InsightView = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                localInsights.map((insight) => (
+                localInsights.slice(0, visibleInsights).map((insight) => (
                   <TableRow
                     key={insight.id}
                     className="cursor-pointer hover:bg-slate-50"
@@ -141,6 +147,14 @@ export const InsightView = ({
           </Table>
         </TabsContent>
       </Tabs>
+
+      {visibleInsights < localInsights.length && (
+        <div className="flex justify-center py-4">
+          <Button onClick={handleLoadMore} variant="secondary" size="sm">
+            Load more
+          </Button>
+        </div>
+      )}
 
       <InsightSheet
         isOpen={isInsightSheetOpen}

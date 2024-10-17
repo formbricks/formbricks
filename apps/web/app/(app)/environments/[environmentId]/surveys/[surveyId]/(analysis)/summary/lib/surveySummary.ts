@@ -302,7 +302,7 @@ export const getQuestionSummary = async (
             });
           }
         });
-        const insights = await getInsightsBySurveyIdQuestionId(survey.id, question.id);
+        const insights = await getInsightsBySurveyIdQuestionId(survey.id, question.id, 50);
 
         summary.push({
           type: question.type,

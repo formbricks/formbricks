@@ -7,6 +7,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
 import { InsightSheet } from "@formbricks/ui/components/InsightSheet";
 import {
   Table,
@@ -178,9 +179,9 @@ export const InsightView = ({
 
       {hasMore && !isFetching && (
         <div className="flex justify-center py-5">
-          <button onClick={fetchNextPage} className="button-secondary">
+          <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
             Load more
-          </button>
+          </Button>
         </div>
       )}
 

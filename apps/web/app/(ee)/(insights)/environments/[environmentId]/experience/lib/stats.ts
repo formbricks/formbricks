@@ -101,7 +101,6 @@ export const getStats = reactCache(
         tags: [
           responseCache.tag.byEnvironmentId(environmentId),
           documentCache.tag.byEnvironmentId(environmentId),
-          environmentCache.tag.byId(environmentId),
         ],
       }
     )()
