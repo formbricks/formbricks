@@ -1,5 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/components/EditMemberships/OrganizationActions";
+import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
+import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/OrganizationActions";
+import { getIsOrganizationAIReady } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
@@ -52,6 +54,8 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const isLeaveOrganizationDisabled = userMemberships.length <= 1;
   const isUserAdminOrOwner = isAdmin || isOwner;
 
+  const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Organization Settings">
@@ -59,7 +63,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
-          activeId="members"
+          activeId="general"
         />
       </PageHeader>
       <SettingsCard title="Manage members" description="Add or remove members in your organization.">
@@ -95,6 +99,17 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           membershipRole={currentUserMembership?.role}
         />
       </SettingsCard>
+      {isOrganizationAIReady && (
+        <SettingsCard
+          title="Formbricks AI"
+          description="Get personalised insights from your survey responses with Formbricks AI">
+          <AIToggle
+            environmentId={params.environmentId}
+            organization={organization}
+            isAdminOrOwner={isUserAdminOrOwner}
+          />
+        </SettingsCard>
+      )}
       {isMultiOrgEnabled && (
         <SettingsCard
           title="Delete Organization"

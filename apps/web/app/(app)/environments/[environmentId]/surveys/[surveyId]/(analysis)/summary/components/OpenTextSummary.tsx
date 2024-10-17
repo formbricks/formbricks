@@ -68,7 +68,7 @@ export const OpenTextSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
         additionalInfo={
-          isAIEnabled && !questionSummary.insightsEnabled ? (
+          isAIEnabled && questionSummary.insightsEnabled === false ? (
             <div className="flex items-center space-x-2">
               <div className="flex items-center rounded-lg bg-slate-100 p-2">Insights disabled</div>
             </div>

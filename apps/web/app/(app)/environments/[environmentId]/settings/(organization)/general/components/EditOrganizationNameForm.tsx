@@ -1,6 +1,6 @@
 "use client";
 
-import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/actions";
+import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";

@@ -38,6 +38,25 @@ export const updateOrganizationNameAction = authenticatedActionClient
     return await updateOrganization(parsedInput.organizationId, parsedInput.data);
   });
 
+const ZUpdateOrganizationAIEnabledAction = z.object({
+  organizationId: ZId,
+  data: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+});
+
+export const updateOrganizationAIEnabledAction = authenticatedActionClient
+  .schema(ZUpdateOrganizationAIEnabledAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+      data: parsedInput.data,
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["organization", "update"],
+    });
+
+    return await updateOrganization(parsedInput.organizationId, parsedInput.data);
+  });
+
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
   organizationId: ZId,

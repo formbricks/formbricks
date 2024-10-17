@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/actions";
+import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";

@@ -21,6 +21,12 @@ export const EnableInsightsBanner = ({ surveyId, surveyResponseCount }: EnableIn
 
     if (insightGenerationActionResponse?.data) {
       toast.success("Insights have been generated.");
+
+      if (typeof window !== "undefined") {
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
     } else {
       toast.error("No insights found");
     }

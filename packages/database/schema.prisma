@@ -463,6 +463,7 @@ model Organization {
   /// [TeamBilling]
   billing     Json
   invites     Invite[]
+  isAIEnabled Boolean      @default(false)
 }
 
 enum MembershipRole {

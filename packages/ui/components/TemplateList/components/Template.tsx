@@ -31,11 +31,11 @@ export const Template = ({
   return (
     <div
       onClick={() => {
+        const newTemplate = replacePresetPlaceholders(template, product);
         if (noPreview) {
-          createSurvey(template);
+          createSurvey(newTemplate);
           return;
         }
-        const newTemplate = replacePresetPlaceholders(template, product);
         onTemplateClick(newTemplate);
         setActiveTemplate(newTemplate);
       }}
