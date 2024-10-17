@@ -4,6 +4,10 @@ export const convertFloatToNDecimal = (num: number, N: number = 2) => {
   return Math.round(num * Math.pow(10, N)) / Math.pow(10, N);
 };
 
+export const convertFloatTo2Decimal = (num: number) => {
+  return Math.round(num * 100) / 100;
+};
+
 export const constructToastMessage = (
   questionType: TSurveyQuestionTypeEnum,
   filterValue: string,
