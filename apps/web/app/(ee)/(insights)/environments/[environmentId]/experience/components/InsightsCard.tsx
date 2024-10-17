@@ -1,10 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { TDocumentFilterCriteria } from "@formbricks/types/documents";
-import { TInsightFilterCriteria } from "@formbricks/types/insights";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
-import { InsightLoading } from "./InsightLoading";
 import { InsightView } from "./InsightView";
 
 interface InsightsCardProps {
