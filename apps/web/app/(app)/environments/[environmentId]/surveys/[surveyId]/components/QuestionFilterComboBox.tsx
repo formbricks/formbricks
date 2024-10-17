@@ -3,6 +3,7 @@
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
@@ -49,7 +50,7 @@ export const QuestionFilterComboBox = ({
   const commandRef = React.useRef(null);
   const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
-
+  const t = useTranslations();
   // multiple when question type is multi selection
   const isMultiple =
     type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
@@ -92,7 +93,7 @@ export const QuestionFilterComboBox = ({
             )}>
             <div className="flex items-center justify-between">
               {!filterValue ? (
-                <p className="text-slate-400">Select...</p>
+                <p className="text-slate-400">{t("common.select")}...</p>
               ) : (
                 <p className="mr-1 max-w-[50px] truncate text-slate-600 sm:max-w-[80px]">{filterValue}</p>
               )}
@@ -144,7 +145,7 @@ export const QuestionFilterComboBox = ({
               </div>
             )
           ) : (
-            <p className="text-slate-400">Select...</p>
+            <p className="text-slate-400">{t("common.select")}...</p>
           )}
           <div>
             {open ? (
@@ -158,7 +159,7 @@ export const QuestionFilterComboBox = ({
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
               <CommandList>
-                <CommandEmpty>No result found.</CommandEmpty>
+                <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
                 <CommandGroup>
                   {options?.map((o) => (
                     <CommandItem

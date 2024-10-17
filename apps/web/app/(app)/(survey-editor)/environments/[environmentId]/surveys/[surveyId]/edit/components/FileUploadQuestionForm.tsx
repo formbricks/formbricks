@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon, XCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -43,6 +44,7 @@ export const FileUploadQuestionForm = ({
   isFormbricksCloud,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
+  const t = useTranslations();
   const [isMaxSizeError, setMaxSizeError] = useState(false);
   const {
     billingInfo,
@@ -126,7 +128,7 @@ export const FileUploadQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -142,7 +144,7 @@ export const FileUploadQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -166,7 +168,7 @@ export const FileUploadQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -175,8 +177,8 @@ export const FileUploadQuestionForm = ({
           isChecked={question.allowMultipleFiles}
           onToggle={() => updateQuestion(questionIdx, { allowMultipleFiles: !question.allowMultipleFiles })}
           htmlId="allowMultipleFile"
-          title="Allow Multiple Files"
-          description="Let people upload up to 25 files at the same time."
+          title={t("environments.surveys.edit.allow_multiple_files")}
+          description={t("environments.surveys.edit.let_people_upload_up_to_25_files_at_the_same_time")}
           childBorder
           customContainerClass="p-0"></AdvancedOptionToggle>
 
@@ -184,13 +186,13 @@ export const FileUploadQuestionForm = ({
           isChecked={!!question.maxSizeInMB}
           onToggle={handleMaxSizeInMBToggle}
           htmlId="maxFileSize"
-          title="Max file size"
-          description="Limit the maximum file size."
+          title={t("environments.surveys.edit.max_file_size")}
+          description={t("environments.surveys.edit.limit_the_maximum_file_size")}
           childBorder
           customContainerClass="p-0">
           <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-700">
-              Limit upload file size to
+              {t("environments.surveys.edit.limit_upload_file_size_to")}
               <Input
                 autoFocus
                 type="number"
@@ -200,7 +202,9 @@ export const FileUploadQuestionForm = ({
                   const parsedValue = parseInt(e.target.value, 10);
 
                   if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
-                    toast.error(`Max file size limit is ${maxSizeInMBLimit} MB`);
+                    toast.error(
+                      `${t("environments.surveys.edit.max_file_size_limit_is")} ${maxSizeInMBLimit} MB`
+                    );
                     setMaxSizeError(true);
                     updateQuestion(questionIdx, { maxSizeInMB: maxSizeInMBLimit });
                     return;
@@ -214,12 +218,13 @@ export const FileUploadQuestionForm = ({
             </p>
             {isMaxSizeError && (
               <p className="text-xs text-red-500">
-                Max file size limit is {maxSizeInMBLimit} MB. If you need more, please{" "}
+                {t("environments.surveys.edit.max_file_size_limit_is")} {maxSizeInMBLimit} MB.{" "}
+                {t("environments.surveys.edit.if_you_need_more_please")}
                 <Link
                   className="underline"
                   target="_blank"
                   href={`/environments/${localSurvey.environmentId}/settings/billing`}>
-                  upgrade your plan.
+                  {t("environments.surveys.edit.upgrade_your_plan")}
                 </Link>
               </p>
             )}
@@ -232,8 +237,8 @@ export const FileUploadQuestionForm = ({
             updateQuestion(questionIdx, { allowedFileExtensions: checked ? [] : undefined })
           }
           htmlId="limitFileType"
-          title="Limit file types"
-          description="Control which file types can be uploaded."
+          title={t("environments.surveys.edit.limit_file_types")}
+          description={t("environments.surveys.edit.control_which_file_types_can_be_uploaded")}
           childBorder
           customContainerClass="p-0">
           <div className="p-4">
@@ -261,7 +266,7 @@ export const FileUploadQuestionForm = ({
                 type="text"
               />
               <Button size="sm" variant="secondary" onClick={(e) => addExtension(e)}>
-                Allow file type
+                {t("environments.surveys.edit.allow_file_type")}
               </Button>
             </div>
           </div>

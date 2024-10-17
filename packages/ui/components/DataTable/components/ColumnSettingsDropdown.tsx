@@ -1,5 +1,6 @@
 import { Column } from "@tanstack/react-table";
 import { EllipsisVerticalIcon, EyeOffIcon, SettingsIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 
 interface ColumnSettingsDropdownProps<T> {
@@ -11,6 +12,7 @@ export const ColumnSettingsDropdown = <T,>({
   column,
   setIsTableSettingsModalOpen,
 }: ColumnSettingsDropdownProps<T>) => {
+  const t = useTranslations();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -26,7 +28,7 @@ export const ColumnSettingsDropdown = <T,>({
           }}
           icon={<EyeOffIcon className="h-4 w-4" />}>
           <div className="flex items-center space-x-2">
-            <span>Hide column</span>
+            <span>{t("common.hide_column")}</span>
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -34,7 +36,7 @@ export const ColumnSettingsDropdown = <T,>({
           onClick={() => setIsTableSettingsModalOpen(true)}
           icon={<SettingsIcon className="h-4 w-4" />}>
           <div className="flex items-center space-x-2">
-            <span>Table settings</span>
+            <span>{t("common.table_settings")}</span>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

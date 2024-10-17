@@ -9,6 +9,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -47,7 +48,7 @@ export const EditEndingCard = ({
   isFormbricksCloud,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
-
+  const t = useTranslations();
   const isRedirectToUrlDisabled = isFormbricksCloud
     ? plan === "free" && endingCard.type !== "redirectToUrl"
     : false;
@@ -171,12 +172,15 @@ export const EditEndingCard = ({
                             attributeClasses
                           )[selectedLanguageCode]
                         )
-                      : "Ending card")}
-                  {endingCard.type === "redirectToUrl" && (endingCard.label || "Redirect to Url")}
+                      : t("environments.surveys.edit.ending_card"))}
+                  {endingCard.type === "redirectToUrl" &&
+                    (endingCard.label || t("environments.surveys.edit.redirect_to_url"))}
                 </p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {endingCard.type === "endScreen" ? "Ending card" : "Redirect to Url"}
+                    {endingCard.type === "endScreen"
+                      ? t("environments.surveys.edit.ending_card")
+                      : t("environments.surveys.edit.redirect_to_url")}
                   </p>
                 )}
               </div>
@@ -201,7 +205,7 @@ export const EditEndingCard = ({
         <Collapsible.CollapsibleContent className="mt-3 px-4 pb-6">
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
-            tooltipContent={"Redirect To Url is not available on free plan"}
+            tooltipContent={t("environments.surveys.edit.redirect_to_url_not_available_on_free_plan")}
             triggerClass="w-full">
             <OptionsSwitch
               options={endingCardTypes}

@@ -63,7 +63,8 @@
     "sharp": "0.33.5",
     "ua-parser-js": "1.0.39",
     "webpack": "5.95.0",
-    "xlsx": "0.18.5"
+    "xlsx": "0.18.5",
+    "next-intl": "3.20.0"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

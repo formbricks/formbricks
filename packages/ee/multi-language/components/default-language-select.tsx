@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { DefaultTag } from "@formbricks/ui/components/DefaultTag";
@@ -23,9 +24,12 @@ export function DefaultLanguageSelect({
   product,
   setConfirmationModalInfo,
 }: DefaultLanguageSelectProps) {
+  const t = useTranslations();
   return (
     <div className="space-y-4">
-      <p className="text-sm">1. Choose the default language for this survey:</p>
+      <p className="text-sm">
+        {t("environments.surveys.edit.1_choose_the_default_language_for_this_survey")}:
+      </p>
       <div className="flex items-center space-x-4">
         <div className="w-48">
           <Select
@@ -34,9 +38,15 @@ export function DefaultLanguageSelect({
             onValueChange={(languageCode) => {
               setConfirmationModalInfo({
                 open: true,
-                title: `Set ${getLanguageLabel(languageCode)} as default language`,
-                text: `Once set, the default language for this survey can only be changed by disabling the multi-language option and deleting all translations.`,
-                buttonText: `Set ${getLanguageLabel(languageCode)} as default language`,
+                title: t(`environments.surveys.edit.set_language_as_default_language`, {
+                  language: getLanguageLabel(languageCode),
+                }),
+                text: t(
+                  "environments.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
+                ),
+                buttonText: t("environments.surveys.edit.set_language_as_default_language", {
+                  language: getLanguageLabel(languageCode),
+                }),
                 onConfirm: () => {
                   handleDefaultLanguageChange(languageCode);
                 },

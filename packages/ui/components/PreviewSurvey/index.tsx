@@ -2,6 +2,7 @@
 
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { TJsFileUploadParams } from "@formbricks/types/js";
@@ -70,7 +71,7 @@ export const PreviewSurvey = ({
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-
+  const t = useTranslations();
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
@@ -322,7 +323,11 @@ export const PreviewSurvey = ({
                   aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
+                <p>
+                  {previewType === "modal"
+                    ? t("environments.surveys.edit.your_web_app")
+                    : t("common.preview")}
+                </p>
 
                 <div className="flex items-center">
                   {isFullScreenPreview ? (

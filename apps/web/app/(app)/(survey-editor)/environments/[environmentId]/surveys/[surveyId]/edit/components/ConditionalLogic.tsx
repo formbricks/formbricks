@@ -13,6 +13,7 @@ import {
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -42,6 +43,7 @@ export function ConditionalLogic({
   questionIdx,
   updateQuestion,
 }: ConditionalLogicProps) {
+  const t = useTranslations();
   const transformedSurvey = useMemo(() => {
     let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default", attributeClasses);
     modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default", attributeClasses);
@@ -115,7 +117,7 @@ export function ConditionalLogic({
   return (
     <div className="mt-4">
       <Label className="flex gap-2">
-        Conditional Logic
+        {t("environments.surveys.edit.conditional_logic")}
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
@@ -145,7 +147,7 @@ export function ConditionalLogic({
                       duplicateLogic(logicItemIdx);
                     }}
                     icon={<CopyIcon className="h-4 w-4" />}>
-                    Duplicate
+                    {t("common.duplicate")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={logicItemIdx === 0}
@@ -153,7 +155,7 @@ export function ConditionalLogic({
                       moveLogic(logicItemIdx, logicItemIdx - 1);
                     }}
                     icon={<ArrowUpIcon className="h-4 w-4" />}>
-                    Move up
+                    {t("common.move_up")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={logicItemIdx === (question.logic ?? []).length - 1}
@@ -161,14 +163,14 @@ export function ConditionalLogic({
                       moveLogic(logicItemIdx, logicItemIdx + 1);
                     }}
                     icon={<ArrowDownIcon className="h-4 w-4" />}>
-                    Move down
+                    {t("common.move_down")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
                       handleRemoveLogic(logicItemIdx);
                     }}
                     icon={<TrashIcon className="h-4 w-4" />}>
-                    Remove
+                    {t("common.remove")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -187,7 +189,7 @@ export function ConditionalLogic({
           variant="secondary"
           EndIcon={PlusIcon}
           onClick={addLogic}>
-          Add logic
+          {t("environments.surveys.edit.add_logic")}
         </Button>
       </div>
     </div>

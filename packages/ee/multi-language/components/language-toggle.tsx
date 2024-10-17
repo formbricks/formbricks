@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import type { TLanguage } from "@formbricks/types/product";
 import { Label } from "@formbricks/ui/components/Label";
@@ -11,6 +12,7 @@ interface LanguageToggleProps {
 }
 
 export function LanguageToggle({ language, isChecked, onToggle, onEdit }: LanguageToggleProps) {
+  const t = useTranslations();
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex items-center space-x-4">
@@ -27,7 +29,7 @@ export function LanguageToggle({ language, isChecked, onToggle, onEdit }: Langua
         </Label>
         {isChecked ? (
           <p className="cursor-pointer text-xs text-slate-600 underline" onClick={onEdit}>
-            Edit {getLanguageLabel(language.code)} translations
+            {t("environments.surveys.edit.edit_translations", { language: getLanguageLabel(language.code) })}
           </p>
         ) : null}
       </div>

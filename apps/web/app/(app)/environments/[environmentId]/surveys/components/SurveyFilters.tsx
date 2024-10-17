@@ -3,6 +3,7 @@
 import { SortOption } from "@/app/(app)/environments/[environmentId]/surveys/components/SortOption";
 import { initialFilters } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
 import { ChevronDownIcon, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDebounce } from "react-use";
 import { TProductConfigChannel } from "@formbricks/types/product";
@@ -61,7 +62,7 @@ export const SurveyFilters = ({
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
-
+  const t = useTranslations();
   useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 800, [name]);
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
@@ -121,12 +122,12 @@ export const SurveyFilters = ({
         <SearchBar
           value={name}
           onChange={setName}
-          placeholder={"Search by survey name"}
+          placeholder={t("environments.surveys.search_by_survey_name")}
           className="border-slate-700"
         />
         <div>
           <SurveyFilterDropdown
-            title="Created By"
+            title={t("common.created_by")}
             id="createdBy"
             options={creatorOptions}
             selectedOptions={createdBy}
@@ -137,7 +138,7 @@ export const SurveyFilters = ({
         </div>
         <div>
           <SurveyFilterDropdown
-            title="Status"
+            title={t("common.status")}
             id="status"
             options={statusOptions}
             selectedOptions={status}
@@ -149,7 +150,7 @@ export const SurveyFilters = ({
         {currentProductChannel !== "link" && (
           <div>
             <SurveyFilterDropdown
-              title="Type"
+              title={t("common.type")}
               id="type"
               options={typeOptions}
               selectedOptions={type}
@@ -170,7 +171,7 @@ export const SurveyFilters = ({
             className="h-8"
             EndIcon={X}
             endIconClassName="h-4 w-4">
-            Clear Filters
+            {t("common.clear_filters")}
           </Button>
         )}
       </div>
@@ -182,7 +183,7 @@ export const SurveyFilters = ({
             <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
                 <span className="text-sm">
-                  Sort by: {sortOptions.find((option) => option.value === sortBy)?.label}
+                  {t("common.sort_by")}: {sortOptions.find((option) => option.value === sortBy)?.label}
                 </span>
                 <ChevronDownIcon className="ml-2 h-4 w-4" />
               </div>

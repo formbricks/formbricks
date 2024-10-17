@@ -1,4 +1,5 @@
 import { Terminal } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
 import { FormControl, FormField, FormItem, FormLabel } from "../../Form";
 import { Input } from "../../Input";
@@ -10,7 +11,7 @@ interface CodeActionFormProps {
 
 export const CodeActionForm = ({ form, isEdit }: CodeActionFormProps) => {
   const { control, watch } = form;
-
+  const t = useTranslations();
   return (
     <>
       <div className="col-span-1">
@@ -19,12 +20,12 @@ export const CodeActionForm = ({ form, isEdit }: CodeActionFormProps) => {
           name="key"
           render={({ field, fieldState: { error } }) => (
             <FormItem>
-              <FormLabel htmlFor="codeActionKeyInput">Key</FormLabel>
+              <FormLabel htmlFor="codeActionKeyInput">{t("common.key")}</FormLabel>
 
               <FormControl>
                 <Input
                   id="codeActionKeyInput"
-                  placeholder="e.g. download_cta_click_on_home"
+                  placeholder={t("environments.actions.eg_download_cta_click_on_home")}
                   {...field}
                   className="mb-2 w-1/2"
                   value={field.value ?? ""}
@@ -39,15 +40,15 @@ export const CodeActionForm = ({ form, isEdit }: CodeActionFormProps) => {
       </div>
       <Alert>
         <Terminal className="h-4 w-4" />
-        <AlertTitle>How do Code Actions work?</AlertTitle>
+        <AlertTitle>{t("environments.actions.how_do_code_actions_work")}</AlertTitle>
         <AlertDescription>
-          You can track code action anywhere in your app using{" "}
+          {t("environments.actions.you_can_track_code_action_anywhere_in_your_app_using")}
           <span className="rounded bg-slate-100 px-2 py-1 text-xs">
             formbricks.track(&quot;{watch("key")}&quot;)
           </span>{" "}
-          in your code. Read more in our{" "}
+          {t("environments.actions.in_your_code_read_more_in_our")}{" "}
           <a href="https://formbricks.com/docs/actions/code" target="_blank" className="underline">
-            docs
+            {t("common.docs")}
           </a>
           .
         </AlertDescription>

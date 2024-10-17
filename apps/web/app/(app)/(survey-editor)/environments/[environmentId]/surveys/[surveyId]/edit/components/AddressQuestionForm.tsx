@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -32,36 +33,36 @@ export const AddressQuestionForm = ({
   attributeClasses,
 }: AddressQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
-
+  const t = useTranslations();
   const fields = [
     {
       id: "addressLine1",
-      label: "Address Line 1",
+      label: t("environments.surveys.edit.address_line_1"),
       ...question.addressLine1,
     },
     {
       id: "addressLine2",
-      label: "Address Line 2",
+      label: t("environments.surveys.edit.address_line_2"),
       ...question.addressLine2,
     },
     {
       id: "city",
-      label: "City",
+      label: t("environments.surveys.edit.city"),
       ...question.city,
     },
     {
       id: "state",
-      label: "State",
+      label: t("environments.surveys.edit.state"),
       ...question.state,
     },
     {
       id: "zip",
-      label: "Zip",
+      label: t("environments.surveys.edit.zip"),
       ...question.zip,
     },
     {
       id: "country",
-      label: "Country",
+      label: t("environments.surveys.edit.country"),
       ...question.country,
     },
   ];
@@ -96,7 +97,7 @@ export const AddressQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -113,7 +114,7 @@ export const AddressQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -137,7 +138,7 @@ export const AddressQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
 

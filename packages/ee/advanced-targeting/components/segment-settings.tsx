@@ -1,6 +1,7 @@
 "use client";
 
 import { FilterIcon, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -32,7 +33,7 @@ export function SegmentSettings({
   segments,
 }: TSegmentSettingsTabProps) {
   const router = useRouter();
-
+  const t = useTranslations();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegment);
 
@@ -135,7 +136,7 @@ export function SegmentSettings({
         <div className="flex flex-col overflow-auto rounded-lg bg-white">
           <div className="flex w-full items-center gap-4">
             <div className="flex w-1/2 flex-col gap-2">
-              <label className="text-sm font-medium text-slate-900">Title</label>
+              <label className="text-sm font-medium text-slate-900">{t("common.title")}</label>
               <div className="relative flex flex-col gap-1">
                 <Input
                   className="w-auto"
@@ -145,14 +146,14 @@ export function SegmentSettings({
                       title: e.target.value,
                     }));
                   }}
-                  placeholder="Ex. Power Users"
+                  placeholder={t("environments.segments.ex_power_users")}
                   value={segment.title}
                 />
               </div>
             </div>
 
             <div className="flex w-1/2 flex-col gap-2">
-              <label className="text-sm font-medium text-slate-900">Description</label>
+              <label className="text-sm font-medium text-slate-900">{t("common.description")}</label>
               <div className="relative flex flex-col gap-1">
                 <Input
                   className={cn("w-auto")}
@@ -162,7 +163,7 @@ export function SegmentSettings({
                       description: e.target.value,
                     }));
                   }}
-                  placeholder="Ex. Power Users"
+                  placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                   value={segment.description ?? ""}
                 />
               </div>
@@ -174,7 +175,9 @@ export function SegmentSettings({
             {segment.filters.length === 0 && (
               <div className="-mb-2 flex items-center gap-1">
                 <FilterIcon className="h-5 w-5 text-slate-700" />
-                <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
+                <h3 className="text-sm font-medium text-slate-700">
+                  {t("environments.segments.add_your_first_filter_to_get_started")}
+                </h3>
               </div>
             )}
 
@@ -194,7 +197,7 @@ export function SegmentSettings({
                 }}
                 size="sm"
                 variant="secondary">
-                Add Filter
+                {t("common.add_filter")}
               </Button>
             </div>
 
@@ -219,7 +222,7 @@ export function SegmentSettings({
               }}
               type="button"
               variant="warn">
-              Delete
+              {t("common.delete")}
             </Button>
             <Button
               disabled={isSaveDisabled}
@@ -228,7 +231,7 @@ export function SegmentSettings({
                 handleUpdateSegment();
               }}
               type="submit">
-              Save changes
+              {t("common.save_changes")}
             </Button>
 
             {isDeleteSegmentModalOpen ? (

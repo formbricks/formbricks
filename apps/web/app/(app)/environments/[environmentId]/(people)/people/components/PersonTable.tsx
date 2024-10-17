@@ -1,3 +1,5 @@
+"use client";
+
 import { generatePersonTableColumns } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTableColumn";
 import {
   DndContext,
@@ -12,6 +14,7 @@ import {
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -54,9 +57,10 @@ export const PersonTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
+  const t = useTranslations();
   // Generate columns
   const columns = useMemo(
-    () => generatePersonTableColumns(isExpanded ?? false, searchValue),
+    () => generatePersonTableColumns(isExpanded ?? false, searchValue, t),
     [isExpanded, searchValue]
   );
 
@@ -157,7 +161,11 @@ export const PersonTable = ({
 
   return (
     <div className="w-full">
-      <SearchBar value={searchValue} onChange={setSearchValue} placeholder="Search person" />
+      <SearchBar
+        value={searchValue}
+        onChange={setSearchValue}
+        placeholder={t("environments.people.search_person")}
+      />
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
@@ -222,7 +230,7 @@ export const PersonTable = ({
               {table.getRowModel().rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
+                    {t("common.no_results")}
                   </TableCell>
                 </TableRow>
               )}

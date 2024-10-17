@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
 import { TProductStyling } from "@formbricks/types/product";
@@ -32,6 +33,7 @@ export const BackgroundStylingCard = ({
   isUnsplashConfigured,
   form,
 }: BackgroundStylingCardProps) => {
+  const t = useTranslations();
   return (
     <Collapsible.Root
       open={open}
@@ -62,12 +64,12 @@ export const BackgroundStylingCard = ({
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
-                Background Styling
+                {t("environments.surveys.edit.background_styling")}
               </p>
               {isSettingsPage && <Badge text="Link Surveys" type="gray" size="normal" />}
             </div>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
-              Change the background to a color, image or animation.
+              {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}
             </p>
           </div>
         </div>
@@ -81,8 +83,10 @@ export const BackgroundStylingCard = ({
             render={({ field }) => (
               <FormItem>
                 <div>
-                  <FormLabel>Change background</FormLabel>
-                  <FormDescription>Pick a background from our library or upload your own.</FormDescription>
+                  <FormLabel>{t("environments.surveys.edit.change_background")}</FormLabel>
+                  <FormDescription>
+                    {t("environments.surveys.edit.pick_a_background_from_our_library_or_upload_your_own")}
+                  </FormDescription>
                 </div>
 
                 <FormControl>
@@ -115,8 +119,10 @@ export const BackgroundStylingCard = ({
                   render={({ field }) => (
                     <FormItem>
                       <div>
-                        <FormLabel>Brightness</FormLabel>
-                        <FormDescription>Darken or lighten background of your choice.</FormDescription>
+                        <FormLabel>{t("environments.surveys.edit.brightness")}</FormLabel>
+                        <FormDescription>
+                          {t("environments.surveys.edit.darken_or_lighten_background_of_your_choice")}
+                        </FormDescription>
                       </div>
 
                       <FormControl>

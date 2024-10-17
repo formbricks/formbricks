@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
@@ -33,6 +34,7 @@ export const MatrixQuestionForm = ({
   attributeClasses,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
+  const t = useTranslations();
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
@@ -82,17 +84,17 @@ export const MatrixQuestionForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: "Keep current order",
+      label: t("environments.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: "Randomize all",
+      label: t("environments.surveys.edit.randomize_all"),
       show: true,
     },
     exceptLast: {
       id: "exceptLast",
-      label: "Randomize all except last option",
+      label: t("environments.surveys.edit.randomize_all_except_last"),
       show: true,
     },
   };
@@ -102,7 +104,7 @@ export const MatrixQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -118,7 +120,7 @@ export const MatrixQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -142,14 +144,14 @@ export const MatrixQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
       <div className="mt-3 grid grid-cols-2 gap-4">
         <div>
           {/* Rows section */}
-          <Label htmlFor="rows">Rows</Label>
+          <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
           <div>
             {question.rows.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "row")}>
@@ -185,13 +187,13 @@ export const MatrixQuestionForm = ({
                 e.preventDefault();
                 handleAddLabel("row");
               }}>
-              <span>Add row</span>
+              <span>{t("environments.surveys.edit.add_row")}</span>
             </Button>
           </div>
         </div>
         <div>
           {/* Columns section */}
-          <Label htmlFor="columns">Columns</Label>
+          <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
           <div>
             {question.columns.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "column")}>
@@ -227,7 +229,7 @@ export const MatrixQuestionForm = ({
                 e.preventDefault();
                 handleAddLabel("column");
               }}>
-              <span>Add column</span>
+              <span>{t("environments.surveys.edit.add_column")}</span>
             </Button>
           </div>
           <div className="mt-3 flex flex-1 items-center justify-end gap-2">

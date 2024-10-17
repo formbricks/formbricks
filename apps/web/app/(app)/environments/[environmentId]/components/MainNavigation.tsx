@@ -27,6 +27,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -81,7 +82,7 @@ export const MainNavigation = ({
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
-
+  const t = useTranslations();
   const [currentOrganizationName, setCurrentOrganizationName] = useState("");
   const [currentOrganizationId, setCurrentOrganizationId] = useState("");
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
@@ -159,14 +160,14 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: "Surveys",
+        name: t("common.surveys"),
         href: `/environments/${environment.id}/surveys`,
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
         isHidden: false,
       },
       {
-        name: "People",
+        name: t("common.people"),
         href: `/environments/${environment.id}/people`,
         icon: UserIcon,
         isActive:
@@ -175,20 +176,20 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
-        name: "Actions",
+        name: t("common.actions"),
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
       },
       {
-        name: "Integrations",
+        name: t("common.integrations"),
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),
         isHidden: isViewer,
       },
       {
-        name: "Configuration",
+        name: t("common.configuration"),
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
