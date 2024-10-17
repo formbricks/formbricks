@@ -2,10 +2,13 @@
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- CreateEnum
-CREATE TYPE "InsightCategory" AS ENUM ('featureRequest', 'complaint', 'praise');
+CREATE TYPE "InsightCategory" AS ENUM ('featureRequest', 'complaint', 'praise', 'other');
 
 -- CreateEnum
 CREATE TYPE "Sentiment" AS ENUM ('positive', 'negative', 'neutral');
+
+-- AlterTable
+ALTER TABLE "Organization" ADD COLUMN     "isAIEnabled" BOOLEAN NOT NULL DEFAULT false;
 
 -- CreateTable
 CREATE TABLE "Insight" (
