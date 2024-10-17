@@ -4,7 +4,6 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { documentCache } from "@formbricks/lib/document/cache";
-import { environmentCache } from "@formbricks/lib/environment/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";

@@ -3,7 +3,6 @@
 import { UserIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import formbricks from "@formbricks/js";
-import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
