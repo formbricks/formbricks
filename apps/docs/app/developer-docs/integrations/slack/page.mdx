@@ -8,7 +8,10 @@ import LinkWithQuestions from "./images/link-with-questions.webp";
 import ListLinkedSurveys from "./images/list-linked-surveys.webp";
 import SlackAuth from "./images/slack-auth.webp";
 import SlackConnected from "./images/slack-connected.webp";
-
+import AddSlackBot1 from "./images/add-slack-bot-1.webp";
+import AddSlackBot2 from "./images/add-slack-bot-2.webp";
+import AddSlackBot3 from "./images/add-slack-bot-3.webp";
+import AddSlackBot4 from "./images/add-slack-bot-4.webp";
 export const metadata = {
   title: "Slack",
   description:
@@ -69,7 +72,32 @@ The slack integration allows you to automatically send responses to a Slack chan
   channel in the Slack workspace you integrated.
 </Note>
 
-5. Add your bot to the Slack channel you want to link
+5. In order to make your channel available in channel dropdown, you need to add formbricks integration bot to the channel you want to link. You can do this by going to channel settings -> Integrations -> Add apps -> Search for "Formbricks" -> Select the bot -> Add.
+
+<MdxImage
+  src={AddSlackBot1}  
+  alt="Click on three dot at top right of the channel"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+<MdxImage
+  src={AddSlackBot2}
+  alt="Select Edit Settings"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+<MdxImage
+  src={AddSlackBot3}
+  alt="Navigate to Integrations"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+<MdxImage
+  src={AddSlackBot4}
+  alt="Add Formbricks Bot"
+  quality="100"   
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 6. Now click on the "Link channel" button to link a Slack channel with Formbricks and a modal will open up.
 
