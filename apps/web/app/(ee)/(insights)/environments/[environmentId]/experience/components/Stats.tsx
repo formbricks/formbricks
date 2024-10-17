@@ -38,13 +38,13 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
     };
 
     getData();
-  }, [statsFrom]);
+  }, [environmentId, statsFrom]);
 
   const statsData = [
     {
       key: "sentimentScore",
       title: "Sentiment Score",
-      value: stats.sentimentScore ? `${Math.round(stats.sentimentScore * 100)}%` : "-",
+      value: stats.sentimentScore ? `${Math.floor(stats.sentimentScore * 100)}%` : "-",
       icon: GaugeIcon,
       width: "w-20",
     },

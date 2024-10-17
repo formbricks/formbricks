@@ -1417,6 +1417,7 @@ export const generateInsightsForSurvey = async (surveyId: string): Promise<Boole
       },
       select: {
         id: true,
+        environmentId: true,
         questions: true,
       },
     });
@@ -1469,7 +1470,7 @@ export const generateInsightsForSurvey = async (surveyId: string): Promise<Boole
       },
     });
 
-    surveyCache.revalidate({ id: surveyId });
+    surveyCache.revalidate({ id: surveyId, environmentId: survey.environmentId });
 
     if (insightsEnabledQuestionIds.length > 0) {
       await generateInsightsForSurveyResponses(updatedSurvey);

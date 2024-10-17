@@ -36,20 +36,20 @@ export const ExperiencePage = ({
         type="single"
         value={statsPeriod}
         onValueChange={(value) => value && setStatsPeriod(value as TStatsPeriod)}>
-        <ToggleGroupItem value="all" aria-label="Toggle all">
-          All
-        </ToggleGroupItem>
         <ToggleGroupItem value="day" aria-label="Toggle day">
-          Day
+          Today
         </ToggleGroupItem>
         <ToggleGroupItem value="week" aria-label="Toggle week">
-          Week
+          This week
         </ToggleGroupItem>
         <ToggleGroupItem value="month" aria-label="Toggle month">
-          Month
+          This month
         </ToggleGroupItem>
         <ToggleGroupItem value="quarter" aria-label="Toggle quarter">
-          Quarter
+          This quarter
+        </ToggleGroupItem>
+        <ToggleGroupItem value="all" aria-label="Toggle all">
+          All time
         </ToggleGroupItem>
       </ToggleGroup>
       <ExperiencePageStats statsFrom={statsFrom} environmentId={environment.id} />

@@ -66,10 +66,10 @@ export const AIToggle = ({ organization, isAdminOrOwner }: AIToggleProps) => {
           }}
         />
       </div>
-      <div className="text-xs italic">
+      <div className="mt-3 text-xs text-slate-600">
         By activating Formbricks AI, you agree to the updated{" "}
         <Link
-          className="font-semibold hover:underline"
+          className="underline"
           href={"https://formbricks.com/privacy-policy"}
           rel="noreferrer"
           target="_blank">
