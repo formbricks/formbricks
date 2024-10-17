@@ -39,7 +39,7 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
             <PlusIcon className="h-5 w-5 text-white" />
           </div>
           <div className="px-4 py-3">
-            <p className="text-sm font-semibold">Add Question</p>
+            <p className="text-sm font-semibold">Add question</p>
             <p className="mt-1 text-xs text-slate-500">Add a new question to your survey</p>
           </div>
         </div>

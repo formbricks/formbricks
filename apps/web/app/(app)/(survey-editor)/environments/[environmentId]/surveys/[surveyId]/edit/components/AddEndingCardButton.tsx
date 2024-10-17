@@ -18,7 +18,7 @@ export const AddEndingCardButton = ({ localSurvey, addEndingCard }: AddEndingCar
         <PlusIcon className="h-6 w-6 text-white" />
       </div>
       <div className="px-4 py-3 text-sm">
-        <p className="font-semibold">Add Ending</p>
+        <p className="font-semibold">Add ending</p>
       </div>
     </div>
   );
