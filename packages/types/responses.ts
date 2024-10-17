@@ -206,12 +206,12 @@ export const ZResponseFilterCriteria = z.object({
     .optional(),
 });
 
-export const ZResponsePerson = z.object({
+export const ZResponseContact = z.object({
   id: ZId,
   userId: z.string(),
 });
 
-export type TResponsePerson = z.infer<typeof ZResponsePerson>;
+export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
@@ -256,7 +256,7 @@ export const ZResponse = z.object({
   updatedAt: z.date(),
   surveyId: z.string().cuid2(),
   displayId: z.string().nullish(),
-  person: ZResponsePerson.nullable(),
+  person: ZResponseContact.nullable(),
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
@@ -351,7 +351,7 @@ export const ZResponseTableData = z.object({
   language: z.string().nullable(),
   responseData: ZResponseData,
   variables: z.record(z.union([z.string(), z.number()])),
-  person: ZResponsePerson.nullable(),
+  person: ZResponseContact.nullable(),
   personAttributes: ZResponsePersonAttributes,
 });
 

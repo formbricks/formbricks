@@ -3,6 +3,7 @@
 import { debounce } from "lodash";
 import { useEffect, useMemo, useState } from "react";
 import React from "react";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { getContactAttributeKeysAction, getContactsAction } from "../actions";
@@ -21,14 +22,13 @@ export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewPr
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
-  const [environmentAttributes, setEnvironmentAttributes] = useState([]);
+  const [environmentAttributes, setEnvironmentAttributes] = useState<TContactAttributeKey[]>([]);
 
   // Fetch environment attributes
   useEffect(() => {
     const fetchAttributes = async () => {
       setIsAttributesLoaded(false);
       try {
-        console.log("Fetching attributes for environment", environment.id);
         const environmentAttributesResponse = await getContactAttributeKeysAction({
           environmentId: environment.id,
         });
@@ -55,7 +55,6 @@ export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewPr
     const fetchContacts = async () => {
       setIsContactsLoaded(false);
       try {
-        console.log("Fetching contacts for environment", environment.id);
         setHasMore(true);
         const contactsResponse = await getContactsAction({
           environmentId: environment.id,

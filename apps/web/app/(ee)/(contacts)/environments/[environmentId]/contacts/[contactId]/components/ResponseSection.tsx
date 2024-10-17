@@ -1,28 +1,28 @@
-import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseTimeline";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
+import { ResponseTimeline } from "./ResponseTimeline";
 
 interface ResponseSectionProps {
   environment: TEnvironment;
-  personId: string;
+  contactId: string;
   environmentTags: TTag[];
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const ResponseSection = async ({
   environment,
-  personId,
+  contactId,
   environmentTags,
-  attributeClasses,
+  contactAttributeKeys,
 }: ResponseSectionProps) => {
-  const responses = await getResponsesByContactId(personId);
+  const responses = await getResponsesByContactId(contactId);
   const surveyIds = responses?.map((response) => response.surveyId) || [];
   const surveys: TSurvey[] = surveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
   const session = await getServerSession(authOptions);
@@ -48,7 +48,7 @@ export const ResponseSection = async ({
       responses={responses}
       environment={environment}
       environmentTags={environmentTags}
-      attributeClasses={attributeClasses}
+      contactAttributeKeys={contactAttributeKeys}
     />
   );
 };

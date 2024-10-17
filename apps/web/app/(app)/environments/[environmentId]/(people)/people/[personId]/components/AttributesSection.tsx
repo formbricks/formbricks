@@ -1,6 +1,6 @@
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPerson } from "@formbricks/lib/person/service";
-import { getResponsesByPersonId } from "@formbricks/lib/response/service";
+import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 
 export const AttributesSection = async ({ personId }: { personId: string }) => {
@@ -9,7 +9,7 @@ export const AttributesSection = async ({ personId }: { personId: string }) => {
     throw new Error("No such person found");
   }
 
-  const responses = await getResponsesByPersonId(personId);
+  const responses = await getResponsesByContactId(personId);
 
   const numberOfResponses = responses?.length || 0;
 

@@ -33,7 +33,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     responseCache.revalidate({
       id: responseId,
       surveyId: response?.surveyId,
-      personId: response?.person?.id,
+      contactId: response?.person?.id,
     });
 
     tagOnResponseCache.revalidate({
@@ -71,7 +71,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
     responseCache.revalidate({
       id: responseId,
       surveyId: response?.surveyId,
-      personId: response?.person?.id,
+      contactId: response?.person?.id,
     });
 
     tagOnResponseCache.revalidate({

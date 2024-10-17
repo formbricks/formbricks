@@ -9,6 +9,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
+  TResponseContact,
   TResponseFilterCriteria,
   TResponseInput,
   TResponseUpdateInput,
@@ -64,10 +65,12 @@ export const responseSelection = {
   singleUseId: true,
   language: true,
   displayId: true,
-  person: {
+  contact: {
     select: {
       id: true,
-      userId: true,
+      attributes: {
+        select: { attributeKey: true, value: true },
+      },
     },
   },
   tags: {
@@ -101,16 +104,16 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
-export const getResponsesByPersonId = reactCache(
-  (personId: string, page?: number): Promise<TResponse[] | null> =>
+export const getResponsesByContactId = reactCache(
+  (contactId: string, page?: number): Promise<TResponse[] | null> =>
     cache(
       async () => {
-        validateInputs([personId, ZId], [page, ZOptionalNumber]);
+        validateInputs([contactId, ZId], [page, ZOptionalNumber]);
 
         try {
           const responsePrisma = await prisma.response.findMany({
             where: {
-              personId,
+              contactId,
             },
             select: responseSelection,
             take: page ? ITEMS_PER_PAGE : undefined,
@@ -121,7 +124,7 @@ export const getResponsesByPersonId = reactCache(
           });
 
           if (!responsePrisma) {
-            throw new ResourceNotFoundError("Response from PersonId", personId);
+            throw new ResourceNotFoundError("Response from ContactId", contactId);
           }
 
           let responses: TResponse[] = [];
@@ -129,8 +132,16 @@ export const getResponsesByPersonId = reactCache(
           await Promise.all(
             responsePrisma.map(async (response) => {
               const responseNotes = await getResponseNotes(response.id);
+              const responsePerson: TResponseContact = {
+                id: response.contact?.id as string,
+                userId: response.contact?.attributes.find(
+                  (attribute) => attribute.attributeKey.key === "userId"
+                )?.value as string,
+              };
+
               responses.push({
                 ...response,
+                person: responsePerson,
                 notes: responseNotes,
                 tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
               });
@@ -146,9 +157,9 @@ export const getResponsesByPersonId = reactCache(
           throw error;
         }
       },
-      [`getResponsesByPersonId-${personId}-${page}`],
+      [`getResponsesByContactId-${contactId}-${page}`],
       {
-        tags: [responseCache.tag.byPersonId(personId)],
+        tags: [responseCache.tag.byContactId(contactId)],
       }
     )()
 );
@@ -329,7 +340,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     responseCache.revalidate({
       environmentId: environmentId,
       id: response.id,
-      personId: response.person?.id,
+      contactId: response.person?.id,
       userId: userId ?? undefined,
       surveyId: response.surveyId,
       singleUseId: singleUseId ? singleUseId : undefined,
@@ -747,7 +758,7 @@ export const updateResponse = async (
 
     responseCache.revalidate({
       id: response.id,
-      personId: response.person?.id,
+      contactId: response.person?.id,
       surveyId: response.surveyId,
     });
 
@@ -829,7 +840,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     responseCache.revalidate({
       environmentId: survey?.environmentId,
       id: response.id,
-      personId: response.person?.id,
+      contactId: response.person?.id,
       surveyId: response.surveyId,
     });
 

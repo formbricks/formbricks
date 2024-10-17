@@ -1,4 +1,4 @@
-import { getResponsesByPersonId } from "@formbricks/lib/response/service";
+import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { getContact, getContactAttributes } from "../../lib/contacts";
 
@@ -8,10 +8,8 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
     throw new Error("No such person found");
   }
 
-  // const responses = await getResponsesByPersonId(contactId);
-
-  // const numberOfResponses = responses?.length || 0;
-  const numberOfResponses = 0;
+  const responses = await getResponsesByContactId(contactId);
+  const numberOfResponses = responses?.length || 0;
 
   return (
     <div className="space-y-6">

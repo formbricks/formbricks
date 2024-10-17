@@ -5,7 +5,12 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
-import { getContactAttributeKeys, getContacts } from "./lib/contacts";
+import {
+  deleteContact,
+  getContactAttributeKeys,
+  getContacts,
+  getOrganizationIdFromContactId,
+} from "./lib/contacts";
 
 const ZGetContactsAction = z.object({
   environmentId: ZId,
@@ -37,19 +42,18 @@ export const getContactAttributeKeysAction = authenticatedActionClient
     return getContactAttributeKeys(environmentId);
   });
 
-// const ZGetPersonAttributesAction = z.object({
-//   environmentId: ZId,
-//   personId: ZId,
-// });
+const ZPersonDeleteAction = z.object({
+  contactId: ZId,
+});
 
-// export const getPersonAttributesAction = authenticatedActionClient
-//   .schema(ZGetPersonAttributesAction)
-//   .action(async ({ ctx, parsedInput }) => {
-//     await checkAuthorization({
-//       userId: ctx.user.id,
-//       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-//       rules: ["environment", "read"],
-//     });
+export const deleteContactAction = authenticatedActionClient
+  .schema(ZPersonDeleteAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromContactId(parsedInput.contactId),
+      rules: ["person", "delete"],
+    });
 
-//     return getAttributes(parsedInput.personId);
-//   });
+    return await deleteContact(parsedInput.contactId);
+  });

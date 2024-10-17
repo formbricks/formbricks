@@ -1,16 +1,25 @@
 import "server-only";
+import {
+  convertPrismaContactAttributes,
+  transformPrismaContact,
+} from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
+import { contactAttributeCache } from "@formbricks/lib/contactAttribute/cache";
+import { contactAttributeKeyCache } from "@formbricks/lib/contactAttributeKey/cache";
+import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributes } from "@formbricks/types/contact-attributes";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TContact, TContactWithAttributes } from "../types/contact";
 import { contactCache } from "./contactCache";
 
-export const selectContact = {
+const selectContact = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -28,7 +37,7 @@ export const selectContact = {
   },
 } satisfies Prisma.ContactSelect;
 
-export const selectAttribute = {
+const selectContactAttribute = {
   value: true,
   attributeKey: {
     select: {
@@ -37,59 +46,6 @@ export const selectAttribute = {
     },
   },
 } satisfies Prisma.ContactAttributeSelect;
-
-// convert prisma attributes to a key-value object
-const convertPrismaAttributes = (
-  prismaAttributes: any
-): {
-  [x: string]: {
-    name: string | null;
-    value: string;
-  };
-} => {
-  return prismaAttributes.reduce(
-    (acc, attr) => {
-      acc[attr.attributeKey.key] = {
-        name: attr.attributeKey.name,
-        value: attr.value,
-      };
-      return acc;
-    },
-    {} as Record<string, string | number>
-  );
-};
-
-type TransformPersonInput = {
-  id: string;
-  environmentId: string;
-  attributes: {
-    value: string;
-    attributeKey: {
-      key: string;
-      name: string | null;
-    };
-  }[];
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export const transformPrismaContact = (person: TransformPersonInput): TContactWithAttributes => {
-  const attributes = person.attributes.reduce(
-    (acc, attr) => {
-      acc[attr.attributeKey.key] = attr.value;
-      return acc;
-    },
-    {} as Record<string, string | number>
-  );
-
-  return {
-    id: person.id,
-    attributes,
-    environmentId: person.environmentId,
-    createdAt: new Date(person.createdAt),
-    updatedAt: new Date(person.updatedAt),
-  } as TContactWithAttributes;
-};
 
 const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => ({
   environmentId,
@@ -171,41 +127,85 @@ export const getContact = reactCache(
     )()
 );
 
-export const getContactAttributeKeys = reactCache((environmentId: string) =>
-  cache(
-    async () => {
-      return await prisma.contactAttributeKey.findMany({
-        where: { environmentId },
-      });
-    },
-    [],
-    {}
-  )()
+export const deleteContact = async (contactId: string): Promise<TContact | null> => {
+  validateInputs([contactId, ZId]);
+
+  try {
+    const contact = await prisma.contact.delete({
+      where: {
+        id: contactId,
+      },
+      select: selectContact,
+    });
+
+    const userId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
+
+    contactCache.revalidate({
+      id: contact.id,
+      userId,
+      environmentId: contact.environmentId,
+    });
+
+    return contact;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getOrganizationIdFromContactId = async (contactId: string) => {
+  const contact = await getContact(contactId);
+  if (!contact) {
+    throw new ResourceNotFoundError("contact", contactId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(contact.environmentId);
+};
+
+export const getContactAttributeKeys = reactCache(
+  (environmentId: string): Promise<TContactAttributeKey[]> =>
+    cache(
+      async () => {
+        return await prisma.contactAttributeKey.findMany({
+          where: { environmentId },
+        });
+      },
+      [`getContactAttributeKeys-${environmentId}`],
+      {
+        tags: [contactAttributeKeyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
 );
 
-export const getContactAttributes = reactCache((contactId: string) =>
-  cache(
-    async () => {
-      validateInputs([contactId, ZId]);
+export const getContactAttributes = reactCache(
+  (contactId: string): Promise<TContactAttributes> =>
+    cache(
+      async () => {
+        validateInputs([contactId, ZId]);
 
-      try {
-        const prismaAttributes = await prisma.contactAttribute.findMany({
-          where: {
-            contactId,
-          },
-          select: selectAttribute,
-        });
+        try {
+          const prismaAttributes = await prisma.contactAttribute.findMany({
+            where: {
+              contactId,
+            },
+            select: selectContactAttribute,
+          });
 
-        return convertPrismaAttributes(prismaAttributes);
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return convertPrismaContactAttributes(prismaAttributes);
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getContactAttributes-${contactId}`],
+      {
+        tags: [contactAttributeCache.tag.byContactId(contactId)],
       }
-    },
-    [],
-    {}
-  )()
+    )()
 );

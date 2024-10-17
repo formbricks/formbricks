@@ -35,7 +35,7 @@ import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { getResponsesByPersonId } from "../response/service";
+import { getResponsesByContactId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { diffInDays } from "../utils/datetime";
@@ -1051,7 +1051,7 @@ export const getSyncSurveys = reactCache(
           }
 
           const displays = await getDisplaysByPersonId(person.id);
-          const responses = await getResponsesByPersonId(person.id);
+          const responses = await getResponsesByContactId(person.id);
 
           // filter surveys that meet the displayOption criteria
           surveys = surveys.filter((survey) => {

@@ -55,15 +55,6 @@ export const getOrganizationIdFromResponseId = async (responseId: string) => {
   return await getOrganizationIdFromSurveyId(response.surveyId);
 };
 
-export const getOrganizationIdFromPersonId = async (personId: string) => {
-  const person = await getPerson(personId);
-  if (!person) {
-    throw new ResourceNotFoundError("person", personId);
-  }
-
-  return await getOrganizationIdFromEnvironmentId(person.environmentId);
-};
-
 export const getOrganizationIdFromTagId = async (tagId: string) => {
   const tag = await getTag(tagId);
   if (!tag) {

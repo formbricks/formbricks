@@ -37,8 +37,8 @@ import {
   getResponseCountBySurveyId,
   getResponseDownloadUrl,
   getResponses,
+  getResponsesByContactId,
   getResponsesByEnvironmentId,
-  getResponsesByPersonId,
   getSurveySummary,
   updateResponse,
 } from "../service";
@@ -133,20 +133,20 @@ describe("Tests for getResponsesByPersonId", () => {
     it("Returns all responses associated with a given person ID", async () => {
       prisma.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
 
-      const responses = await getResponsesByPersonId(mockPerson.id);
+      const responses = await getResponsesByContactId(mockPerson.id);
       expect(responses).toEqual([expectedResponseWithPerson]);
     });
 
     it("Returns an empty array when no responses are found for the given person ID", async () => {
       prisma.response.findMany.mockResolvedValue([]);
 
-      const responses = await getResponsesByPersonId(mockPerson.id);
+      const responses = await getResponsesByContactId(mockPerson.id);
       expect(responses).toEqual([]);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getResponsesByPersonId, "123#", 1);
+    testInputValidation(getResponsesByContactId, "123#", 1);
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -157,14 +157,14 @@ describe("Tests for getResponsesByPersonId", () => {
 
       prisma.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getResponsesByPersonId(mockPerson.id)).rejects.toThrow(DatabaseError);
+      await expect(getResponsesByContactId(mockPerson.id)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getResponsesByPersonId(mockPerson.id)).rejects.toThrow(Error);
+      await expect(getResponsesByContactId(mockPerson.id)).rejects.toThrow(Error);
     });
   });
 });

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZAttributes } from "@formbricks/types/attributes";
 
 export const ZContact = z.object({
   id: z.string().cuid2(),
@@ -10,8 +9,8 @@ export const ZContact = z.object({
 
 const ZContactTableAttributeData = z.object({
   key: z.string(),
-  name: z.string().optional(),
-  value: z.string().optional(),
+  name: z.string().nullable(),
+  value: z.string().nullable(),
 });
 
 export const ZContactTableData = z.object({
@@ -23,12 +22,26 @@ export const ZContactTableData = z.object({
   attributes: z.array(ZContactTableAttributeData),
 });
 
-export const ZPersonWithAttributes = ZContact.extend({
-  attributes: ZAttributes,
+export const ZContactWithAttributes = ZContact.extend({
+  attributes: z.record(z.string()),
 });
 
-export type TContactWithAttributes = z.infer<typeof ZPersonWithAttributes>;
+export type TContactWithAttributes = z.infer<typeof ZContactWithAttributes>;
 
 export type TContactTableData = z.infer<typeof ZContactTableData>;
 
 export type TContact = z.infer<typeof ZContact>;
+
+export type TTransformPersonInput = {
+  id: string;
+  environmentId: string;
+  attributes: {
+    value: string;
+    attributeKey: {
+      key: string;
+      name: string | null;
+    };
+  }[];
+  createdAt: Date;
+  updatedAt: Date;
+};
