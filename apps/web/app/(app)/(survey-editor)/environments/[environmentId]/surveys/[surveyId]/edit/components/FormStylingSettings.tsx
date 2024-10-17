@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, SparklesIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
@@ -28,6 +29,7 @@ export const FormStylingSettings = ({
   setOpen,
   form,
 }: FormStylingSettingsProps) => {
+  const t = useTranslations();
   const brandColor = form.watch("brandColor.light") || COLOR_DEFAULTS.brandColor;
   const background = form.watch("background");
   const highlightBorderColor = form.watch("highlightBorderColor");
@@ -94,10 +96,10 @@ export const FormStylingSettings = ({
 
           <div>
             <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
-              Form Styling
+              {t("environments.surveys.edit.form_styling")}
             </p>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
-              Style the question texts, descriptions and input fields.
+              {t("environments.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
             </p>
           </div>
         </div>
@@ -114,8 +116,10 @@ export const FormStylingSettings = ({
               render={({ field }) => (
                 <FormItem className="space-y-4">
                   <div>
-                    <FormLabel>Brand color</FormLabel>
-                    <FormDescription>Change the brand color of the survey.</FormDescription>
+                    <FormLabel>{t("environments.surveys.edit.brand_color")}</FormLabel>
+                    <FormDescription>
+                      {t("environments.surveys.edit.change_the_brand_color_of_the_survey")}
+                    </FormDescription>
                   </div>
 
                   <FormControl>
@@ -136,7 +140,7 @@ export const FormStylingSettings = ({
               EndIcon={SparklesIcon}
               className="w-fit"
               onClick={() => suggestColors()}>
-              Suggest colors
+              {t("environments.surveys.edit.suggest_colors")}
             </Button>
           </div>
 
@@ -146,8 +150,10 @@ export const FormStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel>Question color</FormLabel>
-                  <FormDescription>Change the question color of the survey.</FormDescription>
+                  <FormLabel>{t("environments.surveys.edit.question_color")}</FormLabel>
+                  <FormDescription>
+                    {t("environments.surveys.edit.change_the_question_color_of_the_survey")}
+                  </FormDescription>
                 </div>
 
                 <FormControl>
@@ -167,8 +173,10 @@ export const FormStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel>Input color</FormLabel>
-                  <FormDescription>Change the background color of the input fields.</FormDescription>
+                  <FormLabel>{t("environments.surveys.edit.input_color")}</FormLabel>
+                  <FormDescription>
+                    {t("environments.surveys.edit.change_the_background_color_of_the_input_fields")}
+                  </FormDescription>
                 </div>
 
                 <FormControl>
@@ -188,8 +196,10 @@ export const FormStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel>Input border color</FormLabel>
-                  <FormDescription>Change the border color of the input fields.</FormDescription>
+                  <FormLabel>{t("environments.surveys.edit.input_border_color")}</FormLabel>
+                  <FormDescription>
+                    {t("environments.surveys.edit.change_the_border_color_of_the_input_fields")}
+                  </FormDescription>
                 </div>
 
                 <FormControl>

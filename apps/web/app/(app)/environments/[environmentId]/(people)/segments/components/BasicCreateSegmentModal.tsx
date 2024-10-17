@@ -229,7 +229,7 @@ export const BasicCreateSegmentModal = ({
             ) : (
               <UpgradePlanNotice
                 message={t("environments.segments.for_advanced_targeting_please")}
-                textForUrl={t("environments.segments.request_an_enterprise_license")}
+                textForUrl={t("common.request_an_enterprise_license")}
                 url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}

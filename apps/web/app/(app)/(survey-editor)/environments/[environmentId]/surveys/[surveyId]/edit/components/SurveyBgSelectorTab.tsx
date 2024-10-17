@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { TabBar } from "@formbricks/ui/components/TabBar";
 import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
@@ -14,13 +15,6 @@ interface SurveyBgSelectorTabProps {
   bg: string;
 }
 
-const tabs = [
-  { id: "color", label: "Color" },
-  { id: "animation", label: "Animation" },
-  { id: "upload", label: "Upload" },
-  { id: "image", label: "Image" },
-];
-
 export const SurveyBgSelectorTab = ({
   handleBgChange,
   colors,
@@ -30,10 +24,17 @@ export const SurveyBgSelectorTab = ({
   isUnsplashConfigured,
 }: SurveyBgSelectorTabProps) => {
   const [activeTab, setActiveTab] = useState(bgType || "color");
-
+  const t = useTranslations();
   const [colorBackground, setColorBackground] = useState(bg);
   const [animationBackground, setAnimationBackground] = useState(bg);
   const [uploadBackground, setUploadBackground] = useState(bg);
+
+  const tabs = [
+    { id: "color", label: t("environments.surveys.edit.color") },
+    { id: "animation", label: t("environments.surveys.edit.animation") },
+    { id: "upload", label: t("environments.surveys.edit.upload") },
+    { id: "image", label: t("environments.surveys.edit.image") },
+  ];
 
   useEffect(() => {
     if (bgType === "color") {

@@ -65,7 +65,7 @@ export const CreateNewActionTab = ({
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["name"],
-            message: `Action with name ${data.name} already exists`,
+            message: t("environments.actions.action_with_name_already_exists", { name: data.name }),
           });
         }
       })
@@ -88,15 +88,15 @@ export const CreateNewActionTab = ({
     const { type } = data;
     try {
       if (isViewer) {
-        throw new Error("You are not authorised to perform this action.");
+        throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
 
       if (data.name && actionClassNames.includes(data.name)) {
-        throw new Error(`Action with name ${data.name} already exist`);
+        throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
       }
 
       if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
-        throw new Error(`Action with key ${data.key} already exist`);
+        throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
       }
 
       if (
@@ -158,7 +158,7 @@ export const CreateNewActionTab = ({
 
       reset();
       resetAllStates();
-      toast.success("Action created successfully");
+      toast.success(t("environments.actions.action_created_successfully"));
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -184,8 +184,8 @@ export const CreateNewActionTab = ({
                     <TabToggle
                       id="type"
                       options={[
-                        { value: "noCode", label: t("environments.actions.no_code") },
-                        { value: "code", label: t("environments.actions.code") },
+                        { value: "noCode", label: t("common.no_code") },
+                        { value: "code", label: t("common.code") },
                       ]}
                       {...field}
                       defaultSelected={field.value}

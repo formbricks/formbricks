@@ -10,6 +10,7 @@ import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -30,6 +31,7 @@ interface ResponseFilterProps {
 }
 
 export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
+  const t = useTranslations();
   const params = useParams();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
@@ -211,10 +213,16 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         align="start"
         className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
         <div className="mb-8 flex flex-wrap items-start justify-between">
-          <p className="text-slate800 hidden text-lg font-semibold sm:block">Show all responses that match</p>
-          <p className="block text-base text-slate-500 sm:hidden">Show all responses where...</p>
+          <p className="text-slate800 hidden text-lg font-semibold sm:block">
+            {t("environments.surveys.summary.show_all_responses_that_match")}
+          </p>
+          <p className="block text-base text-slate-500 sm:hidden">
+            {t("environments.surveys.summary.show_all_responses_where")}
+          </p>
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-normal text-slate-600">Only completed</label>
+            <label className="text-sm font-normal text-slate-600">
+              {t("environments.surveys.summary.only_completed")}
+            </label>
             <Checkbox
               className={clsx("rounded-md", filterValue.onlyComplete && "bg-black text-white")}
               checked={filterValue.onlyComplete}
@@ -283,15 +291,15 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         ))}
         <div className="mt-8 flex items-center justify-between">
           <Button size="sm" variant="secondary" onClick={handleAddNewFilter}>
-            Add filter
+            {t("common.add_filter")}
             <Plus width={18} height={18} className="ml-2" />
           </Button>
           <div className="flex gap-2">
             <Button size="sm" onClick={handleApplyFilters}>
-              Apply filters
+              {t("common.apply_filters")}
             </Button>
             <Button size="sm" variant="minimal" onClick={handleClearAllFilters}>
-              Clear all
+              {t("common.clear_all")}
             </Button>
           </div>
         </div>

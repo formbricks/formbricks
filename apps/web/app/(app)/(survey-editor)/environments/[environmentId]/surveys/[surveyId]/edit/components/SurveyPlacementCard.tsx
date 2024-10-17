@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { TPlacement } from "@formbricks/types/common";
@@ -21,6 +22,7 @@ export const SurveyPlacementCard = ({
   setLocalSurvey,
   environmentId,
 }: SurveyPlacementCardProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   const { productOverwrites } = localSurvey ?? {};
@@ -90,8 +92,10 @@ export const SurveyPlacementCard = ({
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Survey Placement</p>
-            <p className="mt-1 text-sm text-slate-500">Overwrite the global placement of the survey</p>
+            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.survey_placement")}</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("environments.surveys.edit.overwrite_the_global_placement_of_the_survey")}
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -104,9 +108,13 @@ export const SurveyPlacementCard = ({
               <Label htmlFor="surveyDeadline" className="cursor-pointer">
                 <div className="ml-2">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      {t("environments.surveys.edit.overwrite_placement")}
+                    </h3>
                   </div>
-                  <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
+                  <p className="text-xs font-normal text-slate-500">
+                    {t("environments.surveys.edit.change_the_placement_of_this_survey")}
+                  </p>
                 </div>
               </Label>
             </div>
@@ -129,9 +137,11 @@ export const SurveyPlacementCard = ({
 
             <div>
               <p className="text-xs text-slate-500">
-                To keep the placement over all surveys consistent, you can{" "}
+                {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
                 <Link href={`/environments/${environmentId}/product/look`} target="_blank">
-                  <span className="underline">set the global placement in the Look & Feel settings.</span>
+                  <span className="underline">
+                    {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
+                  </span>
                 </Link>
               </p>
             </div>

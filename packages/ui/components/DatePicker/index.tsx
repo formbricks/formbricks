@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import { addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { SelectSingleEventHandler } from "react-day-picker";
 import { cn } from "@formbricks/lib/cn";
@@ -17,6 +18,7 @@ export const DatePicker = ({
   date?: Date | null;
   handleDateChange: (date?: Date) => void;
 }) => {
+  const t = useTranslations();
   let formattedDate = date ? new Date(date) : undefined;
 
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -37,7 +39,7 @@ export const DatePicker = ({
           )}
           ref={btnRef}>
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {formattedDate ? format(formattedDate, "PPP") : <span>Pick a date</span>}
+          {formattedDate ? format(formattedDate, "PPP") : <span>{t("common.pick_a_date")}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">

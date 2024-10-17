@@ -6,6 +6,7 @@ import {
   getResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
@@ -24,6 +25,7 @@ interface ResultsShareButtonProps {
 }
 
 export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProps) => {
+  const t = useTranslations();
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -89,7 +91,9 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
           className="focus:bg-muted cursor-pointer border border-slate-200 outline-none hover:border-slate-300">
           <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[7rem] sm:px-6 sm:py-3">
             <div className="hidden w-full items-center justify-between sm:flex">
-              <span className="text-sm text-slate-700">Share results</span>
+              <span className="text-sm text-slate-700">
+                {t("environments.surveys.summary.share_results")}
+              </span>
               <LinkIcon className="ml-2 h-4 w-4" />
             </div>
             <DownloadIcon className="block h-4 sm:hidden" />
@@ -103,7 +107,9 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
                 toast.success("Link to public results copied");
               }}
               icon={<CopyIcon className="ml-1.5 inline h-4 w-4" />}>
-              <p className="text-slate-700">Copy link to public results</p>
+              <p className="text-slate-700">
+                {t("environments.surveys.summary.copy_link_to_public_results")}
+              </p>
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
@@ -111,7 +117,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
                 copyUrlToClipboard();
               }}
               icon={<CopyIcon className="ml-1.5 h-4 w-4" />}>
-              <p className="flex items-center text-slate-700">Copy link</p>
+              <p className="flex items-center text-slate-700">{t("common.copy_link")}</p>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -120,7 +126,9 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
             }}
             icon={<GlobeIcon className="ml-1.5 h-4 w-4" />}>
             <p className="flex items-center text-slate-700">
-              {survey.resultShareKey ? "Unpublish from web" : "Publish to web"}
+              {survey.resultShareKey
+                ? t("environments.surveys.summary.unpublish_from_web")
+                : t("environments.surveys.summary.publish_to_web")}
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>
