@@ -5,9 +5,9 @@ import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
-import { InsightView } from "../../../../components/InsightView";
 import { getEnvironmentInsightsAction } from "../actions";
 import { InsightLoading } from "./InsightLoading";
+import { InsightView } from "./InsightView";
 
 interface InsightsTableProps {
   environmentId: string;

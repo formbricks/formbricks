@@ -3,7 +3,9 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { documentCache } from "@formbricks/lib/document/cache";
 import { environmentCache } from "@formbricks/lib/environment/cache";
+import { responseCache } from "@formbricks/lib/response/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -94,9 +96,13 @@ export const getStats = reactCache(
           throw error;
         }
       },
-      [`stats-${environmentId}-${statsFrom}`],
+      [`stats-${environmentId}-${statsFrom?.toDateString()}`],
       {
-        tags: [environmentCache.tag.byId(environmentId)],
+        tags: [
+          responseCache.tag.byEnvironmentId(environmentId),
+          documentCache.tag.byEnvironmentId(environmentId),
+          environmentCache.tag.byId(environmentId),
+        ],
       }
     )()
 );

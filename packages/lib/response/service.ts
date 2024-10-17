@@ -28,6 +28,7 @@ import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { displayCache } from "../display/cache";
 import { deleteDisplay, getDisplayCountBySurveyId } from "../display/service";
+import { documentCache } from "../document/cache";
 import { createDocument, doesDocumentExistForResponseId } from "../document/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
@@ -574,6 +575,7 @@ export const getSurveySummary = reactCache(
           surveyCache.tag.byId(surveyId),
           responseCache.tag.bySurveyId(surveyId),
           displayCache.tag.bySurveyId(surveyId),
+          documentCache.tag.bySurveyId(surveyId),
         ],
       }
     )()
