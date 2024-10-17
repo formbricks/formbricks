@@ -1,6 +1,6 @@
 import { SendToBack } from "lucide-react";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Modal } from "../../Modal";
+import { Modal } from "@formbricks/ui/components/Modal";
 import SurveyMigrateOptions from "./SurveyMigrateOptions";
 
 interface MigrateSurveyModalProps {

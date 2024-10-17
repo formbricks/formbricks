@@ -1,5 +1,6 @@
 "use server";
 
+import { getSurvey, getSurveys } from "@/app/(app)/environments/[environmentId]/surveys/lib/surveys";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -11,8 +12,6 @@ import { getProducts } from "@formbricks/lib/product/service";
 import {
   copySurveyToOtherEnvironment,
   deleteSurvey,
-  getSurvey,
-  getSurveys,
   migrateSurveyToOtherEnvironment,
 } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";

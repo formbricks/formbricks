@@ -5,8 +5,17 @@ import {
   deleteSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { getSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { SurveyMigrateModal } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyMigrateModal";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
-import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowUpFromLineIcon,
+  CopyIcon,
+  EyeIcon,
+  LinkIcon,
+  SendToBack,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -49,6 +58,7 @@ export const SurveyDropDownMenu = ({
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
+  const [isMigrateFormOpen, setIsMigrateFormOpen] = useState(false);
   const router = useRouter();
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
@@ -150,6 +160,24 @@ export const SurveyDropDownMenu = ({
                 </DropdownMenuItem>
               </>
             )}
+            {!isSurveyCreationDeletionDisabled && (
+              <>
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    disabled={loading}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      setIsMigrateFormOpen(true);
+                    }}>
+                    <SendToBack className="mr-2 h-4 w-4" />
+                    Migrate...
+                  </button>
+                </DropdownMenuItem>
+              </>
+            )}
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
@@ -217,6 +245,14 @@ export const SurveyDropDownMenu = ({
 
       {isCopyFormOpen && (
         <CopySurveyModal open={isCopyFormOpen} setOpen={setIsCopyFormOpen} survey={survey} />
+      )}
+      {isMigrateFormOpen && (
+        <SurveyMigrateModal
+          open={isMigrateFormOpen}
+          setOpen={setIsMigrateFormOpen}
+          survey={survey}
+          onMigrated={deleteSurvey}
+        />
       )}
     </div>
   );

@@ -8,11 +8,10 @@ import {
   TSurveyMigrateFormData,
   ZSurveyMigrateFormValidation,
 } from "@formbricks/types/surveys/types";
-import { Button } from "../../Button";
-import { FormField, FormProvider } from "../../Form";
-import { Label } from "../../Label";
-import { RadioGroup, RadioGroupItem } from "../../RadioGroup";
-import { TooltipRenderer } from "../../Tooltip";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormField, FormProvider } from "@formbricks/ui/components/Form";
+import { Label } from "@formbricks/ui/components/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 import { migrateSurveyToOtherEnvironmentAction } from "../actions";
 
 export const SurveyMigrateForm = ({
@@ -76,30 +75,13 @@ export const SurveyMigrateForm = ({
           <RadioGroup>
             {formFields.fields.map((field, productIndex) => {
               const product = defaultProducts.find((product) => product.id === field.product);
-              const isDisabled =
-                survey.type !== "link" &&
-                product?.config.channel !== survey.type &&
-                product?.config.channel !== null;
 
               return (
                 <div key={product?.id}>
                   <div className="mb-4 flex flex-col gap-2">
-                    <TooltipRenderer
-                      shouldRender={isDisabled}
-                      tooltipContent={
-                        <span>
-                          This product is not compatible with the survey type. Please select a different
-                          product.
-                        </span>
-                      }>
-                      <div className="w-fit">
-                        <p className="text-base font-semibold text-slate-900">
-                          {product?.name}
-                          {isDisabled && <span className="ml-2 mr-11 text-sm text-gray-500">(Disabled)</span>}
-                        </p>
-                      </div>
-                    </TooltipRenderer>
-
+                    <div className="w-fit">
+                      <p className="text-base font-semibold text-slate-900">{product?.name}</p>
+                    </div>
                     <div className="flex flex-col gap-2">
                       {product?.environments.map((environment) => {
                         return (
@@ -117,18 +99,14 @@ export const SurveyMigrateForm = ({
                                   <RadioGroupItem
                                     {...field}
                                     onClick={() => {
-                                      if (!isDisabled) {
-                                        setSelectedEnvironmentId(environment.id);
-                                      }
+                                      setSelectedEnvironmentId(environment.id);
                                     }}
                                     className="mr-2 h-4 w-4 appearance-none border-gray-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
-                                    disabled={isDisabled}
                                     id={environment.id}
                                     value={environment.id}
                                   />
                                   <Label htmlFor={environment.id}>
-                                    <p
-                                      className={`text-sm font-medium capitalize ${isDisabled ? "text-gray-500" : "text-slate-900"}`}>
+                                    <p className={`text-sm font-medium capitalize text-slate-900`}>
                                       {environment.type}
                                     </p>
                                   </Label>

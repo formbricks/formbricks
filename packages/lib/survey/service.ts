@@ -793,7 +793,7 @@ export const migrateSurveyToOtherEnvironment = async (
   validateInputs([environmentId, ZId], [surveyId, ZId], [targetEnvironmentId, ZId], [userId, ZId]);
 
   // Start a transaction
-  const updatedSurvey = await prisma.$transaction(async (prisma) => {
+  const [updatedSurvey, existingSurvey] = await prisma.$transaction(async (prisma) => {
     try {
       // Fetch required resources
       const existingSurvey = await getSurvey(surveyId);
@@ -843,27 +843,30 @@ export const migrateSurveyToOtherEnvironment = async (
               environment: { connect: { id: targetEnvironmentId } },
             },
           };
-        } else if (surveyUpdateData) {
-          surveyUpdateData.segment = { connect: { id: existingSurvey.segment.id } };
         } else {
           const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
             where: {
               title: existingSurvey.segment.title,
               isPrivate: false,
               environmentId: targetEnvironmentId,
+              filters: existingSurvey.segment.filters
+                ? { equals: existingSurvey.segment.filters }
+                : undefined,
             },
           });
 
-          surveyUpdateData.segment = {
-            create: {
-              title: existingSegmentInTargetEnvironment
-                ? `${existingSurvey.segment.title}-${Date.now()}`
-                : existingSurvey.segment.title,
-              isPrivate: false,
-              filters: existingSurvey.segment.filters,
-              environment: { connect: { id: targetEnvironmentId } },
-            },
-          };
+          if (!existingSegmentInTargetEnvironment) {
+            surveyUpdateData.segment = {
+              create: {
+                title: `${existingSurvey.segment.title}-${Date.now()}`,
+                isPrivate: false,
+                filters: existingSurvey.segment.filters,
+                environment: { connect: { id: targetEnvironmentId } },
+              },
+            };
+          } else {
+            surveyUpdateData.segment = { connect: { id: existingSegmentInTargetEnvironment.id } };
+          }
         }
       }
 
@@ -876,7 +879,7 @@ export const migrateSurveyToOtherEnvironment = async (
       // Handle triggers separately
       await migrateSurveyTriggers(existingSurvey, targetEnvironmentId, prisma);
 
-      return updatedSurvey;
+      return [updatedSurvey, existingSurvey];
     } catch (error) {
       console.error("Error during survey migration", error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -915,7 +918,7 @@ export const migrateSurveyToOtherEnvironment = async (
 
   if (updatedSurvey.segment) {
     segmentCache.revalidate({
-      id: updatedSurvey.segment.id,
+      id: existingSurvey?.segment?.id,
       environmentId: updatedSurvey.environmentId,
     });
   }
@@ -955,7 +958,7 @@ const migrateSurveyTriggers = async (
     if (!actionClassId) {
       const newActionClass = await prisma.actionClass.create({
         data: {
-          name: trigger.actionClass.name,
+          name: `trigger.actionClass.name-${Date.now()}`,
           description: trigger.actionClass.description,
           type: trigger.actionClass.type,
           key: trigger.actionClass.key,
