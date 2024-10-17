@@ -201,7 +201,7 @@ export const ContactTable = ({
                       key={cell.id}
                       onClick={() => {
                         if (cell.column.id === "select") return;
-                        router.push(`/environments/${environmentId}/people/${row.id}`);
+                        router.push(`/environments/${environmentId}/contacts/${row.id}`);
                       }}
                       style={cell.column.id === "select" ? getCommonPinningStyles(cell.column) : {}}
                       className={cn(
