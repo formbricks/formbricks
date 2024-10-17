@@ -145,11 +145,6 @@ export const SigninForm = ({
     return null;
   }, [totpBackup, totpLogin]);
 
-  console.log("publicSignUpEnabled", publicSignUpEnabled);
-  console.log("totpLogin", totpLogin);
-  console.log("isMultiOrgEnabled", isMultiOrgEnabled);
-  console.log("condition:", publicSignUpEnabled && !totpLogin && isMultiOrgEnabled);
-
   return (
     <FormProvider {...formMethods}>
       <div className="text-center">

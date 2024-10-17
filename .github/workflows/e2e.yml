@@ -52,8 +52,6 @@ jobs:
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
-          echo "logging: "
-          cat .env
         shell: bash
 
       - name: Build App
