@@ -856,53 +856,90 @@ export const copySurveyToOtherEnvironment = async (
           }
         : undefined,
       triggers: {
-        create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
-          const baseActionClassData = {
-            name: trigger.actionClass.name,
-            environment: { connect: { id: targetEnvironmentId } },
-            description: trigger.actionClass.description,
-            type: trigger.actionClass.type,
-          };
+        create: await Promise.all(
+          existingSurvey.triggers.map(
+            async (trigger): Promise<Prisma.SurveyTriggerCreateWithoutSurveyInput> => {
+              const baseActionClassData = {
+                name: trigger.actionClass.name,
+                environment: { connect: { id: targetEnvironmentId } },
+                description: trigger.actionClass.description,
+                type: trigger.actionClass.type,
+              };
 
-          if (isSameEnvironment) {
-            return {
-              actionClass: { connect: { id: trigger.actionClass.id } },
-            };
-          } else if (trigger.actionClass.type === "code") {
-            return {
-              actionClass: {
-                connectOrCreate: {
+              if (isSameEnvironment) {
+                return {
+                  actionClass: { connect: { id: trigger.actionClass.id } },
+                };
+              }
+
+              if (trigger.actionClass.type === "code") {
+                const existingTrigger = await prisma.actionClass.findFirst({
                   where: {
-                    key_environmentId: { key: trigger.actionClass.key!, environmentId: targetEnvironmentId },
-                  },
-                  create: {
-                    ...baseActionClassData,
-                    key: trigger.actionClass.key,
-                  },
-                },
-              },
-            };
-          } else {
-            return {
-              actionClass: {
-                connectOrCreate: {
-                  where: {
-                    name_environmentId: {
-                      name: trigger.actionClass.name,
-                      environmentId: targetEnvironmentId,
+                    name: trigger.actionClass.name,
+                    environmentId: targetEnvironmentId,
+                    key: {
+                      not: trigger.actionClass.key,
                     },
                   },
-                  create: {
-                    ...baseActionClassData,
+                });
+                if (existingTrigger) {
+                  baseActionClassData.name = `${baseActionClassData.name}-${Date.now()}`;
+                }
+
+                return {
+                  actionClass: {
+                    connectOrCreate: {
+                      where: {
+                        key_environmentId: {
+                          key: trigger.actionClass.key!,
+                          environmentId: targetEnvironmentId,
+                        },
+                      },
+                      create: {
+                        ...baseActionClassData,
+                        key: trigger.actionClass.key,
+                      },
+                    },
+                  },
+                };
+              } else {
+                let actionClassName = trigger.actionClass.name;
+                const existingTrigger = await prisma.actionClass.findFirst({
+                  where: {
+                    name: trigger.actionClass.name,
+                    environmentId: targetEnvironmentId,
                     noCodeConfig: trigger.actionClass.noCodeConfig
-                      ? structuredClone(trigger.actionClass.noCodeConfig)
+                      ? { not: trigger.actionClass.noCodeConfig }
                       : undefined,
                   },
-                },
-              },
-            };
-          }
-        }),
+                });
+                if (existingTrigger) {
+                  actionClassName = `${baseActionClassData.name}-${Date.now()}`;
+                  baseActionClassData.name = actionClassName;
+                }
+
+                return {
+                  actionClass: {
+                    connectOrCreate: {
+                      where: {
+                        name_environmentId: {
+                          name: actionClassName,
+                          environmentId: targetEnvironmentId,
+                        },
+                      },
+                      create: {
+                        ...baseActionClassData,
+                        noCodeConfig: trigger.actionClass.noCodeConfig
+                          ? structuredClone(trigger.actionClass.noCodeConfig)
+                          : undefined,
+                      },
+                    },
+                  },
+                };
+              }
+            }
+          )
+        ),
       },
       environment: {
         connect: {
