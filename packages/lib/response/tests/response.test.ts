@@ -23,6 +23,7 @@ import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, TResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
+import { getSurveySummary } from "../../../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import { selectPerson } from "../../person/service";
 import {
   mockAttributeClass,
@@ -39,7 +40,6 @@ import {
   getResponses,
   getResponsesByEnvironmentId,
   getResponsesByPersonId,
-  getSurveySummary,
   updateResponse,
 } from "../service";
 import { buildWhereClause } from "../utils";

@@ -1,9 +1,8 @@
-version: "3.3"
 services:
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg17
     volumes:
-      - formbricks-postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -21,5 +20,5 @@ services:
       - 1025:1025 # smtp server
 
 volumes:
-  formbricks-postgres:
+  postgres:
     driver: local

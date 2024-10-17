@@ -4,8 +4,10 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { getIsAIEnabled } from "@formbricks/lib/utils/ai";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
@@ -58,6 +60,14 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
 
   const prefilledFilters = [product.config.channel, product.config.industry, searchParams.role ?? null];
 
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
+  const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+
   return (
     <TemplateContainerWithPreview
       environmentId={environmentId}
@@ -65,6 +75,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
       environment={environment}
       product={product}
       prefilledFilters={prefilledFilters}
+      isAIEnabled={isAIEnabled}
     />
   );
 };

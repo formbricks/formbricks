@@ -163,7 +163,7 @@ x-environment: &environment
 services:
   postgres:
     restart: always
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg17
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:

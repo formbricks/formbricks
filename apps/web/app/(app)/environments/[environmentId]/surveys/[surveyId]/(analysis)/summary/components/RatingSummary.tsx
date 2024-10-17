@@ -44,7 +44,7 @@ export const RatingSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
-        insights={
+        additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}
             <div>Overall: {questionSummary.average.toFixed(2)}</div>

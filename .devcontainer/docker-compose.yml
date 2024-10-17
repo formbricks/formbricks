@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -22,11 +22,11 @@ services:
     # Uncomment the next line to use a non-root user for all processes.
     # user: node
 
-    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   db:
-    image: postgres:latest
+    image: pgvector/pgvector:pg17
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -41,12 +41,11 @@ services:
     image: mailhog/mailhog
     network_mode: service:app
     logging:
-      driver: "none" # disable saving logs
+      driver:
+        "none" # disable saving logs
         #    ports:
       #    - 8025:8025 # web ui
       # 1025:1025 # smtp server
-
-
 
 volumes:
   postgres-data: null

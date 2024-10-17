@@ -1,6 +1,9 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
+import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EnableInsightsBanner";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
+import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { getIsAIEnabled } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -53,6 +56,9 @@ const Page = async ({ params }) => {
 
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
+  const isAIEnabled = await getIsAIEnabled(organization);
+  const shouldGenerateInsights = needsInsightsGeneration(survey);
+
   return (
     <PageContentWrapper>
       <PageHeader
@@ -66,6 +72,10 @@ const Page = async ({ params }) => {
             user={user}
           />
         }>
+        {isAIEnabled && shouldGenerateInsights && (
+          <EnableInsightsBanner surveyId={survey.id} surveyResponseCount={totalResponseCount} />
+        )}
+
         <SurveyAnalysisNavigation
           environmentId={environment.id}
           survey={survey}

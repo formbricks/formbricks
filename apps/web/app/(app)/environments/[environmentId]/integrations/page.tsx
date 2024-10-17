@@ -17,8 +17,8 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
-import { Card } from "@formbricks/ui/components/Card";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { Card } from "@formbricks/ui/components/IntegrationCard";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 

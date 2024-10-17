@@ -717,7 +717,8 @@ test.describe("Testing Survey with advanced logic", async () => {
 
       await page.getByRole("button", { name: "Close" }).click();
       await page.getByRole("link").filter({ hasText: "Responses" }).click();
-      await expect(page.getByRole("table")).toBeVisible();
+      await page.waitForSelector("#response-table");
+
       await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
       await page.waitForTimeout(5000);
       await expect(page.getByRole("cell", { name: "32", exact: true })).toBeVisible();
