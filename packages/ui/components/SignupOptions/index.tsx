@@ -1,9 +1,15 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { z } from "zod";
 import { createUser } from "@formbricks/lib/utils/users";
+import { ZUserName } from "@formbricks/types/user";
+import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
 import { Button } from "../Button";
 import { PasswordInput } from "../PasswordInput";
 import { AzureButton } from "./components/AzureButton";
@@ -41,12 +47,30 @@ export const SignupOptions = ({
   callbackUrl,
   oidcDisplayName,
 }: SignupOptionsProps) => {
-  const [password, setPassword] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [isButtonEnabled, setButtonEnabled] = useState(true);
+
+  const ZSignupInput = z.object({
+    name: ZUserName,
+    email: z.string().email(),
+    password: z
+      .string()
+      .min(8)
+      .regex(/^(?=.*[A-Z])(?=.*\d).*$/),
+  });
+
+  type TSignupInput = z.infer<typeof ZSignupInput>;
+  const form = useForm<TSignupInput>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+    resolver: zodResolver(ZSignupInput),
+  });
 
   const router = useRouter();
 
@@ -60,9 +84,7 @@ export const SignupOptions = ({
     }
   };
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-
+  const handleSubmit = async (data: TSignupInput) => {
     if (!isValid) {
       return;
     }
@@ -70,15 +92,10 @@ export const SignupOptions = ({
     setSigningUp(true);
 
     try {
-      await createUser(
-        e.target.elements.name.value,
-        e.target.elements.email.value,
-        e.target.elements.password.value,
-        inviteToken
-      );
+      await createUser(data.name, data.email, data.password, inviteToken);
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
-        : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
+        : `/auth/verification-requested?email=${encodeURIComponent(data.email)}`;
 
       router.push(url);
     } catch (e: any) {
@@ -92,93 +109,115 @@ export const SignupOptions = ({
   return (
     <div className="space-y-2">
       {emailAuthEnabled && (
-        <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
-          {showLogin && (
-            <div>
-              <div className="mb-2 transition-all duration-500 ease-in-out">
-                <label htmlFor="name" className="sr-only">
-                  Full Name
-                </label>
-                <div className="mt-1">
-                  <input
-                    ref={nameRef}
-                    id="name"
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} ref={formRef} onChange={checkFormValidity}>
+            {showLogin && (
+              <div>
+                <div className="space-y-2">
+                  <FormField
+                    control={form.control}
                     name="name"
-                    type="text"
-                    autoComplete="given-name"
-                    placeholder="Full Name"
-                    aria-placeholder="Full Name"
-                    required
-                    className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    render={({ field, fieldState: { error } }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div>
+                            <Input
+                              value={field.value}
+                              autoFocus
+                              onChange={(name) => field.onChange(name)}
+                              placeholder="Full name"
+                              className="bg-white"
+                            />
+                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field, fieldState: { error } }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div>
+                            <Input
+                              value={field.value}
+                              onChange={(email) => field.onChange(email)}
+                              defaultValue={emailFromSearchParams}
+                              placeholder="engineering@acme.com"
+                              className="bg-white"
+                            />
+                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field, fieldState: { error } }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div>
+                            <PasswordInput
+                              id="password"
+                              name="password"
+                              value={field.value}
+                              onChange={(password) => field.onChange(password)}
+                              autoComplete="current-password"
+                              placeholder="*******"
+                              aria-placeholder="password"
+                              onFocus={() => setIsPasswordFocused(true)}
+                              required
+                              className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
+                            />
+                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
                 </div>
-              </div>
-              <div className="mb-2 transition-all duration-500 ease-in-out">
-                <label htmlFor="email" className="sr-only">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="work@email.com"
-                  defaultValue={emailFromSearchParams}
-                  className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-                />
-              </div>
-              <div className="transition-all duration-500 ease-in-out">
-                <label htmlFor="password" className="sr-only">
-                  Password
-                </label>
-                <PasswordInput
-                  id="password"
-                  name="password"
-                  value={password ? password : ""}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  placeholder="*******"
-                  aria-placeholder="password"
-                  onFocus={() => setIsPasswordFocused(true)}
-                  required
-                  className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
-                />
-              </div>
-              {passwordResetEnabled && isPasswordFocused && (
-                <div className="ml-1 text-right transition-all duration-500 ease-in-out">
-                  <Link href="/auth/forgot-password" className="hover:text-brand-dark text-xs text-slate-500">
-                    Forgot your password?
-                  </Link>
-                </div>
-              )}
-              <IsPasswordValid password={password} setIsValid={setIsValid} />
-            </div>
-          )}
-          {showLogin && (
-            <Button
-              type="submit"
-              className="w-full justify-center"
-              loading={signingUp}
-              disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
-              Continue with Email
-            </Button>
-          )}
 
-          {!showLogin && (
-            <Button
-              type="button"
-              onClick={() => {
-                setShowLogin(true);
-                setButtonEnabled(false);
-                // Add a slight delay before focusing the input field to ensure it's visible
-                setTimeout(() => nameRef.current?.focus(), 100);
-              }}
-              className="w-full justify-center">
-              Continue with Email
-            </Button>
-          )}
-        </form>
+                {passwordResetEnabled && isPasswordFocused && (
+                  <div className="text-right transition-all duration-500 ease-in-out">
+                    <Link
+                      href="/auth/forgot-password"
+                      className="hover:text-brand-dark text-xs text-slate-500">
+                      Forgot your password?
+                    </Link>
+                  </div>
+                )}
+                <IsPasswordValid password={form.watch("password")} setIsValid={setIsValid} />
+              </div>
+            )}
+            {showLogin && (
+              <Button
+                type="submit"
+                className="w-full justify-center"
+                loading={signingUp}
+                disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
+                Continue with Email
+              </Button>
+            )}
+
+            {!showLogin && (
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowLogin(true);
+                  setButtonEnabled(false);
+                  // Add a slight delay before focusing the input field to ensure it's visible
+                  setTimeout(() => nameRef.current?.focus(), 100);
+                }}
+                className="w-full justify-center">
+                Continue with Email
+              </Button>
+            )}
+          </form>
+        </FormProvider>
       )}
       {googleOAuthEnabled && (
         <>

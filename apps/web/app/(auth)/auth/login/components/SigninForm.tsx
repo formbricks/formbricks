@@ -2,15 +2,18 @@
 
 import { TwoFactor } from "@/app/(auth)/auth/login/components/TwoFactor";
 import { TwoFactorBackup } from "@/app/(auth)/auth/login/components/TwoFactorBackup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { XCircleIcon } from "lucide-react";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Controller, FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
 import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 import { AzureButton } from "@formbricks/ui/components/SignupOptions/components/AzureButton";
 import { GithubButton } from "@formbricks/ui/components/SignupOptions/components/GithubButton";
@@ -52,6 +55,19 @@ export const SigninForm = ({
   const emailRef = useRef<HTMLInputElement>(null);
   const formMethods = useForm<TSigninFormState>();
   const callbackUrl = searchParams?.get("callbackUrl");
+  const ZSignInInput = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+  });
+
+  type TSignInInput = z.infer<typeof ZSignInInput>;
+  const form = useForm<TSignInInput>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    resolver: zodResolver(ZSignInInput),
+  });
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
     if (typeof window !== "undefined") {
@@ -151,53 +167,58 @@ export const SigninForm = ({
         <h1 className="mb-4 text-slate-700">{formLabel}</h1>
 
         <div className="space-y-2">
-          <form onSubmit={formMethods.handleSubmit(onSubmit)} className="space-y-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
             {TwoFactorComponent}
-
             {showLogin && (
-              <div className={cn(totpLogin && "hidden")}>
-                <div className="mb-2 transition-all duration-500 ease-in-out">
-                  <label htmlFor="email" className="sr-only">
-                    Email address
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    placeholder="work@email.com"
-                    defaultValue={searchParams?.get("email") || ""}
-                    className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-                    {...formMethods.register("email", {
-                      required: true,
-                      pattern: /\S+@\S+\.\S+/,
-                    })}
-                  />
-                </div>
-                <div className="transition-all duration-500 ease-in-out">
-                  <label htmlFor="password" className="sr-only">
-                    Password
-                  </label>
-                  <Controller
-                    name="password"
-                    control={formMethods.control}
-                    render={({ field }) => (
-                      <PasswordInput
-                        id="password"
-                        autoComplete="current-password"
-                        placeholder="*******"
-                        aria-placeholder="password"
-                        onFocus={() => setIsPasswordFocused(true)}
-                        required
-                        className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-                        {...field}
-                      />
-                    )}
-                    rules={{
-                      required: true,
-                    }}
-                  />
-                </div>
+              <div className={cn(totpLogin && "hidden", "space-y-2")}>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field, fieldState: { error } }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <div>
+                          <input
+                            id="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            value={field.value}
+                            onChange={(email) => field.onChange(email)}
+                            placeholder="work@email.com"
+                            defaultValue={searchParams?.get("email") || ""}
+                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                          />
+                          {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field, fieldState: { error } }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <div>
+                          <PasswordInput
+                            id="password"
+                            autoComplete="current-password"
+                            placeholder="*******"
+                            aria-placeholder="password"
+                            onFocus={() => setIsPasswordFocused(true)}
+                            required
+                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            value={field.value}
+                            onChange={(password) => field.onChange(password)}
+                          />
+                          {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
                 {passwordResetEnabled && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link

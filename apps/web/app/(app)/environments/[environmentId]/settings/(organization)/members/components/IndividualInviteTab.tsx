@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
+import { ZUserName } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
@@ -26,9 +27,7 @@ export const IndividualInviteTab = ({
   environmentId,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
-    name: z
-      .string()
-      .regex(/^[a-zA-Z\s-']+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
+    name: ZUserName,
     email: z.string().email("Invalid email address"),
     role: z.nativeEnum(MembershipRole),
   });
