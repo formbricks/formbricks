@@ -27,7 +27,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         <AccountSettingsNavbar environmentId={environmentId} activeId="profile" />
       </PageHeader>
       {user && (
-        <div>
+        <>
           <SettingsCard title="Personal information" description="Update your personal information.">
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
@@ -54,7 +54,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
           </SettingsCard>
           <SettingsId title="Profile" id={user.id}></SettingsId>
-        </div>
+        </>
       )}
     </PageContentWrapper>
   );
