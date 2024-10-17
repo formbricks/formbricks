@@ -3,8 +3,9 @@ import { test } from "./lib/fixtures";
 import { finishOnboarding, signUpAndLogin } from "./utils/helper";
 import { invites, mockUsers } from "./utils/mock";
 
+test.use({ headless: false });
 test.describe("Invite, accept and remove organization member", async () => {
-  test.describe.configure({ mode: "serial" });
+  test.describe.configure({ mode: "serial", timeout: 30000 });
 
   const { email, name } = mockUsers.organization[0];
   // let inviteLink: string;
