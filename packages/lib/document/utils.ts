@@ -27,7 +27,7 @@ export const handleInsightAssignments = async (
     experimental_telemetry: { isEnabled: true },
   });
   // find close insight to merge it with
-  const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.35);
+  const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.3);
 
   if (nearestInsights.length > 0) {
     // create a documentInsight with this insight

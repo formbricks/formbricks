@@ -1,4 +1,4 @@
-import { InsightView } from "@/app/(app)/environments/[environmentId]/components/InsightView";
+import { InsightView } from "@/app/(ee)/(insights)/components/InsightView";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
@@ -24,6 +24,7 @@ interface OpenTextSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const OpenTextSummary = ({
@@ -32,11 +33,12 @@ export const OpenTextSummary = ({
   survey,
   attributeClasses,
   isAIEnabled,
+  documentsPerPage,
 }: OpenTextSummaryProps) => {
   const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
-    isInsightsEnabled ? "insights" : "responses"
+    isInsightsEnabled && questionSummary.insights.length ? "insights" : "responses"
   );
 
   const handleLoadMore = () => {
@@ -65,7 +67,7 @@ export const OpenTextSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
-        insights={
+        additionalInfo={
           isAIEnabled && !questionSummary.insightsEnabled ? (
             <div className="flex items-center space-x-2">
               <div className="flex items-center rounded-lg bg-slate-100 p-2">Insights disabled</div>
@@ -73,7 +75,11 @@ export const OpenTextSummary = ({
           ) : undefined
         }
       />
-      {isInsightsEnabled && <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />}
+      {isInsightsEnabled && (
+        <div className="ml-4">
+          <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />
+        </div>
+      )}
       <div className="border-t border-slate-200"></div>
       <div className="max-h-[40vh] overflow-y-auto">
         {activeTab === "insights" ? (
@@ -82,6 +88,7 @@ export const OpenTextSummary = ({
             questionId={questionSummary.question.id}
             surveyId={survey.id}
             isSummaryPage={true}
+            documentsPerPage={documentsPerPage}
           />
         ) : activeTab === "responses" ? (
           <>

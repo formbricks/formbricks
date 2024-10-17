@@ -49,6 +49,7 @@ interface SummaryPageProps {
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const SummaryPage = ({
@@ -59,6 +60,7 @@ export const SummaryPage = ({
   totalResponseCount,
   attributeClasses,
   isAIEnabled,
+  documentsPerPage,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -179,6 +181,7 @@ export const SummaryPage = ({
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
+        documentsPerPage={documentsPerPage}
       />
     </>
   );

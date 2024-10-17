@@ -84,6 +84,26 @@ export const navigation: Array<NavGroup> = [
     title: "Core Features",
     links: [
       {
+        title: "Question Types",
+        children: [
+          { title: "Free Text", href: "/global/question-type/free-text" },
+          { title: "Select Single", href: "/global/question-type/single-select" },
+          { title: "Select Multiple", href: "/global/question-type/multi-select" },
+          { title: "Select Picture", href: "/global/question-type/picture-selection" },
+          { title: "Rating", href: "/global/question-type/rating" },
+          { title: "Net Promoter Score", href: "/global/question-type/net-promoter-score" },
+          { title: "Ranking", href: "/global/question-type/ranking" },
+          { title: "Matrix", href: "/global/question-type/matrix" },
+          { title: "Statement (Call to Action)", href: "/global/question-type/statement-cta" },
+          { title: "Consent", href: "/global/question-type/consent" },
+          { title: "File Upload", href: "/global/question-type/file-upload" },
+          { title: "Date", href: "/global/question-type/date" },
+          { title: "Schedule a Meeting", href: "/global/question-type/schedule" },
+          { title: "Address", href: "/global/question-type/address" },
+          { title: "Contact Info", href: "/global/question-type/contact" },
+        ],
+      },
+      {
         title: "Integrations",
         children: [
           { title: "Overview", href: "/developer-docs/integrations/overview" },

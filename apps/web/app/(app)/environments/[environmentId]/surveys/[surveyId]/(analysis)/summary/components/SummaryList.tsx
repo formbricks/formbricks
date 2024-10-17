@@ -40,6 +40,7 @@ interface SummaryListProps {
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const SummaryList = ({
@@ -50,6 +51,7 @@ export const SummaryList = ({
   totalResponseCount,
   attributeClasses,
   isAIEnabled,
+  documentsPerPage,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
 
@@ -129,6 +131,7 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 isAIEnabled={isAIEnabled}
+                documentsPerPage={documentsPerPage}
               />
             );
           }

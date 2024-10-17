@@ -3,6 +3,7 @@
 import { generateInsightsForSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { SparklesIcon } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 
@@ -16,7 +17,14 @@ export const EnableInsightsBanner = ({ surveyId, surveyResponseCount }: EnableIn
 
   const handleInsightGeneration = async () => {
     setIsGeneratingInsights(true);
-    await generateInsightsForSurveyAction({ surveyId });
+    const insightGenerationActionResponse = await generateInsightsForSurveyAction({ surveyId });
+
+    if (insightGenerationActionResponse?.data) {
+      toast.success("Insights have been generated.");
+    } else {
+      toast.error("No insights found");
+    }
+
     setIsGeneratingInsights(false);
   };
 

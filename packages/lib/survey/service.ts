@@ -1408,7 +1408,7 @@ export const getSurveysBySegmentId = reactCache(
     )()
 );
 
-export const generateInsightsForSurvey = async (surveyId: string) => {
+export const generateInsightsForSurvey = async (surveyId: string): Promise<Boolean> => {
   validateInputs([surveyId, ZId]);
   try {
     const survey = await prisma.survey.findUnique({
@@ -1426,7 +1426,7 @@ export const generateInsightsForSurvey = async (surveyId: string) => {
     }
 
     if (!doesSurveyHasOpenTextQuestion(survey.questions)) {
-      return;
+      return false;
     }
 
     const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
@@ -1454,6 +1454,7 @@ export const generateInsightsForSurvey = async (surveyId: string) => {
 
       return question;
     });
+
     const updatedSurvey = await prisma.survey.update({
       where: {
         id: survey.id,
@@ -1472,7 +1473,10 @@ export const generateInsightsForSurvey = async (surveyId: string) => {
 
     if (insightsEnabledQuestionIds.length > 0) {
       await generateInsightsForSurveyResponses(updatedSurvey);
+      return true;
     }
+
+    return false;
   } catch (error) {
     console.error("Error generating insights for surveys:", error);
     throw error;

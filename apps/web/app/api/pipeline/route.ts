@@ -145,7 +145,6 @@ export const POST = async (request: Request) => {
     });
 
     // generate embeddings for all open text question responses for all paid plans
-    // TODO: check longer surveys if documents get created multiple times
     const hasSurveyOpenTextQuestions = survey.questions.some((question) => question.type === "openText");
     if (hasSurveyOpenTextQuestions) {
       const isAICofigured = IS_AI_CONFIGURED;
@@ -160,7 +159,8 @@ export const POST = async (request: Request) => {
         if (isAIEnabled) {
           for (const question of survey.questions) {
             if (question.type === "openText" && question.insightsEnabled) {
-              const isQuestionAnswered = response.data[question.id] !== undefined;
+              const isQuestionAnswered =
+                response.data[question.id] !== undefined && response.data[question.id] !== "";
               if (!isQuestionAnswered) {
                 continue;
               }

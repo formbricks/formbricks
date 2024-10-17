@@ -8,7 +8,9 @@ import { ZId } from "@formbricks/types/common";
 import {
   TDocument,
   TDocumentCreateInput,
+  TDocumentFilterCriteria,
   ZDocumentCreateInput,
+  ZDocumentFilterCriteria,
   ZDocumentSentiment,
 } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -16,6 +18,7 @@ import { ZInsightCategory } from "@formbricks/types/insights";
 import { embeddingsModel, llmModel } from "../aiModels";
 import { cache } from "../cache";
 import { insightCache } from "../insight/cache";
+import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
 import { documentCache } from "./cache";
 import { handleInsightAssignments } from "./utils";
@@ -27,10 +30,20 @@ export type TPrismaDocument = Omit<TDocument, "vector"> & {
 };
 
 export const getDocumentsByInsightId = reactCache(
-  (insightId: string, limit?: number, offset?: number): Promise<TDocument[]> =>
+  (
+    insightId: string,
+    limit?: number,
+    offset?: number,
+    filterCriteria?: TDocumentFilterCriteria
+  ): Promise<TDocument[]> =>
     cache(
       async () => {
-        validateInputs([insightId, ZId]);
+        validateInputs(
+          [insightId, ZId],
+          [limit, z.number().optional()],
+          [offset, z.number().optional()],
+          [filterCriteria, ZDocumentFilterCriteria.optional()]
+        );
 
         limit = limit ?? DOCUMENTS_PER_PAGE;
         try {
@@ -40,6 +53,10 @@ export const getDocumentsByInsightId = reactCache(
                 some: {
                   insightId,
                 },
+              },
+              createdAt: {
+                gte: filterCriteria?.createdAt?.min,
+                lte: filterCriteria?.createdAt?.max,
               },
             },
             orderBy: [
@@ -128,6 +145,12 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
 export const createDocument = async (documentInput: TDocumentCreateInput): Promise<TDocument> => {
   validateInputs([documentInput, ZDocumentCreateInput]);
 
+  const survey = await getSurvey(documentInput.surveyId);
+
+  if (!survey) {
+    throw new Error("Survey not found");
+  }
+
   try {
     // Generate text embedding
     const { embedding } = await embed({
@@ -143,18 +166,20 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
         sentiment: ZDocumentSentiment,
         insights: z.array(
           z.object({
-            title: z.string(),
-            description: z.string(),
+            title: z.string().describe("Insight summary in one sentence"),
+            description: z.string().describe("one sentence description of the insight"),
             category: ZInsightCategory,
           })
         ),
+        isSpam: z.boolean(),
       }),
-      system: `You are an XM researcher. You analyse user feedback and extract insights and the sentiment from it. You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. An insight consist of a title and description (e.g. title: "Interactive charts and graphics", description: "Users would love to see a visualization of the analytics data") as well as tag it with the right category and tries to give insights while being not too specific as it might hold multiple documents.`,
-      prompt: `Analyze this feedback: "${documentInput.text}"`,
+      system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight, try to not too specific in the insights as it might hold multiple documents.`,
+      prompt: `Survey: ${survey.name}\n${documentInput.text}`,
       experimental_telemetry: { isEnabled: true },
     });
 
     const sentiment = object.sentiment;
+    const isSpam = object.isSpam;
     const insights = object.insights;
 
     // create document
@@ -162,6 +187,7 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
       data: {
         ...documentInput,
         sentiment,
+        isSpam,
       },
     });
 
@@ -180,15 +206,17 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
 
     // connect or create the insights
     const insightPromises: Promise<void>[] = [];
-    for (const insight of insights) {
-      if (typeof insight.title !== "string" || typeof insight.description !== "string") {
-        throw new Error("Insight title and description must be a string");
-      }
+    if (!isSpam) {
+      for (const insight of insights) {
+        if (typeof insight.title !== "string" || typeof insight.description !== "string") {
+          throw new Error("Insight title and description must be a string");
+        }
 
-      // create or connect the insight
-      insightPromises.push(handleInsightAssignments(documentInput.environmentId, document.id, insight));
+        // create or connect the insight
+        insightPromises.push(handleInsightAssignments(documentInput.environmentId, document.id, insight));
+      }
+      await Promise.all(insightPromises);
     }
-    await Promise.all(insightPromises);
 
     documentCache.revalidate({
       id: document.id,

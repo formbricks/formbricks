@@ -105,7 +105,7 @@ export const getInsightsEnabled = async (question: TSurveyQuestion): Promise<boo
     schema: z.object({
       insightsEnabled: z.boolean(),
     }),
-    prompt: `We collect complaints, praises & feature requests. Can we find them in this question?: ${question.headline.default}`,
+    prompt: `We extract insights (e.g. feature requests, complaints, other) from survey questions. Can we find them in this question?: ${question.headline.default}`,
     experimental_telemetry: { isEnabled: true },
   });
 

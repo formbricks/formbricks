@@ -9,11 +9,14 @@ import {
 } from "@formbricks/lib/document/service";
 import { getOrganizationIdFromInsightId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
+import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
   surveyId: ZId,
   questionId: ZId,
+  limit: z.number().optional(),
+  offset: z.number().optional(),
 });
 
 export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActionClient
@@ -28,12 +31,17 @@ export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActi
     return await getDocumentsByInsightIdSurveyIdQuestionId(
       parsedInput.insightId,
       parsedInput.surveyId,
-      parsedInput.questionId
+      parsedInput.questionId,
+      parsedInput.limit,
+      parsedInput.offset
     );
   });
 
 const ZGetDocumentsByInsightIdAction = z.object({
   insightId: ZId,
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+  filterCriteria: ZDocumentFilterCriteria.optional(),
 });
 
 export const getDocumentsByInsightIdAction = authenticatedActionClient
@@ -45,5 +53,10 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
       rules: ["response", "read"],
     });
 
-    return await getDocumentsByInsightId(parsedInput.insightId);
+    return await getDocumentsByInsightId(
+      parsedInput.insightId,
+      parsedInput.limit,
+      parsedInput.offset,
+      parsedInput.filterCriteria
+    );
   });

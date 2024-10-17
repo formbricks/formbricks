@@ -88,7 +88,16 @@ export const getInsights = reactCache(
             include: {
               _count: {
                 select: {
-                  documentInsights: true,
+                  documentInsights: {
+                    where: {
+                      document: {
+                        createdAt: {
+                          gte: filterCriteria?.documentCreatedAt?.min,
+                          lte: filterCriteria?.documentCreatedAt?.max,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -194,7 +203,14 @@ export const getInsightsBySurveyIdQuestionId = reactCache(
             include: {
               _count: {
                 select: {
-                  documentInsights: true,
+                  documentInsights: {
+                    where: {
+                      document: {
+                        surveyId,
+                        questionId,
+                      },
+                    },
+                  },
                 },
               },
             },

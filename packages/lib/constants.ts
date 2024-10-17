@@ -79,6 +79,7 @@ export const SURVEYS_PER_PAGE = 12;
 export const RESPONSES_PER_PAGE = 20;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 export const INSIGHTS_PER_PAGE = 10;
+export const DOCUMENTS_PER_PAGE = 10;
 
 export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
 export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
@@ -200,16 +201,16 @@ export enum STRIPE_PRICE_LOOKUP_KEYS {
 
 export const BILLING_LIMITS = {
   FREE: {
-    RESPONSES: 500,
-    MIU: 1000,
+    RESPONSES: 1500,
+    MIU: 2000,
   },
   STARTUP: {
-    RESPONSES: 2000,
-    MIU: 2500,
+    RESPONSES: 5000,
+    MIU: 7500,
   },
   SCALE: {
-    RESPONSES: 5000,
-    MIU: 20000,
+    RESPONSES: 10000,
+    MIU: 30000,
   },
 } as const;
 
