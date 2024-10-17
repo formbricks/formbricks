@@ -166,11 +166,10 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
         sentiment: ZDocumentSentiment,
         insights: z.array(
           z.object({
-            title: z
+            title: z.string().max(25).describe("insight that works standalone, very specific, 'Dark Mode'"),
+            description: z
               .string()
-              .max(25)
-              .describe("question-answering insight that works standalone, very specific"),
-            description: z.string().describe("very brief insight, generic"),
+              .describe("very brief insight, generic, e.g. 'Users would love to see support for dark mode'"),
             category: ZInsightCategory,
           })
         ),
@@ -178,6 +177,7 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
       }),
       system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. The insight title (1-3 words) should concicely answer the question. You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight.`,
       prompt: `Survey: ${survey.name}\n${documentInput.text}`,
+      temperature: 0,
       experimental_telemetry: { isEnabled: true },
     });
 
