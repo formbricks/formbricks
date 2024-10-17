@@ -3,8 +3,8 @@
 import {
   inviteUserAction,
   leaveOrganizationAction,
-} from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/actions";
-import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/components/AddMemberModal";
+} from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AddMemberModal";
 import { XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

@@ -2097,7 +2097,7 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
     })
   ),
   insights: z.array(ZInsight),
-  insightsEnabled: z.boolean().default(false),
+  insightsEnabled: z.boolean().optional(),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;

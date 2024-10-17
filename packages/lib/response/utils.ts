@@ -848,7 +848,7 @@ export const getQuestionWiseSummary = async (
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
           insights,
-          insightsEnabled: question.insightsEnabled || false,
+          insightsEnabled: question.insightsEnabled,
         });
 
         values;

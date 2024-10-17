@@ -64,7 +64,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
-  const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+  const isAIEnabled = await getIsAIEnabled(organization);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">

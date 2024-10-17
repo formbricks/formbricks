@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
@@ -35,6 +36,25 @@ export const updateOrganizationNameAction = authenticatedActionClient
       organizationId: parsedInput.organizationId,
       rules: ["organization", "update"],
     });
+    return await updateOrganization(parsedInput.organizationId, parsedInput.data);
+  });
+
+const ZUpdateOrganizationAIEnabledAction = z.object({
+  organizationId: ZId,
+  data: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+});
+
+export const updateOrganizationAIEnabledAction = authenticatedActionClient
+  .schema(ZUpdateOrganizationAIEnabledAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorization({
+      schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+      data: parsedInput.data,
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["organization", "update"],
+    });
+
     return await updateOrganization(parsedInput.organizationId, parsedInput.data);
   });
 

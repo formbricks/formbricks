@@ -1,4 +1,4 @@
-import { MemberActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/components/EditMemberships/MemberActions";
+import { MemberActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/MemberActions";
 import { isInviteExpired } from "@/app/lib/utils";
 import { EditMembershipRole } from "@formbricks/ee/role-management/components/edit-membership-role";
 import { TInvite } from "@formbricks/types/invites";

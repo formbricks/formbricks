@@ -1,6 +1,6 @@
 "use client";
 
-import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/actions";
+import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";

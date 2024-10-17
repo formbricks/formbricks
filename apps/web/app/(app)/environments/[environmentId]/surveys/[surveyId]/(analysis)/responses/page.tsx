@@ -56,7 +56,7 @@ const Page = async ({ params }) => {
 
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
-  const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+  const isAIEnabled = await getIsAIEnabled(organization);
   const shouldGenerateInsights = needsInsightsGeneration(survey);
 
   return (

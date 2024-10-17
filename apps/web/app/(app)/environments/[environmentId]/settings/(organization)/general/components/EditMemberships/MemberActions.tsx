@@ -5,8 +5,8 @@ import {
   deleteInviteAction,
   deleteMembershipAction,
   resendInviteAction,
-} from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/actions";
-import { ShareInviteModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/members/components/ShareInviteModal";
+} from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { ShareInviteModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/ShareInviteModal";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";

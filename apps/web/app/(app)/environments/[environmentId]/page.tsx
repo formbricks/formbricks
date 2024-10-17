@@ -9,7 +9,7 @@ const Page = async ({ params }) => {
     throw new Error("Organization not found");
   }
 
-  const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+  const isAIEnabled = await getIsAIEnabled(organization);
 
   if (isAIEnabled) {
     return redirect(`/environments/${params.environmentId}/experience`);

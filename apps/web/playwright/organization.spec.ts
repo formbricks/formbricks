@@ -24,7 +24,7 @@ test.describe("Invite, accept and remove organization member", async () => {
       await expect(dropdownInnerContentWrapper).toBeVisible();
 
       await page.getByRole("link", { name: "Organization" }).click();
-      await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
+      await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 

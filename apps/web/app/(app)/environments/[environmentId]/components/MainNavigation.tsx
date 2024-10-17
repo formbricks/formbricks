@@ -216,7 +216,7 @@ export const MainNavigation = ({
     },
     {
       label: "Organization",
-      href: `/environments/${environment.id}/settings/members`,
+      href: `/environments/${environment.id}/settings/general`,
       icon: UsersIcon,
     },
     {
