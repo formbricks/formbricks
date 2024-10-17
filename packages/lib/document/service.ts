@@ -166,19 +166,20 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
         sentiment: ZDocumentSentiment,
         insights: z.array(
           z.object({
-            title: z.string().describe("Insight summary in one sentence"),
-            description: z.string().describe("one sentence description of the insight"),
+            title: z
+              .string()
+              .max(25)
+              .describe("question-answering insight that works standalone, very specific"),
+            description: z.string().describe("very brief insight, generic"),
             category: ZInsightCategory,
           })
         ),
         isSpam: z.boolean(),
       }),
-      system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight, try to not too specific in the insights as it might hold multiple documents.`,
+      system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. The insight title (1-3 words) should concicely answer the question. You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight.`,
       prompt: `Survey: ${survey.name}\n${documentInput.text}`,
       experimental_telemetry: { isEnabled: true },
     });
-
-    console.log("Object", JSON.stringify(object, null, 2));
 
     const sentiment = object.sentiment;
     const isSpam = object.isSpam;
@@ -285,50 +286,6 @@ export const getDocumentsByResponseIdQuestionId = reactCache(
       }
     )()
 );
-
-export const findNearestDocuments = async (
-  environmentId: string,
-  vector: number[],
-  limit: number = 5,
-  threshold: number = 0.5
-): Promise<TDocument[]> => {
-  validateInputs([environmentId, ZId]);
-  // Convert the embedding array to a JSON-like string representation
-  const vectorString = `[${vector.join(",")}]`;
-
-  // Execute raw SQL query to find nearest neighbors and exclude the vector column
-  const prismaDocuments: TPrismaDocument[] = await prisma.$queryRaw`
-    SELECT
-      id,
-      created_at AS "createdAt",
-      updated_at AS "updatedAt",
-      "environmentId",
-      text,
-      "responseId",
-      "questionId",
-      "documentGroupId",
-      vector::text
-    FROM "Document" d
-    WHERE d."environmentId" = ${environmentId}
-      AND d."vector" <=> ${vectorString}::vector(512) <= ${threshold}
-    ORDER BY d."vector" <=> ${vectorString}::vector(512)
-    LIMIT ${limit};
-  `;
-
-  const documents = prismaDocuments.map((prismaDocument) => {
-    // Convert the string representation of the vector back to an array of numbers
-    const vector = prismaDocument.vector
-      .slice(1, -1) // Remove the surrounding square brackets
-      .split(",") // Split the string into an array of strings
-      .map(Number); // Convert each string to a number
-    return {
-      ...prismaDocument,
-      vector,
-    };
-  });
-
-  return documents;
-};
 
 export const doesDocumentExistForResponseId = reactCache(
   (responseId: string): Promise<boolean> =>

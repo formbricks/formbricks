@@ -10,6 +10,10 @@ test.describe("Invite, accept and remove organization member", async () => {
   // let inviteLink: string;
 
   test("Invite organization member", async ({ page }) => {
+    page.on("console", (msg) => {
+      console.log(msg);
+    });
+
     await signUpAndLogin(page, name, email, name);
     await finishOnboarding(page, "link");
 

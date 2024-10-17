@@ -1,13 +1,13 @@
 "use client";
 
-import { InsightView } from "@/app/(ee)/(insights)/components/InsightView";
-import { getInsightsAction } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/actions";
-import { InsightLoading } from "@/app/(ee)/(insights)/environments/[environmentId]/experience/components/InsightLoading";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
+import { InsightView } from "../../../../components/InsightView";
+import { getEnvironmentInsightsAction } from "../actions";
+import { InsightLoading } from "./InsightLoading";
 
 interface InsightsTableProps {
   environmentId: string;
@@ -50,7 +50,7 @@ export const InsightsCard = ({
     const fetchInitialInsights = async () => {
       setIsFetching(true);
       setInsights([]);
-      const res = await getInsightsAction({
+      const res = await getEnvironmentInsightsAction({
         environmentId: environmentId,
         limit: insightsLimit,
         offset: undefined,
@@ -72,7 +72,7 @@ export const InsightsCard = ({
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
-    const res = await getInsightsAction({
+    const res = await getEnvironmentInsightsAction({
       environmentId,
       limit: insightsLimit,
       offset: insights.length,
