@@ -40,6 +40,7 @@ export const getInsights = reactCache(
                   },
                 },
               },
+              category: filterCriteria?.category,
             },
             include: {
               _count: {

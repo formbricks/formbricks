@@ -22,7 +22,6 @@ interface InsightViewProps {
   insights: TInsight[];
   questionId?: string;
   surveyId?: string;
-  isSummaryPage?: boolean;
   documentsFilter?: TDocumentFilterCriteria;
   isFetching?: boolean;
   documentsPerPage?: number;
@@ -32,7 +31,6 @@ export const InsightView = ({
   insights,
   questionId,
   surveyId,
-  isSummaryPage = false,
   documentsFilter,
   isFetching,
   documentsPerPage,
@@ -76,9 +74,9 @@ export const InsightView = ({
   }, [insights]);
 
   return (
-    <div className={cn({ "mt-2": isSummaryPage })}>
+    <div className={cn("mt-2")}>
       <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
-        <TabsList className={cn({ "ml-2": isSummaryPage })}>
+        <TabsList className={cn("ml-2")}>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="complaint">Complaint</TabsTrigger>
           <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>

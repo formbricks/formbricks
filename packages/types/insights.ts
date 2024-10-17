@@ -37,6 +37,7 @@ export const ZInsightFilterCriteria = z.object({
       max: z.date().optional(),
     })
     .optional(),
+  category: ZInsightCategory.optional(),
 });
 
 export type TInsightFilterCriteria = z.infer<typeof ZInsightFilterCriteria>;

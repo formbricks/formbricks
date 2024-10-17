@@ -87,7 +87,6 @@ export const OpenTextSummary = ({
             insights={questionSummary.insights}
             questionId={questionSummary.question.id}
             surveyId={survey.id}
-            isSummaryPage={true}
             documentsPerPage={documentsPerPage}
           />
         ) : activeTab === "responses" ? (

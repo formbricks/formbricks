@@ -1,11 +1,11 @@
 "use client";
 
 import { UserIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
-import { TInsight, TInsightCategory } from "@formbricks/types/insights";
+import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { InsightSheet } from "@formbricks/ui/components/InsightSheet";
 import {
@@ -17,28 +17,26 @@ import {
   TableRow,
 } from "@formbricks/ui/components/Table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
+import { getEnvironmentInsightsAction } from "../actions";
+import { InsightLoading } from "./InsightLoading";
 
 interface InsightViewProps {
-  insights: TInsight[];
-  questionId?: string;
-  surveyId?: string;
-  isSummaryPage?: boolean;
-  documentsFilter?: TDocumentFilterCriteria;
-  isFetching?: boolean;
-  documentsPerPage?: number;
+  statsFrom?: Date;
+  environmentId: string;
+  documentsPerPage: number;
+  insightsPerPage: number;
 }
 
 export const InsightView = ({
-  insights,
-  questionId,
-  surveyId,
-  isSummaryPage = false,
-  documentsFilter,
-  isFetching,
+  statsFrom,
+  environmentId,
+  insightsPerPage,
   documentsPerPage,
 }: InsightViewProps) => {
-  const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
-  const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
+  const [insights, setInsights] = useState<TInsight[]>([]);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isFetching, setIsFetching] = useState(true);
+  const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(false);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
 
@@ -51,34 +49,73 @@ export const InsightView = ({
         insightDescription: currentInsight?.description,
         insightCategory: currentInsight?.category,
         environmentId: currentInsight?.environmentId,
-        surveyId,
-        questionId,
       },
     });
   };
 
-  const handleFilterSelect = useCallback(
-    (filterValue: string) => {
-      setActiveTab(filterValue);
-      if (filterValue === "all") {
-        setLocalInsights(insights);
-      } else {
-        setLocalInsights(
-          insights.filter((insight) => insight.category === (filterValue as TInsightCategory))
-        );
-      }
-    },
-    [insights]
+  const insightsFilter: TInsightFilterCriteria = useMemo(
+    () => ({
+      documentCreatedAt: {
+        min: statsFrom,
+      },
+      category: activeTab === "all" ? undefined : (activeTab as TInsight["category"]),
+    }),
+    [statsFrom, activeTab]
+  );
+
+  const documentsFilter: TDocumentFilterCriteria = useMemo(
+    () => ({
+      createdAt: {
+        min: statsFrom,
+      },
+    }),
+    [statsFrom]
   );
 
   useEffect(() => {
-    handleFilterSelect(activeTab);
-  }, [insights]);
+    const fetchInitialInsights = async () => {
+      setIsFetching(true);
+      setInsights([]);
+      const res = await getEnvironmentInsightsAction({
+        environmentId,
+        limit: insightsPerPage,
+        offset: 0,
+        insightsFilter,
+      });
+      if (res?.data) {
+        setInsights(res.data);
+        setHasMore(res.data.length >= insightsPerPage);
+        setIsFetching(false);
+      }
+    };
+
+    fetchInitialInsights();
+  }, [environmentId, insightsPerPage, insightsFilter]);
+
+  const fetchNextPage = useCallback(async () => {
+    if (!hasMore) return;
+    setIsFetching(true);
+    const res = await getEnvironmentInsightsAction({
+      environmentId,
+      limit: insightsPerPage,
+      offset: insights.length,
+      insightsFilter,
+    });
+    if (res?.data) {
+      setInsights((prevInsights) => [...prevInsights, ...(res.data || [])]);
+      setHasMore(res.data.length >= insightsPerPage);
+      setIsFetching(false);
+    }
+  }, [environmentId, insights, insightsPerPage, insightsFilter, hasMore]);
+
+  const handleFilterSelect = (value: string) => {
+    setActiveTab(value);
+  };
 
   return (
-    <div className={cn({ "mt-2": isSummaryPage })}>
+    <div>
       <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
-        <TabsList className={cn({ "ml-2": isSummaryPage })}>
+        <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="complaint">Complaint</TabsTrigger>
           <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>
@@ -96,7 +133,7 @@ export const InsightView = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isFetching ? null : insights.length === 0 ? (
+              {insights.length === 0 && !isFetching ? (
                 <TableRow>
                   <TableCell colSpan={4} className="py-8 text-center">
                     <p className="text-slate-500">
@@ -105,14 +142,8 @@ export const InsightView = ({
                     </p>
                   </TableCell>
                 </TableRow>
-              ) : localInsights.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">No insights found for this filter.</p>
-                  </TableCell>
-                </TableRow>
               ) : (
-                localInsights.map((insight) => (
+                insights.map((insight) => (
                   <TableRow
                     key={insight.id}
                     className="cursor-pointer hover:bg-slate-50"
@@ -132,24 +163,31 @@ export const InsightView = ({
                         <Badge text="Feature Request" type="warning" size="tiny" />
                       ) : insight.category === "praise" ? (
                         <Badge text="Praise" type="success" size="tiny" />
-                      ) : insight.category === "other" ? (
+                      ) : (
                         <Badge text="Other" type="gray" size="tiny" />
-                      ) : null}
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          {isFetching && <InsightLoading />}
         </TabsContent>
       </Tabs>
+
+      {hasMore && !isFetching && (
+        <div className="flex justify-center py-5">
+          <button onClick={fetchNextPage} className="button-secondary">
+            Load more
+          </button>
+        </div>
+      )}
 
       <InsightSheet
         isOpen={isInsightSheetOpen}
         setIsOpen={setIsInsightSheetOpen}
         insight={currentInsight}
-        surveyId={surveyId}
-        questionId={questionId}
         handleFeedback={handleFeedback}
         documentsFilter={documentsFilter}
         documentsPerPage={documentsPerPage}
