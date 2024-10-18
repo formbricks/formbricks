@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
@@ -34,6 +35,7 @@ export const EditWelcomeCard = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: EditWelcomeCardProps) => {
+  const t = useTranslations();
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
@@ -79,17 +81,19 @@ export const EditWelcomeCard = ({
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Welcome card</p>
+                <p className="text-sm font-semibold">{t("common.welcome_card")}</p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {localSurvey?.welcomeCard?.enabled ? "Shown" : "Hidden"}
+                    {localSurvey?.welcomeCard?.enabled ? t("common.shown") : t("common.hidden")}
                   </p>
                 )}
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Label htmlFor="welcome-toggle">{localSurvey?.welcomeCard?.enabled ? "On" : "Off"}</Label>
+              <Label htmlFor="welcome-toggle">
+                {localSurvey?.welcomeCard?.enabled ? t("common.on") : t("common.off")}
+              </Label>
 
               <Switch
                 id="welcome-toggle"
@@ -105,7 +109,7 @@ export const EditWelcomeCard = ({
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
             <div className="mt-2">
-              <Label htmlFor="companyLogo">Company Logo</Label>
+              <Label htmlFor="companyLogo">{t("environments.surveys.edit.company_logo")}</Label>
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
@@ -122,7 +126,7 @@ export const EditWelcomeCard = ({
               <QuestionFormInput
                 id="headline"
                 value={localSurvey.welcomeCard.headline}
-                label="Note*"
+                label={t("common.note") + "*"}
                 localSurvey={localSurvey}
                 questionIdx={-1}
                 isInvalid={isInvalid}
@@ -133,7 +137,7 @@ export const EditWelcomeCard = ({
               />
             </div>
             <div className="mt-3">
-              <Label htmlFor="subheader">Welcome Message</Label>
+              <Label htmlFor="subheader">{t("environments.surveys.edit.welcome_message")}</Label>
               <div className="mt-2">
                 <LocalizedEditor
                   id="html"
@@ -159,13 +163,13 @@ export const EditWelcomeCard = ({
                     localSurvey={localSurvey}
                     questionIdx={-1}
                     maxLength={48}
-                    placeholder={"Next"}
+                    placeholder={t("common.next")}
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
                     attributeClasses={attributeClasses}
-                    label={`"Next" Button Label`}
+                    label={t("environments.surveys.edit.next_button_label")}
                   />
                 </div>
               </div>
@@ -182,9 +186,9 @@ export const EditWelcomeCard = ({
                 />
               </div>
               <div className="flex-column">
-                <Label htmlFor="timeToFinish">Time to Finish</Label>
+                <Label htmlFor="timeToFinish">{t("common.time_to_finish")}</Label>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  Display an estimate of completion time for survey
+                  {t("environments.surveys.edit.display_an_estimate_of_completion_time_for_survey")}
                 </div>
               </div>
             </div>
@@ -201,9 +205,9 @@ export const EditWelcomeCard = ({
                   />
                 </div>
                 <div className="flex-column">
-                  <Label htmlFor="showResponseCount">Show Response Count</Label>
+                  <Label htmlFor="showResponseCount">{t("common.show_response_count")}</Label>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    Display number of responses for survey
+                    {t("environments.surveys.edit.display_number_of_responses_for_survey")}
                   </div>
                 </div>
               </div>

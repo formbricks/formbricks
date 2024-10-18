@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { LanguageToggle } from "./language-toggle";
@@ -19,6 +20,7 @@ export function SecondaryLanguageSelect({
   localSurvey,
   updateSurveyLanguages,
 }: SecondaryLanguageSelectProps) {
+  const t = useTranslations();
   const isLanguageToggled = (language: TLanguage) => {
     return localSurvey.languages.some(
       (surveyLanguage) => surveyLanguage.language.code === language.code && surveyLanguage.enabled
@@ -27,7 +29,9 @@ export function SecondaryLanguageSelect({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm">2. Activate translation for specific languages:</p>
+      <p className="text-sm">
+        {t("environments.surveys.edit.2_activate_translation_for_specific_languages")}:
+      </p>
       {product.languages
         .filter((lang) => lang.id !== defaultLanguage.id)
         .map((language) => (

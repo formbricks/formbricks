@@ -1,4 +1,5 @@
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -59,8 +60,9 @@ export const InputCombobox = ({
   allowMultiSelect = false,
   showCheckIcon = false,
   comboboxClasses,
-  emptyDropdownText = "No option found.",
+  emptyDropdownText = "environments.surveys.edit.no_option_found",
 }: InputComboboxProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
   const [localValue, setLocalValue] = useState<string | number | string[] | null>(null);
@@ -192,7 +194,7 @@ export const InputCombobox = ({
         <div className="flex items-center gap-2 truncate">
           {option.icon && <option.icon className="h-5 w-5 shrink-0 text-slate-400" />}
           {option.imgSrc && <Image src={option.imgSrc} alt={option.label} width={24} height={24} />}
-          <span className="truncate">{option.label}</span>
+          <span className="truncate">{t(option.label)}</span>
         </div>
       );
     }
@@ -263,7 +265,7 @@ export const InputCombobox = ({
             )}
             <CommandList className="m-1">
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
-                {emptyDropdownText}
+                {t(emptyDropdownText)}
               </CommandEmpty>
               {options && options.length > 0 && (
                 <CommandGroup>
@@ -286,7 +288,7 @@ export const InputCombobox = ({
                           className="mr-2 shrink-0"
                         />
                       )}
-                      <span className="truncate">{option.label}</span>
+                      <span className="truncate">{t(option.label)}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>

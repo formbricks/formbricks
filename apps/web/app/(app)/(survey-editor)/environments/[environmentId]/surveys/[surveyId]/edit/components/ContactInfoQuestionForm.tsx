@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -31,32 +32,33 @@ export const ContactInfoQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: ContactInfoQuestionFormProps): JSX.Element => {
+  const t = useTranslations();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   const fields = [
     {
       id: "firstName",
-      label: "First Name",
+      label: t("environments.surveys.edit.first_name"),
       ...question.firstName,
     },
     {
       id: "lastName",
-      label: "Last Name",
+      label: t("environments.surveys.edit.last_name"),
       ...question.lastName,
     },
     {
       id: "email",
-      label: "Email",
+      label: t("common.email"),
       ...question.email,
     },
     {
       id: "phone",
-      label: "Phone",
+      label: t("common.phone"),
       ...question.phone,
     },
     {
       id: "company",
-      label: "Company",
+      label: t("environments.surveys.edit.company"),
       ...question.company,
     },
   ];
@@ -83,7 +85,7 @@ export const ContactInfoQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -100,7 +102,7 @@ export const ContactInfoQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -124,7 +126,7 @@ export const ContactInfoQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
 

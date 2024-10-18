@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,6 +25,7 @@ export const ResponseOptionsCard = ({
   setLocalSurvey,
   responseCount,
 }: ResponseOptionsCardProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);
@@ -290,8 +292,10 @@ export const ResponseOptionsCard = ({
             />{" "}
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Response Options</p>
-            <p className="mt-1 text-sm text-slate-500">Response limits, redirections and more.</p>
+            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.response_options")}</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("environments.surveys.edit.response_limits_redirections_and_more")}
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -303,12 +307,14 @@ export const ResponseOptionsCard = ({
             htmlId="closeOnNumberOfResponse"
             isChecked={autoComplete}
             onToggle={toggleAutocomplete}
-            title="Close survey on response limit"
-            description="Automatically close the survey after a certain number of responses."
+            title={t("environments.surveys.edit.close_survey_on_response_limit")}
+            description={t(
+              "environments.surveys.edit.automatically_close_the_survey_after_a_certain_number_of_responses"
+            )}
             childBorder={true}>
             <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-700">
-                Automatically mark the survey as complete after
+                {t("environments.surveys.edit.automatically_mark_the_survey_as_complete_after")}
                 <Input
                   autoFocus
                   type="number"
@@ -319,7 +325,7 @@ export const ResponseOptionsCard = ({
                   onBlur={handleInputResponseBlur}
                   className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                 />
-                completed responses.
+                {t("environments.surveys.edit.completed_responses")}
               </p>
             </label>
           </AdvancedOptionToggle>
@@ -328,8 +334,10 @@ export const ResponseOptionsCard = ({
             htmlId="runOnDate"
             isChecked={runOnDateToggle}
             onToggle={handleRunOnDateToggle}
-            title="Release survey on date"
-            description="Automatically release the survey at the beginning of the day (UTC)."
+            title={t("environments.surveys.edit.release_survey_on_date")}
+            description={t(
+              "environments.surveys.edit.automatically_release_the_survey_at_the_beginning_of_the_day_utc"
+            )}
             childBorder={true}>
             <div className="p-4">
               <DatePicker date={runOnDate} handleDateChange={handleRunOnDateChange} />
@@ -340,8 +348,10 @@ export const ResponseOptionsCard = ({
             htmlId="closeOnDate"
             isChecked={closeOnDateToggle}
             onToggle={handleCloseOnDateToggle}
-            title="Close survey on date"
-            description="Automatically closes the survey at the beginning of the day (UTC)."
+            title={t("environments.surveys.edit.close_survey_on_date")}
+            description={t(
+              "environments.surveys.edit.automatically_closes_the_survey_at_the_beginning_of_the_day_utc"
+            )}
             childBorder={true}>
             <div className="p-4">
               <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />

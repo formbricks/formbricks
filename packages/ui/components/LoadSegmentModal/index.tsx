@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -29,7 +30,6 @@ const SegmentDetail = ({
   currentSegment,
 }: SegmentDetailProps) => {
   const [isLoading, setIsLoading] = useState(false);
-
   const handleLoadNewSegment = async (segmentId: string) => {
     try {
       if (currentSegment.id === segmentId) {
@@ -140,7 +140,7 @@ export const LoadSegmentModal = ({
   const handleResetState = () => {
     setOpen(false);
   };
-
+  const t = useTranslations();
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (
@@ -149,22 +149,22 @@ export const LoadSegmentModal = ({
       setOpen={() => {
         handleResetState();
       }}
-      title="Load Segment"
+      title={t("environments.surveys.edit.load_segment")}
       size="lg">
       <>
         {!segmentsArray?.length ? (
           <div className="group">
             <div className="flex h-16 w-full flex-col items-center justify-center rounded-lg text-slate-700">
-              You have not created a segment yet.
+              {t("environments.surveys.edit.you_have_not_created_a_segment_yet")}
             </div>
           </div>
         ) : (
           <div className="flex flex-col">
             <div>
               <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-                <div className="col-span-3 pl-6">Segment</div>
-                <div className="col-span-1 hidden text-center sm:block">Updated at</div>
-                <div className="col-span-1 hidden text-center sm:block">Created at</div>
+                <div className="col-span-3 pl-6">{t("common.segment")}</div>
+                <div className="col-span-1 hidden text-center sm:block">{t("common.updated_at")}</div>
+                <div className="col-span-1 hidden text-center sm:block">{t("common.created_at")}</div>
               </div>
 
               {segmentsArray.map((segment) => (

@@ -1,4 +1,5 @@
 import { RotateCcwIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm, useWatch } from "react-hook-form";
@@ -23,7 +24,7 @@ import { BackgroundStylingCard } from "./BackgroundStylingCard";
 import { CardStylingSettings } from "./CardStylingSettings";
 import { FormStylingSettings } from "./FormStylingSettings";
 
-type StylingViewProps = {
+interface StylingViewProps {
   environment: TEnvironment;
   product: TProduct;
   localSurvey: TSurvey;
@@ -35,7 +36,7 @@ type StylingViewProps = {
   setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
   isUnsplashConfigured: boolean;
   isCxMode: boolean;
-};
+}
 
 export const StylingView = ({
   colors,
@@ -50,6 +51,8 @@ export const StylingView = ({
   isUnsplashConfigured,
   isCxMode,
 }: StylingViewProps) => {
+  const t = useTranslations();
+
   const stylingDefaults: TBaseStyling = useMemo(() => {
     let stylingDefaults: TBaseStyling;
     const isOverwriteEnabled = localSurvey.styling?.overwriteThemeStyling ?? false;
@@ -212,10 +215,10 @@ export const StylingView = ({
 
                     <div>
                       <FormLabel className="text-base font-semibold text-slate-900">
-                        Add custom styles
+                        {t("environments.surveys.edit.add_custom_styles")}
                       </FormLabel>
                       <FormDescription className="text-sm text-slate-800">
-                        Override the theme with individual styles for this survey.
+                        {t("environments.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -261,20 +264,20 @@ export const StylingView = ({
                     variant="minimal"
                     className="flex items-center gap-2"
                     onClick={() => setConfirmResetStylingModalOpen(true)}>
-                    Reset to theme styles
+                    {t("environments.surveys.edit.reset_to_theme_styles")}
                     <RotateCcwIcon className="h-4 w-4" />
                   </Button>
                 )}
               </div>
               <p className="text-sm text-slate-500">
-                Adjust the theme in the{" "}
+                {t("environments.surveys.edit.adjust_the_theme_in_the")}{" "}
                 <Link
                   href={`/environments/${environment.id}/product/look`}
                   target="_blank"
                   className="font-semibold underline">
-                  Look & Feel
+                  {t("common.look_and_feel")}
                 </Link>{" "}
-                settings
+                {t("common.settings")}
               </p>
             </div>
           )}

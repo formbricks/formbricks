@@ -1,7 +1,9 @@
 import { FilterIcon, UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TSegment } from "@formbricks/types/segment";
 
 export const TargetingIndicator = ({ segment }: { segment: TSegment | null }) => {
+  const t = useTranslations();
   const doFiltersExist = !!segment?.filters?.length;
 
   return (
@@ -14,12 +16,17 @@ export const TargetingIndicator = ({ segment }: { segment: TSegment | null }) =>
 
       <div className="flex flex-col">
         <h3 className="text-sm font-medium text-slate-900">
-          Audience: <span className="font-bold">{doFiltersExist ? "Targeted" : "Everyone"}</span>
+          {t("environments.surveys.edit.audience")}:{" "}
+          <span className="font-bold">
+            {doFiltersExist
+              ? t("environments.surveys.edit.targeted")
+              : t("environments.surveys.edit.everyone")}
+          </span>
         </h3>
         <p className="text-xs text-slate-500">
           {doFiltersExist
-            ? "Only people who match your targeting can be surveyed."
-            : "Without a filter, all of your users can be surveyed."}
+            ? t("environments.surveys.edit.only_people_who_match_your_targeting_can_be_surveyed")
+            : t("environments.surveys.edit.without_a_filter_all_of_your_users_can_be_surveyed")}
         </p>
       </div>
     </div>

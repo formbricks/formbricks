@@ -7,6 +7,7 @@ import {
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -38,7 +39,7 @@ export const ActionSettingsTab = ({
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-
+  const t = useTranslations();
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
   const { isViewer } = getAccessFlags(membershipRole);
@@ -58,7 +59,7 @@ export const ActionSettingsTab = ({
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["name"],
-            message: `Action with name ${data.name} already exists`,
+            message: t("environments.actions.action_with_name_already_exists", { name: data.name }),
           });
         }
       })
@@ -77,7 +78,7 @@ export const ActionSettingsTab = ({
       setIsUpdatingAction(true);
 
       if (data.name && actionClassNames.includes(data.name)) {
-        throw new Error(`Action with name ${data.name} already exist`);
+        throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
       }
 
       if (
