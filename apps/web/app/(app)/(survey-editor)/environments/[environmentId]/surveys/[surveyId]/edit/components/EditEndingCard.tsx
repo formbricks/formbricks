@@ -6,6 +6,7 @@ import { RedirectUrlForm } from "@/app/(app)/(survey-editor)/environments/[envir
 import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
@@ -117,6 +118,8 @@ export const EditEndingCard = ({
     });
   };
 
+  const [parent] = useAutoAnimate();
+
   return (
     <div
       className={cn(open ? "shadow-lg" : "shadow-md", "group z-20 flex flex-row rounded-lg bg-white")}
@@ -198,7 +201,7 @@ export const EditEndingCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="mt-3 px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "mt-3 pb-6"}`} ref={parent}>
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
             tooltipContent={"Redirect To Url is not available on free plan"}
