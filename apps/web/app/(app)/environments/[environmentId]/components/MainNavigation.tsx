@@ -429,7 +429,7 @@ export const MainNavigation = ({
                       "flex cursor-pointer flex-row items-center space-x-3",
                       isCollapsed ? "pl-2" : "pl-4"
                     )}>
-                    <ProfileAvatar userId={user.id} imageUrl={user.imageUrl} />
+                    <ProfileAvatar imageUrl={user.imageUrl} email={user.email} />
                     {!isCollapsed && !isTextVisible && (
                       <>
                         <div className={cn(isTextVisible ? "opacity-0" : "opacity-100")}>
