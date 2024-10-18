@@ -8,7 +8,7 @@ import { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "../ClientLogo";
 import { MediaBackground } from "../MediaBackground";
 import { ResetProgressButton } from "../ResetProgressButton";
@@ -144,7 +144,7 @@ export const PreviewSurvey = ({
   }, [product.styling, survey.styling]);
 
   const updateQuestionId = useCallback(
-    (newQuestionId: string) => {
+    (newQuestionId: TSurveyQuestionId) => {
       if (
         !newQuestionId ||
         newQuestionId === "hidden" ||

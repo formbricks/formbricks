@@ -25,7 +25,7 @@ import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TI18nString, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
@@ -39,6 +39,8 @@ interface SummaryListProps {
   survey: TSurvey;
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
+  isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const SummaryList = ({
@@ -48,11 +50,13 @@ export const SummaryList = ({
   survey,
   totalResponseCount,
   attributeClasses,
+  isAIEnabled,
+  documentsPerPage,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
 
   const setFilter = (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
@@ -126,6 +130,8 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                isAIEnabled={isAIEnabled}
+                documentsPerPage={documentsPerPage}
               />
             );
           }

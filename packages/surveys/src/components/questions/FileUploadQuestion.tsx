@@ -8,7 +8,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "../buttons/BackButton";
 import { FileInput } from "../general/FileInput";
 import { Subheader } from "../general/Subheader";
@@ -27,7 +27,7 @@ interface FileUploadQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const FileUploadQuestion = ({

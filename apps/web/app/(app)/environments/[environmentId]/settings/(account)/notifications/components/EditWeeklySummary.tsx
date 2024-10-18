@@ -43,7 +43,7 @@ export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAler
             </div>
             <p className="pb-3 pl-4 text-xs text-slate-400">
               Want to loop in organization mates?{" "}
-              <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
+              <Link className="font-semibold" href={`/environments/${environmentId}/settings/general`}>
                 Invite them.
               </Link>
             </p>

@@ -15,6 +15,7 @@ import {
   TSurveyLogicAction,
   TSurveyLogicConditionsOperator,
   TSurveyQuestion,
+  TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
@@ -1023,7 +1024,7 @@ const isUsedInRightOperand = (
   }
 };
 
-export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): number => {
+export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQuestionId): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       // It's a TConditionGroup
@@ -1053,7 +1054,11 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: string): nu
   );
 };
 
-export const findOptionUsedInLogic = (survey: TSurvey, questionId: string, optionId: string): number => {
+export const findOptionUsedInLogic = (
+  survey: TSurvey,
+  questionId: TSurveyQuestionId,
+  optionId: string
+): number => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       // It's a TConditionGroup

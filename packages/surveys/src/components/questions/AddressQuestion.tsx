@@ -10,7 +10,7 @@ import { useMemo, useRef, useState } from "preact/hooks";
 import { useCallback } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyAddressQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface AddressQuestionProps {
   question: TSurveyAddressQuestion;
@@ -23,7 +23,7 @@ interface AddressQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
 }
 

@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface HtmlBodyProps {
   htmlString?: string;
-  questionId: string;
+  questionId: TSurveyQuestionId;
 }
 
 export const HtmlBody = ({ htmlString, questionId }: HtmlBodyProps) => {

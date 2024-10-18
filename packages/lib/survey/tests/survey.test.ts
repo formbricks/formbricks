@@ -288,6 +288,7 @@ describe("Tests for updateSurvey", () => {
   describe("Happy Path", () => {
     it("Updates a survey successfully", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
       const updatedSurvey = await updateSurvey(updateSurveyInput);
       expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
@@ -311,6 +312,7 @@ describe("Tests for updateSurvey", () => {
         clientVersion: "0.0.1",
       });
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.update.mockRejectedValue(errToThrow);
       await expect(updateSurvey(updateSurveyInput)).rejects.toThrow(DatabaseError);
     });

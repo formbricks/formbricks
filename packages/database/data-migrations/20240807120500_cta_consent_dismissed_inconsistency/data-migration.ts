@@ -2,7 +2,11 @@
 
 /* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
-import { type TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  type TSurveyQuestion,
+  type TSurveyQuestionId,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 
 const prisma = new PrismaClient();
 
@@ -55,7 +59,7 @@ async function runMigration(): Promise<void> {
           responses.map(async (response) => {
             const updatedData = { ...response.data };
 
-            ctaOrConsentQuestionIds.forEach((questionId: string) => {
+            ctaOrConsentQuestionIds.forEach((questionId: TSurveyQuestionId) => {
               if (updatedData[questionId] && updatedData[questionId] === "dismissed") {
                 updatedData[questionId] = "";
               }

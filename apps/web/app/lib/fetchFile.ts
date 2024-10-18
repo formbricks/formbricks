@@ -4,7 +4,7 @@ export const fetchFile = async (
 ) => {
   const endpoint = filetype === "csv" ? "csv-conversion" : "excel-conversion";
 
-  const response = await fetch(`/api/internal/${endpoint}`, {
+  const response = await fetch(`/api/${endpoint}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

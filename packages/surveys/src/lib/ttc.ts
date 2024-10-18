@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { TResponseTtc } from "@formbricks/types/responses";
+import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
-export const getUpdatedTtc = (ttc: TResponseTtc, questionId: string, time: number) => {
+export const getUpdatedTtc = (ttc: TResponseTtc, questionId: TSurveyQuestionId, time: number) => {
   // Check if the question ID already exists
   if (ttc.hasOwnProperty(questionId)) {
     return {
@@ -18,7 +19,7 @@ export const getUpdatedTtc = (ttc: TResponseTtc, questionId: string, time: numbe
 };
 
 export const useTtc = (
-  questionId: string,
+  questionId: TSurveyQuestionId,
   ttc: TResponseTtc,
   setTtc: (ttc: TResponseTtc) => void,
   startTime: number,

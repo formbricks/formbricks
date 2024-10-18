@@ -16,6 +16,7 @@ x-nextauth-secret: &nextauth_secret
   # Encryption key
   # You can use: `openssl rand -hex 32` to generate one
 
+
 x-cron-secret: &cron_secret
   # Set the below to use it instead of API Key for the API & use as an auth for cronjobs
   # You can use: $(openssl rand -hex 32) to generate a secure one
@@ -72,7 +73,7 @@ x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
 services:
   postgres:
     restart: always
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg17
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:

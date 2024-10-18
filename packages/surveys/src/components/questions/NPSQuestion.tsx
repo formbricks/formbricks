@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -23,7 +23,7 @@ interface NPSQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const NPSQuestion = ({

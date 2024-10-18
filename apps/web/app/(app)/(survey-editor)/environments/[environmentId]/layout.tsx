@@ -12,7 +12,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
 import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
-const EnvLayout = async ({ children, params }) => {
+const SurveyEditorEnvironmentLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -61,4 +61,4 @@ const EnvLayout = async ({ children, params }) => {
   );
 };
 
-export default EnvLayout;
+export default SurveyEditorEnvironmentLayout;

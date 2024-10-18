@@ -9,7 +9,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface ContactInfoQuestionProps {
   question: TSurveyContactInfoQuestion;
@@ -23,7 +23,7 @@ interface ContactInfoQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
 }
 
