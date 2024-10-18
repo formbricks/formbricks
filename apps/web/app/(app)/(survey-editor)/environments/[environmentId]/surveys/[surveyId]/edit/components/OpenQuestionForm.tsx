@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -54,6 +55,8 @@ export const OpenQuestionForm = ({
     updateQuestion(questionIdx, updatedAttributes);
   };
 
+  const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -69,7 +72,7 @@ export const OpenQuestionForm = ({
         label={"Question*"}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">

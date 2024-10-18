@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -37,6 +38,7 @@ export const EditWelcomeCard = ({
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
+  const [parent] = useAutoAnimate();
 
   let open = activeQuestionId == "start";
 
@@ -72,7 +74,7 @@ export const EditWelcomeCard = ({
       <Collapsible.Root
         open={open}
         onOpenChange={setOpen}
-        className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
+        className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-200 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
           className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
@@ -102,7 +104,7 @@ export const EditWelcomeCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
           <form>
             <div className="mt-2">
               <Label htmlFor="companyLogo">Company Logo</Label>
