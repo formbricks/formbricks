@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -96,7 +97,8 @@ export const MatrixQuestionForm = ({
       show: true,
     },
   };
-
+  /// Auto animate
+  const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
@@ -111,7 +113,7 @@ export const MatrixQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
       />
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
@@ -150,7 +152,7 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Rows section */}
           <Label htmlFor="rows">Rows</Label>
-          <div>
+          <div ref={parent}>
             {question.rows.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "row")}>
                 <QuestionFormInput
@@ -192,7 +194,7 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Columns section */}
           <Label htmlFor="columns">Columns</Label>
-          <div>
+          <div ref={parent}>
             {question.columns.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "column")}>
                 <QuestionFormInput

@@ -419,7 +419,7 @@ export const QuestionCard = ({
                 {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
               </Collapsible.CollapsibleTrigger>
 
-              <Collapsible.CollapsibleContent className="space-y-4">
+              <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
                 {question.type !== TSurveyQuestionTypeEnum.NPS &&
                 question.type !== TSurveyQuestionTypeEnum.Rating &&
                 question.type !== TSurveyQuestionTypeEnum.CTA ? (
