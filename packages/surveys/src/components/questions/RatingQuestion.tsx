@@ -75,7 +75,6 @@ export const RatingQuestion = ({
     <input
       type="radio"
       id={id}
-      aria-label="Select this option to give 5 stars"
       name="rating"
       value={number}
       className="fb-invisible fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
