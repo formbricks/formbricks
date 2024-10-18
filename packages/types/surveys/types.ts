@@ -220,6 +220,7 @@ export type TSurveySingleUse = z.infer<typeof ZSurveySingleUse>;
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
+  value: ZI18nString,
 });
 
 export const ZSurveyPictureChoice = z.object({
@@ -2105,6 +2106,7 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
   choices: z.array(
     z.object({
       value: z.string(),
+      label: z.string(),
       count: z.number(),
       percentage: z.number(),
       others: z
@@ -2366,6 +2368,7 @@ export const ZSurveyQuestionSummaryRanking = z.object({
   choices: z.array(
     z.object({
       value: z.string(),
+      label: z.string(),
       count: z.number(),
       avgRanking: z.number(),
       others: z

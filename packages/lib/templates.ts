@@ -112,24 +112,29 @@ const cartAbandonmentSurvey = (): TTemplate => {
             {
               id: createId(),
               label: { default: "High shipping costs" },
+              value: { default: "High shipping costs" },
             },
             {
               id: createId(),
               label: { default: "Found a better price elsewhere" },
+              value: { default: "Found a better price elsewhere" },
             },
             {
               id: createId(),
               label: { default: "Just browsing" },
+              value: { default: "Just browsing" },
             },
             {
               id: createId(),
               label: { default: "Decided not to buy" },
+              value: { default: "Decided not to buy" },
             },
             {
               id: createId(),
               label: { default: "Payment issues" },
+              value: { default: "Payment issues" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -164,24 +169,29 @@ const cartAbandonmentSurvey = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Lower shipping costs" },
+              value: { default: "Lower shipping costs" },
             },
             {
               id: createId(),
               label: { default: "Discounts or promotions" },
+              value: { default: "Discounts or promotions" },
             },
             {
               id: createId(),
               label: { default: "More payment options" },
+              value: { default: "More payment options" },
             },
             {
               id: createId(),
               label: { default: "Better product descriptions" },
+              value: { default: "Better product descriptions" },
             },
             {
               id: createId(),
               label: { default: "Improved website navigation" },
+              value: { default: "Improved website navigation" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -301,24 +311,29 @@ const siteAbandonmentSurvey = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Can't find what I am looking for" },
+              value: { default: "Can't find what I am looking for" },
             },
             {
               id: createId(),
               label: { default: "Site is too slow" },
+              value: { default: "Site is too slow" },
             },
             {
               id: createId(),
               label: { default: "Technical issues" },
+              value: { default: "Technical issues" },
             },
             {
               id: createId(),
               label: { default: "Just browsing" },
+              value: { default: "Just browsing" },
             },
             {
               id: createId(),
               label: { default: "Found a better site" },
+              value: { default: "Found a better site" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -353,24 +368,29 @@ const siteAbandonmentSurvey = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Faster loading times" },
+              value: { default: "Faster loading times" },
             },
             {
               id: createId(),
               label: { default: "Better product search functionality" },
+              value: { default: "Better product search functionality" },
             },
             {
               id: createId(),
               label: { default: "More product variety" },
+              value: { default: "More product variety" },
             },
             {
               id: createId(),
               label: { default: "Improved site design" },
+              value: { default: "Improved site design" },
             },
             {
               id: createId(),
               label: { default: "More customer reviews" },
+              value: { default: "More customer reviews" },
             },
-            { id: "other", label: { default: "Other" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
         },
         {
@@ -490,14 +510,17 @@ const productMarketFitSuperhuman = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Not at all disappointed" },
+              value: { default: "Not at all disappointed" },
             },
             {
               id: createId(),
               label: { default: "Somewhat disappointed" },
+              value: { default: "Somewhat disappointed" },
             },
             {
               id: createId(),
               label: { default: "Very disappointed" },
+              value: { default: "Very disappointed" },
             },
           ],
         },
@@ -512,22 +535,27 @@ const productMarketFitSuperhuman = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Founder" },
+              value: { default: "Founder" },
             },
             {
               id: createId(),
               label: { default: "Executive" },
+              value: { default: "Executive" },
             },
             {
               id: createId(),
               label: { default: "Product Manager" },
+              value: { default: "Product Manager" },
             },
             {
               id: createId(),
               label: { default: "Product Owner" },
+              value: { default: "Product Owner" },
             },
             {
               id: createId(),
               label: { default: "Software Engineer" },
+              value: { default: "Software Engineer" },
             },
           ],
         },
@@ -580,22 +608,27 @@ const onboardingSegmentation = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Founder" },
+              value: { default: "Founder" },
             },
             {
               id: createId(),
               label: { default: "Executive" },
+              value: { default: "Executive" },
             },
             {
               id: createId(),
               label: { default: "Product Manager" },
+              value: { default: "Product Manager" },
             },
             {
               id: createId(),
               label: { default: "Product Owner" },
+              value: { default: "Product Owner" },
             },
             {
               id: createId(),
               label: { default: "Software Engineer" },
+              value: { default: "Software Engineer" },
             },
           ],
         },
@@ -610,22 +643,27 @@ const onboardingSegmentation = (): TTemplate => {
             {
               id: createId(),
               label: { default: "only me" },
+              value: { default: "only me" },
             },
             {
               id: createId(),
               label: { default: "1-5 employees" },
+              value: { default: "1-5 employees" },
             },
             {
               id: createId(),
               label: { default: "6-10 employees" },
+              value: { default: "6-10 employees" },
             },
             {
               id: createId(),
               label: { default: "11-100 employees" },
+              value: { default: "11-100 employees" },
             },
             {
               id: createId(),
               label: { default: "over 100 employees" },
+              value: { default: "over 100 employees" },
             },
           ],
         },
@@ -640,22 +678,27 @@ const onboardingSegmentation = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Recommendation" },
+              value: { default: "Recommendation" },
             },
             {
               id: createId(),
               label: { default: "Social Media" },
+              value: { default: "Social Media" },
             },
             {
               id: createId(),
               label: { default: "Ads" },
+              value: { default: "Ads" },
             },
             {
               id: createId(),
               label: { default: "Google Search" },
+              value: { default: "Google Search" },
             },
             {
               id: createId(),
               label: { default: "In a Podcast" },
+              value: { default: "In a Podcast" },
             },
           ],
         },
@@ -825,11 +868,33 @@ const churnSurvey = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Difficult to use" } },
-            { id: reusableOptionIds[1], label: { default: "It's too expensive" } },
-            { id: reusableOptionIds[2], label: { default: "I am missing features" } },
-            { id: reusableOptionIds[3], label: { default: "Poor customer service" } },
-            { id: reusableOptionIds[4], label: { default: "I just didn't need it anymore" } },
+            {
+              id: createId(),
+              label: { default: "Difficult to use" },
+              value: { default: "Difficult to use" },
+            },
+            {
+              id: createId(),
+              label: { default: "It's too expensive" },
+              value: { default: "It's too expensive" },
+            },
+            {
+              id: createId(),
+              label: { default: "I am missing features" },
+              value: { default: "I am missing features" },
+            },
+            {
+              id: createId(),
+              label: { default: "Poor customer service" },
+              value: {
+                default: "Poor customer service",
+              },
+            },
+            {
+              id: createId(),
+              label: { default: "I just didn't need it anymore" },
+              value: { default: "I just didn't need it anymore" },
+            },
           ],
           headline: { default: "Why did you cancel your subscription?" },
           required: true,
@@ -1037,8 +1102,8 @@ const earnedAdvocacyScore = (): TTemplate => {
           ],
           shuffleOption: "none",
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Yes" } },
-            { id: reusableOptionIds[1], label: { default: "No" } },
+            { id: createId(), label: { default: "Yes" }, value: { default: "Yes" } },
+            { id: createId(), label: { default: "No" }, value: { default: "No" } },
           ],
           headline: { default: "Have you actively recommended {{productName}} to others?" },
           required: true,
@@ -1120,8 +1185,8 @@ const earnedAdvocacyScore = (): TTemplate => {
           ],
           shuffleOption: "none",
           choices: [
-            { id: reusableOptionIds[2], label: { default: "Yes" } },
-            { id: reusableOptionIds[3], label: { default: "No" } },
+            { id: createId(), label: { default: "Yes" }, value: { default: "Yes" } },
+            { id: createId(), label: { default: "No" }, value: { default: "No" } },
           ],
           headline: { default: "Have you actively discouraged others from choosing {{productName}}?" },
           required: true,
@@ -1308,11 +1373,31 @@ const improveTrialConversion = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "I didn't get much value out of it" } },
-            { id: reusableOptionIds[1], label: { default: "I expected something else" } },
-            { id: reusableOptionIds[2], label: { default: "It's too expensive for what it does" } },
-            { id: reusableOptionIds[3], label: { default: "I am missing a feature" } },
-            { id: reusableOptionIds[4], label: { default: "I was just looking around" } },
+            {
+              id: createId(),
+              label: { default: "I didn't get much value out of it" },
+              value: { default: "I didn't get much value out of it" },
+            },
+            {
+              id: createId(),
+              label: { default: "I expected something else" },
+              value: { default: "I expected something else" },
+            },
+            {
+              id: createId(),
+              label: { default: "It's too expensive for what it does" },
+              value: { default: "It's too expensive for what it does" },
+            },
+            {
+              id: createId(),
+              label: { default: "I am missing a feature" },
+              value: { default: "I am missing a feature" },
+            },
+            {
+              id: createId(),
+              label: { default: "I was just looking around" },
+              value: { default: "I was just looking around" },
+            },
           ],
           headline: { default: "Why did you stop your trial?" },
           required: true,
@@ -1788,11 +1873,28 @@ const improveActivationRate = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Didn't seem useful to me" } },
-            { id: reusableOptionIds[1], label: { default: "Difficult to set up or use" } },
-            { id: reusableOptionIds[2], label: { default: "Lacked features/functionality" } },
-            { id: reusableOptionIds[3], label: { default: "Just haven't had the time" } },
-            { id: reusableOptionIds[4], label: { default: "Something else" } },
+            {
+              id: createId(),
+              label: { default: "Didn't seem useful to me" },
+              value: { default: "Didn't seem useful to me" },
+            },
+            {
+              id: createId(),
+              label: { default: "Difficult to set up or use" },
+              value: { default: "Difficult to set up or use" },
+            },
+            {
+              id: createId(),
+              label: { default: "Lacked features/functionality" },
+              value: { default: "Lacked features/functionality" },
+            },
+            {
+              id: createId(),
+              label: { default: "Just haven't had the time" },
+              value: { default: "Just haven't had the time" },
+            },
+
+            { id: createId(), label: { default: "Something else" }, value: { default: "Something else" } },
           ],
           headline: {
             default: "What's the main reason why you haven't finished setting up {{productName}}?",
@@ -1966,11 +2068,23 @@ const uncoverStrengthsAndWeaknesses = (): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Ease of use" } },
-            { id: createId(), label: { default: "Good value for money" } },
-            { id: createId(), label: { default: "It's open-source" } },
-            { id: createId(), label: { default: "The founders are cute" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Ease of use" }, value: { default: "Ease of use" } },
+            {
+              id: createId(),
+              label: { default: "Good value for money" },
+              value: { default: "Good value for money" },
+            },
+            {
+              id: createId(),
+              label: { default: "It's open-source" },
+              value: { default: "It's open-source" },
+            },
+            {
+              id: createId(),
+              label: { default: "The founders are cute" },
+              value: { default: "The founders are cute" },
+            },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "What do you value most about {{productName}}?" },
           required: true,
@@ -1980,10 +2094,10 @@ const uncoverStrengthsAndWeaknesses = (): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Documentation" } },
-            { id: createId(), label: { default: "Customizability" } },
-            { id: createId(), label: { default: "Pricing" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Documentation" }, value: { default: "Documentation" } },
+            { id: createId(), label: { default: "Customizability" }, value: { default: "Customizability" } },
+            { id: createId(), label: { default: "Pricing" }, value: { default: "Pricing" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "What should we improve on?" },
           required: true,
@@ -2024,14 +2138,17 @@ const productMarketFitShort = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Not at all disappointed" },
+              value: { default: "Not at all disappointed" },
             },
             {
               id: createId(),
               label: { default: "Somewhat disappointed" },
+              value: { default: "Somewhat disappointed" },
             },
             {
               id: createId(),
               label: { default: "Very disappointed" },
+              value: { default: "Very disappointed" },
             },
           ],
         },
@@ -2070,22 +2187,27 @@ const marketAttribution = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Recommendation" },
+              value: { default: "Recommendation" },
             },
             {
               id: createId(),
               label: { default: "Social Media" },
+              value: { default: "Social Media" },
             },
             {
               id: createId(),
               label: { default: "Ads" },
+              value: { default: "Ads" },
             },
             {
               id: createId(),
               label: { default: "Google Search" },
+              value: { default: "Google Search" },
             },
             {
               id: createId(),
               label: { default: "In a Podcast" },
+              value: { default: "In a Podcast" },
             },
           ],
         },
@@ -2115,22 +2237,27 @@ const changingSubscriptionExperience = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Extremely difficult" },
+              value: { default: "Extremely difficult" },
             },
             {
               id: createId(),
               label: { default: "It took a while, but I got it" },
+              value: { default: "It took a while, but I got it" },
             },
             {
               id: createId(),
               label: { default: "It was alright" },
+              value: { default: "It was alright" },
             },
             {
               id: createId(),
               label: { default: "Quite easy" },
+              value: { default: "Quite easy" },
             },
             {
               id: createId(),
               label: { default: "Very easy, love it!" },
+              value: { default: "Very easy, love it!" },
             },
           ],
         },
@@ -2144,14 +2271,17 @@ const changingSubscriptionExperience = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Yes, very clear." },
+              value: { default: "Yes, very clear." },
             },
             {
               id: createId(),
               label: { default: "I was confused at first, but found what I needed." },
+              value: { default: "I was confused at first, but found what I needed." },
             },
             {
               id: createId(),
               label: { default: "Quite complicated." },
+              value: { default: "Quite complicated." },
             },
           ],
         },
@@ -2182,18 +2312,22 @@ const identifyCustomerGoals = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Understand my user base deeply" },
+              value: { default: "Understand my user base deeply" },
             },
             {
               id: createId(),
               label: { default: "Identify upselling opportunities" },
+              value: { default: "Identify upselling opportunities" },
             },
             {
               id: createId(),
               label: { default: "Build the best possible product" },
+              value: { default: "Build the best possible product" },
             },
             {
               id: createId(),
               label: { default: "Rule the world to make everyone breakfast brussels sprouts." },
+              value: { default: "Rule the world to make everyone breakfast brussels sprouts." },
             },
           ],
         },
@@ -2229,10 +2363,10 @@ const featureChaser = (): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Aspect 1" } },
-            { id: createId(), label: { default: "Aspect 2" } },
-            { id: createId(), label: { default: "Aspect 3" } },
-            { id: createId(), label: { default: "Aspect 4" } },
+            { id: createId(), label: { default: "Aspect 1" }, value: { default: "Aspect 1" } },
+            { id: createId(), label: { default: "Aspect 2" }, value: { default: "Aspect 2" } },
+            { id: createId(), label: { default: "Aspect 3" }, value: { default: "Aspect 3" } },
+            { id: createId(), label: { default: "Aspect 4" }, value: { default: "Aspect 4" } },
           ],
           headline: { default: "Which aspect is most important?" },
           required: true,
@@ -2274,18 +2408,22 @@ const fakeDoorFollowUp = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Aspect 1" },
+              value: { default: "Aspect 1" },
             },
             {
               id: createId(),
               label: { default: "Aspect 2" },
+              value: { default: "Aspect 2" },
             },
             {
               id: createId(),
               label: { default: "Aspect 3" },
+              value: { default: "Aspect 3" },
             },
             {
               id: createId(),
               label: { default: "Aspect 4" },
+              value: { default: "Aspect 4" },
             },
           ],
         },
@@ -2372,8 +2510,12 @@ const feedbackBox = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Bug report 🐞" } },
-            { id: reusableOptionIds[1], label: { default: "Feature Request 💡" } },
+            { id: createId(), label: { default: "Bug report 🐞" }, value: { default: "Bug report 🐞" } },
+            {
+              id: createId(),
+              label: { default: "Feature Request 💡" },
+              value: { default: "Feature Request 💡" },
+            },
           ],
           headline: { default: "What's on your mind, boss?" },
           required: true,
@@ -2587,22 +2729,27 @@ const newIntegrationSurvey = (): TTemplate => {
             {
               id: createId(),
               label: { default: "PostHog" },
+              value: { default: "PostHog" },
             },
             {
               id: createId(),
               label: { default: "Segment" },
+              value: { default: "Segment" },
             },
             {
               id: createId(),
               label: { default: "Hubspot" },
+              value: { default: "Hubspot" },
             },
             {
               id: createId(),
               label: { default: "Twilio" },
+              value: { default: "Twilio" },
             },
             {
               id: "other",
               label: { default: "Other" },
+              value: { default: "Other" },
             },
           ],
         },
@@ -2632,10 +2779,12 @@ const docsFeedback = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Yes 👍" },
+              value: { default: "Yes 👍" },
             },
             {
               id: createId(),
               label: { default: "No 👎" },
+              value: { default: "No 👎" },
             },
           ],
         },
@@ -2734,11 +2883,21 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Please select one:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Very satisfied" } },
-            { id: createId(), label: { default: "Somewhat satisfied" } },
-            { id: createId(), label: { default: "Neither satisfied nor dissatisfied" } },
-            { id: createId(), label: { default: "Somewhat dissatisfied" } },
-            { id: createId(), label: { default: "Very dissatisfied" } },
+            {
+              id: createId(),
+              label: { default: "Very satisfied" },
+              value: { default: "Very satisfied" },
+            },
+            {
+              id: createId(),
+              label: { default: "Somewhat satisfied" },
+              value: { default: "Somewhat satisfied" },
+            },
+            {
+              id: createId(),
+              label: { default: "Neither satisfied nor dissatisfied" },
+              value: { default: "Neither satisfied nor dissatisfied" },
+            },
           ],
         },
         {
@@ -2750,16 +2909,20 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Select all that apply:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Reliable" } },
-            { id: createId(), label: { default: "High quality" } },
-            { id: createId(), label: { default: "Overpriced" } },
-            { id: createId(), label: { default: "Impractical" } },
-            { id: createId(), label: { default: "Useful" } },
-            { id: createId(), label: { default: "Ineffective" } },
-            { id: createId(), label: { default: "Unique" } },
-            { id: createId(), label: { default: "Poor quality" } },
-            { id: createId(), label: { default: "Good value for money" } },
-            { id: createId(), label: { default: "Unreliable" } },
+            { id: createId(), label: { default: "Reliable" }, value: { default: "Reliable" } },
+            { id: createId(), label: { default: "High quality" }, value: { default: "High quality" } },
+            { id: createId(), label: { default: "Overpriced" }, value: { default: "Overpriced" } },
+            { id: createId(), label: { default: "Impractical" }, value: { default: "Impractical" } },
+            { id: createId(), label: { default: "Useful" }, value: { default: "Useful" } },
+            { id: createId(), label: { default: "Ineffective" }, value: { default: "Ineffective" } },
+            { id: createId(), label: { default: "Unique" }, value: { default: "Unique" } },
+            { id: createId(), label: { default: "Poor quality" }, value: { default: "Poor quality" } },
+            {
+              id: createId(),
+              label: { default: "Good value for money" },
+              value: { default: "Good value for money" },
+            },
+            { id: createId(), label: { default: "Unreliable" }, value: { default: "Unreliable" } },
           ],
         },
         {
@@ -2769,11 +2932,11 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Select one option:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Extremely well" } },
-            { id: createId(), label: { default: "Very well" } },
-            { id: createId(), label: { default: "Somewhat well" } },
-            { id: createId(), label: { default: "Not so well" } },
-            { id: createId(), label: { default: "Not at all well" } },
+            { id: createId(), label: { default: "Extremely well" }, value: { default: "Extremely well" } },
+            { id: createId(), label: { default: "Very well" }, value: { default: "Very well" } },
+            { id: createId(), label: { default: "Somewhat well" }, value: { default: "Somewhat well" } },
+            { id: createId(), label: { default: "Not so well" }, value: { default: "Not so well" } },
+            { id: createId(), label: { default: "Not at all well" }, value: { default: "Not at all well" } },
           ],
         },
         {
@@ -2783,11 +2946,23 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Select one option:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Very high quality" } },
-            { id: createId(), label: { default: "High quality" } },
-            { id: createId(), label: { default: "Low quality" } },
-            { id: createId(), label: { default: "Very low quality" } },
-            { id: createId(), label: { default: "Neither high nor low" } },
+            {
+              id: createId(),
+              label: { default: "Very high quality" },
+              value: { default: "Very high quality" },
+            },
+            { id: createId(), label: { default: "High quality" }, value: { default: "High quality" } },
+            { id: createId(), label: { default: "Low quality" }, value: { default: "Low quality" } },
+            {
+              id: createId(),
+              label: { default: "Very low quality" },
+              value: { default: "Very low quality" },
+            },
+            {
+              id: createId(),
+              label: { default: "Neither high nor low" },
+              value: { default: "Neither high nor low" },
+            },
           ],
         },
         {
@@ -2797,11 +2972,11 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Please select one:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Excellent" } },
-            { id: createId(), label: { default: "Above average" } },
-            { id: createId(), label: { default: "Average" } },
-            { id: createId(), label: { default: "Below average" } },
-            { id: createId(), label: { default: "Poor" } },
+            { id: createId(), label: { default: "Excellent" }, value: { default: "Excellent" } },
+            { id: createId(), label: { default: "Above average" }, value: { default: "Above average" } },
+            { id: createId(), label: { default: "Average" }, value: { default: "Average" } },
+            { id: createId(), label: { default: "Below average" }, value: { default: "Below average" } },
+            { id: createId(), label: { default: "Poor" }, value: { default: "Poor" } },
           ],
         },
         {
@@ -2811,12 +2986,28 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Select one option:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Extremely responsive" } },
-            { id: createId(), label: { default: "Very responsive" } },
-            { id: createId(), label: { default: "Somewhat responsive" } },
-            { id: createId(), label: { default: "Not so responsive" } },
-            { id: createId(), label: { default: "Not at all responsive" } },
-            { id: createId(), label: { default: "Not applicable" } },
+            {
+              id: createId(),
+              label: { default: "Extremely responsive" },
+              value: { default: "Extremely responsive" },
+            },
+            { id: createId(), label: { default: "Very responsive" }, value: { default: "Very responsive" } },
+            {
+              id: createId(),
+              label: { default: "Somewhat responsive" },
+              value: { default: "Somewhat responsive" },
+            },
+            {
+              id: createId(),
+              label: { default: "Not so responsive" },
+              value: { default: "Not so responsive" },
+            },
+            {
+              id: createId(),
+              label: { default: "Not at all responsive" },
+              value: { default: "Not at all responsive" },
+            },
+            { id: createId(), label: { default: "Not applicable" }, value: { default: "Not applicable" } },
           ],
         },
         {
@@ -2826,12 +3017,28 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Select one option:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "This is my first purchase" } },
-            { id: createId(), label: { default: "Less than six months" } },
-            { id: createId(), label: { default: "Six months to a year" } },
-            { id: createId(), label: { default: "1 - 2 years" } },
-            { id: createId(), label: { default: "3 or more years" } },
-            { id: createId(), label: { default: "I haven't made a purchase yet" } },
+            {
+              id: createId(),
+              label: { default: "This is my first purchase" },
+              value: { default: "This is my first purchase" },
+            },
+            {
+              id: createId(),
+              label: { default: "Less than six months" },
+              value: { default: "Less than six months" },
+            },
+            {
+              id: createId(),
+              label: { default: "Six months to a year" },
+              value: { default: "Six months to a year" },
+            },
+            { id: createId(), label: { default: "1 - 2 years" }, value: { default: "1 - 2 years" } },
+            { id: createId(), label: { default: "3 or more years" }, value: { default: "3 or more years" } },
+            {
+              id: createId(),
+              label: { default: "I haven't made a purchase yet" },
+              value: { default: "I haven't made a purchase yet" },
+            },
           ],
         },
         {
@@ -2841,11 +3048,19 @@ const customerSatisfactionScore = (): TTemplate => {
           subheader: { default: "Select one option:" },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Extremely likely" } },
-            { id: createId(), label: { default: "Very likely" } },
-            { id: createId(), label: { default: "Somewhat likely" } },
-            { id: createId(), label: { default: "Not so likely" } },
-            { id: createId(), label: { default: "Not at all likely" } },
+            {
+              id: createId(),
+              label: { default: "Extremely likely" },
+              value: { default: "Extremely likely" },
+            },
+            { id: createId(), label: { default: "Very likely" }, value: { default: "Very likely" } },
+            { id: createId(), label: { default: "Somewhat likely" }, value: { default: "Somewhat likely" } },
+            { id: createId(), label: { default: "Not so likely" }, value: { default: "Not so likely" } },
+            {
+              id: createId(),
+              label: { default: "Not at all likely" },
+              value: { default: "Not at all likely" },
+            },
           ],
         },
         {
@@ -2991,11 +3206,11 @@ const collectFeedback = (): TTemplate => {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           choices: [
-            { id: createId(), label: { default: "Google" } },
-            { id: createId(), label: { default: "Social Media" } },
-            { id: createId(), label: { default: "Friends" } },
-            { id: createId(), label: { default: "Podcast" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Google" }, value: { default: "Google" } },
+            { id: createId(), label: { default: "Social Media" }, value: { default: "Social Media" } },
+            { id: createId(), label: { default: "Friends" }, value: { default: "Friends" } },
+            { id: createId(), label: { default: "Podcast" }, value: { default: "Podcast" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "How did you hear about us?" },
           required: true,
@@ -3036,18 +3251,22 @@ const identifyUpsellOpportunities = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Less than 1 hour" },
+              value: { default: "Less than 1 hour" },
             },
             {
               id: createId(),
               label: { default: "1 to 2 hours" },
+              value: { default: "1 to 2 hours" },
             },
             {
               id: createId(),
               label: { default: "3 to 5 hours" },
+              value: { default: "3 to 5 hours" },
             },
             {
               id: createId(),
               label: { default: "5+ hours" },
+              value: { default: "5+ hours" },
             },
           ],
         },
@@ -3073,10 +3292,10 @@ const prioritizeFeatures = (): TTemplate => {
           logic: [],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Feature 1" } },
-            { id: createId(), label: { default: "Feature 2" } },
-            { id: createId(), label: { default: "Feature 3" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: "Feature 1" }, value: { default: "Feature 1" } },
+            { id: createId(), label: { default: "Feature 2" }, value: { default: "Feature 2" } },
+            { id: createId(), label: { default: "Feature 3" }, value: { default: "Feature 3" } },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "Which of these features would be MOST valuable to you?" },
           required: true,
@@ -3087,9 +3306,9 @@ const prioritizeFeatures = (): TTemplate => {
           logic: [],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Feature 1" } },
-            { id: createId(), label: { default: "Feature 2" } },
-            { id: createId(), label: { default: "Feature 3" } },
+            { id: createId(), label: { default: "Feature 1" }, value: { default: "Feature 1" } },
+            { id: createId(), label: { default: "Feature 2" }, value: { default: "Feature 2" } },
+            { id: createId(), label: { default: "Feature 3" }, value: { default: "Feature 3" } },
           ],
           headline: { default: "Which of these features would be LEAST valuable to you?" },
           required: true,
@@ -3164,14 +3383,17 @@ const marketSiteClarity = (): TTemplate => {
             {
               id: createId(),
               label: { default: "Yes, totally" },
+              value: { default: "Yes, totally" },
             },
             {
               id: createId(),
               label: { default: "Kind of..." },
+              value: { default: "Kind of..." },
             },
             {
               id: createId(),
               label: { default: "No, not at all" },
+              value: { default: "No, not at all" },
             },
           ],
         },
@@ -3639,9 +3861,13 @@ const measureTaskAccomplishment = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Yes" } },
-            { id: reusableOptionIds[1], label: { default: "Working on it, boss" } },
-            { id: reusableOptionIds[2], label: { default: "No" } },
+            { id: createId(), label: { default: "Yes" }, value: { default: "Yes" } },
+            {
+              id: createId(),
+              label: { default: "Working on it, boss" },
+              value: { default: "Working on it, boss" },
+            },
+            { id: createId(), label: { default: "No" }, value: { default: "No" } },
           ],
           headline: { default: "Were you able to accomplish what you came here to do today?" },
           required: true,
@@ -4037,11 +4263,27 @@ const identifySignUpBarriers = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "May not have what I'm looking for" } },
-            { id: reusableOptionIds[1], label: { default: "Still comparing options" } },
-            { id: reusableOptionIds[2], label: { default: "Seems complicated" } },
-            { id: reusableOptionIds[3], label: { default: "Pricing is a concern" } },
-            { id: reusableOptionIds[4], label: { default: "Something else" } },
+            {
+              id: createId(),
+              label: { default: "May not have what I'm looking for" },
+              value: { default: "May not have what I'm looking for" },
+            },
+            {
+              id: createId(),
+              label: { default: "Still comparing options" },
+              value: { default: "Still comparing options" },
+            },
+            {
+              id: createId(),
+              label: { default: "Seems complicated" },
+              value: { default: "Seems complicated" },
+            },
+            {
+              id: createId(),
+              label: { default: "Pricing is a concern" },
+              value: { default: "Pricing is a concern" },
+            },
+            { id: createId(), label: { default: "Something else" }, value: { default: "Something else" } },
           ],
           headline: { default: "What is holding you back from trying {{productName}}?" },
           required: true,
@@ -4997,11 +5239,27 @@ const understandLowEngagement = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Difficult to use" } },
-            { id: reusableOptionIds[1], label: { default: "Found a better alternative" } },
-            { id: reusableOptionIds[2], label: { default: "Just haven't had the time" } },
-            { id: reusableOptionIds[3], label: { default: "Lacked features I need" } },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: "xoqb0wjjsk4t0lx0i7jrhx26",
+              label: { default: "Difficult to use" },
+              value: { default: "Difficult to use" },
+            },
+            {
+              id: "p768nlw47ndehtgzx6m82dr6",
+              label: { default: "Found a better alternative" },
+              value: { default: "Found a better alternative" },
+            },
+            {
+              id: "izt28ma5ep3s92531owxj1vg",
+              label: { default: "Just haven't had the time" },
+              value: { default: "Just haven't had the time" },
+            },
+            {
+              id: "dhkp2wb9e1tv7kfu8csjhzbh",
+              label: { default: "Lacked features I need" },
+              value: { default: "Lacked features I need" },
+            },
+            { id: "other", label: { default: "Other" }, value: { default: "Other" } },
           ],
           headline: { default: "What's the main reason you haven't been back to {{productName}} recently?" },
           required: true,

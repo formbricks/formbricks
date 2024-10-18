@@ -59,6 +59,7 @@ export const RankingQuestionForm = ({
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
+      value: createI18nString("", surveyLanguageCodes),
     };
 
     updateQuestion(questionIdx, {
@@ -72,6 +73,7 @@ export const RankingQuestionForm = ({
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
+      value: createI18nString("", surveyLanguageCodes),
     };
 
     updateQuestion(questionIdx, { choices: [...choices, newChoice] });
@@ -106,6 +108,17 @@ export const RankingQuestionForm = ({
       lastChoiceRef.current?.focus();
     }
   }, [question.choices?.length]);
+
+  const updateValue = (choiceIdx: number, updatedAttributes: { value: TI18nString }) => {
+    let newChoices: any[] = [];
+    if (question.choices) {
+      newChoices = question.choices.map((choice, idx) => {
+        if (idx !== choiceIdx) return choice;
+        return { ...choice, ...updatedAttributes };
+      });
+    }
+    updateQuestion(questionIdx, { choices: newChoices });
+  };
 
   return (
     <form>
@@ -190,6 +203,7 @@ export const RankingQuestionForm = ({
                       choiceIdx={choiceIdx}
                       questionIdx={questionIdx}
                       updateChoice={updateChoice}
+                      updateValue={updateValue}
                       deleteChoice={deleteChoice}
                       addChoice={addChoice}
                       isInvalid={isInvalid}
