@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -70,6 +71,8 @@ export const SurveyPlacementCard = ({
     }
   };
 
+  const [parent] = useAutoAnimate();
+
   return (
     <Collapsible.Root
       open={open}
@@ -95,7 +98,7 @@ export const SurveyPlacementCard = ({
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="pb-3">
+      <Collapsible.CollapsibleContent className={`flex ${open && "pb-3"}`} ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-6">
           <div className="flex flex-col gap-4">
