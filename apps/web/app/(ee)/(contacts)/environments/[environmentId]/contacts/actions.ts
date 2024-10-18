@@ -4,13 +4,9 @@ import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
+import { getContactAttributeKeys } from "@formbricks/lib/services/contact-attribute-keys";
 import { ZId } from "@formbricks/types/common";
-import {
-  deleteContact,
-  getContactAttributeKeys,
-  getContacts,
-  getOrganizationIdFromContactId,
-} from "./lib/contacts";
+import { deleteContact, getContacts, getOrganizationIdFromContactId } from "./lib/contacts";
 
 const ZGetContactsAction = z.object({
   environmentId: ZId,

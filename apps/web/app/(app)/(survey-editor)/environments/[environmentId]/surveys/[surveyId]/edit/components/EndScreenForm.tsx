@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
@@ -15,7 +15,7 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
 }
@@ -26,7 +26,7 @@ export const EndScreenForm = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   updateSurvey,
   endingCard,
 }: EndScreenFormProps) => {
@@ -46,7 +46,7 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
 
       <QuestionFormInput
@@ -59,7 +59,7 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="mt-4">
         <div className="flex items-center space-x-1">
@@ -102,7 +102,7 @@ export const EndScreenForm = ({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             </div>
             <div className="space-y-2">

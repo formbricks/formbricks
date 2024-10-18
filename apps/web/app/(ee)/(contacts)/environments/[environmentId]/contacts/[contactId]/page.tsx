@@ -2,7 +2,6 @@ import { AttributesSection } from "@/app/(ee)/(contacts)/environments/[environme
 import { DeleteContactButton } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/[contactId]/components/delete-contact-button";
 import {
   getContact,
-  getContactAttributeKeys,
   getContactAttributes,
 } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/lib/contacts";
 import { getContactIdentifier } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/lib/utils";
@@ -13,6 +12,7 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getContactAttributeKeys } from "@formbricks/lib/services/contact-attribute-keys";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";

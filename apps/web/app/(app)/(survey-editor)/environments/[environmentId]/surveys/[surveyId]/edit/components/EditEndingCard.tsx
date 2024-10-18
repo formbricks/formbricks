@@ -11,7 +11,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
@@ -26,7 +26,7 @@ interface EditEndingCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
@@ -41,7 +41,7 @@ export const EditEndingCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   plan,
   addEndingCard,
   isFormbricksCloud,
@@ -160,7 +160,7 @@ export const EditEndingCard = ({
                       localSurvey,
                       true,
                       selectedLanguageCode,
-                      attributeClasses
+                      contactAttributeKeys
                     )[selectedLanguageCode]
                       ? formatTextWithSlashes(
                           recallToHeadline(
@@ -168,7 +168,7 @@ export const EditEndingCard = ({
                             localSurvey,
                             true,
                             selectedLanguageCode,
-                            attributeClasses
+                            contactAttributeKeys
                           )[selectedLanguageCode]
                         )
                       : "Ending card")}
@@ -225,7 +225,7 @@ export const EditEndingCard = ({
               isInvalid={isInvalid}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
             />

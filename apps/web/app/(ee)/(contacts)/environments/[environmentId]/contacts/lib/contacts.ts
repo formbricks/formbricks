@@ -7,13 +7,11 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { contactAttributeKeyCache } from "@formbricks/lib/cache/contact-attribute-key";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { contactAttributeCache } from "@formbricks/lib/contactAttribute/cache";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TContactAttributes } from "@formbricks/types/contact-attributes";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TContact, TContactWithAttributes } from "../types/contact";
@@ -169,21 +167,6 @@ export const getOrganizationIdFromContactId = async (contactId: string) => {
 
   return await getOrganizationIdFromEnvironmentId(contact.environmentId);
 };
-
-export const getContactAttributeKeys = reactCache(
-  (environmentId: string): Promise<TContactAttributeKey[]> =>
-    cache(
-      async () => {
-        return await prisma.contactAttributeKey.findMany({
-          where: { environmentId },
-        });
-      },
-      [`getContactAttributeKeys-${environmentId}`],
-      {
-        tags: [contactAttributeKeyCache.tag.byEnvironmentId(environmentId)],
-      }
-    )()
-);
 
 export const getContactAttributes = reactCache(
   (contactId: string): Promise<TContactAttributes> =>

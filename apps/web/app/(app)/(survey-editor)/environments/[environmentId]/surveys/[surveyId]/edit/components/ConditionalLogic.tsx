@@ -16,7 +16,7 @@ import {
 import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -32,22 +32,22 @@ interface ConditionalLogicProps {
   questionIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export function ConditionalLogic({
-  attributeClasses,
+  contactAttributeKeys,
   localSurvey,
   question,
   questionIdx,
   updateQuestion,
 }: ConditionalLogicProps) {
   const transformedSurvey = useMemo(() => {
-    let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default", attributeClasses);
-    modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default", attributeClasses);
+    let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default", contactAttributeKeys);
+    modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default", contactAttributeKeys);
 
     return modifiedSurvey;
-  }, [localSurvey, attributeClasses]);
+  }, [localSurvey, contactAttributeKeys]);
 
   const addLogic = () => {
     const operator = getDefaultOperatorForQuestion(question);

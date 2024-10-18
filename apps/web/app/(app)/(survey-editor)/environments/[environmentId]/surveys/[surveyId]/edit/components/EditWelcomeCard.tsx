@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { FileInput } from "@formbricks/ui/components/FileInput";
 import { Label } from "@formbricks/ui/components/Label";
@@ -21,7 +21,7 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const EditWelcomeCard = ({
@@ -32,7 +32,7 @@ export const EditWelcomeCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
 }: EditWelcomeCardProps) => {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -129,7 +129,7 @@ export const EditWelcomeCard = ({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             </div>
             <div className="mt-3">
@@ -164,7 +164,7 @@ export const EditWelcomeCard = ({
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
-                    attributeClasses={attributeClasses}
+                    contactAttributeKeys={contactAttributeKeys}
                     label={`"Next" Button Label`}
                   />
                 </div>

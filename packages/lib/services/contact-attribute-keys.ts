@@ -1,8 +1,8 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
-import { contactAttributeKeyCache } from "@formbricks/lib/cache/contact-attribute-key";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { cache } from "../cache";
+import { contactAttributeKeyCache } from "../cache/contact-attribute-key";
 
 export const getContactAttributeKeys = reactCache(
   (environmentId: string): Promise<TContactAttributeKey[]> =>

@@ -17,7 +17,7 @@ import {
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
@@ -63,7 +63,7 @@ interface QuestionFormInputProps {
   ref?: RefObject<HTMLInputElement>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const QuestionFormInput = ({
@@ -83,7 +83,7 @@ export const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
-  attributeClasses,
+  contactAttributeKeys,
 }: QuestionFormInputProps) => {
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
@@ -166,7 +166,7 @@ export const QuestionFormInput = ({
           getLocalizedValue(text, usedLanguageCode),
           localSurvey,
           usedLanguageCode,
-          attributeClasses
+          contactAttributeKeys
         )
       : []
   );
@@ -194,7 +194,7 @@ export const QuestionFormInput = ({
             getLocalizedValue(text, usedLanguageCode),
             localSurvey,
             usedLanguageCode,
-            attributeClasses
+            contactAttributeKeys
           )
         : []
     );
@@ -223,7 +223,7 @@ export const QuestionFormInput = ({
     // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText = recallToHeadline(text, localSurvey, false, usedLanguageCode, attributeClasses)[
+      let remainingText = recallToHeadline(text, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
         usedLanguageCode
       ];
       filterRecallItems(remainingText);
@@ -400,13 +400,13 @@ export const QuestionFormInput = ({
         localSurvey,
         false,
         usedLanguageCode,
-        attributeClasses
+        contactAttributeKeys
       );
 
       setText(modifiedHeadlineWithName);
       setShowFallbackInput(true);
     },
-    [attributeClasses, elementText, fallbacks, handleUpdate, localSurvey, usedLanguageCode]
+    [contactAttributeKeys, elementText, fallbacks, handleUpdate, localSurvey, usedLanguageCode]
   );
 
   // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
@@ -492,7 +492,7 @@ export const QuestionFormInput = ({
       localSurvey,
       false,
       usedLanguageCode,
-      attributeClasses
+      contactAttributeKeys
     );
 
     setText(valueTI18nString);
@@ -570,7 +570,7 @@ export const QuestionFormInput = ({
                 aria-label={label}
                 autoComplete={showRecallItemSelect ? "off" : "on"}
                 value={
-                  recallToHeadline(text, localSurvey, false, usedLanguageCode, attributeClasses)[
+                  recallToHeadline(text, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
                     usedLanguageCode
                   ]
                 }
@@ -630,14 +630,14 @@ export const QuestionFormInput = ({
             recallItems={recallItems}
             selectedLanguageCode={usedLanguageCode}
             hiddenFields={localSurvey.hiddenFields}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
           />
         )}
       </div>
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong>{" "}
-          {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
+          {recallToHeadline(value, localSurvey, false, "default", contactAttributeKeys)["default"]}
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (

@@ -5,7 +5,7 @@ import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
@@ -26,7 +26,7 @@ interface SurveyEditorProps {
   product: TProduct;
   environment: TEnvironment;
   actionClasses: TActionClass[];
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
@@ -44,7 +44,7 @@ export const SurveyEditor = ({
   product,
   environment,
   actionClasses,
-  attributeClasses,
+  contactAttributeKeys,
   segments,
   responseCount,
   membershipRole,
@@ -169,7 +169,7 @@ export const SurveyEditor = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               plan={plan}
               isCxMode={isCxMode}
             />
@@ -197,7 +197,7 @@ export const SurveyEditor = ({
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               actionClasses={actionClasses}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               segments={segments}
               responseCount={responseCount}
               membershipRole={membershipRole}
