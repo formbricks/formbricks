@@ -23,7 +23,7 @@ import { constructToastMessage } from "@/app/(app)/environments/[environmentId]/
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -38,7 +38,7 @@ interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   totalResponseCount: number;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const SummaryList = ({
@@ -47,7 +47,7 @@ export const SummaryList = ({
   responseCount,
   survey,
   totalResponseCount,
-  attributeClasses,
+  contactAttributeKeys,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
 
@@ -125,7 +125,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }
@@ -140,7 +140,7 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 surveyType={survey.type}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
               />
             );
@@ -151,7 +151,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
               />
             );
@@ -162,7 +162,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }
@@ -172,7 +172,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
               />
             );
@@ -183,7 +183,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
               />
             );
@@ -194,7 +194,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
               />
             );
@@ -206,7 +206,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }
@@ -217,7 +217,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }
@@ -228,7 +228,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }
@@ -238,7 +238,7 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
               />
             );
@@ -250,7 +250,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }
@@ -261,7 +261,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 surveyType={survey.type}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }
@@ -281,7 +281,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             );
           }

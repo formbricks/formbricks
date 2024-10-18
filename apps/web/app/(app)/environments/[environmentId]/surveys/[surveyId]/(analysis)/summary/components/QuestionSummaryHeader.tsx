@@ -1,7 +1,7 @@
 import { InboxIcon } from "lucide-react";
 import { questionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 
 interface HeadProps {
@@ -9,7 +9,7 @@ interface HeadProps {
   showResponses?: boolean;
   insights?: JSX.Element;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const QuestionSummaryHeader = ({
@@ -17,7 +17,7 @@ export const QuestionSummaryHeader = ({
   insights,
   showResponses = true,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
 }: HeadProps) => {
   const questionType = questionTypes.find((type) => type.id === questionSummary.question.type);
 
@@ -45,9 +45,13 @@ export const QuestionSummaryHeader = ({
       <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(
-            recallToHeadline(questionSummary.question.headline, survey, true, "default", attributeClasses)[
-              "default"
-            ]
+            recallToHeadline(
+              questionSummary.question.headline,
+              survey,
+              true,
+              "default",
+              contactAttributeKeys
+            )["default"]
           )}
         </h3>
       </div>

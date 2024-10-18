@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
@@ -20,7 +20,7 @@ interface MultipleChoiceSummaryProps {
   environmentId: string;
   surveyType: TSurveyType;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: string,
     label: TI18nString,
@@ -35,7 +35,7 @@ export const MultipleChoiceSummary = ({
   environmentId,
   surveyType,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   setFilter,
 }: MultipleChoiceSummaryProps) => {
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
@@ -66,7 +66,7 @@ export const MultipleChoiceSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (

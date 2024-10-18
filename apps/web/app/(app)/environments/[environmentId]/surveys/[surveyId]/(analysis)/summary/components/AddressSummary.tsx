@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
 import { ArrayResponse } from "@formbricks/ui/components/ArrayResponse";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
@@ -11,21 +11,21 @@ interface AddressSummaryProps {
   questionSummary: TSurveyQuestionSummaryAddress;
   environmentId: string;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const AddressSummary = ({
   questionSummary,
   environmentId,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
 }: AddressSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">

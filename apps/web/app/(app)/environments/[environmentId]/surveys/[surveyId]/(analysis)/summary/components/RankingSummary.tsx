@@ -1,4 +1,4 @@
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -7,14 +7,14 @@ interface RankingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRanking;
   surveyType: TSurveyType;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const RankingSummary = ({
   questionSummary,
   surveyType,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
 }: RankingSummaryProps) => {
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
@@ -26,7 +26,7 @@ export const RankingSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (

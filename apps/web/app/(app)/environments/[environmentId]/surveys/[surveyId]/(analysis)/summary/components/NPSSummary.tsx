@@ -1,4 +1,4 @@
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
@@ -12,7 +12,7 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: string,
     label: TI18nString,
@@ -22,7 +22,7 @@ interface NPSSummaryProps {
   ) => void;
 }
 
-export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilter }: NPSSummaryProps) => {
+export const NPSSummary = ({ questionSummary, survey, contactAttributeKeys, setFilter }: NPSSummaryProps) => {
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {
@@ -61,7 +61,7 @@ export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilte
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors", "dismissed"].map((group) => (

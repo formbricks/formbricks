@@ -1,4 +1,4 @@
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
@@ -11,7 +11,7 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface MatrixQuestionSummaryProps {
   questionSummary: TSurveyQuestionSummaryMatrix;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: string,
     label: TI18nString,
@@ -24,7 +24,7 @@ interface MatrixQuestionSummaryProps {
 export const MatrixQuestionSummary = ({
   questionSummary,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   setFilter,
 }: MatrixQuestionSummaryProps) => {
   const getOpacityLevel = (percentage: number): string => {
@@ -49,7 +49,7 @@ export const MatrixQuestionSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}

@@ -55,7 +55,7 @@ const Page = async ({ params }) => {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={attributeClasses}
         />
       </PageContentWrapper>
     </div>

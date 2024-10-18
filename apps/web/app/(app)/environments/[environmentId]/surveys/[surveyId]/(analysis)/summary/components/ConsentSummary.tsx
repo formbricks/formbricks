@@ -1,4 +1,4 @@
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
@@ -12,7 +12,7 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface ConsentSummaryProps {
   questionSummary: TSurveyQuestionSummaryConsent;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: string,
     label: TI18nString,
@@ -25,7 +25,7 @@ interface ConsentSummaryProps {
 export const ConsentSummary = ({
   questionSummary,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   setFilter,
 }: ConsentSummaryProps) => {
   const summaryItems = [
@@ -45,7 +45,7 @@ export const ConsentSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
