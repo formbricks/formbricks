@@ -2477,3 +2477,25 @@ export const ZSurveyRecallItem = z.object({
 });
 
 export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;
+
+export const ZSurveyCopyFormValidation = z.object({
+  products: z.array(
+    z.object({
+      product: z.string(),
+      environments: z.array(z.string()),
+    })
+  ),
+});
+
+export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;
+
+export const ZSurveyMigrateFormValidation = z.object({
+  products: z.array(
+    z.object({
+      product: z.string(),
+      environments: z.array(z.string()),
+    })
+  ),
+});
+
+export type TSurveyMigrateFormData = z.infer<typeof ZSurveyMigrateFormValidation>;
