@@ -5,6 +5,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
@@ -17,7 +18,7 @@ interface RatingSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,

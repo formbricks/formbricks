@@ -15,6 +15,7 @@ import {
 } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZInsightCategory } from "@formbricks/types/insights";
+import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { embeddingsModel, llmModel } from "../aiModels";
 import { cache } from "../cache";
 import { insightCache } from "../insight/cache";
@@ -102,7 +103,7 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
   (
     insightId: string,
     surveyId: string,
-    questionId: string,
+    questionId: TSurveyQuestionId,
     limit?: number,
     offset?: number
   ): Promise<TDocument[]> =>
@@ -111,7 +112,7 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
         validateInputs(
           [insightId, ZId],
           [surveyId, ZId],
-          [questionId, ZId],
+          [questionId, ZSurveyQuestionId],
           [limit, z.number().optional()],
           [offset, z.number().optional()]
         );
@@ -312,10 +313,10 @@ export const createDocumentAndAssignInsight = async (
 };
 
 export const getDocumentsByResponseIdQuestionId = reactCache(
-  (responseId: string, questionId: string): Promise<TDocument[]> =>
+  (responseId: string, questionId: TSurveyQuestionId): Promise<TDocument[]> =>
     cache(
       async () => {
-        validateInputs([responseId, ZId], [questionId, ZId]);
+        validateInputs([responseId, ZId], [questionId, ZSurveyQuestionId]);
 
         try {
           const prismaDocuments: TPrismaDocument[] = await prisma.$queryRaw`

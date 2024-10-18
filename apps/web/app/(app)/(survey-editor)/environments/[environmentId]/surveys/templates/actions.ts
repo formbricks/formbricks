@@ -62,8 +62,6 @@ export const createAISurveyAction = authenticatedActionClient
       experimental_telemetry: { isEnabled: true },
     });
 
-    console.log("object", JSON.stringify(object, null, 2));
-
     const parsedQuestions = object.questions.map((question) => {
       return ZSurveyQuestion.parse({
         id: createId(),

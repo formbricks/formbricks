@@ -5,7 +5,7 @@ import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TInsight, TInsightCreateInput, ZInsightCreateInput } from "@formbricks/types/insights";
-import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { cache } from "../cache";
 import { INSIGHTS_PER_PAGE } from "../constants";
 import { documentCache } from "../document/cache";
@@ -104,7 +104,7 @@ export const getInsightsBySurveyId = reactCache(
 );
 
 export const getInsightsBySurveyIdQuestionId = reactCache(
-  (surveyId: string, questionId: string, limit?: number, offset?: number): Promise<TInsight[]> =>
+  (surveyId: string, questionId: TSurveyQuestionId, limit?: number, offset?: number): Promise<TInsight[]> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [questionId, ZSurveyQuestionId]);

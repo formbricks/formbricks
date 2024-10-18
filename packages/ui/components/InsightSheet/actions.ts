@@ -10,11 +10,12 @@ import {
 import { getOrganizationIdFromInsightId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
+import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
   surveyId: ZId,
-  questionId: ZId,
+  questionId: ZSurveyQuestionId,
   limit: z.number().optional(),
   offset: z.number().optional(),
 });

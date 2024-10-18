@@ -27,6 +27,7 @@ import {
   TSurveyLanguage,
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestion,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryAddress,
   TSurveyQuestionSummaryDate,
   TSurveyQuestionSummaryFileUpload,
@@ -82,7 +83,11 @@ const evaluateLogicAndGetNextQuestionId = (
   currentQuestionIndex: number,
   currQuesTemp: TSurveyQuestion,
   selectedLanguage: string | null
-): { nextQuestionId: string | undefined; updatedSurvey: TSurvey; updatedVariables: TResponseVariables } => {
+): {
+  nextQuestionId: TSurveyQuestionId | undefined;
+  updatedSurvey: TSurvey;
+  updatedVariables: TResponseVariables;
+} => {
   const questions = localSurvey.questions;
 
   let updatedSurvey = { ...localSurvey };

@@ -67,8 +67,6 @@ export const getStats = reactCache(
             }
           );
 
-          console.log(sentimentCounts);
-
           // analysed feedbacks is the sum of all the sentiments
           const analysedFeedbacks = Object.values(sentimentCounts).reduce((acc, count) => acc + count, 0);
 

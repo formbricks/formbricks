@@ -1,4 +1,5 @@
 import { revalidateTag } from "next/cache";
+import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface RevalidateProps {
   id?: string;
@@ -20,19 +21,19 @@ export const documentCache = {
     byResponseId(responseId: string) {
       return `responses-${responseId}-documents`;
     },
-    byResponseIdQuestionId(responseId: string, questionId: string) {
+    byResponseIdQuestionId(responseId: string, questionId: TSurveyQuestionId) {
       return `responses-${responseId}-questions-${questionId}-documents`;
     },
     bySurveyId(surveyId: string) {
       return `surveys-${surveyId}-documents`;
     },
-    bySurveyIdQuestionId(surveyId: string, questionId: string) {
+    bySurveyIdQuestionId(surveyId: string, questionId: TSurveyQuestionId) {
       return `surveys-${surveyId}-questions-${questionId}-documents`;
     },
     byInsightId(insightId: string) {
       return `insights-${insightId}-documents`;
     },
-    byInsightIdSurveyIdQuestionId(insightId: string, surveyId: string, questionId: string) {
+    byInsightIdSurveyIdQuestionId(insightId: string, surveyId: string, questionId: TSurveyQuestionId) {
       return `insights-${insightId}-surveys-${surveyId}-questions-${questionId}-documents`;
     },
   },

@@ -2,12 +2,13 @@ import "server-only";
 import { embed } from "ai";
 import { prisma } from "@formbricks/database";
 import { TInsightCategory } from "@formbricks/types/insights";
+import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { embeddingsModel } from "../aiModels";
 import { createInsight, findNearestInsights } from "../insight/service";
 import { getInsightVectorText } from "../insight/utils";
 import { documentCache } from "./cache";
 
-export const getQuestionResponseReferenceId = (surveyId: string, questionId: string) => {
+export const getQuestionResponseReferenceId = (surveyId: string, questionId: TSurveyQuestionId) => {
   return `${surveyId}-${questionId}`;
 };
 
