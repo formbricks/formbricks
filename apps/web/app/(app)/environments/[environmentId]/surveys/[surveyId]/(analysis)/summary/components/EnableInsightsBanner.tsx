@@ -18,21 +18,7 @@ export const EnableInsightsBanner = ({ surveyId, surveyResponseCount }: EnableIn
   const handleInsightGeneration = async () => {
     setIsGeneratingInsights(true);
     toast.success("Generating insights for this survey. Please check back in a few minutes.");
-    const insightGenerationActionResponse = await generateInsightsForSurveyAction({ surveyId });
-
-    if (insightGenerationActionResponse?.data) {
-      toast.success("Insights have been generated.");
-
-      if (typeof window !== "undefined") {
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-      }
-    } else {
-      toast.error("No insights found");
-    }
-
-    setIsGeneratingInsights(false);
+    generateInsightsForSurveyAction({ surveyId });
   };
 
   return (
@@ -51,8 +37,7 @@ export const EnableInsightsBanner = ({ surveyId, surveyResponseCount }: EnableIn
           size="sm"
           className="shrink-0"
           onClick={handleInsightGeneration}
-          loading={isGeneratingInsights}
-          disabled={surveyResponseCount > 10000}
+          disabled={surveyResponseCount > 10000 || isGeneratingInsights}
           tooltip={
             surveyResponseCount > 10000
               ? "Kindly contact us at hola@formbricks.com to generate insights for this survey"

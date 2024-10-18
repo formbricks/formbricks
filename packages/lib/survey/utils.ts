@@ -112,34 +112,3 @@ export const getInsightsEnabled = async (question: TSurveyQuestion): Promise<boo
 
   return object.insightsEnabled;
 };
-
-export const generateInsightsForSurvey = async (surveyId: string) => {
-  try {
-    const response = await fetch(`${WEBAPP_URL}/api/insights`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": CRON_SECRET,
-      },
-      body: JSON.stringify({
-        surveyId,
-      }),
-    });
-    const statusCode = response.status;
-
-    if (statusCode >= 200 && statusCode < 300) {
-      return { ok: true, data: true };
-    } else {
-      const errorMessage = await response.text();
-      return {
-        ok: false,
-        error: new Error(`Request failed with status code ${statusCode}: ${errorMessage}`),
-      };
-    }
-  } catch (error) {
-    return {
-      ok: false,
-      error: new Error(`Error while generating insights for survey: ${error.message}`),
-    };
-  }
-};

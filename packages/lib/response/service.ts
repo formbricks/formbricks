@@ -15,20 +15,12 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import {
-  TSurvey,
-  TSurveyQuestionTypeEnum,
-  TSurveyQuestions,
-  ZSurveyQuestions,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { deleteDisplay } from "../display/service";
-import { documentCache } from "../document/cache";
-import { createDocument, doesDocumentExistForResponseId } from "../document/service";
-import { handleInsightAssignments } from "../document/utils";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
@@ -37,14 +29,12 @@ import { getResponseNotes } from "../responseNote/service";
 import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
-import { getPromptText } from "../utils/ai";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import {
   buildWhereClause,
   calculateTtcTotal,
-  doesThisResponseHasAnyOpenTextAnswer,
   extractSurveyDetails,
   getResponseHiddenFields,
   getResponseMeta,
@@ -863,114 +853,3 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
       }
     )()
 );
-
-export const generateInsightsForSurveyResponses = async (surveyData: {
-  id: string;
-  name: string;
-  environmentId: string;
-  questions: TSurveyQuestions;
-}): Promise<void> => {
-  const { id: surveyId, name, environmentId, questions } = surveyData;
-
-  validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
-  try {
-    const openTextQuestionsWithInsights = questions.filter(
-      (question) => question.type === TSurveyQuestionTypeEnum.OpenText && question.insightsEnabled
-    );
-
-    const openTextQuestionIds = openTextQuestionsWithInsights.map((question) => question.id);
-
-    if (openTextQuestionIds.length === 0) {
-      return;
-    }
-
-    // Fetching responses
-    const batchSize = 3000;
-    const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-    const pages = Math.ceil(totalResponseCount / batchSize);
-
-    for (let i = 0; i < pages; i++) {
-      const responses = await prisma.response.findMany({
-        where: {
-          surveyId,
-          documents: {
-            none: {},
-          },
-        },
-        select: {
-          id: true,
-          data: true,
-        },
-        take: batchSize,
-        skip: i * batchSize,
-      });
-
-      const responsesWithOpenTextAnswers = responses.filter((response) =>
-        doesThisResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data)
-      );
-
-      const documentExistsPromises = responsesWithOpenTextAnswers.map((response) =>
-        doesDocumentExistForResponseId(response.id)
-      );
-
-      const documentExistsResults = await Promise.all(documentExistsPromises);
-
-      const responsesWithoutDocument = responsesWithOpenTextAnswers.filter(
-        (_, index) => !documentExistsResults[index]
-      );
-
-      const createDocumentPromises = responsesWithoutDocument.map((response) => {
-        return Promise.all(
-          openTextQuestionsWithInsights.map(async (question) => {
-            const responseText = response.data[question.id] as string;
-            if (!responseText) {
-              return;
-            }
-
-            const text = getPromptText(question.headline.default, responseText);
-
-            return await createDocument(name, {
-              environmentId,
-              surveyId,
-              responseId: response.id,
-              questionId: question.id,
-              text,
-            });
-          })
-        );
-      });
-
-      const createDocumentResults = await Promise.all(createDocumentPromises);
-      const createdDocuments = createDocumentResults.flat().filter(Boolean);
-
-      for (const document of createdDocuments) {
-        if (document) {
-          const insightPromises: Promise<void>[] = [];
-          const { insights, isSpam, id, environmentId } = document;
-          if (!isSpam) {
-            for (const insight of insights) {
-              if (typeof insight.title !== "string" || typeof insight.description !== "string") {
-                throw new Error("Insight title and description must be a string");
-              }
-
-              // create or connect the insight
-              insightPromises.push(handleInsightAssignments(environmentId, id, insight));
-            }
-            await Promise.all(insightPromises);
-          }
-        }
-      }
-      documentCache.revalidate({
-        environmentId: environmentId,
-        surveyId: surveyId,
-      });
-    }
-    return;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};

@@ -1,10 +1,9 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { CRON_SECRET } from "@formbricks/lib/constants";
-import { generateInsightsForSurveyResponses } from "@formbricks/lib/response/service";
-import { generateInsightsEnabledForSurveyQuestions } from "@formbricks/lib/survey/service";
 import { responses } from "../../lib/api/response";
 import { transformErrorToDetails } from "../../lib/api/validator";
+import { generateInsightsEnabledForSurveyQuestions, generateInsightsForSurveyResponses } from "./lib/utils";
 
 const ZGenerateInsightsInput = z.object({
   surveyId: z.string(),
@@ -32,8 +31,6 @@ export const POST = async (request: Request) => {
     const { surveyId } = inputValidation.data;
 
     const data = await generateInsightsEnabledForSurveyQuestions(surveyId);
-
-    console.log(data);
 
     if (!data.success) {
       return responses.successResponse({ message: "No insights enabled questions found" });
