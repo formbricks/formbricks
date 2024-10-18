@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
+import { ZInsightCategory } from "./insights";
 import { ZSurveyQuestionId } from "./surveys/types";
 
 export const ZDocumentSentiment = z.enum(["positive", "negative", "neutral"]);
@@ -39,3 +40,17 @@ export const ZDocumentFilterCriteria = z.object({
 });
 
 export type TDocumentFilterCriteria = z.infer<typeof ZDocumentFilterCriteria>;
+
+export const ZGenerateDocumentObjectSchema = z.object({
+  sentiment: ZDocumentSentiment,
+  insights: z.array(
+    z.object({
+      title: z.string().describe("insight title, very specific"),
+      description: z.string().describe("very brief insight description"),
+      category: ZInsightCategory,
+    })
+  ),
+  isSpam: z.boolean(),
+});
+
+export type TGenerateDocumentObjectSchema = z.infer<typeof ZGenerateDocumentObjectSchema>;

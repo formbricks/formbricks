@@ -1,4 +1,4 @@
-import { InsightView } from "@/app/(ee)/(insights)/components/InsightView";
+import { InsightView } from "@/modules/ee/insights/components/insights-view";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";

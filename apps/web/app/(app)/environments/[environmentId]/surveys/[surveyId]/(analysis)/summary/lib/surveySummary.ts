@@ -1,11 +1,11 @@
 import "server-only";
+import { getInsightsBySurveyIdQuestionId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/insights";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { cache } from "@formbricks/lib/cache";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { getDisplayCountBySurveyId } from "@formbricks/lib/display/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getInsightsBySurveyIdQuestionId } from "@formbricks/lib/insight/service";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";

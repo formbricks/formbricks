@@ -1,5 +1,6 @@
 "use server";
 
+import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
@@ -8,7 +9,6 @@ import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/util
 import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
-import { generateInsightsForSurvey } from "../../../../../../api/insights/lib/utils";
 import { getSurveySummary } from "./summary/lib/surveySummary";
 
 export const revalidateSurveyIdPath = async (environmentId: string, surveyId: string) => {

@@ -3,7 +3,6 @@ import { getActionClass } from "../actionClass/service";
 import { getApiKey } from "../apiKey/service";
 import { getAttributeClass } from "../attributeClass/service";
 import { getEnvironment } from "../environment/service";
-import { getInsight } from "../insight/service";
 import { getIntegration } from "../integration/service";
 import { getInvite } from "../invite/service";
 import { getLanguage } from "../language/service";
@@ -54,15 +53,6 @@ export const getOrganizationIdFromResponseId = async (responseId: string) => {
   }
 
   return await getOrganizationIdFromSurveyId(response.surveyId);
-};
-
-export const getOrganizationIdFromInsightId = async (insightId: string) => {
-  const insight = await getInsight(insightId);
-  if (!insight) {
-    throw new ResourceNotFoundError("insight", insightId);
-  }
-
-  return await getOrganizationIdFromEnvironmentId(insight.environmentId);
 };
 
 export const getOrganizationIdFromPersonId = async (personId: string) => {
