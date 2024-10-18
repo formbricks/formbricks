@@ -60,14 +60,6 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
 
   const prefilledFilters = [product.config.channel, product.config.industry, searchParams.role ?? null];
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
-
-  const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
-
   return (
     <TemplateContainerWithPreview
       environmentId={environmentId}
@@ -75,7 +67,8 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
       environment={environment}
       product={product}
       prefilledFilters={prefilledFilters}
-      isAIEnabled={isAIEnabled}
+      // AI Survey Creation -- Need improvement
+      isAIEnabled={false}
     />
   );
 };
