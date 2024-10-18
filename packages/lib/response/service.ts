@@ -26,7 +26,9 @@ import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { deleteDisplay } from "../display/service";
+import { documentCache } from "../document/cache";
 import { createDocument, doesDocumentExistForResponseId } from "../document/service";
+import { handleInsightAssignments } from "../document/utils";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
@@ -864,10 +866,11 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
 
 export const generateInsightsForSurveyResponses = async (surveyData: {
   id: string;
+  name: string;
   environmentId: string;
   questions: TSurveyQuestions;
 }): Promise<void> => {
-  const { id: surveyId, environmentId, questions } = surveyData;
+  const { id: surveyId, name, environmentId, questions } = surveyData;
 
   validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
   try {
@@ -902,38 +905,67 @@ export const generateInsightsForSurveyResponses = async (surveyData: {
         skip: i * batchSize,
       });
 
-      for (let response of responses) {
-        const hasOpenTextResponse = doesThisResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data);
+      const responsesWithOpenTextAnswers = responses.filter((response) =>
+        doesThisResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data)
+      );
 
-        if (!hasOpenTextResponse) {
-          continue;
-        }
+      const documentExistsPromises = responsesWithOpenTextAnswers.map((response) =>
+        doesDocumentExistForResponseId(response.id)
+      );
 
-        // Check if a document already exists for the response
-        const documentExists = await doesDocumentExistForResponseId(response.id);
-        if (!documentExists) {
-          // Iterate over each open text question with insights enabled
-          for (let question of openTextQuestionsWithInsights) {
-            // Get the response text for the current question
+      const documentExistsResults = await Promise.all(documentExistsPromises);
+
+      const responsesWithoutDocument = responsesWithOpenTextAnswers.filter(
+        (_, index) => !documentExistsResults[index]
+      );
+
+      const createDocumentPromises = responsesWithoutDocument.map((response) => {
+        return Promise.all(
+          openTextQuestionsWithInsights.map(async (question) => {
             const responseText = response.data[question.id] as string;
             if (!responseText) {
-              // Skip if there is no response text for the question
-              continue;
+              return;
             }
 
             const text = getPromptText(question.headline.default, responseText);
 
-            await createDocument({
+            return await createDocument(name, {
               environmentId,
               surveyId,
               responseId: response.id,
               questionId: question.id,
               text,
             });
+          })
+        );
+      });
+
+      const createDocumentResults = await Promise.all(createDocumentPromises);
+      const createdDocuments = createDocumentResults.flat().filter(Boolean);
+
+      for (const document of createdDocuments) {
+        if (document) {
+          const insightPromises: Promise<void>[] = [];
+          const { insights, isSpam, id, environmentId } = document;
+          if (!isSpam) {
+            for (const insight of insights) {
+              if (typeof insight.title !== "string" || typeof insight.description !== "string") {
+                throw new Error("Insight title and description must be a string");
+              }
+
+              // create or connect the insight
+              insightPromises.push(handleInsightAssignments(environmentId, id, insight));
+            }
+            await Promise.all(insightPromises);
           }
         }
       }
+      documentCache.revalidate({
+        environmentId: environmentId,
+        surveyId: surveyId,
+      });
     }
+    return;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

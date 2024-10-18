@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
+import { ZSurveyQuestionId } from "./surveys/types";
 
 export const ZDocumentSentiment = z.enum(["positive", "negative", "neutral"]);
 
@@ -11,7 +12,7 @@ export const ZDocument = z.object({
   updatedAt: z.date(),
   environmentId: ZId,
   responseId: ZId.nullable(),
-  questionId: ZId.nullable(),
+  questionId: ZSurveyQuestionId.nullable(),
   sentiment: ZDocumentSentiment,
   text: z.string(),
 });
@@ -22,7 +23,7 @@ export const ZDocumentCreateInput = z.object({
   environmentId: ZId,
   surveyId: ZId,
   responseId: ZId,
-  questionId: ZId,
+  questionId: ZSurveyQuestionId,
   text: z.string(),
 });
 

@@ -29,6 +29,20 @@ export type TPrismaDocument = Omit<TDocument, "vector"> & {
   vector: string;
 };
 
+const ZGenerateDocumentObjectSchema = z.object({
+  sentiment: ZDocumentSentiment,
+  insights: z.array(
+    z.object({
+      title: z.string().describe("insight title, very specific"),
+      description: z.string().describe("very brief insight description"),
+      category: ZInsightCategory,
+    })
+  ),
+  isSpam: z.boolean(),
+});
+
+export type TGenerateDocumentObjectSchema = z.infer<typeof ZGenerateDocumentObjectSchema>;
+
 export const getDocumentsByInsightId = reactCache(
   (
     insightId: string,
@@ -142,14 +156,75 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
     )()
 );
 
-export const createDocument = async (documentInput: TDocumentCreateInput): Promise<TDocument> => {
-  validateInputs([documentInput, ZDocumentCreateInput]);
+export const createDocument = async (
+  surveyName: string,
+  documentInput: TDocumentCreateInput
+): Promise<TDocument & { isSpam: Boolean; insights: TGenerateDocumentObjectSchema["insights"] }> => {
+  validateInputs([surveyName, z.string()], [documentInput, ZDocumentCreateInput]);
 
-  const survey = await getSurvey(documentInput.surveyId);
+  try {
+    // Generate text embedding
+    const { embedding } = await embed({
+      model: embeddingsModel,
+      value: documentInput.text,
+      experimental_telemetry: { isEnabled: true },
+    });
 
-  if (!survey) {
-    throw new Error("Survey not found");
+    // generate sentiment and insights
+    const { object } = await generateObject({
+      model: llmModel,
+      schema: ZGenerateDocumentObjectSchema,
+      system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. The insight title (1-3 words) should concicely answer the question, e.g. "What type of people do you think would most benefit" -> "Developers". You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight.`,
+      prompt: `Survey: ${surveyName}\n${documentInput.text}`,
+      temperature: 0,
+      experimental_telemetry: { isEnabled: true },
+    });
+
+    const sentiment = object.sentiment;
+    const isSpam = object.isSpam;
+
+    // create document
+    const prismaDocument = await prisma.document.create({
+      data: {
+        ...documentInput,
+        sentiment,
+        isSpam,
+      },
+    });
+
+    const document = {
+      ...prismaDocument,
+      vector: embedding,
+    };
+
+    // update document vector with the embedding
+    const vectorString = `[${embedding.join(",")}]`;
+    await prisma.$executeRaw`
+        UPDATE "Document"
+        SET "vector" = ${vectorString}::vector(512)
+        WHERE "id" = ${document.id};
+      `;
+
+    documentCache.revalidate({
+      id: document.id,
+      responseId: document.responseId,
+      questionId: document.questionId,
+    });
+
+    return { ...document, insights: object.insights, isSpam };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
+};
+
+export const createDocumentAndAssignInsight = async (
+  surveyName: string,
+  documentInput: TDocumentCreateInput
+): Promise<TDocument> => {
+  validateInputs([surveyName, z.string()], [documentInput, ZDocumentCreateInput]);
 
   try {
     // Generate text embedding
@@ -166,7 +241,7 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
         sentiment: ZDocumentSentiment,
         insights: z.array(
           z.object({
-            title: z.string().max(25).describe("insight title, very specific"),
+            title: z.string().describe("insight title, very specific"),
             description: z.string().describe("very brief insight description"),
             category: ZInsightCategory,
           })
@@ -174,7 +249,7 @@ export const createDocument = async (documentInput: TDocumentCreateInput): Promi
         isSpam: z.boolean(),
       }),
       system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. The insight title (1-3 words) should concicely answer the question, e.g. "What type of people do you think would most benefit" -> "Developers". You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight.`,
-      prompt: `Survey: ${survey.name}\n${documentInput.text}`,
+      prompt: `Survey: ${surveyName}\n${documentInput.text}`,
       temperature: 0,
       experimental_telemetry: { isEnabled: true },
     });

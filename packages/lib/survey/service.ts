@@ -39,7 +39,7 @@ import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { generateInsightsForSurveyResponses, getResponsesByPersonId } from "../response/service";
+import { getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { getIsAIEnabled } from "../utils/ai";
@@ -1408,7 +1408,17 @@ export const getSurveysBySegmentId = reactCache(
     )()
 );
 
-export const generateInsightsForSurvey = async (surveyId: string): Promise<Boolean> => {
+export const generateInsightsEnabledForSurveyQuestions = async (
+  surveyId: string
+): Promise<
+  | {
+      success: false;
+    }
+  | {
+      success: true;
+      survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">;
+    }
+> => {
   validateInputs([surveyId, ZId]);
   try {
     const survey = await prisma.survey.findUnique({
@@ -1417,6 +1427,7 @@ export const generateInsightsForSurvey = async (surveyId: string): Promise<Boole
       },
       select: {
         id: true,
+        name: true,
         environmentId: true,
         questions: true,
       },
@@ -1427,7 +1438,7 @@ export const generateInsightsForSurvey = async (surveyId: string): Promise<Boole
     }
 
     if (!doesSurveyHasOpenTextQuestion(survey.questions)) {
-      return false;
+      return { success: false };
     }
 
     const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
@@ -1465,6 +1476,7 @@ export const generateInsightsForSurvey = async (surveyId: string): Promise<Boole
       },
       select: {
         id: true,
+        name: true,
         environmentId: true,
         questions: true,
       },
@@ -1473,11 +1485,10 @@ export const generateInsightsForSurvey = async (surveyId: string): Promise<Boole
     surveyCache.revalidate({ id: surveyId, environmentId: survey.environmentId });
 
     if (insightsEnabledQuestionIds.length > 0) {
-      await generateInsightsForSurveyResponses(updatedSurvey);
-      return true;
+      return { success: true, survey: updatedSurvey };
     }
 
-    return false;
+    return { success: false };
   } catch (error) {
     console.error("Error generating insights for surveys:", error);
     throw error;

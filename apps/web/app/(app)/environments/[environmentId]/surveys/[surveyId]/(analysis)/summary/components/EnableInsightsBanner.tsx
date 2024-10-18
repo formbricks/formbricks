@@ -17,6 +17,7 @@ export const EnableInsightsBanner = ({ surveyId, surveyResponseCount }: EnableIn
 
   const handleInsightGeneration = async () => {
     setIsGeneratingInsights(true);
+    toast.success("Generating insights for this survey. Please check back in a few minutes.");
     const insightGenerationActionResponse = await generateInsightsForSurveyAction({ surveyId });
 
     if (insightGenerationActionResponse?.data) {

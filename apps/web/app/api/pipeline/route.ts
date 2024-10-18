@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
-import { createDocument } from "@formbricks/lib/document/service";
+import { createDocumentAndAssignInsight } from "@formbricks/lib/document/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
@@ -166,7 +166,7 @@ export const POST = async (request: Request) => {
               }
               const text = getPromptText(question.headline.default, response.data[question.id] as string);
               // TODO: check if subheadline gives more context and better embeddings
-              await createDocument({
+              await createDocumentAndAssignInsight(survey.name, {
                 environmentId,
                 surveyId,
                 responseId: response.id,
