@@ -9,10 +9,15 @@ import { Button } from "@formbricks/ui/components/Button";
 
 interface EnableInsightsBannerProps {
   surveyId: string;
+  maxResponseCount: number;
   surveyResponseCount: number;
 }
 
-export const EnableInsightsBanner = ({ surveyId, surveyResponseCount }: EnableInsightsBannerProps) => {
+export const EnableInsightsBanner = ({
+  surveyId,
+  surveyResponseCount,
+  maxResponseCount = 2000,
+}: EnableInsightsBannerProps) => {
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   const handleInsightGeneration = async () => {
@@ -37,9 +42,9 @@ export const EnableInsightsBanner = ({ surveyId, surveyResponseCount }: EnableIn
           size="sm"
           className="shrink-0"
           onClick={handleInsightGeneration}
-          disabled={surveyResponseCount > 10000 || isGeneratingInsights}
+          disabled={surveyResponseCount > maxResponseCount || isGeneratingInsights}
           tooltip={
-            surveyResponseCount > 10000
+            surveyResponseCount > maxResponseCount
               ? "Kindly contact us at hola@formbricks.com to generate insights for this survey"
               : undefined
           }>

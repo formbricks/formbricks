@@ -7,14 +7,14 @@ import { TUser } from "@formbricks/types/user";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import { TemplateList } from "@formbricks/ui/components/TemplateList";
 
-interface SurveyTemplatesProps {
+interface TemplatesCardProps {
   environment: TEnvironment;
   product: TProduct;
   user: TUser;
   prefilledFilters: TTemplateFilter[];
 }
 
-export const TemplatesCard = ({ environment, product, user, prefilledFilters }: SurveyTemplatesProps) => {
+export const TemplatesCard = ({ environment, product, user, prefilledFilters }: TemplatesCardProps) => {
   return (
     <Card>
       <CardHeader>

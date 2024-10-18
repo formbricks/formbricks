@@ -12,7 +12,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
 import { ToggleGroup, ToggleGroupItem } from "@formbricks/ui/components/ToggleGroup";
 
-interface ExperiencePageProps {
+interface DashboardProps {
   user: TUser;
   environment: TEnvironment;
   product: TProduct;
@@ -26,7 +26,7 @@ export const Dashboard = ({
   user,
   insightsPerPage,
   documentsPerPage,
-}: ExperiencePageProps) => {
+}: DashboardProps) => {
   const [statsPeriod, setStatsPeriod] = useState<TStatsPeriod>("week");
   const statsFrom = getDateFromTimeRange(statsPeriod);
   return (

@@ -1,3 +1,4 @@
+// This function can run for a maximum of 300 seconds
 import { generateInsightsForSurveyResponses } from "@/app/api/(internal)/insights/lib/insights";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -5,6 +6,8 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { generateInsightsEnabledForSurveyQuestions } from "./lib/utils";
+
+export const maxDuration = 300; // This function can run for a maximum of 300 seconds
 
 const ZGenerateInsightsInput = z.object({
   surveyId: z.string(),
