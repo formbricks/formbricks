@@ -3,6 +3,7 @@
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@formbricks/lib/cn";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TProduct } from "@formbricks/types/product";
@@ -282,7 +283,11 @@ export const PreviewSurvey = ({
                       <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                     )}
                   </div>
-                  <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
+                  <div
+                    className={cn(
+                      "z-0 w-full rounded-lg border border-transparent",
+                      survey.type === "link" ? "max-w-lg" : "max-w-md"
+                    )}>
                     <SurveyInline
                       survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={product.linkSurveyBranding}
@@ -380,7 +385,11 @@ export const PreviewSurvey = ({
                     <ClientLogo environmentId={environment.id} product={product} previewSurvey />
                   )}
                 </div>
-                <div className="z-0 w-full max-w-md rounded-lg border-transparent">
+                <div
+                  className={cn(
+                    "z-0 w-full rounded-lg border-transparent",
+                    survey.type === "link" ? "max-w-lg" : "max-w-md"
+                  )}>
                   <SurveyInline
                     survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={product.linkSurveyBranding}
