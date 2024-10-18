@@ -3,9 +3,7 @@ import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
-import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -25,11 +23,6 @@ const Page = async ({ params }) => {
     throw new Error("Environment not found");
   }
 
-  let channelsArray: TIntegrationItem[] = [];
-  if (slackIntegration && slackIntegration.config.key) {
-    channelsArray = await getSlackChannels(params.environmentId);
-  }
-
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
@@ -38,7 +31,6 @@ const Page = async ({ params }) => {
         <SlackWrapper
           isEnabled={isEnabled}
           environment={environment}
-          channelsArray={channelsArray}
           surveys={surveys}
           slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}

@@ -27,6 +27,7 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
 
 const ZDeleteIntegrationAction = z.object({
   integrationId: ZId,
+  environmentId: ZId,
 });
 
 export const deleteIntegrationAction = authenticatedActionClient
@@ -34,7 +35,7 @@ export const deleteIntegrationAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.integrationId),
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       rules: ["integration", "delete"],
     });
 

@@ -7,12 +7,12 @@ import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization
 import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { ZId } from "@formbricks/types/common";
 
-const ZRefreshChannelsAction = z.object({
+const ZGetSlackChannelsAction = z.object({
   environmentId: ZId,
 });
 
-export const refreshChannelsAction = authenticatedActionClient
-  .schema(ZRefreshChannelsAction)
+export const getSlackChannelsAction = authenticatedActionClient
+  .schema(ZGetSlackChannelsAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,
