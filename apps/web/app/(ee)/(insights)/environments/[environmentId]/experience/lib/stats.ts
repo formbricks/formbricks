@@ -37,9 +37,7 @@ export const getStats = reactCache(
               sentiment: true,
             },
             where: {
-              survey: {
-                environmentId,
-              },
+              environmentId,
               createdAt: {
                 gte: statsFrom,
               },

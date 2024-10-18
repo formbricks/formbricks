@@ -147,7 +147,7 @@ export const generateInsightsForSurveyResponses = async (surveyData: {
     }
 
     // Fetching responses
-    const batchSize = 500;
+    const batchSize = 200;
     let skip = 0;
 
     const totalResponseCount = await prisma.response.count({
