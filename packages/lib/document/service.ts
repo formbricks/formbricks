@@ -19,7 +19,6 @@ import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/
 import { embeddingsModel, llmModel } from "../aiModels";
 import { cache } from "../cache";
 import { insightCache } from "../insight/cache";
-import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
 import { documentCache } from "./cache";
 import { handleInsightAssignments } from "./utils";
