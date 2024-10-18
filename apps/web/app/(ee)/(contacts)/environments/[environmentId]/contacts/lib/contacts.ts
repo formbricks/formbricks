@@ -47,27 +47,32 @@ const selectContactAttribute = {
   },
 } satisfies Prisma.ContactAttributeSelect;
 
-const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => ({
-  environmentId,
-  OR: [
-    {
-      attributes: {
-        some: {
-          value: {
-            contains: search,
-            mode: "insensitive",
+const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
+  const whereClause: Prisma.ContactWhereInput = { environmentId };
+
+  if (search) {
+    whereClause.OR = [
+      {
+        attributes: {
+          some: {
+            value: {
+              contains: search,
+              mode: "insensitive",
+            },
           },
         },
       },
-    },
-    {
-      id: {
-        contains: search,
-        mode: "insensitive",
+      {
+        id: {
+          contains: search,
+          mode: "insensitive",
+        },
       },
-    },
-  ],
-});
+    ];
+  }
+
+  return whereClause;
+};
 
 export const getContacts = reactCache(
   (environmentId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> =>

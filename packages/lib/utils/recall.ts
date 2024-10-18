@@ -1,4 +1,3 @@
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TResponseData } from "@formbricks/types/responses";
@@ -176,7 +175,7 @@ export const getRecallItems = (
   text: string,
   survey: TSurvey,
   languageCode: string,
-  attributeClasses: TAttributeClass[]
+  attributeClasses: TContactAttributeKey[]
 ): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 

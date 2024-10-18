@@ -1,5 +1,5 @@
-import { AttributesSection } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/[contactId]/components/AttributesSection";
-import { DeleteContactButton } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/[contactId]/components/DeleteContactButton";
+import { AttributesSection } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/[contactId]/components/attributes-section";
+import { DeleteContactButton } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/[contactId]/components/delete-contact-button";
 import {
   getContact,
   getContactAttributeKeys,
@@ -16,7 +16,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { ResponseSection } from "./components/ResponseSection";
+import { ResponseSection } from "./components/response-section";
 
 const Page = async ({ params }: { params: { environmentId: string; contactId: string } }) => {
   const [environment, environmentTags, product, session, organization, contact, attributeKeys, attributes] =

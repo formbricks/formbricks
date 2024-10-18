@@ -10,7 +10,7 @@ interface DataTableToolbarProps<T> {
   isExpanded: boolean;
   table: Table<T>;
   deleteRows: (rowIds: string[]) => void;
-  type: "person" | "response";
+  type: "response" | "contact";
 }
 
 export const DataTableToolbar = <T,>({

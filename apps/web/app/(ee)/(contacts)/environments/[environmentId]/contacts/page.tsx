@@ -4,8 +4,8 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { Button } from "@formbricks/ui/components/Button";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { ContactDataView } from "./components/ContactDataView";
-import { ContactsSecondaryNavigation } from "./components/ContactsSecondaryNavigation";
+import { ContactDataView } from "./components/contact-data-view";
+import { ContactsSecondaryNavigation } from "./components/contacts-secondary-navigation";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
   const environment = await getEnvironment(params.environmentId);

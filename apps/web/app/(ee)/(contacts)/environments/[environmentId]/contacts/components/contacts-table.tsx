@@ -25,9 +25,9 @@ import { SearchBar } from "@formbricks/ui/components/SearchBar";
 import { Skeleton } from "@formbricks/ui/components/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/components/Table";
 import { TContactTableData } from "../types/contact";
-import { generateContactTableColumns } from "./ContactTableColumn";
+import { generateContactTableColumns } from "./contact-table-column";
 
-interface ContactTableProps {
+interface ContactsTableProps {
   data: TContactTableData[];
   fetchNextPage: () => void;
   hasMore: boolean;
@@ -38,7 +38,7 @@ interface ContactTableProps {
   setSearchValue: (value: string) => void;
 }
 
-export const ContactTable = ({
+export const ContactsTable = ({
   data,
   fetchNextPage,
   hasMore,
@@ -47,7 +47,7 @@ export const ContactTable = ({
   environmentId,
   searchValue,
   setSearchValue,
-}: ContactTableProps) => {
+}: ContactsTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
@@ -170,7 +170,7 @@ export const ContactTable = ({
           isExpanded={isExpanded ?? false}
           table={table}
           deleteRows={deletePersons}
-          type="person"
+          type="contact"
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>

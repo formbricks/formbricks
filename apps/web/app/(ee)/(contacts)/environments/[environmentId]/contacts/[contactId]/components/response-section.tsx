@@ -7,7 +7,7 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { ResponseTimeline } from "./ResponseTimeline";
+import { ResponseTimeline } from "./response-timeline";
 
 interface ResponseSectionProps {
   environment: TEnvironment;

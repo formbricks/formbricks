@@ -6,9 +6,9 @@ import React from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
-import { getContactAttributeKeysAction, getContactsAction } from "../actions";
+import { deleteContactAction, getContactAttributeKeysAction, getContactsAction } from "../actions";
 import { TContactTableData, TContactWithAttributes } from "../types/contact";
-import { ContactTable } from "./ContactTable";
+import { ContactsTable } from "./contacts-table";
 
 interface ContactDataViewProps {
   environment: TEnvironment;
@@ -110,8 +110,9 @@ export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewPr
   };
 
   // Delete selected contacts
-  const deletePersons = (personIds: string[]) => {
-    setContacts((prevContacts) => prevContacts.filter((p) => !personIds.includes(p.id)));
+  const deletePersons = async (contactIds: string[]) => {
+    await Promise.all(contactIds.map((contactId) => deleteContactAction({ contactId })));
+    setContacts((prevContacts) => prevContacts.filter((contact) => !contactIds.includes(contact.id)));
   };
 
   // Prepare data for the ContactTable component
@@ -136,7 +137,7 @@ export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewPr
   }
 
   return (
-    <ContactTable
+    <ContactsTable
       data={contactsTableData}
       fetchNextPage={fetchNextPage}
       hasMore={hasMore}

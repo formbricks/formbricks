@@ -8,7 +8,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { ResponseFeed } from "./ResponseFeed";
+import { ResponseFeed } from "./response-feed";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];
