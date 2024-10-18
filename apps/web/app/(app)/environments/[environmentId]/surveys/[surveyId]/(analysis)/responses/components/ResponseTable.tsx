@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -65,6 +66,7 @@ export const ResponseTable = ({
   const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [parent] = useAutoAnimate();
 
   // Generate columns
   const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer);
@@ -199,7 +201,7 @@ export const ResponseTable = ({
                 ))}
               </TableHeader>
 
-              <TableBody>
+              <TableBody ref={parent}>
                 {table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
