@@ -1,9 +1,10 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, CheckIcon } from "lucide-react";
 import Link from "next/link";
-import { KeyboardEventHandler, useEffect, useState } from "react";
+import { KeyboardEventHandler, use, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -272,6 +273,7 @@ export const ResponseOptionsCard = ({
       return;
     }
   };
+  const [parent] = useAutoAnimate();
 
   return (
     <Collapsible.Root
@@ -295,7 +297,7 @@ export const ResponseOptionsCard = ({
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent>
+      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           {/* Close Survey on Limit */}
