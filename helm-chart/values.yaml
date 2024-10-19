@@ -42,7 +42,7 @@ autoscaling:
           periodSeconds: 15
       selectPolicy: Max
 
-replicaCount: 1
+replicaCount: 2
 
 formbricksConfig:
   nextAuthSecret: ""
@@ -105,7 +105,7 @@ traefik:
     readOnlyRootFilesystem: true
 
 redis:
-  enabled: false
+  enabled: true
   externalUrl: ""
   architecture: standalone
   auth:
@@ -118,7 +118,7 @@ redis:
     replicaCount: 0
 
 postgresql:
-  enabled: false
+  enabled: true
   externalUrl: ""
   auth:
     username: formbricks

@@ -76,13 +76,7 @@ To quickly deploy Formbricks with default settings:
    helm install my-formbricks formbricks/formbricks --namespace formbricks --create-namespace
    ```
 
-This will deploy Formbricks with 1 Pod and default settings, with PostgreSQL, Redis, and Traefik disabled.
-
-Note: Formbricks requires a PostgreSQL database. You need to provide either an internal or external PostgreSQL instance. Here's an example of enabling the internal PostgreSQL:
-
-   ```bash
-   helm install my-formbricks formbricks/formbricks --namespace formbricks --create-namespace
-   ```
+This will deploy Formbricks with default settings, including a new PostgreSQL instance and Redis enabled, Traefik disabled.
 
 ### Usage Examples
 
@@ -403,7 +397,7 @@ Below is a comprehensive list of all configurable values in the Formbricks Helm 
 
 | Field | Description | Default |
 |-------|-------------|---------|
-| `image.repository` | Docker image repository for Formbricks | `ghcr.io/formbricks/formbricks` |
+| `image.repository` | Docker image repository for Formbricks | `formbricks/formbricks` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `image.tag` | Docker image tag | `"latest"` |
 | `service.type` | Kubernetes service type | `ClusterIP` |
