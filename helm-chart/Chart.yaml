@@ -13,11 +13,3 @@ dependencies:
     version: 20.1.5
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
-  - name: nginx
-    version: 18.2.3
-    repository: https://charts.bitnami.com/bitnami
-    condition: nginx.enabled
-  - name: cert-manager
-    version: v1.16.1
-    repository: https://charts.jetstack.io
-    condition: certmanager.enabled
