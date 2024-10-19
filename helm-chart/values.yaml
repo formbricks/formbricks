@@ -1,5 +1,5 @@
 global:
-  hostname: ""
+  hostname: "virenet.team"
 
 
 image:
