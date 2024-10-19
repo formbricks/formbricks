@@ -229,7 +229,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
 
         <div ref={parent}>
           {filterValue.filter?.map((s, i) => (
-            <>
+            <React.Fragment key={i}>
               <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
                 <div
                   className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
@@ -283,7 +283,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
                   <hr className="w-full text-slate-600" />
                 </div>
               )}
-            </>
+            </React.Fragment>
           ))}
         </div>
         <div className="mt-8 flex items-center justify-between">
