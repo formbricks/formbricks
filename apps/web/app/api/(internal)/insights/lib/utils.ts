@@ -64,6 +64,14 @@ export const generateInsightsEnabledForSurveyQuestions = async (
 
     const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
 
+    const openTextQuestionsWithoutInsightsEnabled = openTextQuestions.filter(
+      (question) => typeof question.insightsEnabled === "undefined"
+    );
+
+    if (openTextQuestionsWithoutInsightsEnabled.length === 0) {
+      return { success: false };
+    }
+
     const insightsEnabledValues = await Promise.all(
       openTextQuestions.map(async (question) => {
         const insightsEnabled = await getInsightsEnabled(question);
