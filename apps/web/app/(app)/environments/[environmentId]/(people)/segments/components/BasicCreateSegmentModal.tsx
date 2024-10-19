@@ -1,6 +1,5 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -44,8 +43,6 @@ export const BasicCreateSegmentModal = ({
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegmentState);
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
-  const [parent] = useAutoAnimate();
-
   const handleResetState = () => {
     setSegment(initialSegmentState);
     setOpen(false);
