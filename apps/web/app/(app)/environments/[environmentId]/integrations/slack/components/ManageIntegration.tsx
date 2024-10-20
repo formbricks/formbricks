@@ -20,6 +20,8 @@ interface ManageIntegrationProps {
     React.SetStateAction<(TIntegrationSlackConfigData & { index: number }) | null>
   >;
   refreshChannels: () => void;
+  showReconnectButton: boolean;
+  handleSlackAuthorization: () => void;
 }
 
 export const ManageIntegration = ({
@@ -29,6 +31,8 @@ export const ManageIntegration = ({
   setIsConnected,
   setSelectedIntegration,
   refreshChannels,
+  showReconnectButton,
+  handleSlackAuthorization,
 }: ManageIntegrationProps) => {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
@@ -41,7 +45,10 @@ export const ManageIntegration = ({
   const handleDeleteIntegration = async () => {
     try {
       setisDeleting(true);
-      await deleteIntegrationAction({ integrationId: slackIntegration.id });
+      await deleteIntegrationAction({
+        environmentId: environment.id,
+        integrationId: slackIntegration.id,
+      });
       setIsConnected(false);
       toast.success("Integration removed successfully");
     } catch (error) {
@@ -59,7 +66,18 @@ export const ManageIntegration = ({
 
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end">
+      {showReconnectButton && (
+        <div className="mb-4 flex w-full items-center justify-between space-x-4">
+          <p className="text-amber-700">
+            <strong>Note:</strong> We recently changed our Slack integration to also support private channels.
+            Please reconnect your Slack workspace.
+          </p>
+          <Button onClick={handleSlackAuthorization} variant="secondary">
+            Reconnect
+          </Button>
+        </div>
+      )}
+      <div className="flex w-full justify-end space-x-4">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">Connected with {slackIntegration.config.key.team.name}</span>
