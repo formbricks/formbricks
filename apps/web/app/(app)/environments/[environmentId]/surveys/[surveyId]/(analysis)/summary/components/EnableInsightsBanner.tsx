@@ -16,7 +16,7 @@ interface EnableInsightsBannerProps {
 export const EnableInsightsBanner = ({
   surveyId,
   surveyResponseCount,
-  maxResponseCount = 2000,
+  maxResponseCount = 500,
 }: EnableInsightsBannerProps) => {
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
