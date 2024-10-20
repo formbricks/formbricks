@@ -65,7 +65,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
     const openTextQuestions = survey.questions.filter((question) => question.type === "openText");
 
     const openTextQuestionsWithoutInsightsEnabled = openTextQuestions.filter(
-      (question) => typeof question.insightsEnabled === "undefined"
+      (question) => question.type === "openText" && typeof question.insightsEnabled === "undefined"
     );
 
     if (openTextQuestionsWithoutInsightsEnabled.length === 0) {
