@@ -39,6 +39,7 @@ export const ZOrganization = z.object({
     message: "Organization name must be at least 1 character long",
   }),
   billing: ZOrganizationBilling,
+  isAIEnabled: z.boolean().default(false),
 });
 
 export const ZOrganizationCreateInput = z.object({
@@ -51,6 +52,7 @@ export type TOrganizationCreateInput = z.infer<typeof ZOrganizationCreateInput>;
 export const ZOrganizationUpdateInput = z.object({
   name: z.string(),
   billing: ZOrganizationBilling.optional(),
+  isAIEnabled: z.boolean().optional(),
 });
 
 export type TOrganizationUpdateInput = z.infer<typeof ZOrganizationUpdateInput>;

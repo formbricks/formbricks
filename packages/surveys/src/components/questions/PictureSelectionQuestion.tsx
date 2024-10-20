@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -23,7 +23,7 @@ interface PictureSelectionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const PictureSelectionQuestion = ({
