@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
@@ -32,6 +33,8 @@ export const BackgroundStylingCard = ({
   isUnsplashConfigured,
   form,
 }: BackgroundStylingCardProps) => {
+  const [parent] = useAutoAnimate();
+
   return (
     <Collapsible.Root
       open={open}
@@ -72,7 +75,7 @@ export const BackgroundStylingCard = ({
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent>
+      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="pt-1 text-slate-600" />
         <div className="flex flex-col gap-6 p-6 pt-2">
           <FormField

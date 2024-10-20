@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -31,7 +32,7 @@ export const RatingQuestionForm = ({
   attributeClasses,
 }: RatingQuestionFormProps) => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-
+  const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
@@ -47,7 +48,7 @@ export const RatingQuestionForm = ({
         attributeClasses={attributeClasses}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">

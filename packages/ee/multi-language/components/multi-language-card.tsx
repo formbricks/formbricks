@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
@@ -169,6 +170,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     setLocalSurvey({ ...localSurvey, ...{ showLanguageSwitch: !localSurvey.showLanguageSwitch } });
   };
 
+  const [parent] = useAutoAnimate();
+
   return (
     <div
       className={cn(
@@ -212,7 +215,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
           <div className="space-y-4">
             {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice

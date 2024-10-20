@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
@@ -64,7 +65,8 @@ export const PictureSelectionForm = ({
       choices: updatedChoices,
     });
   };
-
+  // Auto animate
+  const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
@@ -79,7 +81,7 @@ export const PictureSelectionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
       />
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">
