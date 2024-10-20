@@ -1,5 +1,8 @@
 // This function can run for a maximum of 300 seconds
-import { generateInsightsForSurveyResponses } from "@/app/api/(internal)/insights/lib/insights";
+import {
+  //  generateInsightsForSurveyResponses,
+  generateInsightsForSurveyResponsesConcept,
+} from "@/app/api/(internal)/insights/lib/insights";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
@@ -40,7 +43,8 @@ export const POST = async (request: Request) => {
       return responses.successResponse({ message: "No insights enabled questions found" });
     }
 
-    await generateInsightsForSurveyResponses(data.survey);
+    // await generateInsightsForSurveyResponses(data.survey);
+    await generateInsightsForSurveyResponsesConcept(data.survey);
 
     return responses.successResponse({ message: "Insights generated successfully" });
   } catch (error) {

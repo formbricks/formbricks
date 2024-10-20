@@ -23,6 +23,158 @@ import {
   ZSurveyQuestions,
 } from "@formbricks/types/surveys/types";
 
+export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
+  id: string;
+  name: string;
+  environmentId: string;
+  questions: TSurveyQuestions;
+}): Promise<void> => {
+  const startTime = Date.now();
+  console.log(`Generating insights for survey responses: ${surveyData.id} at ${startTime}`);
+  const { id: surveyId, name, environmentId, questions } = surveyData;
+
+  validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
+
+  try {
+    const openTextQuestionsWithInsights = questions.filter(
+      (question) => question.type === TSurveyQuestionTypeEnum.OpenText && question.insightsEnabled
+    );
+
+    const openTextQuestionIds = openTextQuestionsWithInsights.map((question) => question.id);
+
+    if (openTextQuestionIds.length === 0) {
+      return;
+    }
+
+    // Fetching responses
+    const batchSize = 200;
+    let skip = 0;
+    let rateLimit: number | undefined;
+    const spillover: { responseId: string; questionId: string; text: string }[] = [];
+    let allResponsesProcessed = false;
+
+    // Fetch the rate limit once, if not already set
+    if (rateLimit === undefined) {
+      const { rawResponse } = await embed({
+        model: embeddingsModel,
+        value: "Test",
+        experimental_telemetry: { isEnabled: true },
+      });
+
+      const rateLimitHeader = rawResponse?.headers?.["x-ratelimit-remaining-requests"];
+      rateLimit = rateLimitHeader ? parseInt(rateLimitHeader, 10) : undefined;
+    }
+
+    console.log(`Rate limit for embedding API: ${rateLimit}`);
+    while (!allResponsesProcessed || spillover.length > 0) {
+      // If there are any spillover documents from the previous iteration, prioritize them
+      let answersForDocumentCreation = [...spillover];
+      spillover.length = 0; // Empty the spillover array after moving contents
+
+      // Fetch new responses only if spillover is empty
+      if (answersForDocumentCreation.length === 0 && !allResponsesProcessed) {
+        const responses = await prisma.response.findMany({
+          where: {
+            surveyId,
+            documents: {
+              none: {},
+            },
+            finished: true,
+          },
+          select: {
+            id: true,
+            data: true,
+          },
+          take: batchSize,
+          skip,
+        });
+
+        if (responses.length === 0) {
+          allResponsesProcessed = true; // Mark as finished when no more responses are found
+        }
+
+        const responsesWithOpenTextAnswers = responses.filter((response) =>
+          doesResponseHasAnyOpenTextAnswer(openTextQuestionIds, response.data)
+        );
+
+        skip += batchSize - responsesWithOpenTextAnswers.length;
+
+        responsesWithOpenTextAnswers.forEach((response) => {
+          openTextQuestionsWithInsights.forEach((question) => {
+            const responseText = response.data[question.id] as string;
+            if (responseText) {
+              const text = getPromptText(question.headline.default, responseText);
+              answersForDocumentCreation.push({
+                responseId: response.id,
+                questionId: question.id,
+                text,
+              });
+            }
+          });
+        });
+      }
+
+      // Process documents only up to the rate limit
+      if (rateLimit !== undefined && rateLimit < answersForDocumentCreation.length) {
+        // Push excess documents to the spillover array
+        spillover.push(...answersForDocumentCreation.slice(rateLimit));
+        answersForDocumentCreation = answersForDocumentCreation.slice(0, rateLimit);
+      }
+
+      console.log(
+        `Processing ${answersForDocumentCreation.length} documents and spillover: ${spillover.length}`
+      );
+
+      const createDocumentPromises = answersForDocumentCreation.map((answer) => {
+        return createDocument(name, {
+          environmentId,
+          surveyId,
+          responseId: answer.responseId,
+          questionId: answer.questionId,
+          text: answer.text,
+        });
+      });
+
+      const createDocumentResults = await Promise.all(createDocumentPromises);
+      const createdDocuments = createDocumentResults.filter(Boolean);
+
+      for (const document of createdDocuments) {
+        if (document) {
+          const insightPromises: Promise<void>[] = [];
+          const { insights, isSpam, id, environmentId } = document;
+          if (!isSpam) {
+            for (const insight of insights) {
+              if (typeof insight.title !== "string" || typeof insight.description !== "string") {
+                throw new Error("Insight title and description must be a string");
+              }
+
+              // Create or connect the insight
+              insightPromises.push(handleInsightAssignments(environmentId, id, insight));
+            }
+            await Promise.all(insightPromises);
+          }
+        }
+      }
+
+      documentCache.revalidate({
+        environmentId: environmentId,
+        surveyId: surveyId,
+      });
+      console.log(
+        `Processed ${createdDocuments.length} documents in ${(Date.now() - startTime) / 1000} seconds`
+      );
+    }
+
+    return;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
 export const generateInsightsForSurveyResponses = async (surveyData: {
   id: string;
   name: string;
@@ -216,7 +368,7 @@ export const handleInsightAssignments = async (
       environmentId: environmentId,
       title: insight.title,
       description: insight.description,
-      category: insight.category,
+      category: insight.category ?? "other",
       vector: embedding,
     });
     // create a documentInsight with this insight
