@@ -14,7 +14,7 @@ import { FormbricksClient } from "../../components/FormbricksClient";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 
-const EnvLayout = async ({ children, params }) => {
+export const EnvLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);

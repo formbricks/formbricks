@@ -1,13 +1,13 @@
 import { useTranslations } from "next-intl";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
-import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
   product: TProduct;
   defaultLanguage: TLanguage;
   setSelectedLanguageCode: (languageCode: string) => void;
-  setActiveQuestionId: (questionId: string) => void;
+  setActiveQuestionId: (questionId: TSurveyQuestionId) => void;
   localSurvey: TSurvey;
   updateSurveyLanguages: (language: TLanguage) => void;
 }

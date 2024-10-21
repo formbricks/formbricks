@@ -14,6 +14,7 @@ interface StartFromScratchTemplateProps {
   product: TProduct;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
+  noPreview?: boolean;
 }
 
 export const StartFromScratchTemplate = ({
@@ -23,12 +24,17 @@ export const StartFromScratchTemplate = ({
   product,
   createSurvey,
   loading,
+  noPreview,
 }: StartFromScratchTemplateProps) => {
   const t = useTranslations();
   return (
     <button
       type="button"
       onClick={() => {
+        if (noPreview) {
+          createSurvey(customSurvey);
+          return;
+        }
         const newTemplate = replacePresetPlaceholders(customSurvey, product);
         onTemplateClick(newTemplate);
         setActiveTemplate(newTemplate);

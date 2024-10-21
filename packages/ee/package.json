@@ -20,6 +20,8 @@
     "@types/react": "18.3.11"
   },
   "dependencies": {
+    "ai": "^3.4.9",
+    "@ai-sdk/azure": "^0.0.17",
     "@formbricks/database": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",

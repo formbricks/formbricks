@@ -4,14 +4,14 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { SurveyVariablesCardItem } from "./SurveyVariablesCardItem";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (id: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (id: TSurveyQuestionId | null) => void;
 }
 
 const variablesCardId = `fb-variables-${Date.now()}`;

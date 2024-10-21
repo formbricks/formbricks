@@ -22,6 +22,7 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
+    instrumentationHook: true,
     staleTimes: {
       dynamic: 0,
     },

@@ -102,8 +102,8 @@ export const EditAlerts = ({
               </div>
             )}
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              {t("environments.settings.notifications.want_to_loop_in_organization_mates")}?
-              <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
+              {t("environments.settings.notifications.want_to_loop_in_organization_mates")}?{" "}
+              <Link className="font-semibold" href={`/environments/${environmentId}/settings/general`}>
                 {t("common.invite_them")}
               </Link>
             </p>
