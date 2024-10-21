@@ -1,3 +1,4 @@
+import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getActionClass } from "../actionClass/service";
 import { getApiKey } from "../apiKey/service";
@@ -6,11 +7,9 @@ import { getEnvironment } from "../environment/service";
 import { getIntegration } from "../integration/service";
 import { getInvite } from "../invite/service";
 import { getLanguage } from "../language/service";
-import { getPerson } from "../person/service";
 import { getProduct } from "../product/service";
 import { getResponse } from "../response/service";
 import { getResponseNote } from "../responseNote/service";
-import { getSegment } from "../segment/service";
 import { getSurvey } from "../survey/service";
 import { getTag } from "../tag/service";
 import { getWebhook } from "../webhook/service";
@@ -83,7 +82,14 @@ export const getOrganizationIdFromAttributeClassId = async (attributeClassId: st
 };
 
 export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
-  const segment = await getSegment(segmentId);
+  const segment = await prisma.segment.findUnique({
+    where: {
+      id: segmentId,
+    },
+    select: {
+      environmentId: true,
+    },
+  });
   if (!segment) {
     throw new ResourceNotFoundError("segment", segmentId);
   }
