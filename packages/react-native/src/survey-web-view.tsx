@@ -65,13 +65,15 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   );
 
   useEffect(() => {
-    if (survey.delay) {
-      setTimeout(() => {
+    if (!isSurveyRunning && survey.delay) {
+      const timerId = setTimeout(() => {
         setShowSurvey(true);
       }, survey.delay * 1000);
-      return;
+  
+      return () => clearTimeout(timerId);
+    } else if (!survey.delay) {
+      setShowSurvey(true);
     }
-    setShowSurvey(true);
   }, [survey.delay]);
 
   let languageCode = "default";
@@ -142,7 +144,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   return (
     <Modal
       animationType="slide"
-      visible={showSurvey ? !isSurveyRunning : undefined}
+      visible={showSurvey && !isSurveyRunning}
       transparent
       onRequestClose={() => {
         setShowSurvey(false);
