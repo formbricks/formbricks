@@ -1950,6 +1950,106 @@ const improveActivationRate = (): TTemplate => {
   };
 };
 
+const employeeSattisfaction = (): TTemplate => {
+  return {
+    name: "Employee Sattisfaction",
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
+    description: "Find out what Employees like and don't like about your Organisation.",
+    preset: {
+      ...surveyDefault,
+      name: "Employee Sattisfaction",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extreamly meaningful" } },
+            { id: createId(), label: { default: "Very meaningful" } },
+            { id: createId(), label: { default: "Moderately meaningful" } },
+            { id: createId(), label: { default: "Slightly meaningful" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+          headline: { default: "How meaningful is your work to you?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extreamly challenging" } },
+            { id: createId(), label: { default: "Very challenging" } },
+            { id: createId(), label: { default: "Moderately challenging" } },
+            { id: createId(), label: { default: "Slightly challenging" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+          headline: { default: "How challenging is your job?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extreamly challenging" } },
+            { id: createId(), label: { default: "Very challenging" } },
+            { id: createId(), label: { default: "Moderately challenging" } },
+            { id: createId(), label: { default: "Slightly challenging" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+          headline: { default: "In a typical work week how often do you feel stressed out at work?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extreamly well" } },
+            { id: createId(), label: { default: "Very well" } },
+            { id: createId(), label: { default: "Moderately well" } },
+            { id: createId(), label: { default: "Slightly well" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+          headline: { default: "How well are your paid for your work?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extreamly realistic" } },
+            { id: createId(), label: { default: "Very realistic" } },
+            { id: createId(), label: { default: "Moderately realistic" } },
+            { id: createId(), label: { default: "Slightly realistic" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+          headline: { default: "How realistic are the expectations of your supervisor?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extreamly likely" } },
+            { id: createId(), label: { default: "Very likely" } },
+            { id: createId(), label: { default: "Moderately likely" } },
+            { id: createId(), label: { default: "Slightly likely" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+          headline: { default: "How likely are you to recommend your organization to a friend?" },
+          required: true,
+        },
+      ],
+    },
+  };
+};
+
 const uncoverStrengthsAndWeaknesses = (): TTemplate => {
   return {
     name: "Uncover Strengths & Weaknesses",
@@ -5196,6 +5296,7 @@ export const templates: TTemplate[] = [
   improveNewsletterContent(),
   evaluateAProductIdea(),
   understandLowEngagement(),
+  employeeSattisfaction(),
 ];
 
 export const customSurvey = {
