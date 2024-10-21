@@ -1952,14 +1952,14 @@ const improveActivationRate = (): TTemplate => {
 
 const employeeSattisfaction = (): TTemplate => {
   return {
-    name: "Employee Sattisfaction",
+    name: "Employee Satisfaction",
     role: "productManager",
     industries: ["saas", "other"],
     channels: ["app", "link"],
     description: "Find out what Employees like and don't like about your Organisation.",
     preset: {
       ...surveyDefault,
-      name: "Employee Sattisfaction",
+      name: "Employee Satisfaction",
       questions: [
         {
           id: createId(),
