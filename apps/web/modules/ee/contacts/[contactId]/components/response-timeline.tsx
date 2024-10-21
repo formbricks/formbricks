@@ -37,7 +37,8 @@ export const ResponseTimeline = ({
   }, [responses]);
 
   return (
-    <div className="md:col-span-3">
+    // <div className="md:col-span-3">
+    <div className="col-span-3">
       <div className="flex items-center justify-between pb-6">
         <h2 className="text-lg font-bold text-slate-700">Responses</h2>
         <div className="text-right">

@@ -40,7 +40,7 @@ export const SegmentsPage = async ({ params }: { params: { environmentId: string
   return (
     <PageContentWrapper>
       <PageHeader
-        pageTitle="People"
+        pageTitle="Contacts"
         cta={
           <CreateSegmentModal
             environmentId={params.environmentId}

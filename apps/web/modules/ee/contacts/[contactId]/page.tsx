@@ -65,7 +65,8 @@ export const SingleContactPage = async ({
     <PageContentWrapper>
       <PageHeader pageTitle={getContactIdentifier(attributes)} cta={getDeletePersonButton()} />
       <section className="pb-24 pt-6">
-        <div className="grid grid-cols-1 gap-x-8 md:grid-cols-4">
+        {/* <div className="grid grid-cols-1 gap-x-8 md:grid-cols-4"> */}
+        <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ResponseSection
             environment={environment}
