@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { surveyCache } from "@formbricks/lib/survey/cache";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { doesSurveyHasOpenTextQuestion, getInsightsEnabled } from "@formbricks/lib/survey/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
@@ -37,7 +38,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
     }
   | {
       success: true;
-      survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">;
+      survey: TSurvey;
     }
 > => {
   validateInputs([surveyId, ZId]);
@@ -96,7 +97,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
       return question;
     });
 
-    const updatedSurvey = await prisma.survey.update({
+    await prisma.survey.update({
       where: {
         id: survey.id,
       },
@@ -110,6 +111,12 @@ export const generateInsightsEnabledForSurveyQuestions = async (
         questions: true,
       },
     });
+
+    const updatedSurvey = await getSurvey(surveyId);
+
+    if (!updatedSurvey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
 
     surveyCache.revalidate({ id: surveyId, environmentId: survey.environmentId });
 
