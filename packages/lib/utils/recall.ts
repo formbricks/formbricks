@@ -1,13 +1,7 @@
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAttributes } from "@formbricks/types/attributes";
-import { TResponseData } from "@formbricks/types/responses";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyQuestion,
-  TSurveyRecallItem,
-  TSurveyVariables,
-} from "@formbricks/types/surveys/types";
+import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";
@@ -240,7 +234,7 @@ export const parseRecallInfo = (
   text: string,
   attributes?: TAttributes,
   responseData?: TResponseData,
-  variables?: TSurveyVariables,
+  variables?: TResponseVariables,
   withSlash: boolean = false
 ) => {
   let modifiedText = text;
@@ -267,11 +261,13 @@ export const parseRecallInfo = (
     });
   }
 
-  if (variables && variables.length > 0) {
-    variables.forEach((variable) => {
+  const variableIds = Object.keys(variables || {});
+
+  if (variables && variableIds.length > 0) {
+    variableIds.forEach((variableId) => {
       const recallPattern = `#recall:`;
       while (modifiedText.includes(recallPattern)) {
-        const recallInfo = extractRecallInfo(modifiedText, variable.id);
+        const recallInfo = extractRecallInfo(modifiedText, variableId);
         if (!recallInfo) break; // Exit the loop if no recall info is found
 
         const recallItemId = extractId(recallInfo);
@@ -279,7 +275,11 @@ export const parseRecallInfo = (
 
         const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
 
-        let value = variable.value?.toString() || fallback;
+        let value;
+        if (variables[variableId]) {
+          value = variables[variableId] || fallback;
+        }
+
         if (withSlash) {
           modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
         } else {

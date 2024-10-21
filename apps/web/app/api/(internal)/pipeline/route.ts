@@ -5,6 +5,7 @@ import { getIsAIEnabled } from "@/app/lib/utils";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { sendResponseFinishedEmail } from "@formbricks/email";
+import { getAttributes } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -13,6 +14,7 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { getPromptText } from "@formbricks/lib/utils/ai";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
 import { TWebhook } from "@formbricks/types/webhooks";
@@ -157,6 +159,8 @@ export const POST = async (request: Request) => {
         const isAIEnabled = await getIsAIEnabled(organization);
 
         if (isAIEnabled) {
+          const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
+
           for (const question of survey.questions) {
             if (question.type === "openText" && question.insightsEnabled) {
               const isQuestionAnswered =
@@ -164,7 +168,15 @@ export const POST = async (request: Request) => {
               if (!isQuestionAnswered) {
                 continue;
               }
-              const text = getPromptText(question.headline.default, response.data[question.id] as string);
+
+              const headline = parseRecallInfo(
+                question.headline["default"],
+                attributes,
+                response.data,
+                response.variables
+              );
+
+              const text = getPromptText(headline, response.data[question.id] as string);
               // TODO: check if subheadline gives more context and better embeddings
               await createDocumentAndAssignInsight(survey.name, {
                 environmentId,
