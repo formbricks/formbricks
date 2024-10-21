@@ -11,7 +11,7 @@ import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TProduct } from "@formbricks/types/product";
 import {
   TI18nString,
@@ -53,7 +53,7 @@ interface QuestionCardProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
@@ -74,7 +74,7 @@ export const QuestionCard = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
-  attributeClasses,
+  contactAttributeKeys,
   addQuestion,
   isFormbricksCloud,
   isCxMode,
@@ -185,7 +185,7 @@ export const QuestionCard = ({
                     localSurvey,
                     true,
                     selectedLanguageCode,
-                    attributeClasses
+                    contactAttributeKeys
                   )[selectedLanguageCode]
                     ? formatTextWithSlashes(
                         recallToHeadline(
@@ -193,7 +193,7 @@ export const QuestionCard = ({
                           localSurvey,
                           true,
                           selectedLanguageCode,
-                          attributeClasses
+                          contactAttributeKeys
                         )[selectedLanguageCode] ?? ""
                       )
                     : getTSurveyQuestionTypeEnumName(question.type)}
@@ -235,7 +235,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -247,7 +247,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -259,7 +259,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -271,7 +271,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -283,7 +283,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
@@ -295,7 +295,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -306,7 +306,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -318,7 +318,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -330,7 +330,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
@@ -343,7 +343,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               isFormbricksCloud={isFormbricksCloud}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
@@ -356,7 +356,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -368,7 +368,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -380,7 +380,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -392,7 +392,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -404,7 +404,7 @@ export const QuestionCard = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           ) : null}
           <div className="mt-4">
@@ -446,7 +446,7 @@ export const QuestionCard = ({
                           if (questionIdx === localSurvey.questions.length - 1) return;
                           updateEmptyNextButtonLabels(translatedNextButtonLabel);
                         }}
-                        attributeClasses={attributeClasses}
+                        contactAttributeKeys={contactAttributeKeys}
                       />
                     </div>
                     {questionIdx !== 0 && (
@@ -462,7 +462,7 @@ export const QuestionCard = ({
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
-                        attributeClasses={attributeClasses}
+                        contactAttributeKeys={contactAttributeKeys}
                       />
                     )}
                   </div>
@@ -483,7 +483,7 @@ export const QuestionCard = ({
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
-                        attributeClasses={attributeClasses}
+                        contactAttributeKeys={contactAttributeKeys}
                       />
                     </div>
                   )}
@@ -493,7 +493,7 @@ export const QuestionCard = ({
                   questionIdx={questionIdx}
                   localSurvey={localSurvey}
                   updateQuestion={updateQuestion}
-                  attributeClasses={attributeClasses}
+                  contactAttributeKeys={contactAttributeKeys}
                 />
               </Collapsible.CollapsibleContent>
             </Collapsible.Root>

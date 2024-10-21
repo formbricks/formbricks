@@ -258,12 +258,12 @@ export const getRoleManagementPermission = async (organization: TOrganization): 
 };
 
 export const getAdvancedTargetingPermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD)
+  if (IS_FORMBRICKS_CLOUD) {
     return (
       organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
       organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
     );
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
+  } else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   else return false;
 };
 

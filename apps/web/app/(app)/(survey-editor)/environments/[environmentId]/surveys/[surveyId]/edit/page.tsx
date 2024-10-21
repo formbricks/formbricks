@@ -1,7 +1,7 @@
+import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getServerSession } from "next-auth";
 import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -10,7 +10,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSegments } from "@formbricks/lib/segment/service";
+import { getContactAttributeKeys } from "@formbricks/lib/services/contact-attribute-keys";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
@@ -28,7 +28,7 @@ const Page = async ({ params, searchParams }) => {
     product,
     environment,
     actionClasses,
-    attributeClasses,
+    contactAttributeKeys,
     responseCount,
     organization,
     session,
@@ -38,7 +38,7 @@ const Page = async ({ params, searchParams }) => {
     getProductByEnvironmentId(params.environmentId),
     getEnvironment(params.environmentId),
     getActionClasses(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getContactAttributeKeys(params.environmentId),
     getResponseCountBySurveyId(params.surveyId),
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -63,7 +63,7 @@ const Page = async ({ params, searchParams }) => {
     !survey ||
     !environment ||
     !actionClasses ||
-    !attributeClasses ||
+    !contactAttributeKeys ||
     !product ||
     isSurveyCreationDeletionDisabled
   ) {
@@ -78,7 +78,7 @@ const Page = async ({ params, searchParams }) => {
       product={product}
       environment={environment}
       actionClasses={actionClasses}
-      attributeClasses={attributeClasses}
+      contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
       colors={SURVEY_BG_COLORS}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
@@ -22,7 +22,7 @@ interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummaryOpenText;
   environmentId: string;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
 }
@@ -31,7 +31,7 @@ export const OpenTextSummary = ({
   questionSummary,
   environmentId,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   isAIEnabled,
   documentsPerPage,
 }: OpenTextSummaryProps) => {
@@ -66,7 +66,7 @@ export const OpenTextSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (
             <div className="flex items-center space-x-2">

@@ -21,7 +21,7 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {
@@ -57,7 +57,7 @@ interface QuestionsViewProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
 }
@@ -74,7 +74,7 @@ export const QuestionsView = ({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-  attributeClasses,
+  contactAttributeKeys,
   plan,
   isCxMode,
 }: QuestionsViewProps) => {
@@ -442,7 +442,7 @@ export const QuestionsView = ({
             isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
             setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
           />
         </div>
       )}
@@ -465,7 +465,7 @@ export const QuestionsView = ({
           setActiveQuestionId={setActiveQuestionId}
           invalidQuestions={invalidQuestions}
           internalQuestionIdMap={internalQuestionIdMap}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
@@ -493,7 +493,7 @@ export const QuestionsView = ({
                   isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   selectedLanguageCode={selectedLanguageCode}
-                  attributeClasses={attributeClasses}
+                  contactAttributeKeys={contactAttributeKeys}
                   plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}

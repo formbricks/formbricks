@@ -5,12 +5,11 @@ import { toast } from "react-hot-toast";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { DeleteDialog } from "../../DeleteDialog";
 import { deleteResponseAction } from "../../SingleResponseCard/actions";
-import { deletePersonAction } from "../actions";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   deleteRows: (rowId: string[]) => void;
-  type: "response" | "person";
+  type: "response" | "contact";
 }
 
 export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRowSettingsProps<T>) => {
@@ -35,8 +34,8 @@ export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRow
 
       if (type === "response") {
         await Promise.all(rowsToBeDeleted.map((responseId) => deleteResponseAction({ responseId })));
-      } else if (type === "person") {
-        await Promise.all(rowsToBeDeleted.map((personId) => deletePersonAction({ personId })));
+      } else if (type === "contact") {
+        // await Promise.all(rowsToBeDeleted.map((personId) => deletePersonAction({ personId })));
       }
 
       deleteRows(rowsToBeDeleted);
