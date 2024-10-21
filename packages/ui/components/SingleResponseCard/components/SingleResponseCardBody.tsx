@@ -79,7 +79,7 @@ export const SingleResponseCardBody = ({
                         getLocalizedValue(question.headline, "default"),
                         {},
                         response.data,
-                        survey.variables,
+                        response.variables,
                         true
                       )
                     )}

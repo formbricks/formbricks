@@ -275,10 +275,8 @@ export const parseRecallInfo = (
 
         const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
 
-        let value;
-        if (variables[variableId]) {
-          value = variables[variableId] || fallback;
-        }
+        let value = variables[variableId] || fallback;
+        value = value.toString();
 
         if (withSlash) {
           modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
