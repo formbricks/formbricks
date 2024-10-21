@@ -24,6 +24,8 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, TResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { selectContact } from "../../person/service";
+import { getSurveySummary } from "../../../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
+import { selectPerson } from "../../person/service";
 import {
   mockAttributeClass,
   mockOrganizationOutput,
@@ -40,6 +42,7 @@ import {
   getResponsesByContactId,
   getResponsesByEnvironmentId,
   getSurveySummary,
+  getResponsesByPersonId,
   updateResponse,
 } from "../service";
 import { buildWhereClause } from "../utils";

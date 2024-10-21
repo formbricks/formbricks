@@ -5,6 +5,7 @@ import {
   getResponseCountAction,
   getSurveySummaryAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import ScrollToTop from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { ResultsShareButton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
@@ -47,6 +48,8 @@ interface SummaryPageProps {
   user?: TUser;
   totalResponseCount: number;
   contactAttributeKeys: TContactAttributeKey[];
+  isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const SummaryPage = ({
@@ -56,6 +59,8 @@ export const SummaryPage = ({
   webAppUrl,
   totalResponseCount,
   contactAttributeKeys,
+  isAIEnabled,
+  documentsPerPage,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -167,6 +172,7 @@ export const SummaryPage = ({
         <CustomFilter survey={surveyMemoized} />
         {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />}
       </div>
+      <ScrollToTop containerId="mainContent" />
       <SummaryList
         summary={surveySummary.summary}
         responseCount={responseCount}
@@ -174,6 +180,8 @@ export const SummaryPage = ({
         environment={environment}
         totalResponseCount={totalResponseCount}
         contactAttributeKeys={contactAttributeKeys}
+        isAIEnabled={isAIEnabled}
+        documentsPerPage={documentsPerPage}
       />
     </>
   );

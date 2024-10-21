@@ -2,6 +2,7 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
@@ -14,7 +15,7 @@ interface NPSSummaryProps {
   survey: TSurvey;
   contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,

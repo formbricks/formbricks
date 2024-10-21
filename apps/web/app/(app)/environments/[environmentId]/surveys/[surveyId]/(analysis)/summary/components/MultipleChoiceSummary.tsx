@@ -5,6 +5,7 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryMultipleChoice,
   TSurveyQuestionTypeEnum,
   TSurveyType,
@@ -22,7 +23,7 @@ interface MultipleChoiceSummaryProps {
   survey: TSurvey;
   contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,

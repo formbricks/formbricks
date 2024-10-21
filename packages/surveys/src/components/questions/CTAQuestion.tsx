@@ -9,7 +9,7 @@ import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -23,7 +23,7 @@ interface CTAQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const CTAQuestion = ({

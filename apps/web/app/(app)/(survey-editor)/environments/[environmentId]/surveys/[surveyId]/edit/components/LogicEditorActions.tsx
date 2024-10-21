@@ -200,30 +200,27 @@ export function LogicEditorActions({
 
               <DropdownMenuContent>
                 <DropdownMenuItem
-                  className="flex items-center gap-2"
                   onClick={() => {
                     handleActionsChange("addBelow", idx);
-                  }}>
-                  <PlusIcon className="h-4 w-4" />
+                  }}
+                  icon={<PlusIcon className="h-4 w-4" />}>
                   Add action below
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  className="flex items-center gap-2"
                   disabled={actions.length === 1}
                   onClick={() => {
                     handleActionsChange("remove", idx);
-                  }}>
-                  <TrashIcon className="h-4 w-4" />
+                  }}
+                  icon={<TrashIcon className="h-4 w-4" />}>
                   Remove
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  className="flex items-center gap-2"
                   onClick={() => {
                     handleActionsChange("duplicate", idx);
-                  }}>
-                  <CopyIcon className="h-4 w-4" />
+                  }}
+                  icon={<CopyIcon className="h-4 w-4" />}>
                   Duplicate
                 </DropdownMenuItem>
               </DropdownMenuContent>

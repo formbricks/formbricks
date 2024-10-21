@@ -7,14 +7,14 @@ import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
   showResponses?: boolean;
-  insights?: JSX.Element;
+  additionalInfo?: JSX.Element;
   survey: TSurvey;
   contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const QuestionSummaryHeader = ({
   questionSummary,
-  insights,
+  additionalInfo,
   showResponses = true,
   survey,
   contactAttributeKeys,
@@ -66,7 +66,7 @@ export const QuestionSummaryHeader = ({
             {`${questionSummary.responseCount} Responses`}
           </div>
         )}
-        {insights}
+        {additionalInfo}
         {!questionSummary.question.required && (
           <div className="flex items-center rounded-lg bg-slate-100 p-2">Optional</div>
         )}

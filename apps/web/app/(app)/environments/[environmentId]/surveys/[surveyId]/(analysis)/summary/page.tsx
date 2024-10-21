@@ -1,10 +1,17 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
+import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EnableInsightsBanner";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
+import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { getIsAIEnabled } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import {
+  DOCUMENTS_PER_PAGE,
+  MAX_RESPONSES_FOR_INSIGHT_GENERATION,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -60,6 +67,11 @@ const Page = async ({ params }: { params: { environmentId: string; surveyId: str
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  // I took this out cause it's cloud only right?
+  // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+
+  const isAIEnabled = await getIsAIEnabled(organization);
+  const shouldGenerateInsights = needsInsightsGeneration(survey);
 
   return (
     <PageContentWrapper>
@@ -74,6 +86,13 @@ const Page = async ({ params }: { params: { environmentId: string; surveyId: str
             user={user}
           />
         }>
+        {isAIEnabled && shouldGenerateInsights && (
+          <EnableInsightsBanner
+            surveyId={survey.id}
+            surveyResponseCount={totalResponseCount}
+            maxResponseCount={MAX_RESPONSES_FOR_INSIGHT_GENERATION}
+          />
+        )}
         <SurveyAnalysisNavigation
           environmentId={environment.id}
           survey={survey}
@@ -89,6 +108,8 @@ const Page = async ({ params }: { params: { environmentId: string; surveyId: str
         user={user}
         totalResponseCount={totalResponseCount}
         contactAttributeKeys={contactAttributeKeys}
+        isAIEnabled={isAIEnabled}
+        documentsPerPage={DOCUMENTS_PER_PAGE}
       />
     </PageContentWrapper>
   );

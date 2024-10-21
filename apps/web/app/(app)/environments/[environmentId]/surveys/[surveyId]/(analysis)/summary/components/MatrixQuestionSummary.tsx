@@ -2,6 +2,7 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
@@ -13,7 +14,7 @@ interface MatrixQuestionSummaryProps {
   survey: TSurvey;
   contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,

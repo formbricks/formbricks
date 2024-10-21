@@ -10,6 +10,8 @@ import {
   updateSegmentIdInFilter,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import {
+  ArrowDownIcon,
+  ArrowUpIcon,
   FingerprintIcon,
   MonitorSmartphoneIcon,
   MoreVertical,
@@ -161,13 +163,15 @@ function SegmentFilterItemContextMenu({
           <DropdownMenuItem
             onClick={() => {
               onMoveFilter(filterId, "up");
-            }}>
+            }}
+            icon={<ArrowUpIcon className="h-4 w-4" />}>
             Move up
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               onMoveFilter(filterId, "down");
-            }}>
+            }}
+            icon={<ArrowDownIcon className="h-4 w-4" />}>
             Move down
           </DropdownMenuItem>
         </DropdownMenuContent>
