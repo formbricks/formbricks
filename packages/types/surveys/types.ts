@@ -2,6 +2,7 @@ import { type ZodIssue, z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
+import { ZInsight } from "../insights";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
@@ -473,6 +474,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
+  insightsEnabled: z.boolean().default(false).optional(),
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
@@ -2094,6 +2096,8 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       personAttributes: ZAttributes.nullable(),
     })
   ),
+  insights: z.array(ZInsight),
+  insightsEnabled: z.boolean().optional(),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;
@@ -2430,6 +2434,8 @@ export const ZSurveySummary = z.object({
   summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),
 });
 
+export type TSurveySummary = z.infer<typeof ZSurveySummary>;
+
 export const ZSurveyFilterCriteria = z.object({
   name: z.string().optional(),
   status: z.array(ZSurveyStatus).optional(),
@@ -2468,7 +2474,6 @@ const ZSortOption = z.object({
 });
 
 export type TSortOption = z.infer<typeof ZSortOption>;
-export type TSurveySummary = z.infer<typeof ZSurveySummary>;
 
 export const ZSurveyRecallItem = z.object({
   id: z.string(),

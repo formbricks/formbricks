@@ -48,6 +48,8 @@ interface SummaryPageProps {
   user?: TUser;
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
+  isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const SummaryPage = ({
@@ -57,6 +59,8 @@ export const SummaryPage = ({
   webAppUrl,
   totalResponseCount,
   attributeClasses,
+  isAIEnabled,
+  documentsPerPage,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -176,6 +180,8 @@ export const SummaryPage = ({
         environment={environment}
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
+        isAIEnabled={isAIEnabled}
+        documentsPerPage={documentsPerPage}
       />
     </>
   );
