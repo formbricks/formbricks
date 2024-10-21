@@ -1950,7 +1950,7 @@ const improveActivationRate = (): TTemplate => {
   };
 };
 
-const employeeSattisfaction = (): TTemplate => {
+const employeeSatisfaction = (): TTemplate => {
   return {
     name: "Employee Satisfaction",
     role: "productManager",
@@ -5296,7 +5296,7 @@ export const templates: TTemplate[] = [
   improveNewsletterContent(),
   evaluateAProductIdea(),
   understandLowEngagement(),
-  employeeSattisfaction(),
+  employeeSatisfaction(),
 ];
 
 export const customSurvey = {
