@@ -121,13 +121,20 @@ export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalP
                 <Controller
                   name="code"
                   control={control}
-                  render={({ field }) => (
-                    <OTPInput
-                      value={field.value}
-                      valueLength={6}
-                      onChange={field.onChange}
-                      containerClassName="justify-start mt-4"
-                    />
+                  render={({ field, formState: { errors } }) => (
+                    <>
+                      <OTPInput
+                        value={field.value}
+                        valueLength={6}
+                        onChange={field.onChange}
+                        containerClassName="justify-start mt-4"
+                      />
+                      {errors.code && (
+                        <p className="mt-2 text-sm text-red-600" id="code-error">
+                          {errors.code.message}
+                        </p>
+                      )}
+                    </>
                   )}
                 />
               )}

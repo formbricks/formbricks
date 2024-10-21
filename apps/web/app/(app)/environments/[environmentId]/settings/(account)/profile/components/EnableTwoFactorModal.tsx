@@ -148,7 +148,7 @@ type TEnableCodeProps = {
   refreshData: () => void;
 };
 const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) => {
-  const { control, handleSubmit } = useForm<TEnterCodeFormState>({
+  const { control, handleSubmit, setError } = useForm<TEnterCodeFormState>({
     defaultValues: {
       code: "",
     },
@@ -163,6 +163,9 @@ const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) =
 
         // refresh data to update the UI
         refreshData();
+      } else {
+        const errorMessage = getFormattedErrorMessage(enableTwoFactorAuthResponse);
+        setError("code", { message: errorMessage });
       }
     } catch (err) {
       toast.error(err.message);

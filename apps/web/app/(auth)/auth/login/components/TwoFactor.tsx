@@ -5,7 +5,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import { OTPInput } from "@formbricks/ui/components/OTPInput";
 
 export const TwoFactor = () => {
-  const { control } = useFormContext();
+  const { control, formState: { errors } } = useFormContext();
 
   return (
     <>
@@ -18,7 +18,14 @@ export const TwoFactor = () => {
           control={control}
           name="totpCode"
           render={({ field }) => (
-            <OTPInput value={field.value ?? ""} onChange={field.onChange} valueLength={6} />
+            <>
+              <OTPInput value={field.value ?? ""} onChange={field.onChange} valueLength={6} />
+              {errors.totpCode && (
+                <p className="mt-2 text-sm text-red-600" id="totpCode-error">
+                  {errors.totpCode.message}
+                </p>
+              )}
+            </>
           )}
         />
       </div>
