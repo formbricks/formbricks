@@ -11,12 +11,15 @@ import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
+import { useRouter } from "next/navigation";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
+  const router = useRouter();
   if (!session) {
-    throw new Error("Session not found");
+    router.push("/auth/login");
+    return null;
   }
 
   const user = session && session.user ? await getUser(session.user.id) : null;
