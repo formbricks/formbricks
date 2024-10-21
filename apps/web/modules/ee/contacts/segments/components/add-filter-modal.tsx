@@ -29,25 +29,25 @@ const handleAddFilter = ({
   type,
   onAddFilter,
   setOpen,
-  attributeClassName,
+  contactAttributeKey,
   deviceType,
   segmentId,
 }: {
   type: TFilterType;
   onAddFilter: (filter: TBaseFilter) => void;
   setOpen: (open: boolean) => void;
-  attributeClassName?: string;
+  contactAttributeKey?: string;
   segmentId?: string;
   deviceType?: string;
 }): void => {
   if (type === "attribute") {
-    if (!attributeClassName) return;
+    if (!contactAttributeKey) return;
 
     const newFilterResource: TSegmentAttributeFilter = {
       id: createId(),
       root: {
         type,
-        attributeClassName,
+        contactAttributeKey,
       },
       qualifier: {
         operator: "equals",
@@ -188,7 +188,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
                 type: "attribute",
                 onAddFilter,
                 setOpen,
-                attributeClassName: attributeKey.name ?? attributeKey.key,
+                contactAttributeKey: attributeKey.name ?? attributeKey.key,
               });
             }}>
             <TagIcon className="h-4 w-4" />
@@ -304,7 +304,7 @@ export function AddFilterModal({
                         type: "attribute",
                         onAddFilter,
                         setOpen,
-                        attributeClassName: attributeKey.name ?? attributeKey.key,
+                        contactAttributeKey: attributeKey.name ?? attributeKey.key,
                       });
                     }}>
                     <TagIcon className="h-4 w-4" />

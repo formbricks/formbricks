@@ -8,21 +8,12 @@ import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/c
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromProductId,
-  getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
 } from "@formbricks/lib/organization/utils";
 import { getProduct } from "@formbricks/lib/product/service";
-import {
-  cloneSegment,
-  createSegment,
-  resetSegmentInSurvey,
-  updateSegment,
-} from "@formbricks/lib/segment/service";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { loadNewSegmentInSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
-import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 
 export const updateSurveyAction = authenticatedActionClient
@@ -50,135 +41,6 @@ export const refetchProductAction = authenticatedActionClient
     });
 
     return await getProduct(parsedInput.productId);
-  });
-
-const ZCreateBasicSegmentAction = z.object({
-  description: z.string().optional(),
-  environmentId: ZId,
-  filters: ZBaseFilters,
-  isPrivate: z.boolean(),
-  surveyId: ZId,
-  title: z.string(),
-});
-
-export const createBasicSegmentAction = authenticatedActionClient
-  .schema(ZCreateBasicSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["segment", "create"],
-    });
-
-    const parsedFilters = ZSegmentFilters.safeParse(parsedInput.filters);
-
-    if (!parsedFilters.success) {
-      const errMsg =
-        parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-      throw new Error(errMsg);
-    }
-
-    const segment = await createSegment({
-      environmentId: parsedInput.environmentId,
-      surveyId: parsedInput.surveyId,
-      title: parsedInput.title,
-      description: parsedInput.description || "",
-      isPrivate: parsedInput.isPrivate,
-      filters: parsedInput.filters,
-    });
-    surveyCache.revalidate({ id: parsedInput.surveyId });
-
-    return segment;
-  });
-
-const ZUpdateBasicSegmentAction = z.object({
-  segmentId: ZId,
-  data: ZSegmentUpdateInput,
-});
-
-export const updateBasicSegmentAction = authenticatedActionClient
-  .schema(ZUpdateBasicSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "update"],
-    });
-
-    const { filters } = parsedInput.data;
-    if (filters) {
-      const parsedFilters = ZSegmentFilters.safeParse(filters);
-
-      if (!parsedFilters.success) {
-        const errMsg =
-          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-        throw new Error(errMsg);
-      }
-    }
-
-    return await updateSegment(parsedInput.segmentId, parsedInput.data);
-  });
-
-const ZLoadNewBasicSegmentAction = z.object({
-  surveyId: ZId,
-  segmentId: ZId,
-});
-
-export const loadNewBasicSegmentAction = authenticatedActionClient
-  .schema(ZLoadNewBasicSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSegmentId(parsedInput.surveyId),
-      rules: ["segment", "read"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "update"],
-    });
-
-    return await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
-  });
-
-const ZCloneBasicSegmentAction = z.object({
-  segmentId: ZId,
-  surveyId: ZId,
-});
-
-export const cloneBasicSegmentAction = authenticatedActionClient
-  .schema(ZCloneBasicSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "create"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "read"],
-    });
-
-    return await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
-  });
-
-const ZResetBasicSegmentFiltersAction = z.object({
-  surveyId: ZId,
-});
-
-export const resetBasicSegmentFiltersAction = authenticatedActionClient
-  .schema(ZResetBasicSegmentFiltersAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["segment", "update"],
-    });
-
-    return await resetSegmentInSurvey(parsedInput.surveyId);
   });
 
 const ZGetImagesFromUnsplashAction = z.object({

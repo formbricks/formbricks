@@ -75,7 +75,7 @@ export const getMockSegmentFilters = (): TBaseFilters => [
           id: mockFilterGroupResourceId11,
           root: {
             type: "attribute",
-            attributeClassName: "email",
+            contactAttributeKey: "email",
           },
           value: mockEmailValue,
           qualifier: {
@@ -90,7 +90,7 @@ export const getMockSegmentFilters = (): TBaseFilters => [
           id: mockFilterGroupResourceId21,
           root: {
             type: "attribute",
-            attributeClassName: "userId",
+            contactAttributeKey: "userId",
           },
           value: mockUserId,
           qualifier: {

@@ -53,7 +53,8 @@
     "data-migration:advanced-logic": "ts-node ./data-migrations/20240828122408_advanced_logic_editor/data-migration.ts",
     "data-migration:segments-actions-cleanup": "ts-node ./data-migrations/20240904091113_removed_actions_table/data-migration.ts",
     "data-migration:migrate-survey-types": "ts-node ./data-migrations/20241002123456_migrate_survey_types/data-migration.ts",
-    "data-migration:xm": "ts-node ./data-migrations/20241010133706_xm_user_identification/data-migration.ts"
+    "data-migration:xm": "ts-node ./data-migrations/20241010133706_xm_user_identification/data-migration.ts",
+    "data-migration:xm-segments": "ts-node ./data-migrations/20241021123456_xm_segment_migration/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "5.20.0",

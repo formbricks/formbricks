@@ -399,7 +399,7 @@ export const getSegmentsByAttributeKey = reactCache((environmentId: string, attr
           select: selectSegment,
         });
 
-        // search for attributeClassName in the filters
+        // search for contactAttributeKey in the filters
         const clonedSegments = structuredClone(segments);
 
         const filteredSegments = clonedSegments.filter((segment) => {
@@ -427,9 +427,9 @@ const evaluateAttributeFilter = (
   filter: TSegmentAttributeFilter
 ): boolean => {
   const { value, qualifier, root } = filter;
-  const { attributeClassName } = root;
+  const { contactAttributeKey } = root;
 
-  const attributeValue = attributes[attributeClassName];
+  const attributeValue = attributes[contactAttributeKey];
   if (!attributeValue) {
     return false;
   }

@@ -33,7 +33,7 @@ import { TargetingIndicator } from "@formbricks/ui/components/TargetingIndicator
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 
-interface UserTargetingAdvancedCardProps {
+interface TargetingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
@@ -42,14 +42,14 @@ interface UserTargetingAdvancedCardProps {
   initialSegment?: TSegment;
 }
 
-export function AdvancedTargetingCard({
+export function TargetingCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
   contactAttributeKeys,
   segments,
   initialSegment,
-}: UserTargetingAdvancedCardProps) {
+}: TargetingCardProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);

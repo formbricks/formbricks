@@ -134,17 +134,6 @@ export const createGroupFromResource = (group: TBaseFilters, resourceId: string)
       if (group[i].id === resourceId) {
         // make an outer group, wrap the current group in it and add a filter below it
 
-        // const newFilter: TBaseFilter = {
-        //   id: createId(),
-        //   connector: "and",
-        //   resource: {
-        //     id: createId(),
-        //     root: { type: "attribute", attributeClassName: "" },
-        //     qualifier: { operator: "endsWith" },
-        //     value: "",
-        //   },
-        // };
-
         const outerGroup: TBaseFilter = {
           connector: filters.connector,
           id: createId(),
@@ -352,21 +341,21 @@ export const updateOperatorInFilter = (
   }
 };
 
-export const updateAttributeClassNameInFilter = (
+export const updateContactAttributeKeyInFilter = (
   group: TBaseFilters,
   filterId: string,
-  newAttributeClassName: string
+  newContactAttributeKey: string
 ) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TSegmentAttributeFilter).root.attributeClassName = newAttributeClassName;
+        (resource as TSegmentAttributeFilter).root.contactAttributeKey = newContactAttributeKey;
         break;
       }
     } else {
-      updateAttributeClassNameInFilter(resource, filterId, newAttributeClassName);
+      updateContactAttributeKeyInFilter(resource, filterId, newContactAttributeKey);
     }
   }
 };
@@ -462,8 +451,8 @@ export const searchForAttributeKeyInSegment = (filters: TBaseFilters, attributeK
       const { type } = root;
 
       if (type === "attribute") {
-        const { attributeClassName: className } = root;
-        if (className === attributeKey) {
+        const { contactAttributeKey: key } = root;
+        if (key === attributeKey) {
           return true;
         }
       }

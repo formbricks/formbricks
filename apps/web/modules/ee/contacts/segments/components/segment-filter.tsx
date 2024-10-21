@@ -2,7 +2,7 @@ import {
   convertOperatorToText,
   convertOperatorToTitle,
   toggleFilterConnector,
-  updateAttributeClassNameInFilter,
+  updateContactAttributeKeyInFilter,
   updateDeviceTypeInFilter,
   updateFilterValue,
   updateOperatorInFilter,
@@ -203,10 +203,10 @@ function AttributeSegmentFilter({
   updateValueInLocalSurvey,
   segment,
   setSegment,
-  contactAttributeKeys: attributeClasses,
+  contactAttributeKeys,
   viewOnly,
 }: TAttributeSegmentFilterProps) {
-  const { attributeClassName } = resource.root;
+  const { contactAttributeKey } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
   const [valueError, setValueError] = useState("");
@@ -233,8 +233,9 @@ function AttributeSegmentFilter({
     };
   });
 
-  const attributeClass =
-    attributeClasses.find((attrClass) => attrClass.name === attributeClassName)?.name ?? undefined;
+  const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
+
+  const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
     const updatedSegment = structuredClone(segment);
@@ -248,7 +249,7 @@ function AttributeSegmentFilter({
   const updateAttributeClassNameInLocalSurvey = (filterId: string, newAttributeClassName: string) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
-      updateAttributeClassNameInFilter(updatedSegment.filters, filterId, newAttributeClassName);
+      updateContactAttributeKeyInFilter(updatedSegment.filters, filterId, newAttributeClassName);
     }
 
     setSegment(updatedSegment);
@@ -299,22 +300,21 @@ function AttributeSegmentFilter({
         onValueChange={(value) => {
           updateAttributeClassNameInLocalSurvey(resource.id, value);
         }}
-        value={attributeClass}>
+        value={attrKeyValue}>
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <SelectValue>
-            <div
-              className={cn("flex items-center gap-2", !isCapitalized(attributeClass ?? "") && "lowercase")}>
+            <div className={cn("flex items-center gap-2", !isCapitalized(attrKeyValue ?? "") && "lowercase")}>
               <TagIcon className="h-4 w-4 text-sm" />
-              <p>{attributeClass}</p>
+              <p>{attrKeyValue}</p>
             </div>
           </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
-          {attributeClasses.map((attrClass) => (
-            <SelectItem key={attrClass.id} value={attrClass.name ?? attrClass.key}>
+          {contactAttributeKeys.map((attrClass) => (
+            <SelectItem key={attrClass.id} value={attrClass.key}>
               {attrClass.name}
             </SelectItem>
           ))}

@@ -1,6 +1,5 @@
-import { AdvancedTargetingCard } from "@formbricks/ee/advanced-targeting/components/advanced-targeting-card";
+import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -10,7 +9,6 @@ import { HowToSendCard } from "./HowToSendCard";
 import { RecontactOptionsCard } from "./RecontactOptionsCard";
 import { ResponseOptionsCard } from "./ResponseOptionsCard";
 import { SurveyPlacementCard } from "./SurveyPlacementCard";
-import { TargetingCard } from "./TargetingCard";
 import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
@@ -46,24 +44,13 @@ export const SettingsView = ({
 
       {localSurvey.type === "app" ? (
         <div>
-          {!isUserTargetingAllowed ? (
+          {isUserTargetingAllowed && (
             <TargetingCard
               key={localSurvey.segment?.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               environmentId={environment.id}
-              attributeClasses={contactAttributeKeys as unknown as TAttributeClass[]}
-              segments={segments}
-              initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
-              isFormbricksCloud={isFormbricksCloud}
-            />
-          ) : (
-            <AdvancedTargetingCard
-              key={localSurvey.segment?.id}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              environmentId={environment.id}
-              attributeClasses={contactAttributeKeys as unknown as TAttributeClass[]}
+              contactAttributeKeys={contactAttributeKeys}
               segments={segments}
               initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
             />
