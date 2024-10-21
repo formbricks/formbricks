@@ -10,7 +10,7 @@ import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
-import { ToggleGroup, ToggleGroupItem } from "@formbricks/ui/components/ToggleGroup";
+import { Tabs, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
 
 interface DashboardProps {
   user: TUser;
@@ -32,26 +32,29 @@ export const Dashboard = ({
   return (
     <div className="container mx-auto space-y-6 p-4">
       <Greeting userName={user.name} />
-      <ToggleGroup
-        type="single"
+      <hr className="border-slate-200" />
+      <Tabs
         value={statsPeriod}
-        onValueChange={(value) => value && setStatsPeriod(value as TStatsPeriod)}>
-        <ToggleGroupItem value="day" aria-label="Toggle day">
-          Today
-        </ToggleGroupItem>
-        <ToggleGroupItem value="week" aria-label="Toggle week">
-          This week
-        </ToggleGroupItem>
-        <ToggleGroupItem value="month" aria-label="Toggle month">
-          This month
-        </ToggleGroupItem>
-        <ToggleGroupItem value="quarter" aria-label="Toggle quarter">
-          This quarter
-        </ToggleGroupItem>
-        <ToggleGroupItem value="all" aria-label="Toggle all">
-          All time
-        </ToggleGroupItem>
-      </ToggleGroup>
+        onValueChange={(value) => value && setStatsPeriod(value as TStatsPeriod)}
+        className="flex justify-center">
+        <TabsList>
+          <TabsTrigger value="day" aria-label="Toggle day">
+            Today
+          </TabsTrigger>
+          <TabsTrigger value="week" aria-label="Toggle week">
+            This week
+          </TabsTrigger>
+          <TabsTrigger value="month" aria-label="Toggle month">
+            This month
+          </TabsTrigger>
+          <TabsTrigger value="quarter" aria-label="Toggle quarter">
+            This quarter
+          </TabsTrigger>
+          <TabsTrigger value="all" aria-label="Toggle all">
+            All time
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       <ExperiencePageStats statsFrom={statsFrom} environmentId={environment.id} />
       <InsightsCard
         statsFrom={statsFrom}

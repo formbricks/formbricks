@@ -101,7 +101,7 @@ export const InsightView = ({
             </TableHeader>
             <TableBody>
               {isFetching ? null : insights.length === 0 ? (
-                <TableRow>
+                <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
                     <p className="text-slate-500">
                       No insights found. Collect more survey responses or enable insights for your existing
@@ -110,7 +110,7 @@ export const InsightView = ({
                   </TableCell>
                 </TableRow>
               ) : localInsights.length === 0 ? (
-                <TableRow>
+                <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
                     <p className="text-slate-500">No insights found for this filter.</p>
                   </TableCell>
@@ -119,7 +119,7 @@ export const InsightView = ({
                 localInsights.slice(0, visibleInsights).map((insight) => (
                   <TableRow
                     key={insight.id}
-                    className="cursor-pointer hover:bg-slate-50"
+                    className="group cursor-pointer hover:bg-slate-50"
                     onClick={() => {
                       setCurrentInsight(insight);
                       setIsInsightSheetOpen(true);
@@ -128,7 +128,9 @@ export const InsightView = ({
                       {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
                     </TableCell>
                     <TableCell className="font-medium">{insight.title}</TableCell>
-                    <TableCell>{insight.description}</TableCell>
+                    <TableCell className="underline-offset-2 group-hover:underline">
+                      {insight.description}
+                    </TableCell>
                     <TableCell>
                       {insight.category === "complaint" ? (
                         <Badge text="Complaint" type="error" size="tiny" />
