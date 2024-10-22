@@ -447,6 +447,7 @@ model Product {
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                 Json?
+  productTeams         ProductTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -464,6 +465,15 @@ model Organization {
   billing     Json
   invites     Invite[]
   isAIEnabled Boolean      @default(false)
+  teams       Team[]
+}
+
+// Updated Enums
+enum OrganizationRole {
+  owner
+  manager
+  member
+  billing
 }
 
 enum MembershipRole {
@@ -475,12 +485,13 @@ enum MembershipRole {
 }
 
 model Membership {
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  accepted       Boolean        @default(false)
-  role           MembershipRole
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  accepted         Boolean          @default(false)
+  role             MembershipRole? // deprecated
+  organizationRole OrganizationRole @default(member)
 
   @@id([userId, organizationId])
   @@index([userId])
@@ -488,19 +499,19 @@ model Membership {
 }
 
 model Invite {
-  id             String         @id @default(uuid())
+  id             String           @id @default(uuid())
   email          String
   name           String?
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  creator        User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creator        User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
   creatorId      String
-  acceptor       User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptor       User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
   acceptorId     String?
-  accepted       Boolean        @default(false)
-  createdAt      DateTime       @default(now())
+  accepted       Boolean          @default(false)
+  createdAt      DateTime         @default(now())
   expiresAt      DateTime
-  role           MembershipRole @default(admin)
+  role           OrganizationRole @default(member)
 
   @@index([email, organizationId])
   @@index([organizationId])
@@ -600,6 +611,7 @@ model User {
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
   surveys                   Survey[]
+  teamMemberships           TeamMembership[]
 
   @@index([email])
 }
@@ -710,4 +722,45 @@ model Document {
 
   @@unique([responseId, questionId])
   @@index([createdAt])
+}
+
+model Team {
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  name           String
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamMembers    TeamMembership[]
+  productTeams   ProductTeam[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+enum TeamRole {
+  admin
+  contributor
+}
+
+model TeamMembership {
+  teamId String
+  team   Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   TeamRole
+
+  @@id([teamId, userId])
+  @@index([userId])
+}
+
+model ProductTeam {
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([productId, teamId])
+  @@index([productId])
+  @@index([teamId])
 }
