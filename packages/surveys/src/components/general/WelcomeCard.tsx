@@ -1,10 +1,11 @@
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TI18nString, TSurvey, TSurveyVariables } from "@formbricks/types/surveys/types";
+import { TResponseData, TResponseTtc, TResponseVariables } from "@formbricks/types/responses";
+import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { Headline } from "./Headline";
 import { HtmlBody } from "./HtmlBody";
 
@@ -18,9 +19,9 @@ interface WelcomeCardProps {
   languageCode: string;
   responseCount?: number;
   autoFocusEnabled: boolean;
-  replaceRecallInfo: (text: string, responseData: TResponseData, variables: TSurveyVariables) => string;
   isCurrent: boolean;
   responseData: TResponseData;
+  variablesData: TResponseVariables;
 }
 
 const TimerIcon = () => {
@@ -70,9 +71,9 @@ export const WelcomeCard = ({
   survey,
   responseCount,
   autoFocusEnabled,
-  replaceRecallInfo,
   isCurrent,
   responseData,
+  variablesData,
 }: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -145,16 +146,12 @@ export const WelcomeCard = ({
             headline={replaceRecallInfo(
               getLocalizedValue(headline, languageCode),
               responseData,
-              survey.variables
+              variablesData
             )}
             questionId="welcomeCard"
           />
           <HtmlBody
-            htmlString={replaceRecallInfo(
-              getLocalizedValue(html, languageCode),
-              responseData,
-              survey.variables
-            )}
+            htmlString={replaceRecallInfo(getLocalizedValue(html, languageCode), responseData, variablesData)}
             questionId="welcomeCard"
           />
         </div>
@@ -164,7 +161,8 @@ export const WelcomeCard = ({
         <SubmitButton
           buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
           isLastQuestion={false}
-          focus={autoFocusEnabled}
+          focus={isCurrent ? autoFocusEnabled : false}
+          tabIndex={isCurrent ? 0 : -1}
           onClick={handleSubmit}
           type="button"
           onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}

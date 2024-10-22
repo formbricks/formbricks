@@ -1,4 +1,11 @@
-import { TSurvey, TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
+import {
+  TShuffleOption,
+  TSurvey,
+  TSurveyLogic,
+  TSurveyLogicAction,
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+} from "@formbricks/types/surveys/types";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
@@ -11,7 +18,26 @@ const shuffle = (array: any[]) => {
   }
 };
 
-export const getShuffledChoicesIds = (choices: TSurveyQuestionChoice[], shuffleOption: string): string[] => {
+export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption): number[] => {
+  // Create an array with numbers from 0 to n-1
+  let array = Array.from(Array(n).keys());
+
+  if (shuffleOption === "all") {
+    shuffle(array);
+  } else if (shuffleOption === "exceptLast") {
+    const lastElement = array.pop();
+    if (lastElement) {
+      shuffle(array);
+      array.push(lastElement);
+    }
+  }
+  return array;
+};
+
+export const getShuffledChoicesIds = (
+  choices: TSurveyQuestionChoice[],
+  shuffleOption: TShuffleOption
+): string[] => {
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
@@ -39,7 +65,7 @@ export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number):
   const currentQuestion = survey.questions[currentQustionIdx];
   const surveyLength = survey.questions.length;
   const middleIdx = Math.floor(surveyLength / 2);
-  const possibleNextQuestions = currentQuestion?.logic?.map((l) => l.destination) || [];
+  const possibleNextQuestions = getPossibleNextQuestions(currentQuestion);
 
   const getLastQuestionIndex = () => {
     const lastQuestion = survey.questions
@@ -55,4 +81,20 @@ export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number):
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
   if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
   return elementIdx;
+};
+
+const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
+  if (!question.logic) return [];
+
+  const possibleDestinations: string[] = [];
+
+  question.logic.forEach((logic: TSurveyLogic) => {
+    logic.actions.forEach((action: TSurveyLogicAction) => {
+      if (action.objective === "jumpToQuestion") {
+        possibleDestinations.push(action.target);
+      }
+    });
+  });
+
+  return possibleDestinations;
 };

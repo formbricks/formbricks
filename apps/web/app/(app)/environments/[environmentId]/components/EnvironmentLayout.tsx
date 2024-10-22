@@ -1,5 +1,6 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
+import { getIsAIEnabled } from "@/app/lib/utils";
 import type { Session } from "next-auth";
 import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -53,9 +54,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
 
-  const currentProductChannel =
-    products.find((product) => product.id === environment.productId)?.config.channel ?? null;
-
   let peopleCount = 0;
   let responseCount = 0;
 
@@ -65,6 +63,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
       getMonthlyOrganizationResponseCount(organization.id),
     ]);
   }
+
+  const isAIEnabled = await getIsAIEnabled(organization);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -96,12 +96,12 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          isAIEnabled={isAIEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
             environment={environment}
             environments={environments}
-            currentProductChannel={currentProductChannel}
             membershipRole={currentUserMembership?.role}
           />
           <div className="mt-14">{children}</div>

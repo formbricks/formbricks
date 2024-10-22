@@ -3,6 +3,9 @@ import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
   CheckIcon,
+  ContactIcon,
+  FileDigitIcon,
+  FileType2Icon,
   Grid3X3Icon,
   HomeIcon,
   ImageIcon,
@@ -21,6 +24,7 @@ import {
   TSurveyCTAQuestion,
   TSurveyCalQuestion,
   TSurveyConsentQuestion,
+  TSurveyContactInfoQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
   TSurveyMatrixQuestion,
@@ -46,7 +50,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.OpenText,
     label: "Free text",
-    description: "Ask for a text-based answer",
+    description: "Collect open-ended feedback",
     icon: MessageSquareTextIcon,
     preset: {
       headline: { default: "Who let the dogs out?" },
@@ -58,7 +62,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.MultipleChoiceSingle,
     label: "Single-Select",
-    description: "A single choice from a list of options (radio buttons)",
+    description: "Offer a list of options (choose one)",
     icon: Rows3Icon,
     preset: {
       headline: { default: "What do you do?" },
@@ -72,7 +76,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.MultipleChoiceMulti,
     label: "Multi-Select",
-    description: "Number of choices from a list of options (checkboxes)",
+    description: "Offer a list of options (choose multiple)",
     icon: ListIcon,
     preset: {
       headline: { default: "What's important on vacay?" },
@@ -87,7 +91,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.PictureSelection,
     label: "Picture Selection",
-    description: "Ask respondents to select one or more pictures",
+    description: "Ask respondents to choose one or more images",
     icon: ImageIcon,
     preset: {
       headline: { default: "Which is the cutest puppy?" },
@@ -107,7 +111,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.Rating,
     label: "Rating",
-    description: "Ask respondents for a rating",
+    description: "Ask respondents for a rating (stars, smileys, numbers)",
     icon: StarIcon,
     preset: {
       headline: { default: "How would you rate {{productName}}" },
@@ -120,7 +124,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.NPS,
     label: "Net Promoter Score (NPS)",
-    description: "Rate satisfaction on a 0-10 scale",
+    description: "Measure Net-Promoter-Score (0-10)",
     icon: PresentationIcon,
     preset: {
       headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
@@ -131,7 +135,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.Ranking,
     label: "Ranking",
-    description: "Allow respondents to rank items",
+    description: "Ask respondents to order items by preference or importance",
     icon: ListOrderedIcon,
     preset: {
       headline: { default: "What is most important for you in life?" },
@@ -147,7 +151,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.Matrix,
     label: "Matrix",
-    description: "This is a matrix question",
+    description: "Create a grid to rate multiple items on the same set of criteria",
     icon: Grid3X3Icon,
     preset: {
       headline: { default: "How much do you love these flowers?" },
@@ -158,7 +162,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.CTA,
     label: "Statement (Call to Action)",
-    description: "Prompt respondents to perform an action",
+    description: "Display information and prompt users to take a specific action",
     icon: MousePointerClickIcon,
     preset: {
       headline: { default: "You are one of our power users!" },
@@ -174,7 +178,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.Consent,
     label: "Consent",
-    description: "Ask respondents for consent",
+    description: "Ask to agree to terms, conditions, or data usage",
     icon: CheckIcon,
     preset: {
       headline: { default: "Terms and Conditions" },
@@ -185,7 +189,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.FileUpload,
     label: "File Upload",
-    description: "Allow respondents to upload a file",
+    description: "Enable respondents to upload documents, images, or other files",
     icon: ArrowUpFromLineIcon,
     preset: {
       headline: { default: "File Upload" },
@@ -195,7 +199,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.Date,
     label: "Date",
-    description: "Ask your users to select a date",
+    description: "Ask for a date selection",
     icon: CalendarDaysIcon,
     preset: {
       headline: { default: "When is your birthday?" },
@@ -205,7 +209,7 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.Cal,
     label: "Schedule a meeting",
-    description: "Allow respondents to schedule a meet",
+    description: "Ask respondents to book a time slot for meetings or calls",
     icon: PhoneIcon,
     preset: {
       headline: { default: "Schedule a call with me" },
@@ -215,17 +219,31 @@ export const questionTypes: TQuestion[] = [
   {
     id: QuestionId.Address,
     label: "Address",
-    description: "Allow respondents to provide their address",
+    description: "Ask for a mailing address",
     icon: HomeIcon,
     preset: {
       headline: { default: "Where do you live?" },
-      isAddressLine1Required: false,
-      isAddressLine2Required: false,
-      isCityRequired: false,
-      isStateRequired: false,
-      isZipRequired: false,
-      isCountryRequired: false,
+      addressLine1: { show: true, required: true },
+      addressLine2: { show: true, required: true },
+      city: { show: true, required: true },
+      state: { show: true, required: true },
+      zip: { show: true, required: true },
+      country: { show: true, required: true },
     } as Partial<TSurveyAddressQuestion>,
+  },
+  {
+    id: QuestionId.ContactInfo,
+    label: "Contact Info",
+    description: "Ask for name, surname, email, phone number and company jointly",
+    icon: ContactIcon,
+    preset: {
+      headline: { default: "Contact Info" },
+      firstName: { show: true, required: true },
+      lastName: { show: true, required: true },
+      email: { show: true, required: true },
+      phone: { show: true, required: true },
+      company: { show: true, required: true },
+    } as Partial<TSurveyContactInfoQuestion>,
   },
 ];
 
@@ -256,6 +274,11 @@ export const QUESTIONS_NAME_MAP = questionTypes.reduce(
   }),
   {}
 ) as Record<TSurveyQuestionTypeEnum, string>;
+
+export const VARIABLES_ICON_MAP = {
+  text: <FileType2Icon className="h-4 w-4" />,
+  number: <FileDigitIcon className="h-4 w-4" />,
+};
 
 export const CX_QUESTIONS_NAME_MAP = CXQuestionTypes.reduce(
   (prev, curr) => ({

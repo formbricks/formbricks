@@ -13,7 +13,7 @@ import {
   TIntegrationSlackConfigData,
   TIntegrationSlackInput,
 } from "@formbricks/types/integration/slack";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { AdditionalIntegrationSettings } from "@formbricks/ui/components/AdditionalIntegrationSettings";
 import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
@@ -49,6 +49,7 @@ export const AddChannelMappingModal = ({
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<TIntegrationItem | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const existingIntegrationData = slackIntegration?.config?.data;
@@ -81,6 +82,7 @@ export const AddChannelMappingModal = ({
         })!
       );
       setSelectedQuestions(selectedIntegration.questionIds);
+      setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       return;
@@ -112,6 +114,7 @@ export const AddChannelMappingModal = ({
             ? "All questions"
             : "Selected questions",
         createdAt: new Date(),
+        includeVariables,
         includeHiddenFields,
         includeMetadata,
       };
@@ -133,7 +136,7 @@ export const AddChannelMappingModal = ({
     }
   };
 
-  const handleCheckboxChange = (questionId: string) => {
+  const handleCheckboxChange = (questionId: TSurveyQuestionId) => {
     setSelectedQuestions((prevValues) =>
       prevValues.includes(questionId)
         ? prevValues.filter((value) => value !== questionId)
@@ -258,6 +261,8 @@ export const AddChannelMappingModal = ({
                     </div>
                   </div>
                   <AdditionalIntegrationSettings
+                    includeVariables={includeVariables}
+                    setIncludeVariables={setIncludeVariables}
                     includeHiddenFields={includeHiddenFields}
                     includeMetadata={includeMetadata}
                     setIncludeHiddenFields={setIncludeHiddenFields}

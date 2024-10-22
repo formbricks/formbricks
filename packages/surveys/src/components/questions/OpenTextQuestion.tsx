@@ -10,7 +10,7 @@ import { useCallback } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -25,7 +25,7 @@ interface OpenTextQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const OpenTextQuestion = ({
@@ -44,7 +44,7 @@ export const OpenTextQuestion = ({
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
+  const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleInputChange = (inputValue: string) => {
@@ -62,11 +62,12 @@ export const OpenTextQuestion = ({
 
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      if (question.id && currentElement && autoFocusEnabled) {
+      // will focus on current element when the question ID matches the current question
+      if (question.id && currentElement && autoFocusEnabled && question.id === currentQuestionId) {
         currentElement.focus();
       }
     },
-    [question.id, autoFocusEnabled]
+    [question.id, autoFocusEnabled, currentQuestionId]
   );
 
   return (
@@ -95,7 +96,7 @@ export const OpenTextQuestion = ({
             {question.longAnswer === false ? (
               <input
                 ref={openTextRef}
-                tabIndex={1}
+                tabIndex={isCurrent ? 0 : -1}
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
@@ -105,7 +106,6 @@ export const OpenTextQuestion = ({
                 value={value ? (value as string) : ""}
                 type={question.inputType}
                 onInput={(e) => handleInputChange(e.currentTarget.value)}
-                autoFocus={autoFocusEnabled}
                 className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
@@ -115,7 +115,7 @@ export const OpenTextQuestion = ({
                 ref={openTextRef}
                 rows={3}
                 name={question.id}
-                tabIndex={1}
+                tabIndex={isCurrent ? 0 : -1}
                 aria-label="textarea"
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
@@ -127,7 +127,6 @@ export const OpenTextQuestion = ({
                   handleInputChange(e.currentTarget.value);
                   handleInputResize(e);
                 }}
-                autoFocus={autoFocusEnabled}
                 className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
@@ -136,9 +135,16 @@ export const OpenTextQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+        />
         {!isFirstQuestion && (
           <BackButton
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -147,12 +153,6 @@ export const OpenTextQuestion = ({
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-          onClick={() => {}}
-        />
       </div>
     </form>
   );

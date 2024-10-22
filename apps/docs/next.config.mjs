@@ -110,10 +110,31 @@ const nextConfig = {
         destination: "/global/schedule-start-end-dates",
         permanent: true,
       },
+      {
+        source: "/global/logic-editor",
+        destination: "/global/conditional-logic",
+        permanent: true,
+      },
       // Integrations
       {
         source: "/integrations/:path",
         destination: "/developer-docs/integrations/:path",
+        permanent: true,
+      },
+
+      {
+        source: "/developer-docs/website-survey-sdk",
+        destination: "/developer-docs/js-sdk",
+        permanent: true,
+      },
+      {
+        source: "/website-surveys/quickstart",
+        destination: "/app-surveys/quickstart",
+        permanent: true,
+      },
+      {
+        source: "/website-surveys/framework-guides",
+        destination: "/app-surveys/framework-guides",
         permanent: true,
       },
     ];

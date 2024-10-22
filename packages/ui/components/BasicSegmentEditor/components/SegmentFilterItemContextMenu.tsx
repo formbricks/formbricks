@@ -1,4 +1,4 @@
-import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisVerticalIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
@@ -20,12 +20,20 @@ export const SegmentFilterItemContextMenu = ({
     <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger disabled={viewOnly}>
-          <MoreVerticalIcon className="h-4 w-4" />
+          <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "up")}>Move up</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "down")}>Move down</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onMoveFilter(filterId, "up")}
+            icon={<ArrowUpIcon className="h-4 w-4" />}>
+            Move up
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onMoveFilter(filterId, "down")}
+            icon={<ArrowDownIcon className="h-4 w-4" />}>
+            Move down
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

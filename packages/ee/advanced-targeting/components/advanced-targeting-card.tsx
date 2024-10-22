@@ -8,7 +8,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
   TBaseFilter,
@@ -17,6 +16,7 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
 import { LoadSegmentModal } from "@formbricks/ui/components/LoadSegmentModal";
@@ -37,7 +37,6 @@ interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
-  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
   initialSegment?: TSegment;
@@ -47,7 +46,6 @@ export function AdvancedTargetingCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
-  actionClasses,
   attributeClasses,
   segments,
   initialSegment,
@@ -164,7 +162,7 @@ export function AdvancedTargetingCard({
 
   return (
     <Collapsible.Root
-      className="w-full rounded-lg border border-slate-300 bg-white"
+      className="w-full overflow-hidden rounded-lg border border-slate-300 bg-white"
       onOpenChange={setOpen}
       open={open}>
       <Collapsible.CollapsibleTrigger
@@ -213,7 +211,6 @@ export function AdvancedTargetingCard({
                 {Boolean(segment?.filters.length) && (
                   <div className="w-full">
                     <SegmentEditor
-                      actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
                       environmentId={environmentId}
                       group={segment.filters}
@@ -269,7 +266,6 @@ export function AdvancedTargetingCard({
                 </div>
 
                 <AddFilterModal
-                  actionClasses={actionClasses}
                   attributeClasses={attributeClasses}
                   onAddFilter={(filter) => {
                     handleAddFilterInGroup(filter);
@@ -302,7 +298,6 @@ export function AdvancedTargetingCard({
                 {segmentEditorViewOnly && segment ? (
                   <div className="opacity-60">
                     <SegmentEditor
-                      actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
                       environmentId={environmentId}
                       group={segment.filters}
@@ -420,6 +415,23 @@ export function AdvancedTargetingCard({
               setOpen={setResetAllFiltersModalOpen}
             />
           </div>
+        </div>
+
+        <div>
+          <Alert className="flex items-center rounded-none bg-slate-50">
+            <AlertDescription className="ml-2">
+              <span className="mr-1 text-slate-600">
+                User targeting is currently only available when{" "}
+                <Link
+                  href="https://formbricks.com//docs/app-surveys/user-identification"
+                  target="blank"
+                  className="underline">
+                  identifying users
+                </Link>{" "}
+                with the Formbricks SDK.
+              </span>
+            </AlertDescription>
+          </Alert>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

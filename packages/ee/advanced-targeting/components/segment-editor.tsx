@@ -1,4 +1,4 @@
-import { MoreVertical, Trash2 } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -11,7 +11,6 @@ import {
   moveResource,
   toggleGroupConnector,
 } from "@formbricks/lib/segment/utils";
-import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/components/Button";
@@ -29,7 +28,6 @@ interface TSegmentEditorProps {
   environmentId: string;
   segment: TSegment;
   segments: TSegment[];
-  actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   setSegment: React.Dispatch<React.SetStateAction<TSegment | null>>;
   viewOnly?: boolean;
@@ -40,7 +38,6 @@ export function SegmentEditor({
   environmentId,
   setSegment,
   segment,
-  actionClasses,
   attributeClasses,
   segments,
   viewOnly = false,
@@ -122,7 +119,6 @@ export function SegmentEditor({
         if (isResourceFilter(resource)) {
           return (
             <SegmentFilter
-              actionClasses={actionClasses}
               attributeClasses={attributeClasses}
               connector={connector}
               environmentId={environmentId}
@@ -165,7 +161,6 @@ export function SegmentEditor({
 
               <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
                 <SegmentEditor
-                  actionClasses={actionClasses}
                   attributeClasses={attributeClasses}
                   environmentId={environmentId}
                   group={resource}
@@ -189,7 +184,6 @@ export function SegmentEditor({
                 </div>
 
                 <AddFilterModal
-                  actionClasses={actionClasses}
                   attributeClasses={attributeClasses}
                   onAddFilter={(filter) => {
                     if (addFilterModalOpenedFromBelow) {
@@ -230,7 +224,8 @@ export function SegmentEditor({
                     <DropdownMenuItem
                       onClick={() => {
                         handleMoveResource(groupId, "up");
-                      }}>
+                      }}
+                      icon={<ArrowUpIcon className="h-4 w-4" />}>
                       Move up
                     </DropdownMenuItem>
 
@@ -238,7 +233,8 @@ export function SegmentEditor({
                       onClick={() => {
                         if (viewOnly) return;
                         handleMoveResource(groupId, "down");
-                      }}>
+                      }}
+                      icon={<ArrowDownIcon className="h-4 w-4" />}>
                       Move down
                     </DropdownMenuItem>
                   </DropdownMenuContent>

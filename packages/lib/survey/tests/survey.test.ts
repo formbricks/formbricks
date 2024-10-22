@@ -1,6 +1,7 @@
 import { prisma } from "../../__mocks__/database";
 import { mockResponseNote, mockResponseWithMockPerson } from "../../response/tests/__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
+import { evaluateLogic } from "surveyLogic/utils";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -26,6 +27,7 @@ import {
   mockPrismaPerson,
   mockProduct,
   mockSurveyOutput,
+  mockSurveyWithLogic,
   mockSyncSurveyOutput,
   mockTransformedSurveyOutput,
   mockTransformedSyncSurveyOutput,
@@ -35,6 +37,148 @@ import {
 
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
+});
+
+describe("evaluateLogic with mockSurveyWithLogic", () => {
+  it("should return true when q1 answer is blue", () => {
+    const data = { q1: "blue" };
+    const variablesData = {};
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when q1 answer is not blue", () => {
+    const data = { q1: "red" };
+    const variablesData = {};
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[0].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
+
+  it("should return true when q1 is blue and q2 is pizza", () => {
+    const data = { q1: "blue", q2: "pizza" };
+    const variablesData = {};
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when q1 is blue but q2 is not pizza", () => {
+    const data = { q1: "blue", q2: "burger" };
+    const variablesData = {};
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[1].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
+
+  it("should return true when q2 is pizza or q3 is Inception", () => {
+    const data = { q2: "pizza", q3: "Inception" };
+    const variablesData = {};
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[2].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return true when var1 is equal to single select question value", () => {
+    const data = { q4: "lmao" };
+    const variablesData = { siog1dabtpo3l0a3xoxw2922: "lmao" };
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when var1 is not equal to single select question value", () => {
+    const data = { q4: "lol" };
+    const variablesData = { siog1dabtpo3l0a3xoxw2922: "damn" };
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[3].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
+
+  it("should return true when var2 is greater than 30 and less than open text number value", () => {
+    const data = { q5: "40" };
+    const variablesData = { km1srr55owtn2r7lkoh5ny1u: 35 };
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
+
+  it("should return false when var2 is not greater than 30 or greater than open text number value", () => {
+    const data = { q5: "40" };
+    const variablesData = { km1srr55owtn2r7lkoh5ny1u: 25 };
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[4].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(false);
+  });
+
+  it("should return for complex condition", () => {
+    const data = { q6: ["lmao", "XD"], q1: "green", q2: "pizza", q3: "inspection", name: "pizza" };
+    const variablesData = { siog1dabtpo3l0a3xoxw2922: "tokyo" };
+
+    const result = evaluateLogic(
+      mockSurveyWithLogic,
+      data,
+      variablesData,
+      mockSurveyWithLogic.questions[5].logic![0].conditions,
+      "default"
+    );
+    expect(result).toBe(true);
+  });
 });
 
 describe("Tests for getSurvey", () => {
@@ -144,6 +288,7 @@ describe("Tests for updateSurvey", () => {
   describe("Happy Path", () => {
     it("Updates a survey successfully", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
       const updatedSurvey = await updateSurvey(updateSurveyInput);
       expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
@@ -167,6 +312,7 @@ describe("Tests for updateSurvey", () => {
         clientVersion: "0.0.1",
       });
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.update.mockRejectedValue(errToThrow);
       await expect(updateSurvey(updateSurveyInput)).rejects.toThrow(DatabaseError);
     });
@@ -263,7 +409,7 @@ describe("Tests for duplicateSurvey", () => {
       prisma.actionClass.findFirst.mockResolvedValueOnce(mockActionClass);
       prisma.actionClass.create.mockResolvedValueOnce(mockActionClass);
 
-      const createdSurvey = await copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId);
+      const createdSurvey = await copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId);
       expect(createdSurvey).toEqual(mockSurveyOutput);
     });
   });
@@ -273,7 +419,7 @@ describe("Tests for duplicateSurvey", () => {
 
     it("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prisma.survey.findUnique.mockRejectedValueOnce(new ResourceNotFoundError("Survey", mockId));
-      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId)).rejects.toThrow(
+      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(
         ResourceNotFoundError
       );
     });
@@ -281,9 +427,7 @@ describe("Tests for duplicateSurvey", () => {
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId, mockId)).rejects.toThrow(
-        Error
-      );
+      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(Error);
     });
   });
 });

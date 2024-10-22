@@ -128,8 +128,8 @@ export const PricingCard = ({
           </h2>
           {isCurrentPlan && <Badge text="Current Plan" type="success" size="normal" />}
         </div>
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between lg:flex-col lg:items-stretch">
-          <div className="mt-2 flex items-center gap-x-4">
+        <div className="flex flex-col items-end gap-6 sm:flex-row sm:justify-between lg:flex-col lg:items-stretch">
+          <div className="mt-2 flex items-end gap-x-1">
             <p
               className={cn(
                 plan.featured ? "text-slate-900" : "text-slate-800",
@@ -139,10 +139,9 @@ export const PricingCard = ({
             </p>
             {plan.name !== "Enterprise" && (
               <div className="text-sm leading-5">
-                <p className={plan.featured ? "text-slate-900" : "text-slate-800"}>/ Month</p>
-                <p className={plan.featured ? "text-slate-500" : "text-slate-400"}>{`Billed ${
-                  planPeriod === "monthly" ? "monthly" : "yearly"
-                }`}</p>
+                <p className={plan.featured ? "text-slate-700" : "text-slate-600"}>
+                  / {planPeriod === "monthly" ? "Month" : "Year"}
+                </p>
               </div>
             )}
           </div>

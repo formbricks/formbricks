@@ -1,12 +1,13 @@
 "use client";
 
+import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -17,8 +18,8 @@ import { Tag } from "@formbricks/ui/components/Tag";
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
 }
 
 export const HiddenFieldsCard = ({
@@ -65,6 +66,25 @@ export const HiddenFieldsCard = ({
     });
   };
 
+  const handleDeleteHiddenField = (fieldId: string) => {
+    const quesIdx = findHiddenFieldUsedInLogic(localSurvey, fieldId);
+
+    if (quesIdx !== -1) {
+      toast.error(
+        `${fieldId} is used in logic of question ${quesIdx + 1}. Please remove it from logic first.`
+      );
+      return;
+    }
+
+    updateSurvey(
+      {
+        enabled: true,
+        fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
+      },
+      fieldId
+    );
+  };
+
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
       <div
@@ -80,11 +100,11 @@ export const HiddenFieldsCard = ({
         className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
-          className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+          className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Hidden Fields</p>
+                <p className="text-sm font-semibold">Hidden fields</p>
               </div>
             </div>
 
@@ -111,15 +131,7 @@ export const HiddenFieldsCard = ({
                 return (
                   <Tag
                     key={fieldId}
-                    onDelete={() => {
-                      updateSurvey(
-                        {
-                          enabled: true,
-                          fieldIds: localSurvey.hiddenFields?.fieldIds?.filter((q) => q !== fieldId),
-                        },
-                        fieldId
-                      );
-                    }}
+                    onDelete={(fieldId) => handleDeleteHiddenField(fieldId)}
                     tagId={fieldId}
                     tagName={fieldId}
                   />

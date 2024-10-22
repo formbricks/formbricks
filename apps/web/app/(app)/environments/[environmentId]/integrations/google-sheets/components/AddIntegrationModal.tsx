@@ -18,7 +18,7 @@ import {
   TIntegrationGoogleSheetsConfigData,
   TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/google-sheet";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { AdditionalIntegrationSettings } from "@formbricks/ui/components/AdditionalIntegrationSettings";
 import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
@@ -62,6 +62,7 @@ export const AddIntegrationModal = ({
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
+  const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
@@ -89,6 +90,7 @@ export const AddIntegrationModal = ({
         })!
       );
       setSelectedQuestions(selectedIntegration.questionIds);
+      setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       return;
@@ -127,6 +129,7 @@ export const AddIntegrationModal = ({
           ? "All questions"
           : "Selected questions";
       integrationData.createdAt = new Date();
+      integrationData.includeVariables = includeVariables;
       integrationData.includeHiddenFields = includeHiddenFields;
       integrationData.includeMetadata = includeMetadata;
       if (selectedIntegration) {
@@ -147,7 +150,7 @@ export const AddIntegrationModal = ({
     }
   };
 
-  const handleCheckboxChange = (questionId: string) => {
+  const handleCheckboxChange = (questionId: TSurveyQuestionId) => {
     setSelectedQuestions((prevValues) =>
       prevValues.includes(questionId)
         ? prevValues.filter((value) => value !== questionId)
@@ -229,7 +232,7 @@ export const AddIntegrationModal = ({
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="Surveys">Questions</Label>
-                    <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
+                    <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
                           (question) => (
@@ -256,6 +259,8 @@ export const AddIntegrationModal = ({
                     </div>
                   </div>
                   <AdditionalIntegrationSettings
+                    includeVariables={includeVariables}
+                    setIncludeVariables={setIncludeVariables}
                     includeHiddenFields={includeHiddenFields}
                     includeMetadata={includeMetadata}
                     setIncludeHiddenFields={setIncludeHiddenFields}

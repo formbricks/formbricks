@@ -8,7 +8,7 @@ import { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "../ClientLogo";
 import { MediaBackground } from "../MediaBackground";
 import { ResetProgressButton } from "../ResetProgressButton";
@@ -72,7 +72,6 @@ export const PreviewSurvey = ({
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
 
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const [websiteSetupCompleted, setWebsiteSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
@@ -122,7 +121,7 @@ export const PreviewSurvey = ({
   const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
   const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
 
-  const widgetSetupCompleted = appSetupCompleted || websiteSetupCompleted;
+  const widgetSetupCompleted = appSetupCompleted;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
     // allow style overwrite is disabled from the product
@@ -145,7 +144,7 @@ export const PreviewSurvey = ({
   }, [product.styling, survey.styling]);
 
   const updateQuestionId = useCallback(
-    (newQuestionId: string) => {
+    (newQuestionId: TSurveyQuestionId) => {
       if (
         !newQuestionId ||
         newQuestionId === "hidden" ||
@@ -167,7 +166,7 @@ export const PreviewSurvey = ({
 
   const onFinished = () => {
     // close modal if there are no questions left
-    if ((survey.type === "website" || survey.type === "app") && survey.endings.length === 0) {
+    if (survey.type === "app" && survey.endings.length === 0) {
       setIsModalOpen(false);
       setTimeout(() => {
         setQuestionId(survey.questions[0]?.id);
@@ -198,7 +197,6 @@ export const PreviewSurvey = ({
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);
-      setWebsiteSetupCompleted(environment.websiteSetupCompleted);
     }
   }, [environment]);
 
@@ -218,6 +216,15 @@ export const PreviewSurvey = ({
     }
   }
 
+  const handlePreviewModeChange = (mode: "mobile" | "desktop") => {
+    setPreviewMode(mode);
+    requestAnimationFrame(() => {
+      if (questionId) {
+        setQuestionId(questionId);
+      }
+    });
+  };
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center py-4" id="survey-preview">
       <motion.div
@@ -234,7 +241,7 @@ export const PreviewSurvey = ({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex h-full w-[95%] items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -398,12 +405,12 @@ export const PreviewSurvey = ({
         <TabOption
           active={previewMode === "mobile"}
           icon={<SmartphoneIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
-          onClick={() => setPreviewMode("mobile")}
+          onClick={() => handlePreviewModeChange("mobile")}
         />
         <TabOption
           active={previewMode === "desktop"}
           icon={<MonitorIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
-          onClick={() => setPreviewMode("desktop")}
+          onClick={() => handlePreviewModeChange("desktop")}
         />
       </div>
     </div>
