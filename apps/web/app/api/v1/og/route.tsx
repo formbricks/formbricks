@@ -1,6 +1,7 @@
 import { ImageResponse } from "@vercel/og";
 import { NextRequest } from "next/server";
 
+// We are gonna add options to this to check the logo etc.
 export const GET = async (req: NextRequest) => {
   let name = req.nextUrl.searchParams.get("name");
   let brandColor = req.nextUrl.searchParams.get("brandColor");
