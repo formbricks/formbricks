@@ -67,7 +67,6 @@ export const SurveyTagsWrapper: React.FC<SurveyTagsWrapperProps> = ({
   }, [surveyId]);
 
   useEffect(() => {
-    console.log("unutra tagovi su", tags);
     const timeoutId = setTimeout(() => {
       if (tagIdToHighlight) {
         setTagIdToHighlight("");

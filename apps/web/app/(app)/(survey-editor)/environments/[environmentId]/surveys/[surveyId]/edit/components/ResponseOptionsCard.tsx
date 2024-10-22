@@ -1,7 +1,8 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon } from "lucide-react";
+import { ArrowUpRight, CheckIcon } from "lucide-react";
+import Link from "next/link";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -10,6 +11,7 @@ import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionTo
 import { DatePicker } from "@formbricks/ui/components/DatePicker";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
+import { Switch } from "@formbricks/ui/components/Switch";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
@@ -165,6 +167,17 @@ export const ResponseOptionsCard = ({
     setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
   };
 
+  const handleSingleUseSurveyToggle = () => {
+    if (!localSurvey.singleUse?.enabled) {
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: singleUseEncryption },
+      });
+    } else {
+      setLocalSurvey({ ...localSurvey, singleUse: { enabled: false, isEncrypted: false } });
+    }
+  };
+
   const handleSingleUseSurveyMessageChange = ({
     heading,
     subheading,
@@ -183,6 +196,22 @@ export const ResponseOptionsCard = ({
       ...localSurvey,
       singleUse: { enabled: localSurveySingleUseEnabled, ...message, isEncrypted: singleUseEncryption },
     });
+  };
+
+  const hangleSingleUseEncryptionToggle = () => {
+    if (!singleUseEncryption) {
+      setSingleUseEncryption(true);
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: true },
+      });
+    } else {
+      setSingleUseEncryption(false);
+      setLocalSurvey({
+        ...localSurvey,
+        singleUse: { enabled: true, ...singleUseMessage, isEncrypted: false },
+      });
+    }
   };
 
   useEffect(() => {
@@ -388,6 +417,74 @@ export const ResponseOptionsCard = ({
                       defaultValue={singleUseMessage.subheading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
+                  </div>
+                </div>
+              </AdvancedOptionToggle>
+
+              {/* Single User Survey Options */}
+              <AdvancedOptionToggle
+                htmlId="singleUserSurveyOptions"
+                isChecked={!!localSurvey.singleUse?.enabled}
+                onToggle={handleSingleUseSurveyToggle}
+                title="Single-use survey links"
+                description="Allow only 1 response per survey link."
+                childBorder={true}>
+                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                  <div className="w-full cursor-pointer items-center bg-slate-50">
+                    <div className="row mb-2 flex cursor-default items-center space-x-2">
+                      <Label htmlFor="howItWorks">How it works</Label>
+                    </div>
+                    <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
+                      <li className="text-sm text-slate-600">
+                        Blocks survey if the survey URL has no Single Use Id (suId).
+                      </li>
+                      <li className="text-sm text-slate-600">
+                        Blocks survey if a submission with the Single Use Id (suId) exists already.
+                      </li>
+                      <li className="text-sm text-slate-600">
+                        <Link
+                          href="https://formbricks.com/docs/link-surveys/single-use-links"
+                          target="_blank"
+                          className="underline">
+                          Docs <ArrowUpRight className="inline" size={16} />
+                        </Link>
+                      </li>
+                    </ul>
+                    <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
+                    <Input
+                      autoFocus
+                      id="heading"
+                      className="mb-4 mt-2 bg-white"
+                      name="heading"
+                      defaultValue={singleUseMessage.heading}
+                      onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
+                    />
+
+                    <Label htmlFor="headline">Subheading</Label>
+                    <Input
+                      className="mb-4 mt-2 bg-white"
+                      id="subheading"
+                      name="subheading"
+                      defaultValue={singleUseMessage.subheading}
+                      onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
+                    />
+                    <Label htmlFor="headline">URL Encryption</Label>
+                    <div>
+                      <div className="mt-2 flex items-center space-x-1">
+                        <Switch
+                          id="encryption-switch"
+                          checked={singleUseEncryption}
+                          onCheckedChange={hangleSingleUseEncryptionToggle}
+                        />
+                        <Label htmlFor="encryption-label">
+                          <div className="ml-2">
+                            <p className="text-sm font-normal text-slate-600">
+                              Enable encryption of Single Use Id (suId) in survey URL.
+                            </p>
+                          </div>
+                        </Label>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </AdvancedOptionToggle>

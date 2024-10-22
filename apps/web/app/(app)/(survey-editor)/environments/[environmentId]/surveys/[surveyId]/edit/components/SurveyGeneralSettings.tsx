@@ -454,7 +454,6 @@ export function SurveyGeneralSettings({
                 id="limitedToCountries"
                 checked={limitedToCountries}
                 onCheckedChange={toggleLimitedToCountries}
-                className={"mr-2"}
               />
               <Label htmlFor="countries" className="cursor-pointer">
                 <div className="ml-2">
