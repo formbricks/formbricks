@@ -73,10 +73,10 @@ To quickly deploy Formbricks with default settings:
 
 2. Install the chart:
    ```bash
-   helm install my-formbricks formbricks/formbricks --namespace formbricks --create-namespace
+   helm install my-formbricks formbricks/formbricks --namespace formbricks --create-namespace --set postgresql.enabled=true
    ```
 
-This will deploy Formbricks with default settings, including a new PostgreSQL instance and Redis enabled, Traefik disabled.
+This will deploy Formbricks with default settings, including a new PostgreSQL instance, Redis and Traefik disabled.
 
 ### Usage Examples
 
@@ -136,9 +136,34 @@ Here are various examples of how to install and configure the Formbricks Helm ch
 
 These installation options provide flexibility in setting up Formbricks with Traefik. The SSL option is recommended for production environments to ensure secure communications.
 
+2. **Community Advanced:** 
+Provision a whole community setup with Formbricks, Postgres, Custom Domain with SSL
 
+      ```bash
+      helm install formbricks formbricks/formbricks \
+        --namespace formbricks \
+        --create-namespace \
+         --set postgres.enabled=true \
+        --set traefik.enabled=true \
+        --set hostname=forms.example.com \
+        --set email=your-mail@example.com
+      ```
 
-2. **Installation with Redis and PostgreSQL Disabled, Using External Services**:
+3. **Cluster Advanced:** 
+Provision a ready to use cluster for enterprise customers with Formbricks (3 pods), Postgres, Redis and Custom Domain with SSL
+
+      ```bash
+      helm install formbricks formbricks/formbricks \
+        --namespace formbricks \
+        --create-namespace \
+        --set replicaCount=3
+        --set redis.enabled=true \
+        --set traefik.enabled=true \
+        --set hostname=forms.example.com \
+        --set email=your-mail@example.com
+      ```
+
+4. **Installation with Redis and PostgreSQL Disabled, Using External Services**:
    ```bash
    helm install my-formbricks formbricks/formbricks \
      --namespace formbricks \
@@ -149,7 +174,7 @@ These installation options provide flexibility in setting up Formbricks with Tra
      --set redis.externalUrl=redis://your-redis-url:6379
    ```
 
-3. **High Availability Setup**:
+5. **High Availability Setup**:
     ```bash
    helm install my-formbricks formbricks/formbricks \
     --namespace formbricks \
@@ -388,7 +413,7 @@ Remember to always backup your data before performing upgrades, especially when 
 For support with the Formbricks Helm chart:
 - Open an issue on the [Formbricks GitHub repository](https://github.com/formbricks/formbricks)
 - Join our [community Discord](https://discord.com/invite/3YFcABF2Ts)
-- For enterprise support, contact us at support@formbricks.com
+- For enterprise support, contact us at hola@formbricks.com
 
 
 ## Full Values Documentation
@@ -397,9 +422,9 @@ Below is a comprehensive list of all configurable values in the Formbricks Helm 
 
 | Field | Description | Default |
 |-------|-------------|---------|
-| `image.repository` | Docker image repository for Formbricks | `formbricks/formbricks` |
+| `image.repository` | Docker image repository for Formbricks | `ghcr.io/formbricks/formbricks` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
-| `image.tag` | Docker image tag | `"latest"` |
+| `image.tag` | Docker image tag | `"2.6.0"` |
 | `service.type` | Kubernetes service type | `ClusterIP` |
 | `service.port` | Kubernetes service port | `80` |
 | `service.targetPort` | Container port to expose | `3000` |
@@ -408,7 +433,7 @@ Below is a comprehensive list of all configurable values in the Formbricks Helm 
 | `resources.requests.cpu` | Memory resource request | `null` |
 | `resources.requests.memory` | Memory resource request | `null` |
 | `autoscaling.enabled` | Enable autoscaling | `false` |
-| `autoscaling.minReplicas` | Minimum number of replicas | `2` |
+| `autoscaling.minReplicas` | Minimum number of replicas | `1` |
 | `autoscaling.maxReplicas` | Maximum number of replicas | `5` |
 | `autoscaling.metrics[0].type` | Type of metric for autoscaling | `Resource` |
 | `autoscaling.metrics[0].resource.name` | Resource name for autoscaling metric | `cpu` |
@@ -416,7 +441,7 @@ Below is a comprehensive list of all configurable values in the Formbricks Helm 
 | `autoscaling.metrics[0].resource.target.averageUtilization` | Average utilization target for autoscaling | `80` |
 | `autoscaling.behavior.scaleDown.stabilizationWindowSeconds` | Stabilization window for scaling down | `300` |
 | `autoscaling.behavior.scaleUp.stabilizationWindowSeconds` | Stabilization window for scaling up | `0` |
-| `replicaCount` | Number of replicas | `2` |
+| `replicaCount` | Number of replicas | `1` |
 | `formbricksConfig.nextAuthSecret` | NextAuth secret | `""` |
 | `formbricksConfig.encryptionKey` | Encryption key | `""` |
 | `formbricksConfig.cronSecret` | Cron secret | `""` |
@@ -457,9 +482,9 @@ Below is a comprehensive list of all configurable values in the Formbricks Helm 
 
 ```yaml
 image:
-  repository: formbricks/formbricks
+  repository: ghcr.io/formbricks/formbricks
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "2.6.0"
 
 service:
   type: ClusterIP
@@ -498,16 +523,18 @@ autoscaling:
         - type: Pods
           value: 4
           periodSeconds: 15
-    selectPolicy: Max
+      selectPolicy: Max
 
-replicaCount: 2
+replicaCount: 1
 
 formbricksConfig:
   nextAuthSecret: ""
   encryptionKey: ""
   cronSecret: ""
-  env: {}
-  hostname: ""
+
+env: {}
+
+hostname: ""
 
 traefik:
   enabled: false
@@ -515,17 +542,7 @@ traefik:
     dashboard:
       enabled: false
   additionalArguments:
-    - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-    - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-    - "--entrypoints.web.address=:80"
-    - "--entrypoints.websecure.address=:443"
-    - "--certificatesresolvers.letsencrypt.acme.email=ssl@example.com"
-    - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
-    - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
-    - "--log.level=DEBUG"
-    - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-    - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-    - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+    - "--providers.file.filename=/config/traefik.toml"
   tls:
     enabled: true
     certResolver: letsencrypt
@@ -561,7 +578,7 @@ traefik:
     readOnlyRootFilesystem: true
 
 redis:
-  enabled: true
+  enabled: false
   externalUrl: ""
   architecture: standalone
   auth:
@@ -574,7 +591,7 @@ redis:
     replicaCount: 0
 
 postgresql:
-  enabled: true
+  enabled: false
   externalUrl: ""
   auth:
     username: formbricks

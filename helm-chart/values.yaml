@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/formbricks/formbricks
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: v2.6.0
 
 service:
   type: ClusterIP
@@ -42,7 +42,7 @@ autoscaling:
           periodSeconds: 15
       selectPolicy: Max
 
-replicaCount: 2
+replicaCount: 1
 
 formbricksConfig:
   nextAuthSecret: ""
@@ -52,9 +52,10 @@ formbricksConfig:
 env: {}
 
 hostname: ""
+email: ""
 
 traefik:
-  enabled: false
+  enabled: true
   ingressRoute:
     dashboard:
       enabled: false
@@ -70,9 +71,14 @@ traefik:
     - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
     - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
     - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+    - "--providers.file.filename=/config/traefik.toml"
+  volumes:
+    - name: traefik-config
+      mountPath: "/config"
+      type: configMap
   tls:
     enabled: true
-    certResolver: letsencrypt # todo: change to traefik
+    certResolver: letsencrypt
   ports:
     web:
       port: 80
@@ -105,7 +111,7 @@ traefik:
     readOnlyRootFilesystem: true
 
 redis:
-  enabled: true
+  enabled: false
   externalUrl: ""
   architecture: standalone
   auth:
