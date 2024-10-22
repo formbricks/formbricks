@@ -5314,7 +5314,7 @@ const employeeWellBeing = (): TTemplate => {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: "What changes, if any, would improve your overall well-being at work?" },
-          required: true,
+          required: false,
           placeholder: { default: "Type your answer here..." },
           inputType: "text",
         },
