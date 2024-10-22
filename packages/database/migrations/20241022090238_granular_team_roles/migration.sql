@@ -1,7 +1,7 @@
 /*
   Warnings:
 
-  - The `role` column on the `Invite` table would be dropped and recreated. This will lead to data loss if there is data in the column.
+  - You are about to drop the column `accepted` on the `Invite` table. All the data in the column will be lost.
 
 */
 -- CreateEnum
@@ -11,8 +11,10 @@ CREATE TYPE "OrganizationRole" AS ENUM ('owner', 'manager', 'member', 'billing')
 CREATE TYPE "TeamRole" AS ENUM ('admin', 'contributor');
 
 -- AlterTable
-ALTER TABLE "Invite" DROP COLUMN "role",
-ADD COLUMN     "role" "OrganizationRole" NOT NULL DEFAULT 'member';
+ALTER TABLE "Invite" DROP COLUMN "accepted",
+ADD COLUMN     "organizationRole" "OrganizationRole" NOT NULL DEFAULT 'member',
+ALTER COLUMN "role" DROP NOT NULL,
+ALTER COLUMN "role" DROP DEFAULT;
 
 -- AlterTable
 ALTER TABLE "Membership" ADD COLUMN     "organizationRole" "OrganizationRole" NOT NULL DEFAULT 'member',

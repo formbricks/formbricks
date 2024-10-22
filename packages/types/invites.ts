@@ -8,7 +8,6 @@ export const ZInvite = z.object({
   organizationId: z.string(),
   creatorId: z.string(),
   acceptorId: z.string().nullish(),
-  accepted: z.boolean(),
   createdAt: z.date(),
   expiresAt: z.date(),
   role: ZMembershipRole,

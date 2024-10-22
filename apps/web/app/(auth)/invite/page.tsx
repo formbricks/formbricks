@@ -36,17 +36,6 @@ const Page = async ({ searchParams }) => {
           description="Invites are valid for 7 days. Please request a new invite."
         />
       );
-    } else if (invite.accepted) {
-      return (
-        <ContentLayout
-          headline="You’re already part of the squad."
-          description="This invitation has already been used.">
-          <Button variant="secondary" href="/support">
-            Contact support
-          </Button>
-          <Button href="/">Go to app</Button>
-        </ContentLayout>
-      );
     } else if (!session) {
       const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
       const encodedEmail = encodeURIComponent(email);

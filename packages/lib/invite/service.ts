@@ -31,7 +31,6 @@ const inviteSelect = {
   organizationId: true,
   creatorId: true,
   acceptorId: true,
-  accepted: true,
   createdAt: true,
   expiresAt: true,
   role: true,
