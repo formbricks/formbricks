@@ -2,9 +2,9 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getSurveys } from "@formbricks/lib/survey/service";
+import { getActiveLinkSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
-import {TSurvey, TSurveyLogic, TSurveyLogicAction, TSurveyQuestion} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyLogic, TSurveyLogicAction, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 function calculateElementIdx(survey: TSurvey, currentQustionIdx: number): number {
   const currentQuestion = survey.questions[currentQustionIdx];
@@ -26,7 +26,7 @@ function calculateElementIdx(survey: TSurvey, currentQustionIdx: number): number
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
   if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
   return elementIdx;
-};
+}
 
 const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
   if (!question.logic) return [];
@@ -73,9 +73,12 @@ export async function GET(request: Request) {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const surveys = await getSurveys(authentication.environmentId!);
-
     const { searchParams } = new URL(request.url);
+
+    const tagsParam = searchParams.get("tags");
+    const tags = tagsParam ? tagsParam.split(",") : [];
+
+    const surveys = await getActiveLinkSurveys(authentication.environmentId!, tags);
 
     if (!searchParams.has("country")) {
       return responses.validationResponse({ country: "required" });
@@ -89,9 +92,6 @@ export async function GET(request: Request) {
 
     const activeSurveys = await Promise.all(
       surveys
-        .filter((survey) => {
-          return survey.status === "inProgress" && survey.type === "link";
-        })
         .filter((survey) => {
           if (survey.countries.length > 0) {
             const found = survey.countries.find((country) => {

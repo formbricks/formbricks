@@ -352,6 +352,52 @@ export const getSurveysSortedByRelevance = reactCache(
     )()
 );
 
+export const getActiveLinkSurveys = reactCache(
+  (environmentId: string, tags: string[]): Promise<TSurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+
+        try {
+          const whereClause: Prisma.SurveyWhereInput = {
+            environmentId,
+            status: "inProgress",
+            type: "link",
+          };
+
+          if (tags.length > 0) {
+            whereClause.tags = {
+              some: {
+                name: {
+                  in: tags,
+                },
+              },
+            };
+          }
+
+          const surveysPrisma = await prisma.survey.findMany({
+            where: whereClause,
+            select: selectSurvey,
+          });
+
+          const transformedSurveys = surveysPrisma.map(transformPrismaSurvey);
+          return transformedSurveys;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(`Database error: ${error.message}`);
+            throw new DatabaseError(error.message);
+          }
+          console.error(`Unexpected error: ${error}`);
+          throw error;
+        }
+      },
+      [`getActiveLinkSurveys-${environmentId}-${JSON.stringify(tags)}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
 export const getSurveys = reactCache(
   (
     environmentId: string,
