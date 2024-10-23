@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -18,8 +18,8 @@ import { Tag } from "@formbricks/ui/components/Tag";
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
 }
 
 export const HiddenFieldsCard = ({
@@ -125,7 +125,7 @@ export const HiddenFieldsCard = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
               localSurvey.hiddenFields?.fieldIds?.map((fieldId) => {
                 return (
