@@ -6,11 +6,9 @@ import { getUserLanguage } from "@formbricks/lib/user/service";
 
 export default getRequestConfig(async () => {
   const session = await getServerSession(authOptions);
-
   const locale = session ? await getUserLanguage(session?.user?.id) : DEFAULT_LOCALE;
-
   // Lazy load the locale-specific messages
-  const messages = await import(`../messages/${locale}.json`).then((module) => module.default);
+  const messages = await import(`@formbricks/lib/messages/${locale}.json`).then((module) => module.default);
 
   return {
     locale,

@@ -60,6 +60,7 @@ interface QuestionsViewProps {
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
+  locale: string;
 }
 
 export const QuestionsView = ({
@@ -77,6 +78,7 @@ export const QuestionsView = ({
   attributeClasses,
   plan,
   isCxMode,
+  locale,
 }: QuestionsViewProps) => {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -352,7 +354,7 @@ export const QuestionsView = ({
 
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
-    const newEndingCard = getDefaultEndingCard(localSurvey.languages);
+    const newEndingCard = getDefaultEndingCard(localSurvey.languages, locale);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
 
@@ -469,10 +471,11 @@ export const QuestionsView = ({
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
+          locale={locale}
         />
       </DndContext>
 
-      <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} />
+      <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} locale={locale} />
       <div className="mt-5 flex flex-col gap-5">
         <hr className="border-t border-dashed" />
         <DndContext
@@ -497,6 +500,7 @@ export const QuestionsView = ({
                   plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
+                  locale={locale}
                 />
               );
             })}

@@ -46,14 +46,14 @@ const Page = async ({ params }) => {
       <EnvironmentNotice environmentId={environment.id} subPageUrl="/product/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard
-          title="Development Env Keys"
-          description="Add and remove API keys for your Development environment.">
+          title="environments.product.api-keys.dev_api_keys"
+          description="environments.product.api-keys.dev_api_keys_description">
           <ApiKeyList environmentId={params.environmentId} environmentType="development" />
         </SettingsCard>
       ) : (
         <SettingsCard
-          title="Production Env Keys"
-          description="Add and remove API keys for your Production environment.">
+          title="environments.product.api-keys.prod_api_keys"
+          description="environments.product.api-keys.prod_api_keys_description">
           <ApiKeyList environmentId={params.environmentId} environmentType="production" />
         </SettingsCard>
       )}

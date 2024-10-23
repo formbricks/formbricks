@@ -58,6 +58,7 @@ interface QuestionCardProps {
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
+  locale: string;
 }
 
 export const QuestionCard = ({
@@ -79,6 +80,7 @@ export const QuestionCard = ({
   addQuestion,
   isFormbricksCloud,
   isCxMode,
+  locale,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -197,7 +199,7 @@ export const QuestionCard = ({
                           attributeClasses
                         )[selectedLanguageCode] ?? ""
                       )
-                    : getTSurveyQuestionTypeEnumName(question.type)}
+                    : getTSurveyQuestionTypeEnumName(question.type, locale)}
                 </p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
@@ -221,6 +223,7 @@ export const QuestionCard = ({
                 addCard={addQuestion}
                 cardType="question"
                 isCxMode={isCxMode}
+                locale={locale}
               />
             </div>
           </div>
@@ -430,11 +433,11 @@ export const QuestionCard = ({
                       <QuestionFormInput
                         id="buttonLabel"
                         value={question.buttonLabel}
-                        label={`"Next" Button Label`}
+                        label={t("environments.surveys.edit.next_button_label")}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
-                        placeholder={lastQuestion ? "Finish" : "Next"}
+                        placeholder={lastQuestion ? t("common.finish") : t("common.next")}
                         isInvalid={isInvalid}
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
@@ -456,11 +459,11 @@ export const QuestionCard = ({
                       <QuestionFormInput
                         id="backButtonLabel"
                         value={question.backButtonLabel}
-                        label={`"Back" Button Label`}
+                        label={t("environments.surveys.edit.back_button_label")}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
-                        placeholder={"Back"}
+                        placeholder={t("common.back")}
                         isInvalid={isInvalid}
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
@@ -507,7 +510,7 @@ export const QuestionCard = ({
           <div className="mx-4 flex justify-end space-x-6 border-t border-slate-200">
             {question.type === "openText" && (
               <div className="my-4 flex items-center justify-end space-x-2">
-                <Label htmlFor="longAnswer">Long Answer</Label>
+                <Label htmlFor="longAnswer">{t("environments.surveys.edit.long_answer")}</Label>
                 <Switch
                   id="longAnswer"
                   disabled={question.inputType !== "text"}
@@ -523,7 +526,7 @@ export const QuestionCard = ({
             )}
             {
               <div className="my-4 flex items-center justify-end space-x-2">
-                <Label htmlFor="required-toggle">Required</Label>
+                <Label htmlFor="required-toggle">{t("environments.surveys.edit.required")}</Label>
                 <Switch
                   id="required-toggle"
                   checked={question.required}

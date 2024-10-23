@@ -53,7 +53,9 @@ const Page = async ({ params }) => {
           isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
       </PageHeader>
-      <SettingsCard title="Manage Tags" description="Merge and remove response tags.">
+      <SettingsCard
+        title="environments.product.tags.manage_tags"
+        description="environments.product.tags.manage_tags_description">
         <EditTagsWrapper
           environment={environment}
           environmentTags={tags}

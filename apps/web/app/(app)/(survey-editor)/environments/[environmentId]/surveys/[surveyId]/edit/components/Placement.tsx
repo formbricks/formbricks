@@ -74,20 +74,20 @@ export const Placement = ({
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <RadioGroupItem id="lightOverlay" value="light" />
                 <Label htmlFor="lightOverlay" className="text-slate-900">
-                  {t("environments.surveys.edit.light_overlay")}
+                  {t("common.light_overlay")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <RadioGroupItem id="darkOverlay" value="dark" />
                 <Label htmlFor="darkOverlay" className="text-slate-900">
-                  {t("environments.surveys.edit.dark_overlay")}
+                  {t("common.dark_overlay")}
                 </Label>
               </div>
             </RadioGroup>
           </div>
           <div className="mt-6 space-y-2">
             <Label className="font-semibold">
-              {t("environments.surveys.edit.allow_users_to_exit_by_clicking_outside_the_study")}
+              {t("common.allow_users_to_exit_by_clicking_outside_the_study")}
             </Label>
             <RadioGroup
               onValueChange={(value) => setClickOutsideClose(value === "allow")}
@@ -96,13 +96,13 @@ export const Placement = ({
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <RadioGroupItem id="disallow" value="disallow" />
                 <Label htmlFor="disallow" className="text-slate-900">
-                  {t("environments.surveys.edit.disallow")}
+                  {t("common.disallow")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2 whitespace-nowrap">
                 <RadioGroupItem id="allow" value="allow" />
                 <Label htmlFor="allow" className="text-slate-900">
-                  {t("environments.surveys.edit.allow")}
+                  {t("common.allow")}
                 </Label>
               </div>
             </RadioGroup>

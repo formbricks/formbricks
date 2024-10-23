@@ -33,7 +33,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
-      <PageHeader pageTitle="Slack Integration" />
+      <PageHeader pageTitle={"environments.integrations.slack.slack_integration"} />
       <div className="h-[75vh] w-full">
         <SlackWrapper
           isEnabled={isEnabled}

@@ -1,7 +1,6 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TPersonTableData } from "@formbricks/types/people";
 import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
@@ -10,7 +9,7 @@ import { HighlightedText } from "@formbricks/ui/components/HighlightedText";
 export const generatePersonTableColumns = (
   isExpanded: boolean,
   searchValue: string,
-  t: ReturnType<typeof useTranslations>
+  t: (key: string) => string
 ): ColumnDef<TPersonTableData>[] => {
   const dateColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "createdAt",

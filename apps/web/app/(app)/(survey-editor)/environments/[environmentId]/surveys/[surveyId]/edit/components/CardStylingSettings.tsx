@@ -299,9 +299,9 @@ export const CardStylingSettings = ({
                         </FormControl>
 
                         <div>
-                          <FormLabel>Add highlight border</FormLabel>
+                          <FormLabel>{t("environments.surveys.edit.add_highlight_border")}</FormLabel>
                           <FormDescription className="text-xs font-normal text-slate-500">
-                            Add an outer border to your survey card.
+                            {t("environments.surveys.edit.add_highlight_border_description")}
                           </FormDescription>
                         </div>
                       </div>

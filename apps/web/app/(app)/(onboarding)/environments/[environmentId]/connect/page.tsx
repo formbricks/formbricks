@@ -1,5 +1,6 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
 import { XIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -13,6 +14,7 @@ interface ConnectPageProps {
 }
 
 const Page = async ({ params }: ConnectPageProps) => {
+  const t = await getTranslations();
   const environment = await getEnvironment(params.environmentId);
 
   if (!environment) {
@@ -28,7 +30,7 @@ const Page = async ({ params }: ConnectPageProps) => {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center py-10">
-      <Header title={`Let's connect your product with Formbricks`} subtitle="It takes less than 4 minutes." />
+      <Header title={t("environments.connect.headline")} subtitle={t("environments.connect.subtitle")} />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>
         <p className="text-sm text-slate-500"></p>

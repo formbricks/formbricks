@@ -21,6 +21,7 @@ interface QuestionsDraggableProps {
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
+  locale: string;
 }
 
 export const QuestionsDroppable = ({
@@ -40,6 +41,7 @@ export const QuestionsDroppable = ({
   addQuestion,
   isFormbricksCloud,
   isCxMode,
+  locale,
 }: QuestionsDraggableProps) => {
   return (
     <div className="group mb-5 flex w-full flex-col gap-5">
@@ -65,6 +67,7 @@ export const QuestionsDroppable = ({
             addQuestion={addQuestion}
             isFormbricksCloud={isFormbricksCloud}
             isCxMode={isCxMode}
+            locale={locale}
           />
         ))}
       </SortableContext>

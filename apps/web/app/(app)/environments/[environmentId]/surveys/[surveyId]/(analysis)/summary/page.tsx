@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import {
+  DEFAULT_LOCALE,
   DOCUMENTS_PER_PAGE,
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   WEBAPP_URL,
@@ -110,6 +111,7 @@ const Page = async ({ params }) => {
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
+        locale={user.locale ?? DEFAULT_LOCALE}
       />
     </PageContentWrapper>
   );

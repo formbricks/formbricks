@@ -12,6 +12,7 @@ interface ContactInfoSummaryProps {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 export const ContactInfoSummary = ({
@@ -19,6 +20,7 @@ export const ContactInfoSummary = ({
   environmentId,
   survey,
   attributeClasses,
+  locale,
 }: ContactInfoSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -26,6 +28,7 @@ export const ContactInfoSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">

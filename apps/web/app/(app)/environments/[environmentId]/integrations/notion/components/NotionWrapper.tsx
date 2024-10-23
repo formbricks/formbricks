@@ -23,6 +23,7 @@ interface NotionWrapperProps {
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 export const NotionWrapper = ({
@@ -33,6 +34,7 @@ export const NotionWrapper = ({
   surveys,
   databasesArray,
   attributeClasses,
+  locale,
 }: NotionWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
@@ -63,6 +65,7 @@ export const NotionWrapper = ({
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
           <ManageIntegration
             environment={environment}

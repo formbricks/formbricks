@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeftIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/components/Button";
 import { AppTab } from "./AppTab";
@@ -35,6 +36,7 @@ export const EmbedView = ({
   setSurveyUrl,
   webAppUrl,
 }: EmbedViewProps) => {
+  const t = useTranslations();
   return (
     <div className="h-full overflow-hidden">
       {!disableBack && (
@@ -44,7 +46,7 @@ export const EmbedView = ({
             className="focus:ring-0"
             onClick={handleInitialPageButton}
             StartIcon={ArrowLeftIcon}>
-            Back
+            {t("common.back")}
           </Button>
         </div>
       )}

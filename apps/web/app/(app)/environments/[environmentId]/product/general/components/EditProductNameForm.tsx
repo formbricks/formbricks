@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -31,6 +32,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
   product,
   isProductNameEditDisabled,
 }) => {
+  const t = useTranslations();
   const form = useForm<TEditProductName>({
     defaultValues: {
       name: product.name,
@@ -80,13 +82,15 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="name">What&apos;s your product called?</FormLabel>
+              <FormLabel htmlFor="name">
+                {t("environments.product.general.whats_your_product_called")}
+              </FormLabel>
               <FormControl>
                 <Input
                   type="text"
                   id="name"
                   {...field}
-                  placeholder="Product Name"
+                  placeholder={t("common.product_name")}
                   autoComplete="off"
                   required
                   isInvalid={!!nameError}
@@ -98,11 +102,13 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
         />
 
         <Button type="submit" size="sm" loading={isSubmitting} disabled={isSubmitting || !isDirty}>
-          Update
+          {t("common.update")}
         </Button>
       </form>
     </FormProvider>
   ) : (
-    <p className="text-sm text-red-700">Only Owners, Admins and Editors can perform this action.</p>
+    <p className="text-sm text-red-700">
+      {t("common.only_owners_admins_and_editors_can_perform_this_action")}
+    </p>
   );
 };

@@ -7,11 +7,12 @@ import {
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
+import { DEFAULT_LOCALE, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getUserLanguage } from "@formbricks/lib/user/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
@@ -36,7 +37,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   if (!organization) {
     throw new Error("Organization not found");
   }
-
+  const locale = session?.user.id ? await getUserLanguage(session.user.id) : undefined;
   const canRemoveInAppBranding = getRemoveInAppBrandingPermission(organization);
   const canRemoveLinkBranding = getRemoveLinkBrandingPermission(organization);
 
@@ -59,27 +60,28 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         />
       </PageHeader>
       <SettingsCard
-        title="Theme"
+        title="environments.product.look.theme"
         className="max-w-7xl"
-        description="Create a style theme for all surveys. You can enable custom styling for each survey.">
+        description="environments.product.look.theme_settings_description">
         <ThemeStyling
           environmentId={params.environmentId}
           product={product}
           colors={SURVEY_BG_COLORS}
           isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
+          locale={locale ?? DEFAULT_LOCALE}
         />
       </SettingsCard>
-      <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
+      <SettingsCard title="common.logo" description="environments.product.look.logo_settings_description">
         <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>
       <SettingsCard
-        title="App Survey Placement"
-        description="Change where surveys will be shown in your web app or website.">
+        title="environments.product.look.app_survey_placement"
+        description="environments.product.look.app_survey_placement_settings_description">
         <EditPlacementForm product={product} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
-        title="Formbricks Branding"
-        description="We love your support but understand if you toggle it off.">
+        title="environments.product.look.formbricks_branding"
+        description="environments.product.look.formbricks_branding_settings_description">
         <div className="space-y-4">
           <EditFormbricksBranding
             type="linkSurvey"

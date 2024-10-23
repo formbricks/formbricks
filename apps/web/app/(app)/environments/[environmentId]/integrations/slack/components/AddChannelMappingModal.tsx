@@ -1,5 +1,6 @@
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -43,7 +44,7 @@ export const AddChannelMappingModal = ({
   attributeClasses,
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
-
+  const t = useTranslations();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -93,14 +94,14 @@ export const AddChannelMappingModal = ({
   const linkChannel = async () => {
     try {
       if (!selectedChannel) {
-        throw new Error("Please select a Slack channel");
+        throw new Error(t("environments.integrations.slack.please_select_a_channel"));
       }
       if (!selectedSurvey) {
-        throw new Error("Please select a survey");
+        throw new Error(t("environments.integrations.integrations.please_select_a_survey_error"));
       }
 
       if (selectedQuestions.length === 0) {
-        throw new Error("Please select at least one question");
+        throw new Error(t("environments.integrations.integrations.select_at_least_one_question_error"));
       }
       setIsLinkingChannel(true);
       const integrationData: TIntegrationSlackConfigData = {
@@ -126,7 +127,11 @@ export const AddChannelMappingModal = ({
         slackIntegrationData.config!.data.push(integrationData);
       }
       await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });
-      toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
+      if (selectedIntegration) {
+        toast.success(t("environments.integrations.integration_updated_successfully"));
+      } else {
+        toast.success(t("environments.integrations.integration_added_successfully"));
+      }
       resetForm();
       setOpen(false);
     } catch (e) {
@@ -159,7 +164,7 @@ export const AddChannelMappingModal = ({
     try {
       setIsDeleting(true);
       await createOrUpdateIntegrationAction({ environmentId, integrationData: slackIntegrationData });
-      toast.success("Integration removed successfully");
+      toast.success(t("environments.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
       toast.error(error.message);
@@ -189,7 +194,9 @@ export const AddChannelMappingModal = ({
                 <Image className="w-12" src={SlackLogo} alt="Slack logo" />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Link Slack Channel</div>
+                <div className="text-xl font-medium text-slate-700">
+                  {t("environments.integrations.slack.link_slack_channel")}
+                </div>
               </div>
             </div>
           </div>
@@ -200,7 +207,7 @@ export const AddChannelMappingModal = ({
               <div>
                 <div className="mb-4">
                   <DropdownSelector
-                    label="Select Channel"
+                    label={t("environments.integrations.slack.select_channel")}
                     items={channels}
                     selectedItem={selectedChannel}
                     setSelectedItem={setSelectedChannel}
@@ -208,32 +215,32 @@ export const AddChannelMappingModal = ({
                   />
                   {selectedChannel && hasMatchingId && (
                     <p className="text-xs text-amber-700">
-                      <strong>Note:</strong> You have already connected another survey to this channel.
+                      <strong>{t("environments.integrations.slack.note")}:</strong>{" "}
+                      {t("environments.integrations.slack.already_connected_another_survey")}
                     </p>
                   )}
                   <p className="m-1 text-xs text-slate-500">
                     {channels.length === 0 &&
-                      "You have to create at least one channel to be able to setup this integration"}
+                      t("environments.integrations.slack.create_at_least_one_channel_error")}
                   </p>
                 </div>
                 <div>
                   <DropdownSelector
-                    label="Select Survey"
+                    label={t("common.select_survey")}
                     items={surveys}
                     selectedItem={selectedSurvey}
                     setSelectedItem={setSelectedSurvey}
                     disabled={surveys.length === 0}
                   />
                   <p className="m-1 text-xs text-slate-500">
-                    {surveys.length === 0 &&
-                      "You have to create a survey to be able to setup this integration"}
+                    {surveys.length === 0 && t("environments.integrations.create_survey_warning")}
                   </p>
                 </div>
               </div>
               {selectedSurvey && (
                 <div>
                   <div>
-                    <Label htmlFor="Surveys">Questions</Label>
+                    <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions?.map(
@@ -276,7 +283,7 @@ export const AddChannelMappingModal = ({
             <div className="flex space-x-2">
               {selectedIntegration ? (
                 <Button type="button" variant="warn" loading={isDeleting} onClick={deleteLink}>
-                  Delete
+                  {t("common.delete")}
                 </Button>
               ) : (
                 <Button
@@ -286,11 +293,11 @@ export const AddChannelMappingModal = ({
                     setOpen(false);
                     resetForm();
                   }}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               )}
               <Button type="submit" loading={isLinkingChannel}>
-                {selectedIntegration ? "Update" : "Link Channel"}
+                {selectedIntegration ? t("common.update") : t("environments.integrations.slack.link_channel")}
               </Button>
             </div>
           </div>

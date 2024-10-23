@@ -39,19 +39,19 @@ const Page = async ({ params }) => {
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/app-connection" />
         <SettingsCard
-          title="Website & App Connection Status"
-          description="Check if your app is successfully connected with Formbricks. Reload page to recheck.">
+          title="environments.product.app-connection.app_connection"
+          description="environments.product.app-connection.app_connection_description">
           {environment && <WidgetStatusIndicator environment={environment} />}
         </SettingsCard>
         <SettingsCard
-          title="How to setup"
-          description="Follow these steps to setup the Formbricks widget within your app."
+          title="environments.product.app-connection.how_to_setup"
+          description="environments.product.app-connection.how_to_setup_description"
           noPadding>
           <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
         <SettingsCard
-          title="Your EnvironmentId"
-          description="This id uniquely identifies this Formbricks environment.">
+          title="environments.product.app-connection.environment_id"
+          description="environments.product.app-connection.environment_id_description">
           <EnvironmentIdField environmentId={params.environmentId} />
         </SettingsCard>
       </div>

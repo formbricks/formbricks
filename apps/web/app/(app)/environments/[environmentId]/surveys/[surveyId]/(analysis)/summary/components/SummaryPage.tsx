@@ -50,6 +50,7 @@ interface SummaryPageProps {
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
+  locale: string;
 }
 
 export const SummaryPage = ({
@@ -61,6 +62,7 @@ export const SummaryPage = ({
   attributeClasses,
   isAIEnabled,
   documentsPerPage,
+  locale,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -182,6 +184,7 @@ export const SummaryPage = ({
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
         documentsPerPage={documentsPerPage}
+        locale={locale}
       />
     </>
   );

@@ -38,7 +38,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
-      <PageHeader pageTitle="Google Sheets Integration" />
+      <PageHeader pageTitle={"environments.integrations.google_sheets.google_sheets_integration"} />
       <div className="h-[75vh] w-full">
         <GoogleSheetWrapper
           isEnabled={isEnabled}

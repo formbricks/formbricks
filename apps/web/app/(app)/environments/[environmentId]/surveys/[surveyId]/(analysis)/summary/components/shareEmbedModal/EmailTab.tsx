@@ -1,6 +1,7 @@
 "use client";
 
 import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AuthenticationError } from "@formbricks/types/errors";
@@ -17,7 +18,7 @@ interface EmailTabProps {
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [showEmbed, setShowEmbed] = useState(false);
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
-
+  const t = useTranslations();
   const emailHtml = useMemo(() => {
     if (!emailHtmlPreview) return "";
     return emailHtmlPreview
@@ -62,7 +63,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             }}
             className="shrink-0"
             EndIcon={CopyIcon}>
-            Copy code
+            {t("copy.copy_code")}
           </Button>
         ) : (
           <>
@@ -73,7 +74,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
               onClick={() => sendPreviewEmail()}
               EndIcon={MailIcon}
               className="shrink-0">
-              Send Preview
+              {t("environments.surveys.summary.send_preview")}
             </Button>
           </>
         )}
@@ -85,7 +86,9 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           }}
           EndIcon={Code2Icon}
           className="shrink-0">
-          {showEmbed ? "Hide Embed Code" : "View Embed Code"}
+          {showEmbed
+            ? t("environments.surveys.summary.hide_embed_code")
+            : t("environments.surveys.summary.view_embed_code")}
         </Button>
       </div>
       {showEmbed ? (

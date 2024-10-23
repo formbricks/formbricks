@@ -24,33 +24,32 @@ interface SurveyFilterProps {
 }
 
 const creatorOptions: TFilterOption[] = [
-  { label: "You", value: "you" },
-  { label: "Others", value: "others" },
+  { label: "common.you", value: "you" },
+  { label: "common.others", value: "others" },
 ];
 
 const statusOptions: TFilterOption[] = [
-  { label: "In Progress", value: "inProgress" },
-  { label: "Scheduled", value: "scheduled" },
-  { label: "Paused", value: "paused" },
-  { label: "Completed", value: "completed" },
-  { label: "Draft", value: "draft" },
+  { label: "common.scheduled", value: "scheduled" },
+  { label: "common.paused", value: "paused" },
+  { label: "common.completed", value: "completed" },
+  { label: "common.draft", value: "draft" },
 ];
 
 const sortOptions: TSortOption[] = [
   {
-    label: "Last Modified",
+    label: "common.updated_at",
     value: "updatedAt",
   },
   {
-    label: "Created On",
+    label: "common.created_at",
     value: "createdAt",
   },
   {
-    label: "Alphabetical",
+    label: "environments.surveys.alphabetical",
     value: "name",
   },
   {
-    label: "Relevance",
+    label: "environments.surveys.relevance",
     value: "relevance",
   },
 ];
@@ -68,8 +67,8 @@ export const SurveyFilters = ({
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
 
   const typeOptions: TFilterOption[] = [
-    { label: "Link", value: "link" },
-    { label: "App", value: "app" },
+    { label: "common.link", value: "link" },
+    { label: "common.app", value: "app" },
   ];
 
   const toggleDropdown = (id: string) => {
@@ -183,7 +182,7 @@ export const SurveyFilters = ({
             <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
                 <span className="text-sm">
-                  {t("common.sort_by")}: {sortOptions.find((option) => option.value === sortBy)?.label}
+                  {t("common.sort_by")}: {t(sortOptions.find((option) => option.value === sortBy)?.label)}
                 </span>
                 <ChevronDownIcon className="ml-2 h-4 w-4" />
               </div>

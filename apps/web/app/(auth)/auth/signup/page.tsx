@@ -21,7 +21,8 @@ import {
 const Page = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
   const isMultOrgEnabled = await getIsMultiOrgEnabled();
-
+  const locale = (searchParams.locale as string) ?? "en-US";
+  console.log(locale);
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }

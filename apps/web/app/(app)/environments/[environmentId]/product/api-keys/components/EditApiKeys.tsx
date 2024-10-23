@@ -1,11 +1,11 @@
 "use client";
 
 import { FilesIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TApiKey } from "@formbricks/types/api-keys";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
@@ -23,6 +23,7 @@ export const EditAPIKeys = ({
   apiKeys: TApiKey[];
   environmentId: string;
 }) => {
+  const t = useTranslations();
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
   const [apiKeysLocal, setApiKeysLocal] = useState<TApiKey[]>(apiKeys);
@@ -39,9 +40,9 @@ export const EditAPIKeys = ({
       await deleteApiKeyAction({ id: activeKey.id });
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
-      toast.success("API Key deleted");
+      toast.success(t("environments.product.api-keys.api_key_deleted"));
     } catch (e) {
-      toast.error("Unable to delete API Key");
+      toast.error(t("environments.product.api-keys.unable_to_delete_api_key"));
     } finally {
       setOpenDeleteKeyModal(false);
     }
@@ -55,7 +56,7 @@ export const EditAPIKeys = ({
     if (createApiKeyResponse?.data) {
       const updatedApiKeys = [...apiKeysLocal!, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
-      toast.success("API key created");
+      toast.success(t("environments.product.api-keys.api_key_created"));
     } else {
       const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
       toast.error(errorMessage);
@@ -67,7 +68,7 @@ export const EditAPIKeys = ({
   const ApiKeyDisplay = ({ apiKey }) => {
     const copyToClipboard = () => {
       navigator.clipboard.writeText(apiKey);
-      toast.success("API Key copied to clipboard");
+      toast.success(t("environments.product.api-keys.api_key_copied_to_clipboard"));
     };
 
     if (!apiKey) {
@@ -88,15 +89,17 @@ export const EditAPIKeys = ({
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-4 sm:col-span-2">Label</div>
-          <div className="col-span-4 hidden sm:col-span-5 sm:block">API Key</div>
-          <div className="col-span-4 sm:col-span-2">Created at</div>
+          <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
+          <div className="col-span-4 hidden sm:col-span-5 sm:block">
+            {t("environments.product.api-keys.api_key")}
+          </div>
+          <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
           <div></div>
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal && apiKeysLocal.length === 0 ? (
             <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
-              You don&apos;t have any API keys yet
+              {t("environments.product.api-keys.no_api_keys_yet")}
             </div>
           ) : (
             apiKeysLocal &&
@@ -127,7 +130,7 @@ export const EditAPIKeys = ({
           onClick={() => {
             setOpenAddAPIKeyModal(true);
           }}>
-          {`Add ${capitalizeFirstLetter(environmentType)} API Key`}
+          {t("environments.product.api-keys.add_env_api_key", { environmentType })}
         </Button>
       </div>
 
@@ -139,7 +142,7 @@ export const EditAPIKeys = ({
       <DeleteDialog
         open={isDeleteKeyModalOpen}
         setOpen={setOpenDeleteKeyModal}
-        deleteWhat="API Key"
+        deleteWhat={t("environments.product.api-keys.api_key")}
         onDelete={handleDeleteKey}
       />
     </div>

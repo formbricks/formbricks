@@ -36,6 +36,7 @@ interface EditEndingCardProps {
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
+  locale: string;
 }
 
 export const EditEndingCard = ({
@@ -51,6 +52,7 @@ export const EditEndingCard = ({
   plan,
   addEndingCard,
   isFormbricksCloud,
+  locale,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
   const t = useTranslations();
@@ -203,6 +205,7 @@ export const EditEndingCard = ({
                 updateCard={() => {}}
                 addCard={addEndingCard}
                 cardType="ending"
+                locale={locale}
               />
             </div>
           </div>

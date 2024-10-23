@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
@@ -25,39 +26,37 @@ const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
 };
 
-const validateLanguages = (languages: TLanguage[]) => {
+const validateLanguages = (languages: TLanguage[], t: (key: string) => string) => {
   const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
   const languageAliases = languages
     .filter((language) => language.alias)
     .map((language) => language.alias!.toLowerCase().trim());
 
   if (languageCodes.includes("")) {
-    toast.error("Please select a Language", { duration: 2000 });
+    toast.error(t("environments.product.languages.please_select_a_language"), { duration: 2000 });
     return false;
   }
 
   // Check for duplicates within the languageCodes and languageAliases
   if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageCodes)) {
-    toast.error("Duplicate language or language ID", { duration: 4000 });
+    toast.error(t("environments.product.languages.duplicate_language_or_language_id"), { duration: 4000 });
     return false;
   }
 
   // Check if any alias matches the identifier of any added languages
   if (languageCodes.some((code) => languageAliases.includes(code))) {
-    toast.error(
-      "There is a conflict between the identifier of an added language and one for your aliases. Aliases and identifiers cannot be identical.",
-      { duration: 6000 }
-    );
+    toast.error(t("environments.product.languages.conflict_between_identifier_and_alias"), {
+      duration: 6000,
+    });
     return false;
   }
 
   // Check if the chosen alias matches an ISO identifier of a language that hasn’t been added
   for (const alias of languageAliases) {
     if (iso639Languages.some((language) => language.alpha2 === alias && !languageCodes.includes(alias))) {
-      toast.error(
-        "There is a conflict between the selected alias and another language that has this identifier. Please add the language with this identifier to your product instead to avoid inconsistencies.",
-        { duration: 6000 }
-      );
+      toast.error(t("environments.product.languages.conflict_between_selected_alias_and_another_language"), {
+        duration: 6000,
+      });
       return false;
     }
   }
@@ -66,6 +65,7 @@ const validateLanguages = (languages: TLanguage[]) => {
 };
 
 export function EditLanguage({ product }: EditLanguageProps) {
+  const t = useTranslations();
   const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -99,14 +99,14 @@ export function EditLanguage({ product }: EditLanguageProps) {
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: `You cannot remove this language since it’s still used in these surveys:\n\n${surveyList}\n\nPlease remove the language from these surveys in order to remove it from the product.`,
+            text: `${t("environments.product.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("environments.product.languages.remove_language_from_surveys_to_remove_it_from_product")}`,
             isButtonDisabled: true,
           });
         } else {
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: "Are you sure you want to delete this language? This action cannot be undone.",
+            text: t("environments.product.languages.delete_language_confirmation"),
             isButtonDisabled: false,
           });
         }
@@ -115,7 +115,7 @@ export function EditLanguage({ product }: EditLanguageProps) {
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error("Something went wrong. Please try again later.");
+      toast.error(t("common.something_went_wrong_please_try_again_later"));
     }
   };
 
@@ -123,11 +123,11 @@ export function EditLanguage({ product }: EditLanguageProps) {
     try {
       await deleteLanguageAction({ languageId, productId: product.id });
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
-      toast.success("Language deleted successfully.");
+      toast.success(t("environments.product.languages.language_deleted_successfully"));
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     } catch (err) {
-      toast.error("Something went wrong. Please try again later.");
+      toast.error(t("common.something_went_wrong_please_try_again_later"));
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     }
   };
@@ -138,7 +138,7 @@ export function EditLanguage({ product }: EditLanguageProps) {
   };
 
   const handleSaveChanges = async () => {
-    if (!validateLanguages(languages)) return;
+    if (!validateLanguages(languages, t)) return;
     await Promise.all(
       languages.map((lang) => {
         return lang.id === "new"
@@ -153,14 +153,14 @@ export function EditLanguage({ product }: EditLanguageProps) {
             });
       })
     );
-    toast.success("Languages updated successfully.");
+    toast.success(t("environments.product.languages.languages_updated_successfully"));
     setIsEditing(false);
   };
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
     isEditing && languages.length === product.languages.length ? (
       <Button onClick={onClick} size="sm" variant="secondary" StartIcon={PlusIcon}>
-        Add language
+        {t("environments.product.languages.add_language")}
       </Button>
     ) : null;
 
@@ -186,7 +186,9 @@ export function EditLanguage({ product }: EditLanguageProps) {
             ))}
           </>
         ) : (
-          <p className="text-sm italic text-slate-500">No language found. Add your first language below.</p>
+          <p className="text-sm italic text-slate-500">
+            {t("environments.product.languages.no_language_found")}
+          </p>
         )}
         <AddLanguageButton onClick={handleAddLanguage} />
       </div>
@@ -197,9 +199,10 @@ export function EditLanguage({ product }: EditLanguageProps) {
           setIsEditing(true);
         }}
         onSave={handleSaveChanges}
+        t={t}
       />
       <ConfirmationModal
-        buttonText="Remove Language"
+        buttonText={t("environments.product.languages.remove_language")}
         isButtonDisabled={confirmationModal.isButtonDisabled}
         onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
         open={confirmationModal.isOpen}
@@ -207,7 +210,7 @@ export function EditLanguage({ product }: EditLanguageProps) {
           setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
         }}
         text={confirmationModal.text}
-        title="Remove Language"
+        title={t("environments.product.languages.remove_language")}
       />
     </div>
   );
@@ -218,18 +221,19 @@ const EditSaveButtons: React.FC<{
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
-}> = ({ isEditing, onEdit, onSave, onCancel }) =>
+  t: (key: string) => string;
+}> = ({ isEditing, onEdit, onSave, onCancel, t }) =>
   isEditing ? (
     <div className="flex gap-4">
       <Button onClick={onSave} size="sm">
-        Save changes
+        {t("common.save_changes")}
       </Button>
       <Button onClick={onCancel} size="sm" variant="minimal">
-        Cancel
+        {t("common.cancel")}
       </Button>
     </div>
   ) : (
     <Button className="w-fit" onClick={onEdit} size="sm">
-      Edit languages
+      {t("environments.product.languages.edit_languages")}
     </Button>
   );

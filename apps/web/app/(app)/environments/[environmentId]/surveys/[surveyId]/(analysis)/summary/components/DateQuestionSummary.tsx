@@ -14,6 +14,7 @@ interface DateQuestionSummary {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 export const DateQuestionSummary = ({
@@ -21,6 +22,7 @@ export const DateQuestionSummary = ({
   environmentId,
   survey,
   attributeClasses,
+  locale,
 }: DateQuestionSummary) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
 
@@ -37,6 +39,7 @@ export const DateQuestionSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">

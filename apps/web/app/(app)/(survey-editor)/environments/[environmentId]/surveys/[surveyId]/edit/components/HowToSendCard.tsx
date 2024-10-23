@@ -18,9 +18,10 @@ interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
+  locale: string;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const t = useTranslations();
@@ -33,7 +34,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
     if (type === "link" && localSurvey.endings.length === 0) {
-      endingsTemp.push(getDefaultEndingCard(localSurvey.languages));
+      endingsTemp.push(getDefaultEndingCard(localSurvey.languages, locale));
     }
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,

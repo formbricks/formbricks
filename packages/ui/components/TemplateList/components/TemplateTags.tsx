@@ -1,4 +1,5 @@
 import { SplitIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
@@ -28,11 +29,20 @@ const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   }
 };
 
-const getChannelTag = (channels: NonNullabeChannel[] | undefined): string | undefined => {
+const getChannelTag = (
+  channels: NonNullabeChannel[] | undefined,
+  t: (key: string) => string
+): string | undefined => {
   if (!channels) return undefined;
   const getLabel = (channelValue: NonNullabeChannel) =>
     channelMapping.find((channel) => channel.value === channelValue)?.label;
-  const labels = channels.map((channel) => getLabel(channel)).sort();
+  const labels = channels
+    .map((channel) => {
+      const label = getLabel(channel);
+      if (label) return t(label);
+      return undefined;
+    })
+    .sort();
 
   const removeSurveySuffix = (label: string | undefined) => label?.replace(" Survey", "");
 
@@ -42,10 +52,10 @@ const getChannelTag = (channels: NonNullabeChannel[] | undefined): string | unde
 
     case 2:
       // Return labels for two channels concatenated with "or", removing "Survey"
-      return labels.map(removeSurveySuffix).join(" or ") + " Survey";
+      return labels.map(removeSurveySuffix).join(t(" " + t("common.or") + " ")) + t("common.survey");
 
     case 3:
-      return "All Channels";
+      return t("environments.surveys.templates.all_channels");
 
     default:
       return undefined;
@@ -53,6 +63,7 @@ const getChannelTag = (channels: NonNullabeChannel[] | undefined): string | unde
 };
 
 export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) => {
+  const t = useTranslations();
   const roleBasedStyling = useMemo(() => getRoleBasedStyling(template.role), [template.role]);
 
   const roleTag = useMemo(
@@ -60,14 +71,14 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
     [template.role]
   );
 
-  const channelTag = useMemo(() => getChannelTag(template.channels), [template.channels]);
+  const channelTag = useMemo(() => getChannelTag(template.channels, t), [template.channels]);
   const getIndustryTag = (industries: TProductConfigIndustry[] | undefined): string | undefined => {
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
     if (selectedFilter[1] !== null)
       return industryMapping.find((industry) => industry.value === selectedFilter[1])?.label;
     if (!industries || industries.length === 0) return undefined;
     return industries.length > 1
-      ? "Multiple Industries"
+      ? t("environments.surveys.templates.multiple_industries")
       : industryMapping.find((industry) => industry.value === industries[0])?.label;
   };
 
@@ -78,11 +89,11 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{roleTag}</div>
+      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{t(roleTag)}</div>
       {industryTag && (
         <div
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
-          {industryTag}
+          {t(industryTag)}
         </div>
       )}
       {channelTag && (
@@ -90,11 +101,13 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
           className={cn(
             "flex-nowrap rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
           )}>
-          {channelTag}
+          {t(channelTag)}
         </div>
       )}
       {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
-        <TooltipRenderer tooltipContent="This survey uses branching logic." shouldRender={true}>
+        <TooltipRenderer
+          tooltipContent={t("environments.surveys.templates.uses_branching_logic")}
+          shouldRender={true}>
           <SplitIcon className="h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
         </TooltipRenderer>
       )}

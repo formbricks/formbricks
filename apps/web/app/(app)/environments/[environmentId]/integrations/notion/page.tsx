@@ -1,6 +1,9 @@
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
+import { getServerSession } from "next-auth";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+import { authOptions } from "@formbricks/lib/authOptions";
 import {
+  DEFAULT_LOCALE,
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
   NOTION_OAUTH_CLIENT_SECRET,
@@ -11,6 +14,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { getUserLanguage } from "@formbricks/lib/user/service";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -38,11 +42,13 @@ const Page = async ({ params }) => {
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
     databasesArray = await getNotionDatabases(environment.id);
   }
+  const session = await getServerSession(authOptions);
+  const locale = session?.user.id ? await getUserLanguage(session.user.id) : undefined;
 
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
-      <PageHeader pageTitle="Notion Integration" />
+      <PageHeader pageTitle={"environments.integrations.notion.notion_integration"} />
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}
@@ -51,6 +57,7 @@ const Page = async ({ params }) => {
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
         attributeClasses={attributeClasses}
+        locale={locale ?? DEFAULT_LOCALE}
       />
     </PageContentWrapper>
   );

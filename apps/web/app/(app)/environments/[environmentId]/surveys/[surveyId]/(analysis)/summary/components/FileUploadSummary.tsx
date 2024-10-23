@@ -15,6 +15,7 @@ interface FileUploadSummaryProps {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 export const FileUploadSummary = ({
@@ -22,6 +23,7 @@ export const FileUploadSummary = ({
   environmentId,
   survey,
   attributeClasses,
+  locale,
 }: FileUploadSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
 
@@ -38,6 +40,7 @@ export const FileUploadSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">

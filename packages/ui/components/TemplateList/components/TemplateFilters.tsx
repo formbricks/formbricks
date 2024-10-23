@@ -42,7 +42,11 @@ export const TemplateFilters = ({
                   : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                 "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
               )}>
-              {index === 0 ? "All channels" : index === 1 ? "All industries" : "All roles"}
+              {index === 0
+                ? t("environments.surveys.templates.all_channels")
+                : index === 1
+                  ? t("environments.surveys.templates.all_industries")
+                  : t("environments.surveys.templates.all_roles")}
             </button>
             {filters.map((filter) => (
               <button

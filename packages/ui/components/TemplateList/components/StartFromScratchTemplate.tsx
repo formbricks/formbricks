@@ -1,7 +1,7 @@
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
-import { customSurvey } from "@formbricks/lib/templates";
+import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import { TProduct } from "@formbricks/types/product";
 import { TTemplate } from "@formbricks/types/templates";
 import { Button } from "../../Button";
@@ -15,6 +15,7 @@ interface StartFromScratchTemplateProps {
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   noPreview?: boolean;
+  locale: string;
 }
 
 export const StartFromScratchTemplate = ({
@@ -25,8 +26,10 @@ export const StartFromScratchTemplate = ({
   createSurvey,
   loading,
   noPreview,
+  locale,
 }: StartFromScratchTemplateProps) => {
   const t = useTranslations();
+  const customSurvey = getCustomSurveyTemplate(locale);
   return (
     <button
       type="button"

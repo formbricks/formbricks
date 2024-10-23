@@ -93,12 +93,12 @@ export const RankingQuestionForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: "Keep current order",
+      label: t("environments.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: "Randomize all",
+      label: t("environments.surveys.edit.randomize_all"),
       show: question.choices.length > 0,
     },
   };

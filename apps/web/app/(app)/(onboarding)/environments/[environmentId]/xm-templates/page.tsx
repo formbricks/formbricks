@@ -1,6 +1,7 @@
 import { XMTemplateList } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/components/XMTemplateList";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
@@ -18,7 +19,7 @@ interface XMTemplatePageProps {
 const Page = async ({ params }: XMTemplatePageProps) => {
   const session = await getServerSession(authOptions);
   const environment = await getEnvironment(params.environmentId);
-
+  const t = await getTranslations();
   if (!session) {
     throw new Error("Session not found");
   }
@@ -27,7 +28,6 @@ const Page = async ({ params }: XMTemplatePageProps) => {
   if (!user) {
     throw new Error("User not found");
   }
-
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -43,7 +43,7 @@ const Page = async ({ params }: XMTemplatePageProps) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
-      <Header title="What kind of feedback would you like to get?" />
+      <Header title={t("environments.xm-templates.headline")} />
       <XMTemplateList product={product} user={user} environmentId={environment.id} />
       {products.length >= 2 && (
         <Button

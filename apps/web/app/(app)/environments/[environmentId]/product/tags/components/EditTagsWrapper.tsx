@@ -7,6 +7,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/product/tags/actions";
 import { MergeTagsCombobox } from "@/app/(app)/environments/[environmentId]/product/tags/components/MergeTagsCombobox";
 import { AlertCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -41,6 +42,7 @@ const SingleTag: React.FC<{
   updateTagsCount = () => {},
   environmentTags,
 }) => {
+  const t = useTranslations();
   const router = useRouter();
   const [updateTagError, setUpdateTagError] = useState(false);
   const [isMergingTags, setIsMergingTags] = useState(false);
@@ -78,13 +80,17 @@ const SingleTag: React.FC<{
                     toast.success("Tag updated");
                   } else {
                     const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
-                    if (errorMessage.includes("Unique constraint failed on the fields")) {
-                      toast.error("Tag already exists", {
+                    if (
+                      errorMessage.includes(
+                        t("environments.product.tags.unique_constraint_failed_on_the_fields")
+                      )
+                    ) {
+                      toast.error(t("environments.product.tags.tag_already_exists"), {
                         duration: 2000,
                         icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
                       });
                     } else {
-                      toast.error(errorMessage ?? "Something went wrong", {
+                      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
                         duration: 2000,
                       });
                     }
@@ -117,12 +123,12 @@ const SingleTag: React.FC<{
                   setIsMergingTags(true);
                   mergeTagsAction({ originalTagId: tagId, newTagId }).then((mergeTagsResponse) => {
                     if (mergeTagsResponse?.data) {
-                      toast.success("Tags merged");
+                      toast.success(t("environments.product.tags.tags_merged"));
                       updateTagsCount();
                       router.refresh();
                     } else {
                       const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
-                      toast.error(errorMessage ?? "Something went wrong");
+                      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
                     }
                     setIsMergingTags(false);
                   });
@@ -138,13 +144,13 @@ const SingleTag: React.FC<{
               // loading={isDeletingTag}
               className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
               onClick={() => setOpenDeleteTagDialog(true)}>
-              Delete
+              {t("common.delete")}
             </Button>
             <DeleteDialog
               open={openDeleteTagDialog}
               setOpen={setOpenDeleteTagDialog}
               deleteWhat={tagName}
-              text="Are you sure you want to delete this tag?"
+              text={t("environments.product.tags.delete_tag_confirmation")}
               onDelete={confirmDeleteTag}
             />
           </div>
@@ -155,13 +161,14 @@ const SingleTag: React.FC<{
 };
 
 export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
+  const t = useTranslations();
   const { environment, environmentTags, environmentTagsCount } = props;
   return (
     <div className="">
       <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
-        <div className="col-span-2">Tag</div>
-        <div className="col-span-1 text-center">Count</div>
-        <div className="col-span-1 flex justify-center text-center">Actions</div>
+        <div className="col-span-2">{t("environments.product.tags.tag")}</div>
+        <div className="col-span-1 text-center">{t("environments.product.tags.count")}</div>
+        <div className="col-span-1 flex justify-center text-center">{t("common.actions")}</div>
       </div>
 
       {!environmentTags?.length ? (

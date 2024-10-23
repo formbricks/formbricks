@@ -54,23 +54,25 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         />
       </PageHeader>
 
-      <SettingsCard title="Product Name" description="Change your products name.">
+      <SettingsCard
+        title="common.product_name"
+        description="environments.product.general.product_name_settings_description">
         <EditProductNameForm product={product} isProductNameEditDisabled={isProductNameEditDisabled} />
       </SettingsCard>
       <SettingsCard
-        title="Recontact Waiting Time"
-        description="Control how frequently users can be surveyed across all app surveys.">
+        title="environments.product.general.recontact_waiting_time"
+        description="environments.product.general.recontact_waiting_time_settings_description">
         <EditWaitingTimeForm product={product} />
       </SettingsCard>
       <SettingsCard
-        title="Delete Product"
-        description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
+        title="environments.product.general.delete_product"
+        description="environments.product.general.delete_product_settings_description">
         <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
       <div>
-        <SettingsId title="Product ID" id={product.id}></SettingsId>
+        <SettingsId title="common.product_id" id={product.id}></SettingsId>
         {!IS_FORMBRICKS_CLOUD && (
-          <SettingsId title="Formbricks version" id={packageJson.version}></SettingsId>
+          <SettingsId title="common.formbricks_version" id={packageJson.version}></SettingsId>
         )}
       </div>
     </PageContentWrapper>

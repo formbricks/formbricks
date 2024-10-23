@@ -29,6 +29,7 @@ interface MultipleChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
+  locale: string;
 }
 
 export const MultipleChoiceSummary = ({
@@ -38,6 +39,7 @@ export const MultipleChoiceSummary = ({
   survey,
   attributeClasses,
   setFilter,
+  locale,
 }: MultipleChoiceSummaryProps) => {
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
   const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
@@ -68,6 +70,7 @@ export const MultipleChoiceSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (

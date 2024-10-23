@@ -82,7 +82,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle="surveys" cta={isViewer ? <></> : <CreateSurveyButton />} />
+          <PageHeader pageTitle="common.surveys" cta={isViewer ? <></> : <CreateSurveyButton />} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}

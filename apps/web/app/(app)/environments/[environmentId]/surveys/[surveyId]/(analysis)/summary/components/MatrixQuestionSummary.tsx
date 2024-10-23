@@ -20,6 +20,7 @@ interface MatrixQuestionSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
+  locale: string;
 }
 
 export const MatrixQuestionSummary = ({
@@ -27,6 +28,7 @@ export const MatrixQuestionSummary = ({
   survey,
   attributeClasses,
   setFilter,
+  locale,
 }: MatrixQuestionSummaryProps) => {
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
@@ -51,6 +53,7 @@ export const MatrixQuestionSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}

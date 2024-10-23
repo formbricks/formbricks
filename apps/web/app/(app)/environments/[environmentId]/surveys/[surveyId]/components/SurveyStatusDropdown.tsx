@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -23,6 +24,7 @@ export const SurveyStatusDropdown = ({
   updateLocalSurveyStatus,
   survey,
 }: SurveyStatusDropdownProps) => {
+  const t = useTranslations();
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled =
@@ -33,7 +35,7 @@ export const SurveyStatusDropdown = ({
     <>
       {survey.status === "draft" ? (
         <div className="flex items-center">
-          <p className="text-sm italic text-slate-600">Draft</p>
+          <p className="text-sm italic text-slate-600">{t("common.draft")}</p>
         </div>
       ) : (
         <Select

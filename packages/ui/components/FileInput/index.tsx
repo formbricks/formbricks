@@ -17,8 +17,8 @@ const isImage = (name: string) => {
   return allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtension);
 };
 const options = [
-  { value: "image", label: "Image" },
-  { value: "video", label: "Video" },
+  { value: "image", label: "common.image" },
+  { value: "video", label: "common.video" },
 ];
 
 interface FileInputProps {

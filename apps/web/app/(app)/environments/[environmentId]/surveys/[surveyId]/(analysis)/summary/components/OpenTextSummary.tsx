@@ -1,4 +1,5 @@
 import { InsightView } from "@/modules/ee/insights/components/insights-view";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
@@ -35,6 +36,7 @@ export const OpenTextSummary = ({
   isAIEnabled,
   documentsPerPage,
 }: OpenTextSummaryProps) => {
+  const t = useTranslations();
   const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
@@ -51,12 +53,12 @@ export const OpenTextSummary = ({
   const tabNavigation = [
     {
       id: "insights",
-      label: "Insights",
+      label: t("common.insights"),
       onClick: () => setActiveTab("insights"),
     },
     {
       id: "responses",
-      label: "Responses",
+      label: t("common.responses"),
       onClick: () => setActiveTab("responses"),
     },
   ];
@@ -70,7 +72,9 @@ export const OpenTextSummary = ({
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (
             <div className="flex items-center space-x-2">
-              <div className="flex items-center rounded-lg bg-slate-100 p-2">Insights disabled</div>
+              <div className="flex items-center rounded-lg bg-slate-100 p-2">
+                {t("environments.surveys.summary.insights_disabled")}
+              </div>
             </div>
           ) : undefined
         }
