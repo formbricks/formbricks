@@ -85,7 +85,10 @@ export const generateInsightsForSurveyResponsesConcept = async (survey: TSurvey)
           skip,
         });
 
-        if (responses.length === 0) {
+        if (
+          responses.length === 0 ||
+          (responses.length < batchSize && rateLimit && responses.length < rateLimit)
+        ) {
           allResponsesProcessed = true; // Mark as finished when no more responses are found
         }
 
@@ -95,28 +98,41 @@ export const generateInsightsForSurveyResponsesConcept = async (survey: TSurvey)
 
         skip += batchSize - responsesWithOpenTextAnswers.length;
 
-        responsesWithOpenTextAnswers.forEach(async (response) => {
-          const attributes = response.personId ? await getAttributes(response.personId) : {};
+        const answersForDocumentCreationPromises = await Promise.all(
+          responsesWithOpenTextAnswers.map(async (response) => {
+            const attributes = response.personId ? await getAttributes(response.personId) : {};
 
-          openTextQuestionsWithInsights.forEach((question) => {
-            const responseText = response.data[question.id] as string;
-            if (responseText) {
-              const headline = parseRecallInfo(
-                question.headline["default"],
-                attributes,
-                response.data,
-                response.variables
-              );
+            return Promise.all(
+              openTextQuestionsWithInsights.map((question) => {
+                const responseText = response.data[question.id] as string;
+                if (!responseText) {
+                  return;
+                }
 
-              const text = getPromptText(headline, responseText);
+                const headline = parseRecallInfo(
+                  question.headline["default"],
+                  attributes,
+                  response.data,
+                  response.variables
+                );
 
-              answersForDocumentCreation.push({
-                responseId: response.id,
-                questionId: question.id,
-                text,
-              });
-            }
-          });
+                const text = getPromptText(headline, responseText);
+
+                return {
+                  responseId: response.id,
+                  questionId: question.id,
+                  text,
+                };
+              })
+            );
+          })
+        );
+
+        const answersForDocumentCreationResult = answersForDocumentCreationPromises.flat();
+        answersForDocumentCreationResult.forEach((answer) => {
+          if (answer) {
+            answersForDocumentCreation.push(answer);
+          }
         });
       }
 
