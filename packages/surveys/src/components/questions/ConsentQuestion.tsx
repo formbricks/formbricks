@@ -8,7 +8,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -22,7 +22,7 @@ interface ConsentQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const ConsentQuestion = ({
