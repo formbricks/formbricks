@@ -80,7 +80,7 @@ export const SurveyCard = ({
       </div>
       <div
         className={cn(
-          "col-span-1 flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
+          "col-span-1 flex w-fit items-center gap-2 whitespace-nowrap rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
           surveyStatusLabel === "Scheduled" && "bg-slate-200",
           surveyStatusLabel === "In Progress" && "bg-emerald-50",
           surveyStatusLabel === "Completed" && "bg-slate-200",
