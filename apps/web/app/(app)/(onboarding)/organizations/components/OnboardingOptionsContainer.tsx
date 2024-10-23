@@ -1,7 +1,6 @@
 import { LucideProps } from "lucide-react";
 import Link from "next/link";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { OptionCard } from "@formbricks/ui/components/OptionCard";
 
 interface OnboardingOptionsContainerProps {
@@ -40,11 +39,7 @@ export const OnboardingOptionsContainer = ({ options }: OnboardingOptionsContain
   };
 
   return (
-    <div
-      className={cn({
-        "flex w-5/6 flex-wrap justify-center gap-8 text-center md:flex-row lg:w-2/3": options.length >= 3,
-        "flex justify-center gap-8": options.length < 3,
-      })}>
+    <div className="flex w-full max-w-5xl flex-wrap justify-center gap-8 text-center">
       {options.map((option) =>
         option.href ? (
           <Link key={option.title} href={option.href}>

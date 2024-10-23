@@ -10,7 +10,11 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyQuestionChoice, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
+import type {
+  TSurveyQuestionChoice,
+  TSurveyQuestionId,
+  TSurveyRankingQuestion,
+} from "@formbricks/types/surveys/types";
 
 interface RankingQuestionProps {
   question: TSurveyRankingQuestion;
@@ -24,7 +28,7 @@ interface RankingQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const RankingQuestion = ({

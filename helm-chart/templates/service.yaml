@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "formbricks.fullname" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort | default 3000 }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "formbricks.selectorLabels" . | nindent 4 }}

@@ -13,7 +13,7 @@ import {
   TIntegrationSlackConfigData,
   TIntegrationSlackInput,
 } from "@formbricks/types/integration/slack";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { AdditionalIntegrationSettings } from "@formbricks/ui/components/AdditionalIntegrationSettings";
 import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
@@ -136,7 +136,7 @@ export const AddChannelMappingModal = ({
     }
   };
 
-  const handleCheckboxChange = (questionId: string) => {
+  const handleCheckboxChange = (questionId: TSurveyQuestionId) => {
     setSelectedQuestions((prevValues) =>
       prevValues.includes(questionId)
         ? prevValues.filter((value) => value !== questionId)

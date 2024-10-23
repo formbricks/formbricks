@@ -29,6 +29,7 @@ import {
   TSingleCondition,
   TSurveyLogic,
   TSurveyLogicAction,
+  TSurveyQuestionId,
 } from "@formbricks/types/surveys/types";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
@@ -47,8 +48,8 @@ import { QuestionsDroppable } from "./QuestionsDroppable";
 interface QuestionsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
   product: TProduct;
   invalidQuestions: string[] | null;
   setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
