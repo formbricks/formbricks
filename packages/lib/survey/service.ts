@@ -881,6 +881,216 @@ export const createSurvey = async (
   }
 };
 
+/**
+ * Migrate / Move a survey to a different environment
+ *
+ * @param surveyId
+ * @param environmentId
+ * @param targetEnvironmentId
+ * @param userId
+ * @returns
+ */
+export const migrateSurveyToOtherEnvironment = async (
+  surveyId: string,
+  environmentId: string,
+  targetEnvironmentId: string,
+  userId: string
+): Promise<Prisma.Survey> => {
+  validateInputs([environmentId, ZId], [surveyId, ZId], [targetEnvironmentId, ZId], [userId, ZId]);
+
+  // Start a transaction
+  const [updatedSurvey, existingSurvey] = await prisma.$transaction(async (prisma) => {
+    try {
+      // Fetch required resources
+      const existingSurvey = await getSurvey(surveyId);
+      if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
+
+      const [targetEnvironment, targetProduct] = await Promise.all([
+        getEnvironment(targetEnvironmentId),
+        getProductByEnvironmentId(targetEnvironmentId),
+      ]);
+
+      if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
+      if (!targetProduct) throw new ResourceNotFoundError("Product", targetEnvironmentId);
+
+      // Prepare survey update data (excluding triggers)
+      const surveyUpdateData: Prisma.SurveyUpdateInput = {
+        environment: {
+          connect: { id: targetEnvironmentId },
+        },
+        languages: {
+          create: existingSurvey.languages.map((surveyLanguage) => ({
+            language: {
+              connectOrCreate: {
+                where: {
+                  productId_code: { code: surveyLanguage.language.code, productId: targetProduct.id },
+                },
+                create: {
+                  code: surveyLanguage.language.code,
+                  alias: surveyLanguage.language.alias,
+                  productId: targetProduct.id,
+                },
+              },
+            },
+            default: surveyLanguage.default,
+            enabled: surveyLanguage.enabled,
+          })),
+        },
+      };
+
+      // Handle segment
+      if (existingSurvey.segment) {
+        if (existingSurvey.segment.isPrivate) {
+          surveyUpdateData.segment = {
+            create: {
+              title: surveyId,
+              isPrivate: true,
+              filters: existingSurvey.segment.filters,
+              environment: { connect: { id: targetEnvironmentId } },
+            },
+          };
+        } else {
+          const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
+            where: {
+              title: existingSurvey.segment.title,
+              isPrivate: false,
+              environmentId: targetEnvironmentId,
+              filters: existingSurvey.segment.filters
+                ? { equals: existingSurvey.segment.filters }
+                : undefined,
+            },
+          });
+
+          if (!existingSegmentInTargetEnvironment) {
+            surveyUpdateData.segment = {
+              create: {
+                title: `${existingSurvey.segment.title}-${Date.now()}`,
+                isPrivate: false,
+                filters: existingSurvey.segment.filters,
+                environment: { connect: { id: targetEnvironmentId } },
+              },
+            };
+          } else {
+            surveyUpdateData.segment = { connect: { id: existingSegmentInTargetEnvironment.id } };
+          }
+        }
+      }
+
+      // Update the survey
+      const updatedSurvey = await prisma.survey.update({
+        where: { id: surveyId },
+        data: surveyUpdateData,
+      });
+
+      // Handle triggers separately
+      await migrateSurveyTriggers(existingSurvey, targetEnvironmentId, prisma);
+
+      return [updatedSurvey, existingSurvey];
+    } catch (error) {
+      console.error("Error during survey migration", error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  });
+
+  // Revalidate caches
+  surveyCache.revalidate({
+    id: surveyId,
+    environmentId: targetEnvironmentId,
+  });
+
+  surveyCache.revalidate({
+    id: surveyId,
+    environmentId: environmentId,
+  });
+
+  surveyCache.revalidate({
+    environmentId: environmentId,
+  });
+
+  surveyCache.revalidate({
+    environmentId: targetEnvironmentId,
+  });
+
+  productCache.revalidate({
+    environmentId: environmentId,
+  });
+
+  productCache.revalidate({
+    environmentId: targetEnvironmentId,
+  });
+
+  if (updatedSurvey.segment) {
+    segmentCache.revalidate({
+      id: existingSurvey?.segment?.id,
+      environmentId: updatedSurvey.environmentId,
+    });
+  }
+
+  return updatedSurvey;
+};
+
+// Separate function for migrating triggers
+const migrateSurveyTriggers = async (
+  existingSurvey: TSurvey,
+  targetEnvironmentId: string,
+  prisma: Prisma.TransactionClient
+) => {
+  for (const trigger of existingSurvey.triggers) {
+    let whereClause = {
+      name: trigger.actionClass.name,
+      environmentId: targetEnvironmentId,
+      description: trigger.actionClass.description,
+      type: trigger.actionClass.type,
+      key: trigger.actionClass.key,
+      noCodeConfig: trigger.actionClass.noCodeConfig
+        ? { equals: trigger.actionClass.noCodeConfig }
+        : undefined,
+    };
+    // Each code trigger is uniquely identified by its key and environmentId
+    if (trigger.actionClass.type === "code" && trigger.actionClass.key) {
+      whereClause = {
+        key: trigger.actionClass.key,
+        environmentId: targetEnvironmentId,
+      };
+    }
+    const existingActionClass = await prisma.actionClass.findFirst({
+      where: whereClause,
+    });
+
+    let actionClassId = existingActionClass?.id;
+    if (!actionClassId) {
+      const newActionClass = await prisma.actionClass.create({
+        data: {
+          name: `trigger.actionClass.name-${Date.now()}`,
+          description: trigger.actionClass.description,
+          type: trigger.actionClass.type,
+          key: trigger.actionClass.key,
+          noCodeConfig: trigger.actionClass.noCodeConfig
+            ? structuredClone(trigger.actionClass.noCodeConfig)
+            : undefined,
+          environment: { connect: { id: targetEnvironmentId } },
+        },
+      });
+      actionClassId = newActionClass.id;
+    }
+
+    await prisma.surveyTrigger.update({
+      where: {
+        surveyId_actionClassId: {
+          surveyId: existingSurvey.id,
+          actionClassId: trigger.actionClass.id,
+        },
+      },
+      data: {
+        actionClassId: actionClassId,
+      },
+    });
+  }
+};
+
 export const copySurveyToOtherEnvironment = async (
   environmentId: string,
   surveyId: string,
