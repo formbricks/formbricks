@@ -2,21 +2,20 @@
 
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { TProductConfigChannel } from "@formbricks/types/product";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface ProductConfigNavigationProps {
-  environmentId: string;
   activeId: string;
-  isMultiLanguageAllowed: boolean;
-  productChannel: TProductConfigChannel;
+  environmentId?: string;
+  isMultiLanguageAllowed?: boolean;
+  loading?: boolean;
 }
 
 export const ProductConfigNavigation = ({
-  environmentId,
   activeId,
+  environmentId,
   isMultiLanguageAllowed,
-  productChannel,
+  loading,
 }: ProductConfigNavigationProps) => {
   const pathname = usePathname();
   let navigation = [
@@ -57,22 +56,13 @@ export const ProductConfigNavigation = ({
       current: pathname?.includes("/api-keys"),
     },
     {
-      id: "website-connection",
-      label: "Website Connection",
-      icon: <ListChecksIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/product/website-connection`,
-      current: pathname?.includes("/website-connection"),
-      hidden: !!(productChannel && productChannel !== "website"),
-    },
-    {
       id: "app-connection",
-      label: "App Connection",
+      label: "Website & App Connection",
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/app-connection`,
       current: pathname?.includes("/app-connection"),
-      hidden: !!(productChannel && productChannel !== "app"),
     },
   ];
 
-  return <SecondaryNavigation navigation={navigation} activeId={activeId} />;
+  return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
 };

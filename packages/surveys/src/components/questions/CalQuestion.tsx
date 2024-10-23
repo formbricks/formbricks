@@ -10,7 +10,7 @@ import { useCallback, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import { TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { TSurveyCalQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;
@@ -24,7 +24,7 @@ interface CalQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const CalQuestion = ({
@@ -44,7 +44,7 @@ export const CalQuestion = ({
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-
+  const isCurrent = question.id === currentQuestionId;
   const onSuccessfulBooking = useCallback(() => {
     onChange({ [question.id]: "booked" });
     const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -87,20 +87,22 @@ export const CalQuestion = ({
           </>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        {!question.required && (
+          <SubmitButton
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
+            tabIndex={isCurrent ? 0 : -1}
+          />
+        )}
+        <div></div>
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
-          />
-        )}
-        <div></div>
-        {!question.required && (
-          <SubmitButton
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-            isLastQuestion={isLastQuestion}
+            tabIndex={isCurrent ? 0 : -1}
           />
         )}
       </div>

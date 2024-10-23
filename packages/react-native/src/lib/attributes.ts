@@ -3,7 +3,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import type { TAttributes } from "@formbricks/types/attributes";
 import { type Result, err, ok } from "@formbricks/types/error-handlers";
 import type { NetworkError } from "@formbricks/types/errors";
-import { Logger } from "../../../js-core/src/shared/logger";
+import { Logger } from "../../../js-core/src/lib/logger";
 import { appConfig } from "./config";
 
 const logger = Logger.getInstance();

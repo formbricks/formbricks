@@ -1,7 +1,8 @@
-import { z } from "zod";
+import { type ZodIssue, z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
+import { ZInsight } from "../insights";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
@@ -474,6 +475,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
+  insightsEnabled: z.boolean().default(false).optional(),
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
@@ -684,7 +686,7 @@ export const ZSurveyDisplayOption = z.enum([
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
 
-export const ZSurveyType = z.enum(["link", "app", "website"]);
+export const ZSurveyType = z.enum(["link", "app"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
@@ -2010,7 +2012,7 @@ const validateActions = (
     return undefined;
   });
 
-  const filteredActionIssues = actionIssues.filter((issue) => issue !== undefined);
+  const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 
@@ -2095,6 +2097,8 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       personAttributes: ZAttributes.nullable(),
     })
   ),
+  insights: z.array(ZInsight),
+  insightsEnabled: z.boolean().optional(),
 });
 
 export type TSurveyQuestionSummaryOpenText = z.infer<typeof ZSurveyQuestionSummaryOpenText>;
@@ -2433,6 +2437,8 @@ export const ZSurveySummary = z.object({
   summary: z.array(z.union([ZSurveyQuestionSummary, ZSurveyQuestionSummaryHiddenFields])),
 });
 
+export type TSurveySummary = z.infer<typeof ZSurveySummary>;
+
 export const ZSurveyFilterCriteria = z.object({
   name: z.string().optional(),
   status: z.array(ZSurveyStatus).optional(),
@@ -2471,7 +2477,6 @@ const ZSortOption = z.object({
 });
 
 export type TSortOption = z.infer<typeof ZSortOption>;
-export type TSurveySummary = z.infer<typeof ZSurveySummary>;
 
 export const ZSurveyRecallItem = z.object({
   id: z.string(),
@@ -2480,14 +2485,3 @@ export const ZSurveyRecallItem = z.object({
 });
 
 export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;
-
-export const ZSurveyCopyFormValidation = z.object({
-  products: z.array(
-    z.object({
-      product: z.string(),
-      environments: z.array(z.string()),
-    })
-  ),
-});
-
-export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;

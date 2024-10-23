@@ -19,14 +19,14 @@ import {
   TSurveyQuestionChoice,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys/types";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
 import {
   getChoiceValue,
   getIndex,
   getPlaceHolderById,
   isValueIncomplete,
-} from "@formbricks/ui/QuestionFormInput/utils";
+} from "@formbricks/ui/components/QuestionFormInput/utils";
 
 interface CustomValueInputProps {
   id: string;

@@ -2,21 +2,18 @@ import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/
 import { EnvironmentIdField } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/EnvironmentIdField";
 import { SetupInstructions } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/SetupInstructions";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import { notFound } from "next/navigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { EnvironmentNotice } from "@formbricks/ui/components/EnvironmentNotice";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../../settings/components/SettingsCard";
 
 const Page = async ({ params }) => {
-  const [environment, product, organization] = await Promise.all([
+  const [environment, organization] = await Promise.all([
     getEnvironment(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
@@ -29,11 +26,6 @@ const Page = async ({ params }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const currentProductChannel = product?.config.channel ?? null;
-
-  if (currentProductChannel && currentProductChannel !== "app") {
-    return notFound();
-  }
 
   return (
     <PageContentWrapper>
@@ -42,26 +34,25 @@ const Page = async ({ params }) => {
           environmentId={params.environmentId}
           activeId="app-connection"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
-          productChannel={currentProductChannel}
         />
       </PageHeader>
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/app-connection" />
         <SettingsCard
-          title="App Connection Status"
+          title="Website & App Connection Status"
           description="Check if your app is successfully connected with Formbricks. Reload page to recheck.">
-          {environment && <WidgetStatusIndicator environment={environment} size="large" type="app" />}
+          {environment && <WidgetStatusIndicator environment={environment} />}
+        </SettingsCard>
+        <SettingsCard
+          title="How to setup"
+          description="Follow these steps to setup the Formbricks widget within your app."
+          noPadding>
+          <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
         <SettingsCard
           title="Your EnvironmentId"
           description="This id uniquely identifies this Formbricks environment.">
           <EnvironmentIdField environmentId={params.environmentId} />
-        </SettingsCard>
-        <SettingsCard
-          title="How to setup"
-          description="Follow these steps to setup the Formbricks widget within your app"
-          noPadding>
-          <SetupInstructions type="app" environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
       </div>
     </PageContentWrapper>

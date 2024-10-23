@@ -35,7 +35,7 @@
     "build": "tsc && vite build",
     "build:dev": "tsc && vite build --mode dev",
     "lint": "eslint src --ext .ts,.js,.tsx,.jsx",
-    "go": "vite build --watch --mode dev",
+    "dev": "vite build --watch --mode dev",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
   "devDependencies": {
@@ -44,12 +44,12 @@
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@types/react": "^18.2.79",
-    "react": "18.2.0",
-    "react-native": "^0.74.5",
-    "terser": "^5.31.3",
-    "vite": "^5.3.5",
-    "vite-plugin-dts": "^3.9.1"
+    "@types/react": "18.3.11",
+    "react": "18.3.1",
+    "react-native": "0.74.5",
+    "terser": "5.31.3",
+    "vite": "5.4.8",
+    "vite-plugin-dts": "3.9.1"
   },
   "peerDependencies": {
     "react": ">=16.8.0",

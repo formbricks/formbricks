@@ -10,7 +10,7 @@ import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -23,7 +23,7 @@ interface MatrixQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const MatrixQuestion = ({
@@ -42,7 +42,7 @@ export const MatrixQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-
+  const isCurrent = question.id === currentQuestionId;
   const rowShuffleIdx = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledRowIndices(question.rows.length, question.shuffleOption);
@@ -149,7 +149,7 @@ export const MatrixQuestion = ({
                     {question.columns.map((column, columnIndex) => (
                       <td
                         key={columnIndex}
-                        tabIndex={0}
+                        tabIndex={isCurrent ? 0 : -1}
                         className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-gray-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                         onClick={() =>
                           handleSelect(
@@ -195,21 +195,20 @@ export const MatrixQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        {!isFirstQuestion && (
-          <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            onClick={handleBackButtonClick}
-            tabIndex={0}
-          />
-        )}
-        <div></div>
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
         <SubmitButton
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
-          tabIndex={0}
+          tabIndex={isCurrent ? 0 : -1}
         />
+        {!isFirstQuestion && (
+          <BackButton
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+            onClick={handleBackButtonClick}
+            tabIndex={isCurrent ? 0 : -1}
+          />
+        )}
       </div>
     </form>
   );

@@ -29,7 +29,7 @@ const DropdownMenuSubTrigger: React.ComponentType<
     <DropdownMenuPrimitive.SubTrigger
       ref={ref as any}
       className={cn(
-        "flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[state=open]:bg-slate-100",
+        "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-none hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
         inset && "pl-8",
         className
       )}
@@ -46,7 +46,7 @@ const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.Dropdown
     <DropdownMenuPrimitive.SubContent
       ref={ref as any}
       className={cn(
-        "animate-in slide-in-from-left-1 z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white p-1 text-slate-700 shadow-md",
+        "animate-in slide-in-from-left-1 z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-sm hover:text-slate-700",
         className
       )}
       {...props}
@@ -67,7 +67,7 @@ const DropdownMenuContent: React.ComponentType<DropdownMenuPrimitive.DropdownMen
           ref={ref}
           sideOffset={sideOffset}
           className={cn(
-            "animate-in data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white p-1 text-slate-700 shadow-md",
+            "animate-in data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-700 shadow-sm",
             className
           )}
           {...props}
@@ -80,22 +80,26 @@ DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 const DropdownMenuItem: React.ForwardRefExoticComponent<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
+    icon?: React.ReactNode;
   } & React.RefAttributes<React.ElementRef<typeof DropdownMenuPrimitive.Item>>
 > = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
+    icon?: React.ReactNode;
   }
->(({ className, inset, ...props }, ref) => (
+>(({ className, children, inset, icon, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-md px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-pointer select-none items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}
-    {...props}
-  />
+    {...props}>
+    {icon}
+    {children}
+  </DropdownMenuPrimitive.Item>
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
@@ -108,7 +112,7 @@ const DropdownMenuCheckboxItem: React.ComponentType<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     checked={checked}
@@ -132,7 +136,7 @@ const DropdownMenuRadioItem: React.ComponentType<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium outline-none focus:bg-slate-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}>

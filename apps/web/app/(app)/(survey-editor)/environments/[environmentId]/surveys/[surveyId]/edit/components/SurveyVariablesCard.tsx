@@ -3,14 +3,14 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { SurveyVariablesCardItem } from "./SurveyVariablesCardItem";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (id: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (id: TSurveyQuestionId | null) => void;
 }
 
 const variablesCardId = `fb-variables-${Date.now()}`;
@@ -48,7 +48,7 @@ export const SurveyVariablesCard = ({
         className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
-          className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+          className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
           <div>
             <div className="inline-flex">
               <div>

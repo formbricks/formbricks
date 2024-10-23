@@ -25,7 +25,7 @@ import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TI18nString, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
@@ -39,6 +39,8 @@ interface SummaryListProps {
   survey: TSurvey;
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
+  isAIEnabled: boolean;
+  documentsPerPage?: number;
 }
 
 export const SummaryList = ({
@@ -48,13 +50,13 @@ export const SummaryList = ({
   survey,
   totalResponseCount,
   attributeClasses,
+  isAIEnabled,
+  documentsPerPage,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
-  const widgetSetupCompleted =
-    survey.type === "app" ? environment.appSetupCompleted : environment.websiteSetupCompleted;
 
   const setFilter = (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
@@ -107,10 +109,8 @@ export const SummaryList = ({
 
   return (
     <div className="mt-10 space-y-8">
-      {(survey.type === "app" || survey.type === "website") &&
-      responseCount === 0 &&
-      !widgetSetupCompleted ? (
-        <EmptyAppSurveys environment={environment} surveyType={survey.type} />
+      {survey.type === "app" && responseCount === 0 && !environment.appSetupCompleted ? (
+        <EmptyAppSurveys environment={environment} />
       ) : summary.length === 0 ? (
         <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (
@@ -119,7 +119,6 @@ export const SummaryList = ({
           environment={environment}
           noWidgetRequired={survey.type === "link"}
           emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
-          widgetSetupCompleted={widgetSetupCompleted}
         />
       ) : (
         summary.map((questionSummary) => {
@@ -131,6 +130,8 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                isAIEnabled={isAIEnabled}
+                documentsPerPage={documentsPerPage}
               />
             );
           }
