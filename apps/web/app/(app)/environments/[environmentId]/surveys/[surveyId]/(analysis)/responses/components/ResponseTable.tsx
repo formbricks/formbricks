@@ -36,7 +36,7 @@ interface ResponseTableProps {
   environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
-  isViewer: boolean;
+  isMember: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
@@ -51,7 +51,7 @@ export const ResponseTable = ({
   user,
   environment,
   environmentTags,
-  isViewer,
+  isMember,
   fetchNextPage,
   hasMore,
   deleteResponses,
@@ -67,7 +67,7 @@ export const ResponseTable = ({
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isMember);
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -253,7 +253,7 @@ export const ResponseTable = ({
             user={user}
             environment={environment}
             environmentTags={environmentTags}
-            isViewer={isViewer}
+            isMember={isMember}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
             setSelectedResponseId={setSelectedResponseId}

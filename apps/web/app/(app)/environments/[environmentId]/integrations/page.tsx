@@ -56,7 +56,7 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
@@ -206,7 +206,7 @@ const Page = async ({ params }) => {
     statusText: widgetSetupCompleted ? "App Connected" : "Not Connected",
   });
 
-  if (isViewer) return <ErrorComponent />;
+  if (isMember) return <ErrorComponent />;
 
   return (
     <PageContentWrapper>

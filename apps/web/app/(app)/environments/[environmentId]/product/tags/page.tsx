@@ -39,8 +39,8 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isTagSettingDisabled = isViewer;
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const isTagSettingDisabled = isMember;
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 

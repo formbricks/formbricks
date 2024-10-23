@@ -25,7 +25,7 @@ interface SingleResponseCardHeaderProps {
   survey: TSurvey;
   environment: TEnvironment;
   user?: TUser;
-  isViewer: boolean;
+  isMember: boolean;
   setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
 }
 
@@ -35,7 +35,7 @@ export const SingleResponseCardHeader = ({
   survey,
   environment,
   user,
-  isViewer,
+  isMember,
   setDeleteDialogOpen,
 }: SingleResponseCardHeaderProps) => {
   const displayIdentifier = response.person
@@ -199,7 +199,7 @@ export const SingleResponseCardHeader = ({
             {timeSince(response.createdAt.toISOString())}
           </time>
           {user &&
-            !isViewer &&
+            !isMember &&
             (canResponseBeDeleted ? (
               <TrashIcon
                 onClick={() => setDeleteDialogOpen(true)}

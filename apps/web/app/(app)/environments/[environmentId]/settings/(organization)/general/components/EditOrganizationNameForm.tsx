@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -23,7 +23,7 @@ import { Input } from "@formbricks/ui/components/Input";
 interface EditOrganizationNameProps {
   environmentId: string;
   organization: TOrganization;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
 }
 
 const ZEditOrganizationNameFormSchema = ZOrganization.pick({ name: true });
@@ -38,7 +38,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
     resolver: zodResolver(ZEditOrganizationNameFormSchema),
   });
 
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
 
   const { isSubmitting, isDirty } = form.formState;
 
@@ -62,7 +62,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
     }
   };
 
-  return isViewer ? (
+  return isMember ? (
     <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
   ) : (
     <FormProvider {...form}>

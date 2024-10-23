@@ -17,7 +17,7 @@ import { deleteOrganization, updateOrganization } from "@formbricks/lib/organiza
 import { getOrganizationIdFromInviteId } from "@formbricks/lib/organization/utils";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { ZMembershipRole } from "@formbricks/types/memberships";
+import { ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
 const ZUpdateOrganizationNameAction = z.object({
@@ -112,7 +112,7 @@ export const leaveOrganizationAction = authenticatedActionClient
       throw new AuthenticationError("Not a member of this organization");
     }
 
-    if (membership.role === "owner") {
+    if (membership.organizationRole === "owner") {
       throw new ValidationError("You cannot leave a organization you own");
     }
 
@@ -187,7 +187,7 @@ const ZInviteUserAction = z.object({
   organizationId: ZId,
   email: z.string(),
   name: z.string(),
-  role: ZMembershipRole,
+  organizationRole: ZOrganizationRole,
 });
 
 export const inviteUserAction = authenticatedActionClient
@@ -208,7 +208,7 @@ export const inviteUserAction = authenticatedActionClient
       invitee: {
         email: parsedInput.email,
         name: parsedInput.name,
-        role: parsedInput.role,
+        organizationRole: parsedInput.organizationRole,
       },
     });
 

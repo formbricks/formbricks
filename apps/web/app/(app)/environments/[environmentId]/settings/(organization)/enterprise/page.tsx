@@ -30,8 +30,8 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isAdmin, isOwner } = getAccessFlags(currentUserMembership?.role);
-  const isPricingDisabled = !isOwner && !isAdmin;
+  const { isManager, isOwner } = getAccessFlags(currentUserMembership?.organizationRole);
+  const isPricingDisabled = !isOwner && !isManager;
 
   if (isPricingDisabled) {
     notFound();
@@ -46,7 +46,7 @@ const Page = async ({ params }) => {
       onRequest: false,
     },
     {
-      title: "Organization Roles (Admin, Editor, Developer, etc.)",
+      title: "Organization Roles (Manager, Member, Billing, etc.)",
       comingSoon: false,
       onRequest: false,
     },
@@ -88,7 +88,7 @@ const Page = async ({ params }) => {
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={currentUserMembership?.organizationRole}
           activeId="enterprise"
         />
       </PageHeader>

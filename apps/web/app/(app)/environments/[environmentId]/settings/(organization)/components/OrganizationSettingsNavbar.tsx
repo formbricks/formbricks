@@ -1,9 +1,8 @@
 "use client";
 
-import { BoltIcon, CreditCardIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 export const OrganizationSettingsNavbar = ({
@@ -15,20 +14,19 @@ export const OrganizationSettingsNavbar = ({
 }: {
   environmentId?: string;
   isFormbricksCloud: boolean;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   activeId: string;
   loading?: boolean;
 }) => {
   const pathname = usePathname();
-  const { isAdmin, isOwner } = getAccessFlags(membershipRole);
-  const isPricingDisabled = !isOwner && !isAdmin;
+  const { isManager, isOwner } = getAccessFlags(membershipRole);
+  const isPricingDisabled = !isOwner && !isManager;
 
   const navigation = [
     {
       id: "general",
       label: "General",
       href: `/environments/${environmentId}/settings/general`,
-      icon: <UsersIcon className="h-5 w-5" />,
       current: pathname?.includes("/general"),
       hidden: false,
     },
@@ -36,7 +34,6 @@ export const OrganizationSettingsNavbar = ({
       id: "billing",
       label: "Billing & Plan",
       href: `/environments/${environmentId}/settings/billing`,
-      icon: <CreditCardIcon className="h-5 w-5" />,
       hidden: !isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/billing"),
     },
@@ -44,9 +41,15 @@ export const OrganizationSettingsNavbar = ({
       id: "enterprise",
       label: "Enterprise License",
       href: `/environments/${environmentId}/settings/enterprise`,
-      icon: <BoltIcon className="h-5 w-5" />,
       hidden: isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/enterprise"),
+    },
+    {
+      id: "teams",
+      label: "Teams",
+      href: `/environments/${environmentId}/settings/teams`,
+      // hidden: isFormbricksCloud || isPricingDisabled,
+      current: pathname?.includes("/teams"),
     },
   ];
 

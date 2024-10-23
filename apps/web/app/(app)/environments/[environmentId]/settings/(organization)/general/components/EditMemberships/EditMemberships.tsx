@@ -20,8 +20,9 @@ export const EditMemberships = async ({
   const members = await getMembersByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
 
-  const currentUserRole = membership?.role;
-  const isUserAdminOrOwner = membership?.role === "admin" || membership?.role === "owner";
+  const currentUserRole = membership?.organizationRole;
+  const isUserManagerOrOwner =
+    membership?.organizationRole === "manager" || membership?.organizationRole === "owner";
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   return (
@@ -40,7 +41,7 @@ export const EditMemberships = async ({
             currentUserId={currentUserId}
             invites={invites ?? []}
             members={members ?? []}
-            isUserAdminOrOwner={isUserAdminOrOwner}
+            isUserManagerOrOwner={isUserManagerOrOwner}
             currentUserRole={currentUserRole}
             canDoRoleManagement={canDoRoleManagement}
           />

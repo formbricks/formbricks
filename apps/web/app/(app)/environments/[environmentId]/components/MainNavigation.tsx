@@ -37,7 +37,7 @@ import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
@@ -67,7 +67,7 @@ interface NavigationProps {
   products: TProduct[];
   isMultiOrgEnabled: boolean;
   isFormbricksCloud?: boolean;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   isAIEnabled?: boolean;
 }
 
@@ -93,9 +93,9 @@ export const MainNavigation = ({
   const [latestVersion, setLatestVersion] = useState("");
 
   const product = products.find((product) => product.id === environment.productId);
-  const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
-  const isOwnerOrAdmin = isAdmin || isOwner;
-  const isPricingDisabled = !isOwner && !isAdmin;
+  const { isManager, isOwner, isMember } = getAccessFlags(membershipRole);
+  const isOwnerOrManager = isManager || isOwner;
+  const isPricingDisabled = !isOwner && !isManager;
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -195,17 +195,17 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),
-        isHidden: isViewer,
+        isHidden: isMember,
       },
       {
         name: "Configuration",
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
-        isHidden: isViewer,
+        isHidden: isMember,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, isMember]
   );
 
   const dropdownNavigation = [
@@ -257,8 +257,8 @@ export const MainNavigation = ({
         }
       }
     }
-    if (isOwnerOrAdmin) loadReleases();
-  }, [isOwnerOrAdmin]);
+    if (isOwnerOrManager) loadReleases();
+  }, [isOwnerOrManager]);
 
   return (
     <>
@@ -321,7 +321,7 @@ export const MainNavigation = ({
           {/* Product Switch */}
           <div>
             {/* New Version Available */}
-            {!isCollapsed && isOwnerOrAdmin && latestVersion && !isFormbricksCloud && (
+            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (
               <Link
                 href="https://github.com/formbricks/formbricks/releases"
                 target="_blank"
@@ -415,7 +415,7 @@ export const MainNavigation = ({
                   ))}
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
-                {isOwnerOrAdmin && (
+                {isOwnerOrManager && (
                   <DropdownMenuItem
                     onClick={() => handleAddProduct(organization.id)}
                     icon={<PlusIcon className="mr-2 h-4 w-4" />}>

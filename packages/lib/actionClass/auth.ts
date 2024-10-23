@@ -55,9 +55,9 @@ export const verifyUserRoleAccess = async (
     }
 
     const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
-    const { isViewer } = getAccessFlags(currentUserMembership?.role);
+    const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
-    if (isViewer) {
+    if (isMember) {
       accessObject.hasCreateOrUpdateAccess = false;
       accessObject.hasDeleteAccess = false;
     }

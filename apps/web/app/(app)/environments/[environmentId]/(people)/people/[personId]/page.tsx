@@ -50,11 +50,11 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
   const getDeletePersonButton = () => {
     return (
-      <DeletePersonButton environmentId={environment.id} personId={params.personId} isViewer={isViewer} />
+      <DeletePersonButton environmentId={environment.id} personId={params.personId} isMember={isMember} />
     );
   };
 

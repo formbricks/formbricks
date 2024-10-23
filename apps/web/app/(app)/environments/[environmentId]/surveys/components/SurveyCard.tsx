@@ -17,7 +17,7 @@ interface SurveyCardProps {
   survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
-  isViewer: boolean;
+  isMember: boolean;
   WEBAPP_URL: string;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
@@ -26,12 +26,12 @@ export const SurveyCard = ({
   survey,
   environment,
   otherEnvironment,
-  isViewer,
+  isMember,
   WEBAPP_URL,
   deleteSurvey,
   duplicateSurvey,
 }: SurveyCardProps) => {
-  const isSurveyCreationDeletionDisabled = isViewer;
+  const isSurveyCreationDeletionDisabled = isMember;
 
   const surveyStatusLabel = useMemo(() => {
     if (survey.status === "inProgress") return "In Progress";

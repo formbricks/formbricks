@@ -8,12 +8,12 @@ import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { ZMembershipRole } from "@formbricks/types/memberships";
+import { ZOrganizationRole } from "@formbricks/types/memberships";
 
 const ZInviteOrganizationMemberAction = z.object({
   organizationId: ZId,
   email: z.string(),
-  role: ZMembershipRole,
+  organizationRole: ZOrganizationRole,
   inviteMessage: z.string(),
 });
 
@@ -35,7 +35,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       invitee: {
         email: parsedInput.email,
         name: "",
-        role: parsedInput.role,
+        organizationRole: parsedInput.organizationRole,
       },
     });
 

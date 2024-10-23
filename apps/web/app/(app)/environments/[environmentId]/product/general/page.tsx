@@ -35,10 +35,10 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isProductNameEditDisabled = isDeveloper ? true : isViewer;
+  const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const isProductNameEditDisabled = isMember || isBilling ? false : true;
 
-  if (isViewer) {
+  if (isMember) {
     return <ErrorComponent />;
   }
 

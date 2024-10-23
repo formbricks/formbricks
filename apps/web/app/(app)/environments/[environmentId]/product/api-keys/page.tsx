@@ -31,10 +31,10 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
-  return !isViewer ? (
+  return !isMember ? (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
         <ProductConfigNavigation

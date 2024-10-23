@@ -14,7 +14,7 @@ import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
@@ -26,7 +26,7 @@ interface ActionSettingsTabProps {
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   setOpen: (v: boolean) => void;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
 }
 
 export const ActionSettingsTab = ({
@@ -41,7 +41,7 @@ export const ActionSettingsTab = ({
 
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
   const actionClassNames = useMemo(
     () =>
       actionClasses.filter((action) => action.id !== actionClass.id).map((actionClass) => actionClass.name),
@@ -71,7 +71,7 @@ export const ActionSettingsTab = ({
 
   const onSubmit = async (data: TActionClassInput) => {
     try {
-      if (isViewer) {
+      if (isMember) {
         throw new Error("You are not authorised to perform this action.");
       }
       setIsUpdatingAction(true);
@@ -162,7 +162,7 @@ export const ActionSettingsTab = ({
                   )}
                 />
               </div>
-              {!isViewer && (
+              {!isMember && (
                 <div className="col-span-1">
                   <FormField
                     control={control}
@@ -206,7 +206,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between border-t border-slate-200 py-6">
             <div>
-              {!isViewer && actionClass.type !== "automatic" && (
+              {!isMember && actionClass.type !== "automatic" && (
                 <Button
                   type="button"
                   variant="warn"

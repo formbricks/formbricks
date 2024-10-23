@@ -271,8 +271,8 @@ export const authOptions: NextAuthOptions = {
             });
             isNewOrganization = true;
           }
-          const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
-          await createMembership(organization.id, userProfile.id, { role, accepted: true });
+          const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "manager";
+          await createMembership(organization.id, userProfile.id, { organizationRole: role, accepted: true });
           await createAccount({
             ...account,
             userId: userProfile.id,

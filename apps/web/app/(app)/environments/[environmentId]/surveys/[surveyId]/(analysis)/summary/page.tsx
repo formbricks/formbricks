@@ -66,7 +66,7 @@ const Page = async ({ params }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
@@ -81,7 +81,7 @@ const Page = async ({ params }) => {
           <SurveyAnalysisCTA
             environment={environment}
             survey={survey}
-            isViewer={isViewer}
+            isMember={isMember}
             webAppUrl={WEBAPP_URL}
             user={user}
           />

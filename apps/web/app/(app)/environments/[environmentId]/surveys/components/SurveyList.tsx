@@ -17,7 +17,7 @@ import { SurveyLoading } from "./SurveyLoading";
 interface SurveysListProps {
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
-  isViewer: boolean;
+  isMember: boolean;
   WEBAPP_URL: string;
   userId: string;
   surveysPerPage: number;
@@ -35,7 +35,7 @@ export const initialFilters: TSurveyFilters = {
 export const SurveysList = ({
   environment,
   otherEnvironment,
-  isViewer,
+  isMember,
   WEBAPP_URL,
   userId,
   surveysPerPage: surveysLimit,
@@ -153,7 +153,7 @@ export const SurveysList = ({
                   survey={survey}
                   environment={environment}
                   otherEnvironment={otherEnvironment}
-                  isViewer={isViewer}
+                  isMember={isMember}
                   WEBAPP_URL={WEBAPP_URL}
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}

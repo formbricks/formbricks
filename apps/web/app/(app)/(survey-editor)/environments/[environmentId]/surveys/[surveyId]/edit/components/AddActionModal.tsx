@@ -12,7 +12,7 @@ interface AddActionModalProps {
   environmentId: string;
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
-  isViewer: boolean;
+  isMember: boolean;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }
@@ -24,7 +24,7 @@ export const AddActionModal = ({
   setActionClasses,
   localSurvey,
   setLocalSurvey,
-  isViewer,
+  isMember,
   environmentId,
 }: AddActionModalProps) => {
   const tabs = [
@@ -46,7 +46,7 @@ export const AddActionModal = ({
           actionClasses={actionClasses}
           setActionClasses={setActionClasses}
           setOpen={setOpen}
-          isViewer={isViewer}
+          isMember={isMember}
           setLocalSurvey={setLocalSurvey}
           environmentId={environmentId}
         />

@@ -26,7 +26,7 @@ const ProductOnboardingLayout = async ({ children, params }) => {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
-  if (!membership || membership.role === "viewer") return notFound();
+  if (!membership || membership.organizationRole === "member") return notFound();
 
   const organization = await getOrganization(params.organizationId);
   if (!organization) {

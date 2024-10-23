@@ -17,7 +17,7 @@ import { CustomDialog } from "@formbricks/ui/components/CustomDialog";
 
 type OrganizationActionsProps = {
   role: string;
-  isAdminOrOwner: boolean;
+  isUserManagerOrOwner: boolean;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
   isInviteDisabled: boolean;
@@ -28,7 +28,7 @@ type OrganizationActionsProps = {
 };
 
 export const OrganizationActions = ({
-  isAdminOrOwner,
+  isUserManagerOrOwner,
   role,
   organization,
   isLeaveOrganizationDisabled,
@@ -61,8 +61,8 @@ export const OrganizationActions = ({
   const handleAddMembers = async (data: TInvitee[]) => {
     try {
       await Promise.all(
-        data.map(async ({ name, email, role }) => {
-          await inviteUserAction({ organizationId: organization.id, email, name, role });
+        data.map(async ({ name, email, organizationRole }) => {
+          await inviteUserAction({ organizationId: organization.id, email, name, organizationRole });
         })
       );
       toast.success("Member invited successfully");
@@ -93,7 +93,7 @@ export const OrganizationActions = ({
             Create new organization
           </Button>
         )}
-        {!isInviteDisabled && isAdminOrOwner && (
+        {!isInviteDisabled && isUserManagerOrOwner && (
           <Button
             size="sm"
             onClick={() => {

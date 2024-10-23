@@ -53,8 +53,8 @@ const Page = async ({ params, searchParams }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isSurveyCreationDeletionDisabled = isViewer;
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const isSurveyCreationDeletionDisabled = isMember;
 
   const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
@@ -80,7 +80,7 @@ const Page = async ({ params, searchParams }) => {
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
       responseCount={responseCount}
-      membershipRole={currentUserMembership?.role}
+      membershipRole={currentUserMembership?.organizationRole}
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}

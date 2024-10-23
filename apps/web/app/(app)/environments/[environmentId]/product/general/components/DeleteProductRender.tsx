@@ -12,13 +12,13 @@ import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
 type DeleteProductRenderProps = {
   isDeleteDisabled: boolean;
-  isUserAdminOrOwner: boolean;
+  isUserManagerOrOwner: boolean;
   product: TProduct;
 };
 
 export const DeleteProductRender = ({
   isDeleteDisabled,
-  isUserAdminOrOwner,
+  isUserManagerOrOwner,
   product,
 }: DeleteProductRenderProps) => {
   const router = useRouter();
@@ -59,8 +59,8 @@ export const DeleteProductRender = ({
 
       {isDeleteDisabled && (
         <p className="text-sm text-red-700">
-          {!isUserAdminOrOwner
-            ? "Only Admin or Owners can delete products."
+          {!isUserManagerOrOwner
+            ? "Only Managers or Owners can delete products."
             : "This is your only product, it cannot be deleted. Create a new product first."}
         </p>
       )}

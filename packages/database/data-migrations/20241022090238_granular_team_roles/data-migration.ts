@@ -204,6 +204,7 @@ async function runMigration(): Promise<void> {
                   productTeams: {
                     create: productIdsInOrganization.map((product) => ({
                       productId: product.id,
+                      permission: "manage",
                     })),
                   },
                 },
@@ -237,6 +238,7 @@ async function runMigration(): Promise<void> {
                   productTeams: {
                     create: productIdsInOrganization.map((product) => ({
                       productId: product.id,
+                      permission: "read",
                     })),
                   },
                 },

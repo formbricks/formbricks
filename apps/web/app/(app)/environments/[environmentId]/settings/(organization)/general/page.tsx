@@ -44,15 +44,15 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.organizationRole);
   const userMemberships = await getMembershipsByUserId(session.user.id);
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
-  const currentUserRole = currentUserMembership?.role;
+  const currentUserRole = currentUserMembership?.organizationRole;
 
   const isLeaveOrganizationDisabled = userMemberships.length <= 1;
-  const isUserAdminOrOwner = isAdmin || isOwner;
+  const isUserManagerOrOwner = isManager || isOwner;
 
   const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
 
@@ -62,7 +62,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={currentUserMembership?.organizationRole}
           activeId="general"
         />
       </PageHeader>
@@ -70,7 +70,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         {currentUserRole && (
           <OrganizationActions
             organization={organization}
-            isAdminOrOwner={isUserAdminOrOwner}
+            isUserManagerOrOwner={isUserManagerOrOwner}
             role={currentUserRole}
             isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
             isInviteDisabled={INVITE_DISABLED}
@@ -96,7 +96,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         <EditOrganizationNameForm
           organization={organization}
           environmentId={params.environmentId}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={currentUserMembership?.organizationRole}
         />
       </SettingsCard>
       {isOrganizationAIReady && (
@@ -106,7 +106,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           <AIToggle
             environmentId={params.environmentId}
             organization={organization}
-            isAdminOrOwner={isUserAdminOrOwner}
+            isUserManagerOrOwner={isUserManagerOrOwner}
           />
         </SettingsCard>
       )}

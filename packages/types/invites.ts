@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZMembershipRole } from "./memberships";
+import { ZOrganizationRole } from "./memberships";
 
 export const ZInvite = z.object({
   id: z.string(),
@@ -10,14 +10,14 @@ export const ZInvite = z.object({
   acceptorId: z.string().nullish(),
   createdAt: z.date(),
   expiresAt: z.date(),
-  role: ZMembershipRole,
+  organizationRole: ZOrganizationRole,
 });
 export type TInvite = z.infer<typeof ZInvite>;
 
 export const ZInvitee = z.object({
   email: z.string().email(),
   name: z.string(),
-  role: ZMembershipRole,
+  organizationRole: ZOrganizationRole,
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
 
@@ -30,7 +30,7 @@ export const ZCurrentUser = z.object({
 export type TCurrentUser = z.infer<typeof ZCurrentUser>;
 
 export const ZInviteUpdateInput = z.object({
-  role: ZMembershipRole,
+  organizationRole: ZOrganizationRole,
 });
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
 

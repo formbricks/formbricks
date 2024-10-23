@@ -5,14 +5,14 @@ import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-reac
 import { useRouter } from "next/navigation";
 import formbricks from "@formbricks/js";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 
 interface TopControlButtonsProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
 }
 
 export const TopControlButtons = ({
@@ -47,7 +47,7 @@ export const TopControlButtons = ({
         }}>
         <CircleUserIcon strokeWidth={1.5} className="h-5 w-5" />
       </Button>
-      {membershipRole && membershipRole !== "viewer" ? (
+      {membershipRole && membershipRole !== "member" ? (
         <Button
           variant="secondary"
           size="icon"

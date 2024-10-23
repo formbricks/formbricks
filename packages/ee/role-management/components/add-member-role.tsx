@@ -1,5 +1,7 @@
+import { OrganizationRole } from "@prisma/client";
 import type { Control } from "react-hook-form";
 import { Controller } from "react-hook-form";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Label } from "@formbricks/ui/components/Label";
 import {
   Select,
@@ -10,15 +12,8 @@ import {
   SelectValue,
 } from "@formbricks/ui/components/Select";
 
-enum MembershipRole {
-  Admin = "admin",
-  Editor = "editor",
-  Developer = "developer",
-  Viewer = "viewer",
-}
-
 interface AddMemberRoleProps {
-  control: Control<{ name: string; email: string; role: MembershipRole }>;
+  control: Control<{ name: string; email: string; organizationRole: TOrganizationRole }>;
   canDoRoleManagement: boolean;
 }
 
@@ -26,15 +21,15 @@ export function AddMemberRole({ control, canDoRoleManagement }: AddMemberRolePro
   return (
     <Controller
       control={control}
-      name="role"
+      name="organizationRole"
       render={({ field: { onChange, value } }) => (
         <div>
           <Label>Role</Label>
           <Select
-            defaultValue="admin"
+            defaultValue="manager"
             disabled={!canDoRoleManagement}
             onValueChange={(v) => {
-              onChange(v as MembershipRole);
+              onChange(v as TOrganizationRole);
             }}
             value={value}>
             <SelectTrigger className="capitalize">
@@ -42,7 +37,7 @@ export function AddMemberRole({ control, canDoRoleManagement }: AddMemberRolePro
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {Object.values(MembershipRole).map((role) => (
+                {Object.values(OrganizationRole).map((role) => (
                   <SelectItem className="capitalize" key={role} value={role}>
                     {role}
                   </SelectItem>

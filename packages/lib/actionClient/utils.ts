@@ -2,11 +2,15 @@ import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
 import { TOperation, TResource } from "@formbricks/types/action-client";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getMembershipRole } from "../membership/hooks/actions";
 import { Permissions } from "./permissions";
 
-export const getOperationPermissions = (role: TMembershipRole, entity: TResource, operation: TOperation) => {
+export const getOperationPermissions = (
+  role: TOrganizationRole,
+  entity: TResource,
+  operation: TOperation
+) => {
   const permission = Permissions[role][entity][operation];
 
   if (typeof permission === "boolean" && !permission) {
@@ -18,7 +22,7 @@ export const getOperationPermissions = (role: TMembershipRole, entity: TResource
 
 export const getRoleBasedSchema = <T extends z.ZodRawShape>(
   schema: z.ZodObject<T>,
-  role: TMembershipRole,
+  role: TOrganizationRole,
   entity: TResource,
   operation: TOperation
 ): z.ZodObject<T> => {

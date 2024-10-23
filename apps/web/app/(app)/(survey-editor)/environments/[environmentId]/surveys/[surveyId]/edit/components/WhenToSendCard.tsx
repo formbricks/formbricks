@@ -12,7 +12,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
@@ -24,7 +24,7 @@ interface WhenToSendCardProps {
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   propActionClasses: TActionClass[];
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
 }
 
 export const WhenToSendCard = ({
@@ -39,7 +39,7 @@ export const WhenToSendCard = ({
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
   const delay = localSurvey.delay !== 0;
@@ -347,7 +347,7 @@ export const WhenToSendCard = ({
         setOpen={setAddActionModalOpen}
         actionClasses={actionClasses}
         setActionClasses={setActionClasses}
-        isViewer={isViewer}
+        isMember={isMember}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
       />

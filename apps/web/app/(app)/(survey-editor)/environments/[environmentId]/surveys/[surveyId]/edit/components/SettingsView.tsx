@@ -2,7 +2,7 @@ import { AdvancedTargetingCard } from "@formbricks/ee/advanced-targeting/compone
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { HowToSendCard } from "./HowToSendCard";
@@ -20,7 +20,7 @@ interface SettingsViewProps {
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
   responseCount: number;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
 }

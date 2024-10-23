@@ -61,7 +61,10 @@ const Page = async ({ searchParams }) => {
         </ContentLayout>
       );
     } else {
-      await createMembership(invite.organizationId, session.user.id, { accepted: true, role: invite.role });
+      await createMembership(invite.organizationId, session.user.id, {
+        accepted: true,
+        organizationRole: invite.organizationRole,
+      });
       await deleteInvite(inviteId);
 
       await sendInviteAcceptedEmail(invite.creator.name ?? "", user?.name ?? "", invite.creator.email);

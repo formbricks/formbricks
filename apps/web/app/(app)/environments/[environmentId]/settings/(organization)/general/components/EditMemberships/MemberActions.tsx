@@ -22,7 +22,6 @@ type MemberActionsProps = {
   organization: TOrganization;
   member?: TMember;
   invite?: TInvite;
-  isAdminOrOwner: boolean;
   showDeleteButton?: boolean;
 };
 

@@ -35,9 +35,9 @@ export const verifyUserRoleAccess = async (
     throw new Error("Organization not found");
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  if (isViewer) {
+  if (isMember) {
     return {
       hasCreateOrUpdateAccess: false,
       hasDeleteAccess: false,

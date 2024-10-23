@@ -7,7 +7,7 @@ import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -20,7 +20,7 @@ interface EditOrganizationNameForm {
 interface EditOrganizationNameProps {
   environmentId: string;
   organization: TOrganization;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
 }
 
 export const EditOrganizationName = ({ organization, membershipRole }: EditOrganizationNameProps) => {
@@ -36,7 +36,7 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
     },
   });
   const [isUpdatingOrganization, setIsUpdatingOrganization] = useState(false);
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
 
   const organizationName = useWatch({
     control,
@@ -70,7 +70,7 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
     }
   };
 
-  return isViewer ? (
+  return isMember ? (
     <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
   ) : (
     <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(handleUpdateOrganizationName)}>

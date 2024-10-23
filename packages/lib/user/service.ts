@@ -93,8 +93,8 @@ export const getUserByEmail = reactCache(
     )()
 );
 
-const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
-  memberships.filter((membership) => membership.role === "admin");
+const getManagerMemberships = (memberships: TMembership[]): TMembership[] =>
+  memberships.filter((membership) => membership.organizationRole === "manager");
 
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
@@ -204,20 +204,20 @@ export const deleteUser = async (id: string): Promise<TUser> => {
 
     for (const currentUserMembership of currentUserMemberships) {
       const organizationMemberships = currentUserMembership.organization.memberships;
-      const role = currentUserMembership.role;
+      const role = currentUserMembership.organizationRole;
       const organizationId = currentUserMembership.organizationId;
 
-      const organizationAdminMemberships = getAdminMemberships(organizationMemberships);
-      const organizationHasAtLeastOneAdmin = organizationAdminMemberships.length > 0;
+      const organizationManagerMemberships = getManagerMemberships(organizationMemberships);
+      const organizationHasAtLeastOneManager = organizationManagerMemberships.length > 0;
       const organizationHasOnlyOneMember = organizationMemberships.length === 1;
       const currentUserIsOrganizationOwner = role === "owner";
       await deleteMembership(id, organizationId);
 
       if (organizationHasOnlyOneMember) {
         await deleteOrganization(organizationId);
-      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneAdmin) {
-        const firstAdmin = organizationAdminMemberships[0];
-        await updateMembership(firstAdmin.userId, organizationId, { role: "owner" });
+      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneManager) {
+        const firstManager = organizationManagerMemberships[0];
+        await updateMembership(firstManager.userId, organizationId, { organizationRole: "owner" });
       } else if (currentUserIsOrganizationOwner) {
         await deleteOrganization(organizationId);
       }
