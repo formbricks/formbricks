@@ -1,0 +1,23 @@
+{{- if .Values.traefik.enabled  -}}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "formbricks.fullname" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+  {{- with .Values.traefik.ingressRoute.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ include "formbricks.fullname" . }}
+          port: {{ .Values.service.port }}
+  tls:
+    certResolver: letsencrypt
+{{- end }}
