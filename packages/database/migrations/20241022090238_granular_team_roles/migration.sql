@@ -10,6 +10,9 @@ CREATE TYPE "OrganizationRole" AS ENUM ('owner', 'manager', 'member', 'billing')
 -- CreateEnum
 CREATE TYPE "TeamRole" AS ENUM ('admin', 'contributor');
 
+-- CreateEnum
+CREATE TYPE "PermissionLevel" AS ENUM ('read', 'readWrite', 'manage');
+
 -- AlterTable
 ALTER TABLE "Invite" DROP COLUMN "accepted",
 ADD COLUMN     "organizationRole" "OrganizationRole" NOT NULL DEFAULT 'member',
@@ -44,6 +47,7 @@ CREATE TABLE "TeamMembership" (
 CREATE TABLE "ProductTeam" (
     "productId" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
+    "permission" "PermissionLevel" NOT NULL DEFAULT 'read',
 
     CONSTRAINT "ProductTeam_pkey" PRIMARY KEY ("productId","teamId")
 );

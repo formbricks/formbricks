@@ -468,7 +468,6 @@ model Organization {
   teams       Team[]
 }
 
-// Updated Enums
 enum OrganizationRole {
   owner
   manager
@@ -754,11 +753,18 @@ model TeamMembership {
   @@index([userId])
 }
 
+enum PermissionLevel {
+  read
+  readWrite
+  manage
+}
+
 model ProductTeam {
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  teamId    String
-  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  teamId     String
+  team       Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  permission PermissionLevel @default(read)
 
   @@id([productId, teamId])
   @@index([productId])
