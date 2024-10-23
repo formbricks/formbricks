@@ -19,10 +19,10 @@ import type {
   TResponseTtc,
   TResponseVariables,
 } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface VariableStackEntry {
-  questionId: string;
+  questionId: TSurveyQuestionId;
   variables: TResponseVariables;
 }
 
@@ -198,7 +198,7 @@ export const Survey = ({
     }));
   };
 
-  const pushVariableState = (questionId: string) => {
+  const pushVariableState = (questionId: TSurveyQuestionId) => {
     setVariableStack((prevStack) => [...prevStack, { questionId, variables: { ...currentVariables } }]);
   };
 
@@ -215,7 +215,7 @@ export const Survey = ({
 
   const evaluateLogicAndGetNextQuestionId = (
     data: TResponseData
-  ): { nextQuestionId: string | undefined; calculatedVariables: TResponseVariables } => {
+  ): { nextQuestionId: TSurveyQuestionId | undefined; calculatedVariables: TResponseVariables } => {
     const questions = survey.questions;
     const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
 
@@ -318,7 +318,10 @@ export const Survey = ({
     setQuestionId(prevQuestionId);
   };
 
-  const getQuestionPrefillData = (questionId: string, offset: number): TResponseDataValue | undefined => {
+  const getQuestionPrefillData = (
+    questionId: TSurveyQuestionId,
+    offset: number
+  ): TResponseDataValue | undefined => {
     if (offset === 0 && prefillResponseData) {
       return prefillResponseData[questionId];
     }

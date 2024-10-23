@@ -5,6 +5,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
@@ -17,7 +18,7 @@ interface RatingSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
@@ -44,7 +45,7 @@ export const RatingSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
-        insights={
+        additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}
             <div>Overall: {questionSummary.average.toFixed(2)}</div>
