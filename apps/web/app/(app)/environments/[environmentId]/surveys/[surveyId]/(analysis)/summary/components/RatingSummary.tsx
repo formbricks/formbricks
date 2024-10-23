@@ -1,7 +1,7 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import {
   TI18nString,
   TSurvey,
@@ -16,7 +16,7 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -29,7 +29,7 @@ interface RatingSummaryProps {
 export const RatingSummary = ({
   questionSummary,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   setFilter,
 }: RatingSummaryProps) => {
   const getIconBasedOnScale = useMemo(() => {
@@ -44,7 +44,7 @@ export const RatingSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}

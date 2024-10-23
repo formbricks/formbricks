@@ -1,6 +1,6 @@
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
@@ -17,7 +17,7 @@ interface RatingQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const RatingQuestionForm = ({
@@ -28,7 +28,7 @@ export const RatingQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
 }: RatingQuestionFormProps) => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
@@ -44,7 +44,7 @@ export const RatingQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
 
       <div>
@@ -61,7 +61,7 @@ export const RatingQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             </div>
           </div>
@@ -136,7 +136,7 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
           />
         </div>
         <div className="flex-1">
@@ -151,7 +151,7 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
           />
         </div>
       </div>
@@ -170,7 +170,7 @@ export const RatingQuestionForm = ({
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
             />
           </div>
         )}

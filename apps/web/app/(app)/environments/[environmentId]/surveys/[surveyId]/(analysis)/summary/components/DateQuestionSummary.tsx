@@ -3,7 +3,7 @@ import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
@@ -13,14 +13,14 @@ interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummaryDate;
   environmentId: string;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const DateQuestionSummary = ({
   questionSummary,
   environmentId,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
 }: DateQuestionSummary) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
 
@@ -36,7 +36,7 @@ export const DateQuestionSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">

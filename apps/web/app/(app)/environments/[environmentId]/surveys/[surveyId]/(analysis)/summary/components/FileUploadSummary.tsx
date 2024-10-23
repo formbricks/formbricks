@@ -4,7 +4,7 @@ import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
@@ -14,14 +14,14 @@ interface FileUploadSummaryProps {
   questionSummary: TSurveyQuestionSummaryFileUpload;
   environmentId: string;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const FileUploadSummary = ({
   questionSummary,
   environmentId,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
 }: FileUploadSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
 
@@ -37,7 +37,7 @@ export const FileUploadSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">

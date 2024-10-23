@@ -1,8 +1,8 @@
+import { evaluateSegment, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { attributeCache } from "@formbricks/lib/attribute/cache";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
-import { segmentCache } from "@formbricks/lib/segment/cache";
-import { evaluateSegment, getSegments } from "@formbricks/lib/segment/service";
+import { segmentCache } from "@formbricks/lib/cache/segment";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { TPerson, ZPerson } from "@formbricks/types/people";

@@ -13,7 +13,7 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { selectPerson } from "../../../person/service";
+import { selectContact } from "../../../person/service";
 import { selectSurvey } from "../../service";
 
 const currentDate = new Date();
@@ -117,7 +117,7 @@ export const mockUser: TUser = {
 };
 
 export const mockPrismaPerson: Prisma.PersonGetPayload<{
-  include: typeof selectPerson;
+  include: typeof selectContact;
 }> = {
   id: mockId,
   userId: mockId,

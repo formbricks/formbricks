@@ -7,8 +7,8 @@ import { toast } from "react-hot-toast";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/organization/hooks/useGetBillingInfo";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
@@ -26,7 +26,7 @@ interface FileUploadFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isFormbricksCloud: boolean;
 }
 
@@ -39,7 +39,7 @@ export const FileUploadQuestionForm = ({
   product,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   isFormbricksCloud,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
@@ -133,7 +133,7 @@ export const FileUploadQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <div>
         {question.subheader !== undefined && (
@@ -149,7 +149,7 @@ export const FileUploadQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
               />
             </div>
           </div>

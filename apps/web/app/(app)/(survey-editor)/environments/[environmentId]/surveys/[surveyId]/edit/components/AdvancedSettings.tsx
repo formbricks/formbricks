@@ -1,5 +1,5 @@
 import { ConditionalLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/ConditionalLogic";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { UpdateQuestionId } from "./UpdateQuestionId";
 
@@ -8,7 +8,7 @@ interface AdvancedSettingsProps {
   questionIdx: number;
   localSurvey: TSurvey;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const AdvancedSettings = ({
@@ -16,7 +16,7 @@ export const AdvancedSettings = ({
   questionIdx,
   localSurvey,
   updateQuestion,
-  attributeClasses,
+  contactAttributeKeys,
 }: AdvancedSettingsProps) => {
   return (
     <div className="flex flex-col gap-4">
@@ -25,7 +25,7 @@ export const AdvancedSettings = ({
         updateQuestion={updateQuestion}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
 
       <UpdateQuestionId
