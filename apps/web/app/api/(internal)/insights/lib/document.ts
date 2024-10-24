@@ -14,10 +14,15 @@ import {
 } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 
+export type TCreatedDocument = TDocument & {
+  isSpam: Boolean;
+  insights: TGenerateDocumentObjectSchema["insights"];
+};
+
 export const createDocument = async (
   surveyName: string,
   documentInput: TDocumentCreateInput
-): Promise<TDocument & { isSpam: Boolean; insights: TGenerateDocumentObjectSchema["insights"] }> => {
+): Promise<TCreatedDocument> => {
   validateInputs([surveyName, z.string()], [documentInput, ZDocumentCreateInput]);
 
   try {
