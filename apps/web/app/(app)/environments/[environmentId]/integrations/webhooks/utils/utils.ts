@@ -14,7 +14,7 @@ export const validWebHookURL = (urlInput: string) => {
     const domainError: string =
       "Please enter a complete URL with a valid domain (e.g., https://formbricks.com)";
 
-    const multipleSlashesPattern = /https:\/\/{2,}/;
+    const multipleSlashesPattern = /(?<!:)\/\/+/;
     if (multipleSlashesPattern.test(trimmedInput)) {
       return {
         valid: false,
