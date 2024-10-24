@@ -1,4 +1,5 @@
 import { PlusCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -20,6 +21,7 @@ type FormValues = {
 };
 
 export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationModalProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [organizationName, setOrganizationName] = useState("");
@@ -55,9 +57,11 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
                 <PlusCircleIcon className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Create organization</div>
+                <div className="text-xl font-medium text-slate-700">
+                  {t("environments.settings.general.create_new_organization")}
+                </div>
                 <div className="text-sm text-slate-500">
-                  Create a new organization to handle a different set of products.
+                  {t("environments.settings.general.create_new_organization_description")}
                 </div>
               </div>
             </div>
@@ -67,10 +71,10 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
           <div className="flex w-full justify-between space-y-4 rounded-lg p-6">
             <div className="grid w-full gap-x-2">
               <div>
-                <Label>Organization Name</Label>
+                <Label>{t("environments.settings.general.organization_name")}</Label>
                 <Input
                   autoFocus
-                  placeholder="e.g. Power Puff Girls"
+                  placeholder={t("environments.settings.general.organization_name_placeholder")}
                   {...register("name", { required: true })}
                   value={organizationName}
                   onChange={(e) => setOrganizationName(e.target.value)}
@@ -86,10 +90,10 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
                 onClick={() => {
                   setOpen(false);
                 }}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" loading={loading} disabled={!isOrganizationNameValid}>
-                Create organization
+                {t("environments.settings.general.create_new_organization")}
               </Button>
             </div>
           </div>

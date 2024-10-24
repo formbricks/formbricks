@@ -58,7 +58,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Organization Settings">
+      <PageHeader pageTitle={"environments.settings.general.organization_settings"}>
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
@@ -66,7 +66,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           activeId="general"
         />
       </PageHeader>
-      <SettingsCard title="Manage members" description="Add or remove members in your organization.">
+      <SettingsCard
+        title="environments.settings.general.manage_members"
+        description="environments.settings.general.manage_members_description">
         {currentUserRole && (
           <OrganizationActions
             organization={organization}
@@ -92,7 +94,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           </Suspense>
         )}
       </SettingsCard>
-      <SettingsCard title="Organization Name" description="Give your organization a descriptive name.">
+      <SettingsCard
+        title="environments.settings.general.organization_name"
+        description="environments.settings.general.organization_name_description">
         <EditOrganizationNameForm
           organization={organization}
           environmentId={params.environmentId}
@@ -101,8 +105,8 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       </SettingsCard>
       {isOrganizationAIReady && (
         <SettingsCard
-          title="Formbricks AI"
-          description="Get personalised insights from your survey responses with Formbricks AI">
+          title="environments.settings.general.formbricks_ai"
+          description="environments.settings.general.formbricks_ai_description">
           <AIToggle
             environmentId={params.environmentId}
             organization={organization}
@@ -112,8 +116,8 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       )}
       {isMultiOrgEnabled && (
         <SettingsCard
-          title="Delete Organization"
-          description="Delete organization with all its products including all surveys, responses, people, actions and attributes">
+          title="environments.settings.general.delete_organization"
+          description="environments.settings.general.delete_organization_description">
           <DeleteOrganization
             organization={organization}
             isDeleteDisabled={isDeleteDisabled}

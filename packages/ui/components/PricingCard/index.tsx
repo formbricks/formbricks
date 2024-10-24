@@ -1,4 +1,5 @@
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
@@ -38,6 +39,7 @@ export const PricingCard = ({
   organization,
   productFeatureKeys,
 }: PricingCardProps) => {
+  const t = useTranslations();
   const [loading, setLoading] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
@@ -79,7 +81,7 @@ export const PricingCard = ({
               setLoading(false);
             }}
             className="flex justify-center">
-            Start Free Trial
+            {t("environments.settings.billing.start_free_trial")}
           </Button>
         );
       }
@@ -91,7 +93,7 @@ export const PricingCard = ({
             setUpgradeModalOpen(true);
           }}
           className="flex justify-center">
-          Switch Plan
+          {t("environments.settings.billing.switch_plan")}
         </Button>
       );
     }
@@ -124,9 +126,11 @@ export const PricingCard = ({
               plan.featured ? "text-slate-900" : "text-slate-800",
               "text-sm font-semibold leading-6"
             )}>
-            {plan.name}
+            {t(plan.name)}
           </h2>
-          {isCurrentPlan && <Badge text="Current Plan" type="success" size="normal" />}
+          {isCurrentPlan && (
+            <Badge text={t("environments.settings.billing.current_plan")} type="success" size="normal" />
+          )}
         </div>
         <div className="flex flex-col items-end gap-6 sm:flex-row sm:justify-between lg:flex-col lg:items-stretch">
           <div className="mt-2 flex items-end gap-x-1">
@@ -135,7 +139,7 @@ export const PricingCard = ({
                 plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
-              {planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly}
+              {planPeriod === "monthly" ? t(plan.price.monthly) : t(plan.price.yearly)}
             </p>
             {plan.name !== "Enterprise" && (
               <div className="text-sm leading-5">
@@ -158,13 +162,13 @@ export const PricingCard = ({
                 setLoading(false);
               }}
               className="flex justify-center">
-              Manage Subscription
+              {t("environments.settings.billing.manage_subscription")}
             </Button>
           )}
 
           {organization.billing.plan !== plan.id && plan.id === productFeatureKeys.ENTERPRISE && (
             <Button loading={loading} onClick={() => onUpgrade()} className="flex justify-center">
-              Contact Us
+              {t("environments.settings.billing.contact_us")}
             </Button>
           )}
         </div>
@@ -184,7 +188,7 @@ export const PricingCard = ({
                   aria-hidden="true"
                 />
 
-                {mainFeature}
+                {t(mainFeature)}
               </li>
             ))}
           </ul>
@@ -202,9 +206,10 @@ export const PricingCard = ({
         }}
         open={upgradeModalOpen}
         setOpen={setUpgradeModalOpen}
-        text={`Are you sure you want to switch to the ${plan.name} plan? You will be charged ${
-          planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly
-        } per month.`}
+        text={t("environments.settings.billing.switch_plan_confirmation_text", {
+          plan: t(plan.name),
+          price: planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly,
+        })}
         buttonVariant="primary"
         buttonLoading={loading}
         closeOnOutsideClick={false}

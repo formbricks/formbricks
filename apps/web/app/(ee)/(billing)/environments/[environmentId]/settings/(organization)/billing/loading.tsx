@@ -6,7 +6,7 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Loading = () => {
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Organization Settings">
+      <PageHeader pageTitle={"environments.settings.general.organization_settings"}>
         <OrganizationSettingsNavbar isFormbricksCloud={IS_FORMBRICKS_CLOUD} activeId="billing" loading />
       </PageHeader>
       <div className="my-8 h-64 animate-pulse rounded-xl bg-slate-200"></div>
