@@ -187,7 +187,6 @@ const renderWidget = async (
           variables: responseUpdate.variables,
           hiddenFields,
           displayId: surveyState.displayId,
-          failed: responseUpdate.failed,
         });
 
         if (isNewResponse) {

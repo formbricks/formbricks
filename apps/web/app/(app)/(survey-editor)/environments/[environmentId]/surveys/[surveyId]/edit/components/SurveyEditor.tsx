@@ -208,10 +208,6 @@ export const SurveyEditor = ({
               isUserTargetingAllowed={isUserTargetingAllowed}
               isFormbricksCloud={isFormbricksCloud}
               product={localProduct}
-              invalidQuestions={invalidQuestions}
-              setInvalidQuestions={setInvalidQuestions}
-              selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
             />
           )}
         </main>

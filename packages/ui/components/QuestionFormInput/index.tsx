@@ -39,7 +39,6 @@ import {
   determineImageUploaderVisibility,
   getChoiceLabel,
   getEndingCardText,
-  getFailCardText,
   getIndex,
   getMatrixLabel,
   getPlaceHolderById,
@@ -66,7 +65,6 @@ interface QuestionFormInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   attributeClasses: TAttributeClass[];
-  fail?: boolean;
 }
 
 export const QuestionFormInput = ({
@@ -87,7 +85,6 @@ export const QuestionFormInput = ({
   onBlur,
   className,
   attributeClasses,
-  fail,
 }: QuestionFormInputProps) => {
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
@@ -129,9 +126,6 @@ export const QuestionFormInput = ({
 
     if (isWelcomeCard) {
       return getWelcomeCardText(localSurvey, id, surveyLanguageCodes);
-    }
-    if (fail) {
-      return getFailCardText(localSurvey, id, surveyLanguageCodes);
     }
     if (isEndingCard) {
       return getEndingCardText(localSurvey, id, surveyLanguageCodes, questionIdx);

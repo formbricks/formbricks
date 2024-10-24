@@ -199,10 +199,6 @@ const baseSurveyProperties = {
   isSingleResponsePerEmailEnabled: false,
   attributeFilters: [],
   reward: 5,
-  failureChance: 0,
-  failureCard: {
-    enabled: false,
-  },
   countries: [],
   tags: [],
   limitedCountries: false,

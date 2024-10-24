@@ -1,5 +1,4 @@
 import { EndingCard } from "@/components/general/EndingCard";
-import { FailureCard } from "@/components/general/FailureCard.tsx";
 import { FormbricksBranding } from "@/components/general/FormbricksBranding";
 import { LanguageSwitch } from "@/components/general/LanguageSwitch";
 import { ProgressBar } from "@/components/general/ProgressBar";
@@ -10,8 +9,7 @@ import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { adTranslations } from "@/lib/adTranslations.ts";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
+import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
@@ -275,8 +273,6 @@ export const Survey = ({
     return { nextQuestionId, calculatedVariables: calculationResults };
   };
 
-  const [failed, setFailed] = useState(false);
-
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
     const questionId = Object.keys(responseData)[0];
     setLoadingElement(true);
@@ -288,10 +284,6 @@ export const Survey = ({
       nextQuestionId === undefined ||
       !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
 
-    const random = Math.random() * 100;
-    const surveyFailed = finished && random <= survey.failureChance;
-    setFailed(surveyFailed);
-
     onChange(responseData);
     onChangeVariables(calculatedVariables);
     onResponse({
@@ -300,7 +292,6 @@ export const Survey = ({
       finished,
       variables: calculatedVariables,
       language: selectedLanguage,
-      failed: surveyFailed
     });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
@@ -339,17 +330,6 @@ export const Survey = ({
       return prefillResponseData[questionId];
     }
     return undefined;
-  };
-
-  const appendSurveyAndPanelistQueryParamsToRedirectUrl = (url: string | null): string | null => {
-    if (!url) return null;
-    const urlObj = new URL(url);
-    urlObj.searchParams.append("survey_id", survey.id);
-    const panelistId = getPanelistId();
-    if (panelistId) {
-      urlObj.searchParams.append("panelist_id", panelistId);
-    }
-    return urlObj.toString();
   };
 
   const getPanelistId = (): string | null => {
@@ -394,33 +374,6 @@ export const Survey = ({
         const endingCard = localSurvey.endings.find((ending) => {
           return ending.id === questionId;
         });
-        if (localSurvey.failureCard.enabled && failed) {
-          return (
-            <FailureCard
-              key="end"
-              headline={replaceRecallInfo(
-                getLocalizedValue(localSurvey.failureCard.headline, selectedLanguage),
-                responseData,
-                {} //todo marko
-              )}
-              subheader={replaceRecallInfo(
-                getLocalizedValue(localSurvey.failureCard.subheader, selectedLanguage),
-                responseData,
-                {}
-              )}
-              isResponseSendingFinished={isResponseSendingFinished}
-              buttonLabel={getLocalizedValue(localSurvey.failureCard.buttonLabel, selectedLanguage)}
-              buttonLink={localSurvey.failureCard.buttonLink}
-              survey={localSurvey}
-              imageUrl={localSurvey.failureCard.imageUrl}
-              redirectUrl={appendSurveyAndPanelistQueryParamsToRedirectUrl(localSurvey.redirectOnFailUrl)}
-              isRedirectDisabled={isRedirectDisabled}
-              autoFocusEnabled={autoFocusEnabled}
-              isCurrent={offset === 0}
-              failed={true}
-            />
-          );
-        }
         if (endingCard) {
           return (
             <EndingCard

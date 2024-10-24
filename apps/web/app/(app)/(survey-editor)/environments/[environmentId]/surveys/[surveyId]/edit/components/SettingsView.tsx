@@ -26,10 +26,6 @@ interface SettingsViewProps {
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
   product: TProduct;
-  invalidQuestions: string[] | null;
-  setInvalidQuestions: (invalidQuestions: string[] | null) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   environmentTags: TTag[];
 }
 
@@ -45,9 +41,6 @@ export const SettingsView = ({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   product,
-  invalidQuestions,
-  setSelectedLanguageCode,
-  selectedLanguageCode,
   environmentTags,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
@@ -58,10 +51,6 @@ export const SettingsView = ({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         product={product}
-        isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        selectedLanguageCode={selectedLanguageCode}
-        attributeClasses={attributeClasses}
         environmentTags={environmentTags}
         environmentId={environment.id}
       />

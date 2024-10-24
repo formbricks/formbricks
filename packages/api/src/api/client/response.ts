@@ -23,7 +23,6 @@ export class ResponseAPI {
   async update({
     responseId,
     finished,
-    failed,
     data,
     ttc,
     variables,
@@ -34,7 +33,6 @@ export class ResponseAPI {
       data,
       ttc,
       variables,
-      failed,
       language,
     });
   }

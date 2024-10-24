@@ -54,15 +54,6 @@ export const ZSurveyEndings = z.array(ZSurveyEnding);
 
 export type TSurveyEndings = z.infer<typeof ZSurveyEndings>;
 
-export const ZSurveyFailureCard = z.object({
-  enabled: z.boolean(),
-  headline: ZI18nString.optional(),
-  subheader: ZI18nString.optional(),
-  buttonLabel: ZI18nString.optional(),
-  buttonLink: z.optional(z.string()),
-  imageUrl: z.string().optional(),
-});
-
 export enum TSurveyQuestionTypeEnum {
   FileUpload = "fileUpload",
   OpenText = "openText",
@@ -741,7 +732,6 @@ export const ZSurvey = z
     displayLimit: z.number().nullable(),
     redirectOnFailUrl: z.string().url().nullable(),
     welcomeCard: ZSurveyWelcomeCard,
-    failureCard: ZSurveyFailureCard,
     questions: ZSurveyQuestions.min(1, {
       message: "Survey must have at least one question",
     }).superRefine((questions, ctx) => {
@@ -805,7 +795,6 @@ export const ZSurvey = z
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
     resultShareKey: z.string().nullable(),
     reward: z.number(),
-    failureChance: z.number(),
     countries: z.array(ZCountry),
     tags: z.array(ZTag),
     limitedCountries: z.boolean(),
@@ -2091,9 +2080,6 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     questions: ZSurvey.innerType().shape.questions, // Keep questions required and with its original validation
     languages: z.array(ZSurveyLanguage).default([]),
     welcomeCard: ZSurveyWelcomeCard.default({
-      enabled: false,
-    }),
-    failureCard: ZSurveyFailureCard.default({
       enabled: false,
     }),
     endings: ZSurveyEndings.default([]),
