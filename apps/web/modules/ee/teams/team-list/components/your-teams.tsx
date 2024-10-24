@@ -2,6 +2,8 @@
 
 import { TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
 import Link from "next/link";
+import { useState } from "react";
+import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import {
@@ -19,40 +21,72 @@ interface YourTeamsProps {
 }
 
 export const YourTeams = ({ teams, leaveTeam }: YourTeamsProps) => {
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [leaveTeamModalOpen, setLeaveTeamModalOpen] = useState<boolean>(false);
+
+  const handleLeaveTeam = (teamId: string) => {
+    leaveTeam(teamId);
+    setLeaveTeamModalOpen(false);
+    setSelectedTeamId(null);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Your Teams</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teams.map((team) => (
-              <TableRow key={team.id}>
-                <TableCell>
-                  <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
-                    {team.name}
-                  </Link>{" "}
-                  ({team.memberCount} members)
-                </TableCell>
-                <TableCell className="capitalize">{team.userRole}</TableCell>
-                <TableCell>
-                  <Button variant="alert" size="sm" className="text-white" onClick={() => leaveTeam(team.id)}>
-                    Leave Team
-                  </Button>
-                </TableCell>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Teams</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {teams.map((team) => (
+                <TableRow key={team.id}>
+                  <TableCell>
+                    <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
+                      {team.name}
+                    </Link>{" "}
+                    ({team.memberCount} members)
+                  </TableCell>
+                  <TableCell className="capitalize">{team.userRole}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="alert"
+                      size="sm"
+                      className="text-white"
+                      onClick={() => {
+                        setSelectedTeamId(team.id);
+                        setLeaveTeamModalOpen(true);
+                      }}>
+                      Leave Team
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      {leaveTeamModalOpen && selectedTeamId && (
+        <AlertDialog
+          open={leaveTeamModalOpen}
+          setOpen={setLeaveTeamModalOpen}
+          headerText="Leave Team"
+          mainText="Are you sure you want to leave this team?"
+          confirmBtnLabel="Confirm"
+          onDecline={() => {
+            setSelectedTeamId(null);
+            setLeaveTeamModalOpen(false);
+          }}
+          onConfirm={() => handleLeaveTeam(selectedTeamId)}
+        />
+      )}
+    </>
   );
 };
