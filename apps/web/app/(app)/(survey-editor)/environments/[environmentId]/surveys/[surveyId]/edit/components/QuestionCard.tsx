@@ -5,6 +5,7 @@ import { RankingQuestionForm } from "@/app/(app)/(survey-editor)/environments/[e
 import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
@@ -85,6 +86,7 @@ export const QuestionCard = ({
 
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+  const [parent] = useAutoAnimate();
 
   const updateEmptyButtonLabels = (
     labelKey: "buttonLabel" | "backButtonLabel",
@@ -229,7 +231,7 @@ export const QuestionCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-4">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`}>
           {question.type === TSurveyQuestionTypeEnum.OpenText ? (
             <OpenQuestionForm
               localSurvey={localSurvey}
@@ -423,7 +425,7 @@ export const QuestionCard = ({
                 {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
               </Collapsible.CollapsibleTrigger>
 
-              <Collapsible.CollapsibleContent className="space-y-4">
+              <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
                 {question.type !== TSurveyQuestionTypeEnum.NPS &&
                 question.type !== TSurveyQuestionTypeEnum.Rating &&
                 question.type !== TSurveyQuestionTypeEnum.CTA ? (
