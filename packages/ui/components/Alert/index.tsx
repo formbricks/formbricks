@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-3 [&>svg]:absolute [&>svg]:text-foreground [&>svg]:left-3 [&>svg]:top-3 [&>svg+div]:translate-y-[-3px] [&:has(svg)]:pl-9",
+  "relative w-full rounded-xl border p-3 [&>svg]:absolute [&>svg]:text-foreground [&>svg]:left-3 [&>svg]:top-3 [&>svg+div]:translate-y-[-3px] [&:has(svg)]:pl-9",
   {
     variants: {
       variant: {
@@ -34,7 +34,7 @@ const AlertTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement> & { dangerouslySetInnerHTML?: { __html: string } }
 >(({ className, ...props }, ref) => (
-  <h5 ref={ref} className={cn("mb-1 font-medium leading-none tracking-tight", className)} {...props} />
+  <h5 ref={ref} className={cn("mb-1 cursor-default font-medium leading-none", className)} {...props} />
 ));
 AlertTitle.displayName = "AlertTitle";
 
@@ -42,7 +42,7 @@ const AlertDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement> & { dangerouslySetInnerHTML?: { __html: string } }
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("text-sm [&_p]:leading-relaxed", className)} {...props} />
+  <div ref={ref} className={cn("cursor-default text-sm [&_p]:leading-relaxed", className)} {...props} />
 ));
 AlertDescription.displayName = "AlertDescription";
 

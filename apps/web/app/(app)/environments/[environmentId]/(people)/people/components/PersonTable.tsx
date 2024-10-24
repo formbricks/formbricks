@@ -11,6 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -54,6 +55,8 @@ export const PersonTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
+
+  const [parent] = useAutoAnimate();
   // Generate columns
   const columns = useMemo(
     () => generatePersonTableColumns(isExpanded ?? false, searchValue),
@@ -189,7 +192,7 @@ export const PersonTable = ({
               ))}
             </TableHeader>
 
-            <TableBody>
+            <TableBody ref={parent}>
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
