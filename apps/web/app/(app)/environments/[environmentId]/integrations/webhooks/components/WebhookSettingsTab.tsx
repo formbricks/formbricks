@@ -51,8 +51,8 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
       setHittingEndpoint(false);
       try {
         new URL(testEndpointInput);
-      } catch(error) {
-        toast.error("Please enter valid URL");
+      } catch (error) {
+        toast.error("Please enter a valid URL");
         return;
       }
       if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
