@@ -170,7 +170,7 @@ export const POST = async (request: Request) => {
               }
 
               const headline = parseRecallInfo(
-                question.headline["default"],
+                question.headline[response.language ?? "default"],
                 attributes,
                 response.data,
                 response.variables

@@ -555,7 +555,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+    const isAIEnabled = await getIsAIEnabled(organization);
     if (isAIEnabled) {
       if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
         const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
@@ -777,7 +777,7 @@ export const createSurvey = async (
     }
 
     //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+    const isAIEnabled = await getIsAIEnabled(organization);
     if (isAIEnabled) {
       if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
         const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];

@@ -1,4 +1,4 @@
-import { createDocument } from "@/app/api/(internal)/insights/lib/document";
+import { TCreatedDocument, createDocument } from "@/app/api/(internal)/insights/lib/document";
 import { doesResponseHasAnyOpenTextAnswer } from "@/app/api/(internal)/insights/lib/utils";
 import { documentCache } from "@/lib/cache/document";
 import { insightCache } from "@/lib/cache/insight";
@@ -25,7 +25,9 @@ import {
   ZSurveyQuestions,
 } from "@formbricks/types/surveys/types";
 
-export const generateInsightsForSurveyResponsesConcept = async (survey: TSurvey): Promise<void> => {
+export const generateInsightsForSurveyResponsesConcept = async (
+  survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">
+): Promise<void> => {
   const { id: surveyId, name, environmentId, questions } = survey;
 
   validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
@@ -80,6 +82,7 @@ export const generateInsightsForSurveyResponsesConcept = async (survey: TSurvey)
             data: true,
             variables: true,
             personId: true,
+            language: true,
           },
           take: batchSize,
           skip,
@@ -101,30 +104,29 @@ export const generateInsightsForSurveyResponsesConcept = async (survey: TSurvey)
         const answersForDocumentCreationPromises = await Promise.all(
           responsesWithOpenTextAnswers.map(async (response) => {
             const attributes = response.personId ? await getAttributes(response.personId) : {};
+            const responseEntries = openTextQuestionsWithInsights.map((question) => {
+              const responseText = response.data[question.id] as string;
+              if (!responseText) {
+                return;
+              }
 
-            return Promise.all(
-              openTextQuestionsWithInsights.map((question) => {
-                const responseText = response.data[question.id] as string;
-                if (!responseText) {
-                  return;
-                }
+              const headline = parseRecallInfo(
+                question.headline[response.language ?? "default"],
+                attributes,
+                response.data,
+                response.variables
+              );
 
-                const headline = parseRecallInfo(
-                  question.headline["default"],
-                  attributes,
-                  response.data,
-                  response.variables
-                );
+              const text = getPromptText(headline, responseText);
 
-                const text = getPromptText(headline, responseText);
+              return {
+                responseId: response.id,
+                questionId: question.id,
+                text,
+              };
+            });
 
-                return {
-                  responseId: response.id,
-                  questionId: question.id,
-                  text,
-                };
-              })
-            );
+            return responseEntries;
           })
         );
 
@@ -190,7 +192,9 @@ export const generateInsightsForSurveyResponsesConcept = async (survey: TSurvey)
   }
 };
 
-export const generateInsightsForSurveyResponses = async (survey: TSurvey): Promise<void> => {
+export const generateInsightsForSurveyResponses = async (
+  survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">
+): Promise<void> => {
   const { id: surveyId, name, environmentId, questions } = survey;
 
   validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
@@ -235,6 +239,7 @@ export const generateInsightsForSurveyResponses = async (survey: TSurvey): Promi
           data: true,
           variables: true,
           personId: true,
+          language: true,
         },
         take: batchSize,
         skip,
@@ -246,39 +251,41 @@ export const generateInsightsForSurveyResponses = async (survey: TSurvey): Promi
 
       skip += batchSize - responsesWithOpenTextAnswers.length;
 
-      const createDocumentResults = await Promise.all(
-        responsesWithOpenTextAnswers.map(async (response) => {
-          const attributes = response.personId ? await getAttributes(response.personId) : {};
+      const createDocumentPromises: Promise<TCreatedDocument | undefined>[] = [];
 
-          return Promise.all(
-            openTextQuestionsWithInsights.map((question) => {
-              const responseText = response.data[question.id] as string;
-              if (!responseText) {
-                return;
-              }
+      for (const response of responsesWithOpenTextAnswers) {
+        const attributes = response.personId ? await getAttributes(response.personId) : {};
 
-              const headline = parseRecallInfo(
-                question.headline["default"],
-                attributes,
-                response.data,
-                response.variables
-              );
+        for (const question of openTextQuestionsWithInsights) {
+          const responseText = response.data[question.id] as string;
+          if (!responseText) {
+            continue;
+          }
 
-              const text = getPromptText(headline, responseText);
-
-              return createDocument(name, {
-                environmentId,
-                surveyId,
-                responseId: response.id,
-                questionId: question.id,
-                text,
-              });
-            })
+          const headline = parseRecallInfo(
+            question.headline[response.language ?? "default"],
+            attributes,
+            response.data,
+            response.variables
           );
-        })
-      );
 
-      const createdDocuments = createDocumentResults.flat().filter(Boolean);
+          const text = getPromptText(headline, responseText);
+
+          const createDocumentPromise = createDocument(name, {
+            environmentId,
+            surveyId,
+            responseId: response.id,
+            questionId: question.id,
+            text,
+          });
+
+          createDocumentPromises.push(createDocumentPromise);
+        }
+      }
+
+      const createdDocuments = (await Promise.all(createDocumentPromises)).filter(
+        Boolean
+      ) as TCreatedDocument[];
 
       for (const document of createdDocuments) {
         if (document) {
@@ -302,7 +309,6 @@ export const generateInsightsForSurveyResponses = async (survey: TSurvey): Promi
         surveyId: surveyId,
       });
     }
-    return;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

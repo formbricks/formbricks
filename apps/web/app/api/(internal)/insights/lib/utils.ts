@@ -38,22 +38,12 @@ export const generateInsightsEnabledForSurveyQuestions = async (
     }
   | {
       success: true;
-      survey: TSurvey;
+      survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">;
     }
 > => {
   validateInputs([surveyId, ZId]);
   try {
-    const survey = await prisma.survey.findUnique({
-      where: {
-        id: surveyId,
-      },
-      select: {
-        id: true,
-        name: true,
-        environmentId: true,
-        questions: true,
-      },
-    });
+    const survey = await getSurvey(surveyId);
 
     if (!survey) {
       throw new ResourceNotFoundError("Survey", surveyId);
@@ -97,7 +87,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
       return question;
     });
 
-    await prisma.survey.update({
+    const updatedSurvey = await prisma.survey.update({
       where: {
         id: survey.id,
       },
@@ -111,8 +101,6 @@ export const generateInsightsEnabledForSurveyQuestions = async (
         questions: true,
       },
     });
-
-    const updatedSurvey = await getSurvey(surveyId);
 
     if (!updatedSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
