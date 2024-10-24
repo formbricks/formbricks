@@ -46,6 +46,12 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
 
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
+      try {
+        new URL(testEndpointInput);
+      } catch (error) {
+        toast.error("Please enter valid URL");
+        return;
+      }
       setHittingEndpoint(true);
       await testEndpointAction({ url: testEndpointInput });
       setHittingEndpoint(false);
