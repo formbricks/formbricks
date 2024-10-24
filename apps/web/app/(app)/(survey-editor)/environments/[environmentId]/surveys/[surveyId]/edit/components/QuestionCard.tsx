@@ -231,7 +231,7 @@ export const QuestionCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`} ref={parent}>
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`}>
           {question.type === TSurveyQuestionTypeEnum.OpenText ? (
             <OpenQuestionForm
               localSurvey={localSurvey}
