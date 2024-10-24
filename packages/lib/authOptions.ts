@@ -66,16 +66,16 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!user || !credentials) {
-          throw new Error("No user matches the provided credentials");
+          throw new Error("Invalid credentials");
         }
         if (!user.password) {
-          throw new Error("No user matches the provided credentials");
+          throw new Error("Invalid credentials");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error("No user matches the provided credentials");
+          throw new Error("Invalid credentials");
         }
 
         return {
@@ -190,6 +190,7 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
+        // check if user's email is verified or not
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");
         }
@@ -245,7 +246,8 @@ export const authOptions: NextAuthOptions = {
         const existingUserWithEmail = await getUserByEmail(user.email);
 
         if (existingUserWithEmail) {
-          throw new Error("A user with this email exists already.");
+          // Sign in the user with the existing account
+          return true;
         }
 
         const userProfile = await createUser({

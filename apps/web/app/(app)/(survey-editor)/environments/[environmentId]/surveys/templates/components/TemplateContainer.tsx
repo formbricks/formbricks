@@ -1,5 +1,6 @@
 "use client";
 
+import { FormbricksAICard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/FormbricksAICard";
 import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
 import { useState } from "react";
 import { customSurvey } from "@formbricks/lib/templates";
@@ -9,6 +10,7 @@ import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
 import { SearchBar } from "@formbricks/ui/components/SearchBar";
+import { Separator } from "@formbricks/ui/components/Separator";
 import { TemplateList } from "@formbricks/ui/components/TemplateList";
 import { minimalSurvey } from "../../lib/minimalSurvey";
 
@@ -18,6 +20,7 @@ type TemplateContainerWithPreviewProps = {
   environment: TEnvironment;
   user: TUser;
   prefilledFilters: (TProductConfigChannel | TProductConfigIndustry | TTemplateRole | null)[];
+  isAIEnabled: boolean;
 };
 
 export const TemplateContainerWithPreview = ({
@@ -25,6 +28,7 @@ export const TemplateContainerWithPreview = ({
   environment,
   user,
   prefilledFilters,
+  isAIEnabled,
 }: TemplateContainerWithPreviewProps) => {
   const initialTemplate = customSurvey;
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
@@ -47,6 +51,15 @@ export const TemplateContainerWithPreview = ({
               />
             </div>
           </div>
+
+          {isAIEnabled && (
+            <>
+              <div className="px-6">
+                <FormbricksAICard environmentId={environment.id} />
+              </div>
+              <Separator className="mt-4" />
+            </>
+          )}
 
           <TemplateList
             environment={environment}

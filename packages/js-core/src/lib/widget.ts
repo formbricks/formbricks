@@ -269,7 +269,7 @@ const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurv
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
-      script.src = `${config.get().apiHost}/api/packages/surveys`;
+      script.src = `${config.get().apiHost}/js/surveys.umd.cjs`;
       script.async = true;
       script.onload = () => resolve(window.formbricksSurveys);
       script.onerror = (error) => {

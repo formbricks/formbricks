@@ -374,7 +374,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }):
       }
 
       const script = document.createElement("script");
-      script.src = "${options.apiHost ?? "http://localhost:3000"}/api/packages/surveys";
+      script.src = "${options.apiHost ?? "http://localhost:3000"}/js/surveys.umd.cjs";
       script.async = true;
       script.onload = () => loadSurvey();
       script.onerror = (error) => {

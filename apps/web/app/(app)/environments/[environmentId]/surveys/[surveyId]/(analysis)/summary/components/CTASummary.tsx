@@ -19,7 +19,7 @@ export const CTASummary = ({ questionSummary, survey, attributeClasses }: CTASum
         questionSummary={questionSummary}
         showResponses={false}
         attributeClasses={attributeClasses}
-        insights={
+        additionalInfo={
           <>
             <div className="flex items-center rounded-lg bg-slate-100 p-2">
               <InboxIcon className="mr-2 h-4 w-4" />

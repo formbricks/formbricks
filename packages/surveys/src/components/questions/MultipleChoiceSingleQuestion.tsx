@@ -9,7 +9,7 @@ import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceQuestion;
@@ -23,7 +23,7 @@ interface MultipleChoiceSingleProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const MultipleChoiceSingleQuestion = ({
@@ -45,7 +45,7 @@ export const MultipleChoiceSingleQuestion = ({
   const otherSpecify = useRef<HTMLInputElement | null>(null);
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
+  const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
@@ -132,8 +132,8 @@ export const MultipleChoiceSingleQuestion = ({
                   return (
                     <label
                       dir="auto"
-                      tabIndex={idx + 1}
                       key={choice.id}
+                      tabIndex={isCurrent ? 0 : -1}
                       className={cn(
                         value === getLocalizedValue(choice.label, languageCode)
                           ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
@@ -176,7 +176,7 @@ export const MultipleChoiceSingleQuestion = ({
                 {otherOption && (
                   <label
                     dir="auto"
-                    tabIndex={questionChoices.length + 1}
+                    tabIndex={isCurrent ? 0 : -1}
                     className={cn(
                       value === getLocalizedValue(otherOption.label, languageCode)
                         ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
@@ -193,10 +193,10 @@ export const MultipleChoiceSingleQuestion = ({
                     }}>
                     <span className="fb-flex fb-items-center fb-text-sm">
                       <input
+                        tabIndex={-1}
                         dir="auto"
                         type="radio"
                         id={otherOption.id}
-                        tabIndex={-1}
                         name={question.id}
                         value={getLocalizedValue(otherOption.label, languageCode)}
                         className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
@@ -217,7 +217,6 @@ export const MultipleChoiceSingleQuestion = ({
                     {otherSelected && (
                       <input
                         ref={otherSpecify}
-                        tabIndex={questionChoices.length + 1}
                         id={`${otherOption.id}-label`}
                         dir="auto"
                         name={question.id}
@@ -240,11 +239,16 @@ export const MultipleChoiceSingleQuestion = ({
           </div>
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
-            tabIndex={questionChoices.length + 3}
+            tabIndex={isCurrent ? 0 : -1}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -252,12 +256,6 @@ export const MultipleChoiceSingleQuestion = ({
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          tabIndex={questionChoices.length + 2}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
       </div>
     </form>
   );

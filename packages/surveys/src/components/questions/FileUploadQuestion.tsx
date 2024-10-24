@@ -8,7 +8,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "../buttons/BackButton";
 import { FileInput } from "../general/FileInput";
 import { Subheader } from "../general/Subheader";
@@ -27,7 +27,7 @@ interface FileUploadQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const FileUploadQuestion = ({
@@ -48,6 +48,7 @@ export const FileUploadQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+  const isCurrent = question.id === currentQuestionId;
 
   return (
     <form
@@ -103,20 +104,21 @@ export const FileUploadQuestion = ({
           />
         </div>
       </ScrollableContainer>
-      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+      <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        <SubmitButton
+          tabIndex={isCurrent ? 0 : -1}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
         {!isFirstQuestion && (
           <BackButton
+            tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
           />
         )}
-        <div></div>
-        <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
-          isLastQuestion={isLastQuestion}
-        />
       </div>
     </form>
   );

@@ -3,10 +3,7 @@
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import {
-  getOrganizationIdFromAttributeClassId,
-  getOrganizationIdFromEnvironmentId,
-} from "@formbricks/lib/organization/utils";
+import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
 import { ZAttributeClass } from "@formbricks/types/attribute-classes";
 import { ZId } from "@formbricks/types/common";
@@ -19,12 +16,6 @@ const ZGetSegmentsByAttributeClassAction = z.object({
 export const getSegmentsByAttributeClassAction = authenticatedActionClient
   .schema(ZGetSegmentsByAttributeClassAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromAttributeClassId(parsedInput.attributeClass.id),
-      rules: ["attributeClass", "read"],
-    });
-
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),

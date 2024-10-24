@@ -163,6 +163,8 @@ const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) =
 
         // refresh data to update the UI
         refreshData();
+      } else {
+        toast.error("The 2FA OTP is incorrect. Please try again.");
       }
     } catch (err) {
       toast.error(err.message);
