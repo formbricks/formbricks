@@ -40,6 +40,7 @@
     "@vercel/otel": "1.10.0",
     "@vercel/speed-insights": "1.0.12",
     "bcryptjs": "2.4.3",
+    "csv-parse": "5.5.6",
     "dotenv": "16.4.5",
     "encoding": "0.1.13",
     "file-loader": "6.2.0",

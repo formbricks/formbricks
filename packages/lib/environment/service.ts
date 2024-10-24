@@ -188,7 +188,7 @@ export const createEnvironment = async (
             },
             {
               key: "email",
-              name: "Name",
+              name: "Email",
               description: "The email of a contact",
               type: "default",
               isUnique: true,

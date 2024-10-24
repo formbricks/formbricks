@@ -45,3 +45,62 @@ export type TTransformPersonInput = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+// types related to the csv upload:
+export const ZContactCSVDuplicateAction = z.enum(["skip", "update", "overwrite"]);
+export type TContactCSVDuplicateAction = z.infer<typeof ZContactCSVDuplicateAction>;
+
+export const ZContactCSVUploadResponse = z.array(z.record(z.string())).superRefine((data, ctx) => {
+  for (const record of data) {
+    if (!Object.keys(record).includes("email")) {
+      return ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Missing email field for one or more records",
+      });
+    }
+
+    if (!record.email) {
+      return ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email field is empty for one or more records",
+      });
+    }
+  }
+
+  // check for duplicate emails
+  const emails = data.map((record) => record.email);
+  const emailSet = new Set(emails);
+
+  if (emails.length !== emailSet.size) {
+    return ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Duplicate emails found in the records",
+    });
+  }
+
+  // check for duplicate userIds if present
+  const userIds = data.map((record) => record.userId).filter(Boolean);
+  if (userIds?.length > 0) {
+    const userIdSet = new Set(userIds);
+    if (userIds.length !== userIdSet.size) {
+      return ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Duplicate userIds found in the records",
+      });
+    }
+  }
+});
+
+export type TContactCSVUploadResponse = z.infer<typeof ZContactCSVUploadResponse>;
+
+export const ZContactCSVAttributeMap = z.map(z.string(), z.string()).superRefine((attributeMap, ctx) => {
+  const values = Array.from(attributeMap.values());
+
+  if (new Set(values).size !== values.length) {
+    return ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Attribute map contains duplicate values",
+    });
+  }
+});
+export type TContactCSVAttributeMap = z.infer<typeof ZContactCSVAttributeMap>;

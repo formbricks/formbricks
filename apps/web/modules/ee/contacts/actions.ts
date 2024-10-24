@@ -1,12 +1,23 @@
 "use server";
 
+import { ValidationError } from "webpack";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getContactAttributeKeys } from "@formbricks/lib/services/contact-attribute-keys";
 import { ZId } from "@formbricks/types/common";
-import { deleteContact, getContacts, getOrganizationIdFromContactId } from "./lib/contacts";
+import {
+  createContactsFromCSV,
+  deleteContact,
+  getContacts,
+  getOrganizationIdFromContactId,
+} from "./lib/contacts";
+import {
+  ZContactCSVAttributeMap,
+  ZContactCSVDuplicateAction,
+  ZContactCSVUploadResponse,
+} from "./types/contact";
 
 const ZGetContactsAction = z.object({
   environmentId: ZId,
@@ -52,4 +63,30 @@ export const deleteContactAction = authenticatedActionClient
     });
 
     return await deleteContact(parsedInput.contactId);
+  });
+
+const ZCreateContactsFromCSV = z.object({
+  csvData: ZContactCSVUploadResponse,
+  environmentId: ZId,
+  duplicateContactsAction: ZContactCSVDuplicateAction,
+  attributeMap: ZContactCSVAttributeMap,
+});
+
+export const createContactsFromCSVAction = authenticatedActionClient
+  .schema(ZCreateContactsFromCSV)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["person", "create"],
+    });
+
+    const result = await createContactsFromCSV(
+      parsedInput.csvData,
+      parsedInput.environmentId,
+      parsedInput.duplicateContactsAction,
+      parsedInput.attributeMap
+    );
+
+    return result;
   });

@@ -34,11 +34,6 @@ export const ContactsSecondaryNavigation = async ({
       label: "Segments",
       href: `/environments/${environmentId}/segments`,
     },
-    // {
-    //   id: "attributes",
-    //   label: "Attributes",
-    //   href: `/environments/${environmentId}/attributes`,
-    // },
   ];
 
   return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;
