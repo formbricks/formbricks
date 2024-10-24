@@ -37,7 +37,7 @@ const Page = async ({ params }) => {
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={currentUserMembership?.organizationRole}
           activeId="billing"
         />
       </PageHeader>

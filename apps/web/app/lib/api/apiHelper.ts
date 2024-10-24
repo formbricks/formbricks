@@ -73,33 +73,3 @@ export const getSessionUser = async (req?: NextApiRequest, res?: NextApiResponse
   }
   if (session && "user" in session) return session.user;
 };
-
-export const isOwner = async (user, organizationId) => {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_organizationId: {
-        userId: user.id,
-        organizationId: organizationId,
-      },
-    },
-  });
-  if (membership && membership.role === "owner") {
-    return true;
-  }
-  return false;
-};
-
-export const isAdminOrOwner = async (user, organizationId) => {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_organizationId: {
-        userId: user.id,
-        organizationId: organizationId,
-      },
-    },
-  });
-  if (membership && (membership.role === "admin" || membership.role === "owner")) {
-    return true;
-  }
-  return false;
-};

@@ -41,9 +41,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const canRemoveLinkBranding = getRemoveLinkBrandingPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  if (isViewer) {
+  if (isMember) {
     return <ErrorComponent />;
   }
 
@@ -70,7 +70,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         />
       </SettingsCard>
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
-        <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
+        <EditLogo product={product} environmentId={params.environmentId} isMember={isMember} />
       </SettingsCard>
       <SettingsCard
         title="App Survey Placement"

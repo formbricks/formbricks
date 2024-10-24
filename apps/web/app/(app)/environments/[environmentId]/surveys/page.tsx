@@ -55,7 +55,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const prefilledFilters = [product?.config.channel, product.config.industry, searchParams.role ?? null];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
@@ -79,24 +79,24 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle="Surveys" cta={isViewer ? <></> : CreateSurveyButton} />
+          <PageHeader pageTitle="Surveys" cta={isMember ? <></> : CreateSurveyButton} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}
-            isViewer={isViewer}
+            isMember={isMember}
             WEBAPP_URL={WEBAPP_URL}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
             currentProductChannel={currentProductChannel}
           />
         </>
-      ) : isViewer ? (
+      ) : isMember ? (
         <>
           <h1 className="px-6 text-3xl font-extrabold text-slate-700">No surveys created yet.</h1>
 
           <h2 className="px-6 text-lg font-medium text-slate-500">
-            As a Viewer you are not allowed to create surveys. Please ask an Editor to create a survey or an
-            Admin to upgrade your role.
+            As a Member you are not allowed to create surveys. Please ask an owner to create a survey or a
+            manager to upgrade your role.
           </h2>
         </>
       ) : (

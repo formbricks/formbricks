@@ -12,10 +12,10 @@ import { Switch } from "@formbricks/ui/components/Switch";
 interface AIToggleProps {
   environmentId: string;
   organization: TOrganization;
-  isAdminOrOwner: boolean;
+  isUserManagerOrOwner: boolean;
 }
 
-export const AIToggle = ({ organization, isAdminOrOwner }: AIToggleProps) => {
+export const AIToggle = ({ organization, isUserManagerOrOwner }: AIToggleProps) => {
   const [isAIEnabled, setIsAIEnabled] = useState(organization.isAIEnabled);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,7 +48,7 @@ export const AIToggle = ({ organization, isAdminOrOwner }: AIToggleProps) => {
     }
   };
 
-  return !isAdminOrOwner ? (
+  return !isUserManagerOrOwner ? (
     <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
   ) : (
     <div className="flex flex-col gap-2">

@@ -93,7 +93,7 @@ const ResponseSurveyCard = ({
   });
 
   const { membershipRole } = useMembershipRole(survey?.environmentId || "");
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
 
   return (
     <div key={response.id}>
@@ -107,7 +107,7 @@ const ResponseSurveyCard = ({
           environment={environment}
           deleteResponses={deleteResponses}
           updateResponse={updateResponse}
-          isViewer={isViewer}
+          isMember={isMember}
         />
       )}
     </div>

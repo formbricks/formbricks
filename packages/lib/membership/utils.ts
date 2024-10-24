@@ -1,17 +1,15 @@
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 
-export const getAccessFlags = (role?: TMembershipRole) => {
-  const isAdmin = role === "admin";
-  const isEditor = role === "editor";
+export const getAccessFlags = (role?: TOrganizationRole) => {
   const isOwner = role === "owner";
-  const isDeveloper = role === "developer";
-  const isViewer = role === "viewer";
+  const isManager = role === "manager";
+  const isBilling = role === "billing";
+  const isMember = role === "member";
 
   return {
-    isAdmin,
-    isEditor,
+    isManager,
     isOwner,
-    isDeveloper,
-    isViewer,
+    isBilling,
+    isMember,
   };
 };

@@ -94,7 +94,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           products={products}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={currentUserMembership?.organizationRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isAIEnabled={isAIEnabled}
         />
@@ -102,7 +102,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           <TopControlBar
             environment={environment}
             environments={environments}
-            membershipRole={currentUserMembership?.role}
+            membershipRole={currentUserMembership?.organizationRole}
           />
           <div className="mt-14">{children}</div>
         </div>

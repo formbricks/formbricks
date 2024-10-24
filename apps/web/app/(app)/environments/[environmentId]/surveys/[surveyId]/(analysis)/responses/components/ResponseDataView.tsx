@@ -12,7 +12,7 @@ interface ResponseDataViewProps {
   user?: TUser;
   environment: TEnvironment;
   environmentTags: TTag[];
-  isViewer: boolean;
+  isMember: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
@@ -96,7 +96,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   user,
   environment,
   environmentTags,
-  isViewer,
+  isMember,
   fetchNextPage,
   hasMore,
   deleteResponses,
@@ -113,7 +113,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         responses={responses}
         user={user}
         environmentTags={environmentTags}
-        isViewer={isViewer}
+        isMember={isMember}
         environment={environment}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
-import type { TMembershipRole } from "@formbricks/types/memberships";
+import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -19,19 +19,19 @@ import { transferOwnershipAction, updateInviteAction, updateMembershipAction } f
 import { TransferOwnershipModal } from "./transfer-ownership-modal";
 
 interface Role {
-  isAdminOrOwner: boolean;
-  memberRole: TMembershipRole;
+  isUserManagerOrOwner: boolean;
+  memberRole: TOrganizationRole;
   organizationId: string;
   memberId?: string;
   memberName: string;
   userId: string;
-  memberAccepted: boolean;
+  memberAccepted?: boolean;
   inviteId?: string;
   currentUserRole: string;
 }
 
 export function EditMembershipRole({
-  isAdminOrOwner,
+  isUserManagerOrOwner,
   memberRole,
   organizationId,
   memberId,
@@ -48,16 +48,16 @@ export function EditMembershipRole({
   const disableRole =
     memberRole && memberId && userId ? memberRole === "owner" || memberId === userId : false;
 
-  const handleMemberRoleUpdate = async (role: TMembershipRole) => {
+  const handleMemberRoleUpdate = async (organizationRole: TOrganizationRole) => {
     setLoading(true);
 
     try {
       if (memberAccepted && memberId) {
-        await updateMembershipAction({ userId: memberId, organizationId, data: { role } });
+        await updateMembershipAction({ userId: memberId, organizationId, data: { organizationRole } });
       }
 
       if (inviteId) {
-        await updateInviteAction({ inviteId: inviteId, organizationId, data: { role } });
+        await updateInviteAction({ inviteId: inviteId, organizationId, data: { organizationRole } });
       }
     } catch (error) {
       toast.error("Something went wrong");
@@ -85,7 +85,7 @@ export function EditMembershipRole({
     }
   };
 
-  const handleRoleChange = (role: TMembershipRole) => {
+  const handleRoleChange = (role: TOrganizationRole) => {
     if (role === "owner") {
       setTransferOwnershipModalOpen(true);
     } else {
@@ -94,7 +94,7 @@ export function EditMembershipRole({
   };
 
   const getMembershipRoles = () => {
-    const roles = ["owner", "admin", "editor", "developer", "viewer"];
+    const roles = ["owner", "manager", "member", "billing"];
     if (currentUserRole === "owner" && memberAccepted) {
       return roles;
     }
@@ -102,7 +102,7 @@ export function EditMembershipRole({
     return roles.filter((role) => role !== "owner");
   };
 
-  if (isAdminOrOwner) {
+  if (isUserManagerOrOwner) {
     return (
       <>
         <DropdownMenu>
@@ -121,7 +121,7 @@ export function EditMembershipRole({
             <DropdownMenuContent>
               <DropdownMenuRadioGroup
                 onValueChange={(value) => {
-                  handleRoleChange(value.toLowerCase() as TMembershipRole);
+                  handleRoleChange(value.toLowerCase() as TOrganizationRole);
                 }}
                 value={capitalizeFirstLetter(memberRole)}>
                 {getMembershipRoles().map((role) => (

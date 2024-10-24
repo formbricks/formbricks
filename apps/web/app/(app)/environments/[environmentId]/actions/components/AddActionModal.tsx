@@ -18,7 +18,7 @@ interface AddActionModalProps {
 export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalProps) => {
   const [open, setOpen] = useState(false);
   const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
   const [newActionClasses, setNewActionClasses] = useState<TActionClass[]>(actionClasses);
 
   if (error) {
@@ -52,7 +52,7 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
           <CreateNewActionTab
             actionClasses={newActionClasses}
             environmentId={environmentId}
-            isViewer={isViewer}
+            isMember={isMember}
             setActionClasses={setNewActionClasses}
             setOpen={setOpen}
           />

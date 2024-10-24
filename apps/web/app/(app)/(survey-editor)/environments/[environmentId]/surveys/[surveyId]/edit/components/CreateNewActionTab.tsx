@@ -23,7 +23,7 @@ import { createActionClassAction } from "../actions";
 interface CreateNewActionTabProps {
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
-  isViewer: boolean;
+  isMember: boolean;
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
@@ -33,7 +33,7 @@ export const CreateNewActionTab = ({
   actionClasses,
   setActionClasses,
   setOpen,
-  isViewer,
+  isMember,
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
@@ -85,7 +85,7 @@ export const CreateNewActionTab = ({
   const submitHandler = async (data: TActionClassInput) => {
     const { type } = data;
     try {
-      if (isViewer) {
+      if (isMember) {
         throw new Error("You are not authorised to perform this action.");
       }
 

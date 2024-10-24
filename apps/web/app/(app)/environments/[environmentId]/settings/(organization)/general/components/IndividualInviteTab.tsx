@@ -1,16 +1,17 @@
 "use client";
 
+import { OrganizationRole } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
-import { MembershipRole } from "./AddMemberModal";
 
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; organizationRole: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
@@ -32,12 +33,12 @@ export const IndividualInviteTab = ({
   } = useForm<{
     name: string;
     email: string;
-    role: MembershipRole;
+    organizationRole: TOrganizationRole;
   }>();
 
   const submitEventClass = async () => {
     const data = getValues();
-    data.role = data.role || MembershipRole.Admin;
+    data.organizationRole = data.organizationRole || OrganizationRole.manager;
     await onSubmit([data]);
     setOpen(false);
     reset();

@@ -58,7 +58,7 @@ const Page = async ({ params }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
   const isAIEnabled = await getIsAIEnabled(organization);
   const shouldGenerateInsights = needsInsightsGeneration(survey);
@@ -71,7 +71,7 @@ const Page = async ({ params }) => {
           <SurveyAnalysisCTA
             environment={environment}
             survey={survey}
-            isViewer={isViewer}
+            isMember={isMember}
             webAppUrl={WEBAPP_URL}
             user={user}
           />

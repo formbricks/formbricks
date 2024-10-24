@@ -1,12 +1,12 @@
 import { TopControlButtons } from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface SideBarProps {
   environment: TEnvironment;
   environments: TEnvironment[];
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
 }
 
 export const TopControlBar = ({ environment, environments, membershipRole }: SideBarProps) => {

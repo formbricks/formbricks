@@ -167,7 +167,7 @@ const getQuestionColumnsData = (
 export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
-  isViewer: boolean
+  isMember: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
     getQuestionColumnsData(question, survey, isExpanded)
@@ -347,5 +347,5 @@ export const generateResponseTableColumns = (
     notesColumn,
   ];
 
-  return isViewer ? baseColumns : [getSelectionColumn(), ...baseColumns];
+  return isMember ? baseColumns : [getSelectionColumn(), ...baseColumns];
 };

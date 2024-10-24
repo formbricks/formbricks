@@ -50,9 +50,9 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     session?.user.id,
     product.organizationId
   );
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  if (isViewer) {
+  if (isMember) {
     return redirect(`/environments/${environment.id}/surveys`);
   }
 

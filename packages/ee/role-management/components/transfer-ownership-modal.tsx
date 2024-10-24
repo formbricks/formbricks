@@ -42,7 +42,7 @@ export function TransferOwnershipModal({
             There can only be one owner of each organization. If you transfer your ownership to{" "}
             <b>{memberName}</b>, you will lose all of your ownership rights.
           </li>
-          <li>When you transfer the ownership, you will remain an Admin of the organization.</li>
+          <li>When you transfer the ownership, you will remain manager of the organization.</li>
         </ul>
         <form>
           <label htmlFor="transferOwnershipConfirmation">

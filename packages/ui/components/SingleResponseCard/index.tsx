@@ -27,7 +27,7 @@ interface SingleResponseCardProps {
   environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
   deleteResponses?: (responseIds: string[]) => void;
-  isViewer: boolean;
+  isMember: boolean;
   setSelectedResponseId?: (responseId: string | null) => void;
 }
 
@@ -40,7 +40,7 @@ export const SingleResponseCard = ({
   environment,
   updateResponse,
   deleteResponses,
-  isViewer,
+  isMember,
   setSelectedResponseId,
 }: SingleResponseCardProps) => {
   const environmentId = survey.environmentId;
@@ -89,7 +89,7 @@ export const SingleResponseCard = ({
   const handleDeleteResponse = async () => {
     setIsDeleting(true);
     try {
-      if (isViewer) {
+      if (isMember) {
         throw new Error("You are not authorized to perform this action.");
       }
       await deleteResponseAction({ responseId: response.id });
@@ -130,7 +130,7 @@ export const SingleResponseCard = ({
           survey={survey}
           environment={environment}
           user={user}
-          isViewer={isViewer}
+          isMember={isMember}
           setDeleteDialogOpen={setDeleteDialogOpen}
         />
 
@@ -142,7 +142,7 @@ export const SingleResponseCard = ({
           tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
           environmentTags={environmentTags}
           updateFetchedResponses={updateFetchedResponses}
-          isViewer={isViewer}
+          isMember={isMember}
         />
 
         <DeleteDialog

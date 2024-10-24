@@ -19,7 +19,7 @@ interface ResponseCardModalProps {
   environmentTags: TTag[];
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   deleteResponses: (responseIds: string[]) => void;
-  isViewer: boolean;
+  isMember: boolean;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -34,7 +34,7 @@ export const ResponseCardModal = ({
   environmentTags,
   updateResponse,
   deleteResponses,
-  isViewer,
+  isMember,
   open,
   setOpen,
 }: ResponseCardModalProps) => {
@@ -105,7 +105,7 @@ export const ResponseCardModal = ({
             pageType="response"
             environment={environment}
             environmentTags={environmentTags}
-            isViewer={isViewer}
+            isMember={isMember}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
             setSelectedResponseId={setSelectedResponseId}

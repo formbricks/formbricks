@@ -28,9 +28,9 @@ const BillingLayout = async ({ children, params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  return <>{isOwner || isAdmin ? <>{children}</> : <ErrorComponent />}</>;
+  return <>{isOwner || isManager ? <>{children}</> : <ErrorComponent />}</>;
 };
 
 export default BillingLayout;

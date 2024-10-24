@@ -20,7 +20,7 @@ interface ResponseTagsWrapperProps {
   responseId: string;
   environmentTags: TTag[];
   updateFetchedResponses: () => void;
-  isViewer?: boolean;
+  isMember?: boolean;
 }
 
 export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -29,7 +29,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   responseId,
   environmentTags,
   updateFetchedResponses,
-  isViewer,
+  isMember,
 }) => {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
@@ -58,7 +58,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   return (
     <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
-      {!isViewer && (
+      {!isMember && (
         <Button
           variant="minimal"
           size="sm"
@@ -79,11 +79,11 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             tags={tagsState}
             setTagsState={setTagsState}
             highlight={tagIdToHighlight === tag.tagId}
-            allowDelete={!isViewer}
+            allowDelete={!isMember}
           />
         ))}
 
-        {!isViewer && (
+        {!isMember && (
           <TagsCombobox
             open={open}
             setOpen={setOpen}

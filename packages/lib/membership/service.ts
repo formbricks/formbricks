@@ -35,7 +35,7 @@ export const getMembersByOrganizationId = reactCache(
               },
               userId: true,
               accepted: true,
-              role: true,
+              organizationRole: true,
             },
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -47,7 +47,7 @@ export const getMembersByOrganizationId = reactCache(
               email: member.user?.email || "",
               userId: member.userId,
               accepted: member.accepted,
-              role: member.role,
+              organizationRole: member.organizationRole,
             };
           });
 
@@ -147,7 +147,7 @@ export const createMembership = async (
         userId,
         organizationId,
         accepted: data.accepted,
-        role: data.role as TMembership["role"],
+        organizationRole: data.organizationRole as TMembership["organizationRole"],
       },
     });
     organizationCache.revalidate({
@@ -255,7 +255,7 @@ export const transferOwnership = async (
           },
         },
         data: {
-          role: "admin",
+          organizationRole: "owner",
         },
       }),
       prisma.membership.update({
@@ -266,7 +266,7 @@ export const transferOwnership = async (
           },
         },
         data: {
-          role: "owner",
+          organizationRole: "owner",
         },
       }),
     ]);

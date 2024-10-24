@@ -24,17 +24,16 @@ import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { validateInputs } from "../utils/validate";
 import { inviteCache } from "./cache";
 
-const inviteSelect = {
+const inviteSelect: Prisma.InviteSelect = {
   id: true,
   email: true,
   name: true,
   organizationId: true,
   creatorId: true,
   acceptorId: true,
-  accepted: true,
   createdAt: true,
   expiresAt: true,
-  role: true,
+  organizationRole: true,
 };
 interface InviteWithCreator extends TInvite {
   creator: {
@@ -224,7 +223,7 @@ export const inviteUser = async ({
   const currentUser = session.user;
 
   try {
-    const { name, email, role } = invitee;
+    const { name, email, organizationRole } = invitee;
     const { id: currentUserId } = currentUser;
     const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
@@ -252,7 +251,7 @@ export const inviteUser = async ({
         organization: { connect: { id: organizationId } },
         creator: { connect: { id: currentUserId } },
         acceptor: user ? { connect: { id: user.id } } : undefined,
-        role,
+        organizationRole,
         expiresAt,
       },
     });

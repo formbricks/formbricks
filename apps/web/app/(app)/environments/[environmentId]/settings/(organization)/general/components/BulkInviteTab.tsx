@@ -1,18 +1,19 @@
 "use client";
 
+import { OrganizationRole } from "@prisma/client";
 import { UploadIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { ZInvitees } from "@formbricks/types/invites";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
-import { MembershipRole } from "./AddMemberModal";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; organizationRole: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
 }
 
@@ -42,7 +43,9 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
           return {
             name: name.trim(),
             email: email.trim(),
-            role: canDoRoleManagement ? (role.trim().toLowerCase() as MembershipRole) : MembershipRole.Admin,
+            organizationRole: canDoRoleManagement
+              ? (role.trim().toLowerCase() as TOrganizationRole)
+              : OrganizationRole.manager,
           };
         });
         try {
@@ -88,8 +91,8 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
             <AlertDescription className="ml-2">
               <p className="text-sm">
                 <strong>Warning: </strong> Please note that on the Free Plan, all organization members are
-                automatically assigned the &quot;Admin&quot; role regardless of the role specified in the CSV
-                file.
+                automatically assigned the &quot;Manager&quot; role regardless of the role specified in the
+                CSV file.
               </p>
             </AlertDescription>
           </Alert>

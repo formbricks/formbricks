@@ -62,12 +62,12 @@ export const DeleteAccountModal = ({
         <ul className="list-disc pb-6 pl-6">
           <li>Permanent removal of all of your personal information and data.</li>
           <li>
-            If you are the owner of an organization with other admins, the ownership of that organization will
-            be transferred to another admin.
+            If you are the owner of an organization with other managers, the ownership of that organization
+            will be transferred to another manager.
           </li>
           <li>
-            If you are the only member of an organization or there is no other admin present, the organization
-            will be irreversibly deleted along with all associated data.
+            If you are the only member of an organization or there is no other manager present, the
+            organization will be irreversibly deleted along with all associated data.
           </li>
           <li>This action cannot be undone. If it&apos;s gone, it&apos;s gone.</li>
         </ul>
