@@ -1,6 +1,7 @@
 import Link from "next/link";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
+import { ProBadge } from "@formbricks/ui/components/ProBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface NavigationLinkProps {
@@ -10,6 +11,7 @@ interface NavigationLinkProps {
   children: React.ReactNode;
   linkText: string;
   isTextVisible: boolean;
+  isPaywall?: boolean;
 }
 
 export const NavigationLink = ({
@@ -19,6 +21,7 @@ export const NavigationLink = ({
   children,
   linkText,
   isTextVisible = true,
+  isPaywall = false,
 }: NavigationLinkProps) => {
   const activeClass = "bg-slate-50 border-r-4 border-brand-dark font-semibold text-slate-900";
   const inactiveClass =
@@ -53,10 +56,10 @@ export const NavigationLink = ({
             {children}
             <span
               className={cn(
-                "ml-2 transition-opacity duration-100",
+                "ml-2 flex transition-opacity duration-100",
                 isTextVisible ? "opacity-0" : "opacity-100"
               )}>
-              {linkText}
+              {linkText} {isPaywall && <ProBadge />}
             </span>
           </Link>
         </li>

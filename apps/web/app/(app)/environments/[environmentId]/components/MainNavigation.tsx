@@ -66,9 +66,10 @@ interface NavigationProps {
   organization: TOrganization;
   products: TProduct[];
   isMultiOrgEnabled: boolean;
-  isFormbricksCloud?: boolean;
+  isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
-  isAIEnabled?: boolean;
+  isAIEnabled: boolean;
+  isEnterpriseLicenseEnabled: boolean;
 }
 
 export const MainNavigation = ({
@@ -78,9 +79,10 @@ export const MainNavigation = ({
   user,
   products,
   isMultiOrgEnabled,
-  isFormbricksCloud = true,
   membershipRole,
-  isAIEnabled = false,
+  isFormbricksCloud,
+  isAIEnabled,
+  isEnterpriseLicenseEnabled,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -166,7 +168,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/experience`,
         icon: GaugeIcon,
         isActive: pathname?.includes("/experience"),
-        isHidden: !isAIEnabled,
+        isPaywall: !isAIEnabled,
       },
       {
         name: "Surveys",
@@ -176,13 +178,11 @@ export const MainNavigation = ({
         isHidden: false,
       },
       {
-        name: "People",
-        href: `/environments/${environment.id}/people`,
+        name: "Contacts",
+        href: `/environments/${environment.id}/contacts`,
         icon: UserIcon,
-        isActive:
-          pathname?.includes("/people") ||
-          pathname?.includes("/segments") ||
-          pathname?.includes("/attributes"),
+        isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
+        isPaywall: !isEnterpriseLicenseEnabled,
       },
       {
         name: "Actions",
@@ -310,7 +310,8 @@ export const MainNavigation = ({
                       isActive={item.isActive}
                       isCollapsed={isCollapsed}
                       isTextVisible={isTextVisible}
-                      linkText={item.name}>
+                      linkText={item.name}
+                      isPaywall={item.isPaywall}>
                       <item.icon strokeWidth={1.5} />
                     </NavigationLink>
                   )
