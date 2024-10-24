@@ -26,7 +26,7 @@ const cards = [
 const Loading = () => {
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Organization Settings">
+      <PageHeader pageTitle={"environments.settings.general.organization_settings"}>
         <OrganizationSettingsNavbar isFormbricksCloud={IS_FORMBRICKS_CLOUD} activeId="general" loading />
       </PageHeader>
       {cards.map((card, index) => (

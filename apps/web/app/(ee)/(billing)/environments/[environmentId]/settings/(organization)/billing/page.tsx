@@ -33,7 +33,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Organization Settings">
+      <PageHeader pageTitle={"environments.settings.general.organization_settings"}>
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}

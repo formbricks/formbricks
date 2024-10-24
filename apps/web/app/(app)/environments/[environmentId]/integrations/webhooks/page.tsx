@@ -31,7 +31,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <GoBackButton />
-      <PageHeader pageTitle="Webhooks" cta={renderAddWebhookButton()} />
+      <PageHeader pageTitle="common.webhooks" cta={renderAddWebhookButton()} />
       <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (

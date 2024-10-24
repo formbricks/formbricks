@@ -21,6 +21,7 @@ interface ConsentSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
+  locale: string;
 }
 
 export const ConsentSummary = ({
@@ -28,6 +29,7 @@ export const ConsentSummary = ({
   survey,
   attributeClasses,
   setFilter,
+  locale,
 }: ConsentSummaryProps) => {
   const summaryItems = [
     {
@@ -47,6 +49,7 @@ export const ConsentSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {

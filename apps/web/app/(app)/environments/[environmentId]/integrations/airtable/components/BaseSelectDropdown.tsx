@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Control, Controller, UseFormSetValue } from "react-hook-form";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { Label } from "@formbricks/ui/components/Label";
@@ -27,9 +28,10 @@ export const BaseSelectDropdown = ({
   setValue,
   defaultValue,
 }: BaseSelectProps) => {
+  const t = useTranslations();
   return (
     <div className="flex w-full flex-col">
-      <Label htmlFor="base">Airtable base</Label>
+      <Label htmlFor="base">{t("environments.integrations.airtable.airtable_base")}</Label>
       <div className="mt-1 flex">
         <Controller
           control={control}

@@ -1,34 +1,36 @@
 import { TIntegrationType } from "@formbricks/types/integration";
 
-export const getIntegrationDetails = (integrationType: TIntegrationType) => {
+export const getIntegrationDetails = (integrationType: TIntegrationType, t: (key: string) => string) => {
   switch (integrationType) {
     case "googleSheets":
       return {
-        text: "Sync responses directly with Google Sheets.",
+        text: t("environments.integrations.google_sheets.google_sheets_integration_description"),
         docsLink: "https://formbricks.com/docs/integrations/google-sheets",
-        connectButtonLabel: "Connect with Google Sheets",
-        notConfiguredText: "Google Sheet Integration is not configured in your instance of Formbricks.",
+        connectButtonLabel: t("environments.integrations.google_sheets.connect_with_google_sheets"),
+        notConfiguredText: t(
+          "environments.integrations.google_sheets.google_sheet_integration_is_not_configured"
+        ),
       };
     case "airtable":
       return {
-        text: "Sync responses directly with Airtable.",
+        text: t("environments.integrations.airtable.airtable_integration_description"),
         docsLink: "https://formbricks.com/docs/integrations/airtable",
-        connectButtonLabel: "Connect with Airtable",
-        notConfiguredText: "Airtable Integration is not configured in your instance of Formbricks.",
+        connectButtonLabel: t("environments.integrations.airtable.connect_with_airtable"),
+        notConfiguredText: t("environments.integrations.airtable.airtable_integration_is_not_configured"),
       };
     case "notion":
       return {
-        text: "Sync responses directly with your Notion database.",
+        text: t("environments.integrations.notion.notion_integration_description"),
         docsLink: "https://formbricks.com/docs/integrations/notion",
-        connectButtonLabel: "Connect with Notion",
-        notConfiguredText: "Notion Integration is not configured in your instance of Formbricks.",
+        connectButtonLabel: t("environments.integrations.notion.connect_with_notion"),
+        notConfiguredText: t("environments.integrations.notion.notion_integration_is_not_configured"),
       };
     case "slack":
       return {
-        text: "Send responses directly to Slack.",
+        text: t("environments.integrations.slack.slack_integration_description"),
         docsLink: "https://formbricks.com/docs/integrations/slack",
-        connectButtonLabel: "Connect with Slack",
-        notConfiguredText: "Slack Integration is not configured in your instance of Formbricks.",
+        connectButtonLabel: t("environments.integrations.slack.connect_with_slack"),
+        notConfiguredText: t("environments.integrations.slack.slack_integration_is_not_configured"),
       };
   }
 };

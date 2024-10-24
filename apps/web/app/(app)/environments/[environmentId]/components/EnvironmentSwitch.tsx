@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -13,6 +14,7 @@ interface EnvironmentSwitchProps {
 }
 
 export const EnvironmentSwitch = ({ environment, environments }: EnvironmentSwitchProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [isEnvSwitchChecked, setIsEnvSwitchChecked] = useState(environment?.type === "development");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +42,7 @@ export const EnvironmentSwitch = ({ environment, environments }: EnvironmentSwit
       <Label
         htmlFor="development-mode"
         className={cn("hover:cursor-pointer", isEnvSwitchChecked && "text-orange-800")}>
-        Dev Env
+        {t("common.dev_env")}
       </Label>
       <Switch
         className="focus:ring-orange-800 data-[state=checked]:bg-orange-800"

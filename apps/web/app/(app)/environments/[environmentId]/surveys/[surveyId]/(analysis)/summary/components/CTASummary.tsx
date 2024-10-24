@@ -9,9 +9,10 @@ interface CTASummaryProps {
   questionSummary: TSurveyQuestionSummaryCta;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
-export const CTASummary = ({ questionSummary, survey, attributeClasses }: CTASummaryProps) => {
+export const CTASummary = ({ questionSummary, survey, attributeClasses, locale }: CTASummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -19,6 +20,7 @@ export const CTASummary = ({ questionSummary, survey, attributeClasses }: CTASum
         questionSummary={questionSummary}
         showResponses={false}
         attributeClasses={attributeClasses}
+        locale={locale}
         additionalInfo={
           <>
             <div className="flex items-center rounded-lg bg-slate-100 p-2">

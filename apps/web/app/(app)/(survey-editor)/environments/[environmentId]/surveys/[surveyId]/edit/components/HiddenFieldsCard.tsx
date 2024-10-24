@@ -4,6 +4,7 @@ import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environm
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -31,7 +32,7 @@ export const HiddenFieldsCard = ({
 }: HiddenFieldsCardProps) => {
   const open = activeQuestionId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
-
+  const t = useTranslations();
   const setOpen = (open: boolean) => {
     if (open) {
       setActiveQuestionId("hidden");
@@ -108,7 +109,7 @@ export const HiddenFieldsCard = ({
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Hidden fields</p>
+                <p className="text-sm font-semibold">{t("common.hidden_fields")}</p>
               </div>
             </div>
 
@@ -143,7 +144,7 @@ export const HiddenFieldsCard = ({
               })
             ) : (
               <p className="mt-2 text-sm italic text-slate-500">
-                No hidden fields yet. Add the first one below.
+                {t("environments.surveys.edit.no_hidden_fields_yet_add_first_one_below")}
               </p>
             )}
           </div>
@@ -171,10 +172,10 @@ export const HiddenFieldsCard = ({
                 fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
                 enabled: true,
               });
-              toast.success("Hidden field added successfully");
+              toast.success(t("environments.surveys.edit.hidden_field_added_successfully"));
               setHiddenField("");
             }}>
-            <Label htmlFor="headline">Hidden Field</Label>
+            <Label htmlFor="headline">{t("common.hidden_field")}</Label>
             <div className="mt-2 flex gap-2">
               <Input
                 autoFocus
@@ -182,10 +183,10 @@ export const HiddenFieldsCard = ({
                 name="headline"
                 value={hiddenField}
                 onChange={(e) => setHiddenField(e.target.value.trim())}
-                placeholder="Type field id..."
+                placeholder={t("environments.surveys.edit.type_field_id") + "..."}
               />
               <Button variant="secondary" type="submit" size="sm" className="whitespace-nowrap">
-                Add hidden field ID
+                {t("environments.surveys.edit.add_hidden_field_id")}
               </Button>
             </div>
           </form>

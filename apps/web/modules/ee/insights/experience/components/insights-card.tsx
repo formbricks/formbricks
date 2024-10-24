@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import { InsightView } from "./insight-view";
 
@@ -18,11 +19,12 @@ export const InsightsCard = ({
   insightsPerPage: insightsLimit,
   documentsPerPage,
 }: InsightsCardProps) => {
+  const t = useTranslations();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Insights for {productName}</CardTitle>
-        <CardDescription>All the insights generated from responses across all your surveys</CardDescription>
+        <CardTitle>{t("environments.experience.insights_for_product", { productName })}</CardTitle>
+        <CardDescription>{t("environments.experience.insights_description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <InsightView

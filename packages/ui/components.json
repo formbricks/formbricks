@@ -1,20 +1,20 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "default",
+  "aliases": {
+    "components": "@formbricks/ui/components",
+    "hooks": "@formbricks/ui/hooks",
+    "lib": "@formbricks/ui/lib",
+    "ui": "@formbricks/ui/components",
+    "utils": "@formbricks/ui/lib/utils"
+  },
   "rsc": true,
-  "tsx": true,
+  "style": "default",
   "tailwind": {
+    "baseColor": "slate",
     "config": "tailwind.config.js",
     "css": "globals.css",
-    "baseColor": "slate",
     "cssVariables": false,
     "prefix": ""
   },
-  "aliases": {
-    "components": "@formbricks/ui/components",
-    "ui": "@formbricks/ui/components",
-    "utils": "@formbricks/ui/lib/utils",
-    "lib": "@formbricks/ui/lib",
-    "hooks": "@formbricks/ui/hooks"
-  }
+  "tsx": true
 }

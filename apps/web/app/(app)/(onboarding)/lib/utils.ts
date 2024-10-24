@@ -3,10 +3,10 @@ import { TProductConfigChannel } from "@formbricks/types/product";
 export const getCustomHeadline = (channel?: TProductConfigChannel) => {
   switch (channel) {
     case "website":
-      return "Let's get the most out of your website traffic!";
+      return "organizations.products.new.settings.website_channel_headline";
     case "app":
-      return "Let's research what your users need!";
+      return "organizations.products.new.settings.app_channel_headline";
     default:
-      return "You maintain a product, how exciting!";
+      return "organizations.products.new.settings.link_channel_headline";
   }
 };

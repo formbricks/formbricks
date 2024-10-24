@@ -6,6 +6,7 @@ import { ExperiencePageStats } from "@/modules/ee/insights/experience/components
 import { TemplatesCard } from "@/modules/ee/insights/experience/components/templates-card";
 import { getDateFromTimeRange } from "@/modules/ee/insights/experience/lib/utils";
 import { TStatsPeriod } from "@/modules/ee/insights/experience/types/stats";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -27,6 +28,7 @@ export const Dashboard = ({
   insightsPerPage,
   documentsPerPage,
 }: DashboardProps) => {
+  const t = useTranslations();
   const [statsPeriod, setStatsPeriod] = useState<TStatsPeriod>("week");
   const statsFrom = getDateFromTimeRange(statsPeriod);
   return (
@@ -39,19 +41,19 @@ export const Dashboard = ({
         className="flex justify-center">
         <TabsList>
           <TabsTrigger value="day" aria-label="Toggle day">
-            Today
+            {t("environments.experience.today")}
           </TabsTrigger>
           <TabsTrigger value="week" aria-label="Toggle week">
-            This week
+            {t("environments.experience.this_week")}
           </TabsTrigger>
           <TabsTrigger value="month" aria-label="Toggle month">
-            This month
+            {t("environments.experience.this_month")}
           </TabsTrigger>
           <TabsTrigger value="quarter" aria-label="Toggle quarter">
-            This quarter
+            {t("environments.experience.this_quarter")}
           </TabsTrigger>
           <TabsTrigger value="all" aria-label="Toggle all">
-            All time
+            {t("environments.experience.all_time")}
           </TabsTrigger>
         </TabsList>
       </Tabs>

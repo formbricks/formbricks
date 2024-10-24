@@ -37,6 +37,7 @@ interface SurveyEditorProps {
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
+  locale: string;
 }
 
 export const SurveyEditor = ({
@@ -55,6 +56,7 @@ export const SurveyEditor = ({
   isUnsplashConfigured,
   plan,
   isCxMode = false,
+  locale,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -172,6 +174,7 @@ export const SurveyEditor = ({
               attributeClasses={attributeClasses}
               plan={plan}
               isCxMode={isCxMode}
+              locale={locale}
             />
           )}
 
@@ -203,6 +206,7 @@ export const SurveyEditor = ({
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
               isFormbricksCloud={isFormbricksCloud}
+              locale={locale}
             />
           )}
         </main>

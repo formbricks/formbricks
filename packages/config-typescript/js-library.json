@@ -1,17 +1,17 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Node 16",
-  "extends": "./base.json",
   "compilerOptions": {
-    "outDir": "./dist",
     "declaration": true,
-    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "lib": ["es2022", "dom", "dom.iterable"],
     "module": "ESNext",
-    "target": "ES2022",
-    "strict": true,
-    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "outDir": "./dist",
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  }
+    "strict": true,
+    "target": "ES2022"
+  },
+  "display": "Node 16",
+  "extends": "./base.json"
 }

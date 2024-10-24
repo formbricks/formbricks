@@ -1,4 +1,5 @@
 import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
@@ -16,6 +17,7 @@ interface ShareSurveyLinkProps {
 }
 
 export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: ShareSurveyLinkProps) => {
+  const t = useTranslations();
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
@@ -75,7 +77,7 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
             window.open(previewUrl, "_blank");
           }}
           EndIcon={SquareArrowOutUpRight}>
-          Preview
+          {t("common.preview")}
         </Button>
         <Button
           variant="secondary"
@@ -86,7 +88,7 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
             toast.success("URL copied to clipboard!");
           }}
           EndIcon={Copy}>
-          Copy
+          {t("common.copy")}
         </Button>
         {survey.singleUse?.enabled && (
           <Button

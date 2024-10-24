@@ -41,6 +41,7 @@ interface SummaryListProps {
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
+  locale: string;
 }
 
 export const SummaryList = ({
@@ -52,6 +53,7 @@ export const SummaryList = ({
   attributeClasses,
   isAIEnabled,
   documentsPerPage,
+  locale,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
 
@@ -132,6 +134,7 @@ export const SummaryList = ({
                 attributeClasses={attributeClasses}
                 isAIEnabled={isAIEnabled}
                 documentsPerPage={documentsPerPage}
+                locale={locale}
               />
             );
           }
@@ -148,6 +151,7 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 setFilter={setFilter}
+                locale={locale}
               />
             );
           }
@@ -159,6 +163,7 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 setFilter={setFilter}
+                locale={locale}
               />
             );
           }
@@ -169,6 +174,7 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             );
           }
@@ -180,6 +186,7 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 setFilter={setFilter}
+                locale={locale}
               />
             );
           }
@@ -191,6 +198,7 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 setFilter={setFilter}
+                locale={locale}
               />
             );
           }
@@ -202,6 +210,7 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 setFilter={setFilter}
+                locale={locale}
               />
             );
           }
@@ -213,6 +222,7 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             );
           }
@@ -224,6 +234,7 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             );
           }
@@ -235,6 +246,7 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             );
           }
@@ -246,6 +258,7 @@ export const SummaryList = ({
                 survey={survey}
                 attributeClasses={attributeClasses}
                 setFilter={setFilter}
+                locale={locale}
               />
             );
           }
@@ -257,6 +270,7 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             );
           }
@@ -268,6 +282,7 @@ export const SummaryList = ({
                 surveyType={survey.type}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             );
           }
@@ -288,6 +303,7 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             );
           }

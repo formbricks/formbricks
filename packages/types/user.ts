@@ -37,6 +37,7 @@ export const ZUser = z.object({
   role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
+  locale: z.string(),
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -49,6 +50,7 @@ export const ZUserUpdateInput = z.object({
   objective: ZUserObjective.nullish(),
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
+  locale: z.string().optional(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
@@ -64,6 +66,7 @@ export const ZUserCreateInput = z.object({
   objective: ZUserObjective.nullish(),
   identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
   identityProviderAccountId: z.string().optional(),
+  locale: z.string().optional(),
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;

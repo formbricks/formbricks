@@ -4,12 +4,13 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import {
-  CXQuestionTypes,
+  getCXQuestionTypes,
   getQuestionDefaults,
-  questionTypes,
+  getQuestionTypes,
   universalQuestionPresets,
 } from "@formbricks/lib/utils/questions";
 import { TProduct } from "@formbricks/types/product";
@@ -18,14 +19,15 @@ interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
   product: TProduct;
   isCxMode: boolean;
+  locale: string;
 }
 
-export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestionButtonProps) => {
+export const AddQuestionButton = ({ addQuestion, product, isCxMode, locale }: AddQuestionButtonProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [hoveredQuestionId, setHoveredQuestionId] = useState<string | null>(null);
+  const availableQuestionTypes = isCxMode ? getCXQuestionTypes(locale) : getQuestionTypes(locale);
   const [parent] = useAutoAnimate();
-
-  const availableQuestionTypes = isCxMode ? CXQuestionTypes : questionTypes;
 
   return (
     <Collapsible.Root
@@ -41,8 +43,10 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
             <PlusIcon className="h-5 w-5 text-white" />
           </div>
           <div className="px-4 py-3">
-            <p className="text-sm font-semibold">Add question</p>
-            <p className="mt-1 text-xs text-slate-500">Add a new question to your survey</p>
+            <p className="text-sm font-semibold">{t("environments.surveys.edit.add_question")}</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t("environments.surveys.edit.add_a_new_question_to_your_survey")}
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -56,7 +60,7 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode }: AddQuestio
             onClick={() => {
               addQuestion({
                 ...universalQuestionPresets,
-                ...getQuestionDefaults(questionType.id, product),
+                ...getQuestionDefaults(questionType.id, product, locale),
                 id: createId(),
                 type: questionType.id,
               });

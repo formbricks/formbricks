@@ -9,15 +9,17 @@ interface CalSummaryProps {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
-export const CalSummary = ({ questionSummary, survey, attributeClasses }: CalSummaryProps) => {
+export const CalSummary = ({ questionSummary, survey, attributeClasses, locale }: CalSummaryProps) => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>

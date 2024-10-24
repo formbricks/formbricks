@@ -1,42 +1,43 @@
 import { createId } from "@paralleldrive/cuid2";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
+import { translate } from "@formbricks/lib/templates";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 
-export const XMSurveyDefault: TXMTemplate = {
+export const getXMSurveyDefault = (locale: string): TXMTemplate => ({
   name: "",
-  endings: [getDefaultEndingCard([])],
+  endings: [getDefaultEndingCard([], locale)],
   questions: [],
   styling: {
     overwriteThemeStyling: true,
   },
-};
+});
 
-const NPSSurvey = (): TXMTemplate => {
+const NPSSurvey = (locale: string): TXMTemplate => {
   return {
-    ...XMSurveyDefault,
-    name: "NPS Survey",
+    ...getXMSurveyDefault(locale),
+    name: translate("nps_survey_name", locale),
     questions: [
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.NPS,
-        headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+        headline: { default: translate("nps_survey_question_1_headline", locale) },
         required: true,
-        lowerLabel: { default: "Not at all likely" },
-        upperLabel: { default: "Extremely likely" },
+        lowerLabel: { default: translate("nps_survey_question_1_lower_label", locale) },
+        upperLabel: { default: translate("nps_survey_question_1_upper_label", locale) },
         isColorCodingEnabled: true,
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "To help us improve, can you describe the reason(s) for your rating?" },
+        headline: { default: translate("nps_survey_question_2_headline", locale) },
         required: false,
         inputType: "text",
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Any other comments, feedback, or concerns?" },
+        headline: { default: translate("nps_survey_question_3_headline", locale) },
         required: false,
         inputType: "text",
       },
@@ -44,12 +45,12 @@ const NPSSurvey = (): TXMTemplate => {
   };
 };
 
-const StarRatingSurvey = (): TXMTemplate => {
+const StarRatingSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
-    ...XMSurveyDefault,
-    name: "{{productName}}'s Rating Survey",
+    ...getXMSurveyDefault(locale),
+    name: translate("star_rating_survey_name", locale),
     questions: [
       {
         id: reusableQuestionIds[0],
@@ -86,15 +87,15 @@ const StarRatingSurvey = (): TXMTemplate => {
         ],
         range: 5,
         scale: "number",
-        headline: { default: "How do you like {{productName}}?" },
+        headline: { default: translate("star_rating_survey_question_1_headline", locale) },
         required: true,
-        lowerLabel: { default: "Extremely dissatisfied" },
-        upperLabel: { default: "Extremely satisfied" },
+        lowerLabel: { default: translate("star_rating_survey_question_1_lower_label", locale) },
+        upperLabel: { default: translate("star_rating_survey_question_1_upper_label", locale) },
         isColorCodingEnabled: false,
       },
       {
         id: reusableQuestionIds[1],
-        html: { default: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>' },
+        html: { default: translate("star_rating_survey_question_2_html", locale) },
         type: TSurveyQuestionTypeEnum.CTA,
         logic: [
           {
@@ -117,15 +118,15 @@ const StarRatingSurvey = (): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: XMSurveyDefault.endings[0].id,
+                target: getXMSurveyDefault(locale).endings[0].id,
               },
             ],
           },
         ],
-        headline: { default: "Happy to hear 🙏 Please write a review for us!" },
+        headline: { default: translate("star_rating_survey_question_2_headline", locale) },
         required: true,
         buttonUrl: "https://formbricks.com/github",
-        buttonLabel: { default: "Write review" },
+        buttonLabel: { default: translate("star_rating_survey_question_2_button_label", locale) },
         buttonExternal: true,
       },
       {
@@ -142,12 +143,12 @@ const StarRatingSurvey = (): TXMTemplate => {
   };
 };
 
-const CSATSurvey = (): TXMTemplate => {
+const CSATSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
-    ...XMSurveyDefault,
-    name: "{{productName}} CSAT",
+    ...getXMSurveyDefault(locale),
+    name: translate("csat_survey_name", locale),
     questions: [
       {
         id: reusableQuestionIds[0],
@@ -184,10 +185,10 @@ const CSATSurvey = (): TXMTemplate => {
         ],
         range: 5,
         scale: "smiley",
-        headline: { default: "How satisfied are you with your {{productName}} experience?" },
+        headline: { default: translate("csat_survey_question_1_headline", locale) },
         required: true,
-        lowerLabel: { default: "Extremely dissatisfied" },
-        upperLabel: { default: "Extremely satisfied" },
+        lowerLabel: { default: translate("csat_survey_question_1_lower_label", locale) },
+        upperLabel: { default: translate("csat_survey_question_1_upper_label", locale) },
         isColorCodingEnabled: false,
       },
       {
@@ -214,62 +215,62 @@ const CSATSurvey = (): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: XMSurveyDefault.endings[0].id,
+                target: getXMSurveyDefault(locale).endings[0].id,
               },
             ],
           },
         ],
-        headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
+        headline: { default: translate("csat_survey_question_2_headline", locale) },
         required: false,
-        placeholder: { default: "Type your answer here..." },
+        placeholder: { default: translate("csat_survey_question_2_placeholder", locale) },
         inputType: "text",
       },
       {
         id: reusableQuestionIds[2],
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Ugh, sorry! Is there anything we can do to improve your experience?" },
+        headline: { default: translate("csat_survey_question_3_headline", locale) },
         required: false,
-        placeholder: { default: "Type your answer here..." },
+        placeholder: { default: translate("csat_survey_question_3_placeholder", locale) },
         inputType: "text",
       },
     ],
   };
 };
 
-const CESSurvey = (): TXMTemplate => {
+const CESSurvey = (locale: string): TXMTemplate => {
   return {
-    ...XMSurveyDefault,
-    name: "CES Survey",
+    ...getXMSurveyDefault(locale),
+    name: translate("cess_survey_name", locale),
     questions: [
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.Rating,
         range: 5,
         scale: "number",
-        headline: { default: "{{productName}} makes it easy for me to [ADD GOAL]" },
+        headline: { default: translate("cess_survey_question_1_headline", locale) },
         required: true,
-        lowerLabel: { default: "Disagree strongly" },
-        upperLabel: { default: "Agree strongly" },
+        lowerLabel: { default: translate("cess_survey_question_1_lower_label", locale) },
+        upperLabel: { default: translate("cess_survey_question_1_upper_label", locale) },
         isColorCodingEnabled: false,
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Thanks! How could we make it easier for you to [ADD GOAL]?" },
+        headline: { default: translate("cess_survey_question_2_headline", locale) },
         required: true,
-        placeholder: { default: "Type your answer here..." },
+        placeholder: { default: translate("cess_survey_question_2_placeholder", locale) },
         inputType: "text",
       },
     ],
   };
 };
 
-const SmileysRatingSurvey = (): TXMTemplate => {
+const SmileysRatingSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
-    ...XMSurveyDefault,
-    name: "Smileys Survey",
+    ...getXMSurveyDefault(locale),
+    name: translate("smileys_survey_name", locale),
     questions: [
       {
         id: reusableQuestionIds[0],
@@ -306,15 +307,15 @@ const SmileysRatingSurvey = (): TXMTemplate => {
         ],
         range: 5,
         scale: "smiley",
-        headline: { default: "How do you like {{productName}}?" },
+        headline: { default: translate("smileys_survey_question_1_headline", locale) },
         required: true,
-        lowerLabel: { default: "Not good" },
-        upperLabel: { default: "Very satisfied" },
+        lowerLabel: { default: translate("smileys_survey_question_1_lower_label", locale) },
+        upperLabel: { default: translate("smileys_survey_question_1_upper_label", locale) },
         isColorCodingEnabled: false,
       },
       {
         id: reusableQuestionIds[1],
-        html: { default: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>' },
+        html: { default: translate("smileys_survey_question_2_html", locale) },
         type: TSurveyQuestionTypeEnum.CTA,
         logic: [
           {
@@ -337,58 +338,58 @@ const SmileysRatingSurvey = (): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: XMSurveyDefault.endings[0].id,
+                target: getXMSurveyDefault(locale).endings[0].id,
               },
             ],
           },
         ],
-        headline: { default: "Happy to hear 🙏 Please write a review for us!" },
+        headline: { default: translate("smileys_survey_question_2_headline", locale) },
         required: true,
         buttonUrl: "https://formbricks.com/github",
-        buttonLabel: { default: "Write review" },
+        buttonLabel: { default: translate("smileys_survey_question_2_button_label", locale) },
         buttonExternal: true,
       },
       {
         id: reusableQuestionIds[2],
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Sorry to hear! What is ONE thing we can do better?" },
+        headline: { default: translate("smileys_survey_question_3_headline", locale) },
         required: true,
-        subheader: { default: "Help us improve your experience." },
-        buttonLabel: { default: "Send" },
-        placeholder: { default: "Type your answer here..." },
+        subheader: { default: translate("smileys_survey_question_3_subheader", locale) },
+        buttonLabel: { default: translate("smileys_survey_question_3_button_label", locale) },
+        placeholder: { default: translate("smileys_survey_question_3_placeholder", locale) },
         inputType: "text",
       },
     ],
   };
 };
 
-const eNPSSurvey = (): TXMTemplate => {
+const eNPSSurvey = (locale: string): TXMTemplate => {
   return {
-    ...XMSurveyDefault,
-    name: "eNPS Survey",
+    ...getXMSurveyDefault(locale),
+    name: translate("enps_survey_name", locale),
     questions: [
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.NPS,
         headline: {
-          default: "How likely are you to recommend working at this company to a friend or colleague?",
+          default: translate("enps_survey_question_1_headline", locale),
         },
         required: false,
-        lowerLabel: { default: "Not at all likely" },
-        upperLabel: { default: "Extremely likely" },
+        lowerLabel: { default: translate("enps_survey_question_1_lower_label", locale) },
+        upperLabel: { default: translate("enps_survey_question_1_upper_label", locale) },
         isColorCodingEnabled: true,
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "To help us improve, can you describe the reason(s) for your rating?" },
+        headline: { default: translate("enps_survey_question_2_headline", locale) },
         required: false,
         inputType: "text",
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Any other comments, feedback, or concerns?" },
+        headline: { default: translate("enps_survey_question_3_headline", locale) },
         required: false,
         inputType: "text",
       },
@@ -396,11 +397,11 @@ const eNPSSurvey = (): TXMTemplate => {
   };
 };
 
-export const XMTemplates: TXMTemplate[] = [
-  NPSSurvey(),
-  StarRatingSurvey(),
-  CSATSurvey(),
-  CESSurvey(),
-  SmileysRatingSurvey(),
-  eNPSSurvey(),
+export const getXMTemplates = (locale: string): TXMTemplate[] => [
+  NPSSurvey(locale),
+  StarRatingSurvey(locale),
+  CSATSurvey(locale),
+  CESSurvey(locale),
+  SmileysRatingSurvey(locale),
+  eNPSSurvey(locale),
 ];

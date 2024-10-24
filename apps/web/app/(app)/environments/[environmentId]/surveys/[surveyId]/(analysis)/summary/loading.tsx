@@ -5,7 +5,7 @@ import { SkeletonLoader } from "@formbricks/ui/components/SkeletonLoader";
 const Loading = () => {
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Summary" />
+      <PageHeader pageTitle="common.summary" />
       <div className="flex h-9 animate-pulse gap-2">
         <div className="h-9 w-36 rounded-full bg-slate-200"></div>
         <div className="h-9 w-36 rounded-full bg-slate-200"></div>

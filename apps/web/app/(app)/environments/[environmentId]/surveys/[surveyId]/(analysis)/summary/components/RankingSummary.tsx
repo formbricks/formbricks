@@ -8,6 +8,7 @@ interface RankingSummaryProps {
   surveyType: TSurveyType;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 export const RankingSummary = ({
@@ -15,6 +16,7 @@ export const RankingSummary = ({
   surveyType,
   survey,
   attributeClasses,
+  locale,
 }: RankingSummaryProps) => {
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
@@ -27,6 +29,7 @@ export const RankingSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (

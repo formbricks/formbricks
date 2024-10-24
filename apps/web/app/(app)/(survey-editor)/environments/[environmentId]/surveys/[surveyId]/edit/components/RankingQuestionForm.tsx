@@ -5,6 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -37,6 +38,7 @@ export const RankingQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
 }: RankingQuestionFormProps): JSX.Element => {
+  const t = useTranslations();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
 
@@ -92,12 +94,12 @@ export const RankingQuestionForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: "Keep current order",
+      label: t("environments.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: "Randomize all",
+      label: t("environments.surveys.edit.randomize_all"),
       show: question.choices.length > 0,
     },
   };
@@ -115,7 +117,7 @@ export const RankingQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -132,7 +134,7 @@ export const RankingQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -156,13 +158,13 @@ export const RankingQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options*</Label>
+        <Label htmlFor="choices">{t("environments.surveys.edit.options")}*</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="ranking-choices"
@@ -217,7 +219,7 @@ export const RankingQuestionForm = ({
               EndIcon={PlusIcon}
               type="button"
               onClick={() => addOption()}>
-              Add option
+              {t("environments.surveys.edit.add_option")}
             </Button>
             <ShuffleOptionSelect
               shuffleOptionsTypes={shuffleOptionsTypes}

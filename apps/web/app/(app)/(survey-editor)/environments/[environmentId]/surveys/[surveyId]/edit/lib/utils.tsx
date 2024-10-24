@@ -2,7 +2,7 @@ import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { questionTypes } from "@formbricks/lib/utils/questions";
+import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
@@ -41,7 +41,7 @@ export const formatTextWithSlashes = (text: string) => {
   });
 };
 
-const questionIconMapping = questionTypes.reduce(
+const questionIconMapping = getQuestionTypes("en-US").reduce(
   (prev, curr) => ({
     ...prev,
     [curr.id]: curr.icon,
@@ -141,9 +141,9 @@ export const replaceEndingCardHeadlineRecall = (
 };
 
 export const actionObjectiveOptions: TComboboxOption[] = [
-  { label: "Calculate", value: "calculate" },
-  { label: "Require Answer", value: "requireAnswer" },
-  { label: "Jump to question", value: "jumpToQuestion" },
+  { label: "environments.surveys.edit.calculate", value: "calculate" },
+  { label: "environments.surveys.edit.require_answer", value: "requireAnswer" },
+  { label: "environments.surveys.edit.jump_to_question", value: "jumpToQuestion" },
 ];
 
 const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {

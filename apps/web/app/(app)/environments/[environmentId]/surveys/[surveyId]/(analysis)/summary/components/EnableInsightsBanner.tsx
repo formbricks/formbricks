@@ -2,6 +2,7 @@
 
 import { generateInsightsForSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { SparklesIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
@@ -19,6 +20,7 @@ export const EnableInsightsBanner = ({
   surveyResponseCount,
   maxResponseCount,
 }: EnableInsightsBannerProps) => {
+  const t = useTranslations();
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   const handleInsightGeneration = async () => {
@@ -34,12 +36,11 @@ export const EnableInsightsBanner = ({
       </div>
       <div className="flex-1">
         <AlertTitle>
-          <span className="mr-2">Ready to test AI insights?</span>
+          <span className="mr-2">{t("environments.surveys.summary.enable_ai_insights_banner_title")}</span>
           <Badge text="Beta" type="gray" size="normal" />
         </AlertTitle>
         <AlertDescription className="flex items-start justify-between gap-4">
-          You can enable the new insights feature for the survey to get AI-based insights for your open-text
-          responses.
+          {t("environments.surveys.summary.enable_ai_insights_banner_description")}
         </AlertDescription>
       </div>
       <Button
@@ -51,10 +52,10 @@ export const EnableInsightsBanner = ({
         disabled={surveyResponseCount > maxResponseCount || isGeneratingInsights}
         tooltip={
           surveyResponseCount > maxResponseCount
-            ? "Kindly contact us at hola@formbricks.com to generate insights for this survey"
+            ? t("environments.surveys.summary.enable_ai_insights_banner_tooltip")
             : undefined
         }>
-        Enable insights
+        {t("environments.surveys.summary.enable_ai_insights_banner_button")}
       </Button>
     </Alert>
   );

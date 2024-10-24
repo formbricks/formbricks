@@ -6,6 +6,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AddMemberModal";
 import { XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -39,6 +40,7 @@ export const OrganizationActions = ({
   isMultiOrgEnabled,
 }: OrganizationActionsProps) => {
   const router = useRouter();
+  const t = useTranslations();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
   const [isCreateOrganizationModalOpen, setCreateOrganizationModalOpen] = useState(false);
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
@@ -80,7 +82,7 @@ export const OrganizationActions = ({
             variant="secondary"
             size="sm"
             onClick={() => setLeaveOrganizationModalOpen(true)}>
-            Leave organization
+            {t("environments.settings.general.leave_organization")}
           </Button>
         )}
         {isMultiOrgEnabled && (
@@ -90,7 +92,7 @@ export const OrganizationActions = ({
             onClick={() => {
               setCreateOrganizationModalOpen(true);
             }}>
-            Create new organization
+            {t("environments.settings.general.create_new_organization")}
           </Button>
         )}
         {!isInviteDisabled && isAdminOrOwner && (
@@ -99,7 +101,7 @@ export const OrganizationActions = ({
             onClick={() => {
               setAddMemberModalOpen(true);
             }}>
-            Add member
+            {t("environments.settings.general.add_member")}
           </Button>
         )}
       </div>
@@ -119,10 +121,10 @@ export const OrganizationActions = ({
       <CustomDialog
         open={isLeaveOrganizationModalOpen}
         setOpen={setLeaveOrganizationModalOpen}
-        title="Are you sure?"
-        text="You wil leave this organization and loose access to all surveys and responses. You can only rejoin if you are invited again."
+        title={t("environments.settings.general.leave_organization_title")}
+        text={t("environments.settings.general.leave_organization_description")}
         onOk={handleLeaveOrganization}
-        okBtnText="Yes, leave organization"
+        okBtnText={t("environments.settings.general.leave_organization_ok_btn_text")}
         disabled={isLeaveOrganizationDisabled}
         isLoading={loading}>
         {isLeaveOrganizationDisabled && (

@@ -1,4 +1,5 @@
 import { AlertTriangleIcon, CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -7,16 +8,17 @@ interface WidgetStatusIndicatorProps {
 }
 
 export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProps) => {
+  const t = useTranslations();
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: `Formbricks SDK is not yet connected.`,
-      subtitle: `Connect your website or app with Formbricks`,
+      title: t("environments.product.app-connection.formbricks_sdk_not_connected"),
+      subtitle: t("environments.product.app-connection.formbricks_sdk_not_connected_description"),
     },
     running: {
       icon: CheckIcon,
-      title: "Receiving data 💃🕺",
-      subtitle: `Formbricks SDK is connected`,
+      title: t("environments.product.app-connection.receiving_data"),
+      subtitle: t("environments.product.app-connection.formbricks_sdk_connected"),
     },
   };
 

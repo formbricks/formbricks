@@ -6,13 +6,14 @@ import {
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
 import { PlusIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { questionTypes } from "@formbricks/lib/utils/questions";
+import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TIntegrationInput } from "@formbricks/types/integration";
@@ -36,6 +37,7 @@ interface AddIntegrationModalProps {
   databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 export const AddIntegrationModal = ({
@@ -47,7 +49,9 @@ export const AddIntegrationModal = ({
   databases,
   selectedIntegration,
   attributeClasses,
+  locale,
 }: AddIntegrationModalProps) => {
+  const t = useTranslations();
   const { handleSubmit } = useForm();
   const [selectedDatabase, setSelectedDatabase] = useState<TIntegrationNotionDatabase | null>();
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -128,14 +132,14 @@ export const AddIntegrationModal = ({
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
           id: fId,
-          name: `Hidden field : ${fId}`,
+          name: `${t("common.hidden_field")} : ${fId}`,
           type: TSurveyQuestionTypeEnum.OpenText,
         })) || []
       : [];
     const Metadata = [
       {
         id: "metadata",
-        name: `Metadata`,
+        name: t("common.metadata"),
         type: TSurveyQuestionTypeEnum.OpenText,
       },
     ];
@@ -168,25 +172,27 @@ export const AddIntegrationModal = ({
   const linkDatabase = async () => {
     try {
       if (!selectedDatabase) {
-        throw new Error("Please select a database");
+        throw new Error(t("environments.integrations.notion.please_select_a_database"));
       }
       if (!selectedSurvey) {
-        throw new Error("Please select a survey");
+        throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
       if (mapping.length === 1 && (!mapping[0].question.id || !mapping[0].column.id)) {
-        throw new Error("Please select at least one mapping");
+        throw new Error(t("environments.integrations.notion.please_select_at_least_one_mapping"));
       }
 
       if (mapping.filter((m) => m.error).length > 0) {
-        throw new Error("Please resolve the mapping errors");
+        throw new Error(t("environments.integrations.notion.please_resolve_mapping_errors"));
       }
 
       if (
         mapping.filter((m) => m.column.id && !m.question.id).length >= 1 ||
         mapping.filter((m) => m.question.id && !m.column.id).length >= 1
       ) {
-        throw new Error("Please complete mapping fields with notion property");
+        throw new Error(
+          t("environments.integrations.notion.please_complete_mapping_fields_with_notion_property")
+        );
       }
 
       setIsLinkingDatabase(true);
@@ -210,7 +216,11 @@ export const AddIntegrationModal = ({
       }
 
       await createOrUpdateIntegrationAction({ environmentId, integrationData: notionIntegrationData });
-      toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
+      if (selectedIntegration) {
+        toast.success(t("environments.integrations.integration_updated_successfully"));
+      } else {
+        toast.success(t("environments.integrations.integration_added_successfully"));
+      }
       resetForm();
       setOpen(false);
     } catch (e) {
@@ -225,7 +235,7 @@ export const AddIntegrationModal = ({
     try {
       setIsDeleting(true);
       await createOrUpdateIntegrationAction({ environmentId, integrationData: notionIntegrationData });
-      toast.success("Integration removed successfully");
+      toast.success(t("environments.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
       toast.error(error.message);
@@ -272,19 +282,25 @@ export const AddIntegrationModal = ({
           case ERRORS.UNSUPPORTED_TYPE:
             return (
               <>
-                - <i>{col.name}</i> of type <b>{col.type}</b> is not supported by notion API. The data
-                won&apos;t be reflected in your notion database.
+                -{" "}
+                {t("environments.integrations.notion.col_name_of_type_is_not_supported", {
+                  col_name: col.name,
+                  type: col.type,
+                })}
               </>
             );
           case ERRORS.MAPPING:
-            const question = questionTypes.find((qt) => qt.id === ques.type);
+            const question = getQuestionTypes(locale).find((qt) => qt.id === ques.type);
             if (!question) return null;
             return (
               <>
-                - <i>&quot;{ques.name}&quot;</i> of type <b>{question.label}</b> can&apos;t be mapped to the
-                column <i>&quot;{col.name}&quot;</i> of type <b>{col.type}</b>. Instead use column of type{" "}
-                {""}
-                <b>{TYPE_MAPPING[question.id].join(" ,")}.</b>
+                {t("environments.integrations.notion.que_name_of_type_cant_be_mapped_to", {
+                  que_name: ques.name,
+                  question_label: question.label,
+                  col_name: col.name,
+                  col_type: col.type,
+                  mapped_type: TYPE_MAPPING[question.id].join(" ,"),
+                })}
               </>
             );
           default:
@@ -320,7 +336,7 @@ export const AddIntegrationModal = ({
           <div className="flex w-full items-center">
             <div className="w-[340px] max-w-full">
               <DropdownSelector
-                placeholder="Select a survey question"
+                placeholder={t("environments.integrations.notion.select_a_survey_question")}
                 items={filteredQuestionItems}
                 selectedItem={mapping?.[idx]?.question}
                 setSelectedItem={(item) => {
@@ -366,7 +382,7 @@ export const AddIntegrationModal = ({
             <div className="h-px w-4 border-t border-t-slate-300" />
             <div className="w-[340px] max-w-full">
               <DropdownSelector
-                placeholder="Select a field to map"
+                placeholder={t("environments.integrations.notion.select_a_field_to_map")}
                 items={getFilteredDbItems()}
                 selectedItem={mapping?.[idx]?.column}
                 setSelectedItem={(item) => {
@@ -441,8 +457,12 @@ export const AddIntegrationModal = ({
                 <Image className="w-12" src={NotionLogo} alt="Google Sheet logo" />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Link Notion Database</div>
-                <div className="text-sm text-slate-500">Sync responses with a Notion Database</div>
+                <div className="text-xl font-medium text-slate-700">
+                  {t("environments.integrations.notion.link_notion_database")}
+                </div>
+                <div className="text-sm text-slate-500">
+                  {t("environments.integrations.notion.sync_responses_with_a_notion_database")}
+                </div>
               </div>
             </div>
           </div>
@@ -453,7 +473,7 @@ export const AddIntegrationModal = ({
               <div>
                 <div className="mb-4">
                   <DropdownSelector
-                    label="Select Database"
+                    label={t("environments.integrations.notion.select_a_database")}
                     items={databases.map((d) => ({
                       id: d.id,
                       name: (d as any).title?.[0]?.plain_text,
@@ -465,31 +485,34 @@ export const AddIntegrationModal = ({
                   />
                   {selectedDatabase && hasMatchingId && (
                     <p className="text-xs text-amber-700">
-                      <strong>Warning:</strong> A connection with this database is live. Please make changes
-                      with caution.
+                      <strong>{t("common.warning")}:</strong>{" "}
+                      {t("environments.integrations.notion.duplicate_connection_warning")}
                     </p>
                   )}
                   <p className="m-1 text-xs text-slate-500">
                     {databases.length === 0 &&
-                      "You have to create at least one database to be able to setup this integration"}
+                      t(
+                        "environments.integrations.notion.create_at_least_one_database_to_setup_this_integration"
+                      )}
                   </p>
                 </div>
                 <div className="mb-4">
                   <DropdownSelector
-                    label="Select Survey"
+                    label={t("common.select_survey")}
                     items={surveys}
                     selectedItem={selectedSurvey}
                     setSelectedItem={setSelectedSurvey}
                     disabled={surveys.length === 0}
                   />
                   <p className="m-1 text-xs text-slate-500">
-                    {surveys.length === 0 &&
-                      "You have to create a survey to be able to setup this integration"}
+                    {surveys.length === 0 && t("environments.integrations.create_survey_warning")}
                   </p>
                 </div>
                 {selectedDatabase && selectedSurvey && (
                   <div>
-                    <Label>Map Formbricks fields to Notion property</Label>
+                    <Label>
+                      {t("environments.integrations.notion.map_formbricks_fields_to_notion_property")}
+                    </Label>
                     <div className="mt-4 max-h-[20vh] w-full overflow-y-auto">
                       {mapping.map((_, idx) => (
                         <MappingRow idx={idx} key={idx} />
@@ -510,7 +533,7 @@ export const AddIntegrationModal = ({
                   onClick={() => {
                     deleteLink();
                   }}>
-                  Delete
+                  {t("common.delete")}
                 </Button>
               ) : (
                 <Button
@@ -521,14 +544,16 @@ export const AddIntegrationModal = ({
                     resetForm();
                     setMapping([]);
                   }}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               )}
               <Button
                 type="submit"
                 loading={isLinkingDatabase}
                 disabled={mapping.filter((m) => m.error).length > 0}>
-                {selectedIntegration ? "Update" : "Link Database"}
+                {selectedIntegration
+                  ? t("common.update")
+                  : t("environments.integrations.notion.link_database")}
               </Button>
             </div>
           </div>

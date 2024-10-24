@@ -14,6 +14,7 @@ interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -23,7 +24,13 @@ interface NPSSummaryProps {
   ) => void;
 }
 
-export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilter }: NPSSummaryProps) => {
+export const NPSSummary = ({
+  questionSummary,
+  survey,
+  attributeClasses,
+  setFilter,
+  locale,
+}: NPSSummaryProps) => {
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {
@@ -63,6 +70,7 @@ export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilte
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors", "dismissed"].map((group) => (

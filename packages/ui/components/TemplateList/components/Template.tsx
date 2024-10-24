@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
@@ -28,6 +29,7 @@ export const Template = ({
   selectedFilter,
   noPreview,
 }: TemplateProps) => {
+  const t = useTranslations();
   return (
     <div
       onClick={() => {
@@ -54,7 +56,7 @@ export const Template = ({
             disabled={activeTemplate === null}
             loading={loading}
             onClick={() => createSurvey(activeTemplate)}>
-            Use this template
+            {t("environments.surveys.templates.use_this_template")}
           </Button>
         </div>
       )}

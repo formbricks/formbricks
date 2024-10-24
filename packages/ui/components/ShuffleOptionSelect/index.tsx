@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import {
   TShuffleOption,
   TSurveyMatrixQuestion,
@@ -34,6 +35,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
   updateQuestion,
   shuffleOptionsTypes,
 }) => {
+  const t = useTranslations();
   return (
     <Select
       defaultValue={shuffleOption}
@@ -42,7 +44,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
         updateQuestion(questionIdx, { shuffleOption: e });
       }}>
       <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-medium text-slate-600">
-        <SelectValue placeholder="Select ordering" />
+        <SelectValue placeholder={t("environments.surveys.edit.select_ordering")} />
       </SelectTrigger>
       <SelectContent>
         {Object.values(shuffleOptionsTypes).map(

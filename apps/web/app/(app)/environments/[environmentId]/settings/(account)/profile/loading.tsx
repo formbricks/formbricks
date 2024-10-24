@@ -6,8 +6,8 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Loading = () => {
   const cards = [
     {
-      title: "Personal information",
-      description: "Update your personal information",
+      title: "environments.settings.profile.personal_information",
+      description: "environments.settings.profile.update_personal_info",
       skeletonLines: [
         { classes: "h-4 w-28" },
         { classes: "h-6 w-64" },
@@ -16,25 +16,20 @@ const Loading = () => {
       ],
     },
     {
-      title: "Avatar",
-      description: "Assist your organization in identifying you on Formbricks.",
+      title: "common.avatar",
+      description: "environments.settings.profile.organization_identification",
       skeletonLines: [{ classes: "h-10 w-10" }, { classes: "h-8 w-24" }],
     },
     {
-      title: "Security",
-      description: "Manage your password and other security settings.",
-      skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
-    },
-    {
-      title: "Delete account",
-      description: "Delete your account with all of your personal information and data.",
+      title: "environments.settings.profile.delete_account",
+      description: "environments.settings.profile.confirm_delete_account",
       skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
     },
   ];
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Account Settings">
+      <PageHeader pageTitle="common.account_settings">
         <AccountSettingsNavbar activeId="profile" loading />
       </PageHeader>
       {cards.map((card, index) => (

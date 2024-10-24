@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -30,6 +31,7 @@ export const EndScreenForm = ({
   updateSurvey,
   endingCard,
 }: EndScreenFormProps) => {
+  const t = useTranslations();
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
@@ -38,7 +40,7 @@ export const EndScreenForm = ({
     <form>
       <QuestionFormInput
         id="headline"
-        label="Note*"
+        label={t("common.note")}
         value={endingCard.headline}
         localSurvey={localSurvey}
         questionIdx={localSurvey.questions.length + endingCardIndex}
@@ -52,7 +54,7 @@ export const EndScreenForm = ({
       <QuestionFormInput
         id="subheader"
         value={endingCard.subheader}
-        label={"Description"}
+        label={t("common.description")}
         localSurvey={localSurvey}
         questionIdx={localSurvey.questions.length + endingCardIndex}
         isInvalid={isInvalid}
@@ -82,7 +84,7 @@ export const EndScreenForm = ({
             <div className="ml-2">
               <h3 className="text-sm font-semibold text-slate-700">Show Button</h3>
               <p className="text-xs font-normal text-slate-500">
-                Send your respondents to a page of your choice.
+                {t("environments.surveys.edit.send_your_respondents_to_a_page_of_your_choice")}
               </p>
             </div>
           </Label>
@@ -92,7 +94,7 @@ export const EndScreenForm = ({
             <div className="space-y-2">
               <QuestionFormInput
                 id="buttonLabel"
-                label="Button Label"
+                label={t("environments.surveys.edit.button_label")}
                 placeholder="Create your own Survey"
                 className="bg-white"
                 value={endingCard.buttonLabel}
@@ -106,7 +108,7 @@ export const EndScreenForm = ({
               />
             </div>
             <div className="space-y-2">
-              <Label>Button Link</Label>
+              <Label>{t("environments.surveys.edit.button_url")}</Label>
               <Input
                 id="buttonLink"
                 name="buttonLink"

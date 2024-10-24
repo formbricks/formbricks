@@ -1,7 +1,7 @@
-import { getDefaultEndingCard, welcomeCardDefault } from "@formbricks/lib/templates";
+import { getDefaultEndingCard, getDefaultWelcomeCard } from "@formbricks/lib/templates";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-export const minimalSurvey: TSurvey = {
+export const getMinimalSurvey = (locale: string): TSurvey => ({
   id: "someUniqueId1",
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -15,9 +15,9 @@ export const minimalSurvey: TSurvey = {
   triggers: [],
   recontactDays: null,
   displayLimit: null,
-  welcomeCard: welcomeCardDefault,
+  welcomeCard: getDefaultWelcomeCard(locale),
   questions: [],
-  endings: [getDefaultEndingCard([])],
+  endings: [getDefaultEndingCard([], locale)],
   hiddenFields: {
     enabled: false,
   },
@@ -39,4 +39,4 @@ export const minimalSurvey: TSurvey = {
   isVerifyEmailEnabled: false,
   isSingleResponsePerEmailEnabled: false,
   variables: [],
-};
+});

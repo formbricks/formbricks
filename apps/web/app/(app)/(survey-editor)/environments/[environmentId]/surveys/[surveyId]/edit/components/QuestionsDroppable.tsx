@@ -22,6 +22,7 @@ interface QuestionsDraggableProps {
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
+  locale: string;
 }
 
 export const QuestionsDroppable = ({
@@ -41,6 +42,7 @@ export const QuestionsDroppable = ({
   addQuestion,
   isFormbricksCloud,
   isCxMode,
+  locale,
 }: QuestionsDraggableProps) => {
   const [parent] = useAutoAnimate();
 
@@ -68,6 +70,7 @@ export const QuestionsDroppable = ({
             addQuestion={addQuestion}
             isFormbricksCloud={isFormbricksCloud}
             isCxMode={isCxMode}
+            locale={locale}
           />
         ))}
       </SortableContext>

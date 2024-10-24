@@ -1,5 +1,4 @@
 {
-  "extends": "@formbricks/config-typescript/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -7,6 +6,7 @@
     },
     "resolveJsonModule": true
   },
-  "include": [".", "../../packages/types/*.d.ts"],
-  "exclude": ["dist", "build", "node_modules"]
+  "exclude": ["dist", "build", "node_modules"],
+  "extends": "@formbricks/config-typescript/nextjs.json",
+  "include": [".", "../../packages/types/*.d.ts"]
 }

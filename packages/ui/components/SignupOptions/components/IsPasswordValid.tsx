@@ -1,4 +1,5 @@
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 interface Validation {
@@ -12,9 +13,9 @@ const PASSWORD_REGEX = {
 };
 
 const DEFAULT_VALIDATIONS = [
-  { label: "Mix of uppercase and lowercase", state: false },
-  { label: "Minimum 8 & Maximum 128 characters long", state: false },
-  { label: "Contain at least 1 number", state: false },
+  { label: "auth.signup.password_validation_uppercase_and_lowercase", state: false },
+  { label: "auth.signup.password_validation_minimum_8_and_maximum_128_characters", state: false },
+  { label: "auth.signup.password_validation_contain_at_least_1_number", state: false },
 ];
 
 export const IsPasswordValid = ({
@@ -24,12 +25,13 @@ export const IsPasswordValid = ({
   password: string | null;
   setIsValid: (isValid: boolean) => void;
 }) => {
+  const t = useTranslations();
   const [validations, setValidations] = useState<Validation[]>(DEFAULT_VALIDATIONS);
 
   useEffect(() => {
     let newValidations = [...DEFAULT_VALIDATIONS];
 
-    const checkValidation = (prevValidations, index: number, state: boolean) => {
+    const checkValidation = (prevValidations: Validation[], index: number, state: boolean) => {
       const updatedValidations = [...prevValidations];
       updatedValidations[index].state = state;
       return updatedValidations;
@@ -63,7 +65,7 @@ export const IsPasswordValid = ({
           <li key={index}>
             <div className="flex items-center">
               {renderIcon(validation.state)}
-              {validation.label}
+              {t(validation.label)}
             </div>
           </li>
         ))}

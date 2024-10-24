@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TEnvironment } from "@formbricks/types/environment";
 import { Skeleton } from "../Skeleton";
@@ -17,6 +18,7 @@ export const EmptySpaceFiller = ({
   noWidgetRequired,
   emptyMessage,
 }: EmptySpaceFillerProps) => {
+  const t = useTranslations();
   if (type === "table") {
     return (
       <div className="shadow-xs group rounded-xl border border-slate-100 bg-white p-4">
@@ -28,12 +30,13 @@ export const EmptySpaceFiller = ({
                 className="flex w-full items-center justify-center"
                 href={`/environments/${environment.id}/product/app-connection`}>
                 <span className="decoration-brand-dark underline transition-all duration-300 ease-in-out">
-                  Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
+                  {t("environments.surveys.summary.install_widget")}{" "}
+                  <strong>{t("environments.surveys.summary.go_to_setup_checklist")} </strong>
                 </span>
               </Link>
             )}
             {((environment.appSetupCompleted || noWidgetRequired) && emptyMessage) ||
-              "Waiting for a response 🧘‍♂️"}
+              t("environments.surveys.summary.waiting_for_response")}
           </div>
 
           <div className="h-16 w-full rounded-lg bg-slate-50"></div>
@@ -57,13 +60,14 @@ export const EmptySpaceFiller = ({
                 className="flex h-full w-full items-center justify-center"
                 href={`/environments/${environment.id}/product/app-connection`}>
                 <span className="decoration-brand-dark underline transition-all duration-300 ease-in-out">
-                  Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
+                  {t("environments.surveys.summary.install_widget")}{" "}
+                  <strong>{t("environments.surveys.summary.go_to_setup_checklist")} </strong>
                 </span>
               </Link>
             )}
             {(environment.appSetupCompleted || noWidgetRequired) && (
               <span className="bg-light-background-primary-500 text-center">
-                {emptyMessage ?? "Waiting for a response"} 🧘‍♂️
+                {emptyMessage ?? t("environments.surveys.summary.waiting_for_response")}
               </span>
             )}
           </div>

@@ -1,6 +1,6 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getDefaultEndingCard } from "../templates";
+import { getDefaultEndingCard, translate } from "../templates";
 
 export const COLOR_DEFAULTS = {
   brandColor: "#64748b",
@@ -13,119 +13,121 @@ export const COLOR_DEFAULTS = {
   highlightBorderColor: "#64748b",
 } as const;
 
-export const PREVIEW_SURVEY = {
-  id: "cltxxaa6x0000g8hacxdxejeu",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "New Survey",
-  type: "link",
-  environmentId: "cltwumfcz0009echxg02fh7oa",
-  createdBy: "cltwumfbz0000echxysz6ptvq",
-  status: "inProgress",
-  welcomeCard: {
-    html: {
-      default: "Thanks for providing your feedback - let's go!",
-    },
-    enabled: false,
-    headline: {
-      default: "Welcome!",
-    },
-    timeToFinish: false,
-    showResponseCount: false,
-  },
-  styling: null,
-  segment: null,
-  questions: [
-    {
-      id: "tunaz8ricd4regvkz1j0rbf6",
-      type: "openText",
+export const getPreviewSurvey = (locale: string) => {
+  return {
+    id: "cltxxaa6x0000g8hacxdxejeu",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: translate("preview_survey_name", locale),
+    type: "link",
+    environmentId: "cltwumfcz0009echxg02fh7oa",
+    createdBy: "cltwumfbz0000echxysz6ptvq",
+    status: "inProgress",
+    welcomeCard: {
+      html: {
+        default: translate("preview_survey_welcome_card_html", locale),
+      },
+      enabled: false,
       headline: {
-        default: "This is a preview survey",
+        default: translate("preview_survey_welcome_card_headline", locale),
       },
-      required: true,
-      inputType: "text",
-      subheader: {
-        default: "Click through it to check the look and feel of the surveying experience.",
-      },
-      placeholder: {
-        default: "Type your answer here...",
-      },
+      timeToFinish: false,
+      showResponseCount: false,
     },
-    {
-      id: "lbdxozwikh838yc6a8vbwuju",
-      type: "rating",
-      range: 5,
-      scale: "star",
-      isDraft: true,
-      headline: {
-        default: "How would you rate My Product",
-      },
-      required: true,
-      subheader: {
-        default: "Don't worry, be honest.",
-      },
-      lowerLabel: {
-        default: "Not good",
-      },
-      upperLabel: {
-        default: "Very good",
-      },
-    },
-    {
-      id: "rjpu42ps6dzirsn9ds6eydgt",
-      type: "multipleChoiceSingle",
-      choices: [
-        {
-          id: "x6wty2s72v7vd538aadpurqx",
-          label: {
-            default: "Eat the cake 🍰",
-          },
+    styling: null,
+    segment: null,
+    questions: [
+      {
+        id: "tunaz8ricd4regvkz1j0rbf6",
+        type: "openText",
+        headline: {
+          default: translate("preview_survey_question_1_headline", locale),
         },
-        {
-          id: "fbcj4530t2n357ymjp2h28d6",
-          label: {
-            default: "Have the cake 🎂",
-          },
+        required: true,
+        inputType: "text",
+        subheader: {
+          default: translate("preview_survey_question_1_subheader", locale),
         },
-      ],
-      isDraft: true,
-      headline: {
-        default: "What do you do?",
+        placeholder: {
+          default: translate("preview_survey_question_1_placeholder", locale),
+        },
       },
-      required: true,
-      subheader: {
-        default: "Can't do both.",
+      {
+        id: "lbdxozwikh838yc6a8vbwuju",
+        type: "rating",
+        range: 5,
+        scale: "star",
+        isDraft: true,
+        headline: {
+          default: translate("preview_survey_question_2_headline", locale),
+        },
+        required: true,
+        subheader: {
+          default: translate("preview_survey_question_2_subheader", locale),
+        },
+        lowerLabel: {
+          default: translate("preview_survey_question_2_lower_label", locale),
+        },
+        upperLabel: {
+          default: translate("preview_survey_question_2_upper_label", locale),
+        },
       },
-      shuffleOption: "none",
+      {
+        id: "rjpu42ps6dzirsn9ds6eydgt",
+        type: "multipleChoiceSingle",
+        choices: [
+          {
+            id: "x6wty2s72v7vd538aadpurqx",
+            label: {
+              default: translate("preview_survey_question_3_choice_1_label", locale),
+            },
+          },
+          {
+            id: "fbcj4530t2n357ymjp2h28d6",
+            label: {
+              default: translate("preview_survey_question_3_choice_2_label", locale),
+            },
+          },
+        ],
+        isDraft: true,
+        headline: {
+          default: translate("preview_survey_question_3_headline", locale),
+        },
+        required: true,
+        subheader: {
+          default: translate("preview_survey_question_3_subheader", locale),
+        },
+        shuffleOption: "none",
+      },
+    ],
+    endings: [getDefaultEndingCard([], locale)],
+    hiddenFields: {
+      enabled: true,
+      fieldIds: [],
     },
-  ],
-  endings: [getDefaultEndingCard([])],
-  hiddenFields: {
-    enabled: true,
-    fieldIds: [],
-  },
-  variables: [],
-  displayOption: "displayOnce",
-  recontactDays: null,
-  displayLimit: null,
-  autoClose: null,
-  runOnDate: null,
-  closeOnDate: null,
-  delay: 0,
-  displayPercentage: null,
-  autoComplete: 50,
-  isVerifyEmailEnabled: false,
-  isSingleResponsePerEmailEnabled: false,
-  redirectUrl: null,
-  productOverwrites: null,
-  surveyClosedMessage: null,
-  singleUse: {
-    enabled: false,
-    isEncrypted: true,
-  },
-  pin: null,
-  resultShareKey: null,
-  languages: [],
-  triggers: [],
-  showLanguageSwitch: false,
-} as TSurvey;
+    variables: [],
+    displayOption: "displayOnce",
+    recontactDays: null,
+    displayLimit: null,
+    autoClose: null,
+    runOnDate: null,
+    closeOnDate: null,
+    delay: 0,
+    displayPercentage: null,
+    autoComplete: 50,
+    isVerifyEmailEnabled: false,
+    isSingleResponsePerEmailEnabled: false,
+    redirectUrl: null,
+    productOverwrites: null,
+    surveyClosedMessage: null,
+    singleUse: {
+      enabled: false,
+      isEncrypted: true,
+    },
+    pin: null,
+    resultShareKey: null,
+    languages: [],
+    triggers: [],
+    showLanguageSwitch: false,
+  } as TSurvey;
+};

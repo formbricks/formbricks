@@ -1,5 +1,5 @@
 import { InboxIcon } from "lucide-react";
-import { questionTypes } from "@formbricks/lib/utils/questions";
+import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
@@ -10,6 +10,7 @@ interface HeadProps {
   additionalInfo?: JSX.Element;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 export const QuestionSummaryHeader = ({
@@ -18,8 +19,9 @@ export const QuestionSummaryHeader = ({
   showResponses = true,
   survey,
   attributeClasses,
+  locale,
 }: HeadProps) => {
-  const questionType = questionTypes.find((type) => type.id === questionSummary.question.type);
+  const questionType = getQuestionTypes(locale).find((type) => type.id === questionSummary.question.type);
 
   // formats the text to highlight specific parts of the text with slashes
   const formatTextWithSlashes = (text: string): (string | JSX.Element)[] => {

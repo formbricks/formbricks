@@ -15,6 +15,7 @@ import {
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -52,6 +53,7 @@ export const SurveyDropDownMenu = ({
   deleteSurvey,
   duplicateSurvey,
 }: SurveyDropDownMenuProps) => {
+  const t = useTranslations();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
@@ -120,7 +122,7 @@ export const SurveyDropDownMenu = ({
                     className="flex w-full items-center"
                     href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
                     <SquarePenIcon className="mr-2 h-4 w-4" />
-                    Edit
+                    {t("common.edit")}
                   </Link>
                 </DropdownMenuItem>
 
@@ -134,7 +136,7 @@ export const SurveyDropDownMenu = ({
                       duplicateSurveyAndRefresh(survey.id);
                     }}>
                     <CopyIcon className="mr-2 h-4 w-4" />
-                    Duplicate
+                    {t("common.duplicate")}
                   </button>
                 </DropdownMenuItem>
               </>
@@ -152,7 +154,7 @@ export const SurveyDropDownMenu = ({
                       setIsCopyFormOpen(true);
                     }}>
                     <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                    Copy...
+                    {t("common.copy")}...
                   </button>
                 </DropdownMenuItem>
               </>
@@ -171,7 +173,7 @@ export const SurveyDropDownMenu = ({
                       window.open(previewUrl, "_blank");
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
-                    Preview Survey
+                    {t("common.preview_survey")}
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
@@ -188,7 +190,7 @@ export const SurveyDropDownMenu = ({
                       router.refresh();
                     }}>
                     <LinkIcon className="mr-2 h-4 w-4" />
-                    Copy Link
+                    {t("common.copy_link")}
                   </button>
                 </DropdownMenuItem>
               </>
@@ -204,7 +206,7 @@ export const SurveyDropDownMenu = ({
                     setDeleteDialogOpen(true);
                   }}>
                   <TrashIcon className="mr-2 h-4 w-4" />
-                  Delete
+                  {t("common.delete")}
                 </button>
               </DropdownMenuItem>
             )}
@@ -218,7 +220,7 @@ export const SurveyDropDownMenu = ({
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
-          text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
+          text={t("common.delete_survey_and_responses_warning")}
         />
       )}
 

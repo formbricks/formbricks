@@ -3,6 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { SurveyVariablesCardItem } from "./SurveyVariablesCardItem";
@@ -23,6 +24,7 @@ export const SurveyVariablesCard = ({
   setActiveQuestionId,
 }: SurveyVariablesCardProps) => {
   const open = activeQuestionId === variablesCardId;
+  const t = useTranslations();
   const [parent] = useAutoAnimate();
 
   const setOpenState = (state: boolean) => {
@@ -54,7 +56,7 @@ export const SurveyVariablesCard = ({
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Variables</p>
+                <p className="text-sm font-semibold">{t("common.variables")}</p>
               </div>
             </div>
           </div>
@@ -72,7 +74,9 @@ export const SurveyVariablesCard = ({
                 />
               ))
             ) : (
-              <p className="mt-2 text-sm italic text-slate-500">No variables yet. Add the first one below.</p>
+              <p className="mt-2 text-sm italic text-slate-500">
+                {t("environments.surveys.edit.no_variables_yet_add_first_one_below")}
+              </p>
             )}
           </div>
 

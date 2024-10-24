@@ -2,6 +2,7 @@
 
 import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -30,6 +31,7 @@ const ZEditOrganizationNameFormSchema = ZOrganization.pick({ name: true });
 type EditOrganizationNameForm = z.infer<typeof ZEditOrganizationNameFormSchema>;
 
 export const EditOrganizationNameForm = ({ organization, membershipRole }: EditOrganizationNameProps) => {
+  const t = useTranslations();
   const form = useForm<EditOrganizationNameForm>({
     defaultValues: {
       name: organization.name,
@@ -74,13 +76,13 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
           name="name"
           render={({ field, fieldState }) => (
             <FormItem>
-              <FormLabel>Organization Name</FormLabel>
+              <FormLabel>{t("environments.settings.general.organization_name")}</FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type="text"
                   isInvalid={!!fieldState.error?.message}
-                  placeholder="Organization Name"
+                  placeholder={t("environments.settings.general.organization_name_placeholder")}
                   required
                 />
               </FormControl>
@@ -96,7 +98,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
           size="sm"
           loading={isSubmitting}
           disabled={isSubmitting || !isDirty}>
-          Update
+          {t("common.update")}
         </Button>
       </form>
     </FormProvider>

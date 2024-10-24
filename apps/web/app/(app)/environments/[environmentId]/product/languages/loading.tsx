@@ -13,8 +13,8 @@ const Loading = () => {
         <ProductConfigNavigation activeId="languages" loading />
       </PageHeader>
       <SettingsCard
-        title="Multi-language surveys"
-        description="Add languages to create multi-language surveys.">
+        title="environments.product.languages.multi_language_surveys"
+        description="environments.product.languages.multi_language_surveys_description">
         <div className="flex flex-col space-y-4">
           <LanguageLabels />
           {[...Array(3)].map((_, idx) => (

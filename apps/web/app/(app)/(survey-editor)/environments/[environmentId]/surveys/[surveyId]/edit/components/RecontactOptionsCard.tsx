@@ -3,6 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -20,23 +21,23 @@ interface DisplayOption {
 const displayOptions: DisplayOption[] = [
   {
     id: "displayOnce",
-    name: "Show only once",
-    description: "The survey will be shown once, even if person doesn't respond.",
+    name: "environments.surveys.edit.show_only_once",
+    description: "environments.surveys.edit.the_survey_will_be_shown_once_even_if_person_doesnt_respond",
   },
   {
     id: "displaySome",
-    name: "Show multiple times",
-    description: "The survey will be shown multiple times until they respond",
+    name: "environments.surveys.edit.show_multiple_times",
+    description: "environments.surveys.edit.the_survey_will_be_shown_multiple_times_until_they_respond",
   },
   {
     id: "displayMultiple",
-    name: "Until they submit a response",
-    description: "If you really want that answer, ask until you get it.",
+    name: "environments.surveys.edit.until_they_submit_a_response",
+    description: "environments.surveys.edit.if_you_really_want_that_answer_ask_until_you_get_it",
   },
   {
     id: "respondMultiple",
-    name: "Keep showing while conditions match",
-    description: "Even after they submitted a response (e.g. Feedback Box)",
+    name: "environments.surveys.edit.keep_showing_while_conditions_match",
+    description: "environments.surveys.edit.even_after_they_submitted_a_response_e_g_feedback_box",
   },
 ];
 
@@ -51,6 +52,7 @@ export const RecontactOptionsCard = ({
   setLocalSurvey,
   environmentId,
 }: RecontactOptionsCardProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const ignoreWaiting = localSurvey.recontactDays !== null;
   const [inputDays, setInputDays] = useState(
@@ -118,8 +120,10 @@ export const RecontactOptionsCard = ({
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Recontact Options</p>
-            <p className="mt-1 text-sm text-slate-500">Decide how often people can answer this survey.</p>
+            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.recontact_options")}</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("environments.surveys.edit.decide_how_often_people_can_answer_this_survey")}
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -154,15 +158,15 @@ export const RecontactOptionsCard = ({
                     className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
                   <div>
-                    <p className="font-semibold text-slate-700">{option.name}</p>
+                    <p className="font-semibold text-slate-700">{t(option.name)}</p>
 
-                    <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                    <p className="mt-2 text-xs font-normal text-slate-600">{t(option.description)}</p>
                   </div>
                 </Label>
                 {option.id === "displaySome" && localSurvey.displayOption === "displaySome" && (
                   <label htmlFor="displayLimit" className="cursor-pointer p-4">
                     <p className="text-sm font-semibold text-slate-700">
-                      Show survey maximum of
+                      {t("environments.surveys.edit.show_survey_maximum_of")}
                       <Input
                         type="number"
                         min="1"
@@ -171,7 +175,7 @@ export const RecontactOptionsCard = ({
                         onChange={(e) => handleRecontactSessionDaysChange(e)}
                         className="mx-2 inline w-16 bg-white text-center text-sm"
                       />
-                      times.
+                      {t("environments.surveys.edit.times")}.
                     </p>
                   </label>
                 )}
@@ -184,18 +188,18 @@ export const RecontactOptionsCard = ({
           htmlId="recontactDays"
           isChecked={ignoreWaiting}
           onToggle={handleCheckMark}
-          title="Ignore waiting time between surveys"
+          title={t("environments.surveys.edit.ignore_waiting_time_between_surveys")}
           childBorder={false}
           description={
             <>
-              This setting overwrites your{" "}
+              {t("environments.surveys.edit.this_setting_overwrites_your")}{" "}
               <Link
                 className="decoration-brand-dark underline"
                 href={`/environments/${environmentId}/product/general`}
                 target="_blank">
-                waiting period
+                {t("environments.surveys.edit.waiting_period")}
               </Link>
-              . Use with caution.
+              . {t("environments.surveys.edit.use_with_caution")}
             </>
           }>
           {localSurvey.recontactDays !== null && (
@@ -215,10 +219,14 @@ export const RecontactOptionsCard = ({
                   className="aria-checked:border-brand-dark mx-4 text-sm disabled:border-slate-400 aria-checked:border-2"
                 />
                 <div>
-                  <p className="font-semibold text-slate-700">Always show survey</p>
+                  <p className="font-semibold text-slate-700">
+                    {t("environments.surveys.edit.always_show_survey")}
+                  </p>
 
                   <p className="mt-2 text-xs font-normal text-slate-600">
-                    When conditions match, waiting time will be ignored and survey shown.
+                    {t(
+                      "environments.surveys.edit.when_conditions_match_waiting_time_will_be_ignored_and_survey_shown"
+                    )}
                   </p>
                 </div>
               </Label>
@@ -233,7 +241,7 @@ export const RecontactOptionsCard = ({
                 />
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
-                    Wait
+                    {t("environments.surveys.edit.wait")}
                     <Input
                       type="number"
                       min="1"
@@ -242,11 +250,13 @@ export const RecontactOptionsCard = ({
                       onChange={handleRecontactDaysChange}
                       className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
-                    days before showing this survey again.
+                    {t("environments.surveys.edit.days_before_showing_this_survey_again")}.
                   </p>
 
                   <p className="mt-2 text-xs font-normal text-slate-600">
-                    Overwrites waiting period between surveys to {inputDays === 0 ? 1 : inputDays} day(s).
+                    {t("environments.surveys.edit.overwrites_waiting_period_between_surveys_to_x_days", {
+                      days: inputDays === 0 ? 1 : inputDays,
+                    })}
                   </p>
                 </div>
               </label>

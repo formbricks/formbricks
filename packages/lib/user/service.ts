@@ -27,6 +27,7 @@ const responseSelection = {
   identityProvider: true,
   objective: true,
   notificationSettings: true,
+  locale: true,
 };
 
 // function to retrive basic information about a user's user
@@ -152,7 +153,7 @@ const deleteUserById = async (id: string): Promise<TUser> => {
 
 export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   validateInputs([data, ZUserUpdateInput]);
-
+  console.log("data", data);
   try {
     const user = await prisma.user.create({
       data: data,
@@ -286,3 +287,36 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
     throw error;
   }
 };
+
+export const getUserLocale = reactCache(
+  (id: string): Promise<string | undefined> =>
+    cache(
+      async () => {
+        validateInputs([id, ZId]);
+
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              id,
+            },
+            select: responseSelection,
+          });
+
+          if (!user) {
+            return undefined;
+          }
+          return user.locale;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getUserLocale-${id}`],
+      {
+        tags: [userCache.tag.byId(id)],
+      }
+    )()
+);

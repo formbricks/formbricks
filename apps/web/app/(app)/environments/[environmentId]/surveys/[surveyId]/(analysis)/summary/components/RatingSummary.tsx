@@ -24,6 +24,7 @@ interface RatingSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
+  locale: string;
 }
 
 export const RatingSummary = ({
@@ -31,6 +32,7 @@ export const RatingSummary = ({
   survey,
   attributeClasses,
   setFilter,
+  locale,
 }: RatingSummaryProps) => {
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
@@ -45,6 +47,7 @@ export const RatingSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
         additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}
