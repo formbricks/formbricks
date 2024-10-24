@@ -3,6 +3,7 @@
 import { getSurveysAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { getFormattedFilters } from "@/app/(app)/environments/[environmentId]/surveys/lib/utils";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -49,6 +50,7 @@ export const SurveysList = ({
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 
   const filters = useMemo(() => getFormattedFilters(surveyFilters, userId), [surveyFilters, userId]);
+  const [parent] = useAutoAnimate();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -136,7 +138,7 @@ export const SurveysList = ({
       />
       {surveys.length > 0 ? (
         <div>
-          <div className="flex-col space-y-3">
+          <div className="flex-col space-y-3" ref={parent}>
             <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8 text-sm text-slate-800">
               <div className="col-span-2 place-self-start">Name</div>
               <div className="col-span-1">Status</div>
