@@ -26,6 +26,7 @@ interface OpenTextSummaryProps {
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
+  locale: string;
 }
 
 export const OpenTextSummary = ({
@@ -35,6 +36,7 @@ export const OpenTextSummary = ({
   attributeClasses,
   isAIEnabled,
   documentsPerPage,
+  locale,
 }: OpenTextSummaryProps) => {
   const t = useTranslations();
   const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
@@ -69,6 +71,7 @@ export const OpenTextSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (
             <div className="flex items-center space-x-2">

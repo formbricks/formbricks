@@ -134,6 +134,7 @@ export const SummaryList = ({
                 attributeClasses={attributeClasses}
                 isAIEnabled={isAIEnabled}
                 documentsPerPage={documentsPerPage}
+                locale={locale}
               />
             );
           }

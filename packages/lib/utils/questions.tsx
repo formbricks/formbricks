@@ -18,7 +18,6 @@ import {
   Rows3Icon,
   StarIcon,
 } from "lucide-react";
-import { translate } from "templates";
 import {
   TSurveyQuestionTypeEnum as QuestionId,
   TSurveyAddressQuestion,
@@ -37,6 +36,7 @@ import {
   TSurveyRankingQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
+import { translate } from "../templates";
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
 export type TQuestion = {
