@@ -239,6 +239,7 @@ export const initialize = async (
         environmentState,
         personState,
         filteredSurveys,
+        attributes: configInput.attributes || {},
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
@@ -280,6 +281,7 @@ export const initialize = async (
         personState,
         environmentState,
         filteredSurveys,
+        attributes: configInput.attributes || {},
       });
     } catch (e) {
       handleErrorOnFirstInit();
@@ -293,15 +295,9 @@ export const initialize = async (
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
     config.update({
       ...config.get(),
-      personState: {
-        ...config.get().personState,
-        data: {
-          ...config.get().personState.data,
-          attributes: {
-            ...config.get().personState.data.attributes,
-            ...updatedAttributes,
-          },
-        },
+      attributes: {
+        ...config.get().attributes,
+        ...updatedAttributes,
       },
     });
   }

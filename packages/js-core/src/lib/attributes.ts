@@ -42,7 +42,6 @@ export const updateAttribute = async (
   const res = await api.client.attribute.update({ userId, attributes: { [key]: value } });
 
   if (!res.ok) {
-    // @ts-expect-error
     if (res.error.details?.ignore) {
       logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
       return {
@@ -55,7 +54,6 @@ export const updateAttribute = async (
     }
     return err({
       code: "network_error",
-      // @ts-expect-error
       status: res.error.status ?? 500,
       message: res.error.message ?? `Error updating person with userId ${userId}`,
       url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
@@ -93,7 +91,7 @@ export const updateAttributes = async (
   const updatedAttributes = { ...attributes };
 
   try {
-    const existingAttributes = config.get().personState.data.attributes;
+    const existingAttributes = config.get().attributes;
     if (existingAttributes) {
       for (const [key, value] of Object.entries(existingAttributes)) {
         if (updatedAttributes[key] === value) {
@@ -123,7 +121,6 @@ export const updateAttributes = async (
   if (res.ok) {
     return ok(updatedAttributes);
   } else {
-    // @ts-expect-error
     if (res.error.details?.ignore) {
       logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
       return ok(updatedAttributes);
@@ -140,7 +137,7 @@ export const updateAttributes = async (
 };
 
 export const isExistingAttribute = (key: string, value: string): boolean => {
-  if (config.get().personState.data.attributes[key] === value) {
+  if (config.get().attributes[key] === value) {
     return true;
   }
 

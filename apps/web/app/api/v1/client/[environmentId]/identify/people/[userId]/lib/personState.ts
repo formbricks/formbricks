@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { attributeCache } from "@formbricks/lib/attribute/cache";
+import { getAttributesByUserId } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { displayCache } from "@formbricks/lib/display/cache";
