@@ -45,6 +45,12 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       setHittingEndpoint(true);
       await testEndpointAction({ url: testEndpointInput });
       setHittingEndpoint(false);
+      try {
+        new URL(testEndpointInput);
+      } catch(error) {
+        toast.error("Please enter valid URL");
+        return;
+      }
       if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
       return true;
