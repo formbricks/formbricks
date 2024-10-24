@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -509,6 +510,8 @@ export const QuestionFormInput = ({
     debouncedHandleUpdate(value);
   };
 
+  const [animationParent] = useAutoAnimate();
+
   return (
     <div className="w-full">
       <div className="w-full">
@@ -516,7 +519,7 @@ export const QuestionFormInput = ({
           <Label htmlFor={id}>{label}</Label>
         </div>
 
-        <div className="flex flex-col gap-4 bg-white">
+        <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
           {showImageUploader && id === "headline" && (
             <FileInput
               id="question-image"

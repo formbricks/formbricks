@@ -1,7 +1,15 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { generateObject } from "ai";
+import { z } from "zod";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyFilterCriteria,
+  TSurveyQuestion,
+  TSurveyQuestions,
+} from "@formbricks/types/surveys/types";
+import { llmModel } from "../aiModels";
 
 export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
   let segment: TSegment | null = null;
@@ -99,4 +107,21 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
     }
     return false;
   });
+};
+
+export const doesSurveyHasOpenTextQuestion = (questions: TSurveyQuestions): boolean => {
+  return questions.some((question) => question.type === "openText");
+};
+
+export const getInsightsEnabled = async (question: TSurveyQuestion): Promise<boolean> => {
+  const { object } = await generateObject({
+    model: llmModel,
+    schema: z.object({
+      insightsEnabled: z.boolean(),
+    }),
+    prompt: `We extract insights (e.g. feature requests, complaints, other) from survey questions. Can we find them in this question?: ${question.headline.default}`,
+    experimental_telemetry: { isEnabled: true },
+  });
+
+  return object.insightsEnabled;
 };

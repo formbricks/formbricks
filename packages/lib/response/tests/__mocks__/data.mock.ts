@@ -394,6 +394,8 @@ export const mockSurveySummaryOutput = {
   },
   summary: [
     {
+      insights: undefined,
+      insightsEnabled: undefined,
       question: {
         headline: { default: "Question Text", de: "Fragetext" },
         id: "ars2tjk8hsi8oqk1uac00mo8",

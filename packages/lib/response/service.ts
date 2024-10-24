@@ -3,8 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TAttributes } from "@formbricks/types/attributes";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/common";
+import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
@@ -16,13 +15,12 @@ import {
   ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum, TSurveySummary } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
-import { displayCache } from "../display/cache";
-import { deleteDisplay, getDisplayCountBySurveyId } from "../display/service";
+import { deleteDisplay } from "../display/service";
 import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
@@ -38,14 +36,11 @@ import {
   buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
-  getQuestionWiseSummary,
   getResponseHiddenFields,
   getResponseMeta,
   getResponsePersonAttributes,
   getResponsesFileName,
   getResponsesJson,
-  getSurveySummaryDropOff,
-  getSurveySummaryMeta,
 } from "./utils";
 
 const RESPONSES_PER_PAGE = 10;
@@ -515,60 +510,6 @@ export const getResponses = reactCache(
       [`getResponses-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
-      }
-    )()
-);
-
-export const getSurveySummary = reactCache(
-  (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<TSurveySummary> =>
-    cache(
-      async () => {
-        validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
-
-        try {
-          const survey = await getSurvey(surveyId);
-          if (!survey) {
-            throw new ResourceNotFoundError("Survey", surveyId);
-          }
-
-          const batchSize = 3000;
-          const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-          const filteredResponseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
-
-          const hasFilter = totalResponseCount !== filteredResponseCount;
-
-          const pages = Math.ceil(filteredResponseCount / batchSize);
-
-          const responsesArray = await Promise.all(
-            Array.from({ length: pages }, (_, i) => {
-              return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
-            })
-          );
-          const responses = responsesArray.flat();
-
-          const responseIds = hasFilter ? responses.map((response) => response.id) : [];
-
-          const displayCount = await getDisplayCountBySurveyId(surveyId, {
-            createdAt: filterCriteria?.createdAt,
-            ...(hasFilter && { responseIds }),
-          });
-
-          const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
-          const meta = getSurveySummaryMeta(responses, displayCount);
-          const questionWiseSummary = getQuestionWiseSummary(survey, responses, dropOff);
-
-          return { meta, dropOff, summary: questionWiseSummary };
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
-      {
-        tags: [responseCache.tag.bySurveyId(surveyId), displayCache.tag.bySurveyId(surveyId)],
       }
     )()
 );

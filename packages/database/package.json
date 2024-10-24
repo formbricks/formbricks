@@ -52,11 +52,12 @@
     "data-migration:address-question": "ts-node ./data-migrations/20240924123456_migrate_address_question/data-migration.ts",
     "data-migration:advanced-logic": "ts-node ./data-migrations/20240828122408_advanced_logic_editor/data-migration.ts",
     "data-migration:segments-actions-cleanup": "ts-node ./data-migrations/20240904091113_removed_actions_table/data-migration.ts",
-    "data-migration:migrate-survey-types": "ts-node ./data-migrations/20241002123456_migrate_survey_types/data-migration.ts"
+    "data-migration:migrate-survey-types": "ts-node ./data-migrations/20241002123456_migrate_survey_types/data-migration.ts",
+    "data-migration:v2.6": "pnpm data-migration:add-display-id-to-response && pnpm data-migration:address-question && pnpm data-migration:advanced-logic && pnpm data-migration:segments-actions-cleanup && pnpm data-migration:migrate-survey-types"
   },
   "dependencies": {
-    "@prisma/client": "5.18.0",
-    "@prisma/extension-accelerate": "1.1.0",
+    "@prisma/client": "5.20.0",
+    "@prisma/extension-accelerate": "1.2.1",
     "dotenv-cli": "7.4.2"
   },
   "devDependencies": {
@@ -64,9 +65,9 @@
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
     "@formbricks/eslint-config": "workspace:*",
-    "prisma": "5.18.0",
+    "prisma": "5.20.0",
     "prisma-dbml-generator": "0.12.0",
-    "prisma-json-types-generator": "3.0.4",
+    "prisma-json-types-generator": "3.1.1",
     "ts-node": "10.9.2",
     "zod": "3.23.8",
     "zod-prisma": "0.5.4"

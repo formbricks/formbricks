@@ -15,6 +15,7 @@ import {
   TSurvey,
   TSurveyCreateInput,
   TSurveyFilterCriteria,
+  TSurveyQuestions,
   ZSurvey,
   ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
@@ -27,7 +28,10 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { getEnvironment } from "../environment/service";
-import { subscribeOrganizationMembersToSurveyResponses } from "../organization/service";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "../organization/service";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -38,10 +42,18 @@ import { responseCache } from "../response/cache";
 import { getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
+import { getIsAIEnabled } from "../utils/ai";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./utils";
+import {
+  anySurveyHasFilters,
+  buildOrderByClause,
+  buildWhereClause,
+  doesSurveyHasOpenTextQuestion,
+  getInsightsEnabled,
+  transformPrismaSurvey,
+} from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -284,74 +296,6 @@ export const getSurveysByActionClassId = reactCache(
     )()
 );
 
-export const getSurveysSortedByRelevance = reactCache(
-  (
-    environmentId: string,
-    limit?: number,
-    offset?: number,
-    filterCriteria?: TSurveyFilterCriteria
-  ): Promise<TSurvey[]> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
-
-        try {
-          let surveys: TSurvey[] = [];
-          const inProgressSurveyCount = await getInProgressSurveyCount(environmentId, filterCriteria);
-
-          // Fetch surveys that are in progress first
-          const inProgressSurveys =
-            offset && offset > inProgressSurveyCount
-              ? []
-              : await prisma.survey.findMany({
-                  where: {
-                    environmentId,
-                    status: "inProgress",
-                    ...buildWhereClause(filterCriteria),
-                  },
-                  select: selectSurvey,
-                  orderBy: buildOrderByClause("updatedAt"),
-                  take: limit,
-                  skip: offset,
-                });
-
-          surveys = inProgressSurveys.map(transformPrismaSurvey);
-
-          // Determine if additional surveys are needed
-          if (offset !== undefined && limit && inProgressSurveys.length < limit) {
-            const remainingLimit = limit - inProgressSurveys.length;
-            const newOffset = Math.max(0, offset - inProgressSurveyCount);
-            const additionalSurveys = await prisma.survey.findMany({
-              where: {
-                environmentId,
-                status: { not: "inProgress" },
-                ...buildWhereClause(filterCriteria),
-              },
-              select: selectSurvey,
-              orderBy: buildOrderByClause("updatedAt"),
-              take: remainingLimit,
-              skip: newOffset,
-            });
-
-            surveys = [...surveys, ...additionalSurveys.map(transformPrismaSurvey)];
-          }
-
-          return surveys;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`getSurveysSortedByRelevance-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
-      {
-        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      }
-    )()
-);
-
 export const getActiveLinkSurveys = reactCache(
   (environmentId: string, tags: string[]): Promise<TSurvey[]> =>
     cache(
@@ -410,12 +354,6 @@ export const getSurveys = reactCache(
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
         try {
-          if (filterCriteria?.sortBy === "relevance") {
-            // Call the sortByRelevance function
-            return await getSurveysSortedByRelevance(environmentId, limit, offset ?? 0, filterCriteria);
-          }
-
-          // Fetch surveys normally with pagination
           const surveysPrisma = await prisma.survey.findMany({
             where: {
               environmentId,
@@ -677,6 +615,68 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       return rest;
     });
 
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", null);
+    }
+
+    //AI Insights
+    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+    if (isAIEnabled) {
+      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
+        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
+        const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
+          (question) => question.type === "openText"
+        );
+
+        // find the questions that have been updated or added
+        const questionsToCheckForInsights: TSurveyQuestions = [];
+
+        for (const question of openTextQuestions) {
+          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id);
+          const isExistingQuestion = !!existingQuestion;
+
+          if (isExistingQuestion && question.headline.default === existingQuestion.headline.default) {
+            continue;
+          } else {
+            questionsToCheckForInsights.push(question);
+          }
+        }
+
+        const insightsEnabledValues = await Promise.all(
+          questionsToCheckForInsights.map(async (question) => {
+            const insightsEnabled = await getInsightsEnabled(question);
+
+            return { id: question.id, insightsEnabled };
+          })
+        );
+
+        data.questions = data.questions?.map((question) => {
+          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
+          if (index !== -1) {
+            return {
+              ...question,
+              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
+            };
+          }
+
+          return question;
+        });
+      }
+    } else {
+      // check if an existing question got changed that had insights enabled
+      const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
+        (question) => question.type === "openText" && question.insightsEnabled !== undefined
+      );
+      // if question headline changed, remove insightsEnabled
+      for (const question of insightsEnabledOpenTextQuestions) {
+        const updatedQuestion = data.questions?.find((q) => q.id === question.id);
+        if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
+          updatedQuestion.insightsEnabled = undefined;
+        }
+      }
+    }
+
     surveyData.updatedAt = new Date();
 
     data = {
@@ -824,7 +824,7 @@ export const createSurvey = async (
     const actionClasses = await getActionClasses(parsedEnvironmentId);
 
     // @ts-expect-error
-    const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
+    let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...restSurveyBody,
       // TODO: Create with attributeFilters
       triggers: restSurveyBody.triggers
@@ -839,6 +839,38 @@ export const createSurvey = async (
           id: createdBy,
         },
       };
+    }
+
+    const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", null);
+    }
+
+    //AI Insights
+    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+    if (isAIEnabled) {
+      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
+        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
+        const insightsEnabledValues = await Promise.all(
+          openTextQuestions.map(async (question) => {
+            const insightsEnabled = await getInsightsEnabled(question);
+
+            return { id: question.id, insightsEnabled };
+          })
+        );
+
+        data.questions = data.questions?.map((question) => {
+          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
+          if (index !== -1) {
+            return {
+              ...question,
+              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
+            };
+          }
+
+          return question;
+        });
+      }
     }
 
     const survey = await prisma.survey.create({

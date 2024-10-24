@@ -1,21 +1,21 @@
-import { getAllCountries } from "@/app/(app)/environments/[environmentId]/actions";
+import {getAllCountries} from "@/app/(app)/environments/[environmentId]/actions";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import {CheckIcon} from "lucide-react";
+import {useEffect, useState} from "react";
 import Select from "react-select";
-import { cn } from "@formbricks/lib/cn";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import { TTag } from "@formbricks/types/tags";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
-import { getTagsForSurveyAction } from "@formbricks/ui/components/SurveysList/actions";
-import { SurveyTagsWrapper } from "@formbricks/ui/components/SurveysList/components/SurveyTagsWrapper";
-import { Switch } from "@formbricks/ui/components/Switch";
+import {cn} from "@formbricks/lib/cn";
+import {getLocalizedValue} from "@formbricks/lib/i18n/utils";
+import {TAttributeClass} from "@formbricks/types/attribute-classes";
+import {TProduct} from "@formbricks/types/product";
+import {TSurvey} from "@formbricks/types/surveys/types";
+import {TTag} from "@formbricks/types/tags";
+import {AdvancedOptionToggle} from "@formbricks/ui/components/AdvancedOptionToggle";
+import {Input} from "@formbricks/ui/components/Input";
+import {Label} from "@formbricks/ui/components/Label";
+import {QuestionFormInput} from "@formbricks/ui/components/QuestionFormInput";
+import {Switch} from "@formbricks/ui/components/Switch";
+import {SurveyTagsWrapper} from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyTagsWrapper";
+import {getTagsForSurveyAction} from "@/app/(app)/environments/[environmentId]/surveys/actions";
 
 interface SurveyGeneralSettingsProps {
   localSurvey: TSurvey;
@@ -33,16 +33,16 @@ const SURVEY_FAILED_HEADLINE = "Survey Failed";
 const SURVEY_FAILED_SUBHEADER = "Submission unsuccessful.";
 
 export function SurveyGeneralSettings({
-  localSurvey,
-  setLocalSurvey,
-  product,
-  isInvalid,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
-  attributeClasses,
-  environmentTags,
-  environmentId,
-}: SurveyGeneralSettingsProps) {
+                                        localSurvey,
+                                        setLocalSurvey,
+                                        product,
+                                        isInvalid,
+                                        selectedLanguageCode,
+                                        setSelectedLanguageCode,
+                                        attributeClasses,
+                                        environmentTags,
+                                        environmentId,
+                                      }: SurveyGeneralSettingsProps) {
   const [open, setOpen] = useState(true);
   const [customReward, setCustomReward] = useState(localSurvey.reward);
   const [usingCustomReward, setUsingCustomReward] = useState(
@@ -77,7 +77,7 @@ export function SurveyGeneralSettings({
     setLocalSurvey({
       ...localSurvey,
       failureChance: isChecked ? failureChance : 0,
-      failureCard: isChecked ? enabledFailureCard : { enabled: false },
+      failureCard: isChecked ? enabledFailureCard : {enabled: false},
     });
   };
 
@@ -123,7 +123,7 @@ export function SurveyGeneralSettings({
   };
 
   const updateFetchedSurveys = async () => {
-    const fetchedTags = await getTagsForSurveyAction({ surveyId: localSurvey.id });
+    const fetchedTags = await getTagsForSurveyAction({surveyId: localSurvey.id});
     setLocalSurvey((prevState) => ({
       ...prevState,
       tags: fetchedTags?.data ?? [],
@@ -159,16 +159,16 @@ export function SurveyGeneralSettings({
         enabled: !failureCardMessageToggle,
         headline: localSurvey?.failureCard?.headline
           ? {
-              default: !failureCardMessageToggle ? defaultHeadline : localSurvey.failureCard.headline.default,
-            }
-          : { default: defaultHeadline },
+            default: !failureCardMessageToggle ? defaultHeadline : localSurvey.failureCard.headline.default,
+          }
+          : {default: defaultHeadline},
         subheader: localSurvey?.failureCard?.subheader
           ? {
-              default: !failureCardMessageToggle
-                ? defaultSubheader
-                : localSurvey.failureCard.subheader.default,
-            }
-          : { default: defaultSubheader },
+            default: !failureCardMessageToggle
+              ? defaultSubheader
+              : localSurvey.failureCard.subheader.default,
+          }
+          : {default: defaultSubheader},
       },
     });
   };
@@ -201,18 +201,18 @@ export function SurveyGeneralSettings({
 
     if (!localSurvey.redirectOnFailUrl) {
       setRedirectOnFailUrl(product.defaultRedirectOnFailUrl ?? null);
-      setLocalSurvey({ ...localSurvey, redirectOnFailUrl: redirectOnFailUrl });
+      setLocalSurvey({...localSurvey, redirectOnFailUrl: redirectOnFailUrl});
     }
 
     if (redirectToggle && localSurvey.redirectOnFailUrl) {
       setRedirectOnFailUrl(null);
-      setLocalSurvey({ ...localSurvey, redirectOnFailUrl: null });
+      setLocalSurvey({...localSurvey, redirectOnFailUrl: null});
     }
   };
 
   const handleRedirectUrlChange = (link: string) => {
     setRedirectOnFailUrl(link);
-    setLocalSurvey({ ...localSurvey, redirectOnFailUrl: link });
+    setLocalSurvey({...localSurvey, redirectOnFailUrl: link});
   };
 
   const validateUrl = (e) => {
@@ -249,7 +249,7 @@ export function SurveyGeneralSettings({
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
-        <hr className="py-1 text-slate-600" />
+        <hr className="py-1 text-slate-600"/>
         <div className="p-3">
           <div className="p-3">
             <div className="ml-2 flex items-center space-x-1">
@@ -287,7 +287,7 @@ export function SurveyGeneralSettings({
           </div>
           <div className="p-3">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch id="failureChance" checked={hasFailureChance} onCheckedChange={toggleFailureChance} />
+              <Switch id="failureChance" checked={hasFailureChance} onCheckedChange={toggleFailureChance}/>
               <Label htmlFor="failureChance" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Enable Survey Failure Chance</h3>
@@ -392,10 +392,10 @@ export function SurveyGeneralSettings({
                         checked={showFailureCardCTA}
                         onCheckedChange={() => {
                           if (showFailureCardCTA) {
-                            updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
+                            updateSurvey({buttonLabel: undefined, buttonLink: undefined});
                           } else {
                             updateSurvey({
-                              buttonLabel: { default: "Join DigiOpinion" },
+                              buttonLabel: {default: "Join DigiOpinion"},
                               buttonLink: "https://digiopinion.com",
                             });
                           }
@@ -438,7 +438,7 @@ export function SurveyGeneralSettings({
                             className="bg-white"
                             placeholder="https://digiopinion.com"
                             value={localSurvey.failureCard.buttonLink}
-                            onChange={(e) => updateSurvey({ buttonLink: e.target.value })}
+                            onChange={(e) => updateSurvey({buttonLink: e.target.value})}
                           />
                         </div>
                       </div>

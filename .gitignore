@@ -67,3 +67,5 @@ packages/lib/uploads
 *vite.config.*.timestamp-*
 
 .idea/
+# js compiled assets
+apps/web/public/js

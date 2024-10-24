@@ -21,6 +21,7 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import {
   TSurveyQuestion,
   TSurveyQuestionChoice,
+  TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 
@@ -40,7 +41,7 @@ interface QuestionConditionalProps {
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const QuestionConditional = ({
@@ -299,6 +300,7 @@ export const QuestionConditional = ({
       ttc={ttc}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
     <RankingQuestion
@@ -328,6 +330,7 @@ export const QuestionConditional = ({
       ttc={ttc}
       setTtc={setTtc}
       currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
     />
   ) : null;
 };

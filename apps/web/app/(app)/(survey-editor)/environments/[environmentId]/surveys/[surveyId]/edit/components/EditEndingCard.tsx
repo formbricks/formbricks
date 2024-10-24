@@ -16,7 +16,12 @@ import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestionId,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
 import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
@@ -26,7 +31,7 @@ interface EditEndingCardProps {
   endingCardIndex: number;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId: string | null;
+  activeQuestionId: TSurveyQuestionId | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -272,7 +277,7 @@ export const EditEndingCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="mt-3 px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "mt-3 pb-6"}`}>
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
             tooltipContent={"Redirect To Url is not available on free plan"}

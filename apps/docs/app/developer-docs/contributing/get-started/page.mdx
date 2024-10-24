@@ -34,8 +34,8 @@ Once you open a PR, you will get a message from the CLA bot to fill out the form
 
 We currently officially support the below methods to set up your development environment for Formbricks:
 
-- [Gitpod](/docs/developer-docs/contributing/gitpod)
-- [GitHub Codespaces](/docs/developer-docs/contributing/codespaces)
+- [Gitpod](/developer-docs/contributing/gitpod)
+- [GitHub Codespaces](/developer-docs/contributing/codespaces)
 - [Local Machine Setup](#local-machine-setup)
 
 Both Gitpod and GitHub Codespaces have a **generous free tier** to explore and develop. For junior developers we suggest using either of these, because you can dive into coding within minutes, not hours.
@@ -67,7 +67,19 @@ git clone https://github.com/formbricks/formbricks && cd formbricks
    </CodeGroup>
 </Col>
 
-2. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
+2. Setup Node.JS with nvm:
+
+<Col>
+   <CodeGroup title="Setup Node version with nvm">
+
+```bash
+nvm install && nvm use
+```
+
+   </CodeGroup>
+</Col>
+
+3. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
 
 <Col>
    <CodeGroup title="Install dependencies via pnpm">
@@ -79,7 +91,7 @@ pnpm install
    </CodeGroup>
 </Col>
 
-3. Create a `.env` file based on `.env.example`. It's already preset to work with the local development setup but you can also change values if needed.
+4. Create a `.env` file based on `.env.example`. It's already preset to work with the local development setup but you can also change values if needed.
 
 <Col>
    <CodeGroup title="Define environment variables">
@@ -91,7 +103,7 @@ cp .env.example .env
    </CodeGroup>
 </Col>
 
-4. Generate & set some secret values mandatory for the `ENCRYPTION_KEY`, `NEXTAUTH_SECRET` and `CRON_SECRET` in the .env file. You can use the following command to generate the random string of required length:
+5. Generate & set some secret values mandatory for the `ENCRYPTION_KEY`, `NEXTAUTH_SECRET` and `CRON_SECRET` in the .env file. You can use the following command to generate the random string of required length:
 
 - For Linux
 
@@ -121,7 +133,7 @@ sed -i '' '/^CRON_SECRET=/s|.*|CRON_SECRET='$(openssl rand -hex 32)'|' .env
    </CodeGroup>
 </Col>
 
-5. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the Formbricks dev setup:
+6. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the Formbricks dev setup:
 
 <Col>
    <CodeGroup title="Start Formbricks Dev Setup">

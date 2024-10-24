@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
@@ -23,12 +23,20 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
   open: boolean;
+  modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   webAppUrl: string;
   user: TUser;
 }
 
-export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) => {
+export const ShareEmbedSurvey = ({
+  survey,
+  open,
+  modalView,
+  setOpen,
+  webAppUrl,
+  user,
+}: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
@@ -39,23 +47,37 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
     { id: "webpage", label: "Embed on website", icon: Code2Icon },
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single use links" : "Share the link"}`, icon: LinkIcon },
     { id: "app", label: "Embed in app", icon: SmartphoneIcon },
-  ];
+  ].filter((tab) => !(survey.type === "link" && tab.id === "app"));
 
-  const [activeId, setActiveId] = useState(tabs[0].id);
-  const [showView, setShowView] = useState("start");
+  const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
+  const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
   const [surveyUrl, setSurveyUrl] = useState("");
 
-  const handleOpenChange = (open: boolean) => {
-    setActiveId(tabs[0].id);
-    setOpen(open);
-    setShowView(open ? "start" : ""); // Reset to initial page when modal opens or closes
+  useEffect(() => {
+    if (survey.type !== "link") {
+      setActiveId(tabs[3].id);
+    }
+  }, [survey.type]);
 
-    // fetch latest responses
+  useEffect(() => {
+    if (open) {
+      setShowView(modalView);
+    } else {
+      setShowView("start");
+    }
+  }, [open, modalView]);
+
+  const handleOpenChange = (open: boolean) => {
+    setActiveId(survey.type === "link" ? tabs[0].id : tabs[3].id);
+    setOpen(open);
+    if (!open) {
+      setShowView("start");
+    }
     router.refresh();
   };
 
   const handleInitialPageButton = () => {
-    setShowView("start");
+    setOpen(false);
   };
 
   return (
@@ -111,7 +133,8 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
         ) : showView === "embed" ? (
           <EmbedView
             handleInitialPageButton={handleInitialPageButton}
-            tabs={tabs}
+            tabs={survey.type === "link" ? tabs : [tabs[3]]}
+            disableBack={false}
             activeId={activeId}
             environmentId={environmentId}
             setActiveId={setActiveId}
@@ -122,7 +145,7 @@ export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: Sha
             webAppUrl={webAppUrl}
           />
         ) : showView === "panel" ? (
-          <PanelInfoView handleInitialPageButton={handleInitialPageButton} />
+          <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />
         ) : null}
       </DialogContent>
     </Dialog>

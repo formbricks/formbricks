@@ -1,0 +1,3 @@
+{
+  "extends": "@formbricks/config-typescript/js-library.json"
+}

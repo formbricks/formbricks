@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
@@ -154,6 +155,7 @@ export const TargetingCard = ({
     () => (localSurvey?.segment ? localSurvey.segment?.surveys?.length > 1 : false),
     [localSurvey.segment]
   );
+  const [parent] = useAutoAnimate();
 
   return (
     <Collapsible.Root
@@ -176,7 +178,7 @@ export const TargetingCard = ({
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="min-w-full overflow-auto">
+      <Collapsible.CollapsibleContent className="flex min-w-full flex-col overflow-auto" ref={parent}>
         <hr className="text-slate-600" />
 
         <div className="flex flex-col gap-5 p-6">
