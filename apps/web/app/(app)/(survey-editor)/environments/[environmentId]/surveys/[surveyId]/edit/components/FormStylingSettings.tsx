@@ -107,9 +107,9 @@ export const FormStylingSettings = ({
       </Collapsible.CollapsibleTrigger>
 
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
-        <hr className="py-1 text-slate-600" key={"hello"} />
+        <hr className="py-1 text-slate-600" />
 
-        <div className="flex flex-col gap-6 p-6 pt-2" key={"hjiii"}>
+        <div className="flex flex-col gap-6 p-6 pt-2">
           <div className="flex flex-col gap-2">
             <FormField
               control={form.control}
