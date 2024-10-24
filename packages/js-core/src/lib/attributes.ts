@@ -91,19 +91,6 @@ export const updateAttributes = async (
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
 
-  try {
-    const existingAttributes = config.get().attributes;
-    if (existingAttributes) {
-      for (const [key, value] of Object.entries(existingAttributes)) {
-        if (updatedAttributes[key] === value) {
-          delete updatedAttributes[key];
-        }
-      }
-    }
-  } catch (e) {
-    logger.debug("config not set; sending all attributes to backend");
-  }
-
   // send to backend if updatedAttributes is not empty
   if (Object.keys(updatedAttributes).length === 0) {
     logger.debug("No attributes to update. Skipping update.");
@@ -138,14 +125,6 @@ export const updateAttributes = async (
   }
 };
 
-export const isExistingAttribute = (key: string, value: string): boolean => {
-  if (config.get().attributes[key] === value) {
-    return true;
-  }
-
-  return false;
-};
-
 export const setAttributeInApp = async (
   key: string,
   value: any
@@ -158,11 +137,6 @@ export const setAttributeInApp = async (
   const userId = config.get().personState.data.userId;
 
   logger.debug("Setting attribute: " + key + " to value: " + value);
-  // check if attribute already exists with this value
-  if (isExistingAttribute(key, value.toString())) {
-    logger.debug("Attribute already set to this value. Skipping update.");
-    return okVoid();
-  }
 
   if (!userId) {
     logger.error(
@@ -190,6 +164,10 @@ export const setAttributeInApp = async (
         ...config.get(),
         personState,
         filteredSurveys,
+        attributes: {
+          ...config.get().attributes,
+          [key]: value.toString(),
+        },
       });
     }
 
