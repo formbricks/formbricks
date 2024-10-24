@@ -5256,7 +5256,7 @@ const employeeWellBeing = (): TTemplate => {
   return {
     name: "Employee Well-Being",
     role: "productManager",
-    industries: ["eCommerce"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description: "Assess your employee well-being through work-life balance, workload, and environment.",
     preset: {
@@ -5327,7 +5327,7 @@ const professionalDevelopmentGrowth = (): TTemplate => {
   return {
     name: "Professional Development and Growth",
     role: "productManager",
-    industries: ["eCommerce"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description: "Assess employee engagement through growth opportunities, autonomy, and goal setting.",
     preset: {
@@ -5398,7 +5398,7 @@ const recognitionAndReward = (): TTemplate => {
   return {
     name: "Recognition and Reward",
     role: "productManager",
-    industries: ["eCommerce"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description:
       "Evaluate employee satisfaction with recognition, rewards, leadership support, and freedom of expression.",
@@ -5470,7 +5470,7 @@ const alignmentAndEngagement = (): TTemplate => {
   return {
     name: "Alignment and Engagement with Company Vision",
     role: "productManager",
-    industries: ["eCommerce"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description:
       "Gauge employee alignment with the company's vision, strategy, and communication, as well as team collaboration.",
@@ -5540,7 +5540,7 @@ const supportiveWorkCulture = (): TTemplate => {
   return {
     name: "Supportive Work Culture",
     role: "productManager",
-    industries: ["eCommerce"],
+    industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description:
       "Assess employee perceptions of leadership support, communication, and the overall work environment.",
