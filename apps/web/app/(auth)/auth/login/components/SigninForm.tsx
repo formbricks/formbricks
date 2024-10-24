@@ -178,7 +178,7 @@ export const SigninForm = ({
                 </div>
                 <div className="transition-all duration-500 ease-in-out">
                   <label htmlFor="password" className="sr-only">
-                    {t("auth.password")}
+                    {t("common.password")}
                   </label>
                   <Controller
                     name="password"

@@ -211,35 +211,35 @@ export const MainNavigation = ({
 
   const dropdownNavigation = [
     {
-      label: "Account",
+      label: "common.account",
       href: `/environments/${environment.id}/settings/profile`,
       icon: UserCircleIcon,
     },
     {
-      label: "Organization",
+      label: "common.organization",
       href: `/environments/${environment.id}/settings/general`,
       icon: UsersIcon,
     },
     {
-      label: "Billing",
+      label: "common.billing",
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
     },
     {
-      label: "License",
+      label: "common.license",
       href: `/environments/${environment.id}/settings/enterprise`,
       hidden: isFormbricksCloud || isPricingDisabled,
       icon: KeyIcon,
     },
     {
-      label: "Documentation",
+      label: "common.documentation",
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
     {
-      label: "Join Discord",
+      label: "common.join_discord",
       href: "https://formbricks.com/discord",
       target: "_blank",
       icon: AiOutlineDiscord,
@@ -420,7 +420,7 @@ export const MainNavigation = ({
                   <DropdownMenuItem
                     onClick={() => handleAddProduct(organization.id)}
                     icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                    <span>Add product</span>
+                    <span>{t("common.add_product")}</span>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -476,7 +476,7 @@ export const MainNavigation = ({
                         <Link href={link.href} target={link.target} className="flex w-full items-center">
                           <DropdownMenuItem>
                             <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                            {link.label}
+                            {t(link.label)}
                           </DropdownMenuItem>
                         </Link>
                       )
@@ -490,7 +490,7 @@ export const MainNavigation = ({
                       await formbricksLogout();
                     }}
                     icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
-                    Logout
+                    {t("common.logout")}
                   </DropdownMenuItem>
 
                   {/* Organization Switch */}
@@ -500,7 +500,7 @@ export const MainNavigation = ({
                       <DropdownMenuSubTrigger className="rounded-lg">
                         <div>
                           <p>{currentOrganizationName}</p>
-                          <p className="block text-xs text-slate-500">Switch organization</p>
+                          <p className="block text-xs text-slate-500">{t("common.switch_organization")}</p>
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
@@ -524,7 +524,7 @@ export const MainNavigation = ({
                             <DropdownMenuItem
                               onClick={() => setShowCreateOrganizationModal(true)}
                               icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                              <span>Create new organization</span>
+                              <span>{t("common.create_new_organization")}</span>
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuSubContent>

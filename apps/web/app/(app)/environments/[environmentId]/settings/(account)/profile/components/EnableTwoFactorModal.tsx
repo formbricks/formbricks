@@ -4,6 +4,7 @@ import {
   enableTwoFactorAuthAction,
   setupTwoFactorAuthAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -45,7 +46,7 @@ const ConfirmPasswordForm = ({
   setOpen,
 }: TConfirmPasswordFormProps) => {
   const { control, handleSubmit, setError } = useForm<TConfirmPasswordFormState>();
-
+  const t = useTranslations();
   const onSubmit: SubmitHandler<TConfirmPasswordFormState> = async (data) => {
     const setupTwoFactorAuthResponse = await setupTwoFactorAuthAction({ password: data.password });
 
@@ -64,13 +65,17 @@ const ConfirmPasswordForm = ({
   return (
     <div>
       <div className="p-6">
-        <h1 className="text-lg font-semibold">Enable two factor authentication</h1>
-        <h3 className="text-sm text-slate-700">Confirm your current password to get started.</h3>
+        <h1 className="text-lg font-semibold">
+          {t("environments.settings.profile.two_factor_authentication")}
+        </h1>
+        <h3 className="text-sm text-slate-700">
+          {t("environments.settings.profile.confirm_your_current_password_to_get_started")}
+        </h3>
       </div>
       <form className="flex flex-col space-y-10" onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-2 px-6">
           <label htmlFor="password" className="text-sm font-medium text-slate-700">
-            Password
+            {t("common.password")}
           </label>
           <Controller
             name="password"
@@ -99,10 +104,10 @@ const ConfirmPasswordForm = ({
 
         <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
           <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
 
-          <Button size="sm">Confirm</Button>
+          <Button size="sm">{t("common.confirm")}</Button>
         </div>
       </form>
     </div>
@@ -116,26 +121,33 @@ type TScanQRCodeProps = {
   setOpen: (open: boolean) => void;
 };
 const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: TScanQRCodeProps) => {
+  const t = useTranslations();
   return (
     <div>
       <div className="p-6">
-        <h1 className="text-lg font-semibold">Enable two factor authentication</h1>
-        <h3 className="text-sm text-slate-700">Scan the QR code below with your authenticator app.</h3>
+        <h1 className="text-lg font-semibold">
+          {t("environments.settings.profile.enable_two_factor_authentication")}
+        </h1>
+        <h3 className="text-sm text-slate-700">
+          {t("environments.settings.profile.scan_the_qr_code_below_with_your_authenticator_app")}
+        </h3>
       </div>
 
       <div className="mb-4 flex flex-col items-center justify-center space-y-4">
         <Image src={dataUri} alt="QR code" width={200} height={200} />
-        <p className="text-sm text-slate-700">Or enter the following code manually:</p>
+        <p className="text-sm text-slate-700">
+          {t("environments.settings.profile.or_enter_the_following_code_manually")}
+        </p>
         <p className="text-sm font-medium text-slate-700">{secret}</p>
       </div>
 
       <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
         <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
-          Cancel
+          {t("common.cancel")}
         </Button>
 
         <Button size="sm" onClick={() => setCurrentStep("enterCode")}>
-          Next
+          {t("common.next")}
         </Button>
       </div>
     </div>
@@ -148,6 +160,7 @@ type TEnableCodeProps = {
   refreshData: () => void;
 };
 const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) => {
+  const t = useTranslations();
   const { control, handleSubmit } = useForm<TEnterCodeFormState>({
     defaultValues: {
       code: "",
@@ -175,14 +188,18 @@ const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) =
     <>
       <div>
         <div className="p-6">
-          <h1 className="text-lg font-semibold">Enable two factor authentication</h1>
-          <h3 className="text-sm text-slate-700">Enter the code from your authenticator app below.</h3>
+          <h1 className="text-lg font-semibold">
+            {t("environments.settings.profile.enable_two_factor_authentication")}
+          </h1>
+          <h3 className="text-sm text-slate-700">
+            {t("environments.settings.profile.enter_the_code_from_your_authenticator_app_below")}
+          </h3>
         </div>
 
         <form className="flex flex-col space-y-10" onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-2 px-6">
             <label htmlFor="code" className="text-sm font-medium text-slate-700">
-              Code
+              {t("common.code")}
             </label>
             <Controller
               name="code"
@@ -208,10 +225,10 @@ const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) =
 
           <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
             <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
 
-            <Button size="sm">Confirm</Button>
+            <Button size="sm">{t("common.confirm")}</Button>
           </div>
         </form>
       </div>
@@ -225,6 +242,7 @@ type TDisplayBackupCodesProps = {
 };
 
 const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) => {
+  const t = useTranslations();
   const formatBackupCode = (code: string) => `${code.slice(0, 5)}-${code.slice(5, 10)}`;
 
   const handleDownloadBackupCode = () => {
@@ -243,8 +261,12 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
   return (
     <div>
       <div className="p-6">
-        <h1 className="text-lg font-semibold">Enable two factor authentication</h1>
-        <h3 className="text-sm text-slate-700">Save the following backup codes in a safe place.</h3>
+        <h1 className="text-lg font-semibold">
+          {t("environments.settings.profile.enable_two_factor_authentication")}
+        </h1>
+        <h3 className="text-sm text-slate-700">
+          {t("environments.settings.profile.save_the_following_backup_codes_in_a_safe_place")}
+        </h3>
       </div>
 
       <div className="mx-auto mb-6 grid max-w-[60%] grid-cols-2 gap-1 text-center">
@@ -257,7 +279,7 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
 
       <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
         <Button variant="secondary" type="button" size="sm" onClick={() => setOpen(false)}>
-          Close
+          {t("common.close")}
         </Button>
 
         <Button
@@ -266,7 +288,7 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
             navigator.clipboard.writeText(backupCodes.map((code) => formatBackupCode(code)).join("\n"));
             toast.success("Copied to clipboard");
           }}>
-          Copy
+          {t("common.copy")}
         </Button>
 
         <Button
@@ -274,7 +296,7 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
           onClick={() => {
             handleDownloadBackupCode();
           }}>
-          Download
+          {t("common.download")}
         </Button>
       </div>
     </div>

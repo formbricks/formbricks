@@ -45,7 +45,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             )}
           </SettingsCard>
           {user.identityProvider === "email" && (
-            <SettingsCard title="Security" description="Manage your password and other security settings.">
+            <SettingsCard
+              title="common.security"
+              description="environments.settings.profile.security_description">
               <AccountSecurity user={user} />
             </SettingsCard>
           )}
@@ -55,7 +57,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             description="environments.settings.profile.confirm_delete_account">
             <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
           </SettingsCard>
-          <SettingsId title="Profile" id={user.id}></SettingsId>
+          <SettingsId title="common.profile" id={user.id}></SettingsId>
         </div>
       )}
     </PageContentWrapper>
