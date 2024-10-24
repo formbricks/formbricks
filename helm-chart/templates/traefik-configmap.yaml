@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-config
+data:
+  traefik.toml: |
+    [certificatesResolvers.letsencrypt.acme]
+    email = {{ .Values.email }}

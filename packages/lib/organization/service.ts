@@ -20,12 +20,13 @@ import { updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
 import { organizationCache } from "./cache";
 
-export const select = {
+export const select: Prisma.OrganizationSelect = {
   id: true,
   createdAt: true,
   updatedAt: true,
   name: true,
   billing: true,
+  isAIEnabled: true,
 };
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;
@@ -200,13 +201,13 @@ export const updateOrganization = async (
     });
 
     // revalidate cache for environments
-    updatedOrganization?.products.forEach((product) => {
-      product.environments.forEach(async (environment) => {
+    for (const product of updatedOrganization.products) {
+      for (const environment of product.environments) {
         organizationCache.revalidate({
           environmentId: environment.id,
         });
-      });
-    });
+      }
+    }
 
     const organization = {
       ...updatedOrganization,

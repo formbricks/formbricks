@@ -1,5 +1,4 @@
-import { formatDistance } from "date-fns";
-import { intlFormat } from "date-fns";
+import { formatDistance, intlFormat } from "date-fns";
 
 export const convertDateString = (dateString: string) => {
   if (!dateString) {
@@ -10,7 +9,7 @@ export const convertDateString = (dateString: string) => {
     date,
     {
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     },
     {
