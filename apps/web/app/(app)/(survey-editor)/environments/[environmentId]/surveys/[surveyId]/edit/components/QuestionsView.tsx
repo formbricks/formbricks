@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { createId } from "@paralleldrive/cuid2";
-import React, { SetStateAction, useEffect, useMemo, useState } from "react";
+import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -86,7 +86,6 @@ export const QuestionsView = ({
   }, [localSurvey.questions]);
 
   const surveyLanguages = localSurvey.languages;
-  const [backButtonLabel, setbackButtonLabel] = useState(null);
 
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     const updateConditions = (conditions: TConditionGroup): TConditionGroup => {
@@ -238,22 +237,6 @@ export const QuestionsView = ({
       ...updatedAttributes,
     };
 
-    if ("backButtonLabel" in updatedAttributes) {
-      const backButtonLabel = updatedSurvey.questions[questionIdx].backButtonLabel;
-      // If the value of backbuttonLabel is equal to {default:""}, then delete backButtonLabel key
-      if (
-        backButtonLabel &&
-        Object.keys(backButtonLabel).length === 1 &&
-        backButtonLabel["default"].trim() === ""
-      ) {
-        delete updatedSurvey.questions[questionIdx].backButtonLabel;
-      } else {
-        updatedSurvey.questions.forEach((question) => {
-          question.backButtonLabel = updatedAttributes.backButtonLabel;
-        });
-        setbackButtonLabel(updatedAttributes.backButtonLabel);
-      }
-    }
     const attributesToCheck = ["buttonLabel", "upperLabel", "lowerLabel"];
 
     // If the value of buttonLabel, lowerLabel or upperLabel is equal to {default:""}, then delete buttonLabel key
@@ -332,9 +315,6 @@ export const QuestionsView = ({
 
   const addQuestion = (question: TSurveyQuestion, index?: number) => {
     const updatedSurvey = { ...localSurvey };
-    if (backButtonLabel) {
-      question.backButtonLabel = backButtonLabel;
-    }
 
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
     const updatedQuestion = addMultiLanguageLabels(question, languageSymbols);
