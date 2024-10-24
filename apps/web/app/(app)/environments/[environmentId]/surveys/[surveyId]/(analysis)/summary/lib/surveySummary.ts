@@ -372,9 +372,11 @@ export const getQuestionSummary = async (
           }
         });
 
-        Object.entries(choiceCountMap).map(([label, count]) => {
+        Object.entries(choiceCountMap).map(([label, count], index) => {
+          const value = question.choices[index].value;
           values.push({
-            value: label,
+            label: label,
+            value: getLocalizedValue(value, "default"),
             count,
             percentage: responses.length > 0 ? convertFloatTo2Decimal((count / responses.length) * 100) : 0,
           });
@@ -382,7 +384,8 @@ export const getQuestionSummary = async (
 
         if (isOthersEnabled) {
           values.push({
-            value: getLocalizedValue(lastChoice.label, "default") || "Other",
+            label: getLocalizedValue(lastChoice.label, "default") || "Other",
+            value: getLocalizedValue(lastChoice.value, "default") || "Other",
             count: otherValues.length,
             percentage: convertFloatTo2Decimal((otherValues.length / responses.length) * 100),
             others: otherValues.slice(0, VALUES_LIMIT),
