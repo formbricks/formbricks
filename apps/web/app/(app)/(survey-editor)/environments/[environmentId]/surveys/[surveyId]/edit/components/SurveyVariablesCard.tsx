@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,6 +25,8 @@ export const SurveyVariablesCard = ({
 }: SurveyVariablesCardProps) => {
   const open = activeQuestionId === variablesCardId;
   const t = useTranslations();
+  const [parent] = useAutoAnimate();
+
   const setOpenState = (state: boolean) => {
     if (state) {
       setActiveQuestionId(variablesCardId);
@@ -58,8 +61,8 @@ export const SurveyVariablesCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
-          <div className="flex flex-col gap-2">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
+          <div className="flex flex-col gap-2" ref={parent}>
             {localSurvey.variables.length > 0 ? (
               localSurvey.variables.map((variable) => (
                 <SurveyVariablesCardItem

@@ -8,11 +8,12 @@ import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environment
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
@@ -33,6 +34,7 @@ interface ResponseFilterProps {
 export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
   const t = useTranslations();
   const params = useParams();
+  const [parent] = useAutoAnimate();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
 
@@ -232,63 +234,66 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
             />
           </div>
         </div>
-        {filterValue.filter?.map((s, i) => (
-          <>
-            <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
-              <div
-                className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
-                key={`${s.questionType.id}-${i}`}>
-                <QuestionsComboBox
-                  key={`${s.questionType.label}-${i}`}
-                  options={questionComboBoxOptions}
-                  selected={s.questionType}
-                  onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
-                />
-                <QuestionFilterComboBox
-                  key={`${s.questionType.id}-${i}`}
-                  filterOptions={
-                    selectedOptions.questionFilterOptions.find(
-                      (q) =>
-                        (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
-                        q.id === s.questionType.id
-                    )?.filterOptions
-                  }
-                  filterComboBoxOptions={
-                    selectedOptions.questionFilterOptions.find(
-                      (q) =>
-                        (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
-                        q.id === s.questionType.id
-                    )?.filterComboBoxOptions
-                  }
-                  filterValue={filterValue.filter[i].filterType.filterValue}
-                  filterComboBoxValue={filterValue.filter[i].filterType.filterComboBoxValue}
-                  type={
-                    s?.questionType?.type === OptionsType.QUESTIONS
-                      ? s?.questionType?.questionType
-                      : s?.questionType?.type
-                  }
-                  handleRemoveMultiSelect={(value) => handleRemoveMultiSelect(value, i)}
-                  onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
-                  onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
-                  disabled={!s?.questionType?.label}
-                />
+
+        <div ref={parent}>
+          {filterValue.filter?.map((s, i) => (
+            <React.Fragment key={i}>
+              <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
+                <div
+                  className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
+                  key={`${s.questionType.id}-${i}`}>
+                  <QuestionsComboBox
+                    key={`${s.questionType.label}-${i}`}
+                    options={questionComboBoxOptions}
+                    selected={s.questionType}
+                    onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
+                  />
+                  <QuestionFilterComboBox
+                    key={`${s.questionType.id}-${i}`}
+                    filterOptions={
+                      selectedOptions.questionFilterOptions.find(
+                        (q) =>
+                          (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
+                          q.id === s.questionType.id
+                      )?.filterOptions
+                    }
+                    filterComboBoxOptions={
+                      selectedOptions.questionFilterOptions.find(
+                        (q) =>
+                          (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
+                          q.id === s.questionType.id
+                      )?.filterComboBoxOptions
+                    }
+                    filterValue={filterValue.filter[i].filterType.filterValue}
+                    filterComboBoxValue={filterValue.filter[i].filterType.filterComboBoxValue}
+                    type={
+                      s?.questionType?.type === OptionsType.QUESTIONS
+                        ? s?.questionType?.questionType
+                        : s?.questionType?.type
+                    }
+                    handleRemoveMultiSelect={(value) => handleRemoveMultiSelect(value, i)}
+                    onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
+                    onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
+                    disabled={!s?.questionType?.label}
+                  />
+                </div>
+                <div className="flex w-full items-center justify-end gap-1 md:w-auto">
+                  <p className="block font-light text-slate-500 md:hidden">Delete</p>
+                  <TrashIcon
+                    className="w-4 cursor-pointer text-slate-500 md:text-black"
+                    onClick={() => handleDeleteFilter(i)}
+                  />
+                </div>
               </div>
-              <div className="flex w-full items-center justify-end gap-1 md:w-auto">
-                <p className="block font-light text-slate-500 md:hidden">Delete</p>
-                <TrashIcon
-                  className="w-4 cursor-pointer text-slate-500 md:text-black"
-                  onClick={() => handleDeleteFilter(i)}
-                />
-              </div>
-            </div>
-            {i !== filterValue.filter.length - 1 && (
-              <div className="my-6 flex items-center">
-                <p className="mr-6 text-base text-slate-600">And</p>
-                <hr className="w-full text-slate-600" />
-              </div>
-            )}
-          </>
-        ))}
+              {i !== filterValue.filter.length - 1 && (
+                <div className="my-6 flex items-center">
+                  <p className="mr-6 text-base text-slate-600">And</p>
+                  <hr className="w-full text-slate-600" />
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
         <div className="mt-8 flex items-center justify-between">
           <Button size="sm" variant="secondary" onClick={handleAddNewFilter}>
             {t("common.add_filter")}

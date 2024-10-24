@@ -3,6 +3,7 @@ import {
   getDefaultOperatorForQuestion,
   replaceEndingCardHeadlineRecall,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import {
   ArrowDownIcon,
@@ -113,16 +114,17 @@ export function ConditionalLogic({
       logic: logicCopy,
     });
   };
+  const [parent] = useAutoAnimate();
 
   return (
-    <div className="mt-4">
+    <div className="mt-4" ref={parent}>
       <Label className="flex gap-2">
         {t("environments.surveys.edit.conditional_logic")}
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
       {question.logic && question.logic.length > 0 && (
-        <div className="mt-2 flex flex-col gap-4">
+        <div className="mt-2 flex flex-col gap-4" ref={parent}>
           {question.logic.map((logicItem, logicItemIdx) => (
             <div
               key={logicItem.id}

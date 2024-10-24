@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -91,6 +92,8 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale
     },
   ];
 
+  const [parent] = useAutoAnimate();
+
   return (
     <Collapsible.Root
       open={open}
@@ -118,7 +121,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent>
+      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup

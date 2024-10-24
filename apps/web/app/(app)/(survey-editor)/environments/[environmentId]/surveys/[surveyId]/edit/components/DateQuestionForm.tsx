@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -47,6 +48,7 @@ export const DateQuestionForm = ({
 }: IDateQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const t = useTranslations();
+  const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
@@ -61,7 +63,7 @@ export const DateQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
       />
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">

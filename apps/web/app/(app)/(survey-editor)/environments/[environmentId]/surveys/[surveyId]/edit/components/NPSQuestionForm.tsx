@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -34,6 +35,9 @@ export const NPSQuestionForm = ({
 }: NPSQuestionFormProps): JSX.Element => {
   const t = useTranslations();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+  // Auto animate
+  const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -49,7 +53,7 @@ export const NPSQuestionForm = ({
         attributeClasses={attributeClasses}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">

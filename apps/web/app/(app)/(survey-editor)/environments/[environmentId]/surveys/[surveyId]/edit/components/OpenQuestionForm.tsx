@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -56,6 +57,8 @@ export const OpenQuestionForm = ({
     updateQuestion(questionIdx, updatedAttributes);
   };
 
+  const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -71,7 +74,7 @@ export const OpenQuestionForm = ({
         label={t("environments.surveys.edit.question") + "*"}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">

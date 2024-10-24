@@ -3,6 +3,7 @@
 import { findOptionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -160,6 +161,8 @@ export const MultipleChoiceQuestionForm = ({
     }
   }, [isNew]);
 
+  // Auto animate
+  const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
@@ -175,7 +178,7 @@ export const MultipleChoiceQuestionForm = ({
         attributeClasses={attributeClasses}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
@@ -238,7 +241,7 @@ export const MultipleChoiceQuestionForm = ({
               updateQuestion(questionIdx, { choices: newChoices });
             }}>
             <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={parent}>
                 {question.choices &&
                   question.choices.map((choice, choiceIdx) => (
                     <QuestionOptionChoice

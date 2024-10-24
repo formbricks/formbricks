@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { deleteResource, isResourceFilter, moveResource } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -21,6 +22,7 @@ export const BasicSegmentEditor = ({
   attributeClasses,
   viewOnly,
 }: BasicSegmentEditorProps) => {
+  const [parent] = useAutoAnimate();
   const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
     const localSegmentCopy = structuredClone(segment);
     if (localSegmentCopy.filters) {
@@ -41,7 +43,7 @@ export const BasicSegmentEditor = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg">
+    <div className="flex flex-col gap-4 rounded-lg" ref={parent}>
       {group?.map((groupItem) => {
         const { connector, resource, id: groupId } = groupItem;
 

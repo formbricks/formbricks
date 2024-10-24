@@ -5475,6 +5475,78 @@ const understandLowEngagement = (locale: string): TTemplate => {
   };
 };
 
+const employeeWellBeing = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("employee_well_being_name", locale),
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["link"],
+    description: translate("employee_well_being_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("employee_well_being_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: translate("employee_well_being_question_1_headline", locale) },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("employee_well_being_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("employee_well_being_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("employee_well_being_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("employee_well_being_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("employee_well_being_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: translate("employee_well_being_question_3_headline", locale) },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("employee_well_being_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("employee_well_being_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("employee_well_being_question_4_headline", locale) },
+          required: false,
+          placeholder: { default: translate("employee_well_being_question_4_placeholder", locale) },
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
 export const templates = (locale = defaultLocale): TTemplate[] => [
   cartAbandonmentSurvey(locale),
   siteAbandonmentSurvey(locale),
@@ -5516,6 +5588,7 @@ export const templates = (locale = defaultLocale): TTemplate[] => [
   evaluateAProductIdea(locale),
   understandLowEngagement(locale),
   employeeSatisfaction(locale),
+  employeeWellBeing(locale),
 ];
 
 export const getCustomSurveyTemplate = (locale: string): TTemplate => ({

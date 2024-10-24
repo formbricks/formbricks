@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
@@ -43,8 +44,9 @@ export const CTAQuestionForm = ({
 }: CTAQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
   const t = useTranslations();
+  const [parent] = useAutoAnimate();
   return (
-    <form>
+    <form ref={parent}>
       <QuestionFormInput
         id="headline"
         value={question.headline}

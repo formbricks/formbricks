@@ -1,6 +1,7 @@
 "use client";
 
 import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -86,6 +87,9 @@ export const HiddenFieldsCard = ({
     );
   };
 
+  // Auto Animate
+  const [parent] = useAutoAnimate();
+
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
       <div
@@ -125,8 +129,8 @@ export const HiddenFieldsCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
-          <div className="flex gap-2">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
+          <div className="flex flex-wrap gap-2" ref={parent}>
             {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
               localSurvey.hiddenFields?.fieldIds?.map((fieldId) => {
                 return (

@@ -1,4 +1,5 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -43,8 +44,10 @@ export const QuestionsDroppable = ({
   isCxMode,
   locale,
 }: QuestionsDraggableProps) => {
+  const [parent] = useAutoAnimate();
+
   return (
-    <div className="group mb-5 flex w-full flex-col gap-5">
+    <div className="group mb-5 flex w-full flex-col gap-5" ref={parent}>
       <SortableContext items={localSurvey.questions} strategy={verticalListSortingStrategy}>
         {localSurvey.questions.map((question, questionIdx) => (
           <QuestionCard

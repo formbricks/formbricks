@@ -3,11 +3,18 @@
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
+  getSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { getSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
-import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
-import { MoreVertical } from "lucide-react";
+import {
+  ArrowUpFromLineIcon,
+  CopyIcon,
+  EyeIcon,
+  LinkIcon,
+  MoreVertical,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -101,7 +108,7 @@ export const SurveyDropDownMenu = ({
       onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-          <div className="rounded-lg border p-2 hover:bg-slate-50">
+          <div className="rounded-lg border bg-white p-2 hover:bg-slate-50">
             <span className="sr-only">Open options</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
