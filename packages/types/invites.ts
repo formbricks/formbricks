@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZMembershipRole } from "./memberships";
+import { ZUserName } from "./user";
 
 export const ZInvite = z.object({
   id: z.string(),
@@ -17,7 +18,7 @@ export type TInvite = z.infer<typeof ZInvite>;
 
 export const ZInvitee = z.object({
   email: z.string().email(),
-  name: z.string(),
+  name: ZUserName,
   role: ZMembershipRole,
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
