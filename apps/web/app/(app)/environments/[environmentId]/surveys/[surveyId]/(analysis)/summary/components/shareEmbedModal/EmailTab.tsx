@@ -63,7 +63,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             }}
             className="shrink-0"
             EndIcon={CopyIcon}>
-            {t("copy.copy_code")}
+            {t("common.copy_code")}
           </Button>
         ) : (
           <>

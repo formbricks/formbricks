@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { createUser } from "@formbricks/lib/utils/users";
@@ -17,7 +17,6 @@ interface SignupOptionsProps {
   emailFromSearchParams: string;
   setError?: (error: string) => void;
   emailVerificationDisabled: boolean;
-  passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
@@ -25,6 +24,7 @@ interface SignupOptionsProps {
   inviteToken: string | null;
   callbackUrl: string;
   oidcDisplayName?: string;
+  userLocale: string;
 }
 
 export const SignupOptions = ({
@@ -32,7 +32,6 @@ export const SignupOptions = ({
   emailFromSearchParams,
   setError,
   emailVerificationDisabled,
-  passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
@@ -40,10 +39,11 @@ export const SignupOptions = ({
   inviteToken,
   callbackUrl,
   oidcDisplayName,
+  userLocale,
 }: SignupOptionsProps) => {
+  const t = useTranslations();
   const [password, setPassword] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [isButtonEnabled, setButtonEnabled] = useState(true);
@@ -74,6 +74,7 @@ export const SignupOptions = ({
         e.target.elements.name.value,
         e.target.elements.email.value,
         e.target.elements.password.value,
+        userLocale,
         inviteToken
       );
       const url = emailVerificationDisabled
@@ -97,7 +98,7 @@ export const SignupOptions = ({
             <div>
               <div className="mb-2 transition-all duration-500 ease-in-out">
                 <label htmlFor="name" className="sr-only">
-                  Full Name
+                  {t("common.full_name")}
                 </label>
                 <div className="mt-1">
                   <input
@@ -106,8 +107,8 @@ export const SignupOptions = ({
                     name="name"
                     type="text"
                     autoComplete="given-name"
-                    placeholder="Full Name"
-                    aria-placeholder="Full Name"
+                    placeholder={t("common.full_name")}
+                    aria-placeholder={"Full name"}
                     required
                     className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                   />
@@ -115,7 +116,7 @@ export const SignupOptions = ({
               </div>
               <div className="mb-2 transition-all duration-500 ease-in-out">
                 <label htmlFor="email" className="sr-only">
-                  Email address
+                  {t("common.email")}
                 </label>
                 <input
                   id="email"
@@ -130,7 +131,7 @@ export const SignupOptions = ({
               </div>
               <div className="transition-all duration-500 ease-in-out">
                 <label htmlFor="password" className="sr-only">
-                  Password
+                  {t("auth.password")}
                 </label>
                 <PasswordInput
                   id="password"
@@ -140,18 +141,10 @@ export const SignupOptions = ({
                   autoComplete="current-password"
                   placeholder="*******"
                   aria-placeholder="password"
-                  onFocus={() => setIsPasswordFocused(true)}
                   required
                   className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
                 />
               </div>
-              {passwordResetEnabled && isPasswordFocused && (
-                <div className="ml-1 text-right transition-all duration-500 ease-in-out">
-                  <Link href="/auth/forgot-password" className="hover:text-brand-dark text-xs text-slate-500">
-                    Forgot your password?
-                  </Link>
-                </div>
-              )}
               <IsPasswordValid password={password} setIsValid={setIsValid} />
             </div>
           )}
@@ -161,7 +154,7 @@ export const SignupOptions = ({
               className="w-full justify-center"
               loading={signingUp}
               disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
-              Continue with Email
+              {t("auth.continue_with_email")}
             </Button>
           )}
 
@@ -175,29 +168,29 @@ export const SignupOptions = ({
                 setTimeout(() => nameRef.current?.focus(), 100);
               }}
               className="w-full justify-center">
-              Continue with Email
+              {t("auth.continue_with_email")}
             </Button>
           )}
         </form>
       )}
       {googleOAuthEnabled && (
         <>
-          <GoogleButton inviteUrl={callbackUrl} />
+          <GoogleButton inviteUrl={callbackUrl} text={t("auth.continue_with_google")} />
         </>
       )}
       {githubOAuthEnabled && (
         <>
-          <GithubButton inviteUrl={callbackUrl} />
+          <GithubButton inviteUrl={callbackUrl} text={t("auth.continue_with_github")} />
         </>
       )}
       {azureOAuthEnabled && (
         <>
-          <AzureButton inviteUrl={callbackUrl} />
+          <AzureButton inviteUrl={callbackUrl} text={t("auth.continue_with_azure")} />
         </>
       )}
       {oidcOAuthEnabled && (
         <>
-          <OpenIdButton inviteUrl={callbackUrl} text={`Continue with ${oidcDisplayName}`} />
+          <OpenIdButton inviteUrl={callbackUrl} text={t("auth.continue_with_oidc", { oidcDisplayName })} />
         </>
       )}
     </div>

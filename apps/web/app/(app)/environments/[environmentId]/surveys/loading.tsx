@@ -5,7 +5,7 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Loading = () => {
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Surveys" />
+      <PageHeader pageTitle="common.surveys" />
       <div className="flex items-center justify-between">
         <div className="flex h-9 animate-pulse gap-2">
           <div className="w-48 rounded-md bg-slate-300"></div>

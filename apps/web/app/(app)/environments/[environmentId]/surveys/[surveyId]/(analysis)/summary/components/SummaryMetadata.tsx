@@ -134,7 +134,7 @@ export const SummaryMetadata = ({
           </Tooltip>
         </TooltipProvider>
         <StatCard
-          label="Time to Complete"
+          label={t("environments.surveys.summary.time_to_complete")}
           percentage={null}
           value={ttcAverage === 0 ? <span>-</span> : `${formatTime(ttcAverage)}`}
           tooltipText={t("environments.surveys.summary.ttc_tooltip")}

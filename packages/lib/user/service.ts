@@ -153,7 +153,7 @@ const deleteUserById = async (id: string): Promise<TUser> => {
 
 export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   validateInputs([data, ZUserUpdateInput]);
-
+  console.log("data", data);
   try {
     const user = await prisma.user.create({
       data: data,
@@ -288,7 +288,7 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
   }
 };
 
-export const getUserLanguage = reactCache(
+export const getUserLocale = reactCache(
   (id: string): Promise<string | undefined> =>
     cache(
       async () => {
@@ -314,7 +314,7 @@ export const getUserLanguage = reactCache(
           throw error;
         }
       },
-      [`getUserLanguage-${id}`],
+      [`getUserLocale-${id}`],
       {
         tags: [userCache.tag.byId(id)],
       }

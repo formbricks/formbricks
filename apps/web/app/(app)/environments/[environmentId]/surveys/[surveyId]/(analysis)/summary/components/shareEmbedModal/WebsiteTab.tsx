@@ -58,7 +58,7 @@ const StaticTab = ({ surveyUrl }) => {
             toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
           }}
           EndIcon={CopyIcon}>
-          {t("copy.copy_code")}
+          {t("common.copy_code")}
         </Button>
       </div>
       <div className="prose prose-slate max-w-full">

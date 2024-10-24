@@ -66,6 +66,7 @@ export const ZUserCreateInput = z.object({
   objective: ZUserObjective.nullish(),
   identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
   identityProviderAccountId: z.string().optional(),
+  locale: z.string().optional(),
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;

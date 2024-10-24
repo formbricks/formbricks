@@ -17,7 +17,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getUserLanguage } from "@formbricks/lib/user/service";
+import { getUserLocale } from "@formbricks/lib/user/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
@@ -61,7 +61,7 @@ const Page = async ({ params, searchParams }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isSurveyCreationDeletionDisabled = isViewer;
-  const locale = session.user.id ? await getUserLanguage(session.user.id) : undefined;
+  const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
   const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 

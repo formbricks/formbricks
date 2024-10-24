@@ -64,7 +64,7 @@ export const getDefaultSurveyPreset = (locale: string): TTemplate["preset"] => {
 
 const cartAbandonmentSurvey = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("card_abandonment_survey", locale),
     role: "productManager",
@@ -72,7 +72,7 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
     channels: ["app", "website", "link"],
     description: translate("card_abandonment_survey_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("card_abandonment_survey", locale),
       questions: [
         {
@@ -102,7 +102,7 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -260,7 +260,7 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
 
 const siteAbandonmentSurvey = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("site_abandonment_survey", locale),
     role: "productManager",
@@ -268,7 +268,7 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
     channels: ["app", "website"],
     description: translate("site_abandonment_survey_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("site_abandonment_survey", locale),
       questions: [
         {
@@ -298,7 +298,7 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -456,7 +456,7 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
 
 const productMarketFitSuperhuman = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("product_market_fit_superhuman", locale),
     role: "productManager",
@@ -464,7 +464,7 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
     channels: ["app", "link"],
     description: translate("product_market_fit_superhuman_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("product_market_fit_superhuman", locale),
       questions: [
         {
@@ -494,7 +494,7 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -697,7 +697,7 @@ const onboardingSegmentation = (locale: string): TTemplate => {
 const churnSurvey = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("churn_survey", locale),
     role: "sales",
@@ -705,7 +705,7 @@ const churnSurvey = (locale: string): TTemplate => {
     channels: ["app", "link"],
     description: translate("churn_survey_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: "Churn Survey",
       questions: [
         {
@@ -849,7 +849,7 @@ const churnSurvey = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -904,7 +904,7 @@ const churnSurvey = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -941,7 +941,7 @@ const churnSurvey = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -977,7 +977,7 @@ const churnSurvey = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1013,7 +1013,7 @@ const churnSurvey = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1033,7 +1033,7 @@ const churnSurvey = (locale: string): TTemplate => {
 const earnedAdvocacyScore = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("earned_advocacy_score_name", locale),
     role: "customerSuccess",
@@ -1041,7 +1041,7 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
     channels: ["app", "link"],
     description: translate("earned_advocacy_score_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("earned_advocacy_score_name", locale),
       questions: [
         {
@@ -1161,7 +1161,7 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1204,7 +1204,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
     createId(),
     createId(),
   ];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("improve_trial_conversion_name", locale),
     role: "sales",
@@ -1212,7 +1212,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
     channels: ["link", "app"],
     description: translate("improve_trial_conversion_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("improve_trial_conversion_name", locale),
       questions: [
         {
@@ -1356,7 +1356,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1482,7 +1482,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1555,7 +1555,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1579,7 +1579,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1595,6 +1595,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
 };
 
 const reviewPrompt = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
@@ -1604,7 +1605,7 @@ const reviewPrompt = (locale: string): TTemplate => {
     channels: ["link", "app"],
     description: translate("review_prompt_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("review_prompt_name", locale),
       questions: [
         {
@@ -1673,7 +1674,7 @@ const reviewPrompt = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1728,7 +1729,7 @@ const interviewPrompt = (locale: string): TTemplate => {
 const improveActivationRate = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("improve_activation_rate_name", locale),
     role: "productManager",
@@ -1736,7 +1737,7 @@ const improveActivationRate = (locale: string): TTemplate => {
     channels: ["link"],
     description: translate("improve_activation_rate_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("improve_activation_rate_name", locale),
       questions: [
         {
@@ -1908,7 +1909,7 @@ const improveActivationRate = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1942,7 +1943,7 @@ const improveActivationRate = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1976,7 +1977,7 @@ const improveActivationRate = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -2010,7 +2011,7 @@ const improveActivationRate = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -2549,7 +2550,7 @@ const fakeDoorFollowUp = (locale: string): TTemplate => {
 const feedbackBox = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("feedback_box_name", locale),
     role: "productManager",
@@ -2698,7 +2699,7 @@ const feedbackBox = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -2722,7 +2723,7 @@ const feedbackBox = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -3507,7 +3508,7 @@ const customerEffortScore = (locale: string): TTemplate => {
 
 const rateCheckoutExperience = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("rate_checkout_experience_name", locale),
     role: "productManager",
@@ -3515,7 +3516,7 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
     channels: ["website", "app"],
     description: translate("rate_checkout_experience_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("rate_checkout_experience_name", locale),
       questions: [
         {
@@ -3583,7 +3584,7 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -3608,7 +3609,7 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
 
 const measureSearchExperience = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("measure_search_experience_name", locale),
     role: "productManager",
@@ -3616,7 +3617,7 @@ const measureSearchExperience = (locale: string): TTemplate => {
     channels: ["app", "website"],
     description: translate("measure_search_experience_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("measure_search_experience_name", locale),
       questions: [
         {
@@ -3684,7 +3685,7 @@ const measureSearchExperience = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -3709,7 +3710,7 @@ const measureSearchExperience = (locale: string): TTemplate => {
 
 const evaluateContentQuality = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("evaluate_content_quality_name", locale),
     role: "marketing",
@@ -3717,7 +3718,7 @@ const evaluateContentQuality = (locale: string): TTemplate => {
     channels: ["website"],
     description: translate("evaluate_content_quality_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("evaluate_content_quality_name", locale),
       questions: [
         {
@@ -3785,7 +3786,7 @@ const evaluateContentQuality = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -3811,7 +3812,7 @@ const evaluateContentQuality = (locale: string): TTemplate => {
 const measureTaskAccomplishment = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("measure_task_accomplishment_name", locale),
     role: "productManager",
@@ -3819,7 +3820,7 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
     channels: ["app", "website"],
     description: translate("measure_task_accomplishment_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("measure_task_accomplishment_name", locale),
       questions: [
         {
@@ -4002,7 +4003,7 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -4044,7 +4045,7 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -4080,7 +4081,7 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
     createId(),
     createId(),
   ];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
 
   return {
@@ -4090,7 +4091,7 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
     channels: ["website"],
     description: translate("identify_sign_up_barriers_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("identify_sign_up_barriers_with_product_name", locale),
       questions: [
         {
@@ -4120,7 +4121,7 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -4161,7 +4162,7 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -4550,6 +4551,7 @@ const buildProductRoadmap = (locale: string): TTemplate => {
 
 const understandPurchaseIntention = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("understand_purchase_intention_name", locale),
     role: "sales",
@@ -4672,7 +4674,7 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -4717,7 +4719,7 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -4742,7 +4744,7 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
 
 const improveNewsletterContent = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("improve_newsletter_content_name", locale),
     role: "marketing",
@@ -4750,7 +4752,7 @@ const improveNewsletterContent = (locale: string): TTemplate => {
     channels: ["link"],
     description: translate("improve_newsletter_content_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("improve_newsletter_content_name", locale),
       questions: [
         {
@@ -4854,7 +4856,7 @@ const improveNewsletterContent = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -5141,7 +5143,7 @@ const understandLowEngagement = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
 
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("understand_low_engagement_name", locale),
     role: "productManager",
@@ -5149,7 +5151,7 @@ const understandLowEngagement = (locale: string): TTemplate => {
     channels: ["link"],
     description: translate("understand_low_engagement_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("understand_low_engagement_name", locale),
       questions: [
         {
@@ -5347,7 +5349,7 @@ const understandLowEngagement = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -5381,7 +5383,7 @@ const understandLowEngagement = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -5415,7 +5417,7 @@ const understandLowEngagement = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -5449,7 +5451,7 @@ const understandLowEngagement = (locale: string): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: getDefaultSurveyPreset(locale).endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },

@@ -1,10 +1,12 @@
 import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { RequestVerificationEmail } from "@/app/(auth)/auth/verification-requested/components/RequestVerificationEmail";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 const VerificationPageSchema = z.string().email();
 
-const Page = ({ searchParams }) => {
+const Page = async ({ searchParams }) => {
+  const t = await getTranslations();
   const email = searchParams.email;
   try {
     const parsedEmail = VerificationPageSchema.parse(email).toLowerCase();
@@ -12,15 +14,16 @@ const Page = ({ searchParams }) => {
       <FormWrapper>
         <>
           <h1 className="leading-2 mb-4 text-center text-lg font-semibold text-slate-900">
-            Please confirm your email address
+            {t("auth.verification-requested.please_confirm_your_email_address")}
           </h1>
           <p className="text-center text-sm text-slate-700">
-            We sent an email to <span className="font-semibold italic">{parsedEmail}</span>. Please click the
-            link in the email to activate your account.
+            {t("auth.verification-requested.we_sent_an_email_to")}{" "}
+            <span className="font-semibold italic">{parsedEmail}</span>.{" "}
+            {t("auth.verification-requested.please_click_the_link_in_the_email_to_activate_your_account")}
           </p>
           <hr className="my-4" />
           <p className="text-center text-xs text-slate-500">
-            You didn&apos;t receive an email or your link expired?
+            {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}
           </p>
           <div className="mt-5">
             <RequestVerificationEmail email={parsedEmail} />

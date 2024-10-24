@@ -11,18 +11,17 @@ import {
   GOOGLE_OAUTH_ENABLED,
   OIDC_DISPLAY_NAME,
   OIDC_OAUTH_ENABLED,
-  PASSWORD_RESET_DISABLED,
   PRIVACY_URL,
   SIGNUP_ENABLED,
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 const Page = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
   const isMultOrgEnabled = await getIsMultiOrgEnabled();
-  const locale = (searchParams.locale as string) ?? "en-US";
-  console.log(locale);
+  const locale = findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }
@@ -38,7 +37,6 @@ const Page = async ({ searchParams }: { searchParams: { [key: string]: string | 
             webAppUrl={WEBAPP_URL}
             termsUrl={TERMS_URL}
             privacyUrl={PRIVACY_URL}
-            passwordResetEnabled={!PASSWORD_RESET_DISABLED}
             emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
             emailAuthEnabled={EMAIL_AUTH_ENABLED}
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
@@ -46,6 +44,7 @@ const Page = async ({ searchParams }: { searchParams: { [key: string]: string | 
             azureOAuthEnabled={AZURE_OAUTH_ENABLED}
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
+            userLocale={locale}
           />
         </FormWrapper>
       </div>

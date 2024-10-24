@@ -12,7 +12,7 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getUserLanguage } from "@formbricks/lib/user/service";
+import { getUserLocale } from "@formbricks/lib/user/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
@@ -37,7 +37,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   if (!organization) {
     throw new Error("Organization not found");
   }
-  const locale = session?.user.id ? await getUserLanguage(session.user.id) : undefined;
+  const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
   const canRemoveInAppBranding = getRemoveInAppBrandingPermission(organization);
   const canRemoveLinkBranding = getRemoveLinkBrandingPermission(organization);
 

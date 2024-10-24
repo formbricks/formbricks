@@ -6,7 +6,7 @@ interface DevEnvironmentBannerProps {
 }
 
 export const DevEnvironmentBanner = ({ environment }: DevEnvironmentBannerProps) => {
-  const t = useTranslations("environments.product.app-connection");
+  const t = useTranslations();
   return (
     <>
       {environment.type === "development" && (

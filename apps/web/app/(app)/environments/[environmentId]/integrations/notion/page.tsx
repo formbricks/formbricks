@@ -14,7 +14,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { getUserLanguage } from "@formbricks/lib/user/service";
+import { getUserLocale } from "@formbricks/lib/user/service";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -43,7 +43,7 @@ const Page = async ({ params }) => {
     databasesArray = await getNotionDatabases(environment.id);
   }
   const session = await getServerSession(authOptions);
-  const locale = session?.user.id ? await getUserLanguage(session.user.id) : undefined;
+  const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
 
   return (
     <PageContentWrapper>

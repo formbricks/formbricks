@@ -25,7 +25,6 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode, locale }: Ad
   const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [hoveredQuestionId, setHoveredQuestionId] = useState<string | null>(null);
-  console.log(locale);
   const availableQuestionTypes = isCxMode ? getCXQuestionTypes(locale) : getQuestionTypes(locale);
 
   return (

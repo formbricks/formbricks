@@ -1,8 +1,11 @@
 {
   "common": {
+    "account": "Konto",
     "account_settings": "Kontoeinstellungen",
     "avatar": "Avatar",
+    "cancel": "Abbrechen",
     "configuration": "Konfiguration",
+    "delete": "Löschen",
     "email": "E-Mail",
     "full_name": "Vollständiger Name",
     "integrations": "Integrationen",
@@ -13,20 +16,12 @@
     "people": "Menschen",
     "product": "Produkt",
     "profile": "Profil",
+    "save": "Speichern",
     "surveys": "Umfragen",
     "update": "Aktualisieren",
-    "weekly_summary": "Wöchentliche Zusammenfassung",
-    "account": "Konto",
-    "delete": "Löschen",
-    "cancel": "Abbrechen",
-    "save": "Speichern"
+    "weekly_summary": "Wöchentliche Zusammenfassung"
   },
   "environments": {
-    "surveys": {
-      "no_surveys_created_yet": "Noch keine Umfragen erstellt",
-      "viewer_not_allowed_to_create_survey_warning": "Als Viewer sind Sie nicht berechtigt, Umfragen zu erstellen. Bitte bitten Sie einen Editor, eine Umfrage zu erstellen, oder einen Admin, um Ihre Rolle zu aktualisieren.",
-      "all_set_time_to_create_first_survey": "Sie sind fertig! Jetzt können Sie Ihre erste Umfrage erstellen."
-    },
     "settings": {
       "notifications": {
         "auto_subscribe_to_new_surveys": "Automatisch für neue Umfragen anmelden",
@@ -35,34 +30,39 @@
         "manage_email_preferences": "Verwalten Sie Ihre E-Mail-Einstellungen",
         "need_slack_or_discord_notifications": "Möchten Sie Slack oder Discord-Benachrichtigungen",
         "notification_settings": "Benachrichtigungseinstellungen",
+        "notification_settings_updated": "Benachrichtigungseinstellungen aktualisiert",
         "set_up_an_alert_to_get_an_email_on_new_responses": "Richten Sie eine Benachrichtigung ein, um bei neuen Antworten eine E-Mail zu erhalten",
         "stay_up_to_date_with_a_Weekly_every_Monday": "Bleiben Sie mit einem wöchentlichen Bericht jeden Montag auf dem Laufenden",
         "use_the_integration": "Integration verwenden",
         "want_to_loop_in_organization_mates": "Möchten Sie Organisationskollegen einbinden",
         "weekly_summary_products": "Wöchentliche Zusammenfassung (Produkte)",
         "you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore": "Sie werden nicht mehr automatisch für Umfragen dieser Organisation angemeldet!",
-        "you_will_not_receive_any_more_emails_for_responses_on_this_survey": "Sie erhalten keine weiteren E-Mails für Antworten auf diese Umfrage!",
-        "notification_settings_updated": "Benachrichtigungseinstellungen aktualisiert"
+        "you_will_not_receive_any_more_emails_for_responses_on_this_survey": "Sie erhalten keine weiteren E-Mails für Antworten auf diese Umfrage!"
       },
       "profile": {
+        "account_deletion_consequences_warning": "Auswirkungen der Konto-Löschung",
         "change_image": "Bild ändern",
         "confirm_delete_account": "Löschen Sie Ihr Konto mit allen persönlichen Informationen und Daten",
         "confirm_delete_my_account": "Mein Konto löschen",
         "delete_account": "Konto löschen",
         "every_response_tooltip": "Sendet vollständige Antworten, keine Teilantworten.",
+        "org_deletion_warning": "Wenn Sie der einzige Mitglied einer Organisation oder kein anderer Administrator vorhanden ist, wird die Organisation irreversibel gelöscht und alle zugehörigen Daten gelöscht.",
+        "org_ownership_transfer": "Wenn Sie der Besitzer einer Organisation mit anderen Administratoren sind, wird die Besitzschaft dieser Organisation auf einen anderen Administrator übertragen.",
         "organization_identification": "Helfen Sie Ihrer Organisation, Sie auf Formbricks zu identifizieren",
+        "permanent_removal_of_all_of_your_personal_information_and_data": "Permanente Entfernung aller persönlichen Informationen und Daten",
         "personal_information": "Persönliche Informationen",
+        "please_enter_email_to_confirm_account_deletion": "Bitte geben Sie {email} in das folgende Feld ein, um die definitive Löschung Ihres Kontos zu bestätigen:",
+        "profile_updated_successfully": "Ihr Profil wurde erfolgreich aktualisiert",
         "remove_image": "Bild entfernen",
         "update_personal_info": "Aktualisieren Sie Ihre persönlichen Daten",
         "upload_image": "Bild hochladen",
-        "warning_cannot_undo": "Dies kann nicht rückgängig gemacht werden!",
-        "profile_updated_successfully": "Ihr Profil wurde erfolgreich aktualisiert",
-        "please_enter_email_to_confirm_account_deletion": "Bitte geben Sie {email} in das folgende Feld ein, um die definitive Löschung Ihres Kontos zu bestätigen:",
-        "permanent_removal_of_all_of_your_personal_information_and_data": "Permanente Entfernung aller persönlichen Informationen und Daten",
-        "org_ownership_transfer": "Wenn Sie der Besitzer einer Organisation mit anderen Administratoren sind, wird die Besitzschaft dieser Organisation auf einen anderen Administrator übertragen.",
-        "org_deletion_warning": "Wenn Sie der einzige Mitglied einer Organisation oder kein anderer Administrator vorhanden ist, wird die Organisation irreversibel gelöscht und alle zugehörigen Daten gelöscht.",
-        "account_deletion_consequences_warning": "Auswirkungen der Konto-Löschung"
+        "warning_cannot_undo": "Dies kann nicht rückgängig gemacht werden!"
       }
+    },
+    "surveys": {
+      "all_set_time_to_create_first_survey": "Sie sind fertig! Jetzt können Sie Ihre erste Umfrage erstellen.",
+      "no_surveys_created_yet": "Noch keine Umfragen erstellt",
+      "viewer_not_allowed_to_create_survey_warning": "Als Viewer sind Sie nicht berechtigt, Umfragen zu erstellen. Bitte bitten Sie einen Editor, eine Umfrage zu erstellen, oder einen Admin, um Ihre Rolle zu aktualisieren."
     }
   }
 }

@@ -6,7 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_BRAND_COLOR, DEFAULT_LOCALE } from "@formbricks/lib/constants";
 import { getProducts } from "@formbricks/lib/product/service";
-import { getUserLanguage } from "@formbricks/lib/user/service";
+import { getUserLocale } from "@formbricks/lib/user/service";
 import { TProductConfigChannel, TProductConfigIndustry, TProductMode } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
@@ -28,7 +28,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
   const channel = searchParams.channel || null;
   const industry = searchParams.industry || null;
   const mode = searchParams.mode || "surveys";
-  const locale = session?.user.id ? await getUserLanguage(session.user.id) : undefined;
+  const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
   const customHeadline = getCustomHeadline(channel);
   const products = await getProducts(params.organizationId);
 

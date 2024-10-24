@@ -1,8 +1,11 @@
 {
   "common": {
+    "account": "Conta",
     "account_settings": "Configurações da conta",
     "avatar": "Avatar",
+    "cancel": "Cancelar",
     "configuration": "Configuração",
+    "delete": "Excluir",
     "email": "E-mail",
     "full_name": "Nome completo",
     "integrations": "Integrações",
@@ -13,20 +16,12 @@
     "people": "Pessoas",
     "product": "Produto",
     "profile": "Perfil",
+    "save": "Salvar",
     "surveys": "Pesquisas",
     "update": "Atualizar",
-    "weekly_summary": "Resumo semanal",
-    "account": "Conta",
-    "delete": "Excluir",
-    "cancel": "Cancelar",
-    "save": "Salvar"
+    "weekly_summary": "Resumo semanal"
   },
   "environments": {
-    "surveys": {
-      "no_surveys_created_yet": "Nenhuma pesquisa criada ainda",
-      "viewer_not_allowed_to_create_survey_warning": "Como Viewer, você não tem permissão para criar pesquisas. Peça a um Editor para criar uma pesquisa ou um Admin para atualizar sua função.",
-      "all_set_time_to_create_first_survey": "Você está tudo certo! Agora é hora de criar sua primeira pesquisa."
-    },
     "settings": {
       "notifications": {
         "auto_subscribe_to_new_surveys": "Inscrição automática em novas pesquisas",
@@ -36,33 +31,38 @@
         "manage_email_preferences": "Gerencie suas preferências de email",
         "need_slack_or_discord_notifications": "Precisa de notificações do Slack ou Discord",
         "notification_settings": "Configurações de Notificação",
+        "notification_settings_updated": "Configurações de notificação atualizadas",
         "set_up_an_alert_to_get_an_email_on_new_responses": "Configure um alerta para receber um e-mail sobre novas respostas",
         "stay_up_to_date_with_a_Weekly_every_Monday": "Mantenha-se atualizado com um Semanal toda segunda-feira",
         "use_the_integration": "Use a integração",
         "want_to_loop_in_organization_mates": "Quer incluir colegas da organização",
         "weekly_summary_products": "Resumo semanal (Produtos)",
-        "notification_settings_updated": "Configurações de notificação atualizadas",
         "you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore": "Você não será mais inscrito automaticamente para as pesquisas desta organização!",
         "you_will_not_receive_any_more_emails_for_responses_on_this_survey": "Você não receberá mais e-mails para respostas nesta pesquisa!"
       },
       "profile": {
+        "account_deletion_consequences_warning": "Consequências da exclusão da conta",
         "change_image": "Alterar imagem",
         "confirm_delete_account": "Excluir sua conta com todas as suas informações pessoais e dados",
         "confirm_delete_my_account": "Excluir Minha Conta",
         "delete_account": "Excluir Conta",
+        "org_deletion_warning": "Se você é o único membro de uma organização ou não há outro administrador presente, a organização será excluída irreversivelmente junto com todos os dados associados.",
+        "org_ownership_transfer": "Se você é o proprietário de uma organização com outros administradores, o proprietário daquela organização será transferido para outro administrador.",
         "organization_identification": "Ajude sua organização a identificá-lo no Formbricks",
+        "permanent_removal_of_all_of_your_personal_information_and_data": "Remoção permanente de todas as suas informações pessoais e dados",
         "personal_information": "Informações pessoais",
+        "please_enter_email_to_confirm_account_deletion": "Por favor, insira {email} no seguinte campo para confirmar a exclusão definitiva de sua conta:",
+        "profile_updated_successfully": "Seu perfil foi atualizado com sucesso",
         "remove_image": "Remover imagem",
         "update_personal_info": "Atualize suas informações pessoais",
         "upload_image": "Carregar imagem",
-        "warning_cannot_undo": "Isso não pode ser desfeito!",
-        "profile_updated_successfully": "Seu perfil foi atualizado com sucesso",
-        "please_enter_email_to_confirm_account_deletion": "Por favor, insira {email} no seguinte campo para confirmar a exclusão definitiva de sua conta:",
-        "permanent_removal_of_all_of_your_personal_information_and_data": "Remoção permanente de todas as suas informações pessoais e dados",
-        "org_ownership_transfer": "Se você é o proprietário de uma organização com outros administradores, o proprietário daquela organização será transferido para outro administrador.",
-        "org_deletion_warning": "Se você é o único membro de uma organização ou não há outro administrador presente, a organização será excluída irreversivelmente junto com todos os dados associados.",
-        "account_deletion_consequences_warning": "Consequências da exclusão da conta"
+        "warning_cannot_undo": "Isso não pode ser desfeito!"
       }
+    },
+    "surveys": {
+      "all_set_time_to_create_first_survey": "Você está tudo certo! Agora é hora de criar sua primeira pesquisa.",
+      "no_surveys_created_yet": "Nenhuma pesquisa criada ainda",
+      "viewer_not_allowed_to_create_survey_warning": "Como Viewer, você não tem permissão para criar pesquisas. Peça a um Editor para criar uma pesquisa ou um Admin para atualizar sua função."
     }
   }
 }
