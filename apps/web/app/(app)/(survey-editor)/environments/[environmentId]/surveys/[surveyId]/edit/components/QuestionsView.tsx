@@ -12,6 +12,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
@@ -410,6 +411,9 @@ export const QuestionsView = ({
     setLocalSurvey(updatedSurvey);
   };
 
+  // Auto animate
+  const [parent] = useAutoAnimate();
+
   return (
     <div className="mt-12 w-full px-5 py-4">
       {!isCxMode && (
@@ -453,7 +457,7 @@ export const QuestionsView = ({
       </DndContext>
 
       <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} />
-      <div className="mt-5 flex flex-col gap-5">
+      <div className="mt-5 flex flex-col gap-5" ref={parent}>
         <hr className="border-t border-dashed" />
         <DndContext
           id="endings"
