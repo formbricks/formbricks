@@ -1,4 +1,6 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
+import { getTeams } from "@/modules/ee/teams/team-list/lib/teams";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -19,6 +21,12 @@ export const TeamsPage = async ({ params }) => {
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
 
+  const teams = await getTeams(session.user.id, organization.id);
+
+  if (!teams) {
+    throw new Error("Teams not found");
+  }
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Organization Settings">
@@ -29,6 +37,7 @@ export const TeamsPage = async ({ params }) => {
           activeId="teams"
         />
       </PageHeader>
+      <TeamsView teams={teams} organizationId={organization.id} />
     </PageContentWrapper>
   );
 };

@@ -87,9 +87,21 @@ export const Permissions = {
       update: true,
       delete: true,
     },
+    team: {
+      create: true,
+      read: true,
+      update: true,
+      delete: true,
+    },
+    teamMembership: {
+      create: true,
+      read: true,
+      update: true,
+      delete: true,
+    },
   },
 
-  admin: {
+  manager: {
     environment: {
       read: true,
     },
@@ -175,97 +187,21 @@ export const Permissions = {
       update: true,
       delete: true,
     },
-  },
-
-  editor: {
-    environment: {
-      read: true,
-    },
-    product: {
-      create: false,
-      read: true,
-      update: true,
-      delete: true,
-    },
-    organization: {
-      read: true,
-      update: false,
-      delete: false,
-    },
-    membership: {
-      create: false,
-      update: false,
-      delete: false,
-    },
-    person: {
-      delete: true,
-    },
-    response: {
-      read: true,
-      update: true,
-      delete: true,
-    },
-    survey: {
+    team: {
       create: true,
       read: true,
       update: true,
       delete: true,
     },
-    tag: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    responseNote: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    segment: {
+    teamMembership: {
       create: true,
       read: true,
       update: true,
       delete: true,
-    },
-    actionClass: {
-      create: true,
-      delete: true,
-    },
-    integration: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    webhook: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    apiKey: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    subscription: {
-      create: false,
-      read: false,
-      update: false,
-      delete: false,
-    },
-    invite: {
-      create: false,
-      read: false,
-      update: false,
-      delete: false,
-    },
-    language: {
-      create: false,
-      update: false,
-      delete: false,
     },
   },
 
-  developer: {
+  billing: {
     environment: {
       read: true,
     },
@@ -353,9 +289,21 @@ export const Permissions = {
       update: false,
       delete: false,
     },
+    team: {
+      create: false,
+      read: false,
+      update: false,
+      delete: false,
+    },
+    teamMembership: {
+      create: false,
+      read: false,
+      update: false,
+      delete: false,
+    },
   },
 
-  viewer: {
+  member: {
     environment: {
       read: true,
     },
@@ -438,6 +386,18 @@ export const Permissions = {
     },
     language: {
       create: false,
+      update: false,
+      delete: false,
+    },
+    team: {
+      create: false,
+      read: false,
+      update: false,
+      delete: false,
+    },
+    teamMembership: {
+      create: false,
+      read: false,
       update: false,
       delete: false,
     },

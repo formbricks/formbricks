@@ -38,18 +38,19 @@ export const OrganizationSettingsNavbar = ({
       current: pathname?.includes("/billing"),
     },
     {
+      id: "teams",
+      label: "Teams",
+      href: `/environments/${environmentId}/settings/teams`,
+      // hidden: isFormbricksCloud || isPricingDisabled,
+      hidden: false,
+      current: pathname?.includes("/teams"),
+    },
+    {
       id: "enterprise",
       label: "Enterprise License",
       href: `/environments/${environmentId}/settings/enterprise`,
       hidden: isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/enterprise"),
-    },
-    {
-      id: "teams",
-      label: "Teams",
-      href: `/environments/${environmentId}/settings/teams`,
-      // hidden: isFormbricksCloud || isPricingDisabled,
-      current: pathname?.includes("/teams"),
     },
   ];
 
