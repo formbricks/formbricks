@@ -71,7 +71,6 @@ export const getPersonState = async ({
       const personResponses = await getResponsesByUserId(environmentId, userId);
       const personDisplays = await getDisplaysByUserId(environmentId, userId);
       const segments = await getPersonSegmentIds(environmentId, person, device);
-      const attributes = await getAttributesByUserId(environmentId, userId);
 
       // If the person exists, return the persons's state
       const userState: TJsPersonState["data"] = {
@@ -81,7 +80,6 @@ export const getPersonState = async ({
           personDisplays?.map((display) => ({ surveyId: display.surveyId, createdAt: display.createdAt })) ??
           [],
         responses: personResponses?.map((response) => response.surveyId) ?? [],
-        attributes,
         lastDisplayAt:
           personDisplays.length > 0
             ? personDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
