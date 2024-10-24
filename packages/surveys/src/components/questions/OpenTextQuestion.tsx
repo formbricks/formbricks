@@ -10,7 +10,7 @@ import { useCallback } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
+import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -25,7 +25,7 @@ interface OpenTextQuestionProps {
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const OpenTextQuestion = ({

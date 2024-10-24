@@ -18,6 +18,7 @@ import {
   TI18nString,
   TSurvey,
   TSurveyQuestion,
+  TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { Label } from "@formbricks/ui/components/Label";
@@ -47,8 +48,8 @@ interface QuestionCardProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
   duplicateQuestion: (questionIdx: number) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
@@ -87,11 +88,16 @@ export const QuestionCard = ({
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   const [parent] = useAutoAnimate();
 
-  const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
+  const updateEmptyButtonLabels = (
+    labelKey: "buttonLabel" | "backButtonLabel",
+    labelValue: TI18nString,
+    skipIndex: number
+  ) => {
     localSurvey.questions.forEach((q, index) => {
-      if (index === localSurvey.questions.length - 1) return;
-      if (!q.buttonLabel || q.buttonLabel[selectedLanguageCode]?.trim() === "") {
-        updateQuestion(index, { buttonLabel: labelValue });
+      if (index === skipIndex) return;
+      const currentLabel = q[labelKey];
+      if (!currentLabel || currentLabel[selectedLanguageCode]?.trim() === "") {
+        updateQuestion(index, { [labelKey]: labelValue });
       }
     });
   };
@@ -445,7 +451,11 @@ export const QuestionCard = ({
                           };
 
                           if (questionIdx === localSurvey.questions.length - 1) return;
-                          updateEmptyNextButtonLabels(translatedNextButtonLabel);
+                          updateEmptyButtonLabels(
+                            "buttonLabel",
+                            translatedNextButtonLabel,
+                            localSurvey.questions.length - 1
+                          );
                         }}
                         attributeClasses={attributeClasses}
                       />
@@ -464,6 +474,14 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         attributeClasses={attributeClasses}
+                        onBlur={(e) => {
+                          if (!question.backButtonLabel) return;
+                          let translatedBackButtonLabel = {
+                            ...question.backButtonLabel,
+                            [selectedLanguageCode]: e.target.value,
+                          };
+                          updateEmptyButtonLabels("backButtonLabel", translatedBackButtonLabel, 0);
+                        }}
                       />
                     )}
                   </div>
