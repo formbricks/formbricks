@@ -1,7 +1,7 @@
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
 import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
-import { validWebHookURL } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/utils/utils";
+import { validWebHookURL } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/lib/utils";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
 import { useRouter } from "next/navigation";
