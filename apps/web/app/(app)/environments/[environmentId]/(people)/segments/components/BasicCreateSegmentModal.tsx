@@ -101,7 +101,7 @@ export const BasicCreateSegmentModal = ({
   const isSaveDisabled = useMemo(() => {
     // check if title is empty
 
-    if (!segment.title) {
+    if (!segment.title.replaceAll(" ", "")) {
       return true;
     }
 
