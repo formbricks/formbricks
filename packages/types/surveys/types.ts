@@ -2106,6 +2106,7 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
   type: z.union([z.literal("multipleChoiceMulti"), z.literal("multipleChoiceSingle")]),
   question: ZSurveyMultipleChoiceQuestion,
   responseCount: z.number(),
+  selectionCount: z.number(),
   choices: z.array(
     z.object({
       value: z.string(),
@@ -2424,6 +2425,7 @@ export const ZSurveySummary = z.object({
   dropOff: z.array(
     z.object({
       questionId: z.string().cuid2(),
+      questionType: ZSurveyQuestionType,
       headline: z.string(),
       ttc: z.number(),
       impressions: z.number(),
