@@ -367,12 +367,12 @@ export const ResponseOptionsCard = ({
                 htmlId="adjustSurveyClosedMessage"
                 isChecked={surveyClosedMessageToggle}
                 onToggle={handleCloseSurveyMessageToggle}
-                title="Adjust 'Survey Closed' message"
-                description="Change the message visitors see when the survey is closed."
+                title={t("environments.surveys.edit.adjust_survey_closed_message")}
+                description={t("environments.surveys.edit.adjust_survey_closed_message_description")}
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <Label htmlFor="headline">Heading</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.heading")}</Label>
                     <Input
                       autoFocus
                       id="heading"
@@ -382,7 +382,7 @@ export const ResponseOptionsCard = ({
                       onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
                     />
 
-                    <Label htmlFor="headline">Subheading</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
                     <Input
                       className="mt-2 bg-white"
                       id="subheading"
@@ -399,31 +399,35 @@ export const ResponseOptionsCard = ({
                 htmlId="singleUserSurveyOptions"
                 isChecked={!!localSurvey.singleUse?.enabled}
                 onToggle={handleSingleUseSurveyToggle}
-                title="Single-use survey links"
-                description="Allow only 1 response per survey link."
+                title={t("environments.surveys.edit.single_use_survey_links")}
+                description={t("environments.surveys.edit.single_use_survey_links_description")}
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center bg-slate-50">
                     <div className="row mb-2 flex cursor-default items-center space-x-2">
-                      <Label htmlFor="howItWorks">How it works</Label>
+                      <Label htmlFor="howItWorks">{t("environments.surveys.edit.how_it_works")}</Label>
                     </div>
                     <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
                       <li className="text-sm text-slate-600">
-                        Blocks survey if the survey URL has no Single Use Id (suId).
+                        {t(
+                          "environments.surveys.edit.blocks_survey_if_the_survey_url_has_no_single_use_id_suid"
+                        )}
                       </li>
                       <li className="text-sm text-slate-600">
-                        Blocks survey if a submission with the Single Use Id (suId) exists already.
+                        {t(
+                          "environments.surveys.edit.blocks_survey_if_a_submission_with_the_single_use_id_suid_exists_already"
+                        )}
                       </li>
                       <li className="text-sm text-slate-600">
                         <Link
                           href="https://formbricks.com/docs/link-surveys/single-use-links"
                           target="_blank"
                           className="underline">
-                          Docs <ArrowUpRight className="inline" size={16} />
+                          {t("common.read_docs")} <ArrowUpRight className="inline" size={16} />
                         </Link>
                       </li>
                     </ul>
-                    <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.link_used_message")}</Label>
                     <Input
                       autoFocus
                       id="heading"
@@ -433,7 +437,7 @@ export const ResponseOptionsCard = ({
                       onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
                     />
 
-                    <Label htmlFor="headline">Subheading</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
                     <Input
                       className="mb-4 mt-2 bg-white"
                       id="subheading"
@@ -441,7 +445,7 @@ export const ResponseOptionsCard = ({
                       defaultValue={singleUseMessage.subheading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
-                    <Label htmlFor="headline">URL Encryption</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.url_encryption")}</Label>
                     <div>
                       <div className="mt-2 flex items-center space-x-1">
                         <Switch
@@ -452,7 +456,9 @@ export const ResponseOptionsCard = ({
                         <Label htmlFor="encryption-label">
                           <div className="ml-2">
                             <p className="text-sm font-normal text-slate-600">
-                              Enable encryption of Single Use Id (suId) in survey URL.
+                              {t(
+                                "environments.surveys.edit.enable_encryption_of_single_use_id_suid_in_survey_url"
+                              )}
                             </p>
                           </div>
                         </Label>
@@ -467,16 +473,16 @@ export const ResponseOptionsCard = ({
                 htmlId="verifyEmailBeforeSubmission"
                 isChecked={verifyEmailToggle}
                 onToggle={handleVerifyEmailToogle}
-                title="Verify email before submission"
-                description="Only let people with a real email respond."
+                title={t("environments.surveys.edit.verify_email_before_submission")}
+                description={t("environments.surveys.edit.verify_email_before_submission_description")}
                 childBorder={true}>
                 <div className="m-1">
                   <AdvancedOptionToggle
                     htmlId="preventDoubleSubmission"
                     isChecked={isSingleResponsePerEmailEnabledToggle}
                     onToggle={handleSingleResponsePerEmailToggle}
-                    title="Prevent double submission"
-                    description={"Only allow 1 response per email address"}
+                    title={t("environments.surveys.edit.prevent_double_submission")}
+                    description={t("environments.surveys.edit.prevent_double_submission_description")}
                   />
                 </div>
               </AdvancedOptionToggle>
@@ -484,8 +490,8 @@ export const ResponseOptionsCard = ({
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
-                title="Protect survey with a PIN"
-                description="Only users who have the PIN can access the survey."
+                title={t("environments.surveys.edit.protect_survey_with_pin")}
+                description={t("environments.surveys.edit.protect_survey_with_pin_description")}
                 childBorder={true}>
                 <div className="p-4">
                   <Label htmlFor="headline" className="sr-only">

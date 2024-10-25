@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { TabBar } from "@formbricks/ui/components/TabBar";
@@ -25,6 +26,7 @@ export const SurveyBgSelectorTab = ({
 }: SurveyBgSelectorTabProps) => {
   const [activeTab, setActiveTab] = useState(bgType || "color");
   const t = useTranslations();
+  const [parent] = useAutoAnimate();
   const [colorBackground, setColorBackground] = useState(bg);
   const [animationBackground, setAnimationBackground] = useState(bg);
   const [uploadBackground, setUploadBackground] = useState(bg);
@@ -94,7 +96,7 @@ export const SurveyBgSelectorTab = ({
         tabStyle="button"
         className="bg-slate-100"
       />
-      <div className="w-full rounded-b-lg border-x border-b border-slate-200 px-4 pb-4 pt-2">
+      <div className="w-full rounded-b-lg border-x border-b border-slate-200 px-4 pb-4 pt-2" ref={parent}>
         {renderContent()}
       </div>
     </div>

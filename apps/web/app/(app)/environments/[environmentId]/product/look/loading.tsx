@@ -2,6 +2,7 @@
 
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
@@ -20,15 +21,16 @@ const placements = [
 ];
 
 const Loading = () => {
+  const t = useTranslations();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle="common.configuration">
         <ProductConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
-        title="Theme"
+        title="environments.product.look.theme"
         className="max-w-7xl"
-        description="Create a style theme for all surveys. You can enable custom styling for each survey.">
+        description="environments.product.look.theme_settings_description">
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-4 pr-6">
@@ -36,9 +38,11 @@ const Loading = () => {
                 <div className="flex items-center gap-6">
                   <Switch />
                   <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      {t("environments.product.look.enable_custom_styling")}
+                    </h3>
                     <p className="text-xs text-slate-500">
-                      Allow users to override this theme in the editor.
+                      {t("environments.product.look.enable_custom_styling_description")}
                     </p>
                   </div>
                 </div>
@@ -47,28 +51,36 @@ const Loading = () => {
               <div className="flex flex-col gap-3 bg-slate-50 p-4">
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
-                    <h2 className="text-sm font-semibold text-slate-700">Form Styling</h2>
+                    <h2 className="text-sm font-semibold text-slate-700">
+                      {t("environments.surveys.edit.form_styling")}
+                    </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      Style the question texts, descriptions and input fields.
+                      {t("environments.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
                     </p>
                   </div>
                 </div>
 
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
-                    <h2 className="text-sm font-semibold text-slate-700">Card Styling</h2>
-                    <p className="mt-1 text-xs text-slate-500">Style the survey card.</p>
+                    <h2 className="text-sm font-semibold text-slate-700">
+                      {t("environments.surveys.edit.card_styling")}
+                    </h2>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {t("environments.surveys.edit.style_the_survey_card")}
+                    </p>
                   </div>
                 </div>
 
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-semibold text-slate-700">Background Styling</h2>
-                      <Badge text="Link Surveys" type="gray" size="normal" />
+                      <h2 className="text-sm font-semibold text-slate-700">
+                        {t("environments.surveys.edit.background_styling")}
+                      </h2>
+                      <Badge text={t("common.link_surveys")} type="gray" size="normal" />
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      Change the background to a color, image or animation.
+                      {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}
                     </p>
                   </div>
                 </div>
@@ -88,7 +100,7 @@ const Loading = () => {
                   <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                     <p>Preview</p>
 
-                    <div className="flex items-center pr-6">Restart</div>
+                    <div className="flex items-center pr-6">{t("common.restart")}</div>
                   </div>
                 </div>
 
