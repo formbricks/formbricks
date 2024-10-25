@@ -110,7 +110,7 @@ export const OpenTextSummary = ({
                           <div className="hidden md:flex">
                             <PersonAvatar personId={response.person.id} />
                           </div>
-                          <p className="ph-no-capture break-normal text-slate-600 group-hover:underline md:ml-2">
+                          <p className="ph-no-capture truncate break-normal text-slate-600 group-hover:underline sm:max-w-36 md:ml-2 md:max-w-24">
                             {getPersonIdentifier(response.person, response.personAttributes)}
                           </p>
                         </Link>
