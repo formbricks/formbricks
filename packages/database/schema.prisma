@@ -374,6 +374,7 @@ enum IntegrationType {
   notion
   airtable
   slack
+  mattermost
 }
 
 model Integration {

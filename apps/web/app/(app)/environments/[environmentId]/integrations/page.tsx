@@ -63,6 +63,7 @@ const Page = async ({ params }) => {
   const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
+  const isMattermostIntegrationConnected = isIntegrationConnected("mattermost");
 
   const widgetSetupCompleted = !!environment?.appSetupCompleted;
   const integrationCards = [
@@ -189,6 +190,19 @@ const Page = async ({ params }) => {
       icon: <Image src={notionLogo} alt="Notion Logo" />,
       connected: isNotionIntegrationConnected,
       statusText: isNotionIntegrationConnected ? "Connected" : "Not Connected",
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/mattermost`,
+      connectText: `${isMattermostIntegrationConnected ? "Manage" : "Connect"}`,
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/integrations/slack",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Mattermost",
+      description: "Instantly Connect your Mattermost Workspace with Formbricks",
+      icon: <Image src={SlackLogo} alt="Mattermost Logo" />,
+      connected: isMattermostIntegrationConnected,
+      statusText: isMattermostIntegrationConnected ? "Connected" : "Not Connected",
     },
   ];
 

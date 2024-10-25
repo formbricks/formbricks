@@ -30,5 +30,12 @@ export const getIntegrationDetails = (integrationType: TIntegrationType) => {
         connectButtonLabel: "Connect with Slack",
         notConfiguredText: "Slack Integration is not configured in your instance of Formbricks.",
       };
+    case "mattermost":
+      return {
+        text: "Send responses directly to Mattermost.",
+        docsLink: "https://formbricks.com/docs/integrations/slack",
+        connectButtonLabel: "Connect with Mattermost",
+        notConfiguredText: "Mattermost Integration is not configured in your instance of Formbricks.",
+      };
   }
 };
