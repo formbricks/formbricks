@@ -57,9 +57,8 @@ export const YourTeams = ({ teams, leaveTeam }: YourTeamsProps) => {
                   <TableCell className="capitalize">{team.userRole}</TableCell>
                   <TableCell>
                     <Button
-                      variant="alert"
+                      variant="warn"
                       size="sm"
-                      className="text-white"
                       onClick={() => {
                         setSelectedTeamId(team.id);
                         setLeaveTeamModalOpen(true);

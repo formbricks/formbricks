@@ -22,12 +22,12 @@ export const getTeamsAction = authenticatedActionClient
     return await getTeams(ctx.user.id, parsedInput.organizationId);
   });
 
-const ZGetLeaveTeamAction = z.object({
+const ZLeaveTeamAction = z.object({
   teamId: z.string(),
 });
 
 export const leaveTeamAction = authenticatedActionClient
-  .schema(ZGetLeaveTeamAction)
+  .schema(ZLeaveTeamAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,
@@ -38,8 +38,12 @@ export const leaveTeamAction = authenticatedActionClient
     return await leaveTeam(ctx.user.id, parsedInput.teamId);
   });
 
+const ZJoinTeamAction = z.object({
+  teamId: z.string(),
+});
+
 export const joinTeamAction = authenticatedActionClient
-  .schema(ZGetLeaveTeamAction)
+  .schema(ZJoinTeamAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,

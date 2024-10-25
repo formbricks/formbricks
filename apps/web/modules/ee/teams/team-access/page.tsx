@@ -1,4 +1,5 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { AccessView } from "@/modules/ee/teams/team-access/components/access-view";
 import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -8,8 +9,9 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { getTeamsByOranizationId, getTeamsByProductId } from "./lib/teams";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+export const TeamAccess = async ({ params }: { params: { environmentId: string } }) => {
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -29,19 +31,36 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
+  console.log("isBilling", isBilling, "isMember", isMember);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+
+  const teams = await getTeamsByProductId(product.id);
+
+  if (!teams) {
+    throw new Error("Teams not found");
+  }
+
+  const organizationTeams = await getTeamsByOranizationId(organization.id);
+
+  if (!organizationTeams) {
+    throw new Error("Organization Teams not found");
+  }
 
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
         <ProductConfigNavigation
           environmentId={params.environmentId}
-          activeId="general"
+          activeId="access"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
       </PageHeader>
+      <AccessView
+        environmentId={params.environmentId}
+        organizationTeams={organizationTeams}
+        teams={teams}
+        product={product}
+      />
     </PageContentWrapper>
   );
 };
-
-export default Page;

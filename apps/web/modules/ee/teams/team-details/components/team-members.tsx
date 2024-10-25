@@ -40,7 +40,7 @@ export const TeamMembers = ({ members, userId }: TeamMembersProps) => {
             </TableCell>
             <TableCell className="capitalize">{teamMember.role}</TableCell>
             <TableCell>
-              <Button variant="alert" size="sm" className="text-white">
+              <Button variant="warn" size="sm">
                 {teamMember.id === userId ? "Leave" : "Remove"}
               </Button>
             </TableCell>
