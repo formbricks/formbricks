@@ -392,7 +392,10 @@ export const getQuestionSummary = async (
           values.push({
             value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
-            percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
+            percentage:
+              totalResponseCount > 0
+                ? convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100)
+                : 0,
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
