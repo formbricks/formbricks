@@ -30,16 +30,17 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
       title: survey.name,
       description: "Thanks a lot for your time 🙏",
       url: `/s/${survey.id}`,
-      siteName: "",
-      images: [ogImgURL],
+      siteName: "Formbricks",
+      images: [{ url: ogImgURL, width: 800, height: 400, alt: survey.name }],
       locale: "en_US",
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
+      site: "@formbricks",
       title: survey.name,
       description: "Thanks a lot for your time 🙏",
-      images: [ogImgURL],
+      images: [{ url: ogImgURL, width: 800, height: 400, alt: survey.name }],
     },
   };
 };
