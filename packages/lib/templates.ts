@@ -5252,6 +5252,77 @@ const understandLowEngagement = (): TTemplate => {
   };
 };
 
+const employeeWellBeing = (): TTemplate => {
+  return {
+    name: "Employee Well-Being",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["link"],
+    description: "Assess your employee well-being through work-life balance, workload, and environment.",
+    preset: {
+      ...surveyDefault,
+      name: "Employee Well-Being",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "I feel that I have a good balance between my work and personal life." },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: "Very poor balance",
+          },
+          upperLabel: {
+            default: "Excellent balance",
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: "My workload is manageable, allowing me to stay productive without feeling overwhelmed.",
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: "Overwhelming workload",
+          },
+          upperLabel: {
+            default: "Perfectly manageable",
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "The work environment supports my physical and mental well-being." },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: "Not supportive",
+          },
+          upperLabel: {
+            default: "Highly supportive",
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "What changes, if any, would improve your overall well-being at work?" },
+          required: false,
+          placeholder: { default: "Type your answer here..." },
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
 export const templates: TTemplate[] = [
   cartAbandonmentSurvey(),
   siteAbandonmentSurvey(),
@@ -5293,6 +5364,7 @@ export const templates: TTemplate[] = [
   evaluateAProductIdea(),
   understandLowEngagement(),
   employeeSatisfaction(),
+  employeeWellBeing(),
 ];
 
 export const customSurvey = {

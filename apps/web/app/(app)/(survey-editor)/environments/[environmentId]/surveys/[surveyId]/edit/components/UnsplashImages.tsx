@@ -110,6 +110,13 @@ const defaultImages = [
       regularWithAttribution: "/image-backgrounds/kittens.webp",
     },
   },
+  {
+    id: "windows",
+    alt_description: "Windows",
+    urls: {
+      regularWithAttribution: "/image-backgrounds/windows.webp",
+    },
+  },
 ];
 
 export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashSurveyBgProps) => {
