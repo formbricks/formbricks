@@ -15,7 +15,7 @@ import {
 import { DatabaseError } from "@formbricks/types/errors";
 
 export type TCreatedDocument = TDocument & {
-  isSpam: Boolean;
+  isSpam: boolean;
   insights: TGenerateDocumentObjectSchema["insights"];
 };
 
