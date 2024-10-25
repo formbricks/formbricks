@@ -138,7 +138,10 @@ export const SurveyAnalysisCTA = ({
       )}
 
       {!isMember && (
-        <Button href={`/environments/${environment.id}/surveys/${survey.id}/edit`} EndIcon={SquarePenIcon}>
+        <Button
+          href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
+          EndIcon={SquarePenIcon}
+          size="base">
           Edit
         </Button>
       )}

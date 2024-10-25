@@ -22,7 +22,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
     environmentId: config.get().environmentId,
     apiHost: config.get().apiHost,
     ...(userId && { userId }),
-    attributes: config.get().personState.data.attributes,
+    attributes: config.get().attributes,
   };
   await logoutPerson();
   try {
