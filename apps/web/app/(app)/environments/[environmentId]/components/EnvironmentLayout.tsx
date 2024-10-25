@@ -97,6 +97,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           membershipRole={currentUserMembership?.role}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isAIEnabled={isAIEnabled}
+          isEnterpriseLicenseEnabled={active}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
