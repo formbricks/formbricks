@@ -235,6 +235,7 @@ export const getSurveySummaryDropOff = (
   const dropOff = survey.questions.map((question, index) => {
     return {
       questionId: question.id,
+      questionType: question.type,
       headline: getLocalizedValue(question.headline, "default"),
       ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
       impressions: impressionsArr[index] || 0,
@@ -339,6 +340,7 @@ export const getQuestionSummary = async (
         }, {});
 
         const otherValues: TSurveyQuestionSummaryMultipleChoice["choices"][number]["others"] = [];
+        let totalSelectionCount = 0;
         let totalResponseCount = 0;
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
@@ -348,10 +350,12 @@ export const getQuestionSummary = async (
               ? response.data[question.id]
               : checkForI18n(response, question.id, survey, responseLanguageCode);
 
+          let hasValidAnswer = false;
+
           if (Array.isArray(answer)) {
             answer.forEach((value) => {
               if (value) {
-                totalResponseCount++;
+                totalSelectionCount++;
                 if (questionChoices.includes(value)) {
                   choiceCountMap[value]++;
                 } else if (isOthersEnabled) {
@@ -361,11 +365,12 @@ export const getQuestionSummary = async (
                     personAttributes: response.personAttributes,
                   });
                 }
+                hasValidAnswer = true;
               }
             });
           } else if (typeof answer === "string") {
             if (answer) {
-              totalResponseCount++;
+              totalSelectionCount++;
               if (questionChoices.includes(answer)) {
                 choiceCountMap[answer]++;
               } else if (isOthersEnabled) {
@@ -375,7 +380,12 @@ export const getQuestionSummary = async (
                   personAttributes: response.personAttributes,
                 });
               }
+              hasValidAnswer = true;
             }
+          }
+
+          if (hasValidAnswer) {
+            totalResponseCount++;
           }
         });
 
@@ -384,7 +394,7 @@ export const getQuestionSummary = async (
             value: label,
             count,
             percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
+              totalSelectionCount > 0 ? convertFloatTo2Decimal((count / totalSelectionCount) * 100) : 0,
           });
         });
 
@@ -393,8 +403,8 @@ export const getQuestionSummary = async (
             value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
             percentage:
-              totalResponseCount > 0
-                ? convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100)
+              totalSelectionCount > 0
+                ? convertFloatTo2Decimal((otherValues.length / totalSelectionCount) * 100)
                 : 0,
             others: otherValues.slice(0, VALUES_LIMIT),
           });
@@ -403,6 +413,7 @@ export const getQuestionSummary = async (
           type: question.type,
           question,
           responseCount: totalResponseCount,
+          selectionCount: totalSelectionCount,
           choices: values,
         });
 
