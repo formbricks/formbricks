@@ -160,6 +160,26 @@ const NavigationGroup = ({
   const pathname = usePathname();
   const [isActiveGroup, setIsActiveGroup] = useState<boolean>(false);
 
+  // We need to expand the group with the current link so we loop over all links
+  // Until we find the one and then expand the groups
+  useEffect(() => {
+    navigation.some((group) => {
+      return group.links.some((link) => {
+        if (link.children) {
+          return link.children.some((clink) => {
+            if (clink.href.startsWith(pathname)) {
+              setOpenGroups([`${group.title}-${link.title}`]);
+              setActiveGroup(group);
+              return true;
+            }
+          });
+        }
+      });
+    });
+    // We do not need any dependencies this should run on page load only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     setIsActiveGroup(activeGroup?.title === group.title);
   }, [activeGroup?.title, group.title]);
