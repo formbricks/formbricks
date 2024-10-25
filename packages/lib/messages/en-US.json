@@ -339,7 +339,7 @@
     "survey_response_finished_email_hey": "Hey 👋",
     "survey_response_finished_email_this_form": "this form",
     "survey_response_finished_email_turn_off_notifications": "Turn off notifications for",
-    "survey_response_finished_email_turn_off_notifications_for_all": "Turn off notifications for all newly created forms",
+    "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Turn off notifications for all newly created forms",
     "survey_response_finished_email_view_more_responses": "View {responseCount} more responses",
     "survey_response_finished_email_view_responses": "View responses",
     "survey_response_finished_email_view_survey_summary": "View survey summary",

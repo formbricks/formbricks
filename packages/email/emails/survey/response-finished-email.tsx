@@ -182,11 +182,13 @@ export function ResponseFinishedEmail({
                 </Link>
               </Text>
               <Text className="mt-0">
-                {translateEmailText("survey_response_finished_email_turn_off_notifications_for_all", locale)}
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
-                  {translateEmailText("survey_response_finished_email_all_new_forms", locale)}
+                  {translateEmailText(
+                    "survey_response_finished_email_turn_off_notifications_for_all_new_forms",
+                    locale
+                  )}
                 </Link>
               </Text>
             </Section>

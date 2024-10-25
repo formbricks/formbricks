@@ -337,7 +337,7 @@
     "survey_response_finished_email_hey": "नमस्ते 👋",
     "survey_response_finished_email_this_form": "यह सर्वेक्षण",
     "survey_response_finished_email_turn_off_notifications": "निर्देश बंद करें",
-    "survey_response_finished_email_turn_off_notifications_for_all": "सभी नई सर्वेक्षणों के लिए निर्देश बंद करें",
+    "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "सभी नई सर्वेक्षणों के लिए निर्देश बंद करें",
     "survey_response_finished_email_view_more_responses": "{responseCount} अधिक प्रतिक्रियाएं देखें",
     "survey_response_finished_email_view_responses": "प्रतिक्रियाएं देखें",
     "survey_response_finished_email_view_survey_summary": "सर्वेक्षण देखें",
