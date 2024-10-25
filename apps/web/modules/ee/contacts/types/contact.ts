@@ -93,8 +93,8 @@ export const ZContactCSVUploadResponse = z.array(z.record(z.string())).superRefi
 
 export type TContactCSVUploadResponse = z.infer<typeof ZContactCSVUploadResponse>;
 
-export const ZContactCSVAttributeMap = z.map(z.string(), z.string()).superRefine((attributeMap, ctx) => {
-  const values = Array.from(attributeMap.values());
+export const ZContactCSVAttributeMap = z.record(z.string(), z.string()).superRefine((attributeMap, ctx) => {
+  const values = Object.values(attributeMap);
 
   if (new Set(values).size !== values.length) {
     return ctx.addIssue({

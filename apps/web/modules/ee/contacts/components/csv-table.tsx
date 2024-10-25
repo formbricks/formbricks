@@ -30,7 +30,9 @@ export const CsvTable = ({ data }: CsvTableProps) => {
           className="grid gap-4 border-b border-gray-200 bg-white p-4 text-left last:border-b-0"
           style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
           {columns.map((header, colIndex) => (
-            <div key={colIndex}>{row[header]}</div>
+            <div key={colIndex} className="overflow-hidden text-ellipsis whitespace-nowrap">
+              {row[header]}
+            </div>
           ))}
         </div>
       ))}

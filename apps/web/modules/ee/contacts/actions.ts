@@ -1,6 +1,5 @@
 "use server";
 
-import { ValidationError } from "webpack";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";

@@ -2,6 +2,7 @@
 
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
+import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
 import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } from "lucide-react";
@@ -11,13 +12,6 @@ import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
 import { Button } from "@formbricks/ui/components/Button";
 import { Modal } from "@formbricks/ui/components/Modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/components/Select";
 import { StylingTabs } from "@formbricks/ui/components/StylingTabs";
 
 interface UploadContactsCSVButtonProps {
@@ -36,7 +30,7 @@ export const UploadContactsCSVButton = ({
     "skip"
   );
   const [csvResponse, setCSVResponse] = useState<TContactCSVUploadResponse>([]);
-  const [attributeMap, setAttributeMap] = useState(new Map<string, string>());
+  const [attributeMap, setAttributeMap] = useState<Record<string, string>>({});
   const [error, setErrror] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -93,6 +87,7 @@ export const UploadContactsCSVButton = ({
     setCSVResponse([]);
     setDuplicateContactsAction("skip");
     setErrror("");
+    setAttributeMap({});
     if (closeModal) {
       setOpen(false);
     }
@@ -102,16 +97,26 @@ export const UploadContactsCSVButton = ({
     setLoading(true);
     setErrror("");
 
+    // check for duplicate values in the attribute map
+    const values = Object.values(attributeMap);
+    if (new Set(values).size !== values.length) {
+      setErrror("Attribute map contains duplicate values");
+      setLoading(false);
+      return;
+    }
+
     const transformedCsvData = csvResponse.map((record) => {
       const newRecord: Record<string, string> = {};
       Object.entries(record).forEach(([key, value]) => {
         // if the key is in the attribute map, we wanna replace it
-        if (attributeMap.has(key)) {
-          const attrKeyId = attributeMap.get(key);
+        if (attributeMap[key]) {
+          const attrKeyId = attributeMap[key];
           const attrKey = contactAttributeKeys.find((attrKey) => attrKey.id === attrKeyId);
 
           if (attrKey) {
             newRecord[attrKey.key] = value;
+          } else {
+            newRecord[attrKeyId] = value;
           }
         } else {
           newRecord[key] = value;
@@ -189,7 +194,7 @@ export const UploadContactsCSVButton = ({
         </div>
 
         {error ? (
-          <div className="mx-4 my-4 flex items-center gap-2 rounded-md border-2 border-red-200 bg-red-100 p-4">
+          <div className="mx-4 my-4 flex items-center gap-2 rounded-md border-2 border-red-200 bg-red-50 p-4">
             <CircleAlertIcon className="text-red-600" />
             <p className="text-red-600">{error}</p>
           </div>
@@ -225,7 +230,7 @@ export const UploadContactsCSVButton = ({
               <div className="flex flex-col items-center gap-8">
                 <h3 className="text-lg font-medium text-slate-500">Here&apos;s a preview of your data.</h3>
                 <div className="h-[300px] w-full overflow-auto rounded-md border border-slate-300">
-                  <CsvTable data={csvResponse} />
+                  <CsvTable data={[...csvResponse.slice(0, 11)]} />
                 </div>
               </div>
             )}
@@ -239,31 +244,12 @@ export const UploadContactsCSVButton = ({
               <div className="flex flex-col gap-2">
                 {csvColumns.map((column) => {
                   return (
-                    <div className="flex w-full items-center gap-4">
-                      <div className="flex h-10 w-32 items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm">
-                        {column}
-                      </div>
-
-                      <h4 className="text-sm font-medium text-slate-500">should be mapped to </h4>
-
-                      <Select
-                        onValueChange={(value) => {
-                          setAttributeMap((prev) => new Map(prev.set(column, value)));
-                        }}>
-                        <SelectTrigger className="w-min">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {contactAttributeKeys.map((attributeKey) => {
-                            return (
-                              <SelectItem key={attributeKey.id} value={attributeKey.id}>
-                                {attributeKey.name}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <UploadContactsAttributes
+                      csvColumn={column}
+                      attributeMap={attributeMap}
+                      setAttributeMap={setAttributeMap}
+                      contactAttributeKeys={contactAttributeKeys}
+                    />
                   );
                 })}
               </div>
