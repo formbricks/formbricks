@@ -26,6 +26,7 @@ export const GoogleButton = ({
 
   return (
     <Button
+      size="base"
       type="button"
       EndIcon={GoogleIcon}
       startIconClassName="ml-3"
@@ -33,7 +34,7 @@ export const GoogleButton = ({
       variant="secondary"
       className="relative w-full justify-center">
       {text}
-      {lastUsed && <span className="absolute right-3 text-xs">Last Used</span>}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };
