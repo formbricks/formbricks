@@ -65,8 +65,10 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
       const timerId = setTimeout(() => {
         setShowSurvey(true);
       }, survey.delay * 1000);
-  
-      return () => clearTimeout(timerId);
+
+      return () => {
+        clearTimeout(timerId);
+      };
     } else if (!survey.delay) {
       setShowSurvey(true);
     }
@@ -140,7 +142,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   return (
     <Modal
       animationType="slide"
-      visible={showSurvey && !isSurveyRunning}
+      visible={showSurvey ? !isSurveyRunning : null}
       transparent
       onRequestClose={() => {
         setShowSurvey(false);
