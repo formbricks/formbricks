@@ -4,6 +4,7 @@ const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_speci
 
 const ZLocale = z.enum(["en-US", "hi", "de-DE", "pt-BR"]);
 
+export type TLocale = z.infer<typeof ZLocale>;
 export const ZUserObjective = z.enum([
   "increase_conversion",
   "improve_user_retention",
@@ -39,9 +40,7 @@ export const ZUser = z.object({
   role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
-  locale: z.string().refine((value) => ZLocale.safeParse(value).success, {
-    message: "Invalid locale",
-  }),
+  locale: ZLocale,
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -54,12 +53,7 @@ export const ZUserUpdateInput = z.object({
   objective: ZUserObjective.nullish(),
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
-  locale: z
-    .string()
-    .refine((value) => ZLocale.safeParse(value).success, {
-      message: "Invalid locale",
-    })
-    .optional(),
+  locale: ZLocale.optional(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
@@ -75,12 +69,7 @@ export const ZUserCreateInput = z.object({
   objective: ZUserObjective.nullish(),
   identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
   identityProviderAccountId: z.string().optional(),
-  locale: z
-    .string()
-    .refine((value) => ZLocale.safeParse(value).success, {
-      message: "Invalid locale",
-    })
-    .optional(),
+  locale: ZLocale.optional(),
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;

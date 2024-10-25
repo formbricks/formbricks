@@ -40,7 +40,7 @@ export const EndScreenForm = ({
     <form>
       <QuestionFormInput
         id="headline"
-        label={t("common.note")}
+        label={t("common.note") + "*"}
         value={endingCard.headline}
         localSurvey={localSurvey}
         questionIdx={localSurvey.questions.length + endingCardIndex}

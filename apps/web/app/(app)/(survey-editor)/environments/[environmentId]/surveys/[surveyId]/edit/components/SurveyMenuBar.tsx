@@ -401,7 +401,9 @@ export const SurveyMenuBar = ({
               disabled={isSurveySaving || containsEmptyTriggers}
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>
-              {isCxMode ? t("common.save_changes") : t("environments.surveys.edit.publish")}
+              {isCxMode
+                ? t("environments.surveys.edit.save_and_close")
+                : t("environments.surveys.edit.publish")}
             </Button>
           )}
         </div>

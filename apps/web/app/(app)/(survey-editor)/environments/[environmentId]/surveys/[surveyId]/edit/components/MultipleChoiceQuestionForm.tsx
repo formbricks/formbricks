@@ -209,7 +209,7 @@ export const MultipleChoiceQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("common.add_description")}
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>

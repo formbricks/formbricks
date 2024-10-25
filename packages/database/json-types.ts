@@ -20,7 +20,7 @@ import {
   type TSurveyVariables,
   type TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { type TUserNotificationSettings } from "@formbricks/types/user";
+import { type TLocale, type TUserNotificationSettings } from "@formbricks/types/user";
 
 declare global {
   namespace PrismaJson {
@@ -44,5 +44,6 @@ declare global {
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
     export type Styling = TProductStyling;
+    export type Locale = TLocale;
   }
 }
