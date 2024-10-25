@@ -8,26 +8,25 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Loading = () => {
   const cards = [
     {
-      title: "Product Name",
-      description: "Change your products name.",
+      title: "common.product_name",
+      description: "environments.product.general.product_name_settings_description",
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: "Recontact Waiting Time",
-      description: "Control how frequently users can be surveyed across all surveys.",
+      title: "environments.product.general.recontact_waiting_time",
+      description: "environments.product.general.recontact_waiting_time_settings_description",
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: "Delete Product",
-      description:
-        "Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.",
+      title: "environments.product.general.delete_product",
+      description: "environments.product.general.delete_product_settings_description",
       skeletonLines: [{ classes: "h-4 w-96" }, { classes: "h-8 w-24" }],
     },
   ];
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle="common.configuration">
         <ProductConfigNavigation activeId="general" loading />
       </PageHeader>
       {cards.map((card, index) => (

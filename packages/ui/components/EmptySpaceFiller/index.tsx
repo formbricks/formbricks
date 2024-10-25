@@ -92,12 +92,13 @@ export const EmptySpaceFiller = ({
                 className="flex h-full w-full items-center justify-center"
                 href={`/environments/${environment.id}/product/app-connection`}>
                 <span className="decoration-brand-dark underline transition-all duration-300 ease-in-out">
-                  Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
+                  {t("environments.surveys.summary.install_widget")}{" "}
+                  <strong>{t("environments.surveys.summary.go_to_setup_checklist")} 👉</strong>
                 </span>
               </Link>
             )}
             {(environment.appSetupCompleted || noWidgetRequired) && (
-              <span className="text-center">Tag a submission to find your list of tags here.</span>
+              <span className="text-center">{t("environments.product.tags.empty_message")}</span>
             )}
           </div>
           <div className="h-12 w-full rounded-full bg-slate-50/50"></div>

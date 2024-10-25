@@ -6,6 +6,7 @@ import {
 } from "@/app/s/[surveyId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, MailIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
@@ -42,6 +43,7 @@ export const VerifyEmail = ({
   styling,
   attributeClasses,
 }: VerifyEmailProps) => {
+  const t = useTranslations();
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
       email: "",
@@ -66,7 +68,7 @@ export const VerifyEmail = ({
       if (actionResult?.data) {
         form.setError("email", {
           type: "custom",
-          message: "We already received a response for this email address.",
+          message: t("s.response_already_received"),
         });
         return;
       }
@@ -98,9 +100,9 @@ export const VerifyEmail = ({
     return (
       <div className="flex h-[100vh] w-[100vw] flex-col items-center justify-center bg-slate-50">
         <span className="h-24 w-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
-        <p className="mt-8 text-4xl font-bold">This looks fishy.</p>
+        <p className="mt-8 text-4xl font-bold">{t("s.this_looks_fishy")}</p>
         <p className="mt-4 cursor-pointer text-sm text-slate-400" onClick={handleGoBackClick}>
-          Please try again with the original link
+          {t("s.please_try_again_with_the_original_link")}
         </p>
       </div>
     );
@@ -120,9 +122,9 @@ export const VerifyEmail = ({
                 <div className="mx-auto rounded-full border bg-slate-200 p-6">
                   <MailIcon strokeWidth={1.5} className="mx-auto h-12 w-12 text-white" />
                 </div>
-                <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond</p>
+                <p className="mt-8 text-2xl font-bold lg:text-4xl">{t("s.verify_email_before_submission")}</p>
                 <p className="mt-4 text-sm text-slate-500 lg:text-base">
-                  To respond to this survey, please enter your email address below:
+                  {t("s.verify_email_before_submission_description")}
                 </p>
                 <FormField
                   control={form.control}
@@ -140,7 +142,7 @@ export const VerifyEmail = ({
                               className="h-10 bg-white"
                             />
                             <Button type="submit" size="sm" loading={isSubmitting}>
-                              Verify
+                              {t("s.verify_email_before_submission_button")}
                             </Button>
                           </div>
                           {error?.message && <FormError className="mt-2">{error.message}</FormError>}
@@ -150,7 +152,7 @@ export const VerifyEmail = ({
                   )}
                 />
                 <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
-                  Just curious? <span className="underline">Preview survey questions.</span>
+                  {t("s.just_curious")} <span className="underline">{t("s.preview_survey_questions")}</span>
                 </p>
               </div>
             )}
@@ -158,7 +160,7 @@ export const VerifyEmail = ({
         </FormProvider>
         {!emailSent && showPreviewQuestions && (
           <div>
-            <p className="text-4xl font-bold">Question Preview</p>
+            <p className="text-4xl font-bold">{t("s.question_preview")}</p>
             <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
               {survey.questions.map((question, index) => (
                 <p
@@ -167,15 +169,17 @@ export const VerifyEmail = ({
               ))}
             </div>
             <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
-              Want to respond? <span className="underline">Verify email.</span>
+              {t("s.want_to_respond")} <span className="underline">{t("s.verify_email")}</span>
             </p>
           </div>
         )}
         {emailSent && (
           <div>
-            <h1 className="mt-8 text-2xl font-bold lg:text-4xl">Survey sent to {form.getValues().email}</h1>
+            <h1 className="mt-8 text-2xl font-bold lg:text-4xl">
+              {t("s.survey_sent_to", { email: form.getValues().email })}
+            </h1>
             <p className="mt-4 text-center text-sm text-slate-500 lg:text-base">
-              Please also check your spam folder if you don&apos;t see the email in your inbox.
+              {t("s.check_inbox_or_spam")}
             </p>
             <Button
               variant="secondary"
@@ -183,7 +187,7 @@ export const VerifyEmail = ({
               size="sm"
               onClick={handleGoBackClick}
               StartIcon={ArrowLeft}>
-              Back
+              {t("common.back")}
             </Button>
           </div>
         )}

@@ -9,7 +9,7 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Loading = () => {
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle="common.configuration">
         <ProductConfigNavigation activeId="languages" loading />
       </PageHeader>
       <SettingsCard
