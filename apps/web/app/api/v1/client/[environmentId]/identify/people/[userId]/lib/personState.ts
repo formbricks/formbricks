@@ -11,7 +11,6 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { personCache } from "@formbricks/lib/person/cache";
-import { getPersonByUserId } from "@formbricks/lib/person/service";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { getResponsesByUserId } from "@formbricks/lib/response/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -51,36 +50,73 @@ export const getPersonState = async ({
         throw new ResourceNotFoundError(`organization`, environmentId);
       }
 
-      let person = await getPersonByUserId(environmentId, userId);
+      let contact = await prisma.contact.findFirst({
+        where: {
+          attributes: {
+            some: {
+              attributeKey: {
+                key: "userId",
+                environmentId,
+              },
+              value: userId,
+            },
+          },
+        },
+      });
 
-      if (!person) {
-        person = await prisma.person.create({
+      if (!contact) {
+        contact = await prisma.contact.create({
           data: {
             environment: {
               connect: {
                 id: environmentId,
               },
             },
-            userId,
+            attributes: {
+              create: [
+                {
+                  attributeKey: {
+                    connect: { key: "userId", environmentId },
+                  },
+                  value: userId,
+                },
+              ],
+            },
           },
         });
 
         revalidatePerson = true;
       }
 
-      const personResponses = await getResponsesByUserId(environmentId, userId);
-      const personDisplays = await getDisplaysByUserId(environmentId, userId);
-      const segments = await getPersonSegmentIds(environmentId, person, device);
+      const contactResponses = await prisma.response.findMany({
+        where: {
+          contactId: contact.id,
+        },
+        select: {
+          surveyId: true,
+        },
+      });
+      // const personDisplays = await getDisplaysByUserId(environmentId, userId);
+      const contactDisplayes = await prisma.display.findMany({
+        where: {
+          contactId: contact.id,
+        },
+        select: {
+          surveyId: true,
+          createdAt: true,
+        },
+      });
+      const segments = await getPersonSegmentIds(environmentId, contact, device);
       const attributes = await getAttributesByUserId(environmentId, userId);
 
       // If the person exists, return the persons's state
       const userState: TJsPersonState["data"] = {
-        userId: person.userId,
+        userId: contact.userId,
         segments,
         displays:
           personDisplays?.map((display) => ({ surveyId: display.surveyId, createdAt: display.createdAt })) ??
           [],
-        responses: personResponses?.map((response) => response.surveyId) ?? [],
+        responses: contactResponses?.map((response) => response.surveyId) ?? [],
         attributes,
         lastDisplayAt:
           personDisplays.length > 0
@@ -90,7 +126,7 @@ export const getPersonState = async ({
 
       return {
         state: userState,
-        revalidateProps: revalidatePerson ? { personId: person.id, revalidate: true } : undefined,
+        revalidateProps: revalidatePerson ? { personId: contact.id, revalidate: true } : undefined,
       };
     },
     [`personState-${environmentId}-${userId}-${device}`],

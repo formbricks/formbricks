@@ -165,16 +165,31 @@ export const getResponsesByUserId = reactCache(
       async () => {
         validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
 
-        const person = await getPersonByUserId(environmentId, userId);
+        const contact = await prisma.contact.findFirst({
+          where: {
+            attributes: {
+              some: {
+                attributeKey: {
+                  key: "userId",
+                  environmentId,
+                },
+                value: userId,
+              },
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
 
-        if (!person) {
-          throw new ResourceNotFoundError("Person", userId);
+        if (!contact) {
+          throw new ResourceNotFoundError("Contact", userId);
         }
 
         try {
           const responsePrisma = await prisma.response.findMany({
             where: {
-              personId: person.id,
+              personId: contact.id,
             },
             select: responseSelection,
             take: page ? ITEMS_PER_PAGE : undefined,

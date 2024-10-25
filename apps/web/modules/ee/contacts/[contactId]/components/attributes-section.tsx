@@ -18,7 +18,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         <dt className="text-sm font-medium text-slate-500">Email</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.email ? (
-            <span>{attributes.email.value}</span>
+            <span>{attributes.email}</span>
           ) : (
             <span className="text-slate-300">Not provided</span>
           )}
@@ -28,7 +28,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         <dt className="text-sm font-medium text-slate-500">Language</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.language ? (
-            <span>{attributes.language.value}</span>
+            <span>{attributes.language}</span>
           ) : (
             <span className="text-slate-300">Not provided</span>
           )}
@@ -38,7 +38,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         <dt className="text-sm font-medium text-slate-500">User Id</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.userId ? (
-            <span>{attributes.userId.value}</span>
+            <span>{attributes.userId}</span>
           ) : (
             <span className="text-slate-300">Not provided</span>
           )}
@@ -51,14 +51,14 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
 
       {Object.entries(attributes)
         .filter(([key, _]) => key !== "email" && key !== "userId" && key !== "language")
-        .map(([key, attributeData]) => (
-          <div key={key}>
-            <dt className="text-sm font-medium text-slate-500">
-              {capitalizeFirstLetter((attributeData.name ?? key).toString())}
-            </dt>
-            <dd className="mt-1 text-sm text-slate-900">{attributeData.value}</dd>
-          </div>
-        ))}
+        .map(([key, attributeData]) => {
+          return (
+            <div key={key}>
+              <dt className="text-sm font-medium text-slate-500">{capitalizeFirstLetter(key.toString())}</dt>
+              <dd className="mt-1 text-sm text-slate-900">{attributeData}</dd>
+            </div>
+          );
+        })}
       <hr />
 
       <div>

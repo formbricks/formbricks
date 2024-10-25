@@ -3,7 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { getPerson } from "@formbricks/lib/person/service";
+// import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -36,11 +36,14 @@ export const POST = async (request: Request, context: Context): Promise<Response
   const responseInput = await request.json();
 
   // legacy workaround for formbricks-js 1.2.0 & 1.2.1
-  if (responseInput.personId && typeof responseInput.personId === "string") {
-    const person = await getPerson(responseInput.personId);
-    responseInput.userId = person?.userId;
-    delete responseInput.personId;
-  }
+
+  // can we remove this now?
+
+  // if (responseInput.personId && typeof responseInput.personId === "string") {
+  //   const person = await getPerson(responseInput.personId);
+  //   responseInput.userId = person?.userId;
+  //   delete responseInput.personId;
+  // }
 
   const agent = UAParser(request.headers.get("user-agent"));
   const country =

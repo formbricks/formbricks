@@ -1,10 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
-import { getAttributesByUserId, updateAttributes } from "@formbricks/lib/attribute/service";
-import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
+import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";
+import { updateAttributes } from "./lib/attributes";
 
 export const OPTIONS = async () => {
   // cors headers
@@ -39,15 +39,52 @@ export const PUT = async (
 
     const { userId: userIdAttr, ...updatedAttributes } = parsedInput.data.attributes;
 
-    let person = await getPersonByUserId(environmentId, userId);
+    let contact = await prisma.contact.findFirst({
+      where: {
+        environmentId,
+        attributes: { some: { attributeKey: { key: "userId", environmentId }, value: userId } },
+      },
+      select: { id: true, attributes: { select: { attributeKey: { select: { key: true } }, value: true } } },
+    });
 
-    if (!person) {
+    if (!contact) {
       // return responses.notFoundResponse("PersonByUserId", userId, true);
       // HOTFIX: create person if not found to work around caching issue
-      person = await createPerson(environmentId, userId);
+      // contact = await createPerson(environmentId, userId);
+      contact = await prisma.contact.create({
+        data: {
+          environmentId,
+          attributes: {
+            create: [
+              {
+                attributeKey: {
+                  connect: {
+                    key_environmentId: {
+                      key: "userId",
+                      environmentId,
+                    },
+                  },
+                },
+                value: userId,
+              },
+            ],
+          },
+        },
+        select: {
+          id: true,
+          attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
+        },
+      });
     }
 
-    const oldAttributes = await getAttributesByUserId(environmentId, userId);
+    // const oldAttributes = await getAttributesByUserId(environmentId, userId);
+    const oldAttributes = contact.attributes.reduce(
+      (acc, attr) => {
+        acc[attr.attributeKey.key] = attr.value;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
 
     let isUpToDate = true;
     for (const key in updatedAttributes) {
@@ -67,7 +104,7 @@ export const PUT = async (
       );
     }
 
-    await updateAttributes(person.id, updatedAttributes);
+    await updateAttributes(contact.id, userId, environmentId, updatedAttributes);
 
     return responses.successResponse(
       {

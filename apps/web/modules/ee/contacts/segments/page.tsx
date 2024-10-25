@@ -1,10 +1,10 @@
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/SegmentTable";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getContactAttributeKeys } from "@formbricks/lib/services/contact-attribute-keys";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { CreateSegmentModal } from "./components/create-segment-modal";

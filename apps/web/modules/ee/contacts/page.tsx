@@ -1,7 +1,7 @@
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getContactAttributeKeys } from "@formbricks/lib/services/contact-attribute-keys";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { ContactDataView } from "./components/contact-data-view";

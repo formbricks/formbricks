@@ -8,10 +8,5 @@ export const ZContactAttributeUpdateInput = z.object({
 
 export type TContactAttributeUpdateInput = z.infer<typeof ZContactAttributeUpdateInput>;
 
-export const ZContactAttributes = z.record(
-  z.object({
-    name: z.string().nullable(),
-    value: z.string(),
-  })
-);
+export const ZContactAttributes = z.record(z.string());
 export type TContactAttributes = z.infer<typeof ZContactAttributes>;

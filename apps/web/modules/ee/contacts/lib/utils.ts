@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { TContactAttributes } from "@formbricks/types/contact-attributes";
 
 export const getContactIdentifier = (personAttributes: TContactAttributes | null): string => {
-  return personAttributes?.email?.value ?? personAttributes?.userId?.value ?? "";
+  return personAttributes?.email ?? personAttributes?.userId ?? "";
 };
 
 export const convertPrismaContactAttributes = (

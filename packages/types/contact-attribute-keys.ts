@@ -8,6 +8,7 @@ export const ZContactAttributeKey = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  isUnique: z.boolean().default(false),
   key: z.string(),
   name: z.string().nullable(),
   description: z.string().nullable(),

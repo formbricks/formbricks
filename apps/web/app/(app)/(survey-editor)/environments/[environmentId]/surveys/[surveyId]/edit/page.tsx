@@ -1,3 +1,4 @@
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getServerSession } from "next-auth";
 import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
@@ -10,7 +11,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getContactAttributeKeys } from "@formbricks/lib/services/contact-attribute-keys";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
