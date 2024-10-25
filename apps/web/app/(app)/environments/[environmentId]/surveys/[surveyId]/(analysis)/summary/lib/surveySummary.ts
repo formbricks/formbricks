@@ -318,7 +318,7 @@ export const getQuestionSummary = async (
           insightsEnabled: question.insightsEnabled,
         });
 
-        values;
+        values = [];
         break;
       }
       case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
@@ -339,6 +339,7 @@ export const getQuestionSummary = async (
         }, {});
 
         const otherValues: TSurveyQuestionSummaryMultipleChoice["choices"][number]["others"] = [];
+        let totalResponseCount = 0;
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
@@ -349,25 +350,31 @@ export const getQuestionSummary = async (
 
           if (Array.isArray(answer)) {
             answer.forEach((value) => {
-              if (questionChoices.includes(value)) {
-                choiceCountMap[value]++;
-              } else {
+              if (value) {
+                totalResponseCount++;
+                if (questionChoices.includes(value)) {
+                  choiceCountMap[value]++;
+                } else if (isOthersEnabled) {
+                  otherValues.push({
+                    value,
+                    person: response.person,
+                    personAttributes: response.personAttributes,
+                  });
+                }
+              }
+            });
+          } else if (typeof answer === "string") {
+            if (answer) {
+              totalResponseCount++;
+              if (questionChoices.includes(answer)) {
+                choiceCountMap[answer]++;
+              } else if (isOthersEnabled) {
                 otherValues.push({
-                  value,
+                  value: answer,
                   person: response.person,
                   personAttributes: response.personAttributes,
                 });
               }
-            });
-          } else if (typeof answer === "string") {
-            if (questionChoices.includes(answer)) {
-              choiceCountMap[answer]++;
-            } else {
-              otherValues.push({
-                value: answer,
-                person: response.person,
-                personAttributes: response.personAttributes,
-              });
             }
           }
         });
@@ -376,7 +383,8 @@ export const getQuestionSummary = async (
           values.push({
             value: label,
             count,
-            percentage: responses.length > 0 ? convertFloatTo2Decimal((count / responses.length) * 100) : 0,
+            percentage:
+              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
           });
         });
 
@@ -384,14 +392,14 @@ export const getQuestionSummary = async (
           values.push({
             value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
-            percentage: convertFloatTo2Decimal((otherValues.length / responses.length) * 100),
+            percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
         summary.push({
           type: question.type,
           question,
-          responseCount: responses.length,
+          responseCount: totalResponseCount,
           choices: values,
         });
 
