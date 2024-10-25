@@ -102,7 +102,7 @@ export function CreateSegmentModal({
   const isSaveDisabled = useMemo(() => {
     // check if title is empty
 
-    if (!segment.title) {
+    if (!segment.title || segment.title.trim() === "") {
       return true;
     }
 

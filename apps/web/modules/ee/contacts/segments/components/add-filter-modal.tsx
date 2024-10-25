@@ -304,7 +304,7 @@ export function AddFilterModal({
                         type: "attribute",
                         onAddFilter,
                         setOpen,
-                        contactAttributeKey: attributeKey.name ?? attributeKey.key,
+                        contactAttributeKey: attributeKey.key,
                       });
                     }}>
                     <TagIcon className="h-4 w-4" />
