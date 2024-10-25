@@ -34,6 +34,7 @@ export const AzureButton = ({
 
   return (
     <Button
+      size="base"
       type="button"
       EndIcon={MicrosoftIcon}
       startIconClassName="ml-2"
@@ -41,7 +42,7 @@ export const AzureButton = ({
       variant="secondary"
       className="relative w-full justify-center">
       {text}
-      {lastUsed && <span className="absolute right-3 text-xs">Last Used</span>}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };

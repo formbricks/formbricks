@@ -267,6 +267,10 @@ export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = 
   {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
 );
 
+export const getQuestionIcon = (type: TSurveyQuestionTypeEnum) => {
+  return questionTypes.find((questionType) => questionType.id === type)?.icon;
+};
+
 export const QUESTIONS_NAME_MAP = questionTypes.reduce(
   (prev, curr) => ({
     ...prev,
