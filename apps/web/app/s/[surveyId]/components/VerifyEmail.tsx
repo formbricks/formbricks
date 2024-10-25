@@ -28,6 +28,7 @@ interface VerifyEmailProps {
   languageCode: string;
   styling: TProductStyling;
   attributeClasses: TAttributeClass[];
+  locale: string;
 }
 
 const ZVerifyEmailInput = z.object({
@@ -42,6 +43,7 @@ export const VerifyEmail = ({
   languageCode,
   styling,
   attributeClasses,
+  locale,
 }: VerifyEmailProps) => {
   const t = useTranslations();
   const form = useForm<TVerifyEmailInput>({
@@ -78,6 +80,7 @@ export const VerifyEmail = ({
       email: email as string,
       surveyName: survey.name,
       suId: singleUseId ?? "",
+      locale,
     };
     try {
       await sendLinkSurveyEmailAction(data);

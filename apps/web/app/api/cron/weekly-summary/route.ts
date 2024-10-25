@@ -44,7 +44,11 @@ export const POST = async (): Promise<Response> => {
         if (notificationResponse.insights.numLiveSurvey === 0) {
           for (const organizationMember of organizationMembersWithNotificationEnabled) {
             emailSendingPromises.push(
-              sendNoLiveSurveyNotificationEmail(organizationMember.user.email, notificationResponse)
+              sendNoLiveSurveyNotificationEmail(
+                organizationMember.user.email,
+                notificationResponse,
+                organizationMember.user.locale
+              )
             );
           }
           continue;
@@ -52,7 +56,11 @@ export const POST = async (): Promise<Response> => {
 
         for (const organizationMember of organizationMembersWithNotificationEnabled) {
           emailSendingPromises.push(
-            sendWeeklySummaryNotificationEmail(organizationMember.user.email, notificationResponse)
+            sendWeeklySummaryNotificationEmail(
+              organizationMember.user.email,
+              notificationResponse,
+              organizationMember.user.locale
+            )
           );
         }
       }

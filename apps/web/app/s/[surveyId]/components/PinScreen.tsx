@@ -27,6 +27,7 @@ interface PinScreenProps {
   languageCode: string;
   attributeClasses: TAttributeClass[];
   isEmbed: boolean;
+  locale: string;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -45,6 +46,7 @@ export const PinScreen = (props: PinScreenProps) => {
     languageCode,
     attributeClasses,
     isEmbed,
+    locale,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -131,6 +133,7 @@ export const PinScreen = (props: PinScreenProps) => {
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      locale={locale}
     />
   );
 };

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { sendInviteAcceptedEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -75,7 +75,12 @@ const Page = async ({ searchParams }) => {
       await createMembership(invite.organizationId, session.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
-      await sendInviteAcceptedEmail(invite.creator.name ?? "", user?.name ?? "", invite.creator.email);
+      await sendInviteAcceptedEmail(
+        invite.creator.name ?? "",
+        user?.name ?? "",
+        invite.creator.email,
+        user?.locale ?? DEFAULT_LOCALE
+      );
       await updateUser(session.user.id, {
         notificationSettings: {
           ...user.notificationSettings,

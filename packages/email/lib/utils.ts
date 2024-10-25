@@ -18,3 +18,28 @@ export const getRatingNumberOptionColor = (range: number, idx: number): string =
   if (range - idx < 3) return "bg-orange-100";
   return "bg-rose-100";
 };
+
+const defaultLocale = "en-US";
+
+const getMessages = (locale: string): Record<string, string> => {
+  /* eslint-disable-next-line @typescript-eslint/no-var-requires -- Dynamic import is necessary for localization */
+  const messages = require(`@formbricks/lib/messages/${locale}.json`) as { emails: Record<string, string> };
+  return messages.emails;
+};
+
+export const translateEmailText = (
+  text: string,
+  locale: string,
+  replacements?: Record<string, string>
+): string => {
+  const messages = getMessages(locale || defaultLocale);
+  let translatedText = messages[text] || text;
+
+  if (replacements) {
+    Object.entries(replacements).forEach(([key, value]) => {
+      translatedText = translatedText.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+    });
+  }
+
+  return translatedText;
+};
