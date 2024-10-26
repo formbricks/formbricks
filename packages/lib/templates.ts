@@ -2786,6 +2786,59 @@ const NPS = (): TTemplate => {
   };
 };
 
+const CES = (): TTemplate => {
+  return {
+    name: "Customer Effort Score (CES)",
+    role: "customerSuccess",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link", "website"],
+    description: "Measure the Customer Effort Score and satisfaction with your product or service.",
+    preset: {
+      ...surveyDefault,
+      name: "CES Survey",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.CES,
+          headline: { default: "How easy was it to find what you needed on our {{productName}}?" },
+          required: true,
+          lowerLabel: { default: "Very Difficult" },
+          upperLabel: { default: "Very Easy" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.CES,
+          headline: { default: "How satisfied were you with your experience on our {{productName}} today?" },
+          required: false,
+          lowerLabel: { default: "Very Difficult" },
+          upperLabel: { default: "Very Easy" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.CES,
+          headline: { default: "How would you rate the overall usability of our {{productName}}?" },
+          required: false,
+          lowerLabel: { default: "Very Difficult" },
+          upperLabel: { default: "Very Easy" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default:
+              "What could we do to make your experience on our {{productName}} easier and more enjoyable?",
+          },
+          required: false,
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
 const customerSatisfactionScore = (): TTemplate => {
   const reusableQuestionIds = [
     createId(),
@@ -5346,6 +5399,7 @@ export const templates: TTemplate[] = [
   newIntegrationSurvey(),
   docsFeedback(),
   NPS(),
+  CES(),
   customerSatisfactionScore(),
   collectFeedback(),
   identifyUpsellOpportunities(),

@@ -157,6 +157,13 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         return <ResponseBadges items={responseData} isExpanded={isExpanded} />;
       }
       break;
+    case TSurveyQuestionTypeEnum.CES:
+      if (typeof responseData === "string" || typeof responseData === "number") {
+        return <ResponseBadges items={[responseData.toString()]} isExpanded={isExpanded} />;
+      } else if (Array.isArray(responseData)) {
+        return <ResponseBadges items={responseData} isExpanded={isExpanded} />;
+      }
+      break;
     case TSurveyQuestionTypeEnum.Ranking:
       if (Array.isArray(responseData)) {
         return <RankingRespone value={responseData} isExpanded={isExpanded} />;

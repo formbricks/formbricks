@@ -142,6 +142,22 @@ export const QuestionConditional = ({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
     />
+  ) : question.type === TSurveyQuestionTypeEnum.CES ? (
+    <CTAQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "number" ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
   ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
     <CTAQuestion
       key={question.id}

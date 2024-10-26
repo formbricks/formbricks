@@ -60,6 +60,7 @@ export enum TSurveyQuestionTypeEnum {
   MultipleChoiceMulti = "multipleChoiceMulti",
   NPS = "nps",
   CTA = "cta",
+  CES = "ces",
   Rating = "rating",
   Consent = "consent",
   PictureSelection = "pictureSelection",
@@ -515,6 +516,15 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
+export const ZSurveyCESQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.CES),
+  lowerLabel: ZI18nString.optional(),
+  upperLabel: ZI18nString.optional(),
+  isColorCodingEnabled: z.boolean().optional().default(false),
+});
+
+export type TSurveyCESQuestion = z.infer<typeof ZSurveyCESQuestion>;
+
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CTA),
   html: ZI18nString.optional(),
@@ -651,6 +661,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.MultipleChoiceMulti,
   TSurveyQuestionTypeEnum.MultipleChoiceSingle,
   TSurveyQuestionTypeEnum.NPS,
+  TSurveyQuestionTypeEnum.CES,
   TSurveyQuestionTypeEnum.OpenText,
   TSurveyQuestionTypeEnum.PictureSelection,
   TSurveyQuestionTypeEnum.Rating,
@@ -1220,6 +1231,7 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.NPS:
+    case TSurveyQuestionTypeEnum.CES:
     case TSurveyQuestionTypeEnum.Rating:
       if (
         ![
@@ -1419,7 +1431,9 @@ const validateConditions = (
             const validQuestionTypes = [TSurveyQuestionTypeEnum.OpenText];
 
             if (question.inputType === "number") {
-              validQuestionTypes.push(...[TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS]);
+              validQuestionTypes.push(
+                ...[TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS, TSurveyQuestionTypeEnum.CES]
+              );
             }
 
             if (["equals", "doesNotEqual"].includes(condition.operator)) {
@@ -1584,6 +1598,7 @@ const validateConditions = (
         }
       } else if (
         question.type === TSurveyQuestionTypeEnum.NPS ||
+        question.type === TSurveyQuestionTypeEnum.CES ||
         question.type === TSurveyQuestionTypeEnum.Rating
       ) {
         if (rightOperand?.type === "variable") {
@@ -1615,6 +1630,14 @@ const validateConditions = (
               issues.push({
                 code: z.ZodIssueCode.custom,
                 message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              });
+            }
+          } else if (question.type === TSurveyQuestionTypeEnum.CES) {
+            if (rightOperand.value < 0 || rightOperand.value > 10) {
+              issues.push({
+                code: z.ZodIssueCode.custom,
+                message: `Conditional Logic: CES score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -1731,7 +1754,11 @@ const validateConditions = (
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type === "number") {
-            const validQuestionTypes = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
+            const validQuestionTypes = [
+              TSurveyQuestionTypeEnum.Rating,
+              TSurveyQuestionTypeEnum.NPS,
+              TSurveyQuestionTypeEnum.CES,
+            ];
             if (!validQuestionTypes.includes(question.type)) {
               issues.push({
                 code: z.ZodIssueCode.custom,
@@ -1939,6 +1966,7 @@ const validateActions = (
             TSurveyQuestionTypeEnum.MultipleChoiceSingle,
             TSurveyQuestionTypeEnum.Rating,
             TSurveyQuestionTypeEnum.NPS,
+            TSurveyQuestionTypeEnum.CES,
             TSurveyQuestionTypeEnum.Date,
           ];
 
@@ -1966,7 +1994,11 @@ const validateActions = (
       }
 
       if (action.value.type === "question") {
-        const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
+        const allowedQuestions = [
+          TSurveyQuestionTypeEnum.Rating,
+          TSurveyQuestionTypeEnum.NPS,
+          TSurveyQuestionTypeEnum.CES,
+        ];
 
         const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
         if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
