@@ -358,15 +358,22 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
         const root = $getRoot();
         if (root) {
           editor.update(() => {
+            const textContent = props.getText();
             const parser = new DOMParser();
             // Create a new TextNode
             const dom = parser.parseFromString(props.getText(), "text/html");
 
-            const nodes = $generateNodesFromDOM(editor, dom);
-            const paragraph = $createParagraphNode();
-            root.clear().append(paragraph);
-            paragraph.select();
-            $insertNodes(nodes);
+            // Only insert nodes if there's content to avoid adding <p><br></p>
+            if (textContent.trim()) {
+              const nodes = $generateNodesFromDOM(editor, dom);
+              root.clear();
+              $insertNodes(nodes);
+            } else {
+              // Optionally, add an empty paragraph node instead of <br> if required
+              const paragraph = $createParagraphNode();
+              root.clear().append(paragraph);
+              paragraph.select();
+            }
           });
         }
       });
@@ -378,17 +385,20 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
     if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(props.getText(), "text/html");
+        const textContent = props.getText().trim();
 
-        const nodes = $generateNodesFromDOM(editor, dom);
-        const paragraph = $createParagraphNode();
-        $getRoot().clear().append(paragraph);
+        if (textContent) {
+          const parser = new DOMParser();
+          const dom = parser.parseFromString(textContent, "text/html");
+          const nodes = $generateNodesFromDOM(editor, dom);
 
-        paragraph.select();
-
-        $getRoot().select();
-        $insertNodes(nodes);
+          const root = $getRoot();
+          root.clear();
+          $insertNodes(nodes);
+        } else {
+          // Clear root if no content to avoid <p><br></p>
+          $getRoot().clear();
+        }
 
         editor.registerUpdateListener(({ editorState, prevEditorState }) => {
           editorState.read(() => {

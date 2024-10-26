@@ -65,10 +65,9 @@ export function LocalizedEditor({
         setFirstRender={setFirstRender}
         setText={(v: string) => {
           if (!value) return;
-          const sanitizedContent = v.replace(/^<br>/, "");
           const translatedHtml = {
             ...value,
-            [selectedLanguageCode]: sanitizedContent,
+            [selectedLanguageCode]: v,
           };
           if (questionIdx === -1) {
             // welcome card
