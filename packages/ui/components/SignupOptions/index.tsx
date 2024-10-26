@@ -157,6 +157,7 @@ export const SignupOptions = ({
           )}
           {showLogin && (
             <Button
+              size="base"
               type="submit"
               className="w-full justify-center"
               loading={signingUp}
@@ -167,6 +168,7 @@ export const SignupOptions = ({
 
           {!showLogin && (
             <Button
+              size="base"
               type="button"
               onClick={() => {
                 setShowLogin(true);
