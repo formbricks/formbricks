@@ -17,9 +17,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@formbricks/ui/components/Sheet";
+import { CategoryBadge } from "../../experience/components/category-select";
 import { getDocumentsByInsightIdAction, getDocumentsByInsightIdSurveyIdQuestionIdAction } from "./actions";
 
 interface InsightSheetProps {
+  environmentId: string;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   insight: TInsight | null;
@@ -31,6 +33,7 @@ interface InsightSheetProps {
 }
 
 export const InsightSheet = ({
+  environmentId,
   isOpen,
   setIsOpen,
   insight,
@@ -42,7 +45,7 @@ export const InsightSheet = ({
 }: InsightSheetProps) => {
   const [documents, setDocuments] = useState<TDocument[]>([]);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(false); // Default to false
 
   const fetchDocuments = useCallback(async () => {
     if (!insight) return;
@@ -73,23 +76,24 @@ export const InsightSheet = ({
 
     const fetchedDocuments = documentsResponse.data;
 
-    if (fetchedDocuments.length < documentsPerPage) {
-      setHasMore(false); // No more documents to fetch
-    }
-
     setDocuments((prevDocuments) => [...prevDocuments, ...fetchedDocuments]);
+
+    // Set hasMore to true only if the number of fetched documents equals documentsPerPage
+    if (fetchedDocuments.length === documentsPerPage) {
+      setHasMore(true);
+    }
   }, [insight, page, surveyId, questionId, documentsFilter]);
 
   useEffect(() => {
     if (isOpen) {
       setDocuments([]);
       setPage(1);
-      setHasMore(true);
+      setHasMore(false); // Reset hasMore when the sheet is opened
     }
     if (insight) {
       fetchDocuments();
     }
-  }, [fetchDocuments, isOpen]);
+  }, [fetchDocuments, isOpen, insight]);
 
   const handleFeedbackClick = (feedback: "positive" | "negative") => {
     setIsOpen(false);
@@ -112,23 +116,17 @@ export const InsightSheet = ({
         <SheetHeader>
           <SheetTitle>
             <span className="mr-3">{insight.title}</span>
-            {insight.category === "complaint" ? (
-              <Badge text="Complaint" type="error" size="tiny" />
-            ) : insight.category === "featureRequest" ? (
-              <Badge text="Feature Request" type="warning" size="tiny" />
-            ) : insight.category === "praise" ? (
-              <Badge text="Praise" type="success" size="tiny" />
-            ) : null}
+            <CategoryBadge category={insight.category} environmentId={environmentId} insightId={insight.id} />
           </SheetTitle>
           <SheetDescription>{insight.description}</SheetDescription>
-          <div className="flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">
+          <div className="mt-1 flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">
             <p>Did you find this insight helpful?</p>
             <ThumbsUpIcon
-              className="upvote h-4 w-4 cursor-pointer hover:text-black"
+              className="upvote h-4 w-4 cursor-pointer text-slate-700 hover:text-emerald-500"
               onClick={() => handleFeedbackClick("positive")}
             />
             <ThumbsDownIcon
-              className="downvote h-4 w-4 cursor-pointer hover:text-black"
+              className="downvote h-4 w-4 cursor-pointer text-slate-700 hover:text-amber-600"
               onClick={() => handleFeedbackClick("negative")}
             />
           </div>
@@ -140,7 +138,7 @@ export const InsightSheet = ({
               <CardContent className="p-4 text-sm">
                 <Markdown className="whitespace-pre-wrap">{document.text}</Markdown>
               </CardContent>
-              <CardFooter className="flex justify-between bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <CardFooter className="flex justify-between rounded-bl-xl rounded-br-xl border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
                 <p>
                   Sentiment:{" "}
                   {document.sentiment === "positive" ? (

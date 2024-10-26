@@ -82,7 +82,7 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
           <CardContent className="flex items-center justify-between">
             <div className="text-2xl font-bold capitalize">
               {isLoading ? (
-                <div className={cn("h-8 animate-pulse rounded bg-gray-200", stat.width)}></div>
+                <div className={cn("h-8 animate-pulse rounded bg-slate-200", stat.width)}></div>
               ) : (
                 (stat.value ?? "-")
               )}

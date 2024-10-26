@@ -9,7 +9,7 @@ interface FileUploadResponseProps {
 
 export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
   if (selected.length === 0) {
-    return <div className="font-semibold text-gray-500">skipped</div>;
+    return <div className="font-semibold text-slate-500">skipped</div>;
   }
 
   return (

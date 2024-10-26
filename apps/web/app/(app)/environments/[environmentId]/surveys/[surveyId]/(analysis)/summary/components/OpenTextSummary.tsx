@@ -124,7 +124,7 @@ export const OpenTextSummary = ({
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{response.value}</TableCell>
-                    <TableCell width={120}>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
+                    <TableCell width={160}>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

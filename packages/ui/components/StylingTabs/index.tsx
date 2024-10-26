@@ -49,7 +49,7 @@ export const StylingTabs = <T extends string | number>({
       </>
 
       <div
-        className={cn("flex overflow-hidden rounded-md border border-gray-300 p-2", tabsContainerClassName)}>
+        className={cn("flex overflow-hidden rounded-md border border-slate-300 p-2", tabsContainerClassName)}>
         {options.map((option) => (
           <label
             key={option.value}

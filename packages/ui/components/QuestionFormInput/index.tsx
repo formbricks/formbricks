@@ -638,7 +638,7 @@ export const QuestionFormInput = ({
         )}
       </div>
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
-        <div className="mt-1 text-xs text-gray-500">
+        <div className="mt-1 text-xs text-slate-500">
           <strong>Translate:</strong>{" "}
           {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
         </div>

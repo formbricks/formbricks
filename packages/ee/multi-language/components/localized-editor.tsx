@@ -87,7 +87,7 @@ export function LocalizedEditor({
           />
 
           {value && selectedLanguageCode !== "default" && value.default ? (
-            <div className="mt-1 flex text-xs text-gray-500">
+            <div className="mt-1 flex text-xs text-slate-500">
               <strong>Translate:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css

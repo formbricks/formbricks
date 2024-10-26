@@ -32,7 +32,7 @@ export const Placement = ({
   clickOutsideClose,
 }: TPlacementProps) => {
   const overlayStyle =
-    currentPlacement === "center" && overlay === "dark" ? "bg-gray-700/80" : "bg-slate-200";
+    currentPlacement === "center" && overlay === "dark" ? "bg-slate-700/80" : "bg-slate-200";
   return (
     <>
       <div className="flex">

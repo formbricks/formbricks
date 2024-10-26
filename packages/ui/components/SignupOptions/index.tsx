@@ -74,7 +74,7 @@ export const SignupOptions = ({
         e.target.elements.name.value,
         e.target.elements.email.value,
         e.target.elements.password.value,
-        inviteToken
+        inviteToken || ""
       );
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`

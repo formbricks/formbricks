@@ -5,8 +5,8 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
-import { ZInsightFilterCriteria } from "@formbricks/types/insights";
-import { getInsights } from "./lib/insights";
+import { ZInsight, ZInsightFilterCriteria } from "@formbricks/types/insights";
+import { getInsights, updateInsight } from "./lib/insights";
 import { getStats } from "./lib/stats";
 
 const ZGetEnvironmentInsightsAction = z.object({
@@ -48,4 +48,27 @@ export const getStatsAction = authenticatedActionClient
     });
 
     return await getStats(parsedInput.environmentId, parsedInput.statsFrom);
+  });
+
+const ZUpdateInsightAction = z.object({
+  environmentId: ZId,
+  insightId: ZId,
+  updates: ZInsight.partial(),
+});
+
+export const updateInsightAction = authenticatedActionClient
+  .schema(ZUpdateInsightAction)
+  .action(async ({ ctx, parsedInput }) => {
+    try {
+      await checkAuthorization({
+        userId: ctx.user.id,
+        organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+        rules: ["response", "update"],
+      });
+
+      return await updateInsight(parsedInput.insightId, parsedInput.updates);
+    } catch (error) {
+      console.error("Error updating insight:", error);
+      throw error; // Re-throw the error after logging
+    }
   });

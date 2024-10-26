@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import formbricks from "@formbricks/js";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
-import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   Table,
@@ -18,6 +17,7 @@ import {
 } from "@formbricks/ui/components/Table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
 import { getEnvironmentInsightsAction } from "../actions";
+import { CategoryBadge } from "./category-select";
 import { InsightLoading } from "./insight-loading";
 
 interface InsightViewProps {
@@ -86,6 +86,12 @@ export const InsightView = ({
         setInsights(res.data);
         setHasMore(res.data.length >= insightsPerPage);
         setIsFetching(false);
+
+        // Find the updated currentInsight based on its id
+        const updatedCurrentInsight = res.data.find((insight) => insight.id === currentInsight?.id);
+
+        // Update currentInsight with the matched insight or default to the first one
+        setCurrentInsight(updatedCurrentInsight || (res.data.length > 0 ? res.data[0] : null));
       }
     };
 
@@ -159,15 +165,11 @@ export const InsightView = ({
                       {insight.description}
                     </TableCell>
                     <TableCell>
-                      {insight.category === "complaint" ? (
-                        <Badge text="Complaint" type="error" size="tiny" />
-                      ) : insight.category === "featureRequest" ? (
-                        <Badge text="Feature Request" type="warning" size="tiny" />
-                      ) : insight.category === "praise" ? (
-                        <Badge text="Praise" type="success" size="tiny" />
-                      ) : (
-                        <Badge text="Other" type="gray" size="tiny" />
-                      )}
+                      <CategoryBadge
+                        category={insight.category}
+                        environmentId={environmentId}
+                        insightId={insight.id}
+                      />
                     </TableCell>
                   </TableRow>
                 ))
@@ -187,6 +189,7 @@ export const InsightView = ({
       )}
 
       <InsightSheet
+        environmentId={environmentId}
         isOpen={isInsightSheetOpen}
         setIsOpen={setIsInsightSheetOpen}
         insight={currentInsight}
