@@ -76,10 +76,6 @@ export const navigation: Array<NavGroup> = [
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
           { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
-          {
-            title: "Add Images or Videos to Question",
-            href: "/global/add-image-or-video-question",
-          },
         ],
       },
     ],
@@ -90,6 +86,10 @@ export const navigation: Array<NavGroup> = [
       {
         title: "Question Types",
         children: [
+          {
+            title: "Add Image or Video to Question",
+            href: "/global/add-image-or-video-question",
+          },
           { title: "Free Text", href: "/global/question-type/free-text" },
           { title: "Select Single", href: "/global/question-type/single-select" },
           { title: "Select Multiple", href: "/global/question-type/multi-select" },
