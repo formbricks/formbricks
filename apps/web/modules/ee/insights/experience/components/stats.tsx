@@ -2,13 +2,20 @@
 
 import { getStatsAction } from "@/modules/ee/insights/experience/actions";
 import { TStats } from "@/modules/ee/insights/experience/types/stats";
-import { ActivityIcon, GaugeIcon, InboxIcon, MessageCircleIcon } from "lucide-react";
+import {
+  ActivityIcon,
+  FrownIcon,
+  GaugeIcon,
+  InboxIcon,
+  MehIcon,
+  MessageCircleIcon,
+  SmileIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { Badge } from "@formbricks/ui/components/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
-import { cn } from "@formbricks/ui/lib/utils";
+import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
 interface ExperiencePageStatsProps {
   statsFrom?: Date;
@@ -79,20 +86,21 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
             <stat.icon className="text-muted-foreground h-4 w-4" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <div className="text-2xl font-bold capitalize">
-              {isLoading ? (
-                <div className={cn("h-8 animate-pulse rounded bg-slate-200", stat.width)}></div>
-              ) : (
-                (stat.value ?? "-")
-              )}
-            </div>
+          <CardContent className="">
             {stat.key === "sentimentScore" && stats.overallSentiment && (
-              <div>
+              <div className="flex items-center font-medium text-slate-700">
                 {stats.overallSentiment === "positive" ? (
-                  <Badge text="Positive" type="success" size="tiny" />
+                  <TooltipRenderer tooltipContent="Mostly positive">
+                    <SmileIcon className="h-10 w-10" strokeWidth={1.5} />
+                  </TooltipRenderer>
+                ) : stats.overallSentiment === "negative" ? (
+                  <TooltipRenderer tooltipContent="Mostly negative">
+                    <FrownIcon className="h-10 w-10" strokeWidth={1.5} />
+                  </TooltipRenderer>
                 ) : (
-                  <Badge text="Negative" type="error" size="tiny" />
+                  <TooltipRenderer tooltipContent="Mostly negative">
+                    <MehIcon className="h-10 w-10" strokeWidth={1.5} />
+                  </TooltipRenderer>
                 )}
               </div>
             )}

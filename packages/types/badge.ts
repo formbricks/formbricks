@@ -13,6 +13,7 @@ const ZBadgePropsSchema = z.object({
   onChange: z.function().args(z.number()).returns(z.void()).optional(),
   size: z.enum(["tiny", "normal", "large"]),
   className: z.string().optional(),
+  isLoading: z.boolean().optional(),
 });
 
 export type TBadgeOption = z.infer<typeof ZBadgeOptionSchema>;

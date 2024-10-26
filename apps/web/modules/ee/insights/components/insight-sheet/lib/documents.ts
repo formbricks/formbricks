@@ -124,3 +124,57 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
       }
     )()
 );
+
+export const getDocumentById = reactCache(
+  (documentId: string): Promise<TDocument | null> =>
+    cache(
+      async () => {
+        validateInputs([documentId, ZId]);
+
+        try {
+          const document = await prisma.document.findUnique({
+            where: {
+              id: documentId,
+            },
+          });
+
+          return document;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getDocumentById-${documentId}`],
+      {
+        tags: [documentCache.tag.byId(documentId)],
+      }
+    )()
+);
+
+export const updateDocument = async (
+  documentId: string,
+  updates: Partial<TDocument>,
+  environmentId: string,
+  insightId?: string
+): Promise<TDocument> => {
+  try {
+    const updatedDocument = await prisma.document.update({
+      where: { id: documentId },
+      data: updates,
+    });
+    documentCache.revalidate({ environmentId: environmentId });
+    if (insightId) {
+      insightCache.revalidate({ id: insightId });
+    }
+    return updatedDocument;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

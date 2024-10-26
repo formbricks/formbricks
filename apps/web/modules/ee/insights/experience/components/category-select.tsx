@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { TBadgeOption } from "@formbricks/types/badge";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
@@ -37,12 +37,17 @@ const getCategoryIndex = (category: TInsight["category"]) => {
   }
 };
 
-export const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, environmentId, insightId }) => {
+const CategoryBadge = ({ category, environmentId, insightId }: CategoryBadgeProps) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const handleUpdateCategory = async (newCategory: TInsight["category"]) => {
+    setIsUpdating(true);
     try {
       await updateInsightAction({ environmentId, insightId, updates: { category: newCategory } });
     } catch (error) {
       console.error("Failed to update insight:", error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -56,6 +61,9 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({ category, environm
         handleUpdateCategory(newCategory);
       }}
       size="tiny"
+      isLoading={isUpdating}
     />
   );
 };
+
+export default CategoryBadge;

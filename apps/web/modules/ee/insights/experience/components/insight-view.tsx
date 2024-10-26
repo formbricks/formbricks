@@ -17,7 +17,7 @@ import {
 } from "@formbricks/ui/components/Table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
 import { getEnvironmentInsightsAction } from "../actions";
-import { CategoryBadge } from "./category-select";
+import CategoryBadge from "./category-select";
 import { InsightLoading } from "./insight-loading";
 
 interface InsightViewProps {

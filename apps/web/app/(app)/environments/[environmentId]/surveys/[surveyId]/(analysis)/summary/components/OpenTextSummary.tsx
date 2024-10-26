@@ -88,6 +88,7 @@ export const OpenTextSummary = ({
             questionId={questionSummary.question.id}
             surveyId={survey.id}
             documentsPerPage={documentsPerPage}
+            environmentId={environmentId}
           />
         ) : activeTab === "responses" ? (
           <>

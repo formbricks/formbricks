@@ -14,6 +14,7 @@ import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization
 import { ZId } from "@formbricks/types/common";
 import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getDocumentById, updateDocument } from "./lib/documents";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
@@ -92,5 +93,39 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
       parsedInput.limit,
       parsedInput.offset,
       parsedInput.filterCriteria
+    );
+  });
+
+const ZUpdateDocumentAction = z.object({
+  documentId: ZId,
+  environmentId: ZId,
+  insightId: ZId.optional(),
+  updates: z
+    .object({
+      sentiment: z.enum(["positive", "negative", "neutral"]).optional(),
+    })
+    .strict(),
+});
+
+export const updateDocumentAction = authenticatedActionClient
+  .schema(ZUpdateDocumentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const document = await getDocumentById(parsedInput.documentId);
+
+    if (!document) {
+      throw new Error("Document not found");
+    }
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      rules: ["response", "update"],
+    });
+
+    return await updateDocument(
+      parsedInput.documentId,
+      parsedInput.updates,
+      parsedInput.environmentId,
+      parsedInput.insightId
     );
   });

@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 // Adjust the import path as necessary
 
-export const Badge: React.FC<TBadgeProps> = ({
+export const Badge: React.FC<TBadgeProps & { isLoading?: boolean }> = ({
   text,
   type,
   options,
@@ -14,6 +14,7 @@ export const Badge: React.FC<TBadgeProps> = ({
   onChange,
   size,
   className,
+  isLoading = false,
 }) => {
   const bgColor = {
     warning: "bg-amber-100",
@@ -46,13 +47,29 @@ export const Badge: React.FC<TBadgeProps> = ({
 
   const currentOption = options ? options[selectedIndex] : { text, type: type || "gray" };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <span className="animate-pulse">
+          <span className={cn("inline-block h-2 w-8 rounded-full bg-black/10")}></span>
+        </span>
+      );
+    }
+    return (
+      <>
+        {currentOption.text}
+        {options && <ChevronDownIcon className="ml-1 h-3 w-3" aria-hidden="true" />}
+      </>
+    );
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <span
           className={cn(
             "inline-flex items-center rounded-full border border-opacity-50 font-medium",
-            options ? "cursor-pointer hover:border-opacity-100" : "pointer-events-none",
+            options && !isLoading ? "cursor-pointer hover:border-opacity-100" : "pointer-events-none",
             bgColor[currentOption.type],
             borderColor[currentOption.type],
             textColor[currentOption.type],
@@ -60,8 +77,7 @@ export const Badge: React.FC<TBadgeProps> = ({
             textSize,
             className
           )}>
-          {currentOption.text}
-          {options && <ChevronDownIcon className="ml-1 h-3 w-3" aria-hidden="true" />}
+          {renderContent()}
         </span>
       </DropdownMenuTrigger>
       {options && (
