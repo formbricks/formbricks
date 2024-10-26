@@ -44,7 +44,7 @@ export const CTASummary = ({ questionSummary, survey, attributeClasses }: CTASum
             <p className="font-semibold text-slate-700">CTR</p>
             <div>
               <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                {convertFloatToNDecimal(questionSummary.ctr.percentage, 1)}%
+                {convertFloatToNDecimal(questionSummary.ctr.percentage, 2)}%
               </p>
             </div>
           </div>

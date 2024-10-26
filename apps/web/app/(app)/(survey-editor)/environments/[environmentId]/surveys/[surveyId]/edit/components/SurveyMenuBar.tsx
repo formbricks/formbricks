@@ -61,7 +61,7 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const cautionText = "This survey received responses.";
+  const cautionText = "Changes will lead to inconsistencies.";
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
