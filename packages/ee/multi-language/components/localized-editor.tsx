@@ -65,16 +65,17 @@ export function LocalizedEditor({
         setFirstRender={setFirstRender}
         setText={(v: string) => {
           if (!value) return;
+          const sanitizedContent = v.replace(/^<br>/, "");
           const translatedHtml = {
             ...value,
-            [selectedLanguageCode]: v,
+            [selectedLanguageCode]: sanitizedContent,
           };
           if (questionIdx === -1) {
             // welcome card
-            updateQuestion({ html: translatedHtml });
+            updateQuestion({ [id]: translatedHtml });
             return;
           }
-          updateQuestion(questionIdx, { html: translatedHtml });
+          updateQuestion(questionIdx, { [id]: translatedHtml });
         }}
       />
       {localSurvey.languages.length > 1 && (

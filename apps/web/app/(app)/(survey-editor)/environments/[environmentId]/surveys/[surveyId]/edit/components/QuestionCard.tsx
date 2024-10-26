@@ -32,6 +32,7 @@ import { ConsentQuestionForm } from "./ConsentQuestionForm";
 import { DateQuestionForm } from "./DateQuestionForm";
 import { EditorCardMenu } from "./EditorCardMenu";
 import { FileUploadQuestionForm } from "./FileUploadQuestionForm";
+import { HtmlHeader } from "./HtmlHeader";
 import { MatrixQuestionForm } from "./MatrixQuestionForm";
 import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
 import { NPSQuestionForm } from "./NPSQuestionForm";
@@ -186,25 +187,28 @@ export const QuestionCard = ({
                 {QUESTIONS_ICON_MAP[question.type]}
               </div> */}
               <div className="grow" dir="auto">
-                <p className="text-sm font-semibold">
-                  {recallToHeadline(
-                    question.headline,
-                    localSurvey,
-                    true,
-                    selectedLanguageCode,
-                    attributeClasses
-                  )[selectedLanguageCode]
-                    ? formatTextWithSlashes(
-                        recallToHeadline(
-                          question.headline,
-                          localSurvey,
-                          true,
-                          selectedLanguageCode,
-                          attributeClasses
-                        )[selectedLanguageCode] ?? ""
-                      )
-                    : getTSurveyQuestionTypeEnumName(question.type)}
-                </p>
+                <HtmlHeader
+                  htmlString={
+                    recallToHeadline(
+                      question.headline,
+                      localSurvey,
+                      true,
+                      selectedLanguageCode,
+                      attributeClasses
+                    )[selectedLanguageCode]
+                      ? formatTextWithSlashes(
+                          recallToHeadline(
+                            question.headline,
+                            localSurvey,
+                            true,
+                            selectedLanguageCode,
+                            attributeClasses
+                          )[selectedLanguageCode] ?? ""
+                        )
+                      : (getTSurveyQuestionTypeEnumName(question.type) as string)
+                  }
+                  questionId="welcomeCard"
+                />
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
                     {question?.required ? "Required" : "Optional"}
