@@ -70,8 +70,9 @@ export const OpenQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
         label={"Question*"}
+        maxLength={50}
+        minLength={3}
       />
-
       <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
@@ -125,7 +126,6 @@ export const OpenQuestionForm = ({
           label={"Placeholder"}
         />
       </div>
-
       {/* Add a dropdown to select the question type */}
       <div className="mt-3">
         <Label htmlFor="questionType">Input Type</Label>

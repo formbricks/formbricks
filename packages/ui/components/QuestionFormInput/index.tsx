@@ -59,6 +59,7 @@ interface QuestionFormInputProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   label: string;
+  minLength?: number;
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
@@ -81,6 +82,7 @@ export const QuestionFormInput = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   maxLength,
+  minLength,
   placeholder,
   onBlur,
   className,
@@ -96,7 +98,6 @@ export const QuestionFormInput = ({
   const isEndingCard = questionIdx >= localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
-
   const questionId = useMemo(() => {
     return isWelcomeCard
       ? "start"
@@ -171,6 +172,7 @@ export const QuestionFormInput = ({
         )
       : []
   );
+  const [hasMinChars, SetHasMinChars] = useState(true);
 
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(() => {
     const localizedValue = getLocalizedValue(text, usedLanguageCode);
@@ -483,6 +485,12 @@ export const QuestionFormInput = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    if (minLength && value.length < minLength) {
+      SetHasMinChars(false);
+    } else {
+      SetHasMinChars(true);
+    }
+
     const updatedText = {
       ...elementText,
       [usedLanguageCode]: value,
@@ -581,11 +589,15 @@ export const QuestionFormInput = ({
                 ref={inputRef}
                 onBlur={onBlur}
                 maxLength={maxLength ?? undefined}
+                minLength={minLength ?? undefined}
                 isInvalid={
-                  isInvalid &&
-                  text[usedLanguageCode]?.trim() === "" &&
-                  localSurvey.languages?.length > 1 &&
-                  isTranslationIncomplete
+                  !!(
+                    (isInvalid &&
+                      text[usedLanguageCode]?.trim() === "" &&
+                      localSurvey.languages?.length > 1 &&
+                      isTranslationIncomplete) ||
+                    (minLength && !hasMinChars)
+                  )
                 }
               />
               {enabledLanguages.length > 1 && (
