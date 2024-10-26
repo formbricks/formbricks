@@ -485,10 +485,8 @@ export const QuestionFormInput = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (minLength && value.length < minLength) {
-      setHasMinChars(false);
-    } else {
-      setHasMinChars(true);
+    if (minLength) {
+      setHasMinChars(value.length >= minLength);
     }
 
     const updatedText = {
