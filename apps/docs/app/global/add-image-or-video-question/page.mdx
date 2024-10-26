@@ -1,0 +1,58 @@
+import { MdxImage } from "@/components/MdxImage";
+import SurveyEmbed from "@/components/SurveyEmbed";
+import AddImageOrVideoToQuestionImage from "./images/add-image-or-video-to-question-image.webp";
+import AddImageOrVideoToQuestionVideo from "./images/add-image-or-video-to-question-video.webp";
+import AddImageOrVideoToQuestion from "./images/add-image-or-video-to-question.webp";
+
+#### Add Image or Video to Question
+
+# Image or Video
+
+You can add image or videos to any question to provide clearer instructions for respondents. This enhances clarity and makes the question more engaging and interactive, creating a better survey experience.
+
+## Elements
+
+By clicking on this option you can enable Image and video addition to your question.
+
+<MdxImage
+  src={AddImageOrVideoToQuestion}
+  alt="Overview of adding image or video to question"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+### Image Upload
+
+<MdxImage
+  src={AddImageOrVideoToQuestionImage}
+  alt="Overview of adding image to question"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+You can add an image to the question by either clicking the upload icon or dragging the file directly.
+
+### Image Survey Preview
+
+<SurveyEmbed surveyUrl="https://app.formbricks.com/s/cm2pm8ks10000vyqi1nvpvfrd" />
+
+### Video Addition Via Link
+
+<MdxImage
+  src={AddImageOrVideoToQuestionVideo}
+  alt="Overview of adding video to question"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+### Option on video addition
+
+Currently, we support YouTube,Vimeo or Loom URLs.
+
+#### YouTube Privacy Mode
+
+Enabling this option keeps users track to minimum while converting a standard YouTube URL into a no-cookie URL, which is applicable only for YouTube URLs.
+
+### Video Survey Preview
+
+<SurveyEmbed surveyUrl="https://app.formbricks.com/s/masxgemnyfxaq3tnnyjhe3hv" />

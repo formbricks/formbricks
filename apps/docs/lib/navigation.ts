@@ -76,6 +76,10 @@ export const navigation: Array<NavGroup> = [
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
           { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
+          {
+            title: "Add Images or Videos to Question",
+            href: "/global/add-image-or-video-question",
+          },
         ],
       },
     ],
