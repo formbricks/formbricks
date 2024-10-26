@@ -172,7 +172,7 @@ export const QuestionFormInput = ({
         )
       : []
   );
-  const [hasMinChars, SetHasMinChars] = useState(true);
+  const [hasMinChars, setHasMinChars] = useState(true);
 
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(() => {
     const localizedValue = getLocalizedValue(text, usedLanguageCode);
@@ -486,9 +486,9 @@ export const QuestionFormInput = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (minLength && value.length < minLength) {
-      SetHasMinChars(false);
+      setHasMinChars(false);
     } else {
-      SetHasMinChars(true);
+      setHasMinChars(true);
     }
 
     const updatedText = {
