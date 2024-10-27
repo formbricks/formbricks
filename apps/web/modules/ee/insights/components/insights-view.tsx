@@ -98,7 +98,7 @@ export const InsightView = ({
         <TabsList className={cn("ml-2")}>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="complaint">Complaint</TabsTrigger>
-          <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>
+          <TabsTrigger value="featureRequest">Request</TabsTrigger>
           <TabsTrigger value="praise">Praise</TabsTrigger>
           <TabsTrigger value="other">Other</TabsTrigger>
         </TabsList>

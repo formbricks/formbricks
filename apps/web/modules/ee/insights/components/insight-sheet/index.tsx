@@ -125,15 +125,16 @@ export const InsightSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
-      <SheetContent className="flex h-full w-[400rem] flex-col bg-white lg:max-w-lg xl:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle>
-            <span className="mr-3">{insight.title}</span>
+      <SheetContent className="flex h-full flex-col bg-white">
+        <SheetHeader className="flex flex-col gap-1.5">
+          <SheetTitle className="flex items-center gap-x-2">
+            <span>{insight.title}</span>
             <CategoryBadge category={insight.category} environmentId={environmentId} insightId={insight.id} />
           </SheetTitle>
           <SheetDescription>{insight.description}</SheetDescription>
+
           <div className="mt-1 flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">
-            <p>Did you find this insight helpful?</p>
+            <p>Is this insight helpful?</p>
             <ThumbsUpIcon
               className="upvote h-4 w-4 cursor-pointer text-slate-700 hover:text-emerald-500"
               onClick={() => handleFeedbackClick("positive")}
@@ -144,8 +145,8 @@ export const InsightSheet = ({
             />
           </div>
         </SheetHeader>
-
-        <div className="flex flex-1 flex-col space-y-2 overflow-auto pt-4">
+        <hr className="my-2" />
+        <div className="flex flex-1 flex-col gap-y-2 overflow-auto">
           {deferredDocuments.map((document, index) => (
             <Card key={`${document.id}-${index}`} className="transition-opacity duration-200">
               <CardContent className="p-4 text-sm">

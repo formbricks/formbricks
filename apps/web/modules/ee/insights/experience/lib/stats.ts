@@ -77,8 +77,6 @@ export const getStats = reactCache(
 
             overallSentiment =
               sentimentScore > 0.5 ? "positive" : sentimentScore < 0.5 ? "negative" : "balanced";
-
-            console.log("overallSentiment", overallSentiment);
           }
 
           return {
