@@ -49,6 +49,10 @@ export const navigation: Array<NavGroup> = [
           { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
           { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },
           { title: "Partial Submissions", href: "/global/partial-submissions" },
+          {
+            title: "Add Image/Video to Question",
+            href: "/global/add-image-or-video-question",
+          },
         ],
       },
     ],
@@ -76,6 +80,10 @@ export const navigation: Array<NavGroup> = [
           { title: "Recall Functionality", href: "/global/recall" }, // global
           { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
           { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
+          {
+            title: "Add Image/Video to Question",
+            href: "/global/add-image-or-video-question",
+          },
         ],
       },
     ],
