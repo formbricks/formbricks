@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 import { TBadgeOption } from "@formbricks/types/badge";
 import { TInsight } from "@formbricks/types/insights";
 import { Badge } from "@formbricks/ui/components/Badge";
@@ -44,8 +45,10 @@ const CategoryBadge = ({ category, environmentId, insightId }: CategoryBadgeProp
     setIsUpdating(true);
     try {
       await updateInsightAction({ environmentId, insightId, updates: { category: newCategory } });
+      toast.success("Category updated successfully!");
     } catch (error) {
       console.error("Failed to update insight:", error);
+      toast.error("Failed to update category.");
     } finally {
       setIsUpdating(false);
     }

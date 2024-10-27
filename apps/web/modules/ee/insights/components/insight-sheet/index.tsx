@@ -1,7 +1,7 @@
 "use client";
 
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
@@ -45,42 +45,53 @@ export const InsightSheet = ({
 }: InsightSheetProps) => {
   const [documents, setDocuments] = useState<TDocument[]>([]);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false); // Default to false
+  const [isLoading, setIsLoading] = useState(false); // New state for loading
+  const [hasMore, setHasMore] = useState(false);
 
   const fetchDocuments = useCallback(async () => {
     if (!insight) return;
+    if (isLoading) return; // Prevent fetching if already loading
+    setIsLoading(true); // Set loading state to true
 
-    let documentsResponse;
-    if (questionId && surveyId) {
-      documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
-        insightId: insight.id,
-        surveyId,
-        questionId,
-        limit: documentsPerPage,
-        offset: (page - 1) * documentsPerPage,
+    try {
+      let documentsResponse;
+      if (questionId && surveyId) {
+        documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
+          insightId: insight.id,
+          surveyId,
+          questionId,
+          limit: documentsPerPage,
+          offset: (page - 1) * documentsPerPage,
+        });
+      } else {
+        documentsResponse = await getDocumentsByInsightIdAction({
+          insightId: insight.id,
+          filterCriteria: documentsFilter,
+          limit: documentsPerPage,
+          offset: (page - 1) * documentsPerPage,
+        });
+      }
+
+      if (!documentsResponse?.data) {
+        const errorMessage = getFormattedErrorMessage(documentsResponse);
+        console.error(errorMessage);
+        return;
+      }
+
+      const fetchedDocuments = documentsResponse.data;
+
+      setDocuments((prevDocuments) => {
+        // Remove duplicates based on document ID
+        const uniqueDocuments = new Map<string, TDocument>([
+          ...prevDocuments.map((doc) => [doc.id, doc]),
+          ...fetchedDocuments.map((doc) => [doc.id, doc]),
+        ]);
+        return Array.from(uniqueDocuments.values()) as TDocument[];
       });
-    } else {
-      documentsResponse = await getDocumentsByInsightIdAction({
-        insightId: insight.id,
-        filterCriteria: documentsFilter,
-        limit: documentsPerPage,
-        offset: (page - 1) * documentsPerPage,
-      });
-    }
 
-    if (!documentsResponse?.data) {
-      const errorMessage = getFormattedErrorMessage(documentsResponse);
-      console.error(errorMessage);
-      return;
-    }
-
-    const fetchedDocuments = documentsResponse.data;
-
-    setDocuments((prevDocuments) => [...prevDocuments, ...fetchedDocuments]);
-
-    // Set hasMore to true only if the number of fetched documents equals documentsPerPage
-    if (fetchedDocuments.length === documentsPerPage) {
-      setHasMore(true);
+      setHasMore(fetchedDocuments.length === documentsPerPage);
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   }, [insight, page, surveyId, questionId, documentsFilter]);
 
@@ -94,6 +105,8 @@ export const InsightSheet = ({
       fetchDocuments();
     }
   }, [fetchDocuments, isOpen, insight]);
+
+  const deferredDocuments = useDeferredValue(documents);
 
   const handleFeedbackClick = (feedback: "positive" | "negative") => {
     setIsOpen(false);
@@ -133,8 +146,8 @@ export const InsightSheet = ({
         </SheetHeader>
 
         <div className="flex flex-1 flex-col space-y-2 overflow-auto pt-4">
-          {documents.map((document, index) => (
-            <Card key={`${document.id}-${index}`}>
+          {deferredDocuments.map((document, index) => (
+            <Card key={`${document.id}-${index}`} className="transition-opacity duration-200">
               <CardContent className="p-4 text-sm">
                 <Markdown className="whitespace-pre-wrap">{document.text}</Markdown>
               </CardContent>

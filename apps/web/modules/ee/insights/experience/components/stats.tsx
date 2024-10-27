@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
+import { cn } from "@formbricks/ui/lib/utils";
 
 interface ExperiencePageStatsProps {
   statsFrom?: Date;
@@ -86,7 +87,7 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
             <stat.icon className="text-muted-foreground h-4 w-4" />
           </CardHeader>
-          <CardContent className="">
+          <CardContent className={cn(isLoading && "animate-pulse")}>
             {stat.key === "sentimentScore" && stats.overallSentiment && (
               <div className="flex items-center font-medium text-slate-700">
                 {stats.overallSentiment === "positive" ? (
@@ -98,7 +99,7 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
                     <FrownIcon className="h-10 w-10" strokeWidth={1.5} />
                   </TooltipRenderer>
                 ) : (
-                  <TooltipRenderer tooltipContent="Mostly negative">
+                  <TooltipRenderer tooltipContent="Balanced out">
                     <MehIcon className="h-10 w-10" strokeWidth={1.5} />
                   </TooltipRenderer>
                 )}

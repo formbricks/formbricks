@@ -68,7 +68,14 @@ export const updateInsightAction = authenticatedActionClient
 
       return await updateInsight(parsedInput.insightId, parsedInput.updates);
     } catch (error) {
-      console.error("Error updating insight:", error);
-      throw error; // Re-throw the error after logging
+      console.error("Error updating insight:", {
+        insightId: parsedInput.insightId,
+        environmentId: parsedInput.environmentId,
+        error,
+      });
+      if (error instanceof Error) {
+        throw new Error(`Failed to update insight: ${error.message}`);
+      }
+      throw new Error("An unexpected error occurred while updating the insight");
     }
   });

@@ -50,7 +50,7 @@ export const Badge: React.FC<TBadgeProps & { isLoading?: boolean }> = ({
   const renderContent = () => {
     if (isLoading) {
       return (
-        <span className="animate-pulse">
+        <span className="animate-pulse" aria-busy="true">
           <span className={cn("inline-block h-2 w-8 rounded-full bg-black/10")}></span>
         </span>
       );
@@ -88,7 +88,7 @@ export const Badge: React.FC<TBadgeProps & { isLoading?: boolean }> = ({
               className={cn("cursor-pointer px-4 py-2 hover:bg-slate-100", textSize)}
               onClick={(event) => {
                 event.stopPropagation();
-                onChange && onChange(index);
+                onChange?.(index);
               }}>
               {option.text}
             </DropdownMenuItem>

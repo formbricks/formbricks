@@ -8,7 +8,12 @@ import { cache } from "@formbricks/lib/cache";
 import { DOCUMENTS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
-import { TDocument, TDocumentFilterCriteria, ZDocumentFilterCriteria } from "@formbricks/types/documents";
+import {
+  TDocument,
+  TDocumentFilterCriteria,
+  ZDocument,
+  ZDocumentFilterCriteria,
+} from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -160,10 +165,31 @@ export const updateDocument = async (
   environmentId: string,
   insightId?: string
 ): Promise<TDocument> => {
+  validateInputs(
+    [documentId, ZId],
+    [updates, ZDocument.partial()],
+    [environmentId, ZId],
+    [insightId, ZId.optional()]
+  );
   try {
-    const updatedDocument = await prisma.document.update({
-      where: { id: documentId },
-      data: updates,
+    const updatedDocument = await prisma.$transaction(async (tx) => {
+      const document = await tx.document.findFirst({
+        where: {
+          id: documentId,
+          environment: {
+            id: environmentId,
+          },
+        },
+      });
+
+      if (!document) {
+        throw new Error("Document not found or access denied");
+      }
+
+      return tx.document.update({
+        where: { id: documentId },
+        data: updates,
+      });
     });
     documentCache.revalidate({ environmentId: environmentId });
     if (insightId) {

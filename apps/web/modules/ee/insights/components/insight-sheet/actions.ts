@@ -115,17 +115,19 @@ export const updateDocumentAction = authenticatedActionClient
     if (!document) {
       throw new Error("Document not found");
     }
-
+    if (document.environmentId !== parsedInput.environmentId) {
+      throw new Error("Document does not belong to the specified environment");
+    }
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromEnvironmentId(document.environmentId),
       rules: ["response", "update"],
     });
 
     return await updateDocument(
       parsedInput.documentId,
       parsedInput.updates,
-      parsedInput.environmentId,
+      document.environmentId,
       parsedInput.insightId
     );
   });
