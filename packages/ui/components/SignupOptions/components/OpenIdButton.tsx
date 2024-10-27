@@ -32,13 +32,14 @@ export const OpenIdButton = ({
 
   return (
     <Button
+      size="base"
       type="button"
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">
       {text}
-      {lastUsed && <span className="absolute right-3 text-xs">Last Used</span>}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };

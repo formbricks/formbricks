@@ -160,6 +160,33 @@ const NavigationGroup = ({
   const pathname = usePathname();
   const [isActiveGroup, setIsActiveGroup] = useState<boolean>(false);
 
+  // We need to expand the group with the current link so we loop over all links
+  // Until we find the one and then expand the groups
+  useEffect(() => {
+    const findMatchingGroup = () => {
+      for (const group of navigation) {
+        for (const link of group.links) {
+          if (!link.children) continue;
+
+          const matchingChild = link.children.find((child) => pathname && child.href.startsWith(pathname));
+
+          if (matchingChild) {
+            setOpenGroups([`${group.title}-${link.title}`]);
+            setActiveGroup(group);
+            return;
+          }
+        }
+      }
+    };
+
+    findMatchingGroup();
+
+    return () => {
+      setOpenGroups([]);
+      setActiveGroup(null);
+    };
+  }, [pathname, setActiveGroup, setOpenGroups]);
+
   useEffect(() => {
     setIsActiveGroup(activeGroup?.title === group.title);
   }, [activeGroup?.title, group.title]);
