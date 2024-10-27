@@ -37,39 +37,41 @@ export const YourTeams = ({ teams, leaveTeam }: YourTeamsProps) => {
           <CardTitle>Your Teams</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {teams.map((team) => (
-                <TableRow key={team.id}>
-                  <TableCell>
-                    <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
-                      {team.name}
-                    </Link>{" "}
-                    ({team.memberCount} members)
-                  </TableCell>
-                  <TableCell className="capitalize">{team.userRole}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="warn"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedTeamId(team.id);
-                        setLeaveTeamModalOpen(true);
-                      }}>
-                      Leave Team
-                    </Button>
-                  </TableCell>
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-100">
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {teams.map((team) => (
+                  <TableRow key={team.id}>
+                    <TableCell>
+                      <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
+                        {team.name}
+                      </Link>{" "}
+                      ({team.memberCount} members)
+                    </TableCell>
+                    <TableCell className="capitalize">{team.userRole}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="warn"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedTeamId(team.id);
+                          setLeaveTeamModalOpen(true);
+                        }}>
+                        Leave Team
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       {leaveTeamModalOpen && selectedTeamId && (

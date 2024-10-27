@@ -16,9 +16,10 @@ interface CreateTeamModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   organizationId: string;
+  onCreate?: (teamId: string) => void;
 }
 
-export const CreateTeamModal = ({ open, setOpen, organizationId }: CreateTeamModalProps) => {
+export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: CreateTeamModalProps) => {
   const [teamName, setTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,6 +33,9 @@ export const CreateTeamModal = ({ open, setOpen, organizationId }: CreateTeamMod
     const createTeamActionResponse = await createTeamAction({ name, organizationId });
     if (createTeamActionResponse?.data) {
       toast.success("Team created successfully");
+      if (typeof onCreate === "function") {
+        onCreate(createTeamActionResponse.data);
+      }
       router.refresh();
       setOpen(false);
       setTeamName("");

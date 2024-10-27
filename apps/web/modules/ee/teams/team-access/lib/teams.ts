@@ -13,12 +13,7 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
-import {
-  AuthorizationError,
-  DatabaseError,
-  InvalidInputError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getTeamsByProductId = reactCache(
   (productId: string): Promise<TProductTeam[] | null> =>
@@ -48,6 +43,9 @@ export const getTeamsByProductId = reactCache(
               id: true,
               name: true,
               productTeams: {
+                where: {
+                  productId,
+                },
                 select: {
                   permission: true,
                 },
@@ -76,7 +74,7 @@ export const getTeamsByProductId = reactCache(
           throw error;
         }
       },
-      [`product-teams-${productId}`],
+      [`getTeamsByProductId-${productId}`],
       {
         tags: [teamCache.tag.byProductId(productId)],
       }
@@ -194,9 +192,56 @@ export const getTeamsByOranizationId = reactCache(
           throw error;
         }
       },
-      [`organization-teams-${organizationId}`],
+      [`getTeamsByOranizationId-${organizationId}`],
       {
         tags: [teamCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );
+
+export const updateTeamAccessPermission = async (
+  productId: string,
+  teamId: string,
+  permission: TTeamPermission
+): Promise<boolean> => {
+  validateInputs([productId, ZId], [teamId, ZId], [permission, ZTeamPermission]);
+  try {
+    const productMembership = await prisma.productTeam.findUniqueOrThrow({
+      where: {
+        productId_teamId: {
+          productId,
+          teamId,
+        },
+      },
+    });
+
+    if (!productMembership) {
+      throw new AuthorizationError("Team does not have access to this product");
+    }
+
+    await prisma.productTeam.update({
+      where: {
+        productId_teamId: {
+          productId,
+          teamId,
+        },
+      },
+      data: {
+        permission,
+      },
+    });
+
+    teamCache.revalidate({
+      id: teamId,
+      productId,
+    });
+
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

@@ -25,31 +25,33 @@ export const OtherTeams = ({ teams, joinTeam }: OtherTeamsProps) => {
         <CardTitle>Other Teams</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Team Name</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teams.map((team) => (
-              <TableRow key={team.id}>
-                <TableCell>
-                  <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
-                    {team.name}
-                  </Link>{" "}
-                  ({team.memberCount} members)
-                </TableCell>
-                <TableCell>
-                  <Button variant="secondary" size="sm" onClick={() => joinTeam(team.id)}>
-                    Join Team
-                  </Button>
-                </TableCell>
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-100">
+                <TableHead>Team Name</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {teams.map((team) => (
+                <TableRow key={team.id}>
+                  <TableCell>
+                    <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
+                      {team.name}
+                    </Link>{" "}
+                    ({team.memberCount} members)
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="secondary" size="sm" onClick={() => joinTeam(team.id)}>
+                      Join Team
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

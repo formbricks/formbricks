@@ -59,7 +59,7 @@ export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamM
         </div>
       </div>
       <form onSubmit={handleAddTeam}>
-        <div className="flex h-[100px] flex-col overflow-visible rounded-lg bg-white p-6">
+        <div className="overflow-visible p-6">
           <Label htmlFor="team-name" className="mb-1 text-sm font-medium text-slate-900">
             Select teams
           </Label>

@@ -11,11 +11,11 @@ import { getUser } from "../user/service";
 
 export const actionClient = createSafeActionClient({
   handleServerError(e) {
-    if (e instanceof ResourceNotFoundError) {
-      return e.message;
-    } else if (e instanceof AuthorizationError) {
-      return e.message;
-    } else if (e instanceof InvalidInputError) {
+    if (
+      e instanceof ResourceNotFoundError ||
+      e instanceof AuthorizationError ||
+      e instanceof InvalidInputError
+    ) {
       return e.message;
     }
 

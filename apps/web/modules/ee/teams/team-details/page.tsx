@@ -26,8 +26,8 @@ export const TeamDetails = async ({ params }) => {
     throw new Error("Team not found");
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const userId = session.user.id;
 
-  const userId = session?.user.id;
   return (
     <PageContentWrapper>
       <div className="">

@@ -58,7 +58,7 @@ const getUserTeams = reactCache(
           throw error;
         }
       },
-      [`teams-getUserTeams-${userId}`],
+      [`getUserTeams-${userId}`],
       {
         tags: [
           teamCache.tag.byUserId(userId),
@@ -110,7 +110,7 @@ const getOtherTeams = reactCache(
           throw error;
         }
       },
-      [`teams-getOtherTeams-${userId}`],
+      [`getOtherTeams-${userId}`],
       {
         tags: [
           teamCache.tag.byUserId(userId),
@@ -146,6 +146,24 @@ export const getTeams = reactCache(
 export const leaveTeam = async (userId: string, teamId: string): Promise<boolean> => {
   validateInputs([userId, z.string()], [teamId, ZId]);
   try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamId,
+      },
+      select: {
+        organizationId: true,
+        productTeams: {
+          select: {
+            productId: true,
+          },
+        },
+      },
+    });
+
+    if (!team) {
+      throw new ResourceNotFoundError("Team", teamId);
+    }
+
     const deletedMembership = await prisma.teamMembership.delete({
       where: {
         teamId_userId: {
@@ -156,10 +174,14 @@ export const leaveTeam = async (userId: string, teamId: string): Promise<boolean
     });
 
     if (!deletedMembership) {
-      throw new ResourceNotFoundError("Membership", `${teamId}-${userId}`);
+      throw new ResourceNotFoundError("Membership", null);
     }
 
     teamCache.revalidate({ id: teamId, userId });
+
+    for (const productTeam of team.productTeams) {
+      teamCache.revalidate({ productId: productTeam.productId });
+    }
 
     return true;
   } catch (error) {
@@ -180,6 +202,11 @@ export const joinTeam = async (userId: string, teamId: string): Promise<TTeamRol
       },
       select: {
         organizationId: true,
+        productTeams: {
+          select: {
+            productId: true,
+          },
+        },
       },
     });
     if (!team) {
@@ -199,7 +226,7 @@ export const joinTeam = async (userId: string, teamId: string): Promise<TTeamRol
     });
 
     if (!membership) {
-      throw new ResourceNotFoundError("Membership", `${userId}-${team.organizationId}`);
+      throw new ResourceNotFoundError("Membership", null);
     }
 
     let role: TeamRole = "contributor";
@@ -221,6 +248,10 @@ export const joinTeam = async (userId: string, teamId: string): Promise<TTeamRol
     }
 
     teamCache.revalidate({ id: teamId, userId });
+
+    for (const productTeam of team.productTeams) {
+      teamCache.revalidate({ productId: productTeam.productId });
+    }
 
     return createdMembership.role;
   } catch (error) {

@@ -6,6 +6,7 @@ export const ZTeamMember = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
+  isRoleEditable: z.boolean(),
 });
 
 export type TTeamMember = z.infer<typeof ZTeamMember>;

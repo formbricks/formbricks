@@ -1,11 +1,16 @@
 "use server";
 
 import { getOrganizationIdFromProductId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
-import { addTeamAccess, removeTeamAccess } from "@/modules/ee/teams/team-access/lib/teams";
+import {
+  addTeamAccess,
+  removeTeamAccess,
+  updateTeamAccessPermission,
+} from "@/modules/ee/teams/team-access/lib/teams";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { ZId } from "@formbricks/types/common";
+import { ZTeamPermission } from "./types/teams";
 
 const ZRemoveAccessAction = z.object({
   productId: z.string(),
@@ -53,4 +58,32 @@ export const addAccessAction = authenticatedActionClient
     }
 
     return await addTeamAccess(parsedInput.productId, parsedInput.teamIds);
+  });
+
+const ZUpdateAccessPermissionAction = z.object({
+  productId: z.string(),
+  teamId: z.string(),
+  permission: ZTeamPermission,
+});
+
+export const updateAccessPermissionAction = authenticatedActionClient
+  .schema(ZUpdateAccessPermissionAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      rules: ["product", "update"],
+    });
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      rules: ["team", "update"],
+    });
+
+    return await updateTeamAccessPermission(
+      parsedInput.productId,
+      parsedInput.teamId,
+      parsedInput.permission
+    );
   });
