@@ -15,19 +15,25 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/components/DropdownMenu";
-import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
-import { TransferOwnershipModal } from "./transfer-ownership-modal";
+import {
+  //  transferOwnershipAction,
+  updateInviteAction,
+  updateMembershipAction,
+} from "../lib/actions";
+
+// import { TransferOwnershipModal } from "./transfer-ownership-modal";
 
 interface Role {
   isUserManagerOrOwner: boolean;
   memberRole: TOrganizationRole;
   organizationId: string;
   memberId?: string;
-  memberName: string;
+  // memberName: string;
   userId: string;
   memberAccepted?: boolean;
   inviteId?: string;
   currentUserRole: string;
+  doesOrgHaveMoreThanOneOwner?: boolean;
 }
 
 export function EditMembershipRole({
@@ -35,18 +41,18 @@ export function EditMembershipRole({
   memberRole,
   organizationId,
   memberId,
-  memberName,
+  // memberName,
   userId,
   memberAccepted,
   inviteId,
   currentUserRole,
+  doesOrgHaveMoreThanOneOwner,
 }: Role) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
+  // const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
 
-  const disableRole =
-    memberRole && memberId && userId ? memberRole === "owner" || memberId === userId : false;
+  const disableRole = memberId === userId || (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner);
 
   const handleMemberRoleUpdate = async (organizationRole: TOrganizationRole) => {
     setLoading(true);
@@ -67,30 +73,26 @@ export function EditMembershipRole({
     router.refresh();
   };
 
-  const handleOwnershipTransfer = async () => {
-    setLoading(true);
-    try {
-      if (memberId) {
-        await transferOwnershipAction({ organizationId, newOwnerId: memberId });
-      }
+  // const handleOwnershipTransfer = async () => {
+  //   setLoading(true);
+  //   try {
+  //     if (memberId) {
+  //       await transferOwnershipAction({ organizationId, newOwnerId: memberId });
+  //     }
 
-      setLoading(false);
-      setTransferOwnershipModalOpen(false);
-      toast.success("Ownership transferred successfully");
-      router.refresh();
-    } catch (err: any) {
-      toast.error(`Error: ${err.message}`);
-      setLoading(false);
-      setTransferOwnershipModalOpen(false);
-    }
-  };
+  //     setLoading(false);
+  //     setTransferOwnershipModalOpen(false);
+  //     toast.success("Ownership transferred successfully");
+  //     router.refresh();
+  //   } catch (err: any) {
+  //     toast.error(`Error: ${err.message}`);
+  //     setLoading(false);
+  //     setTransferOwnershipModalOpen(false);
+  //   }
+  // };
 
   const handleRoleChange = (role: TOrganizationRole) => {
-    if (role === "owner") {
-      setTransferOwnershipModalOpen(true);
-    } else {
-      handleMemberRoleUpdate(role);
-    }
+    handleMemberRoleUpdate(role);
   };
 
   const getMembershipRoles = () => {
@@ -133,13 +135,13 @@ export function EditMembershipRole({
             </DropdownMenuContent>
           )}
         </DropdownMenu>
-        <TransferOwnershipModal
+        {/* <TransferOwnershipModal
           isLoading={loading}
           memberName={memberName}
           onSubmit={handleOwnershipTransfer}
           open={isTransferOwnershipModalOpen}
           setOpen={setTransferOwnershipModalOpen}
-        />
+        /> */}
       </>
     );
   }

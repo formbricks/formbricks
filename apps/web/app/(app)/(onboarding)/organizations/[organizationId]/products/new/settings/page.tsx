@@ -1,3 +1,4 @@
+import { getTeamsByOranizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
 import { XIcon } from "lucide-react";
@@ -26,6 +27,12 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
   const customHeadline = getCustomHeadline(channel);
   const products = await getProducts(params.organizationId);
 
+  const organizationTeams = await getTeamsByOranizationId(params.organizationId);
+
+  if (!organizationTeams) {
+    throw new Error("Organization teams not found");
+  }
+
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       {channel === "link" || mode === "cx" ? (
@@ -45,6 +52,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         channel={channel}
         industry={industry}
         defaultBrandColor={DEFAULT_BRAND_COLOR}
+        organizationTeams={organizationTeams}
       />
       {products.length >= 1 && (
         <Button

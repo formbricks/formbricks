@@ -1,4 +1,4 @@
-import { teamCache } from "@/app/(ee)/(teams)/lib/cache/team";
+import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";

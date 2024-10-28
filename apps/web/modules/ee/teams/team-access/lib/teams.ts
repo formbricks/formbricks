@@ -1,5 +1,5 @@
 import "server-only";
-import { teamCache } from "@/app/(ee)/(teams)/lib/cache/team";
+import { teamCache } from "@/lib/cache/team";
 import {
   TOrganizationTeam,
   TProductTeam,

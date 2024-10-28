@@ -187,6 +187,20 @@ export const updateMembership = async (
       data,
     });
 
+    await prisma.teamMembership.updateMany({
+      where: {
+        userId,
+        team: {
+          organizationId,
+        },
+      },
+      data: {
+        role: "admin",
+      },
+    });
+
+    //TODO: teamCache invalidation
+
     organizationCache.revalidate({
       userId,
     });
@@ -218,6 +232,17 @@ export const deleteMembership = async (userId: string, organizationId: string): 
         },
       },
     });
+
+    await prisma.teamMembership.deleteMany({
+      where: {
+        userId,
+        team: {
+          organizationId,
+        },
+      },
+    });
+
+    // TODO: teamCache invalidation
 
     organizationCache.revalidate({
       userId,
@@ -255,7 +280,7 @@ export const transferOwnership = async (
           },
         },
         data: {
-          organizationRole: "owner",
+          organizationRole: "manager",
         },
       }),
       prisma.membership.update({

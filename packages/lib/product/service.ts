@@ -256,7 +256,7 @@ export const createProduct = async (
     throw new ValidationError("Product Name is required");
   }
 
-  const { environments, ...data } = productInput;
+  const { environments, teamIds, ...data } = productInput;
 
   try {
     let product = await prisma.product.create({
@@ -271,6 +271,15 @@ export const createProduct = async (
       },
       select: selectProduct,
     });
+
+    if (teamIds) {
+      await prisma.productTeam.createMany({
+        data: teamIds.map((teamId) => ({
+          productId: product.id,
+          teamId,
+        })),
+      });
+    }
 
     productCache.revalidate({
       id: product.id,
