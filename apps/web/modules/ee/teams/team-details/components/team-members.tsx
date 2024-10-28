@@ -2,9 +2,8 @@
 
 import { removeTeamMemberAction, updateUserTeamRoleAction } from "@/modules/ee/teams/team-details/actions";
 import { AddTeamMemberModal } from "@/modules/ee/teams/team-details/components/add-team-member-modal";
-import { TTeamMember } from "@/modules/ee/teams/team-details/types/teams";
+import { TOrganizationMember, TTeamMember } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -32,9 +31,10 @@ interface TeamMembersProps {
   members: TTeamMember[];
   userId: string;
   teamId: string;
+  organizationMembers: TOrganizationMember[];
 }
 
-export const TeamMembers = ({ members, userId, teamId }: TeamMembersProps) => {
+export const TeamMembers = ({ members, userId, teamId, organizationMembers }: TeamMembersProps) => {
   const [openAddMemberModal, setOpenAddMemberModal] = useState<boolean>(false);
   const [removeMemberModalOpen, setRemoveMemberModalOpen] = useState<boolean>(false);
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
@@ -71,6 +71,13 @@ export const TeamMembers = ({ members, userId, teamId }: TeamMembersProps) => {
 
     setRemoveMemberModalOpen(false);
   };
+
+  const organizationMemberOptions = organizationMembers
+    .filter((member) => !members.find((teamMember) => teamMember.id === member.id))
+    .map((member) => ({
+      label: member.name,
+      value: member.id,
+    }));
 
   return (
     <>
@@ -143,7 +150,14 @@ export const TeamMembers = ({ members, userId, teamId }: TeamMembersProps) => {
           </div>
         </CardContent>
       </Card>
-      {openAddMemberModal && <AddTeamMemberModal open={openAddMemberModal} setOpen={setOpenAddMemberModal} />}
+      {openAddMemberModal && (
+        <AddTeamMemberModal
+          teamId={teamId}
+          open={openAddMemberModal}
+          setOpen={setOpenAddMemberModal}
+          organizationMemberOptions={organizationMemberOptions}
+        />
+      )}
       {removeMemberModalOpen && selectedTeamMemberId && (
         <AlertDialog
           open={removeMemberModalOpen}

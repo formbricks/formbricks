@@ -1,7 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { DetailsView } from "@/modules/ee/teams/team-details/components/details-view";
 import { TeamsNavigationBreadcrumbs } from "@/modules/ee/teams/team-details/components/team-navigation";
-import { getTeam } from "@/modules/ee/teams/team-details/lib/teams";
+import { getMembersByOrganizationId, getTeam } from "@/modules/ee/teams/team-details/lib/teams";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -28,6 +28,8 @@ export const TeamDetails = async ({ params }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const userId = session.user.id;
 
+  const organizationMembers = await getMembersByOrganizationId(organization.id);
+
   return (
     <PageContentWrapper>
       <div className="">
@@ -41,7 +43,12 @@ export const TeamDetails = async ({ params }) => {
         </PageHeader>
         <TeamsNavigationBreadcrumbs teamName={team.name} />
       </div>
-      <DetailsView team={team} userId={userId} membershipRole={currentUserMembership?.organizationRole} />
+      <DetailsView
+        team={team}
+        organizationMembers={organizationMembers}
+        userId={userId}
+        membershipRole={currentUserMembership?.organizationRole}
+      />
     </PageContentWrapper>
   );
 };

@@ -2,7 +2,7 @@
 
 import { TeamMembers } from "@/modules/ee/teams/team-details/components/team-members";
 import { TeamSettings } from "@/modules/ee/teams/team-details/components/team-settings";
-import { TTeam } from "@/modules/ee/teams/team-details/types/teams";
+import { TOrganizationMember, TTeam } from "@/modules/ee/teams/team-details/types/teams";
 import { useState } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
@@ -12,9 +12,10 @@ interface DetailsViewProps {
   team: TTeam;
   userId: string;
   membershipRole?: TOrganizationRole;
+  organizationMembers: TOrganizationMember[];
 }
 
-export const DetailsView = ({ team, userId, membershipRole }: DetailsViewProps) => {
+export const DetailsView = ({ team, userId, membershipRole, organizationMembers }: DetailsViewProps) => {
   const [activeId, setActiveId] = useState<"members" | "settings">("members");
 
   const navigation = [
@@ -38,7 +39,12 @@ export const DetailsView = ({ team, userId, membershipRole }: DetailsViewProps) 
         <SecondaryNavigation navigation={navigation} activeId={activeId} />
       </div>
       {activeId === "members" ? (
-        <TeamMembers members={team.teamMembers} userId={userId} teamId={team.id} />
+        <TeamMembers
+          members={team.teamMembers}
+          userId={userId}
+          teamId={team.id}
+          organizationMembers={organizationMembers}
+        />
       ) : (
         <TeamSettings team={team} membershipRole={membershipRole} />
       )}

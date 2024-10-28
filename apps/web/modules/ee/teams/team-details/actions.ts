@@ -2,6 +2,7 @@
 
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import {
+  addTeamMembers,
   deleteTeam,
   removeTeamMember,
   updateTeamName,
@@ -80,4 +81,21 @@ export const removeTeamMemberAction = authenticatedActionClient
     });
 
     return await removeTeamMember(parsedInput.teamId, parsedInput.userId);
+  });
+
+const ZAddTeamMembersAction = z.object({
+  teamId: ZId,
+  userIds: z.array(ZId),
+});
+
+export const addTeamMembersAction = authenticatedActionClient
+  .schema(ZAddTeamMembersAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      rules: ["team", "update"],
+    });
+
+    return await addTeamMembers(parsedInput.teamId, parsedInput.userIds);
   });

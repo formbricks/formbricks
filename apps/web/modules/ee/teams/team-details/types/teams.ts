@@ -20,3 +20,10 @@ export const ZTeam = z.object({
 });
 
 export type TTeam = z.infer<typeof ZTeam>;
+
+export const ZOrganizationMember = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type TOrganizationMember = z.infer<typeof ZOrganizationMember>;

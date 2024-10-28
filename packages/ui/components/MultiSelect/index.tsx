@@ -80,9 +80,7 @@ export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TO
           !Array.isArray(value) ? (
             <p className="text-slate-600">{options.find((option) => option.value === value)?.label}</p>
           ) : (
-            <div
-              className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]"
-              onClick={(e) => e.stopPropagation()}>
+            <div className="no-scrollbar flex gap-3 overflow-auto" onClick={(e) => e.stopPropagation()}>
               {value.map((val) => (
                 <button
                   type="button"

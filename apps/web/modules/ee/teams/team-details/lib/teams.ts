@@ -1,14 +1,21 @@
 import "server-only";
 import { teamCache } from "@/app/(ee)/(teams)/lib/cache/team";
-import { TTeam, ZTeam } from "@/modules/ee/teams/team-details/types/teams";
+import { TOrganizationMember, TTeam, ZTeam } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
-import { Prisma } from "@prisma/client";
+import { Prisma, TeamRole } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { membershipCache } from "@formbricks/lib/membership/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZId, ZString } from "@formbricks/types/common";
+import {
+  AuthorizationError,
+  DatabaseError,
+  ResourceNotFoundError,
+  UnknownError,
+} from "@formbricks/types/errors";
 
 export const getTeam = reactCache(
   (teamId: string): Promise<TTeam> =>
@@ -283,6 +290,111 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
     for (const productTeam of team.productTeams) {
       teamCache.revalidate({ productId: productTeam.productId });
     }
+
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getMembersByOrganizationId = reactCache(
+  (organizationId: string): Promise<TOrganizationMember[]> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZString]);
+
+        try {
+          const membersData = await prisma.membership.findMany({
+            where: { organizationId },
+            select: {
+              user: {
+                select: {
+                  name: true,
+                },
+              },
+              userId: true,
+            },
+          });
+
+          const members = membersData.map((member) => {
+            return {
+              id: member.userId,
+              name: member.user?.name || "",
+            };
+          });
+
+          return members;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw new UnknownError("Error while fetching members");
+        }
+      },
+      [`getMembersByOrganizationId-${organizationId}`],
+      {
+        tags: [membershipCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
+export const addTeamMembers = async (teamId: string, userIds: string[]): Promise<boolean> => {
+  validateInputs([teamId, ZId], [userIds, z.array(ZId)]);
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamId,
+      },
+      select: {
+        organizationId: true,
+      },
+    });
+
+    if (!team) {
+      throw new ResourceNotFoundError("team", teamId);
+    }
+
+    for (const userId of userIds) {
+      const membership = await prisma.membership.findUnique({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId: team.organizationId,
+          },
+        },
+        select: {
+          organizationRole: true,
+        },
+      });
+
+      if (!membership) {
+        throw new ResourceNotFoundError("Membership", null);
+      }
+
+      let role: TeamRole = "contributor";
+
+      if (membership.organizationRole === "owner" || membership.organizationRole === "manager") {
+        role = "admin";
+      }
+
+      await prisma.teamMembership.create({
+        data: {
+          teamId,
+          userId,
+          role,
+        },
+      });
+
+      teamCache.revalidate({ userId });
+    }
+
+    teamCache.revalidate({ id: teamId, organizationId: team.organizationId });
 
     return true;
   } catch (error) {
