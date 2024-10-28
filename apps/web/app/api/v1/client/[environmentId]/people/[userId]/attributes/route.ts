@@ -77,7 +77,6 @@ export const PUT = async (
       });
     }
 
-    // const oldAttributes = await getAttributesByUserId(environmentId, userId);
     const oldAttributes = contact.attributes.reduce(
       (acc, attr) => {
         acc[attr.attributeKey.key] = attr.value;

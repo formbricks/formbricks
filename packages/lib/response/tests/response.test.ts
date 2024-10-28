@@ -57,13 +57,13 @@ import { constantsForTests, mockEnvironment } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {
   ...mockResponse,
-  person: null,
+  contact: null,
   tags: mockTags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 };
 
 const expectedResponseWithPerson: TResponse = {
   ...mockResponse,
-  person: mockPerson,
+  contact: mockPerson,
   tags: mockTags?.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 };
 
@@ -350,7 +350,7 @@ describe("Tests for getResponses service", () => {
             applied: ["tag1"],
             notApplied: ["tag4"],
           },
-          personAttributes: {
+          contactAttributes: {
             "Init Attribute 2": {
               op: "equals",
               value: "four",

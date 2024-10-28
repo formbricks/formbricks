@@ -302,7 +302,7 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
+              person: response.contact,
               personAttributes: response.personAttributes,
             });
           }
@@ -354,7 +354,7 @@ export const getQuestionSummary = async (
               } else {
                 otherValues.push({
                   value,
-                  person: response.person,
+                  person: response.contact,
                   personAttributes: response.personAttributes,
                 });
               }
@@ -365,7 +365,7 @@ export const getQuestionSummary = async (
             } else {
               otherValues.push({
                 value: answer,
-                person: response.person,
+                person: response.contact,
                 personAttributes: response.personAttributes,
               });
             }
@@ -620,7 +620,7 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
+              person: response.contact,
               personAttributes: response.personAttributes,
             });
           }
@@ -645,7 +645,7 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
+              person: response.contact,
               personAttributes: response.personAttributes,
             });
           }
@@ -761,7 +761,7 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
+              person: response.contact,
               personAttributes: response.personAttributes,
             });
           }
@@ -838,7 +838,7 @@ export const getQuestionSummary = async (
         values.push({
           updatedAt: response.updatedAt,
           value: answer,
-          person: response.person,
+          person: response.contact,
           personAttributes: response.personAttributes,
         });
       }

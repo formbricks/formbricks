@@ -38,8 +38,8 @@ export const SingleResponseCardHeader = ({
   isViewer,
   setDeleteDialogOpen,
 }: SingleResponseCardHeaderProps) => {
-  const displayIdentifier = response.person
-    ? getPersonIdentifier(response.person, response.personAttributes)
+  const displayIdentifier = response.contact
+    ? getPersonIdentifier(response.contact, response.personAttributes)
     : null;
   const environmentId = survey.environmentId;
   const canResponseBeDeleted = response.finished
@@ -146,19 +146,19 @@ export const SingleResponseCardHeader = ({
           {pageType === "response" && (
             <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
               <div className="group">
-                {response.person?.id ? (
+                {response.contact?.id ? (
                   user ? (
                     <Link
                       className="flex items-center"
-                      href={`/environments/${environmentId}/people/${response.person.id}`}>
-                      <PersonAvatar personId={response.person.id} />
+                      href={`/environments/${environmentId}/people/${response.contact.id}`}>
+                      <PersonAvatar personId={response.contact.id} />
                       <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                         {displayIdentifier}
                       </h3>
                     </Link>
                   ) : (
                     <div className="flex items-center">
-                      <PersonAvatar personId={response.person.id} />
+                      <PersonAvatar personId={response.contact.id} />
                       <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
                         {displayIdentifier}
                       </h3>

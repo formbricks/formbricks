@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion -- Required for userId */
+
 /* eslint-disable no-constant-condition -- Required for the while loop */
 
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
@@ -35,7 +37,7 @@ async function runMigration(): Promise<void> {
       const attributeKeyMap = new Map<string, string>();
 
       // Fetch existing attributeKeys
-      const existingAttributeKeys = await tx.contactAttributeKey.findMany({
+      const existingUserIdAttributeKeys = await tx.contactAttributeKey.findMany({
         where: {
           key: "userId",
           environmentId: { in: environmentIds.map((e) => e.environmentId) },
@@ -43,7 +45,7 @@ async function runMigration(): Promise<void> {
         select: { id: true, environmentId: true },
       });
 
-      existingAttributeKeys.forEach((ak) => {
+      existingUserIdAttributeKeys.forEach((ak) => {
         attributeKeyMap.set(ak.environmentId, ak.id);
       });
 
@@ -80,6 +82,76 @@ async function runMigration(): Promise<void> {
       let processed = 0;
 
       while (true) {
+        // Ensure email, firstName, lastName attributeKeys exist for all environments
+        const allEnvironmentsInBatch = await tx.environment.findMany({
+          select: { id: true },
+          skip,
+          take: BATCH_SIZE,
+        });
+        console.log("Processing attributeKeys for", allEnvironmentsInBatch.length, "environments");
+
+        for (const env of allEnvironmentsInBatch) {
+          await tx.environment.update({
+            where: { id: env.id },
+            data: {
+              attributeKeys: {
+                upsert: [
+                  {
+                    where: {
+                      key_environmentId: {
+                        key: "email",
+                        environmentId: env.id,
+                      },
+                    },
+                    update: {
+                      isUnique: true,
+                    },
+                    create: {
+                      key: "email",
+                      name: "Email",
+                      description: "The email of a contact",
+                      type: "default",
+                      isUnique: true,
+                    },
+                  },
+                  {
+                    where: {
+                      key_environmentId: {
+                        key: "firstName",
+                        environmentId: env.id,
+                      },
+                    },
+                    update: {},
+                    create: {
+                      key: "firstName",
+                      name: "First Name",
+                      description: "Your contact's first name",
+                      type: "default",
+                    },
+                  },
+                  {
+                    where: {
+                      key_environmentId: {
+                        key: "lastName",
+                        environmentId: env.id,
+                      },
+                    },
+                    update: {},
+                    create: {
+                      key: "lastName",
+                      name: "Last Name",
+                      description: "Your contact's last name",
+                      type: "default",
+                    },
+                  },
+                ],
+              },
+            },
+          });
+        }
+
+        console.log("Processed attributeKeys for", allEnvironmentsInBatch.length, "environments");
+
         const contacts = await tx.contact.findMany({
           skip,
           take: BATCH_SIZE,
@@ -100,16 +172,14 @@ async function runMigration(): Promise<void> {
         // Prepare data for contactAttribute.createMany
         const contactAttributesData = contacts.map((contact) => ({
           contactId: contact.id,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- hall
           attributeKeyId: attributeKeyMap.get(contact.environmentId)!,
-          value: contact.userId,
+          value: contact.userId!,
           createdAt: new Date(),
           updatedAt: new Date(),
         }));
 
         // Insert contactAttributes in bulk
         await tx.contactAttribute.createMany({
-          // @ts-expect-error -- hallehhhhh
           data: contactAttributesData,
         });
 

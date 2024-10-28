@@ -37,9 +37,9 @@ import {
   buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
+  getResponseContactAttributes,
   getResponseHiddenFields,
   getResponseMeta,
-  getResponsePersonAttributes,
   getResponsesFileName,
   getResponsesJson,
 } from "./utils";
@@ -56,7 +56,7 @@ export const responseSelection = {
   meta: true,
   ttc: true,
   variables: true,
-  personAttributes: true,
+  contactAttributes: true,
   singleUseId: true,
   language: true,
   displayId: true,
@@ -99,6 +99,18 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
+const getResponseContact = (
+  responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
+): TResponseContact | null => {
+  if (!responsePrisma.contact) return null;
+
+  return {
+    id: responsePrisma.contact.id as string,
+    userId: responsePrisma.contact.attributes.find((attribute) => attribute.attributeKey.key === "userId")
+      ?.value as string,
+  };
+};
+
 export const getResponsesByContactId = reactCache(
   (contactId: string, page?: number): Promise<TResponse[] | null> =>
     cache(
@@ -127,7 +139,7 @@ export const getResponsesByContactId = reactCache(
           await Promise.all(
             responsePrisma.map(async (response) => {
               const responseNotes = await getResponseNotes(response.id);
-              const responsePerson: TResponseContact = {
+              const responseContact: TResponseContact = {
                 id: response.contact?.id as string,
                 userId: response.contact?.attributes.find(
                   (attribute) => attribute.attributeKey.key === "userId"
@@ -136,7 +148,7 @@ export const getResponsesByContactId = reactCache(
 
               responses.push({
                 ...response,
-                person: responsePerson,
+                contact: responseContact,
                 notes: responseNotes,
                 tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
               });
@@ -155,76 +167,6 @@ export const getResponsesByContactId = reactCache(
       [`getResponsesByContactId-${contactId}-${page}`],
       {
         tags: [responseCache.tag.byContactId(contactId)],
-      }
-    )()
-);
-
-export const getResponsesByUserId = reactCache(
-  (environmentId: string, userId: string, page?: number): Promise<TResponse[] | null> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
-
-        const contact = await prisma.contact.findFirst({
-          where: {
-            attributes: {
-              some: {
-                attributeKey: {
-                  key: "userId",
-                  environmentId,
-                },
-                value: userId,
-              },
-            },
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        if (!contact) {
-          throw new ResourceNotFoundError("Contact", userId);
-        }
-
-        try {
-          const responsePrisma = await prisma.response.findMany({
-            where: {
-              personId: contact.id,
-            },
-            select: responseSelection,
-            take: page ? ITEMS_PER_PAGE : undefined,
-            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-            orderBy: {
-              createdAt: "desc",
-            },
-          });
-
-          if (!responsePrisma) {
-            throw new ResourceNotFoundError("Response from PersonId", person.id);
-          }
-
-          const responsePromises = responsePrisma.map(async (response) => {
-            const tags = response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag);
-
-            return {
-              ...response,
-              tags,
-            };
-          });
-
-          const responses = await Promise.all(responsePromises);
-          return responses;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getResponsesByUserId-${environmentId}-${userId}-${page}`],
-      {
-        tags: [responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       }
     )()
 );
@@ -249,6 +191,7 @@ export const getResponseBySingleUseId = reactCache(
 
           const response: TResponse = {
             ...responsePrisma,
+            contact: getResponseContact(responsePrisma),
             tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           };
 
@@ -344,13 +287,14 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const response: TResponse = {
       ...responsePrisma,
+      contact: getResponseContact(responsePrisma),
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     responseCache.revalidate({
       environmentId: environmentId,
       id: response.id,
-      contactId: response.person?.id,
+      contactId: response.contact?.id,
       userId: userId ?? undefined,
       surveyId: response.surveyId,
       singleUseId: singleUseId ? singleUseId : undefined,
@@ -412,6 +356,7 @@ export const getResponse = reactCache(
 
           const response: TResponse = {
             ...responsePrisma,
+            contact: getResponseContact(responsePrisma),
             tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           };
 
@@ -449,15 +394,15 @@ export const getResponseFilteringValues = reactCache((surveyId: string) =>
           select: {
             data: true,
             meta: true,
-            personAttributes: true,
+            contactAttributes: true,
           },
         });
 
-        const personAttributes = getResponsePersonAttributes(responses);
+        const contactAttributes = getResponseContactAttributes(responses);
         const meta = getResponseMeta(responses);
         const hiddenFields = getResponseHiddenFields(survey, responses);
 
-        return { personAttributes, meta, hiddenFields };
+        return { contactAttributes, meta, hiddenFields };
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -512,6 +457,7 @@ export const getResponses = reactCache(
             responses.map((responsePrisma) => {
               return {
                 ...responsePrisma,
+                contact: getResponseContact(responsePrisma),
                 tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
               };
             })
@@ -636,6 +582,7 @@ export const getResponsesByEnvironmentId = reactCache(
             responses.map(async (responsePrisma) => {
               return {
                 ...responsePrisma,
+                contact: getResponseContact(responsePrisma),
                 tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
               };
             })
@@ -709,12 +656,13 @@ export const updateResponse = async (
 
     const response: TResponse = {
       ...responsePrisma,
+      contact: getResponseContact(responsePrisma),
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     responseCache.revalidate({
       id: response.id,
-      contactId: response.person?.id,
+      contactId: response.contact?.id,
       surveyId: response.surveyId,
     });
 
@@ -774,6 +722,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
+      contact: getResponseContact(responsePrisma),
       notes: responseNotes,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
@@ -787,6 +736,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
       await findAndDeleteUploadedFilesInResponse(
         {
           ...responsePrisma,
+          contact: getResponseContact(responsePrisma),
           tags: responsePrisma.tags.map((tag) => tag.tag),
         },
         survey
@@ -796,7 +746,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
     responseCache.revalidate({
       environmentId: survey?.environmentId,
       id: response.id,
-      contactId: response.person?.id,
+      contactId: response.contact?.id,
       surveyId: response.surveyId,
     });
 

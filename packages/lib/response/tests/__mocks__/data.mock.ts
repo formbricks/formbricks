@@ -78,7 +78,7 @@ export const mockDisplay: TDisplay = {
   createdAt: new Date(),
   updatedAt: new Date(),
   surveyId: mockSurveyId,
-  personId: mockPersonId,
+  contactId: mockPersonId,
   responseId: mockResponseId,
   status: null,
 };
@@ -267,9 +267,9 @@ export const getFilteredMockResponses = (
     }
   }
 
-  if (fitlerCritera.personAttributes !== undefined) {
+  if (fitlerCritera.contactAttributes !== undefined) {
     result = result.filter((response) => {
-      for (const [key, value] of Object.entries(fitlerCritera.personAttributes || {})) {
+      for (const [key, value] of Object.entries(fitlerCritera.contactAttributes || {})) {
         if (value.op === "equals" && response.personAttributes?.[key] !== value.value) {
           return false;
         } else if (value.op === "notEquals" && response.personAttributes?.[key] === value.value) {

@@ -107,37 +107,37 @@ model Contact {
 }
 
 model Response {
-  id               String            @id @default(cuid())
-  createdAt        DateTime          @default(now()) @map(name: "created_at")
-  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
-  finished         Boolean           @default(false)
-  survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId         String
-  contact          Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId        String?
-  notes            ResponseNote[]
+  id                String            @id @default(cuid())
+  createdAt         DateTime          @default(now()) @map(name: "created_at")
+  updatedAt         DateTime          @updatedAt @map(name: "updated_at")
+  finished          Boolean           @default(false)
+  survey            Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId          String
+  contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId         String?
+  notes             ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
-  data             Json              @default("{}")
+  data              Json              @default("{}")
   /// @zod.custom(imports.ZResponseVariables)
   /// [ResponseVariables]
-  variables        Json              @default("{}")
+  variables         Json              @default("{}")
   /// @zod.custom(imports.ZResponseTtc)
   /// [ResponseTtc]
-  ttc              Json              @default("{}")
+  ttc               Json              @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
-  meta             Json              @default("{}")
-  tags             TagsOnResponses[]
-  /// @zod.custom(imports.ZResponsePersonAttributes)
-  /// [ResponsePersonAttributes]
-  personAttributes Json?
+  meta              Json              @default("{}")
+  tags              TagsOnResponses[]
+  /// @zod.custom(imports.ZResponseContactAttributes)
+  /// [ResponseContactAttributes]
+  contactAttributes Json?
   // singleUseId, used to prevent multiple responses
-  singleUseId      String?
-  language         String?
-  documents        Document[]
-  displayId        String?           @unique
-  display          Display?          @relation(fields: [displayId], references: [id])
+  singleUseId       String?
+  language          String?
+  documents         Document[]
+  displayId         String?           @unique
+  display           Display?          @relation(fields: [displayId], references: [id])
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count

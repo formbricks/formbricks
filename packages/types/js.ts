@@ -118,7 +118,6 @@ export const ZJsPersonState = z.object({
   data: z.object({
     userId: z.string().nullable(),
     segments: z.array(ZId), // segment ids the person belongs to
-    // displays: z.array(z.string()), // displayed survey ids
     displays: z.array(
       z.object({
         surveyId: ZId,

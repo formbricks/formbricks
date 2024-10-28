@@ -17,7 +17,7 @@ import {
   deleteDisplay,
   getDisplay,
   getDisplayCountBySurveyId,
-  getDisplaysByPersonId,
+  getDisplaysByContactId,
 } from "../service";
 
 beforeEach(() => {
@@ -45,14 +45,14 @@ describe("Tests for getDisplay", () => {
     it("Returns all displays associated with a given person ID", async () => {
       prisma.display.findMany.mockResolvedValue([mockDisplayWithPersonId]);
 
-      const displays = await getDisplaysByPersonId(mockPerson.id);
+      const displays = await getDisplaysByContactId(mockPerson.id);
       expect(displays).toEqual([mockDisplayWithPersonId]);
     });
 
     it("Returns an empty array when no displays are found for the given person ID", async () => {
       prisma.display.findMany.mockResolvedValue([]);
 
-      const displays = await getDisplaysByPersonId(mockPerson.id);
+      const displays = await getDisplaysByContactId(mockPerson.id);
       expect(displays).toEqual([]);
     });
 
@@ -65,7 +65,7 @@ describe("Tests for getDisplay", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getDisplaysByPersonId, "123#", 1);
+    testInputValidation(getDisplaysByContactId, "123#", 1);
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -76,14 +76,14 @@ describe("Tests for getDisplay", () => {
 
       prisma.display.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getDisplaysByPersonId(mockPerson.id)).rejects.toThrow(DatabaseError);
+      await expect(getDisplaysByContactId(mockPerson.id)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prisma.display.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getDisplaysByPersonId(mockPerson.id)).rejects.toThrow(Error);
+      await expect(getDisplaysByContactId(mockPerson.id)).rejects.toThrow(Error);
     });
   });
 });

@@ -1,21 +1,48 @@
-import { evaluateSegment, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
-import { attributeCache } from "@formbricks/lib/attribute/cache";
-import { getAttributes } from "@formbricks/lib/attribute/service";
+import { getContactAttributes } from "@/app/api/v1/client/[environmentId]/identify/people/[userId]/lib/attributes";
+import { contactAttributeCache } from "@/lib/cache/contact-attribute";
+import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
+import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId } from "@formbricks/types/common";
-import { TPerson, ZPerson } from "@formbricks/types/people";
-import { TSegment } from "@formbricks/types/segment";
+import { ZId, ZString } from "@formbricks/types/common";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TBaseFilter } from "@formbricks/types/segment";
+
+const getSegments = reactCache((environmentId: string) =>
+  cache(
+    async () => {
+      try {
+        return prisma.segment.findMany({
+          where: { environmentId },
+          select: { id: true, filters: true },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getSegments-environmentId-${environmentId}`],
+    {
+      tags: [segmentCache.tag.byEnvironmentId(environmentId)],
+    }
+  )()
+);
 
 export const getPersonSegmentIds = (
   environmentId: string,
-  person: TPerson,
+  contactId: string,
+  contactUserId: string,
   deviceType: "phone" | "desktop"
 ): Promise<string[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [person, ZPerson]);
+      validateInputs([environmentId, ZId], [contactId, ZId], [contactUserId, ZString]);
 
       const segments = await getSegments(environmentId);
 
@@ -24,18 +51,18 @@ export const getPersonSegmentIds = (
         return [];
       }
 
-      const attributes = await getAttributes(person.id);
+      const contactAttributes = await getContactAttributes(contactId);
 
-      const personSegments: TSegment[] = [];
+      const personSegments: { id: string; filters: TBaseFilter[] }[] = [];
 
       for (const segment of segments) {
         const isIncluded = await evaluateSegment(
           {
-            attributes,
+            attributes: contactAttributes,
             deviceType,
             environmentId,
-            personId: person.id,
-            userId: person.userId,
+            personId: contactId,
+            userId: contactUserId,
           },
           segment.filters
         );
@@ -47,8 +74,11 @@ export const getPersonSegmentIds = (
 
       return personSegments.map((segment) => segment.id);
     },
-    [`getPersonSegmentIds-${environmentId}-${person.id}-${deviceType}`],
+    [`getPersonSegmentIds-${environmentId}-${contactId}-${deviceType}`],
     {
-      tags: [segmentCache.tag.byEnvironmentId(environmentId), attributeCache.tag.byPersonId(person.id)],
+      tags: [
+        segmentCache.tag.byEnvironmentId(environmentId),
+        contactAttributeCache.tag.byContactId(contactId),
+      ],
     }
   )();

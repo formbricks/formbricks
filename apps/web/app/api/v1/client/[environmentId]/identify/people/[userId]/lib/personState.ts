@@ -1,18 +1,16 @@
+import { getContactByUserId } from "@/app/api/v1/client/[environmentId]/identify/people/[userId]/lib/contact";
+import { contactCache } from "@/lib/cache/contact";
+import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { prisma } from "@formbricks/database";
-import { attributeCache } from "@formbricks/lib/attribute/cache";
-import { getAttributesByUserId } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { displayCache } from "@formbricks/lib/display/cache";
-import { getDisplaysByUserId } from "@formbricks/lib/display/service";
 import { environmentCache } from "@formbricks/lib/environment/cache";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { personCache } from "@formbricks/lib/person/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
-import { getResponsesByUserId } from "@formbricks/lib/response/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { getPersonSegmentIds } from "./segments";
@@ -50,19 +48,7 @@ export const getPersonState = async ({
         throw new ResourceNotFoundError(`organization`, environmentId);
       }
 
-      let contact = await prisma.contact.findFirst({
-        where: {
-          attributes: {
-            some: {
-              attributeKey: {
-                key: "userId",
-                environmentId,
-              },
-              value: userId,
-            },
-          },
-        },
-      });
+      let contact = await getContactByUserId(environmentId, userId);
 
       if (!contact) {
         contact = await prisma.contact.create({
@@ -76,7 +62,7 @@ export const getPersonState = async ({
               create: [
                 {
                   attributeKey: {
-                    connect: { key: "userId", environmentId },
+                    connect: { key_environmentId: { key: "userId", environmentId } },
                   },
                   value: userId,
                 },
@@ -96,7 +82,7 @@ export const getPersonState = async ({
           surveyId: true,
         },
       });
-      // const personDisplays = await getDisplaysByUserId(environmentId, userId);
+
       const contactDisplayes = await prisma.display.findMany({
         where: {
           contactId: contact.id,
@@ -106,21 +92,22 @@ export const getPersonState = async ({
           createdAt: true,
         },
       });
-      const segments = await getPersonSegmentIds(environmentId, contact, device);
-      const attributes = await getAttributesByUserId(environmentId, userId);
+
+      const segments = await getPersonSegmentIds(environmentId, contact.id, userId, device);
 
       // If the person exists, return the persons's state
       const userState: TJsPersonState["data"] = {
-        userId: contact.userId,
+        userId,
         segments,
         displays:
-          personDisplays?.map((display) => ({ surveyId: display.surveyId, createdAt: display.createdAt })) ??
-          [],
+          contactDisplayes?.map((display) => ({
+            surveyId: display.surveyId,
+            createdAt: display.createdAt,
+          })) ?? [],
         responses: contactResponses?.map((response) => response.surveyId) ?? [],
-        attributes,
         lastDisplayAt:
-          personDisplays.length > 0
-            ? personDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
+          contactDisplayes.length > 0
+            ? contactDisplayes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
             : null,
       };
 
@@ -135,8 +122,8 @@ export const getPersonState = async ({
       tags: [
         environmentCache.tag.byId(environmentId),
         organizationCache.tag.byEnvironmentId(environmentId),
-        personCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        attributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
+        contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
+        contactAttributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         displayCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         segmentCache.tag.byEnvironmentId(environmentId),

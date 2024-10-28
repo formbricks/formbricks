@@ -4,9 +4,9 @@ import { type TIntegrationConfig } from "@formbricks/types/integration";
 import { type TOrganizationBilling } from "@formbricks/types/organizations";
 import { type TProductConfig, type TProductStyling } from "@formbricks/types/product";
 import {
+  type TResponseContactAttributes,
   type TResponseData,
   type TResponseMeta,
-  type TResponsePersonAttributes,
 } from "@formbricks/types/responses";
 import { type TBaseFilters } from "@formbricks/types/segment";
 import {
@@ -30,7 +30,7 @@ declare global {
     export type ProductConfig = TProductConfig;
     export type ResponseData = TResponseData;
     export type ResponseMeta = TResponseMeta;
-    export type ResponsePersonAttributes = TResponsePersonAttributes;
+    export type ResponseContactAttributes = TResponseContactAttributes;
     export type SurveyWelcomeCard = TSurveyWelcomeCard;
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyEnding = TSurveyEnding;

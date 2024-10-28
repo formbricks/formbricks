@@ -235,7 +235,7 @@ export const generateResponseTableColumns = (
     size: 275,
     cell: ({ row }) => {
       const personId = row.original.person
-        ? getPersonIdentifier(row.original.person, row.original.personAttributes)
+        ? getPersonIdentifier(row.original.person, row.original.contactAttributes)
         : "Anonymous";
       return <p className="truncate text-slate-900">{personId}</p>;
     },

@@ -7,6 +7,7 @@ ALTER TABLE "Attribute" RENAME COLUMN "personId" TO "contactId";
 
 -- Rename column "personId" to "contactId" in "Response" table
 ALTER TABLE "Response" RENAME COLUMN "personId" TO "contactId";
+ALTER TABLE "Response" RENAME COLUMN "personAttributes" TO "contactAttributes";
 
 -- Rename column "personId" to "contactId" in "Display" table
 ALTER TABLE "Display" RENAME COLUMN "personId" TO "contactId";
