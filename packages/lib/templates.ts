@@ -3375,9 +3375,9 @@ const careerDevelopmentSurvey = (): TTemplate => {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "Which of the following best describes your current job level?" },
-          subheader: { default: "Please select other is not following options:" },
+          subheader: { default: "Please select one of the following options:" },
           required: true,
-          shuffleOption: "none",
+          shuffleOption: "exceptLast",
           choices: [
             { id: createId(), label: { default: "Individual Contributor" } },
             { id: createId(), label: { default: "Manager" } },
