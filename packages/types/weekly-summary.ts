@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZAttributeClass } from "./attribute-classes";
+import { ZContactAttributeKey } from "./contact-attribute-key";
 import { ZResponseData } from "./responses";
 import { ZSurveyHiddenFields, ZSurveyQuestion, ZSurveyQuestionType, ZSurveyStatus } from "./surveys/types";
 import { ZUserNotificationSettings } from "./user";
@@ -68,7 +68,7 @@ export type TWeeklySummarySurveyData = z.infer<typeof ZWeeklySummarySurveyData>;
 export const ZWeeklySummaryEnvironmentData = z.object({
   id: z.string(),
   surveys: z.array(ZWeeklySummarySurveyData),
-  attributeClasses: z.array(ZAttributeClass),
+  contactAttributeKeys: z.array(ZContactAttributeKey),
 });
 
 export type TWeeklySummaryEnvironmentData = z.infer<typeof ZWeeklySummaryEnvironmentData>;

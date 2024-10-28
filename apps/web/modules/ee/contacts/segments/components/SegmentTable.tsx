@@ -1,4 +1,4 @@
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { SegmentTableDataRowContainer } from "./SegmentTableDataRowContainer";
 

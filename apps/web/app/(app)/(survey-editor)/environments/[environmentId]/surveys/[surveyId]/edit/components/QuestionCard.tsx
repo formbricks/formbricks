@@ -11,7 +11,7 @@ import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
 import {
   TI18nString,

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { FileInput } from "@formbricks/ui/components/FileInput";
 import { Label } from "@formbricks/ui/components/Label";

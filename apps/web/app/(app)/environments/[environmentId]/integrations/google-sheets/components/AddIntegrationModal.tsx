@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -34,7 +34,7 @@ interface AddIntegrationModalProps {
   setOpen: (v: boolean) => void;
   googleSheetIntegration: TIntegrationGoogleSheets;
   selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const AddIntegrationModal = ({
@@ -44,7 +44,7 @@ export const AddIntegrationModal = ({
   setOpen,
   googleSheetIntegration,
   selectedIntegration,
-  attributeClasses,
+  contactAttributeKeys,
 }: AddIntegrationModalProps) => {
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
@@ -234,27 +234,29 @@ export const AddIntegrationModal = ({
                     <Label htmlFor="Surveys">Questions</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
-                          (question) => (
-                            <div key={question.id} className="my-1 flex items-center space-x-2">
-                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                                <Checkbox
-                                  type="button"
-                                  id={question.id}
-                                  value={question.id}
-                                  className="bg-white"
-                                  checked={selectedQuestions.includes(question.id)}
-                                  onCheckedChange={() => {
-                                    handleCheckboxChange(question.id);
-                                  }}
-                                />
-                                <span className="ml-2 w-[30rem] truncate">
-                                  {getLocalizedValue(question.headline, "default")}
-                                </span>
-                              </label>
-                            </div>
-                          )
-                        )}
+                        {replaceHeadlineRecall(
+                          selectedSurvey,
+                          "default",
+                          contactAttributeKeys
+                        )?.questions.map((question) => (
+                          <div key={question.id} className="my-1 flex items-center space-x-2">
+                            <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                              <Checkbox
+                                type="button"
+                                id={question.id}
+                                value={question.id}
+                                className="bg-white"
+                                checked={selectedQuestions.includes(question.id)}
+                                onCheckedChange={() => {
+                                  handleCheckboxChange(question.id);
+                                }}
+                              />
+                              <span className="ml-2 w-[30rem] truncate">
+                                {getLocalizedValue(question.headline, "default")}
+                              </span>
+                            </label>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

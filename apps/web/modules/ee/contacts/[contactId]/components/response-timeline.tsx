@@ -2,7 +2,7 @@
 
 import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";

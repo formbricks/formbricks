@@ -39,7 +39,7 @@ export const SingleResponseCardHeader = ({
   setDeleteDialogOpen,
 }: SingleResponseCardHeaderProps) => {
   const displayIdentifier = response.contact
-    ? getPersonIdentifier(response.contact, response.personAttributes)
+    ? getPersonIdentifier(response.contact, response.contactAttributes)
     : null;
   const environmentId = survey.environmentId;
   const canResponseBeDeleted = response.finished
@@ -62,7 +62,7 @@ export const SingleResponseCardHeader = ({
   };
 
   const renderTooltip = Boolean(
-    (response.personAttributes && Object.keys(response.personAttributes).length > 0) ||
+    (response.contactAttributes && Object.keys(response.contactAttributes).length > 0) ||
       (response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
 
@@ -74,16 +74,18 @@ export const SingleResponseCardHeader = ({
           <span>{response.singleUseId}</span>
         </div>
       )}
-      {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
+      {response.contactAttributes && Object.keys(response.contactAttributes).length > 0 && (
         <div>
           <p className="py-1 font-bold text-slate-700">Person attributes:</p>
-          {Object.keys(response.personAttributes).map((key) => (
+          {Object.keys(response.contactAttributes).map((key) => (
             <p
               key={key}
               className="truncate"
-              title={`${key}: ${response.personAttributes && response.personAttributes[key]}`}>
+              title={`${key}: ${response.contactAttributes && response.contactAttributes[key]}`}>
               {key}:{" "}
-              <span className="font-bold">{response.personAttributes && response.personAttributes[key]}</span>
+              <span className="font-bold">
+                {response.contactAttributes && response.contactAttributes[key]}
+              </span>
             </p>
           ))}
         </div>
@@ -91,7 +93,7 @@ export const SingleResponseCardHeader = ({
 
       {response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0 && (
         <div className="text-slate-600">
-          {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
+          {response.contactAttributes && Object.keys(response.contactAttributes).length > 0 && (
             <hr className="my-2 border-slate-200" />
           )}
           <p className="py-1 font-bold text-slate-700">Device info:</p>

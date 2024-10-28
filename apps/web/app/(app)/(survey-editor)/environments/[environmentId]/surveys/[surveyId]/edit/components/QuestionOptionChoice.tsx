@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,

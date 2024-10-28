@@ -11,7 +11,7 @@ import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/components/Button";
 import {

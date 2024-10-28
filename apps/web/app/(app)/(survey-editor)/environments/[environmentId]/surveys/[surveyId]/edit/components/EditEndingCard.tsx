@@ -11,7 +11,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
   TSurvey,

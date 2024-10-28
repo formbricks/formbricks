@@ -1,5 +1,5 @@
 import { TAttributes } from "@formbricks/types/attributes";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TResponseData } from "@formbricks/types/responses";
 import {
   TI18nString,

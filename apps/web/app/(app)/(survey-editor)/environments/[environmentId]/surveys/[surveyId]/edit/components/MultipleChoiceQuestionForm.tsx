@@ -8,7 +8,7 @@ import { PlusIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TShuffleOption,

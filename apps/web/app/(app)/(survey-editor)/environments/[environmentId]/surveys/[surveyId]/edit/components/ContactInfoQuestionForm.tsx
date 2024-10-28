@@ -3,7 +3,7 @@
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";

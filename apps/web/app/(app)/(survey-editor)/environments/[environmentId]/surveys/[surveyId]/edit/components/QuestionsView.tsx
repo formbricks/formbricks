@@ -21,7 +21,7 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import {

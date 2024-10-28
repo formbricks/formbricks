@@ -5,7 +5,7 @@ import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";

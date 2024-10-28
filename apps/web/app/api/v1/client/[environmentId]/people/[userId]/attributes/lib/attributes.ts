@@ -6,7 +6,7 @@ import { cache } from "@formbricks/lib/cache";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
-import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attributes";
+import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const getContactAttributeKeys = reactCache((environmentId: string) =>

@@ -9,7 +9,7 @@ import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -25,7 +25,7 @@ interface ManageIntegrationProps {
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At"];
@@ -38,7 +38,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
     setIsConnected,
     surveys,
     airtableArray,
-    attributeClasses,
+    contactAttributeKeys,
   } = props;
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -159,7 +159,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           environmentId={environmentId}
           surveys={surveys}
           airtableIntegration={airtableIntegration}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
           {...data}
         />
       )}

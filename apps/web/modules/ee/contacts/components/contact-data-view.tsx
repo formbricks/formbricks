@@ -3,7 +3,7 @@
 import { debounce } from "lodash";
 import { useEffect, useMemo, useState } from "react";
 import React from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { deleteContactAction, getContactAttributeKeysAction, getContactsAction } from "../actions";

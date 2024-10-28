@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";

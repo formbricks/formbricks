@@ -2,7 +2,7 @@
 
 import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
 import { UsersIcon } from "lucide-react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { SegmentActivityTab } from "./SegmentActivityTab";

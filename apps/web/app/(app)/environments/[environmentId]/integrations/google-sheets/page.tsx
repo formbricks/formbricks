@@ -1,5 +1,4 @@
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
@@ -14,14 +13,15 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-s
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { getContactAttributeKeys } from "../lib/contact-attribute-key";
 
 const Page = async ({ params }) => {
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
-  const [surveys, integrations, environment, attributeClasses] = await Promise.all([
+  const [surveys, integrations, environment, contactAttributeKeys] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getContactAttributeKeys(params.environmentId),
   ]);
   if (!environment) {
     throw new Error("Environment not found");
@@ -46,7 +46,7 @@ const Page = async ({ params }) => {
           surveys={surveys}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
         />
       </div>
     </PageContentWrapper>

@@ -28,7 +28,7 @@ export const getNotificationResponse = (
     const parsedSurvey = replaceHeadlineRecall(
       survey as unknown as TSurvey,
       "default",
-      environment.attributeClasses
+      environment.contactAttributeKeys
     ) as TSurvey & { responses: TWeeklyEmailResponseData[] };
     const surveyData: TWeeklySummaryNotificationDataSurvey = {
       id: parsedSurvey.id,

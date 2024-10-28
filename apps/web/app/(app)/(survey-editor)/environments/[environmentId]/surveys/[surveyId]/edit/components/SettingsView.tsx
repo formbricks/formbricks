@@ -1,6 +1,6 @@
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
@@ -34,7 +34,6 @@ export const SettingsView = ({
   responseCount,
   membershipRole,
   isUserTargetingAllowed = false,
-  isFormbricksCloud,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 

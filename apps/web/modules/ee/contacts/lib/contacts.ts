@@ -10,8 +10,8 @@ import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
-import { TContactAttributes } from "@formbricks/types/contact-attributes";
+import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
   TContact,
@@ -20,7 +20,7 @@ import {
   ZContactCSVDuplicateAction,
   ZContactCSVUploadResponse,
 } from "../types/contact";
-import { convertPrismaContactAttributes, transformPrismaContact } from "./utils";
+import { transformPrismaContact } from "./utils";
 
 const selectContact = {
   id: true,

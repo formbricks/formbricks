@@ -1,9 +1,9 @@
 import { TContactWithAttributes, TTransformPersonInput } from "@/modules/ee/contacts/types/contact";
 import { Prisma } from "@prisma/client";
-import { TContactAttributes } from "@formbricks/types/contact-attributes";
+import { TContactAttributes } from "@formbricks/types/contact-attribute";
 
-export const getContactIdentifier = (personAttributes: TContactAttributes | null): string => {
-  return personAttributes?.email ?? personAttributes?.userId ?? "";
+export const getContactIdentifier = (contactAttributes: TContactAttributes | null): string => {
+  return contactAttributes?.email ?? contactAttributes?.userId ?? "";
 };
 
 export const convertPrismaContactAttributes = (

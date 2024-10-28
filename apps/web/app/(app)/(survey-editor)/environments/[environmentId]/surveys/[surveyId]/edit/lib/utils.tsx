@@ -4,7 +4,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { questionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TConditionGroup,
   TLeftOperand,

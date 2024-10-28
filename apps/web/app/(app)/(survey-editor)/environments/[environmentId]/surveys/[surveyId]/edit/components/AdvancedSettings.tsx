@@ -1,5 +1,5 @@
 import { ConditionalLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/ConditionalLogic";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { UpdateQuestionId } from "./UpdateQuestionId";
 

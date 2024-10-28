@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -121,11 +121,11 @@ export const MultipleChoiceSummary = ({
                           <span>{otherValue.value}</span>
                         </div>
                       )}
-                      {surveyType === "app" && otherValue.person && (
+                      {surveyType === "app" && otherValue.contact && (
                         <Link
                           href={
-                            otherValue.person.id
-                              ? `/environments/${environmentId}/people/${otherValue.person.id}`
+                            otherValue.contact.id
+                              ? `/environments/${environmentId}/people/${otherValue.contact.id}`
                               : { pathname: null }
                           }
                           key={idx}
@@ -134,8 +134,10 @@ export const MultipleChoiceSummary = ({
                             <span>{otherValue.value}</span>
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
-                            {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{getPersonIdentifier(otherValue.person, otherValue.personAttributes)}</span>
+                            {otherValue.contact.id && <PersonAvatar personId={otherValue.contact.id} />}
+                            <span>
+                              {getPersonIdentifier(otherValue.contact, otherValue.contactAttributes)}
+                            </span>
                           </div>
                         </Link>
                       )}

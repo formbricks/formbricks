@@ -161,7 +161,7 @@ export const sendResponseFinishedEmail = async (
   response: TResponse,
   responseCount: number
 ): Promise<void> => {
-  const personEmail = response.personAttributes?.email;
+  const personEmail = response.contactAttributes?.email;
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
   if (!organization) {

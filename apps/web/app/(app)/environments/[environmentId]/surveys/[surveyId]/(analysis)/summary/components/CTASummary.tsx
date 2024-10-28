@@ -1,5 +1,5 @@
 import { InboxIcon } from "lucide-react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";

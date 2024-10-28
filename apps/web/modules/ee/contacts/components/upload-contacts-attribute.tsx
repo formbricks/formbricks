@@ -1,7 +1,7 @@
 import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useMemo, useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 
 interface UploadContactsAttributesProps {
   attributeMap: Record<string, string>;

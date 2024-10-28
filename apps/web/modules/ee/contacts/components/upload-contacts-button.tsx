@@ -9,7 +9,7 @@ import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } fro
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { Button } from "@formbricks/ui/components/Button";
 import { Modal } from "@formbricks/ui/components/Modal";
 import { StylingTabs } from "@formbricks/ui/components/StylingTabs";

@@ -8,7 +8,7 @@ import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/organization/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";

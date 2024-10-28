@@ -1,5 +1,5 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { QuestionCard } from "./QuestionCard";

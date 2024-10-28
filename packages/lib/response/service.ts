@@ -270,7 +270,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
             id: person.id,
           },
         },
-        personAttributes: attributes,
+        contactAttributes: attributes,
       }),
       ...(meta && ({ meta } as Prisma.JsonObject)),
       singleUseId,

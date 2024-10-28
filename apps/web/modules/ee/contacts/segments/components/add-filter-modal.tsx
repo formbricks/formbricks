@@ -4,7 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
   TSegment,
@@ -240,12 +240,10 @@ export function AddFilterModal({
     });
   }, [contactAttributeKeys, searchValue]);
 
-  const personAttributesFiltered = useMemo(() => {
-    const personAttributes = [{ name: "userId" }];
+  const contactAttributeFiltered = useMemo(() => {
+    const contactAttributes = [{ name: "userId" }];
 
-    return personAttributes.filter((personAttribute) =>
-      personAttribute.name.toLowerCase().includes(searchValue.toLowerCase())
-    );
+    return contactAttributes.filter((ca) => ca.name.toLowerCase().includes(searchValue.toLowerCase()));
   }, [searchValue]);
 
   const segmentsFiltered = useMemo(() => {
@@ -268,12 +266,12 @@ export function AddFilterModal({
     () => [
       {
         attributes: attributeClassesFiltered,
-        personAttributes: personAttributesFiltered,
+        contactAttributeFiltered,
         segments: segmentsFiltered,
         devices: deviceTypesFiltered,
       },
     ],
-    [attributeClassesFiltered, deviceTypesFiltered, personAttributesFiltered, segmentsFiltered]
+    [attributeClassesFiltered, deviceTypesFiltered, contactAttributeFiltered, segmentsFiltered]
   );
 
   const getAllTabContent = () => {
@@ -284,7 +282,7 @@ export function AddFilterModal({
             filterArr.attributes.length === 0 &&
             filterArr.segments.length === 0 &&
             filterArr.devices.length === 0 &&
-            filterArr.personAttributes.length === 0
+            filterArr.contactAttributeFiltered.length === 0
           );
         }) ? (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
@@ -313,7 +311,7 @@ export function AddFilterModal({
                 );
               })}
 
-              {filters.personAttributes.map((personAttribute) => {
+              {filters.contactAttributeFiltered.map((personAttribute) => {
                 return (
                   <div
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"

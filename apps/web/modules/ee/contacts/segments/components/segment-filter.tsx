@@ -24,7 +24,7 @@ import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isCapitalized } from "@formbricks/lib/utils/strings";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TArithmeticOperator,
   TAttributeOperator,
@@ -782,7 +782,7 @@ export function SegmentFilter({
   environmentId,
   segment,
   segments,
-  contactAttributeKeys: attributeClasses,
+  contactAttributeKeys,
   setSegment,
   handleAddFilterBelow,
   onCreateGroup,
@@ -807,7 +807,7 @@ export function SegmentFilter({
   function RenderFilterModal() {
     return (
       <AddFilterModal
-        contactAttributeKeys={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         onAddFilter={(filter) => {
           handleAddFilterBelow(resource.id, filter);
         }}
@@ -823,7 +823,7 @@ export function SegmentFilter({
       return (
         <>
           <AttributeSegmentFilter
-            contactAttributeKeys={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
             environmentId={environmentId}
             handleAddFilterBelow={handleAddFilterBelow}
@@ -847,7 +847,7 @@ export function SegmentFilter({
       return (
         <>
           <PersonSegmentFilter
-            contactAttributeKeys={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
             environmentId={environmentId}
             handleAddFilterBelow={handleAddFilterBelow}
@@ -871,7 +871,7 @@ export function SegmentFilter({
       return (
         <>
           <SegmentSegmentFilter
-            contactAttributeKeys={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
             environmentId={environmentId}
             handleAddFilterBelow={handleAddFilterBelow}
@@ -894,7 +894,7 @@ export function SegmentFilter({
       return (
         <>
           <DeviceFilter
-            contactAttributeKeys={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
             environmentId={environmentId}
             handleAddFilterBelow={handleAddFilterBelow}

@@ -1,5 +1,5 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-keys";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys/types";
 import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";

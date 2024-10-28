@@ -75,7 +75,7 @@ export const getSurveyFilterDataBySurveySharingKeyAction = actionClient
     const surveyId = await getSurveyIdByResultShareKey(parsedInput.sharingKey);
     if (!surveyId) throw new AuthorizationError("Not authorized");
 
-    const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
+    const [tags, { contactAttributes: attributes, meta, hiddenFields }] = await Promise.all([
       getTagsByEnvironmentId(parsedInput.environmentId),
       getResponseFilteringValues(surveyId),
     ]);
