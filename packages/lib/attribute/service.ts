@@ -2,19 +2,13 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TAttributes, ZAttributes } from "@formbricks/types/attributes";
+import { TAttributes } from "@formbricks/types/attributes";
 import { ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { attributeCache } from "../attribute/cache";
-import { attributeClassCache } from "../attributeClass/cache";
-import {
-  getAttributeClassByName,
-  getAttributeClasses,
-  getAttributeClassesCount,
-} from "../attributeClass/service";
+import { getAttributeClassByName } from "../attributeClass/service";
 import { cache } from "../cache";
-import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "../constants";
 import { getPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 

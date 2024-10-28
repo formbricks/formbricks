@@ -1,7 +1,6 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { notFound } from "next/navigation";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -22,9 +21,8 @@ const Page = async ({ params }) => {
     throw new Error("Survey not found");
   }
   const environmentId = survey.environmentId;
-  const [environment, attributeClasses, product] = await Promise.all([
+  const [environment, product] = await Promise.all([
     getEnvironment(environmentId),
-    getAttributeClasses(environmentId),
     getProductByEnvironmentId(environmentId),
   ]);
 
@@ -55,7 +53,7 @@ const Page = async ({ params }) => {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
-          contactAttributeKeys={attributeClasses}
+          contactAttributeKeys={[]} // not showing any attributes for the sharing page
           isAIEnabled={false} // Disable AI for sharing page for now
         />
       </PageContentWrapper>

@@ -7,7 +7,7 @@ export const getProductsByOrganizationId = async (
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  return await prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where: {
       organizationId: organizationId,
     },
@@ -75,7 +75,7 @@ export const getProductsByOrganizationId = async (
               hiddenFields: true,
             },
           },
-          attributeClasses: {
+          attributeKeys: {
             select: {
               id: true,
               createdAt: true,
@@ -84,7 +84,8 @@ export const getProductsByOrganizationId = async (
               description: true,
               type: true,
               environmentId: true,
-              archived: true,
+              key: true,
+              isUnique: true,
             },
           },
         },
@@ -104,5 +105,22 @@ export const getProductsByOrganizationId = async (
         },
       },
     },
+  });
+
+  return products.map((product) => {
+    const { environments, ...rest } = product;
+    const transformedEnvironments = environments.map((env) => {
+      const { attributeKeys, ...restEnv } = env;
+
+      return {
+        ...restEnv,
+        contactAttributeKeys: attributeKeys,
+      };
+    });
+
+    return {
+      ...rest,
+      environments: transformedEnvironments,
+    };
   });
 };

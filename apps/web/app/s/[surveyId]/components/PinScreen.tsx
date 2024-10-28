@@ -6,7 +6,7 @@ import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { useCallback, useEffect, useState } from "react";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -25,7 +25,7 @@ interface PinScreenProps {
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
 }
 
@@ -43,7 +43,7 @@ export const PinScreen = (props: PinScreenProps) => {
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
-    attributeClasses,
+    contactAttributeKeys,
     isEmbed,
   } = props;
 
@@ -126,7 +126,7 @@ export const PinScreen = (props: PinScreenProps) => {
       webAppUrl={webAppUrl}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
-      attributeClasses={attributeClasses}
+      contactAttributeKeys={contactAttributeKeys}
       isEmbed={isEmbed}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}

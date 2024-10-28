@@ -16,22 +16,4 @@ export const ZContactAttributeKey = z.object({
   environmentId: z.string(),
 });
 
-export const ZContactAttributeKeyInput = z.object({
-  key: z.string(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  type: z.enum(["custom"]),
-  environmentId: z.string(),
-});
-
-export const ZContactAttributeKeyUpdateInput = z.object({
-  key: z.string(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-});
-
-export type TContactAttributeKeyUpdateInput = z.infer<typeof ZContactAttributeKeyUpdateInput>;
-
-export type TContactAttributeKeyInput = z.infer<typeof ZContactAttributeKeyInput>;
-
 export type TContactAttributeKey = z.infer<typeof ZContactAttributeKey>;

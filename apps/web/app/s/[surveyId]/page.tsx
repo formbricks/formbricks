@@ -6,15 +6,14 @@ import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
+import { getContactAttributeKeys } from "./lib/contact-attribute-key";
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
@@ -123,7 +122,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
     throw new Error("Product not found");
   }
 
-  const attributeClasses = await getAttributeClasses(survey.environmentId);
+  const contactAttributeKeys = await getContactAttributeKeys(survey.environmentId);
 
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
@@ -143,15 +142,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
 
   const languageCode = getLanguageCode();
 
-  const userId = searchParams.userId;
-  if (userId) {
-    // make sure the person exists or get's created
-    const person = await getPersonByUserId(survey.environmentId, userId);
-    if (!person) {
-      await createPerson(survey.environmentId, userId);
-    }
-  }
-
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
 
@@ -160,7 +150,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
       <PinScreen
         surveyId={survey.id}
         product={product}
-        userId={userId}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
@@ -170,7 +159,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         isEmbed={isEmbed}
       />
     );
@@ -180,7 +169,6 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
     <LinkSurvey
       survey={survey}
       product={product}
-      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
@@ -188,7 +176,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
-      attributeClasses={attributeClasses}
+      contactAttributeKeys={contactAttributeKeys}
       isEmbed={isEmbed}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}

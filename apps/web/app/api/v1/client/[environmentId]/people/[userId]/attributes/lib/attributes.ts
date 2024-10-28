@@ -98,7 +98,6 @@ export const updateAttributes = async (
   }
 
   // Check if new attribute classes will exceed the limit
-  // const attributeClassCount = await getAttributeClassesCount(environmentId);
   const contactAttributeKeyCount = contactAttributeKeys.length;
 
   const totalAttributeClassesLength = contactAttributeKeyCount + newAttributes.length;

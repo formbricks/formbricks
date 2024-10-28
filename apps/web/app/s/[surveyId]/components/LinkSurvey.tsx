@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TProduct } from "@formbricks/types/product";
 import {
@@ -38,7 +38,7 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
@@ -56,7 +56,7 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
-  attributeClasses,
+  contactAttributeKeys,
   isEmbed,
   IMPRINT_URL,
   PRIVACY_URL,
@@ -169,7 +169,7 @@ export const LinkSurvey = ({
           isErrorComponent={true}
           languageCode={languageCode}
           styling={product.styling}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
         />
       );
     }
@@ -180,7 +180,7 @@ export const LinkSurvey = ({
         survey={survey}
         languageCode={languageCode}
         styling={product.styling}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
     );
   }

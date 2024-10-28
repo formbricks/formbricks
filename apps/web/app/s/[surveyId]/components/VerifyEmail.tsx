@@ -12,7 +12,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
@@ -26,7 +26,7 @@ interface VerifyEmailProps {
   singleUseId?: string;
   languageCode: string;
   styling: TProductStyling;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 const ZVerifyEmailInput = z.object({
@@ -40,7 +40,7 @@ export const VerifyEmail = ({
   singleUseId,
   languageCode,
   styling,
-  attributeClasses,
+  contactAttributeKeys,
 }: VerifyEmailProps) => {
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
@@ -49,8 +49,8 @@ export const VerifyEmail = ({
     resolver: zodResolver(ZVerifyEmailInput),
   });
   survey = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default", attributeClasses);
-  }, [survey, attributeClasses]);
+    return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
+  }, [survey, contactAttributeKeys]);
 
   const { isSubmitting } = form.formState;
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
