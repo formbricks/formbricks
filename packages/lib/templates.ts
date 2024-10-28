@@ -3310,7 +3310,7 @@ const careerDevelopmentSurvey = (): TTemplate => {
           scale: "number",
           headline: {
             default:
-              "I am satisfied with this opportunities , personal and professional growth under {{productName}}.",
+              "I am satisfied with the opportunities for personal and professional growth at {{productName}}.",
           },
           lowerLabel: { default: "Strongly disagree" },
           upperLabel: { default: "Strongly agree" },
@@ -3359,7 +3359,7 @@ const careerDevelopmentSurvey = (): TTemplate => {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: "Which function do you work in?" },
-          subheader: { default: "Please select other is not following options:" },
+          subheader: { default: "Please select one of the following options:" },
           required: true,
           shuffleOption: "none",
           choices: [
@@ -3458,8 +3458,8 @@ const professionalDevelopmentSurvey = (): TTemplate => {
             default:
               "How supported do you feel in your workplace when it comes to pursuing professional development?",
           },
-          lowerLabel: { default: "Extremely supported" },
-          upperLabel: { default: "Not at all supported" },
+          lowerLabel: { default: "Not at all supported" },
+          upperLabel: { default: "Extremely supported" },
           required: true,
           isColorCodingEnabled: false,
         },
@@ -3470,7 +3470,7 @@ const professionalDevelopmentSurvey = (): TTemplate => {
             default: "What is the main reason you would want to spend time on professional development?",
           },
           required: true,
-          shuffleOption: "none",
+          shuffleOption: "exceptLast",
           choices: [
             { id: createId(), label: { default: "Looking for a new job" } },
             { id: createId(), label: { default: "Advancing on my current career path" } },
