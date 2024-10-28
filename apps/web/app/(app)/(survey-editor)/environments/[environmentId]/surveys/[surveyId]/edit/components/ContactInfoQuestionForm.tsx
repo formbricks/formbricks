@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { QuestionToggleTable } from "@formbricks/ui/components/QuestionToggleTable";
@@ -21,6 +22,7 @@ interface ContactInfoQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const ContactInfoQuestionForm = ({
@@ -32,6 +34,7 @@ export const ContactInfoQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: ContactInfoQuestionFormProps): JSX.Element => {
   const t = useTranslations();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
@@ -97,6 +100,7 @@ export const ContactInfoQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -114,6 +118,7 @@ export const ContactInfoQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>

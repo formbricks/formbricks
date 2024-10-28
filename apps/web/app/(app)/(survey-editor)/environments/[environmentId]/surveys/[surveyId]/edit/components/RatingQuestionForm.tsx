@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
@@ -20,6 +21,7 @@ interface RatingQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const RatingQuestionForm = ({
@@ -31,6 +33,7 @@ export const RatingQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: RatingQuestionFormProps) => {
   const t = useTranslations();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -48,6 +51,7 @@ export const RatingQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -65,6 +69,7 @@ export const RatingQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>
@@ -140,6 +145,7 @@ export const RatingQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         </div>
         <div className="flex-1">
@@ -155,6 +161,7 @@ export const RatingQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         </div>
       </div>
@@ -174,6 +181,7 @@ export const RatingQuestionForm = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           </div>
         )}

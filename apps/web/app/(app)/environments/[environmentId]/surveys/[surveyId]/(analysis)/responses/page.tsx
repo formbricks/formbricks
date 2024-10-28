@@ -21,6 +21,7 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
@@ -64,6 +65,7 @@ const Page = async ({ params }) => {
 
   const isAIEnabled = await getIsAIEnabled(organization);
   const shouldGenerateInsights = needsInsightsGeneration(survey);
+  const locale = findMatchingLocale();
 
   return (
     <PageContentWrapper>
@@ -101,6 +103,7 @@ const Page = async ({ params }) => {
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
+        locale={locale}
       />
     </PageContentWrapper>
   );

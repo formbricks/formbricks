@@ -22,6 +22,7 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { Switch } from "@formbricks/ui/components/Switch";
@@ -59,7 +60,7 @@ interface QuestionCardProps {
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const QuestionCard = ({
@@ -249,6 +250,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -261,6 +263,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -273,6 +276,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -285,6 +289,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -297,6 +302,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
@@ -309,6 +315,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -320,6 +327,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -332,6 +340,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -344,6 +353,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
@@ -358,6 +368,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
               isFormbricksCloud={isFormbricksCloud}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
@@ -370,6 +381,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -382,6 +394,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -394,6 +407,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -406,6 +420,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -418,6 +433,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : null}
           <div className="mt-4">
@@ -466,6 +482,7 @@ export const QuestionCard = ({
                           );
                         }}
                         attributeClasses={attributeClasses}
+                        locale={locale}
                       />
                     </div>
                     {questionIdx !== 0 && (
@@ -482,6 +499,7 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         attributeClasses={attributeClasses}
+                        locale={locale}
                         onBlur={(e) => {
                           if (!question.backButtonLabel) return;
                           let translatedBackButtonLabel = {
@@ -511,6 +529,7 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         attributeClasses={attributeClasses}
+                        locale={locale}
                       />
                     </div>
                   )}

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
@@ -19,6 +20,7 @@ interface IDateQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 const dateOptions = [
@@ -45,6 +47,7 @@ export const DateQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: IDateQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const t = useTranslations();
@@ -62,6 +65,7 @@ export const DateQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -78,6 +82,7 @@ export const DateQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>

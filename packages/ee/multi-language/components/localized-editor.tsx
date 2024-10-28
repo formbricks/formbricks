@@ -6,6 +6,7 @@ import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/l
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Editor } from "@formbricks/ui/components/Editor";
 import { LanguageIndicator } from "./language-indicator";
 
@@ -20,6 +21,7 @@ interface LocalizedEditorProps {
   questionIdx: number;
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
+  locale: TUserLocale;
 }
 
 const checkIfValueIsIncomplete = (
@@ -45,6 +47,7 @@ export function LocalizedEditor({
   questionIdx,
   firstRender,
   setFirstRender,
+  locale,
 }: LocalizedEditorProps) {
   const t = useTranslations();
   const surveyLanguageCodes = useMemo(
@@ -86,6 +89,7 @@ export function LocalizedEditor({
             setFirstRender={setFirstRender}
             setSelectedLanguageCode={setSelectedLanguageCode}
             surveyLanguages={localSurvey.languages}
+            locale={locale}
           />
 
           {value && selectedLanguageCode !== "default" && value.default ? (

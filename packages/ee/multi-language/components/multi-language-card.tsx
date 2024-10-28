@@ -11,6 +11,7 @@ import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
@@ -29,6 +30,7 @@ interface MultiLanguageCardProps {
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   setSelectedLanguageCode: (language: string) => void;
+  locale: TUserLocale;
 }
 
 export interface ConfirmationModalProps {
@@ -49,6 +51,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   isMultiLanguageAllowed,
   isFormbricksCloud,
   setSelectedLanguageCode,
+  locale,
 }) => {
   const t = useTranslations();
   const environmentId = localSurvey.environmentId;
@@ -261,6 +264,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                           handleDefaultLanguageChange={handleDefaultLanguageChange}
                           product={product}
                           setConfirmationModalInfo={setConfirmationModalInfo}
+                          locale={locale}
                         />
                         {defaultLanguage ? (
                           <SecondaryLanguageSelect
@@ -270,6 +274,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                             setActiveQuestionId={setActiveQuestionId}
                             setSelectedLanguageCode={setSelectedLanguageCode}
                             updateSurveyLanguages={updateSurveyLanguages}
+                            locale={locale}
                           />
                         ) : null}
                       </div>

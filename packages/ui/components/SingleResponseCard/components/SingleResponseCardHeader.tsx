@@ -8,7 +8,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "../../Avatars";
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
@@ -28,6 +28,7 @@ interface SingleResponseCardHeaderProps {
   user?: TUser;
   isViewer: boolean;
   setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
+  locale: TUserLocale;
 }
 
 export const SingleResponseCardHeader = ({
@@ -38,6 +39,7 @@ export const SingleResponseCardHeader = ({
   user,
   isViewer,
   setDeleteDialogOpen,
+  locale,
 }: SingleResponseCardHeaderProps) => {
   const t = useTranslations();
   const displayIdentifier = response.person
@@ -194,7 +196,7 @@ export const SingleResponseCardHeader = ({
           )}
           {response.language && response.language !== "default" && (
             <div className="flex space-x-2 rounded-full bg-slate-700 px-2 py-1 text-xs text-white">
-              <div>{getLanguageLabel(response.language)}</div>
+              <div>{getLanguageLabel(response.language, locale)}</div>
               <LanguagesIcon className="h-4 w-4" />
             </div>
           )}

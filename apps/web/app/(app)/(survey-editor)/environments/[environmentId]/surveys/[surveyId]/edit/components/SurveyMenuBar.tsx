@@ -41,6 +41,7 @@ interface SurveyMenuBarProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
+  locale: string;
 }
 
 export const SurveyMenuBar = ({
@@ -55,6 +56,7 @@ export const SurveyMenuBar = ({
   responseCount,
   selectedLanguageCode,
   isCxMode,
+  locale,
 }: SurveyMenuBarProps) => {
   const t = useTranslations();
   const router = useRouter();
@@ -187,7 +189,7 @@ export const SurveyMenuBar = ({
         const params = currentError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
           const invalidLanguageLabels = params.invalidLanguageCodes.map(
-            (invalidLanguage: string) => getLanguageLabel(invalidLanguage) ?? invalidLanguage
+            (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
           );
 
           const messageSplit = currentError.message.split("-fLang-")[0];

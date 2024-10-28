@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 import {
@@ -20,6 +21,7 @@ import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
   product: TProduct;
+  locale: TUserLocale;
 }
 
 const checkIfDuplicateExists = (arr: string[]) => {
@@ -64,7 +66,7 @@ const validateLanguages = (languages: TLanguage[], t: (key: string) => string) =
   return true;
 };
 
-export function EditLanguage({ product }: EditLanguageProps) {
+export function EditLanguage({ product, locale }: EditLanguageProps) {
   const t = useTranslations();
   const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
@@ -176,6 +178,7 @@ export function EditLanguage({ product }: EditLanguageProps) {
                 isEditing={isEditing}
                 key={language.id}
                 language={language}
+                locale={locale}
                 onDelete={() => handleDeleteLanguage(language.id)}
                 onLanguageChange={(newLanguage: TLanguage) => {
                   const updatedLanguages = [...languages];

@@ -13,6 +13,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -30,6 +31,7 @@ interface FileUploadFormProps {
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
   isFormbricksCloud: boolean;
+  locale: TUserLocale;
 }
 
 export const FileUploadQuestionForm = ({
@@ -43,6 +45,7 @@ export const FileUploadQuestionForm = ({
   setSelectedLanguageCode,
   attributeClasses,
   isFormbricksCloud,
+  locale,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
   const t = useTranslations();
@@ -139,6 +142,7 @@ export const FileUploadQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -155,6 +159,7 @@ export const FileUploadQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>

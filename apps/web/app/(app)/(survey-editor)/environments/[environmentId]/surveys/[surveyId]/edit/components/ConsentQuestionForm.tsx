@@ -5,6 +5,7 @@ import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
@@ -17,6 +18,7 @@ interface ConsentQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const ConsentQuestionForm = ({
@@ -28,6 +30,7 @@ export const ConsentQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: ConsentQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
   const t = useTranslations();
@@ -44,6 +47,7 @@ export const ConsentQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <div className="mt-3">
@@ -60,6 +64,7 @@ export const ConsentQuestionForm = ({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
+            locale={locale}
           />
         </div>
       </div>
@@ -76,6 +81,7 @@ export const ConsentQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
     </form>
   );

@@ -3,6 +3,7 @@
 import { ArrowLeftIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
@@ -21,6 +22,7 @@ interface EmbedViewProps {
   surveyUrl: string;
   setSurveyUrl: React.Dispatch<React.SetStateAction<string>>;
   webAppUrl: string;
+  locale: TUserLocale;
 }
 
 export const EmbedView = ({
@@ -35,6 +37,7 @@ export const EmbedView = ({
   surveyUrl,
   setSurveyUrl,
   webAppUrl,
+  locale,
 }: EmbedViewProps) => {
   const t = useTranslations();
   return (
@@ -85,6 +88,7 @@ export const EmbedView = ({
               webAppUrl={webAppUrl}
               surveyUrl={surveyUrl}
               setSurveyUrl={setSurveyUrl}
+              locale={locale}
             />
           ) : activeId === "app" ? (
             <AppTab environmentId={environmentId} />

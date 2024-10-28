@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
@@ -10,6 +11,7 @@ interface SecondaryLanguageSelectProps {
   setActiveQuestionId: (questionId: TSurveyQuestionId) => void;
   localSurvey: TSurvey;
   updateSurveyLanguages: (language: TLanguage) => void;
+  locale: TUserLocale;
 }
 
 export function SecondaryLanguageSelect({
@@ -19,6 +21,7 @@ export function SecondaryLanguageSelect({
   setActiveQuestionId,
   localSurvey,
   updateSurveyLanguages,
+  locale,
 }: SecondaryLanguageSelectProps) {
   const t = useTranslations();
   const isLanguageToggled = (language: TLanguage) => {
@@ -46,6 +49,7 @@ export function SecondaryLanguageSelect({
             onToggle={() => {
               updateSurveyLanguages(language);
             }}
+            locale={locale}
           />
         ))}
     </div>

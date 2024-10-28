@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "../Button";
 import { generateSingleUseIdAction } from "./actions";
 import { LanguageDropdown } from "./components/LanguageDropdown";
@@ -14,9 +15,16 @@ interface ShareSurveyLinkProps {
   webAppUrl: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
+  locale: TUserLocale;
 }
 
-export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: ShareSurveyLinkProps) => {
+export const ShareSurveyLink = ({
+  survey,
+  webAppUrl,
+  surveyUrl,
+  setSurveyUrl,
+  locale,
+}: ShareSurveyLinkProps) => {
   const t = useTranslations();
   const [language, setLanguage] = useState("default");
 
@@ -63,7 +71,7 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
       className={`flex max-w-full flex-col items-center justify-center space-x-2 ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
       <SurveyLinkDisplay surveyUrl={surveyUrl} />
       <div className="mt-2 flex items-center justify-center space-x-2">
-        <LanguageDropdown survey={survey} setLanguage={setLanguage} />
+        <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
           aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}

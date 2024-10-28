@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -20,6 +21,7 @@ interface NPSQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const NPSQuestionForm = ({
@@ -32,6 +34,7 @@ export const NPSQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: NPSQuestionFormProps): JSX.Element => {
   const t = useTranslations();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -51,6 +54,7 @@ export const NPSQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -68,6 +72,7 @@ export const NPSQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>
@@ -103,6 +108,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         </div>
         <div className="w-full">
@@ -117,6 +123,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         </div>
       </div>
@@ -136,6 +143,7 @@ export const NPSQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         </div>
       )}

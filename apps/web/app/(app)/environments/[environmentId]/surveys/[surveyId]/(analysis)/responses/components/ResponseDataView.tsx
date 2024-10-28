@@ -5,7 +5,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 
 interface ResponseDataViewProps {
   survey: TSurvey;
@@ -19,6 +19,7 @@ interface ResponseDataViewProps {
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   isFetchingFirstPage: boolean;
+  locale: TUserLocale;
 }
 
 const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
@@ -109,6 +110,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   deleteResponses,
   updateResponse,
   isFetchingFirstPage,
+  locale,
 }) => {
   const t = useTranslations();
   const data = mapResponsesToTableData(responses, survey, t);
@@ -128,6 +130,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         deleteResponses={deleteResponses}
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
+        locale={locale}
       />
     </div>
   );

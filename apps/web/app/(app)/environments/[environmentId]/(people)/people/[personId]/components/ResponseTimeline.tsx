@@ -9,7 +9,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];
@@ -18,6 +18,7 @@ interface ResponseTimelineProps {
   environment: TEnvironment;
   environmentTags: TTag[];
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const ResponseTimeline = ({
@@ -27,6 +28,7 @@ export const ResponseTimeline = ({
   responses,
   environmentTags,
   attributeClasses,
+  locale,
 }: ResponseTimelineProps) => {
   const t = useTranslations();
   const [sortedResponses, setSortedResponses] = useState(responses);
@@ -58,6 +60,7 @@ export const ResponseTimeline = ({
         user={user}
         environmentTags={environmentTags}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
     </div>
   );

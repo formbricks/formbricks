@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TI18nString, TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -26,6 +27,7 @@ interface RankingQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const RankingQuestionForm = ({
@@ -37,6 +39,7 @@ export const RankingQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: RankingQuestionFormProps): JSX.Element => {
   const t = useTranslations();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -125,6 +128,7 @@ export const RankingQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -142,6 +146,7 @@ export const RankingQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>
@@ -206,6 +211,7 @@ export const RankingQuestionForm = ({
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
                       attributeClasses={attributeClasses}
+                      locale={locale}
                     />
                   ))}
               </div>

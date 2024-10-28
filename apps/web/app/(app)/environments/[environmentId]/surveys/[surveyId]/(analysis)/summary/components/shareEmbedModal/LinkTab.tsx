@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ShareSurveyLink } from "@formbricks/ui/components/ShareSurveyLink";
 
 interface LinkTabProps {
@@ -8,9 +9,10 @@ interface LinkTabProps {
   webAppUrl: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
+  locale: TUserLocale;
 }
 
-export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: LinkTabProps) => {
+export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
   const t = useTranslations();
   const docsLinks = [
     {
@@ -46,6 +48,7 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: LinkTabP
           webAppUrl={webAppUrl}
           surveyUrl={surveyUrl}
           setSurveyUrl={setSurveyUrl}
+          locale={locale}
         />
       </div>
       <div className="flex flex-wrap justify-between gap-2">

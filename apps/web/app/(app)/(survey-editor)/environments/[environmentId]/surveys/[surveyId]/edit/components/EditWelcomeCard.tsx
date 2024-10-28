@@ -9,6 +9,7 @@ import { LocalizedEditor } from "@formbricks/ee/multi-language/components/locali
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { FileInput } from "@formbricks/ui/components/FileInput";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -23,6 +24,7 @@ interface EditWelcomeCardProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const EditWelcomeCard = ({
@@ -34,6 +36,7 @@ export const EditWelcomeCard = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: EditWelcomeCardProps) => {
   const t = useTranslations();
   const [firstRender, setFirstRender] = useState(true);
@@ -134,6 +137,7 @@ export const EditWelcomeCard = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
             <div className="mt-3">
@@ -150,6 +154,7 @@ export const EditWelcomeCard = ({
                   firstRender={firstRender}
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
+                  locale={locale}
                 />
               </div>
             </div>
@@ -170,6 +175,7 @@ export const EditWelcomeCard = ({
                     setSelectedLanguageCode={setSelectedLanguageCode}
                     attributeClasses={attributeClasses}
                     label={t("environments.surveys.edit.next_button_label")}
+                    locale={locale}
                   />
                 </div>
               </div>

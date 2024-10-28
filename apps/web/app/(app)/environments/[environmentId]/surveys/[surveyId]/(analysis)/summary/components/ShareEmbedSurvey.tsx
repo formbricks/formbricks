@@ -102,6 +102,7 @@ export const ShareEmbedSurvey = ({
                 webAppUrl={webAppUrl}
                 surveyUrl={surveyUrl}
                 setSurveyUrl={setSurveyUrl}
+                locale={user.locale}
               />
             </div>
             <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
@@ -150,6 +151,7 @@ export const ShareEmbedSurvey = ({
             surveyUrl={surveyUrl}
             setSurveyUrl={setSurveyUrl}
             webAppUrl={webAppUrl}
+            locale={user.locale}
           />
         ) : showView === "panel" ? (
           <PanelInfoView handleInitialPageButton={handleInitialPageButton} disableBack={false} />

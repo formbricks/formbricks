@@ -6,6 +6,7 @@ import { cn } from "@formbricks/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { FileInput } from "@formbricks/ui/components/FileInput";
 import { Label } from "@formbricks/ui/components/Label";
@@ -22,6 +23,7 @@ interface PictureSelectionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const PictureSelectionForm = ({
@@ -33,6 +35,7 @@ export const PictureSelectionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   attributeClasses,
+  locale,
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -81,6 +84,7 @@ export const PictureSelectionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -97,6 +101,7 @@ export const PictureSelectionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>

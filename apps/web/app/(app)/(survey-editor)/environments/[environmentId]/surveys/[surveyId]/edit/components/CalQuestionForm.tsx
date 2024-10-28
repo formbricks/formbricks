@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -20,6 +21,7 @@ interface CalQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const CalQuestionForm = ({
@@ -31,6 +33,7 @@ export const CalQuestionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   attributeClasses,
+  locale,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
@@ -58,6 +61,7 @@ export const CalQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div>
         {question.subheader !== undefined && (
@@ -74,6 +78,7 @@ export const CalQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>

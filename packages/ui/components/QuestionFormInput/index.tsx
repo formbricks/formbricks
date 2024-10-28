@@ -29,6 +29,7 @@ import {
   TSurveyRecallItem,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { LanguageIndicator } from "../../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../../lib/i18n/utils";
 import { FileInput } from "../FileInput";
@@ -66,6 +67,7 @@ interface QuestionFormInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const QuestionFormInput = ({
@@ -86,6 +88,7 @@ export const QuestionFormInput = ({
   onBlur,
   className,
   attributeClasses,
+  locale,
 }: QuestionFormInputProps) => {
   const t = useTranslations();
   const defaultLanguageCode =
@@ -595,6 +598,7 @@ export const QuestionFormInput = ({
                   selectedLanguageCode={usedLanguageCode}
                   surveyLanguages={enabledLanguages}
                   setSelectedLanguageCode={setSelectedLanguageCode}
+                  locale={locale}
                 />
               )}
               {!showRecallItemSelect && showFallbackInput && recallItems.length > 0 && (

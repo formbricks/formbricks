@@ -12,6 +12,7 @@ import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
 import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
@@ -37,7 +38,7 @@ interface SurveyEditorProps {
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const SurveyEditor = ({
@@ -146,6 +147,7 @@ export const SurveyEditor = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
+        locale={locale}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main

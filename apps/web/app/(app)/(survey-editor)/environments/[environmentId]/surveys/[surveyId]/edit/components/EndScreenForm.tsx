@@ -5,6 +5,7 @@ import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -19,6 +20,7 @@ interface EndScreenFormProps {
   attributeClasses: TAttributeClass[];
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
+  locale: TUserLocale;
 }
 
 export const EndScreenForm = ({
@@ -30,6 +32,7 @@ export const EndScreenForm = ({
   attributeClasses,
   updateSurvey,
   endingCard,
+  locale,
 }: EndScreenFormProps) => {
   const t = useTranslations();
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
@@ -49,6 +52,7 @@ export const EndScreenForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <QuestionFormInput
@@ -62,6 +66,7 @@ export const EndScreenForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="mt-4">
         <div className="flex items-center space-x-1">
@@ -107,6 +112,7 @@ export const EndScreenForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
             <div className="space-y-2">

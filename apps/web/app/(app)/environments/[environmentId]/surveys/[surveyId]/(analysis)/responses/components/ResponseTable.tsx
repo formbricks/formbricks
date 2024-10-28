@@ -22,6 +22,7 @@ import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   DataTableHeader,
@@ -44,6 +45,7 @@ interface ResponseTableProps {
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   isFetchingFirstPage: boolean;
+  locale: TUserLocale;
 }
 
 export const ResponseTable = ({
@@ -59,6 +61,7 @@ export const ResponseTable = ({
   deleteResponses,
   updateResponse,
   isFetchingFirstPage,
+  locale,
 }: ResponseTableProps) => {
   const t = useTranslations();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -263,6 +266,7 @@ export const ResponseTable = ({
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
             open={selectedResponse !== null}
+            locale={locale}
             setOpen={(open) => {
               if (!open) {
                 setSelectedResponseId(null);

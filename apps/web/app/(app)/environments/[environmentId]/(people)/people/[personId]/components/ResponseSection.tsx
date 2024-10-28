@@ -5,6 +5,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -41,6 +42,7 @@ export const ResponseSection = async ({
   if (!responses) {
     throw new Error(t("environments.people.no_responses_found"));
   }
+  const locale = findMatchingLocale();
 
   return (
     <ResponseTimeline
@@ -50,6 +52,7 @@ export const ResponseSection = async ({
       environment={environment}
       environmentTags={environmentTags}
       attributeClasses={attributeClasses}
+      locale={locale}
     />
   );
 };

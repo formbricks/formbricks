@@ -35,6 +35,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -62,7 +63,7 @@ interface QuestionsViewProps {
   attributeClasses: TAttributeClass[];
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const QuestionsView = ({
@@ -431,6 +432,7 @@ export const QuestionsView = ({
             setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         </div>
       )}
@@ -525,6 +527,7 @@ export const QuestionsView = ({
               isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
               setSelectedLanguageCode={setSelectedLanguageCode}
+              locale={locale}
             />
           </>
         )}

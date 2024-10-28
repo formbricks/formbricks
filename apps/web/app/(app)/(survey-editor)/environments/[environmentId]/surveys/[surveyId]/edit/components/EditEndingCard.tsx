@@ -20,6 +20,7 @@ import {
   TSurveyQuestionId,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
@@ -36,7 +37,7 @@ interface EditEndingCardProps {
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const EditEndingCard = ({
@@ -244,6 +245,7 @@ export const EditEndingCard = ({
               attributeClasses={attributeClasses}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
+              locale={locale}
             />
           )}
           {endingCard.type === "redirectToUrl" && (

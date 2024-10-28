@@ -6,7 +6,13 @@ import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
-import { TLocale, TUser, TUserCreateInput, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import {
+  TUser,
+  TUserCreateInput,
+  TUserLocale,
+  TUserUpdateInput,
+  ZUserUpdateInput,
+} from "@formbricks/types/user";
 import { cache } from "../cache";
 import { createCustomerIoCustomer } from "../customerio";
 import { deleteMembership, updateMembership } from "../membership/service";
@@ -288,7 +294,7 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
 };
 
 export const getUserLocale = reactCache(
-  (id: string): Promise<TLocale | undefined> =>
+  (id: string): Promise<TUserLocale | undefined> =>
     cache(
       async () => {
         validateInputs([id, ZId]);

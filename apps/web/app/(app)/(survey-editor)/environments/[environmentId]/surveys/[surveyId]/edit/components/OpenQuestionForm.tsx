@@ -10,6 +10,7 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
@@ -33,6 +34,7 @@ interface OpenQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const OpenQuestionForm = ({
@@ -44,6 +46,7 @@ export const OpenQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: OpenQuestionFormProps): JSX.Element => {
   const t = useTranslations();
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
@@ -72,6 +75,7 @@ export const OpenQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
         label={t("environments.surveys.edit.question") + "*"}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -89,6 +93,7 @@ export const OpenQuestionForm = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
                 label={t("common.description")}
+                locale={locale}
               />
             </div>
           </div>
@@ -125,6 +130,7 @@ export const OpenQuestionForm = ({
           setSelectedLanguageCode={setSelectedLanguageCode}
           attributeClasses={attributeClasses}
           label={t("common.placeholder")}
+          locale={locale}
         />
       </div>
 

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -22,6 +23,7 @@ interface MatrixQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const MatrixQuestionForm = ({
@@ -33,6 +35,7 @@ export const MatrixQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const t = useTranslations();
@@ -114,6 +117,7 @@ export const MatrixQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -130,6 +134,7 @@ export const MatrixQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>
@@ -171,6 +176,7 @@ export const MatrixQuestionForm = ({
                     isInvalid && !isLabelValidForAllLanguages(question.rows[index], localSurvey.languages)
                   }
                   attributeClasses={attributeClasses}
+                  locale={locale}
                 />
                 {question.rows.length > 2 && (
                   <TrashIcon
@@ -213,6 +219,7 @@ export const MatrixQuestionForm = ({
                     isInvalid && !isLabelValidForAllLanguages(question.columns[index], localSurvey.languages)
                   }
                   attributeClasses={attributeClasses}
+                  locale={locale}
                 />
                 {question.columns.length > 2 && (
                   <TrashIcon

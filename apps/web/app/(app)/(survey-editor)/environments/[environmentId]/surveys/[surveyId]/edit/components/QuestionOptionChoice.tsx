@@ -13,6 +13,7 @@ import {
   TSurveyQuestionChoice,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
@@ -35,6 +36,7 @@ interface ChoiceProps {
   ) => void;
   surveyLanguageCodes: string[];
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const QuestionOptionChoice = ({
@@ -53,6 +55,7 @@ export const QuestionOptionChoice = ({
   surveyLanguageCodes,
   updateQuestion,
   attributeClasses,
+  locale,
 }: ChoiceProps) => {
   const t = useTranslations();
   const isDragDisabled = choice.id === "other";
@@ -94,6 +97,7 @@ export const QuestionOptionChoice = ({
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
           attributeClasses={attributeClasses}
+          locale={locale}
         />
         {choice.id === "other" && (
           <QuestionFormInput
@@ -115,6 +119,7 @@ export const QuestionOptionChoice = ({
             }
             className="border border-dashed"
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         )}
       </div>
