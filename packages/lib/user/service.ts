@@ -153,7 +153,6 @@ const deleteUserById = async (id: string): Promise<TUser> => {
 
 export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   validateInputs([data, ZUserUpdateInput]);
-  console.log("data", data);
   try {
     const user = await prisma.user.create({
       data: data,

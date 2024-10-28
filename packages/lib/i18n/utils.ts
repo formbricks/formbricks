@@ -879,18 +879,38 @@ export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): 
 export const appLanguages = [
   {
     code: "en-US",
-    label: "English (US)",
+    label: {
+      "en-US": "English (US)",
+      "hi-IN": "अंग्रेज़ी (यूएस)",
+      "de-DE": "Englisch (US)",
+      "pt-BR": "Inglês (EUA)",
+    },
   },
   {
     code: "de-DE",
-    label: "German",
+    label: {
+      "en-US": "German",
+      "hi-IN": "जर्मन",
+      "de-DE": "Deutsch",
+      "pt-BR": "Alemão",
+    },
   },
   {
-    code: "hi",
-    label: "Hindi",
+    code: "hi-IN",
+    label: {
+      "en-US": "Hindi",
+      "hi-IN": "हिंदी",
+      "de-DE": "Hindi",
+      "pt-BR": "Hindi",
+    },
   },
   {
     code: "pt-BR",
-    label: "Portuguese (Brazil)",
+    label: {
+      "en-US": "Portuguese (Brazil)",
+      "hi-IN": "पुर्तगाली (ब्राज़ील)",
+      "de-DE": "Portugiesisch (Brasilien)",
+      "pt-BR": "Português (Brasil)",
+    },
   },
 ];

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronDownIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -92,9 +93,13 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
                   <DropdownMenuTrigger asChild>
                     <Button
                       type="button"
-                      className="w-full border border-slate-300 px-3 text-left"
+                      className="h-10 w-full border border-slate-300 px-3 text-left"
                       variant="minimal">
-                      {appLanguages.find((language) => language.code === field.value)?.label || "NA"}
+                      <div className="flex w-full items-center justify-between">
+                        {appLanguages.find((language) => language.code === field.value)?.label[field.value] ||
+                          "NA"}
+                        <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                      </div>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
@@ -106,7 +111,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
                         key={language.code}
                         onClick={() => field.onChange(language.code)}
                         className="min-h-8 cursor-pointer">
-                        {language.label}
+                        {language.label[field.value]}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
