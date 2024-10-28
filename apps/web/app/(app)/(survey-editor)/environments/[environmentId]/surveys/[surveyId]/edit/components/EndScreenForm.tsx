@@ -102,7 +102,7 @@ export const EndScreenForm = ({
               <QuestionFormInput
                 id="buttonLabel"
                 label={t("environments.surveys.edit.button_label")}
-                placeholder="Create your own Survey"
+                placeholder={t("environments.surveys.edit.create_your_own_survey")}
                 className="bg-white"
                 value={endingCard.buttonLabel}
                 localSurvey={localSurvey}
