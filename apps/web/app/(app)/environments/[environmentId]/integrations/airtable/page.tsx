@@ -42,7 +42,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
-      <PageHeader pageTitle="environments.integrations.airtable.airtable_integration" />
+      <PageHeader pageTitle={t("environments.integrations.airtable.airtable_integration")} />
       <div className="h-[75vh] w-full">
         <AirtableWrapper
           isEnabled={isEnabled}

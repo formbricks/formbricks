@@ -1805,6 +1805,7 @@
     },
     "organization": {
       "create": {
+        "continue": "Continue",
         "delete_account": "Delete account",
         "delete_account_description": "If you want to delete your account, you can do so by clicking the button below.",
         "description": "Make it yours.",

@@ -39,9 +39,10 @@ const LoadingCard = () => {
 };
 
 const Loading = () => {
+  const t = useTranslations();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="common.configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation activeId="api-keys" loading />
       </PageHeader>
       <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>

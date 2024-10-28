@@ -24,7 +24,7 @@ const Loading = () => {
   const t = useTranslations();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="common.configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
