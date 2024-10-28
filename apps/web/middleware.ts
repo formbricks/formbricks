@@ -4,6 +4,7 @@ import {
   shareUrlLimiter,
   signUpLimiter,
   syncUserIdentificationLimiter,
+  forgotPasswordLimiter,
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
@@ -12,6 +13,7 @@ import {
   loginRoute,
   shareUrlRoute,
   signupRoute,
+  forgotPasswordRoute,
 } from "@/app/middleware/endpointValidator";
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
@@ -60,6 +62,8 @@ export const middleware = async (request: NextRequest) => {
         }
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter(`share-${ip}`);
+      } else if (forgotPasswordRoute(request.nextUrl.pathname)) {
+        await forgotPasswordLimiter(`forgot-password-${ip}`);
       }
       return NextResponse.next();
     } catch (e) {
@@ -83,5 +87,6 @@ export const config = {
     "/api/auth/signout",
     "/auth/login",
     "/api/packages/:path*",
+    "/api/v1/users/forgot-password",
   ],
 };

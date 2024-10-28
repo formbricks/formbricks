@@ -1,10 +1,13 @@
 import { prisma } from "@formbricks/database";
 import { sendForgotPasswordEmail } from "@formbricks/email";
+import { loginLimiter } from "@/app/middleware/bucket";
 
 export const POST = async (request: Request) => {
   const { email } = await request.json();
 
   try {
+    await loginLimiter(request.headers.get("x-forwarded-for") || request.connection.remoteAddress);
+
     const foundUser = await prisma.user.findUnique({
       where: {
         email: email.toLowerCase(),

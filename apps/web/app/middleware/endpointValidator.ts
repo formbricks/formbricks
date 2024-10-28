@@ -28,3 +28,5 @@ export const isSyncWithUserIdentificationEndpoint = (
   const match = url.match(regex);
   return match ? { environmentId: match[1], userId: match[2] } : false;
 };
+
+export const forgotPasswordRoute = (url: string) => url === "/api/v1/users/forgot-password";

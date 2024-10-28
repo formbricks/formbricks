@@ -29,3 +29,8 @@ export const syncUserIdentificationLimiter = rateLimit({
   interval: SYNC_USER_IDENTIFICATION_RATE_LIMIT.interval,
   allowedPerInterval: SYNC_USER_IDENTIFICATION_RATE_LIMIT.allowedPerInterval,
 });
+
+export const forgotPasswordLimiter = rateLimit({
+  interval: LOGIN_RATE_LIMIT.interval,
+  allowedPerInterval: LOGIN_RATE_LIMIT.allowedPerInterval,
+});
