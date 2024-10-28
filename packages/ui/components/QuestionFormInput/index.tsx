@@ -127,6 +127,7 @@ export const QuestionFormInput = ({
     if (isWelcomeCard) {
       return getWelcomeCardText(localSurvey, id, surveyLanguageCodes);
     }
+
     if (isEndingCard) {
       return getEndingCardText(localSurvey, id, surveyLanguageCodes, questionIdx);
     }
