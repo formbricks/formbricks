@@ -51,7 +51,7 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
 
   const generateNewSingleUseLink = () => {
     getUrl();
-    toast.success("New single use link generated");
+    toast.success(t("environments.surveys.new_single_use_link_generated"));
   };
 
   useEffect(() => {
@@ -65,8 +65,8 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
       <div className="mt-2 flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} />
         <Button
-          title="Preview survey in a new tab"
-          aria-label="Preview survey in a new tab"
+          title={t("environments.surveys.preview_survey_in_a_new_tab")}
+          aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
           onClick={() => {
             let previewUrl = surveyUrl;
             if (previewUrl.includes("?")) {
@@ -81,11 +81,11 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
         </Button>
         <Button
           variant="secondary"
-          title="Copy survey link to clipboard"
-          aria-label="Copy survey link to clipboard"
+          title={t("environments.surveys.copy_survey_link_to_clipboard")}
+          aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
           onClick={() => {
             navigator.clipboard.writeText(surveyUrl);
-            toast.success("URL copied to clipboard!");
+            toast.success(t("common.copied_to_clipboard"));
           }}
           EndIcon={Copy}>
           {t("common.copy")}

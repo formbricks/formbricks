@@ -199,7 +199,10 @@ export const SurveyVariablesCardItem = ({
                     field.onChange(value);
                   }}>
                   <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Select type" className="text-sm" />
+                    <SelectValue
+                      placeholder={t("environments.surveys.edit.select_type")}
+                      className="text-sm"
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={"number"}>{t("common.number")}</SelectItem>

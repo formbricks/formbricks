@@ -18,12 +18,12 @@ const Page = async ({ params }: ConnectPageProps) => {
   const environment = await getEnvironment(params.environmentId);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const channel = product.config.channel || null;

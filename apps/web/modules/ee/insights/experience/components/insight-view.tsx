@@ -122,7 +122,7 @@ export const InsightView = ({
           <TabsTrigger value="complaint">{t("environments.experience.complaint")}</TabsTrigger>
           <TabsTrigger value="featureRequest">{t("environments.experience.feature_request")}</TabsTrigger>
           <TabsTrigger value="praise">{t("environments.experience.praise")}</TabsTrigger>
-          <TabsTrigger value="other">{t("environments.experience.other")}</TabsTrigger>
+          <TabsTrigger value="other">{t("common.other")}</TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab}>
           <Table>

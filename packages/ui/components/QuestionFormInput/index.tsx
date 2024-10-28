@@ -3,6 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -86,6 +87,7 @@ export const QuestionFormInput = ({
   className,
   attributeClasses,
 }: QuestionFormInputProps) => {
+  const t = useTranslations();
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
@@ -367,7 +369,7 @@ export const QuestionFormInput = ({
   const addRecallItem = useCallback(
     (recallItem: TSurveyRecallItem) => {
       if (recallItem.label.trim() === "") {
-        toast.error("Cannot add question with empty headline as recall");
+        toast.error(t("environments.surveys.edit.cannot_add_question_with_empty_headline_as_recall"));
         return;
       }
 
@@ -557,7 +559,7 @@ export const QuestionFormInput = ({
                     e.preventDefault();
                     setShowFallbackInput(true);
                   }}>
-                  Edit Recall
+                  {t("environments.surveys.edit.edit_recall")}
                   <PencilIcon className="ml-2 h-3 w-3" />
                 </button>
               )}
@@ -567,7 +569,7 @@ export const QuestionFormInput = ({
                 className={`absolute top-0 text-black caret-black ${
                   localSurvey.languages?.length > 1 ? "pr-24" : ""
                 } ${className}`}
-                placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
+                placeholder={placeholder ? placeholder : getPlaceHolderById(id, t)}
                 id={id}
                 name={id}
                 aria-label={label}
@@ -639,12 +641,12 @@ export const QuestionFormInput = ({
       </div>
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
-          <strong>Translate:</strong>{" "}
+          <strong>{t("ee.multi_language.translate")}:</strong>{" "}
           {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
-        <div className="mt-1 text-xs text-red-400">Incomplete translations</div>
+        <div className="mt-1 text-xs text-red-400">{t("ee.multi_language.incomplete_translations")}</div>
       )}
     </div>
   );

@@ -130,7 +130,7 @@ export const ThemeStyling = ({
 
     form.reset({ ...defaultStyling });
 
-    toast.success("Styling updated successfully.");
+    toast.success(t("environments.product.look.styling_updated_successfully"));
     router.refresh();
   }, [form, product.id, router]);
 
@@ -144,7 +144,7 @@ export const ThemeStyling = ({
 
     if (updatedProductResponse?.data) {
       form.reset({ ...updatedProductResponse.data.styling });
-      toast.success("Styling updated successfully.");
+      toast.success(t("environments.product.look.styling_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedProductResponse);
       toast.error(errorMessage);

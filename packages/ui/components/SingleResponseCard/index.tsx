@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -43,6 +44,7 @@ export const SingleResponseCard = ({
   isViewer,
   setSelectedResponseId,
 }: SingleResponseCardProps) => {
+  const t = useTranslations();
   const environmentId = survey.environmentId;
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -90,13 +92,13 @@ export const SingleResponseCard = ({
     setIsDeleting(true);
     try {
       if (isViewer) {
-        throw new Error("You are not authorized to perform this action.");
+        throw new Error(t("common.not_authorized"));
       }
       await deleteResponseAction({ responseId: response.id });
       deleteResponses?.([response.id]);
       router.refresh();
       if (setSelectedResponseId) setSelectedResponseId(null);
-      toast.success("Response deleted successfully.");
+      toast.success(t("environments.surveys.responses.response_deleted_successfully"));
       setDeleteDialogOpen(false);
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);

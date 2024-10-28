@@ -19,7 +19,7 @@ const Page = async ({ params }) => {
   const product = await getProductByEnvironmentId(params.environmentId);
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const HowToAddAttributesButton = (
@@ -35,7 +35,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="common.people" cta={HowToAddAttributesButton}>
+      <PageHeader pageTitle={t("common.people")} cta={HowToAddAttributesButton}>
         <PersonSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
       </PageHeader>
       <AttributeClassesTable attributeClasses={attributeClasses} />

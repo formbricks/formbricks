@@ -211,14 +211,14 @@ export const WhenToSendCard = ({
                           )}
                           {trigger.actionClass.type === "code" && (
                             <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                              Key: <b>{trigger.actionClass.key}</b>
+                              {t("environments.surveys.edit.key")}: <b>{trigger.actionClass.key}</b>
                             </span>
                           )}
                           {trigger.actionClass.type === "noCode" &&
                             trigger.actionClass.noCodeConfig?.type === "click" &&
                             trigger.actionClass.noCodeConfig?.elementSelector.cssSelector && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                CSS Selector:{" "}
+                                {t("environments.surveys.edit.css_selector")}:{" "}
                                 <b>{trigger.actionClass.noCodeConfig?.elementSelector.cssSelector}</b>
                               </span>
                             )}
@@ -226,7 +226,7 @@ export const WhenToSendCard = ({
                             trigger.actionClass.noCodeConfig?.type === "click" &&
                             trigger.actionClass.noCodeConfig?.elementSelector.innerHtml && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                Inner Text:{" "}
+                                {t("environments.surveys.edit.inner_text")}:{" "}
                                 <b>{trigger.actionClass.noCodeConfig?.elementSelector.innerHtml}</b>
                               </span>
                             )}
@@ -234,7 +234,7 @@ export const WhenToSendCard = ({
                           trigger.actionClass.noCodeConfig?.urlFilters &&
                           trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
                             <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                              URL Filters:{" "}
+                              {t("environments.surveys.edit.url_filters")}:{" "}
                               {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
                                 <span key={index}>
                                   {urlFilter.rule} <b>{urlFilter.value}</b>

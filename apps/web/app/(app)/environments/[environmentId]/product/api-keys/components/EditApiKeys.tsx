@@ -72,7 +72,7 @@ export const EditAPIKeys = ({
     };
 
     if (!apiKey) {
-      return <span className="italic">secret</span>;
+      return <span className="italic">{t("environments.product.api-keys.secret")}</span>;
     }
 
     return (

@@ -143,8 +143,8 @@ export const AddIntegrationModal = ({
         questionIds: data.questions,
         questions:
           data.questions.length === selectedSurvey.questions.length
-            ? t("environments.integrations.all_questions")
-            : t("environments.integrations.selected_questions"),
+            ? t("common.all_questions")
+            : t("common.selected_questions"),
         createdAt: new Date(),
         baseId: data.base,
         tableId: data.table,

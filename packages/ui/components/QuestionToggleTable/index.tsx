@@ -44,7 +44,7 @@ export const QuestionToggleTable = ({
               : t("environments.surveys.edit.contact_fields")}
           </th>
           <th className="w-1/4 text-sm font-semibold">{t("common.show")}</th>
-          <th className="w-1/4 text-sm font-semibold">{t("common.required")}</th>
+          <th className="w-1/4 text-sm font-semibold">{t("environments.surveys.edit.required")}</th>
         </tr>
       </thead>
       <tbody>

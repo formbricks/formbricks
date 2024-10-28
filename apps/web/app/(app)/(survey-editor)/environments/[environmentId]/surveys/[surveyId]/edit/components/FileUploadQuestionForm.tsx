@@ -70,14 +70,14 @@ export const FileUploadQuestionForm = ({
     }
 
     if (!modifiedExtension) {
-      toast.error("Please enter a file extension.");
+      toast.error(t("environments.surveys.edit.please_enter_a_file_extension"));
       return;
     }
 
     const parsedExtensionResult = ZAllowedFileExtension.safeParse(modifiedExtension);
 
     if (!parsedExtensionResult.success) {
-      toast.error("This file type is not supported.");
+      toast.error(t("environments.surveys.edit.this_file_type_is_not_supported"));
       return;
     }
 
@@ -88,7 +88,7 @@ export const FileUploadQuestionForm = ({
         });
         setExtension("");
       } else {
-        toast.error("This extension is already added.");
+        toast.error(t("environments.surveys.edit.this_extension_is_already_added"));
       }
     } else {
       updateQuestion(questionIdx, { allowedFileExtensions: [modifiedExtension] });

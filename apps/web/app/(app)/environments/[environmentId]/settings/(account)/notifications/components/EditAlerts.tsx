@@ -98,7 +98,7 @@ export const EditAlerts = ({
               </div>
             ) : (
               <div className="m-2 flex h-16 items-center justify-center rounded bg-slate-50 text-sm text-slate-500">
-                <p>No surveys found.</p>
+                <p>{t("common.no_surveys_found")}</p>
               </div>
             )}
             <p className="pb-3 pl-4 text-xs text-slate-400">

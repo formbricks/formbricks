@@ -88,7 +88,7 @@ export const SignupForm = ({
                 {t("auth.signup.terms_of_service")}
               </Link>
             )}
-            {termsUrl && privacyUrl && <span> and </span>}
+            {termsUrl && privacyUrl && <span> {t("common.and")} </span>}
             {privacyUrl && (
               <Link className="font-semibold" href={privacyUrl} rel="noreferrer" target="_blank">
                 {t("auth.signup.privacy_policy")}

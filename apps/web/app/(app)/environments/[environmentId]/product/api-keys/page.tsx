@@ -1,5 +1,6 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -14,6 +15,7 @@ import { SettingsCard } from "../../settings/components/SettingsCard";
 import { ApiKeyList } from "./components/ApiKeyList";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const [session, environment, organization] = await Promise.all([
     getServerSession(authOptions),
     getEnvironment(params.environmentId),
@@ -21,13 +23,13 @@ const Page = async ({ params }) => {
   ]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
   if (!session) {
-    throw new Error("Unauthenticated");
+    throw new Error(t("common.session_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -36,7 +38,7 @@ const Page = async ({ params }) => {
 
   return !isViewer ? (
     <PageContentWrapper>
-      <PageHeader pageTitle="common.configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation
           environmentId={params.environmentId}
           activeId="api-keys"
@@ -46,14 +48,14 @@ const Page = async ({ params }) => {
       <EnvironmentNotice environmentId={environment.id} subPageUrl="/product/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard
-          title="environments.product.api-keys.dev_api_keys"
-          description="environments.product.api-keys.dev_api_keys_description">
+          title={t("environments.product.api-keys.dev_api_keys")}
+          description={t("environments.product.api-keys.dev_api_keys_description")}>
           <ApiKeyList environmentId={params.environmentId} environmentType="development" />
         </SettingsCard>
       ) : (
         <SettingsCard
-          title="environments.product.api-keys.prod_api_keys"
-          description="environments.product.api-keys.prod_api_keys_description">
+          title={t("environments.product.api-keys.prod_api_keys")}
+          description={t("environments.product.api-keys.prod_api_keys_description")}>
           <ApiKeyList environmentId={params.environmentId} environmentType="production" />
         </SettingsCard>
       )}

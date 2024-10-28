@@ -88,24 +88,24 @@ export const PricingTable = ({
       });
 
       if (!upgradePlanResponse?.data) {
-        throw new Error("Something went wrong");
+        throw new Error(t("common.something_went_wrong_please_try_again"));
       }
 
       const { status, newPlan, url } = upgradePlanResponse.data;
 
       if (status != 200) {
-        throw new Error("Something went wrong");
+        throw new Error(t("common.something_went_wrong_please_try_again"));
       }
       if (!newPlan) {
-        toast.success("Plan upgraded successfully");
+        toast.success(t("environments.settings.billing.plan_upgraded_successfully"));
       } else if (newPlan && url) {
         router.push(url);
       } else {
-        throw new Error("Something went wrong");
+        throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
       console.log({ err });
-      toast.error("Unable to upgrade plan");
+      toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
     }
   };
 
@@ -132,7 +132,7 @@ export const PricingTable = ({
     }
 
     if (planId === "free") {
-      toast.error("Everybody has the free plan by default!");
+      toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
       return;
     }
   };

@@ -266,9 +266,9 @@ export const EditorCardMenu = ({
       <ConfirmationModal
         open={logicWarningModal}
         setOpen={setLogicWarningModal}
-        title="Changing will cause logic errors"
-        text="Changing the question type will remove the logic conditions from this question"
-        buttonText="Change anyway"
+        title={t("environments.surveys.edit.logic_error_warning")}
+        text={t("environments.surveys.edit.logic_error_warning_text")}
+        buttonText={t("environments.surveys.edit.change_anyway")}
         onConfirm={onConfirm}
       />
     </div>

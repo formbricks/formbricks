@@ -1,4 +1,5 @@
 import { LanguagesIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
@@ -38,6 +39,7 @@ export const SingleResponseCardHeader = ({
   isViewer,
   setDeleteDialogOpen,
 }: SingleResponseCardHeaderProps) => {
+  const t = useTranslations();
   const displayIdentifier = response.person
     ? getPersonIdentifier(response.person, response.personAttributes)
     : null;
@@ -70,13 +72,17 @@ export const SingleResponseCardHeader = ({
     <>
       {response.singleUseId && (
         <div>
-          <p className="py-1 font-bold text-slate-700">SingleUse ID:</p>
+          <p className="py-1 font-bold text-slate-700">
+            {t("environments.surveys.responses.single_use_id")}:
+          </p>
           <span>{response.singleUseId}</span>
         </div>
       )}
       {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
         <div>
-          <p className="py-1 font-bold text-slate-700">Person attributes:</p>
+          <p className="py-1 font-bold text-slate-700">
+            {t("environments.surveys.responses.person_attributes")}:
+          </p>
           {Object.keys(response.personAttributes).map((key) => (
             <p
               key={key}
@@ -94,50 +100,50 @@ export const SingleResponseCardHeader = ({
           {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
             <hr className="my-2 border-slate-200" />
           )}
-          <p className="py-1 font-bold text-slate-700">Device info:</p>
+          <p className="py-1 font-bold text-slate-700">{t("environments.surveys.responses.device_info")}:</p>
           {response.meta.userAgent?.browser && (
             <p className="truncate" title={`Browser: ${response.meta.userAgent.browser}`}>
-              Browser: {response.meta.userAgent.browser}
+              {t("environments.surveys.responses.browser")}: {response.meta.userAgent.browser}
             </p>
           )}
           {response.meta.userAgent?.os && (
             <p className="truncate" title={`OS: ${response.meta.userAgent.os}`}>
-              OS: {response.meta.userAgent.os}
+              {t("environments.surveys.responses.os")}: {response.meta.userAgent.os}
             </p>
           )}
           {response.meta.userAgent && (
             <p
               className="truncate"
               title={`Device: ${response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}`}>
-              Device:{" "}
+              {t("environments.surveys.responses.device")}:{" "}
               {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
             </p>
           )}
           {response.meta.url && (
             <p className="truncate" title={`URL: ${response.meta.url}`}>
-              URL: {response.meta.url}
+              {t("common.url")}: {response.meta.url}
             </p>
           )}
           {response.meta.action && (
             <p className="truncate" title={`Action: ${response.meta.action}`}>
-              Action: {response.meta.action}
+              {t("common.action")}: {response.meta.action}
             </p>
           )}
           {response.meta.source && (
             <p className="truncate" title={`Source: ${response.meta.source}`}>
-              Source: {response.meta.source}
+              {t("environments.surveys.responses.source")}: {response.meta.source}
             </p>
           )}
           {response.meta.country && (
             <p className="truncate" title={`Country: ${response.meta.country}`}>
-              Country: {response.meta.country}
+              {t("environments.surveys.responses.country")}: {response.meta.country}
             </p>
           )}
         </div>
       )}
     </>
   );
-  const deleteSubmissionToolTip = <>This response is in progress.</>;
+  const deleteSubmissionToolTip = <>{t("environments.surveys.responses.this_response_is_in_progress")}</>;
 
   return (
     <div className="space-y-2 border-b border-slate-200 px-6 pb-4 pt-4">
@@ -167,7 +173,7 @@ export const SingleResponseCardHeader = ({
                 ) : (
                   <div className="flex items-center">
                     <PersonAvatar personId="anonymous" />
-                    <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
+                    <h3 className="ml-4 pb-1 font-semibold text-slate-600">{t("common.anonymous")}</h3>
                   </div>
                 )}
               </div>

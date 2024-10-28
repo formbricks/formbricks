@@ -122,7 +122,7 @@ export const StylingView = ({
     });
 
     setConfirmResetStylingModalOpen(false);
-    toast.success("Styling set to theme styles");
+    toast.success(t("environments.surveys.edit.styling_set_to_theme_styles"));
   };
 
   useEffect(() => {
@@ -284,9 +284,9 @@ export const StylingView = ({
           <AlertDialog
             open={confirmResetStylingModalOpen}
             setOpen={setConfirmResetStylingModalOpen}
-            headerText="Reset to theme styles"
-            mainText="Are you sure you want to reset the styling to the theme styles? This will remove all custom styling."
-            confirmBtnLabel="Confirm"
+            headerText={t("environments.surveys.edit.reset_to_theme_styles")}
+            mainText={t("environments.surveys.edit.reset_to_theme_styles_main_text")}
+            confirmBtnLabel={t("common.confirm")}
             onDecline={() => setConfirmResetStylingModalOpen(false)}
             onConfirm={onResetThemeStyling}
           />

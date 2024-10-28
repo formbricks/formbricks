@@ -131,7 +131,9 @@ export const MultipleChoiceQuestionForm = ({
       const questionIdx = findOptionUsedInLogic(localSurvey, question.id, choiceToDelete);
       if (questionIdx !== -1) {
         toast.error(
-          `This option is used in logic for question ${questionIdx + 1}. Please fix the logic first before deleting.`
+          t("environments.surveys.edit.option_used_in_logic_error", {
+            questionIndex: questionIdx + 1,
+          })
         );
         return;
       }

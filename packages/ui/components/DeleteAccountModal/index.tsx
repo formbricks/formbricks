@@ -67,10 +67,7 @@ export const DeleteAccountModal = ({
               "environments.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data"
             )}
           </li>
-          <li>
-            {t("environments.settings.profile.org_ownership_transfer")}
-            be transferred to another admin.
-          </li>
+          <li>{t("environments.settings.profile.org_ownership_transfer")}</li>
           <li>{t("environments.settings.profile.org_deletion_warning")}</li>
           <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
         </ul>

@@ -65,7 +65,7 @@ export function SegmentSettings({
 
   const handleUpdateSegment = async () => {
     if (!segment.title) {
-      toast.error("Title is required");
+      toast.error(t("ee.advanced_targeting.title_is_required"));
       return;
     }
 
@@ -86,9 +86,9 @@ export function SegmentSettings({
     } catch (err: any) {
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (!parsedFilters.success) {
-        toast.error("Invalid filters. Please check the filters and try again.");
+        toast.error(t("ee.advanced_targeting.invalid_segment_filters"));
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
       setIsUpdatingSegment(false);
       return;
@@ -105,10 +105,10 @@ export function SegmentSettings({
       await deleteSegmentAction({ segmentId: segment.id });
 
       setIsDeletingSegment(false);
-      toast.success("Segment deleted successfully!");
+      toast.success(t("ee.advanced_targeting.segment_deleted_successfully"));
       handleResetState();
     } catch (err: any) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
 
     setIsDeletingSegment(false);
@@ -170,7 +170,7 @@ export function SegmentSettings({
             </div>
           </div>
 
-          <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
+          <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
           <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
             {segment.filters.length === 0 && (
               <div className="-mb-2 flex items-center gap-1">

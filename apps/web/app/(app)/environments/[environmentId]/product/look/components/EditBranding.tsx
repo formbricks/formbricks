@@ -37,7 +37,11 @@ export const EditFormbricksBranding = ({
         [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
       };
       await updateProductAction({ productId: product.id, data: inputProduct });
-      toast.success(newBrandingState ? "Formbricks branding is shown." : "Formbricks branding is hidden.");
+      toast.success(
+        newBrandingState
+          ? t("environments.product.look.formbricks_branding_shown")
+          : t("environments.product.look.formbricks_branding_hidden")
+      );
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     } finally {

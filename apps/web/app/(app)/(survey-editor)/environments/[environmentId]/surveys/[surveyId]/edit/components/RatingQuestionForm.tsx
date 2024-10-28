@@ -92,9 +92,9 @@ export const RatingQuestionForm = ({
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: "Number", value: "number", icon: HashIcon },
-                { label: "Star", value: "star", icon: StarIcon },
-                { label: "Smiley", value: "smiley", icon: SmileIcon },
+                { label: t("environments.surveys.edit.number"), value: "number", icon: HashIcon },
+                { label: t("environments.surveys.edit.star"), value: "star", icon: StarIcon },
+                { label: t("environments.surveys.edit.smiley"), value: "smiley", icon: SmileIcon },
               ]}
               defaultValue={question.scale || "number"}
               onSelect={(option) => {
@@ -112,11 +112,11 @@ export const RatingQuestionForm = ({
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: "5 points (recommended)", value: 5 },
-                { label: "3 points", value: 3 },
-                { label: "4 points", value: 4 },
-                { label: "7 points", value: 7 },
-                { label: "10 points", value: 10 },
+                { label: t("environments.surveys.edit.five_points_recommended"), value: 5 },
+                { label: t("environments.surveys.edit.three_points"), value: 3 },
+                { label: t("environments.surveys.edit.four_points"), value: 4 },
+                { label: t("environments.surveys.edit.seven_points"), value: 7 },
+                { label: t("environments.surveys.edit.ten_points"), value: 10 },
               ]}
               /* disabled={survey.status !== "draft"} */
               defaultValue={question.range || 5}

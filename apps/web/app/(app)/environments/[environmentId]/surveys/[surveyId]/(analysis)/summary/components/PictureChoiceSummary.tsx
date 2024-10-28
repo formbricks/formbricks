@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
@@ -33,7 +34,7 @@ export const PictureChoiceSummary = ({
   locale,
 }: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices;
-
+  const t = useTranslations();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -52,8 +53,8 @@ export const PictureChoiceSummary = ({
                 questionSummary.question.id,
                 questionSummary.question.headline,
                 questionSummary.question.type,
-                "Includes all",
-                [`Picture ${index + 1}`]
+                t("environments.surveys.summary.includes_all"),
+                [`${t("environments.surveys.summary.picture_idx", { idx: index + 1 })}`]
               )
             }>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
@@ -74,7 +75,7 @@ export const PictureChoiceSummary = ({
                 </div>
               </div>
               <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
-                {result.count} {result.count === 1 ? "response" : "responses"}
+                {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
               </p>
             </div>
             <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100 || 0} />

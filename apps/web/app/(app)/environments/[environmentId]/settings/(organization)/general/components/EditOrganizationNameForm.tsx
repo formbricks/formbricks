@@ -53,7 +53,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
       });
 
       if (updatedOrganizationResponse?.data) {
-        toast.success("Organization name updated successfully.");
+        toast.success(t("environments.settings.general.organization_name_updated_successfully"));
         form.reset({ name: updatedOrganizationResponse.data.name });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedOrganizationResponse);
@@ -65,7 +65,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
   };
 
   return isViewer ? (
-    <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
+    <p className="text-sm text-red-700">{t("common.not_authorized")}</p>
   ) : (
     <FormProvider {...form}>
       <form

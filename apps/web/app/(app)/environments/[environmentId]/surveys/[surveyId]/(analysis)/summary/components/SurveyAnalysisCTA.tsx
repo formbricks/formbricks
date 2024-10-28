@@ -82,10 +82,10 @@ export const SurveyAnalysisCTA = ({
     navigator.clipboard
       .writeText(surveyUrl)
       .then(() => {
-        toast.success("Copied link to clipboard");
+        toast.success(t("common.copied_to_clipboard"));
       })
       .catch((err) => {
-        toast.error("Failed to copy link");
+        toast.error(t("environments.surveys.summary.failed_to_copy_link"));
         console.error(err);
       });
     setModalState((prev) => ({ ...prev, dropdown: false }));
@@ -158,7 +158,7 @@ export const SurveyAnalysisCTA = ({
             <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
               <Button variant="secondary" className="p-2">
                 <MoreVertical className="h-7 w-4" />
-                <span className="sr-only">Open options</span>
+                <span className="sr-only">{t("environments.surveys.summary.open_options")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mr-8 w-40">

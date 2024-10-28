@@ -143,7 +143,7 @@ export const OnboardingSetupInstructions = ({
                   navigator.clipboard.writeText(
                     channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys
                   );
-                  toast.success("Copied to clipboard");
+                  toast.success(t("common.copied_to_clipboard"));
                 }}>
                 {t("common.copy_code")}
               </Button>

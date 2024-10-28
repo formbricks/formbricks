@@ -43,7 +43,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
     try {
       const updatedProductResponse = await updateProductAction({ productId: product.id, data });
       if (updatedProductResponse?.data) {
-        toast.success("Waiting period updated successfully.");
+        toast.success(t("environments.product.general.waiting_period_updated_successfully"));
         form.resetField("recontactDays", { defaultValue: updatedProductResponse.data.recontactDays });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedProductResponse);

@@ -114,7 +114,7 @@ export function LogicEditorActions({
                   id={`action-${idx}-target`}
                   key={`target-${action.id}`}
                   showSearch={false}
-                  options={getActionTargetOptions(action, localSurvey, questionIdx)}
+                  options={getActionTargetOptions(action, localSurvey, questionIdx, t)}
                   value={action.target}
                   onChangeValue={(val: string) => {
                     handleValuesChange(idx, {
@@ -142,13 +142,14 @@ export function LogicEditorActions({
                       });
                     }}
                     comboboxClasses="grow"
-                    emptyDropdownText="Add a variable to calculate"
+                    emptyDropdownText={t("environments.surveys.edit.add_a_variable_to_calculate")}
                   />
                   <InputCombobox
                     id={`action-${idx}-operator`}
                     key={`operator-${action.id}`}
                     showSearch={false}
                     options={getActionOperatorOptions(
+                      t,
                       localSurvey.variables.find((v) => v.id === action.variableId)?.type
                     )}
                     value={action.operator}
@@ -171,7 +172,7 @@ export function LogicEditorActions({
                       placeholder: "Value",
                       type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
                     }}
-                    groupedOptions={getActionValueOptions(action.variableId, localSurvey)}
+                    groupedOptions={getActionValueOptions(action.variableId, localSurvey, t)}
                     onChangeValue={(val, option, fromInput) => {
                       const fieldType = option?.meta?.type as TActionVariableValueType;
 

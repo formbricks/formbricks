@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { useTranslations } from "next-intl";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
@@ -45,6 +46,7 @@ export function LocalizedEditor({
   firstRender,
   setFirstRender,
 }: LocalizedEditorProps) {
+  const t = useTranslations();
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
     [localSurvey.languages]
@@ -88,7 +90,7 @@ export function LocalizedEditor({
 
           {value && selectedLanguageCode !== "default" && value.default ? (
             <div className="mt-1 flex text-xs text-gray-500">
-              <strong>Translate:</strong>
+              <strong>{t("ee.multi_language.translate")}:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
@@ -102,7 +104,9 @@ export function LocalizedEditor({
         </div>
       )}
 
-      {isInComplete ? <div className="mt-1 text-xs text-red-400">Incomplete translations</div> : null}
+      {isInComplete ? (
+        <div className="mt-1 text-xs text-red-400">{t("ee.multi_language.incomplete_translations")}</div>
+      ) : null}
     </div>
   );
 }

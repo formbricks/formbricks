@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -12,6 +13,7 @@ interface LanguageRowProps {
 }
 
 export function LanguageRow({ language, isEditing, onLanguageChange, onDelete }: LanguageRowProps) {
+  const t = useTranslations();
   return (
     <div className="my-3 grid grid-cols-4 gap-4">
       <LanguageSelect
@@ -30,7 +32,7 @@ export function LanguageRow({ language, isEditing, onLanguageChange, onDelete }:
       />
       {language.id !== "new" && isEditing ? (
         <Button className="w-fit" onClick={onDelete} size="sm" variant="warn">
-          Remove
+          {t("common.remove")}
         </Button>
       ) : null}
     </div>

@@ -21,7 +21,7 @@ const Loading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="common.account_settings">
+      <PageHeader pageTitle={t("common.account_settings")}>
         <AccountSettingsNavbar activeId="notifications" loading />
       </PageHeader>
       {cards.map((card, index) => (

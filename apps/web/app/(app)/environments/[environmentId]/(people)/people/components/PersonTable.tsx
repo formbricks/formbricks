@@ -244,7 +244,7 @@ export const PersonTable = ({
         {data && hasMore && data.length > 0 && (
           <div className="mt-4 flex justify-center">
             <Button onClick={fetchNextPage} className="bg-blue-500 text-white">
-              Load More
+              {t("common.load_more")}
             </Button>
           </div>
         )}

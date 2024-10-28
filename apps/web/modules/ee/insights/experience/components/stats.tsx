@@ -52,7 +52,7 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
     },
     {
       key: "activeSurveys",
-      title: t("environments.experience.active_surveys"),
+      title: t("common.active_surveys"),
       value: stats.activeSurveys,
       icon: MessageCircleIcon,
       width: "w-10",

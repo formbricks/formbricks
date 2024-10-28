@@ -1,4 +1,5 @@
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
@@ -69,11 +70,17 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
   return responseData;
 };
 
-const mapResponsesToTableData = (responses: TResponse[], survey: TSurvey): TResponseTableData[] => {
+const mapResponsesToTableData = (
+  responses: TResponse[],
+  survey: TSurvey,
+  t: (key: string) => string
+): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
     createdAt: response.createdAt,
-    status: response.finished ? "Completed ✅" : "Not Completed ⏳",
+    status: response.finished
+      ? t("environments.surveys.responses.completed")
+      : t("environments.surveys.responses.not_completed"),
     responseId: response.id,
     tags: response.tags,
     notes: response.notes,
@@ -103,7 +110,8 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   updateResponse,
   isFetchingFirstPage,
 }) => {
-  const data = mapResponsesToTableData(responses, survey);
+  const t = useTranslations();
+  const data = mapResponsesToTableData(responses, survey, t);
 
   return (
     <div className="w-full">

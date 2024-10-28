@@ -73,7 +73,13 @@ export const HiddenFieldsCard = ({
 
     if (quesIdx !== -1) {
       toast.error(
-        `${fieldId} is used in logic of question ${quesIdx + 1}. Please remove it from logic first.`
+        t(
+          "environments.surveys.edit.fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first",
+          {
+            fieldId,
+            questionIndex: quesIdx + 1,
+          }
+        )
       );
       return;
     }
@@ -115,7 +121,7 @@ export const HiddenFieldsCard = ({
 
             <div className="flex items-center space-x-2">
               <Label htmlFor="hidden-fields-toggle">
-                {localSurvey?.hiddenFields?.enabled ? "On" : "Off"}
+                {localSurvey?.hiddenFields?.enabled ? t("common.on") : t("common.off")}
               </Label>
 
               <Switch

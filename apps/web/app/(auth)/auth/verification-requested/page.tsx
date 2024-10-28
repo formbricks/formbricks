@@ -34,7 +34,7 @@ const Page = async ({ searchParams }) => {
   } catch (error) {
     return (
       <FormWrapper>
-        <p className="text-center">Invalid email address</p>
+        <p className="text-center">{t("auth.verification-requested.invalid_email_address")}</p>
       </FormWrapper>
     );
   }

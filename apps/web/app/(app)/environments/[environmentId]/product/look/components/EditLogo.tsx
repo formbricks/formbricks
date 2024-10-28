@@ -40,7 +40,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       }
       setLogoUrl(uploadResult.url);
     } catch (error) {
-      toast.error("Logo upload failed. Please try again.");
+      toast.error(t("environments.product.look.logo_upload_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -64,9 +64,9 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       await updateProductAction({ productId: product.id, data: updatedProduct });
-      toast.success("Logo updated successfully");
+      toast.success(t("environments.product.look.logo_updated_successfully"));
     } catch (error) {
-      toast.error("Failed to update the logo");
+      toast.error(t("environments.product.look.failed_to_update_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -86,9 +86,9 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
         logo: { url: undefined, bgColor: undefined },
       };
       await updateProductAction({ productId: product.id, data: updatedProduct });
-      toast.success("Logo removed successfully", { icon: "🗑️" });
+      toast.success(t("environments.product.look.logo_removed_successfully"));
     } catch (error) {
-      toast.error("Failed to remove the logo");
+      toast.error(t("environments.product.look.failed_to_remove_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);

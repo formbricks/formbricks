@@ -22,13 +22,13 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
         <div>
-          <Label className="text-slate-500">{t("environments.segments.active_surveys")}</Label>
+          <Label className="text-slate-500">{t("common.active_surveys")}</Label>
           {!activeSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
           {activeSurveys?.map((survey) => <p className="text-sm text-slate-900">{survey}</p>)}
         </div>
         <div>
-          <Label className="text-slate-500">{t("environments.segments.inactive_surveys")}</Label>
+          <Label className="text-slate-500">{t("common.inactive_surveys")}</Label>
           {!inactiveSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
           {inactiveSurveys?.map((survey) => <p className="text-sm text-slate-900">{survey}</p>)}

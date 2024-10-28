@@ -29,7 +29,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   useEffect(() => {
     const getData = async () => {
-      const emailHtml = await getEmailHtmlAction({ surveyId });
+      const emailHtml = await getEmailHtmlAction({ surveyId, t });
       setEmailHtmlPreview(emailHtml?.data || "");
     };
 
@@ -38,14 +38,14 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   const sendPreviewEmail = async () => {
     try {
-      await sendEmbedSurveyPreviewEmailAction({ surveyId });
-      toast.success("Email sent!");
+      await sendEmbedSurveyPreviewEmailAction({ surveyId, t });
+      toast.success(t("environments.surveys.summary.email_sent"));
     } catch (err) {
       if (err instanceof AuthenticationError) {
-        toast.error("You are not authenticated to perform this action.");
+        toast.error(t("common.not_authenticated"));
         return;
       }
-      toast.error("Something went wrong. Please try again later.");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
 
@@ -58,7 +58,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             title="Embed survey in your website"
             aria-label="Embed survey in your website"
             onClick={() => {
-              toast.success("Embed code copied to clipboard!");
+              toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
               navigator.clipboard.writeText(emailHtml);
             }}
             className="shrink-0"
@@ -79,8 +79,8 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           </>
         )}
         <Button
-          title="view embed code for email"
-          aria-label="view embed code for email"
+          title={t("environments.surveys.summary.view_embed_code_for_email")}
+          aria-label={t("environments.surveys.summary.view_embed_code_for_email")}
           onClick={() => {
             setShowEmbed(!showEmbed);
           }}
@@ -110,7 +110,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           <div>
             <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
             <div className="border-b border-slate-200 pb-2 text-sm">
-              Subject : Formbricks Email Survey Preview
+              Subject : {t("environments.surveys.summary.formbricks_email_survey_preview")}
             </div>
             <div className="p-4">
               {emailHtml ? (

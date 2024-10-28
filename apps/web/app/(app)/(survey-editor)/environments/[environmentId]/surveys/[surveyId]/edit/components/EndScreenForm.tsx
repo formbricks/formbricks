@@ -73,7 +73,7 @@ export const EndScreenForm = ({
                 updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
               } else {
                 updateSurvey({
-                  buttonLabel: { default: "Create your own Survey" },
+                  buttonLabel: { default: t("environments.surveys.edit.create_your_own_survey") },
                   buttonLink: "https://formbricks.com",
                 });
               }
@@ -82,7 +82,9 @@ export const EndScreenForm = ({
           />
           <Label htmlFor="showButton" className="cursor-pointer">
             <div className="ml-2">
-              <h3 className="text-sm font-semibold text-slate-700">Show Button</h3>
+              <h3 className="text-sm font-semibold text-slate-700">
+                {t("environments.surveys.edit.show_button")}
+              </h3>
               <p className="text-xs font-normal text-slate-500">
                 {t("environments.surveys.edit.send_your_respondents_to_a_page_of_your_choice")}
               </p>

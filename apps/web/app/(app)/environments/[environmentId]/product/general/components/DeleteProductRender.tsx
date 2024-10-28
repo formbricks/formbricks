@@ -30,7 +30,7 @@ export const DeleteProductRender = ({
     setIsDeleting(true);
     const deleteProductResponse = await deleteProductAction({ productId: product.id });
     if (deleteProductResponse?.data) {
-      toast.success("Product deleted successfully.");
+      toast.success(t("environments.product.general.product_deleted_successfully"));
       router.push("/");
     } else {
       const errorMessage = getFormattedErrorMessage(deleteProductResponse);
@@ -45,8 +45,12 @@ export const DeleteProductRender = ({
       {!isDeleteDisabled && (
         <div>
           <p className="text-sm text-slate-900">
-            Delete {truncate(product.name, 30)}
-            &nbsp;incl. all surveys, responses, people, actions and attributes.{" "}
+            {t(
+              "environments.product.general.delete_product_name_includes_surveys_responses_people_and_more",
+              {
+                productName: truncate(product.name, 30),
+              }
+            )}{" "}
             <strong>{t("environments.product.general.this_action_cannot_be_undone")}</strong>
           </p>
           <Button

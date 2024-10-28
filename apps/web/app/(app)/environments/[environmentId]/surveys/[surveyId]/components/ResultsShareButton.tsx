@@ -45,7 +45,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
   const handleUnpublish = () => {
     deleteResultShareUrlAction({ surveyId: survey.id }).then((deleteResultShareUrlResponse) => {
       if (deleteResultShareUrlResponse?.data) {
-        toast.success("Results unpublished successfully.");
+        toast.success(t("environments.surveys.results_unpublished_successfully"));
         setShowPublishModal(false);
       } else {
         const errorMessage = getFormattedErrorMessage(deleteResultShareUrlResponse);
@@ -72,15 +72,13 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
       navigator.clipboard
         .writeText(currentUrl)
         .then(() => {
-          toast.success("Link to results copied to clipboard.");
+          toast.success(t("common.link_copied_to_clipboard"));
         })
-        .catch((err) => {
-          console.error("Failed to copy: ", err);
-          toast.error("Failed to copy link to results to clipboard.");
+        .catch(() => {
+          toast.error(t("environments.surveys.failed_to_copy_link_to_results"));
         });
     } else {
-      console.error("Cannot copy URL: not running in a browser environment.");
-      toast.error("Failed to copy URL: not in a browser environment.");
+      toast.error(t("environments.surveys.failed_to_copy_url"));
     }
   };
   return (
@@ -104,7 +102,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
             <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(surveyUrl);
-                toast.success("Link to public results copied");
+                toast.success(t("environments.surveys.summary.link_to_public_results_copied"));
               }}
               icon={<CopyIcon className="ml-1.5 inline h-4 w-4" />}>
               <p className="text-slate-700">

@@ -112,8 +112,8 @@ export const AddChannelMappingModal = ({
         questionIds: selectedQuestions,
         questions:
           selectedQuestions.length === selectedSurvey?.questions.length
-            ? "All questions"
-            : "Selected questions",
+            ? t("common.all_questions")
+            : t("common.selected_questions"),
         createdAt: new Date(),
         includeVariables,
         includeHiddenFields,

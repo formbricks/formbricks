@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
@@ -29,6 +30,7 @@ export const generateMetadata = async ({ params }) => {
 };
 
 const Page = async ({ params, searchParams }) => {
+  const t = await getTranslations();
   const [
     survey,
     product,
@@ -51,11 +53,11 @@ const Page = async ({ params, searchParams }) => {
     getSegments(params.environmentId),
   ]);
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

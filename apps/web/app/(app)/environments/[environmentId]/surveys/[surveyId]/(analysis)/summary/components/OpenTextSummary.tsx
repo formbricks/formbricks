@@ -101,9 +101,9 @@ export const OpenTextSummary = ({
             <Table>
               <TableHeader className="bg-slate-100">
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Response</TableHead>
-                  <TableHead>Time</TableHead>
+                  <TableHead>{t("common.user")}</TableHead>
+                  <TableHead>{t("common.response")}</TableHead>
+                  <TableHead>{t("common.time")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -126,7 +126,7 @@ export const OpenTextSummary = ({
                           <div className="hidden md:flex">
                             <PersonAvatar personId="anonymous" />
                           </div>
-                          <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                          <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
                         </div>
                       )}
                     </TableCell>
@@ -139,7 +139,7 @@ export const OpenTextSummary = ({
             {visibleResponses < questionSummary.samples.length && (
               <div className="flex justify-center py-4">
                 <Button onClick={handleLoadMore} variant="secondary" size="sm">
-                  Load more
+                  {t("common.load_more")}
                 </Button>
               </div>
             )}

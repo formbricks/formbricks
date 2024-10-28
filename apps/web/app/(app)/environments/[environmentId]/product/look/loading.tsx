@@ -13,11 +13,11 @@ import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup
 import { Switch } from "@formbricks/ui/components/Switch";
 
 const placements = [
-  { name: "Bottom Right", value: "bottomRight", disabled: false },
-  { name: "Top Right", value: "topRight", disabled: false },
-  { name: "Top Left", value: "topLeft", disabled: false },
-  { name: "Bottom Left", value: "bottomLeft", disabled: false },
-  { name: "Centered Modal", value: "center", disabled: false },
+  { name: "common.bottom_right", value: "bottomRight", disabled: false },
+  { name: "common.top_right", value: "topRight", disabled: false },
+  { name: "common.top_left", value: "topLeft", disabled: false },
+  { name: "common.bottom_left", value: "bottomLeft", disabled: false },
+  { name: "common.centered_modal", value: "center", disabled: false },
 ];
 
 const Loading = () => {
@@ -98,14 +98,14 @@ const Loading = () => {
                     <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
                   </div>
                   <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                    <p>Preview</p>
+                    <p>{t("common.preview")}</p>
 
                     <div className="flex items-center pr-6">{t("common.restart")}</div>
                   </div>
                 </div>
 
                 <div className="grid h-[500px] place-items-center bg-white">
-                  <h1 className="text-xl font-semibold text-slate-700">Loading preview...</h1>
+                  <h1 className="text-xl font-semibold text-slate-700">{t("common.loading")}</h1>
                 </div>
               </div>
             </div>
@@ -116,7 +116,7 @@ const Loading = () => {
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <div className="w-full animate-pulse items-center">
           <div className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
-            <p className="text-xl font-semibold text-slate-700">Loading...</p>
+            <p className="text-xl font-semibold text-slate-700">{t("common.loading")}</p>
           </div>
         </div>
       </SettingsCard>
@@ -140,7 +140,7 @@ const Loading = () => {
                     className={cn(
                       placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900"
                     )}>
-                    {placement.name}
+                    {t(placement.name)}
                   </Label>
                 </div>
               ))}
@@ -150,7 +150,7 @@ const Loading = () => {
             </div>
           </div>
           <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
-            Loading
+            {t("common.loading")}
           </Button>
         </div>
       </SettingsCard>
@@ -161,7 +161,7 @@ const Loading = () => {
         <div className="w-full items-center">
           <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
             <Switch id="signature" checked={false} />
-            <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
+            <Label htmlFor="signature">{t("environments.product.look.show_powered_by_formbricks")}</Label>
           </div>
         </div>
       </SettingsCard>

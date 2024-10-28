@@ -131,9 +131,9 @@ export const ManageIntegration = ({
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat="Google Connection"
+        deleteWhat={t("environments.integrations.google_sheets.google_connection")}
         onDelete={handleDeleteIntegration}
-        text="Are you sure? Your integrations will break."
+        text={t("environments.integrations.google_sheets.google_connection_deletion_description")}
         isDeleting={isDeleting}
       />
     </div>

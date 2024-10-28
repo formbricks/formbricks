@@ -62,7 +62,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
       });
 
       if (updatedProductResponse?.data) {
-        toast.success("Product name updated successfully.");
+        toast.success(t("environments.product.general.product_name_updated_successfully"));
         form.resetField("name", { defaultValue: updatedProductResponse.data.name });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedProductResponse);

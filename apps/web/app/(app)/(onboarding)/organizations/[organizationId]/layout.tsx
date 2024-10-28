@@ -1,5 +1,6 @@
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -10,6 +11,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
 const ProductOnboardingLayout = async ({ children, params }) => {
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -17,7 +19,7 @@ const ProductOnboardingLayout = async ({ children, params }) => {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   const isAuthorized = await canUserAccessOrganization(session.user.id, params.organizationId);
@@ -30,7 +32,7 @@ const ProductOnboardingLayout = async ({ children, params }) => {
 
   const organization = await getOrganization(params.organizationId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   return (

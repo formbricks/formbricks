@@ -21,22 +21,22 @@ const Page = async ({ params }: XMTemplatePageProps) => {
   const environment = await getEnvironment(params.environmentId);
   const t = await getTranslations();
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
 
   const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const products = await getProducts(organizationId);

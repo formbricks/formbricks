@@ -92,7 +92,7 @@ export const SigninForm = ({
     } catch (error) {
       const errorMessage = error.toString();
       const errorFeedback = errorMessage.includes("Invalid URL")
-        ? "Too many requests, please try again after some time!"
+        ? t("auth.login.too_many_requests_please_try_again_after_some_time")
         : error.message;
       setSignInError(errorFeedback);
     } finally {

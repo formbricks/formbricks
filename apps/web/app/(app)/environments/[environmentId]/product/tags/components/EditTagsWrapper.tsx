@@ -51,12 +51,12 @@ const SingleTag: React.FC<{
   const confirmDeleteTag = async () => {
     const deleteTagResponse = await deleteTagAction({ tagId });
     if (deleteTagResponse?.data) {
-      toast.success(`${deleteTagResponse?.data.name ?? "Tag"} tag deleted`);
+      toast.success(t("environments.product.tags.tag_deleted"));
       updateTagsCount();
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(deleteTagResponse);
-      toast.error(errorMessage ?? "Something went wrong");
+      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
     }
   };
 

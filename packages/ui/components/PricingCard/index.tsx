@@ -196,8 +196,8 @@ export const PricingCard = ({
       </div>
 
       <ConfirmationModal
-        title="Switch Plan"
-        buttonText="Confirm"
+        title={t("environments.settings.billing.switch_plan")}
+        buttonText={t("common.confirm")}
         onConfirm={async () => {
           setLoading(true);
           await onUpgrade();

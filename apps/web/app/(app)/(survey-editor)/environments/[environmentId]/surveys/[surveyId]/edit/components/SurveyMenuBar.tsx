@@ -220,7 +220,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
@@ -240,7 +240,7 @@ export const SurveyMenuBar = ({
       });
 
       if (localSurvey.type !== "link" && !localSurvey.triggers?.length) {
-        toast.error("Please set a survey trigger");
+        toast.error(t("environments.surveys.edit.please_set_a_survey_trigger"));
         setIsSurveySaving(false);
         return false;
       }
@@ -252,7 +252,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
-        toast.success("Changes saved.");
+        toast.success(t("environments.surveys.edit.changes_saved"));
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
@@ -262,7 +262,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
-      toast.error(`Error saving changes`);
+      toast.error(t("environments.surveys.edit.error_saving_changes"));
       return false;
     }
   };
@@ -285,7 +285,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
       if (!isSurveyValidResult) {
         setIsSurveyPublishing(false);
         return;
@@ -302,7 +302,8 @@ export const SurveyMenuBar = ({
       setIsSurveyPublishing(false);
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
-      toast.error("An error occured while publishing the survey.");
+      console.error(error);
+      toast.error(t("environments.surveys.edit.error_publishing_survey"));
       setIsSurveyPublishing(false);
     }
   };

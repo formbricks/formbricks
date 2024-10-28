@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -31,14 +32,15 @@ export const ConsentSummary = ({
   setFilter,
   locale,
 }: ConsentSummaryProps) => {
+  const t = useTranslations();
   const summaryItems = [
     {
-      title: "Accepted",
+      title: t("common.accepted"),
       percentage: questionSummary.accepted.percentage,
       count: questionSummary.accepted.count,
     },
     {
-      title: "Dismissed",
+      title: t("common.dismissed"),
       percentage: questionSummary.dismissed.percentage,
       count: questionSummary.dismissed.count,
     },
@@ -78,7 +80,7 @@ export const ConsentSummary = ({
                   </div>
                 </div>
                 <p className="flex w-32 items-end justify-end text-slate-600">
-                  {summaryItem.count} {summaryItem.count === 1 ? "response" : "responses"}
+                  {summaryItem.count} {summaryItem.count === 1 ? t("common.response") : t("common.responses")}
                 </p>
               </div>
               <div className="group-hover:opacity-80">

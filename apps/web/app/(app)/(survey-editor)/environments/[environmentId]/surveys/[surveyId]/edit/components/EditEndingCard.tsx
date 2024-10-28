@@ -61,8 +61,12 @@ export const EditEndingCard = ({
     : false;
 
   const endingCardTypes = [
-    { value: "endScreen", label: "Ending card" },
-    { value: "redirectToUrl", label: "Redirect to Url", disabled: isRedirectToUrlDisabled },
+    { value: "endScreen", label: t("environments.surveys.edit.ending_card") },
+    {
+      value: "redirectToUrl",
+      label: t("environments.surveys.edit.redirect_to_url"),
+      disabled: isRedirectToUrlDisabled,
+    },
   ];
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({

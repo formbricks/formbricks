@@ -1,4 +1,5 @@
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { TIso639Language } from "@formbricks/lib/i18n/utils";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
@@ -14,6 +15,7 @@ interface LanguageSelectProps {
 }
 
 export function LanguageSelect({ language, onLanguageChange, disabled }: LanguageSelectProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(
@@ -54,7 +56,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled }: Languag
         disabled={disabled}
         onClick={toggleDropdown}
         variant="minimal">
-        <span className="mr-2">{selectedOption?.english ?? "Select"}</span>
+        <span className="mr-2">{selectedOption?.english ?? t("common.select")}</span>
         <ChevronDown className="h-4 w-4" />
       </Button>
       <div
@@ -64,7 +66,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled }: Languag
           onChange={(e) => {
             setSearchTerm(e.target.value);
           }}
-          placeholder="Search items"
+          placeholder={t("ee.multi_language.search_items")}
           ref={inputRef}
           type="text"
           value={searchTerm}

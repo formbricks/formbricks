@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -53,6 +54,7 @@ export const QuestionOptionChoice = ({
   updateQuestion,
   attributeClasses,
 }: ChoiceProps) => {
+  const t = useTranslations();
   const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
@@ -75,7 +77,11 @@ export const QuestionOptionChoice = ({
         <QuestionFormInput
           key={choice.id}
           id={`choice-${choiceIdx}`}
-          placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+          placeholder={
+            choice.id === "other"
+              ? t("common.other")
+              : t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 })
+          }
           label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
@@ -93,13 +99,13 @@ export const QuestionOptionChoice = ({
           <QuestionFormInput
             id="otherOptionPlaceholder"
             localSurvey={localSurvey}
-            placeholder={"Please specify"}
+            placeholder={t("environments.surveys.edit.please_specify")}
             label={""}
             questionIdx={questionIdx}
             value={
               question.otherOptionPlaceholder
                 ? question.otherOptionPlaceholder
-                : createI18nString("Please specify", surveyLanguageCodes)
+                : createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}

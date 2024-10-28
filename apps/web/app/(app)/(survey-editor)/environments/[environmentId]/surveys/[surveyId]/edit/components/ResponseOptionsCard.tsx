@@ -39,13 +39,13 @@ export const ResponseOptionsCard = ({
   );
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
-    heading: "Survey Completed",
-    subheading: "This free & open-source survey has been closed",
+    heading: t("environments.surveys.edit.survey_completed_heading"),
+    subheading: t("environments.surveys.edit.survey_completed_subheading"),
   });
 
   const [singleUseMessage, setSingleUseMessage] = useState({
-    heading: "The survey has already been answered.",
-    subheading: "You can only use this link once.",
+    heading: t("environments.surveys.edit.survey_already_answered_heading"),
+    subheading: t("environments.surveys.edit.survey_already_answered_subheading"),
   });
 
   const [singleUseEncryption, setSingleUseEncryption] = useState(true);
@@ -88,7 +88,7 @@ export const ResponseOptionsCard = ({
     //check if pin only contains numbers
     const validation = /^\d+$/;
     const isValidPin = validation.test(pin);
-    if (!isValidPin) return toast.error("PIN can only contain numbers");
+    if (!isValidPin) return toast.error(t("environments.surveys.edit.pin_can_only_contain_numbers"));
     setLocalSurvey({ ...localSurvey, pin });
   };
 
@@ -98,7 +98,8 @@ export const ResponseOptionsCard = ({
     const regexPattern = /^\d{4}$/;
     const isValidPin = regexPattern.test(`${localSurvey.pin}`);
 
-    if (!isValidPin) return setVerifyProtectWithPinError("PIN must be a four digit number.");
+    if (!isValidPin)
+      return setVerifyProtectWithPinError(t("environments.surveys.edit.pin_must_be_a_four_digit_number"));
     setVerifyProtectWithPinError(null);
   };
 
@@ -266,12 +267,16 @@ export const ResponseOptionsCard = ({
 
   const handleInputResponseBlur = (e) => {
     if (parseInt(e.target.value) === 0) {
-      toast.error("Response limit can't be set to 0");
+      toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
       return;
     }
 
     if (parseInt(e.target.value) <= responseCount) {
-      toast.error(`Response limit needs to exceed number of received responses (${responseCount}).`);
+      toast.error(
+        t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
+          responseCount,
+        })
+      );
       return;
     }
   };
@@ -495,7 +500,7 @@ export const ResponseOptionsCard = ({
                 childBorder={true}>
                 <div className="p-4">
                   <Label htmlFor="headline" className="sr-only">
-                    Add PIN:
+                    {t("environments.surveys.edit.add_pin")}
                   </Label>
                   <Input
                     autoFocus
@@ -503,7 +508,7 @@ export const ResponseOptionsCard = ({
                     isInvalid={Boolean(verifyProtectWithPinError)}
                     className="bg-white"
                     name="pin"
-                    placeholder="Add a four digit PIN"
+                    placeholder={t("environments.surveys.edit.add_a_four_digit_pin")}
                     onBlur={handleProtectSurveyPinBlurEvent}
                     defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
                     onKeyDown={handleSurveyPinInputKeyDown}

@@ -49,11 +49,11 @@ const Page = async ({ params }) => {
   const isIntegrationConnected = (type: TIntegrationType) =>
     integrations.some((integration) => integration.type === type);
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

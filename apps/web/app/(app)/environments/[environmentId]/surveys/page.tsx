@@ -35,22 +35,22 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
-  const t = await getTranslations("environments.surveys");
+  const t = await getTranslations();
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const prefilledFilters = [product?.config.channel, product.config.industry, searchParams.role ?? null];
@@ -60,7 +60,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
 
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   const surveyCount = await getSurveyCount(params.environmentId);
@@ -73,7 +73,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
-        {t("new_survey")}
+        {t("environments.surveys.new_survey")}
       </Button>
     );
   };
@@ -82,7 +82,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle="common.surveys" cta={isViewer ? <></> : <CreateSurveyButton />} />
+          <PageHeader pageTitle={t("common.surveys")} cta={isViewer ? <></> : <CreateSurveyButton />} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}
@@ -95,16 +95,18 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
         </>
       ) : isViewer ? (
         <>
-          <h1 className="px-6 text-3xl font-extrabold text-slate-700">{t("no_surveys_created_yet")}</h1>
+          <h1 className="px-6 text-3xl font-extrabold text-slate-700">
+            {t("environments.surveys.no_surveys_created_yet")}
+          </h1>
 
           <h2 className="px-6 text-lg font-medium text-slate-500">
-            {t("viewer_not_allowed_to_create_survey_warning")}
+            {t("environments.surveys.viewer_not_allowed_to_create_survey_warning")}
           </h2>
         </>
       ) : (
         <>
           <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-            {t("all_set_time_to_create_first_survey")}
+            {t("environments.surveys.all_set_time_to_create_first_survey")}
           </h1>
           <TemplateList
             environment={environment}

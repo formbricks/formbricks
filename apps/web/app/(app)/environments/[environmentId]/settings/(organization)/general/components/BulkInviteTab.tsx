@@ -52,7 +52,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
           onSubmit(members);
         } catch (err) {
           console.error(err.message);
-          toast.error("Please check the CSV file and make sure it is according to our format");
+          toast.error(t("environments.settings.general.please_check_csv_file"));
         }
         setOpen(false);
       },
@@ -81,7 +81,9 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
         ) : (
           <UploadIcon className="h-6 w-6 text-neutral-500" />
         )}
-        <span className="text-sm text-neutral-500">{csvFile ? csvFile.name : "Click here to upload"}</span>
+        <span className="text-sm text-neutral-500">
+          {csvFile ? csvFile.name : t("common.click_here_to_upload")}
+        </span>
         <input onChange={onFileInputChange} type="file" ref={fileInputRef} accept=".csv" hidden />
       </div>
       <div>

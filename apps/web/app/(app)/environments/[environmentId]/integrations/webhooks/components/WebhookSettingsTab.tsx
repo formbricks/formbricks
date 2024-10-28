@@ -1,6 +1,5 @@
 "use client";
 
-import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
 import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import clsx from "clsx";
@@ -178,7 +177,6 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
         <div>
           <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
           <TriggerCheckboxGroup
-            triggers={triggers}
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
             allowChanges={webhook.source === "user"}

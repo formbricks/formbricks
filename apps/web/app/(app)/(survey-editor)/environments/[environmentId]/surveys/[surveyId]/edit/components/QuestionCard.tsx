@@ -210,7 +210,9 @@ export const QuestionCard = ({
                 </p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {question?.required ? "Required" : "Optional"}
+                    {question?.required
+                      ? t("environments.surveys.edit.required")
+                      : t("environments.surveys.edit.optional")}
                   </p>
                 )}
               </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -25,6 +26,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   ContentRef,
   onBackgroundLoaded,
 }) => {
+  const t = useTranslations();
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
   const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });
@@ -116,7 +118,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         );
       case "image":
         if (!background?.bg) {
-          return <div>No background image found.</div>;
+          return <div>{t("common.no_background_image_found")}</div>;
         }
 
         return (
@@ -132,14 +134,14 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
               />
               {authorDetailsForUnsplash.authorName && (
                 <div className="absolute bottom-4 right-6 z-10 ml-auto hidden w-max text-xs text-slate-400 md:block">
-                  <span>Photo by </span>
+                  <span>{t("common.photo_by")}</span>
                   <Link
                     href={authorDetailsForUnsplash.authorURL + "?utm_source=formbricks&utm_medium=referral"}
                     target="_blank"
                     className="hover:underline">
                     {authorDetailsForUnsplash.authorName}
                   </Link>
-                  <span> on </span>
+                  <span> {t("common.on")} </span>
                   <Link
                     href="https://unsplash.com/?utm_source=formbricks&utm_medium=referral"
                     target="_blank"
@@ -153,7 +155,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         );
       case "upload":
         if (!background?.bg) {
-          return <div>No background image found.</div>;
+          return <div>{t("common.no_background_image_found")}</div>;
         }
         return (
           <div className={`${baseClasses} ${loadedClass} bg-cover bg-center`}>

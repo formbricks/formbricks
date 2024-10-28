@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -30,6 +31,7 @@ export const MatrixQuestionSummary = ({
   setFilter,
   locale,
 }: MatrixQuestionSummaryProps) => {
+  const t = useTranslations();
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -40,7 +42,7 @@ export const MatrixQuestionSummary = ({
     if (label) {
       return label;
     } else if (percentage !== undefined && totalResponsesForRow !== undefined) {
-      return `${Math.round((percentage / 100) * totalResponsesForRow)} responses`;
+      return `${Math.round((percentage / 100) * totalResponsesForRow)} ${t("common.responses")}`;
     }
     return "";
   };

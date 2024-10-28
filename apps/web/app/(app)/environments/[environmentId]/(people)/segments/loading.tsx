@@ -9,7 +9,7 @@ const Loading = async () => {
   return (
     <>
       <PageContentWrapper>
-        <PageHeader pageTitle="common.people">
+        <PageHeader pageTitle={t("common.people")}>
           <PersonSecondaryNavigation activeId="segments" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

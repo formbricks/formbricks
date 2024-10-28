@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -31,22 +32,23 @@ export const NPSSummary = ({
   setFilter,
   locale,
 }: NPSSummaryProps) => {
+  const t = useTranslations();
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {
-        comparison: "Includes either",
+        comparison: t("environments.surveys.summary.includes_either"),
         values: ["9", "10"],
       },
       passives: {
-        comparison: "Includes either",
+        comparison: t("environments.surveys.summary.includes_either"),
         values: ["7", "8"],
       },
       detractors: {
-        comparison: "Is less than",
+        comparison: t("environments.surveys.summary.is_less_than"),
         values: "7",
       },
       dismissed: {
-        comparison: "Skipped",
+        comparison: t("common.skipped"),
         values: undefined,
       },
     };
@@ -90,7 +92,7 @@ export const NPSSummary = ({
               </div>
               <p className="flex w-32 items-end justify-end text-slate-600">
                 {questionSummary[group]?.count}{" "}
-                {questionSummary[group]?.count === 1 ? "response" : "responses"}
+                {questionSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
               </p>
             </div>
             <ProgressBar

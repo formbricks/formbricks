@@ -32,17 +32,17 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
     typeof window !== "undefined"
       ? z
           .instanceof(FileList)
-          .refine((files) => files.length === 1, "You must select a file.")
+          .refine((files) => files.length === 1, t("environments.settings.profile.you_must_select_a_file"))
           .refine((files) => {
             const file = files[0];
             const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
             return allowedTypes.includes(file.type);
-          }, "Invalid file type. Only JPEG, PNG, and WEBP files are allowed.")
+          }, t("environments.settings.profile.invalid_file_type"))
           .refine((files) => {
             const file = files[0];
             const maxSize = 10 * 1024 * 1024;
             return file.size <= maxSize;
-          }, "File size must be less than 10MB.")
+          }, t("environments.settings.profile.file_size_must_be_less_than_10mb"))
       : z.any();
 
   const formSchema = z.object({
@@ -74,7 +74,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
       await updateAvatarAction({ avatarUrl: url });
       router.refresh();
     } catch (err) {
-      toast.error("Avatar update failed. Please try again.");
+      toast.error(t("environments.settings.profile.avatar_update_failed"));
       setIsLoading(false);
     }
 
@@ -87,7 +87,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
     try {
       await removeAvatarAction({ environmentId });
     } catch (err) {
-      toast.error("Avatar update failed. Please try again.");
+      toast.error(t("environments.settings.profile.avatar_update_failed"));
     } finally {
       setIsLoading(false);
       form.reset();

@@ -8,7 +8,7 @@ interface SegmentTitleProps {
 }
 
 export const SegmentTitle = ({ title, description, isPrivate }: SegmentTitleProps) => {
-  const t = useTranslations("common");
+  const t = useTranslations();
 
   if (isPrivate) {
     return (

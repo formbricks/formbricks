@@ -35,7 +35,7 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     setLoading(true);
     const createOrganizationResponse = await createOrganizationAction({ organizationName: data.name });
     if (createOrganizationResponse?.data) {
-      toast.success("Organization created successfully!");
+      toast.success(t("environments.settings.general.organization_created_successfully"));
       router.push(`/organizations/${createOrganizationResponse.data.id}`);
       setOpen(false);
     } else {

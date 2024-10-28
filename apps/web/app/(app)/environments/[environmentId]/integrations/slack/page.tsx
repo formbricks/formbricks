@@ -1,4 +1,5 @@
 import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper";
+import { getTranslations } from "next-intl/server";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -13,7 +14,7 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
-
+  const t = await getTranslations();
   const [surveys, slackIntegration, environment, attributeClasses] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "slack"),
@@ -22,7 +23,7 @@ const Page = async ({ params }) => {
   ]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   let channelsArray: TIntegrationItem[] = [];

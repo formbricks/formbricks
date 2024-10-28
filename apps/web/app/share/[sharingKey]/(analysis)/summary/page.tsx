@@ -1,5 +1,6 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -11,6 +12,7 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
   if (!surveyId) {
@@ -19,7 +21,7 @@ const Page = async ({ params }) => {
 
   const survey = await getSurvey(surveyId);
   if (!survey) {
-    throw new Error("Survey not found");
+    throw new Error(t("common.survey_not_found"));
   }
   const environmentId = survey.environmentId;
   const [environment, attributeClasses, product] = await Promise.all([
@@ -29,11 +31,11 @@ const Page = async ({ params }) => {
   ]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);

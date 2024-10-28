@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { sendInviteAcceptedEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -10,6 +11,7 @@ import { Button } from "@formbricks/ui/components/Button";
 import { ContentLayout } from "./components/ContentLayout";
 
 const Page = async ({ searchParams }) => {
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const user = session?.user.id ? await getUser(session.user.id) : null;
 
@@ -21,8 +23,8 @@ const Page = async ({ searchParams }) => {
     if (!invite) {
       return (
         <ContentLayout
-          headline="Invite not found 😥"
-          description="The invitation code cannot be found or has already been used."
+          headline={t("auth.invite.invite_not_found")}
+          description={t("auth.invite.invite_not_found_description")}
         />
       );
     }
@@ -32,19 +34,19 @@ const Page = async ({ searchParams }) => {
     if (isInviteExpired) {
       return (
         <ContentLayout
-          headline="Invite expired 😥"
-          description="Invites are valid for 7 days. Please request a new invite."
+          headline={t("auth.invite.invite_expired")}
+          description={t("auth.invite.invite_expired_description")}
         />
       );
     } else if (invite.accepted) {
       return (
         <ContentLayout
-          headline="You’re already part of the squad."
-          description="This invitation has already been used.">
+          headline={t("auth.invite.already_part_of_squad")}
+          description={t("auth.invite.already_part_of_squad_description")}>
           <Button variant="secondary" href="/support">
-            Contact support
+            {t("auth.invite.contact_support")}
           </Button>
-          <Button href="/">Go to app</Button>
+          <Button href="/">{t("auth.invite.go_to_app")}</Button>
         </ContentLayout>
       );
     } else if (!session) {
@@ -55,9 +57,11 @@ const Page = async ({ searchParams }) => {
           <Button
             variant="secondary"
             href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
-            Create account
+            {t("auth.invite.create_account")}
           </Button>
-          <Button href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>Login</Button>
+          <Button href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
+            {t("auth.invite.login")}
+          </Button>
         </ContentLayout>
       );
     } else if (user?.email !== email) {
@@ -66,9 +70,9 @@ const Page = async ({ searchParams }) => {
           headline="Ooops! Wrong email 🤦"
           description="The email in the invitation does not match yours.">
           <Button variant="secondary" href="/support">
-            Contact support
+            {t("auth.invite.contact_support")}
           </Button>
-          <Button href="/">Go to app</Button>
+          <Button href="/">{t("auth.invite.go_to_app")}</Button>
         </ContentLayout>
       );
     } else {
@@ -95,8 +99,10 @@ const Page = async ({ searchParams }) => {
         },
       });
       return (
-        <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
-          <Button href="/">Go to app</Button>
+        <ContentLayout
+          headline={t("auth.invite.welcome_to_organization")}
+          description={t("auth.invite.welcome_to_organization_description")}>
+          <Button href="/">{t("auth.invite.go_to_app")}</Button>
         </ContentLayout>
       );
     }
@@ -104,8 +110,8 @@ const Page = async ({ searchParams }) => {
     console.error(e);
     return (
       <ContentLayout
-        headline="Invite not found 😥"
-        description="The invitation code cannot be found or has already been used."
+        headline={t("auth.invite.invite_not_found")}
+        description={t("auth.invite.invite_not_found_description")}
       />
     );
   }

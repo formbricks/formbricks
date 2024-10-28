@@ -1,4 +1,5 @@
 import { TagIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
@@ -51,7 +52,7 @@ export const AttributeSegmentFilter = ({
 }: AttributeSegmentFilterProps) => {
   const { attributeClassName } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
-
+  const t = useTranslations();
   const [valueError, setValueError] = useState("");
 
   // when the operator changes, we need to check if the value is valid
@@ -101,7 +102,7 @@ export const AttributeSegmentFilter = ({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError("Value cannot be empty");
+      setValueError(t("ee.advanced_targeting.value_cannot_be_empty"));
       return;
     }
 
@@ -114,7 +115,7 @@ export const AttributeSegmentFilter = ({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError("Value must be a number");
+        setValueError(t("ee.advanced_targeting.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 

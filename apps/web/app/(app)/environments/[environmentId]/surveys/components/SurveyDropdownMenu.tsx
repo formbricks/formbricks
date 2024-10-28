@@ -69,9 +69,9 @@ export const SurveyDropDownMenu = ({
       deleteSurvey(surveyId);
       router.refresh();
       setDeleteDialogOpen(false);
-      toast.success("Survey deleted successfully.");
+      toast.success(t("environments.surveys.survey_deleted_successfully"));
     } catch (error) {
-      toast.error("An error occured while deleting survey");
+      toast.error(t("environments.surveys.error_deleting_survey"));
     }
     setLoading(false);
   };
@@ -91,13 +91,13 @@ export const SurveyDropDownMenu = ({
           surveyId: duplicatedSurveyResponse.data.id,
         });
         if (transformedDuplicatedSurvey?.data) duplicateSurvey(transformedDuplicatedSurvey.data);
-        toast.success("Survey duplicated successfully.");
+        toast.success(t("environments.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error("Failed to duplicate the survey.");
+      toast.error(t("environments.surveys.survey_duplication_error"));
     }
     setLoading(false);
   };
@@ -109,7 +109,7 @@ export const SurveyDropDownMenu = ({
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
           <div className="rounded-lg border bg-white p-2 hover:bg-slate-50">
-            <span className="sr-only">Open options</span>
+            <span className="sr-only">{t("environments.surveys.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
@@ -220,7 +220,7 @@ export const SurveyDropDownMenu = ({
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
-          text={t("common.delete_survey_and_responses_warning")}
+          text={t("environments.surveys.delete_survey_and_responses_warning")}
         />
       )}
 

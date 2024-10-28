@@ -454,7 +454,11 @@ export const AddIntegrationModal = ({
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <Image className="w-12" src={NotionLogo} alt="Google Sheet logo" />
+                <Image
+                  className="w-12"
+                  src={NotionLogo}
+                  alt={t("environments.integrations.notion.notion_logo")}
+                />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">

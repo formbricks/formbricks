@@ -1,5 +1,6 @@
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import {
@@ -21,6 +22,7 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const enabled = !!(
     NOTION_OAUTH_CLIENT_ID &&
     NOTION_OAUTH_CLIENT_SECRET &&
@@ -35,7 +37,7 @@ const Page = async ({ params }) => {
   ]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   let databasesArray: TIntegrationNotionDatabase[] = [];

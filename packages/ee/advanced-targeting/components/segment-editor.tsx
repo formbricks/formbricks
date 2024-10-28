@@ -1,4 +1,5 @@
 import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -42,6 +43,7 @@ export function SegmentEditor({
   segments,
   viewOnly = false,
 }: TSegmentEditorProps) {
+  const t = useTranslations();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 
@@ -155,7 +157,7 @@ export function SegmentEditor({
                     if (viewOnly) return;
                     onConnectorChange(groupId, connector);
                   }}>
-                  {connector ? connector : "Where"}
+                  {connector ? connector : t("ee.advanced_targeting.where")}
                 </span>
               </div>
 
@@ -179,7 +181,7 @@ export function SegmentEditor({
                     }}
                     size="sm"
                     variant="secondary">
-                    Add filter
+                    {t("common.add_filter")}
                   </Button>
                 </div>
 
@@ -211,14 +213,14 @@ export function SegmentEditor({
                         setAddFilterModalOpenedFromBelow(true);
                         setAddFilterModalOpen(true);
                       }}>
-                      Add filter below
+                      {t("ee.advanced_targeting.add_filter_below")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       onClick={() => {
                         handleCreateGroup(groupId);
                       }}>
-                      Create group
+                      {t("ee.advanced_targeting.create_group")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
@@ -226,7 +228,7 @@ export function SegmentEditor({
                         handleMoveResource(groupId, "up");
                       }}
                       icon={<ArrowUpIcon className="h-4 w-4" />}>
-                      Move up
+                      {t("common.move_up")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
@@ -235,7 +237,7 @@ export function SegmentEditor({
                         handleMoveResource(groupId, "down");
                       }}
                       icon={<ArrowDownIcon className="h-4 w-4" />}>
-                      Move down
+                      {t("common.move_down")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

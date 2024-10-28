@@ -116,16 +116,16 @@ export const TargetingCard = ({
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
-      if (!segment) throw new Error("Invalid segment");
+      if (!segment) throw new Error(t("environments.surveys.edit.invalid_segment"));
       await updateBasicSegmentAction({ segmentId: segment?.id, data });
 
       router.refresh();
-      toast.success("Segment saved successfully");
+      toast.success(t("environments.surveys.edit.segment_saved_successfully"));
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
     } catch (err) {
-      toast.error(err.message ?? "Error Saving Segment");
+      toast.error(err.message ?? t("environments.surveys.edit.error_saving_segment"));
     }
   };
 
@@ -136,7 +136,7 @@ export const TargetingCard = ({
       });
       return resetBasicSegmentFiltersResponse?.data;
     } catch (err) {
-      toast.error("Error resetting filters");
+      toast.error(t("environments.surveys.edit.error_resetting_filters"));
     }
   };
 

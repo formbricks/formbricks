@@ -50,7 +50,7 @@ export const OrganizationActions = ({
     setLoading(true);
     try {
       await leaveOrganizationAction({ organizationId: organization.id });
-      toast.success("You left the organization successfully");
+      toast.success(t("environments.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);
       router.push("/");
@@ -67,9 +67,9 @@ export const OrganizationActions = ({
           await inviteUserAction({ organizationId: organization.id, email, name, role });
         })
       );
-      toast.success("Member invited successfully");
+      toast.success(t("environments.settings.general.member_invited_successfully"));
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`${t("common.error")}: ${err.message}`);
     }
   };
 
@@ -129,8 +129,7 @@ export const OrganizationActions = ({
         isLoading={loading}>
         {isLeaveOrganizationDisabled && (
           <p className="mt-2 text-sm text-red-700">
-            You cannot leave this organization as it is your only organization. Create a new organization
-            first.
+            {t("environments.settings.general.cannot_leave_only_organization")}
           </p>
         )}
       </CustomDialog>

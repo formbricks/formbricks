@@ -32,10 +32,10 @@ export const DeleteOrganization = ({
 
     try {
       await deleteOrganizationAction({ organizationId: organization.id });
-      toast.success("Organization deleted successfully.");
+      toast.success(t("environments.settings.general.organization_deleted_successfully"));
       router.push("/");
     } catch (err) {
-      toast.error("Error deleting organization. Please try again.");
+      toast.error(t("environments.settings.general.error_deleting_organization_please_try_again"));
     }
 
     setIsDeleteDialogOpen(false);
@@ -43,10 +43,9 @@ export const DeleteOrganization = ({
   };
 
   const deleteDisabledWarning = useMemo(() => {
-    if (isUserOwner)
-      return "This is your only organization, it cannot be deleted. Create a new organization first.";
+    if (isUserOwner) return t("environments.settings.general.cannot_delete_only_organization");
 
-    return "Only Owner can delete the organization.";
+    return t("environments.settings.general.only_owner_can_delete_organization");
   }, [isUserOwner]);
 
   return (

@@ -177,7 +177,7 @@ const EnterCode = ({ setCurrentStep, setOpen, refreshData }: TEnableCodeProps) =
         // refresh data to update the UI
         refreshData();
       } else {
-        toast.error("The 2FA OTP is incorrect. Please try again.");
+        toast.error(t("environments.settings.profile.the_2fa_otp_is_incorrect_please_try_again"));
       }
     } catch (err) {
       toast.error(err.message);
@@ -286,7 +286,7 @@ const DisplayBackupCodes = ({ backupCodes, setOpen }: TDisplayBackupCodesProps) 
           size="sm"
           onClick={() => {
             navigator.clipboard.writeText(backupCodes.map((code) => formatBackupCode(code)).join("\n"));
-            toast.success("Copied to clipboard");
+            toast.success(t("common.copied_to_clipboard"));
           }}>
           {t("common.copy")}
         </Button>

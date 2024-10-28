@@ -65,7 +65,7 @@ export const BasicSegmentSettings = ({
 
   const handleUpdateSegment = async () => {
     if (!segment.title) {
-      toast.error("Title is required.");
+      toast.error(t("environments.segments.title_is_required"));
       return;
     }
 
@@ -82,14 +82,14 @@ export const BasicSegmentSettings = ({
       });
 
       setIsUpdatingSegment(false);
-      toast.success("Segment updated successfully!");
+      toast.success(t("environments.segments.segment_updated_successfully"));
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (!parsedFilters.success) {
-        toast.error("Invalid filters. Please check the filters and try again.");
+        toast.error(t("environments.segments.invalid_filters_please_check_the_filters_and_try_again"));
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
       setIsUpdatingSegment(false);
       return;
@@ -106,10 +106,10 @@ export const BasicSegmentSettings = ({
       await deleteBasicSegmentAction({ segmentId: segment.id });
 
       setIsDeletingSegment(false);
-      toast.success("Segment deleted successfully!");
+      toast.success(t("environments.segments.segment_deleted_successfully"));
       handleResetState();
     } catch (err: any) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
 
     setIsDeletingSegment(false);
@@ -134,7 +134,7 @@ export const BasicSegmentSettings = ({
   if (isAdvancedSegment(segment.filters)) {
     return (
       <p className="italic text-slate-600">
-        This is an advanced segment, you cannot edit it. Please upgrade your plan to edit this segment.
+        {t("environments.segments.advance_segment_cannot_be_edited_upgrade_your_plan")}
       </p>
     );
   }

@@ -82,14 +82,14 @@ export const BasicCreateSegmentModal = ({
       });
 
       setIsCreatingSegment(false);
-      toast.success("Segment created successfully!");
+      toast.success(t("environments.segments.segment_created_successfully"));
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (!parsedFilters.success) {
-        toast.error("Invalid filters. Please check the filters and try again.");
+        toast.error(t("environments.segments.invalid_filters_please_check_the_filters_and_try_again"));
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
       setIsCreatingSegment(false);
       return;
@@ -152,7 +152,7 @@ export const BasicCreateSegmentModal = ({
           <div className="flex flex-col overflow-auto rounded-lg bg-white p-6">
             <div className="flex w-full items-center gap-4">
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Title</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.title")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
                     placeholder={t("environments.segments.ex_power_users")}
@@ -168,7 +168,7 @@ export const BasicCreateSegmentModal = ({
               </div>
 
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Description</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.description")}</label>
                 <Input
                   placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                   onChange={(e) => {
@@ -182,7 +182,7 @@ export const BasicCreateSegmentModal = ({
               </div>
             </div>
 
-            <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
+            <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
             <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment?.filters?.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">

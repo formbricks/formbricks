@@ -2,19 +2,21 @@
 
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { useTranslations } from "next-intl";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = async () => {
+  const t = useTranslations();
   const cards = [
     {
-      title: "environments.product.app-connection.app_connection",
-      description: "environments.product.app-connection.app_connection_description",
+      title: t("environments.product.app-connection.app_connection"),
+      description: t("environments.product.app-connection.app_connection_description"),
       skeletonLines: [{ classes: " h-44 max-w-full rounded-lg" }],
     },
     {
-      title: "environments.product.app-connection.how_to_setup",
-      description: "environments.product.app-connection.how_to_setup_description",
+      title: t("environments.product.app-connection.how_to_setup"),
+      description: t("environments.product.app-connection.how_to_setup_description"),
       skeletonLines: [
         { classes: "h-12 w-24 rounded-lg" },
         { classes: "h-10 w-60 rounded-lg" },
@@ -25,8 +27,8 @@ const Loading = async () => {
       ],
     },
     {
-      title: "environments.product.app-connection.environment_id",
-      description: "environments.product.app-connection.environment_id_description",
+      title: t("environments.product.app-connection.environment_id"),
+      description: t("environments.product.app-connection.environment_id_description"),
       skeletonLines: [{ classes: "h-12 w-4/6 rounded-lg" }],
     },
   ];

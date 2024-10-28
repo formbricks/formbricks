@@ -3,6 +3,7 @@
 import { getPersonsAction } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { PersonTable } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTable";
 import { debounce } from "lodash";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -14,6 +15,7 @@ interface PersonDataViewProps {
 }
 
 export const PersonDataView = ({ environment, itemsPerPage }: PersonDataViewProps) => {
+  const t = useTranslations();
   const [persons, setPersons] = useState<TPersonWithAttributes[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(false);
@@ -38,7 +40,7 @@ export const PersonDataView = ({ environment, itemsPerPage }: PersonDataViewProp
           setHasMore(false);
         }
       } catch (error) {
-        console.error("Error fetching people data:", error);
+        console.error(t("environments.people.error_fetching_people_data"), error);
       } finally {
         setIsDataLoaded(true);
       }
@@ -69,7 +71,7 @@ export const PersonDataView = ({ environment, itemsPerPage }: PersonDataViewProp
           }
         }
       } catch (error) {
-        console.error("Error fetching next page of people data:", error);
+        console.error(t("environments.people.error_fetching_next_page_of_people_data"), error);
       } finally {
         setLoadingNextPage(false);
       }

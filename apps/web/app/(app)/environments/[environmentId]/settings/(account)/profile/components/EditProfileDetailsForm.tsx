@@ -65,7 +65,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
                 <Input
                   {...field}
                   type="text"
-                  placeholder="Full Name"
+                  placeholder={t("common.full_name")}
                   required
                   isInvalid={!!form.formState.errors.name}
                 />

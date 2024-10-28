@@ -240,9 +240,9 @@ export function LogicEditorConditions({
       );
     }
 
-    const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx);
+    const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, t);
     const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
-    const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey);
+    const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey, t);
 
     const allowMultiSelect = ["equalsOneOf", "includesAllOf", "includesOneOf"].includes(condition.operator);
     return (

@@ -2,6 +2,7 @@
 
 import { ResponseFeed } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponsesFeed";
 import { ArrowDownUpIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -27,6 +28,7 @@ export const ResponseTimeline = ({
   environmentTags,
   attributeClasses,
 }: ResponseTimelineProps) => {
+  const t = useTranslations();
   const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
     setSortedResponses([...sortedResponses].reverse());
@@ -39,7 +41,7 @@ export const ResponseTimeline = ({
   return (
     <div className="md:col-span-3">
       <div className="flex items-center justify-between pb-6">
-        <h2 className="text-lg font-bold text-slate-700">Responses</h2>
+        <h2 className="text-lg font-bold text-slate-700">{t("common.responses")}</h2>
         <div className="text-right">
           <button
             type="button"

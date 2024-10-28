@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckIcon, CopyIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@formbricks/ui/components/Button";
@@ -14,7 +15,7 @@ interface ShareInviteModalProps {
 
 export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModalProps) => {
   const linkTextRef = useRef(null);
-
+  const t = useTranslations();
   const handleTextSelection = () => {
     if (linkTextRef.current) {
       const range = document.createRange();
@@ -36,11 +37,13 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
         </div>
         <div className="mt-3 text-center sm:mt-5">
           <h3 className="text-lg font-semibold leading-6 text-slate-900">
-            Your organization invite link is ready!
+            {t("environments.settings.general.organization_invite_link_ready")}
           </h3>
           <div className="mt-4">
             <p className="text-sm text-slate-500">
-              Share this link to let your organization member join your organization:
+              {t(
+                "environments.settings.general.share_this_link_to_let_your_organization_member_join_your_organization"
+              )}
             </p>
             <p
               ref={linkTextRef}
@@ -57,12 +60,12 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
                 navigator.clipboard.writeText(
                   `${window.location.protocol}//${window.location.host}/invite?token=${inviteToken}`
                 );
-                toast.success("URL copied to clipboard!");
+                toast.success(t("common.copied_to_clipboard"));
               }}
-              title="Copy invite link to clipboard"
+              title={t("environments.settings.general.copy_invite_link_to_clipboard")}
               aria-label="Copy invite link to clipboard"
               EndIcon={CopyIcon}>
-              Copy URL
+              {t("common.copy_url")}
             </Button>
           </div>
         </div>

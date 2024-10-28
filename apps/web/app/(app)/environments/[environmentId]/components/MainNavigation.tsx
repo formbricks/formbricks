@@ -211,35 +211,35 @@ export const MainNavigation = ({
 
   const dropdownNavigation = [
     {
-      label: "common.account",
+      label: t("common.account"),
       href: `/environments/${environment.id}/settings/profile`,
       icon: UserCircleIcon,
     },
     {
-      label: "common.organization",
+      label: t("common.organization"),
       href: `/environments/${environment.id}/settings/general`,
       icon: UsersIcon,
     },
     {
-      label: "common.billing",
+      label: t("common.billing"),
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
     },
     {
-      label: "common.license",
+      label: t("common.license"),
       href: `/environments/${environment.id}/settings/enterprise`,
       hidden: isFormbricksCloud || isPricingDisabled,
       icon: KeyIcon,
     },
     {
-      label: "common.documentation",
+      label: t("common.documentation"),
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
     {
-      label: "common.join_discord",
+      label: t("common.join_discord"),
       href: "https://formbricks.com/discord",
       target: "_blank",
       icon: AiOutlineDiscord,
@@ -281,7 +281,7 @@ export const MainNavigation = ({
                     "flex items-center justify-center transition-opacity duration-100",
                     isTextVisible ? "opacity-0" : "opacity-100"
                   )}>
-                  <Image src={FBLogo} width={160} height={30} alt="Formbricks Logo" />
+                  <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
                 </Link>
               )}
               <Button
@@ -476,7 +476,7 @@ export const MainNavigation = ({
                         <Link href={link.href} target={link.target} className="flex w-full items-center">
                           <DropdownMenuItem>
                             <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                            {t(link.label)}
+                            {link.label}
                           </DropdownMenuItem>
                         </Link>
                       )

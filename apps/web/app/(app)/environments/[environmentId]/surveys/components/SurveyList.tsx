@@ -168,7 +168,7 @@ export const SurveysList = ({
           {hasMore && (
             <div className="flex justify-center py-5">
               <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
-                Load more
+                {t("common.load_more")}
               </Button>
             </div>
           )}
@@ -180,7 +180,7 @@ export const SurveysList = ({
           ) : (
             <div className="flex w-full flex-col items-center justify-center text-slate-600">
               <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
-              No surveys found
+              {t("common.no_surveys_found")}
             </div>
           )}
         </div>

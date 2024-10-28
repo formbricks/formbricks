@@ -10,9 +10,9 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
   const environment = await getEnvironment(params.environmentId);
-  const t = await getTranslations("environments.people");
+  const t = await getTranslations();
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   const HowToAddPeopleButton = (
@@ -22,13 +22,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       variant="secondary"
       target="_blank"
       EndIcon={CircleHelpIcon}>
-      {t("how_to_add_people")}
+      {t("environments.people.how_to_add_people")}
     </Button>
   );
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="common.people" cta={HowToAddPeopleButton}>
+      <PageHeader pageTitle={t("common.people")} cta={HowToAddPeopleButton}>
         <PersonSecondaryNavigation activeId="people" environmentId={params.environmentId} />
       </PageHeader>
       <PersonDataView environment={environment} itemsPerPage={ITEMS_PER_PAGE} />

@@ -2,6 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -138,10 +139,11 @@ interface AttributeTabContentProps {
 }
 
 function AttributeTabContent({ attributeClasses, onAddFilter, setOpen }: AttributeTabContentProps) {
+  const t = useTranslations();
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <h2 className="text-base font-medium">Person</h2>
+        <h2 className="text-base font-medium">{t("common.person")}</h2>
         <div>
           <div
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
@@ -163,7 +165,7 @@ function AttributeTabContent({ attributeClasses, onAddFilter, setOpen }: Attribu
               }
             }}>
             <FingerprintIcon className="h-4 w-4" />
-            <p>userId</p>
+            <p>{t("common.user_id")}</p>
           </div>
         </div>
       </div>
@@ -171,11 +173,11 @@ function AttributeTabContent({ attributeClasses, onAddFilter, setOpen }: Attribu
       <hr className="my-2" />
 
       <div>
-        <h2 className="text-base font-medium">Attributes</h2>
+        <h2 className="text-base font-medium">{t("common.attributes")}</h2>
       </div>
       {attributeClasses.length === 0 && (
         <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-          <p>There are no attributes yet!</p>
+          <p>{t("ee.advanced_targeting.no_attributes_yet")}</p>
         </div>
       )}
       {attributeClasses.map((attributeClass) => {
@@ -209,22 +211,30 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
-
+  const t = useTranslations();
   const tabs: {
     id: string;
     label: string;
     icon?: React.ReactNode;
   }[] = [
-    { id: "all", label: "All" },
-    { id: "attributes", label: "Person & Attributes", icon: <TagIcon className="h-4 w-4" /> },
-    { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
-    { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
+    { id: "all", label: t("common.all") },
+    {
+      id: "attributes",
+      label: t("ee.advanced_targeting.person_and_attributes"),
+      icon: <TagIcon className="h-4 w-4" />,
+    },
+    { id: "segments", label: t("common.segments"), icon: <Users2Icon className="h-4 w-4" /> },
+    {
+      id: "devices",
+      label: t("ee.advanced_targeting.devices"),
+      icon: <MonitorSmartphoneIcon className="h-4 w-4" />,
+    },
   ];
 
   const devices = useMemo(
     () => [
-      { id: "phone", name: "Phone" },
-      { id: "desktop", name: "Desktop" },
+      { id: "phone", name: t("ee.advanced_targeting.phone") },
+      { id: "desktop", name: t("ee.advanced_targeting.desktop") },
     ],
     []
   );
@@ -287,7 +297,7 @@ export function AddFilterModal({
           );
         }) ? (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>There are no filters yet!</p>
+            <p>{t("ee.advanced_targeting.no_filters_yet")}</p>
           </div>
         ) : null}
 
@@ -385,7 +395,7 @@ export function AddFilterModal({
       <>
         {segmentsFiltered.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>You currently have no saved segments.</p>
+            <p>{t("ee.advanced_targeting.no_segments_yet")}</p>
           </div>
         )}
         {segmentsFiltered

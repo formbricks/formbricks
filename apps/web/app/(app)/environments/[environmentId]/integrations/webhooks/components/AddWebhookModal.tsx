@@ -1,4 +1,3 @@
-import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
 import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import clsx from "clsx";
@@ -207,7 +206,6 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
               <div>
                 <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
                 <TriggerCheckboxGroup
-                  triggers={triggers}
                   selectedTriggers={selectedTriggers}
                   onCheckboxChange={handleCheckboxChange}
                   allowChanges={true}

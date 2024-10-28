@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
@@ -22,6 +23,7 @@ export const ContactInfoSummary = ({
   attributeClasses,
   locale,
 }: ContactInfoSummaryProps) => {
+  const t = useTranslations();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
@@ -32,9 +34,9 @@ export const ContactInfoSummary = ({
       />
       <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
-          <div className="pl-4 md:pl-6">User</div>
-          <div className="col-span-2 pl-4 md:pl-6">Response</div>
-          <div className="px-4 md:px-6">Time</div>
+          <div className="pl-4 md:pl-6">{t("common.user")}</div>
+          <div className="col-span-2 pl-4 md:pl-6">{t("common.response")}</div>
+          <div className="px-4 md:px-6">{t("common.time")}</div>
         </div>
         <div className="max-h-[62vh] w-full overflow-y-auto">
           {questionSummary.samples.map((response) => {
@@ -59,7 +61,7 @@ export const ContactInfoSummary = ({
                       <div className="hidden md:flex">
                         <PersonAvatar personId="anonymous" />
                       </div>
-                      <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                      <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
                     </div>
                   )}
                 </div>

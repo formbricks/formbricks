@@ -25,7 +25,7 @@ export const EnableInsightsBanner = ({
 
   const handleInsightGeneration = async () => {
     setIsGeneratingInsights(true);
-    toast.success("Generating insights for this survey. Please check back in a few minutes.");
+    toast.success(t("environments.surveys.summary.enable_ai_insights_banner_success"));
     generateInsightsForSurveyAction({ surveyId });
   };
 
