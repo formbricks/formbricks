@@ -1,4 +1,4 @@
-import { createDocument } from "@/app/api/(internal)/insights/lib/document";
+import { TCreatedDocument, createDocument } from "@/app/api/(internal)/insights/lib/document";
 import { doesResponseHasAnyOpenTextAnswer } from "@/app/api/(internal)/insights/lib/utils";
 import { documentCache } from "@/lib/cache/document";
 import { insightCache } from "@/lib/cache/insight";
@@ -135,8 +135,11 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
         });
       });
 
-      const createDocumentResults = await Promise.all(createDocumentPromises);
-      const createdDocuments = createDocumentResults.filter(Boolean);
+      const createDocumentResults = await Promise.allSettled(createDocumentPromises);
+      const fullfilledCreateDocumentResults = createDocumentResults.filter(
+        (result) => result.status === "fulfilled"
+      ) as PromiseFulfilledResult<TCreatedDocument>[];
+      const createdDocuments = fullfilledCreateDocumentResults.filter(Boolean).map((result) => result.value);
 
       for (const document of createdDocuments) {
         if (document) {
@@ -151,7 +154,7 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
               // Create or connect the insight
               insightPromises.push(handleInsightAssignments(environmentId, id, insight));
             }
-            await Promise.all(insightPromises);
+            await Promise.allSettled(insightPromises);
           }
         }
       }
@@ -342,45 +345,49 @@ export const handleInsightAssignments = async (
     category: TInsightCategory;
   }
 ) => {
-  // create embedding for insight
-  const { embedding } = await embed({
-    model: embeddingsModel,
-    value: getInsightVectorText(insight.title, insight.description),
-    experimental_telemetry: { isEnabled: true },
-  });
-  // find close insight to merge it with
-  const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.2);
+  try {
+    // create embedding for insight
+    const { embedding } = await embed({
+      model: embeddingsModel,
+      value: getInsightVectorText(insight.title, insight.description),
+      experimental_telemetry: { isEnabled: true },
+    });
+    // find close insight to merge it with
+    const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.2);
 
-  if (nearestInsights.length > 0) {
-    // create a documentInsight with this insight
-    await prisma.documentInsight.create({
-      data: {
-        documentId,
+    if (nearestInsights.length > 0) {
+      // create a documentInsight with this insight
+      await prisma.documentInsight.create({
+        data: {
+          documentId,
+          insightId: nearestInsights[0].id,
+        },
+      });
+      documentCache.revalidate({
         insightId: nearestInsights[0].id,
-      },
-    });
-    documentCache.revalidate({
-      insightId: nearestInsights[0].id,
-    });
-  } else {
-    // create new insight and documentInsight
-    const newInsight = await createInsight({
-      environmentId: environmentId,
-      title: insight.title,
-      description: insight.description,
-      category: insight.category ?? "other",
-      vector: embedding,
-    });
-    // create a documentInsight with this insight
-    await prisma.documentInsight.create({
-      data: {
-        documentId,
+      });
+    } else {
+      // create new insight and documentInsight
+      const newInsight = await createInsight({
+        environmentId: environmentId,
+        title: insight.title,
+        description: insight.description,
+        category: insight.category ?? "other",
+        vector: embedding,
+      });
+      // create a documentInsight with this insight
+      await prisma.documentInsight.create({
+        data: {
+          documentId,
+          insightId: newInsight.id,
+        },
+      });
+      documentCache.revalidate({
         insightId: newInsight.id,
-      },
-    });
-    documentCache.revalidate({
-      insightId: newInsight.id,
-    });
+      });
+    }
+  } catch (error) {
+    throw error;
   }
 };
 
