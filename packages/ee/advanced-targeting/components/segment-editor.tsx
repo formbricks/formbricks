@@ -157,7 +157,7 @@ export function SegmentEditor({
                     if (viewOnly) return;
                     onConnectorChange(groupId, connector);
                   }}>
-                  {connector ? connector : t("ee.advanced_targeting.where")}
+                  {connector ? connector : t("environments.segments.where")}
                 </span>
               </div>
 
@@ -213,14 +213,14 @@ export function SegmentEditor({
                         setAddFilterModalOpenedFromBelow(true);
                         setAddFilterModalOpen(true);
                       }}>
-                      {t("ee.advanced_targeting.add_filter_below")}
+                      {t("environments.segments.add_filter_below")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       onClick={() => {
                         handleCreateGroup(groupId);
                       }}>
-                      {t("ee.advanced_targeting.create_group")}
+                      {t("environments.segments.create_group")}
                     </DropdownMenuItem>
 
                     <DropdownMenuItem

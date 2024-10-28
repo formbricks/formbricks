@@ -40,18 +40,20 @@ export function TransferOwnershipModal({
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
-            {t("ee.role_management.there_can_only_be_one_owner_of_each_organization")}
-            <b>{memberName}</b>, {t("ee.role_management.you_will_lose_all_of_your_ownership_rights")}
+            {t("environments.settings.general.there_can_only_be_one_owner_of_each_organization")}
+            <b>{memberName}</b>,{" "}
+            {t("environments.settings.general.you_will_lose_all_of_your_ownership_rights")}
           </li>
           <li>
             {t(
-              "ee.role_management.when_you_transfer_the_ownership_you_will_remain_an_admin_of_the_organization"
+              "environments.settings.general.when_you_transfer_the_ownership_you_will_remain_an_admin_of_the_organization"
             )}
           </li>
         </ul>
         <form>
           <label htmlFor="transferOwnershipConfirmation">
-            {t("ee.role_management.type_in")} <b>{memberName}</b> {t("ee.role_management.to_confirm")}:
+            {t("environments.settings.general.type_in")} <b>{memberName}</b>{" "}
+            {t("environments.settings.general.to_confirm")}:
           </label>
           <Input
             className="mt-5"

@@ -134,14 +134,14 @@ export function AdvancedTargetingCard({
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
-      if (!segment) throw new Error(t("ee.advanced_targeting.invalid_segment"));
+      if (!segment) throw new Error(t("environments.segments.invalid_segment"));
       await updateSegmentAction({ segmentId: segment.id, data });
-      toast.success(t("ee.advanced_targeting.segment_saved_successfully"));
+      toast.success(t("environments.segments.segment_saved_successfully"));
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
     } catch (err: any) {
-      toast.error(err.message ?? t("ee.advanced_targeting.error_saving_segment"));
+      toast.error(err.message ?? t("environments.segments.error_saving_segment"));
     }
   };
 
@@ -150,7 +150,7 @@ export function AdvancedTargetingCard({
       const segmentResponse = await resetSegmentFiltersAction({ surveyId: localSurvey.id });
       return segmentResponse?.data;
     } catch (err) {
-      toast.error(t("ee.advanced_targeting.error_resetting_filters"));
+      toast.error(t("environments.segments.error_resetting_filters"));
     }
   };
 
@@ -159,7 +159,7 @@ export function AdvancedTargetingCard({
   }
 
   if (!segment) {
-    throw new Error(t("ee.advanced_targeting.invalid_segment"));
+    throw new Error(t("environments.segments.invalid_segment"));
   }
 
   return (
@@ -178,8 +178,8 @@ export function AdvancedTargetingCard({
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">{t("ee.advanced_targeting.target_audience")}</p>
-            <p className="mt-1 text-sm text-slate-500">{t("ee.advanced_targeting.pre_segment_users")}</p>
+            <p className="font-semibold text-slate-800">{t("environments.segments.target_audience")}</p>
+            <p className="mt-1 text-sm text-slate-500">{t("environments.segments.pre_segment_users")}</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -320,8 +320,8 @@ export function AdvancedTargetingCard({
                     size="sm"
                     variant="secondary">
                     {segmentEditorViewOnly
-                      ? t("ee.advanced_targeting.hide_filters")
-                      : t("ee.advanced_targeting.view_filters")}
+                      ? t("environments.segments.hide_filters")
+                      : t("environments.segments.view_filters")}
                     {segmentEditorViewOnly ? (
                       <ChevronUpIcon className="ml-2 h-3 w-3" />
                     ) : (
@@ -331,7 +331,7 @@ export function AdvancedTargetingCard({
 
                   {isSegmentUsedInOtherSurveys ? (
                     <Button onClick={() => handleCloneSegment()} size="sm" variant="secondary">
-                      {t("ee.advanced_targeting.clone_and_edit_segment")}
+                      {t("environments.segments.clone_and_edit_segment")}
                     </Button>
                   ) : null}
                   {!isSegmentUsedInOtherSurveys && (
@@ -350,12 +350,12 @@ export function AdvancedTargetingCard({
                 {isSegmentUsedInOtherSurveys ? (
                   <p className="mt-1 flex items-center text-xs text-slate-500">
                     <AlertCircle className="mr-1 inline h-3 w-3" />
-                    {t("ee.advanced_targeting.this_segment_is_used_in_other_surveys")}
+                    {t("environments.segments.this_segment_is_used_in_other_surveys")}
                     <Link
                       className="ml-1 underline"
                       href={`/environments/${environmentId}/segments`}
                       target="_blank">
-                      {t("ee.advanced_targeting.here")}
+                      {t("environments.segments.here")}
                     </Link>
                   </p>
                 ) : null}
@@ -370,7 +370,7 @@ export function AdvancedTargetingCard({
               }}
               size="sm"
               variant="secondary">
-              {t("ee.advanced_targeting.load_segment")}
+              {t("environments.segments.load_segment")}
             </Button>
 
             {!segment?.isPrivate && Boolean(segment?.filters.length) && (
@@ -380,7 +380,7 @@ export function AdvancedTargetingCard({
                 }}
                 size="sm"
                 variant="secondary">
-                {t("ee.advanced_targeting.reset_all_filters")}
+                {t("environments.segments.reset_all_filters")}
               </Button>
             )}
 
@@ -392,19 +392,19 @@ export function AdvancedTargetingCard({
                 }}
                 size="sm"
                 variant="secondary">
-                {t("ee.advanced_targeting.save_as_new_segment")}
+                {t("environments.segments.save_as_new_segment")}
               </Button>
             ) : null}
 
             <AlertDialog
-              confirmBtnLabel={t("ee.advanced_targeting.remove_all_filters")}
+              confirmBtnLabel={t("environments.segments.remove_all_filters")}
               declineBtnLabel={t("common.cancel")}
               headerText={t("common.are_you_sure")}
-              mainText={t("ee.advanced_targeting.this_action_resets_all_filters_in_this_survey")}
+              mainText={t("environments.segments.this_action_resets_all_filters_in_this_survey")}
               onConfirm={async () => {
                 const segment = await handleResetAllFilters();
                 if (segment) {
-                  toast.success(t("ee.advanced_targeting.filters_reset_successfully"));
+                  toast.success(t("environments.segments.filters_reset_successfully"));
 
                   setSegment(segment);
                   setResetAllFiltersModalOpen(false);
@@ -425,14 +425,14 @@ export function AdvancedTargetingCard({
           <Alert className="flex items-center rounded-none bg-slate-50">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
-                {t("ee.advanced_targeting.user_targeting_is_currently_only_available_when")}{" "}
+                {t("environments.segments.user_targeting_is_currently_only_available_when")}{" "}
                 <Link
                   href="https://formbricks.com//docs/app-surveys/user-identification"
                   target="blank"
                   className="underline">
-                  {t("ee.advanced_targeting.identifying_users")}
+                  {t("environments.segments.identifying_users")}
                 </Link>{" "}
-                {t("ee.advanced_targeting.with_the_formbricks_sdk")}.
+                {t("environments.segments.with_the_formbricks_sdk")}.
               </span>
             </AlertDescription>
           </Alert>

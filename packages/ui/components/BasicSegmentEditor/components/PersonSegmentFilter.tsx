@@ -62,7 +62,7 @@ export const PersonSegmentFilter = ({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError(t("ee.advanced_targeting.value_must_be_a_number"));
+        setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value]);
@@ -97,7 +97,7 @@ export const PersonSegmentFilter = ({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError(t("ee.advanced_targeting.value_cannot_be_empty"));
+      setValueError(t("environments.segments.value_cannot_be_empty"));
       return;
     }
 
@@ -110,7 +110,7 @@ export const PersonSegmentFilter = ({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError(t("ee.advanced_targeting.value_must_be_a_number"));
+        setValueError(t("environments.segments.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 

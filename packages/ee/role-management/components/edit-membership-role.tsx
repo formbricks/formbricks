@@ -78,7 +78,7 @@ export function EditMembershipRole({
 
       setLoading(false);
       setTransferOwnershipModalOpen(false);
-      toast.success(t("ee.role_management.ownership_transferred_successfully"));
+      toast.success(t("environments.settings.general.ownership_transferred_successfully"));
       router.refresh();
     } catch (err: any) {
       toast.error(`${t("common.error")}: ${err.message}`);

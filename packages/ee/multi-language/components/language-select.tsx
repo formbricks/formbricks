@@ -70,7 +70,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
           onChange={(e) => {
             setSearchTerm(e.target.value);
           }}
-          placeholder={t("ee.multi_language.search_items")}
+          placeholder={t("environments.product.languages.search_items")}
           ref={inputRef}
           type="text"
           value={searchTerm}

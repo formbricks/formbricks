@@ -120,7 +120,7 @@ function SegmentFilterItemConnector({
           if (viewOnly) return;
           onConnectorChange();
         }}>
-        {connector ? connector : t("ee.advanced_targeting.where")}
+        {connector ? connector : t("environments.segments.where")}
       </span>
     </div>
   );
@@ -154,14 +154,14 @@ function SegmentFilterItemContextMenu({
             onClick={() => {
               onAddFilterBelow();
             }}>
-            {t("ee.advanced_targeting.add_filter_below")}
+            {t("environments.segments.add_filter_below")}
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => {
               onCreateGroup(filterId);
             }}>
-            {t("ee.advanced_targeting.create_group")}
+            {t("environments.segments.create_group")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
@@ -229,7 +229,7 @@ function AttributeSegmentFilter({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError(t("ee.advanced_targeting.value_must_be_a_number"));
+        setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value]);
@@ -266,7 +266,7 @@ function AttributeSegmentFilter({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError(t("ee.advanced_targeting.value_cannot_be_empty"));
+      setValueError(t("environments.segments.value_cannot_be_empty"));
       return;
     }
 
@@ -279,7 +279,7 @@ function AttributeSegmentFilter({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError(t("ee.advanced_targeting.value_must_be_a_number"));
+        setValueError(t("environments.segments.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 
@@ -416,7 +416,7 @@ function PersonSegmentFilter({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError(t("ee.advanced_targeting.value_must_be_a_number"));
+        setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value]);
@@ -451,7 +451,7 @@ function PersonSegmentFilter({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError(t("ee.advanced_targeting.value_cannot_be_empty"));
+      setValueError(t("environments.segments.value_cannot_be_empty"));
       return;
     }
 
@@ -464,7 +464,7 @@ function PersonSegmentFilter({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError(t("ee.advanced_targeting.value_must_be_a_number"));
+        setValueError(t("environments.segments.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 
@@ -761,8 +761,8 @@ function DeviceFilter({
 
         <SelectContent>
           {[
-            { id: "desktop", name: t("ee.advanced_targeting.desktop") },
-            { id: "phone", name: t("ee.advanced_targeting.phone") },
+            { id: "desktop", name: t("environments.segments.desktop") },
+            { id: "phone", name: t("environments.segments.phone") },
           ].map((operator) => (
             <SelectItem value={operator.id}>{operator.name}</SelectItem>
           ))}
@@ -920,6 +920,6 @@ export function SegmentFilter({
       );
 
     default:
-      return <div>{t("ee.advanced_targeting.unknown_filter_type")}</div>;
+      return <div>{t("environments.segments.unknown_filter_type")}</div>;
   }
 }

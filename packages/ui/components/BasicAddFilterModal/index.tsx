@@ -66,7 +66,7 @@ export const BasicAddFilterModal = ({
         </div>
         {attributeClassesFiltered?.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>{t("ee.advanced_targeting.no_attributes_yet")}</p>
+            <p>{t("environments.segments.no_attributes_yet")}</p>
           </div>
         )}
         {attributeClassesFiltered.map((attributeClass) => {

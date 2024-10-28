@@ -177,7 +177,7 @@ function AttributeTabContent({ attributeClasses, onAddFilter, setOpen }: Attribu
       </div>
       {attributeClasses.length === 0 && (
         <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-          <p>{t("ee.advanced_targeting.no_attributes_yet")}</p>
+          <p>{t("environments.segments.no_attributes_yet")}</p>
         </div>
       )}
       {attributeClasses.map((attributeClass) => {
@@ -220,21 +220,21 @@ export function AddFilterModal({
     { id: "all", label: t("common.all") },
     {
       id: "attributes",
-      label: t("ee.advanced_targeting.person_and_attributes"),
+      label: t("environments.segments.person_and_attributes"),
       icon: <TagIcon className="h-4 w-4" />,
     },
     { id: "segments", label: t("common.segments"), icon: <Users2Icon className="h-4 w-4" /> },
     {
       id: "devices",
-      label: t("ee.advanced_targeting.devices"),
+      label: t("environments.segments.devices"),
       icon: <MonitorSmartphoneIcon className="h-4 w-4" />,
     },
   ];
 
   const devices = useMemo(
     () => [
-      { id: "phone", name: t("ee.advanced_targeting.phone") },
-      { id: "desktop", name: t("ee.advanced_targeting.desktop") },
+      { id: "phone", name: t("environments.segments.phone") },
+      { id: "desktop", name: t("environments.segments.desktop") },
     ],
     []
   );
@@ -297,7 +297,7 @@ export function AddFilterModal({
           );
         }) ? (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>{t("ee.advanced_targeting.no_filters_yet")}</p>
+            <p>{t("environments.segments.no_filters_yet")}</p>
           </div>
         ) : null}
 
@@ -395,7 +395,7 @@ export function AddFilterModal({
       <>
         {segmentsFiltered.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>{t("ee.advanced_targeting.no_segments_yet")}</p>
+            <p>{t("environments.segments.no_segments_yet")}</p>
           </div>
         )}
         {segmentsFiltered

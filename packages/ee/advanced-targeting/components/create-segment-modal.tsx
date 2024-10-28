@@ -63,7 +63,7 @@ export function CreateSegmentModal({ environmentId, attributeClasses, segments }
 
   const handleCreateSegment = async () => {
     if (!segment.title) {
-      toast.error(t("ee.advanced_targeting.title_is_required"));
+      toast.error(t("environments.segments.title_is_required"));
       return;
     }
 
@@ -79,12 +79,12 @@ export function CreateSegmentModal({ environmentId, attributeClasses, segments }
       });
 
       setIsCreatingSegment(false);
-      toast.success(t("ee.advanced_targeting.segment_saved_successfully"));
+      toast.success(t("environments.segments.segment_saved_successfully"));
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (!parsedFilters.success) {
-        toast.error(t("ee.advanced_targeting.invalid_segment_filters"));
+        toast.error(t("environments.segments.invalid_segment_filters"));
       } else {
         toast.error(t("common.something_went_wrong_please_try_again"));
       }

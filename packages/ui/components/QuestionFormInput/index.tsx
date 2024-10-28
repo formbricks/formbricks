@@ -645,12 +645,14 @@ export const QuestionFormInput = ({
       </div>
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
-          <strong>{t("ee.multi_language.translate")}:</strong>{" "}
+          <strong>{t("environments.product.languages.translate")}:</strong>{" "}
           {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
-        <div className="mt-1 text-xs text-red-400">{t("ee.multi_language.incomplete_translations")}</div>
+        <div className="mt-1 text-xs text-red-400">
+          {t("environments.product.languages.incomplete_translations")}
+        </div>
       )}
     </div>
   );
