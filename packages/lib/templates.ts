@@ -1953,8 +1953,8 @@ const improveActivationRate = (): TTemplate => {
 const employeeSatisfaction = (): TTemplate => {
   return {
     name: "Employee Satisfaction",
-    role: "productManager",
-    industries: ["saas", "other"],
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
     channels: ["app", "link"],
     description: "Gauge employee satisfaction and identify areas for improvement.",
     preset: {
@@ -5255,7 +5255,7 @@ const understandLowEngagement = (): TTemplate => {
 const employeeWellBeing = (): TTemplate => {
   return {
     name: "Employee Well-Being",
-    role: "productManager",
+    role: "peopleManager",
     industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description: "Assess your employee well-being through work-life balance, workload, and environment.",
@@ -5449,7 +5449,7 @@ const longTermRetentionCheckIn = (): TTemplate => {
 const professionalDevelopmentGrowth = (): TTemplate => {
   return {
     name: "Professional Development and Growth",
-    role: "productManager",
+    role: "peopleManager",
     industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description: "Assess employee engagement through growth opportunities, autonomy, and goal setting.",
@@ -5520,7 +5520,7 @@ const professionalDevelopmentGrowth = (): TTemplate => {
 const recognitionAndReward = (): TTemplate => {
   return {
     name: "Recognition and Reward",
-    role: "productManager",
+    role: "peopleManager",
     industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description:
@@ -5592,7 +5592,7 @@ const recognitionAndReward = (): TTemplate => {
 const alignmentAndEngagement = (): TTemplate => {
   return {
     name: "Alignment and Engagement with Company Vision",
-    role: "productManager",
+    role: "peopleManager",
     industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description:
@@ -5662,7 +5662,7 @@ const alignmentAndEngagement = (): TTemplate => {
 const supportiveWorkCulture = (): TTemplate => {
   return {
     name: "Supportive Work Culture",
-    role: "productManager",
+    role: "peopleManager",
     industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description:
