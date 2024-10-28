@@ -1,4 +1,5 @@
 import "server-only";
+import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
 import { TOrganizationMember, TTeam, ZTeam } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
@@ -7,7 +8,6 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { membershipCache } from "@formbricks/lib/membership/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import {

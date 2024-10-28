@@ -1,7 +1,7 @@
 import { MembersInfo } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/MembersInfo";
+import { getMembersByOrganizationId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
-import { getMembersByOrganizationId } from "@formbricks/lib/membership/service";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 

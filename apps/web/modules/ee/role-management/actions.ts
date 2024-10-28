@@ -1,15 +1,12 @@
 "use server";
 
+import { transferOwnership, updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { isOwner } from "@formbricks/lib/auth";
 import { updateInvite } from "@formbricks/lib/invite/service";
-import {
-  getMembershipByUserIdOrganizationId,
-  transferOwnership,
-  updateMembership,
-} from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthorizationError, ValidationError } from "@formbricks/types/errors";
 import { ZInviteUpdateInput } from "@formbricks/types/invites";

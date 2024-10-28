@@ -19,7 +19,7 @@ import {
   //  transferOwnershipAction,
   updateInviteAction,
   updateMembershipAction,
-} from "../lib/actions";
+} from "../actions";
 
 // import { TransferOwnershipModal } from "./transfer-ownership-modal";
 

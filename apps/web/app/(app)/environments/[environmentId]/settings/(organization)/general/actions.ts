@@ -1,5 +1,9 @@
 "use server";
 
+import {
+  deleteMembership,
+  getMembershipsByUserId,
+} from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
@@ -8,11 +12,7 @@ import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
-import {
-  deleteMembership,
-  getMembershipByUserIdOrganizationId,
-  getMembershipsByUserId,
-} from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { getOrganizationIdFromInviteId } from "@formbricks/lib/organization/utils";
 import { ZId, ZUuid } from "@formbricks/types/common";
