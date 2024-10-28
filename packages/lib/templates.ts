@@ -5547,6 +5547,159 @@ const employeeWellBeing = (locale: string): TTemplate => {
   };
 };
 
+const longTermRetentionCheckIn = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("long_term_retention_check_in_name", locale),
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
+    description: translate("long_term_retention_check_in_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("long_term_retention_check_in_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "star",
+          headline: { default: translate("long_term_retention_check_in_question_1_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_1_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_1_upper_label", locale) },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("long_term_retention_check_in_question_2_headline", locale) },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_2_placeholder", locale) },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_5", locale) },
+            },
+          ],
+          headline: {
+            default: translate("long_term_retention_check_in_question_3_headline", locale),
+          },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: translate("long_term_retention_check_in_question_4_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_4_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_4_upper_label", locale) },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("long_term_retention_check_in_question_5_headline", locale),
+          },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_5_placeholder", locale) },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.NPS,
+          headline: { default: translate("long_term_retention_check_in_question_6_headline", locale) },
+          required: false,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_6_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_6_upper_label", locale) },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_5", locale) },
+            },
+          ],
+          headline: { default: translate("long_term_retention_check_in_question_7_headline", locale) },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("long_term_retention_check_in_question_8_headline", locale) },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_8_placeholder", locale) },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "smiley",
+          headline: { default: translate("long_term_retention_check_in_question_9_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_9_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_9_upper_label", locale) },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("long_term_retention_check_in_question_10_headline", locale) },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_10_placeholder", locale) },
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
 export const templates = (locale = defaultLocale): TTemplate[] => [
   cartAbandonmentSurvey(locale),
   siteAbandonmentSurvey(locale),
@@ -5589,6 +5742,7 @@ export const templates = (locale = defaultLocale): TTemplate[] => [
   understandLowEngagement(locale),
   employeeSatisfaction(locale),
   employeeWellBeing(locale),
+  longTermRetentionCheckIn(locale),
 ];
 
 export const getCustomSurveyTemplate = (locale: string): TTemplate => ({

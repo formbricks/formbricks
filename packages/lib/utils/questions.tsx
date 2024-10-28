@@ -322,6 +322,10 @@ export const getQuestionNameMap = (locale: string) =>
     {}
   ) as Record<TSurveyQuestionTypeEnum, string>;
 
+export const getQuestionIcon = (type: TSurveyQuestionTypeEnum) => {
+  return getQuestionTypes("en-US").find((questionType) => questionType.id === type)?.icon;
+};
+
 export const VARIABLES_ICON_MAP = {
   text: <FileType2Icon className="h-4 w-4" />,
   number: <FileDigitIcon className="h-4 w-4" />,

@@ -1,3 +1,4 @@
+import { InboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -42,6 +43,14 @@ export const PictureChoiceSummary = ({
         survey={survey}
         attributeClasses={attributeClasses}
         locale={locale}
+        additionalInfo={
+          questionSummary.question.allowMulti ? (
+            <div className="flex items-center rounded-lg bg-slate-100 p-2">
+              <InboxIcon className="mr-2 h-4 w-4" />
+              {`${questionSummary.selectionCount} ${t("common.selections")}`}
+            </div>
+          ) : undefined
+        }
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, index) => (
@@ -70,12 +79,12 @@ export const PictureChoiceSummary = ({
                 </div>
                 <div className="self-end">
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(result.percentage, 1)}%
+                    {convertFloatToNDecimal(result.percentage, 2)}%
                   </p>
                 </div>
               </div>
               <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
-                {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
+                {result.count} {result.count === 1 ? t("common.selection") : t("common.selections")}
               </p>
             </div>
             <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100 || 0} />

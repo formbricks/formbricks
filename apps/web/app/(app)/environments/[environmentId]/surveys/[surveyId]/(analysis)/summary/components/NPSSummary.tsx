@@ -86,7 +86,7 @@ export const NPSSummary = ({
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(questionSummary[group]?.percentage, 1)}%
+                    {convertFloatToNDecimal(questionSummary[group]?.percentage, 2)}%
                   </p>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { TimerIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { TSurveySummary } from "@formbricks/types/surveys/types";
+import { getQuestionIcon } from "@formbricks/lib/utils/questions";
+import { TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface SummaryDropOffsProps {
@@ -9,6 +10,11 @@ interface SummaryDropOffsProps {
 
 export const SummaryDropOffs = ({ dropOff }: SummaryDropOffsProps) => {
   const t = useTranslations();
+  const getIcon = (questionType: TSurveyQuestionType) => {
+    const Icon = getQuestionIcon(questionType);
+    return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="">
@@ -33,7 +39,10 @@ export const SummaryDropOffs = ({ dropOff }: SummaryDropOffsProps) => {
           <div
             key={quesDropOff.questionId}
             className="grid grid-cols-6 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
-            <div className="col-span-3 pl-4 md:pl-6">{quesDropOff.headline}</div>
+            <div className="col-span-3 flex gap-3 pl-4 md:pl-6">
+              {getIcon(quesDropOff.questionType)}
+              <p>{quesDropOff.headline}</p>
+            </div>
             <div className="whitespace-pre-wrap text-center font-semibold">
               {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>

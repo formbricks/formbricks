@@ -213,6 +213,7 @@ export const SigninForm = ({
             )}
             {emailAuthEnabled && (
               <Button
+                size="base"
                 onClick={() => {
                   if (!showLogin) {
                     setShowLogin(true);
@@ -226,7 +227,7 @@ export const SigninForm = ({
                 loading={loggingIn}>
                 {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
                 {lastLoggedInWith && lastLoggedInWith === "Email" ? (
-                  <span className="absolute right-3 text-xs">{t("auth.last_used")}</span>
+                  <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>
                 ) : null}
               </Button>
             )}

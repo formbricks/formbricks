@@ -28,6 +28,7 @@ export const GoogleButton = ({
 
   return (
     <Button
+      size="base"
       type="button"
       EndIcon={GoogleIcon}
       startIconClassName="ml-3"
@@ -35,7 +36,7 @@ export const GoogleButton = ({
       variant="secondary"
       className="relative w-full justify-center">
       {text}
-      {lastUsed && <span className="absolute right-3 text-xs">{t("auth.last_used")}</span>}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
 };

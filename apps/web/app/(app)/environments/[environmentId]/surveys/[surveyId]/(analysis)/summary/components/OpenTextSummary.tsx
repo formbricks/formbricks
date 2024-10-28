@@ -109,7 +109,7 @@ export const OpenTextSummary = ({
               <TableBody>
                 {questionSummary.samples.slice(0, visibleResponses).map((response) => (
                   <TableRow key={response.id}>
-                    <TableCell>
+                    <TableCell width={180}>
                       {response.person ? (
                         <Link
                           className="ph-no-capture group flex items-center"
@@ -117,7 +117,7 @@ export const OpenTextSummary = ({
                           <div className="hidden md:flex">
                             <PersonAvatar personId={response.person.id} />
                           </div>
-                          <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
+                          <p className="ph-no-capture break-normal text-slate-600 group-hover:underline md:ml-2">
                             {getPersonIdentifier(response.person, response.personAttributes)}
                           </p>
                         </Link>
@@ -126,12 +126,12 @@ export const OpenTextSummary = ({
                           <div className="hidden md:flex">
                             <PersonAvatar personId="anonymous" />
                           </div>
-                          <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
+                          <p className="break-normal text-slate-600 md:ml-2">{t("common.anonymous")}</p>
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{response.value}</TableCell>
-                    <TableCell>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
+                    <TableCell width={120}>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
