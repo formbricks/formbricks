@@ -15,7 +15,6 @@ export const DEFAULT_PERSON_STATE_NO_USER_ID: TJsPersonState = {
     segments: [],
     displays: [],
     responses: [],
-    attributes: {},
     lastDisplayAt: null,
   },
 } as const;
@@ -68,7 +67,6 @@ export const fetchPersonState = async (
       segments: [],
       displays: [],
       responses: [],
-      attributes: {},
       lastDisplayAt: null,
     },
   };
