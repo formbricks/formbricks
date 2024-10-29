@@ -57,7 +57,7 @@
     "signup": {
       "error": "An error occurred when signing you up",
       "have_an_account": "Have an account?",
-      "log_in": "Log in.",
+      "log_in": "Log in",
       "password_validation_contain_at_least_1_number": "Contain at least 1 number",
       "password_validation_minimum_8_and_maximum_128_characters": "Minimum 8 & Maximum 128 characters",
       "password_validation_uppercase_and_lowercase": "Mix of uppercase and lowercase",
@@ -534,7 +534,7 @@
       "headline": "Let's connect your product with Formbricks",
       "i_dont_know_how_to_do_it": "I don't know how to do it",
       "import_formbricks_and_initialize_the_widget_in_your_component": "Import Formbricks and initialize the widget in your Component (e.g. App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Insert this code into the &lt;head&gt; tag of your website:",
+      "insert_this_code_into_the_head_tag_of_your_website": "Insert this code into the head tag of your website:",
       "invite": {
         "headline": "Who is your favorite engineer?",
         "invite_message": "Invite Message",
@@ -1765,7 +1765,7 @@
   "setup": {
     "intro": {
       "get_started": "Get started",
-      "made_with_love_in": "Made with 🤍 in",
+      "made_with_love_in_kiel": "Made with 🤍 in Kiel, Germany",
       "paragraph_1": "Formbricks is an Experience Management Suite built of the <b>fastest growing open source survey platform</b> worldwide.",
       "paragraph_2": "Run targeted surveys on websites, in apps or anywhere online. Gather valuable insights to <b>craft irresistible experiences</b> for customers, users and employees.",
       "paragraph_3": "We're commited to highest degree of data privacy. Self-host to keep <b>full control over your data</b>. Always",

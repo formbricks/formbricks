@@ -33,7 +33,7 @@ const Page = async () => {
         {t("setup.intro.get_started")}
       </Button>
 
-      <p className="pt-6 text-xs text-slate-400">{t("setup.intro.made_with_love_in")} Kiel, Germany</p>
+      <p className="pt-6 text-xs text-slate-400">{t("setup.intro.made_with_love_in_kiel")}</p>
     </div>
   );
 };
