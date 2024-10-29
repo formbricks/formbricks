@@ -73,7 +73,7 @@ export const MultipleChoiceSummary = ({
           questionSummary.type === "multipleChoiceMulti" ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">
               <InboxIcon className="mr-2 h-4 w-4" />
-              {`${questionSummary.selectionCount} selections`}
+              {`${questionSummary.selectionCount} Selections`}
             </div>
           ) : undefined
         }
@@ -101,12 +101,12 @@ export const MultipleChoiceSummary = ({
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(result.percentage, 1)}%
+                    {convertFloatToNDecimal(result.percentage, 2)}%
                   </p>
                 </div>
               </div>
               <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
-                {result.count} {result.count === 1 ? "selection" : "selections"}
+                {result.count} {result.count === 1 ? "Selection" : "Selections"}
               </p>
             </div>
             <div className="group-hover:opacity-80">

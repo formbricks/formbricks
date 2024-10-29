@@ -428,12 +428,14 @@ export const getQuestionSummary = async (
           choiceCountMap[choice.id] = 0;
         });
         let totalResponseCount = 0;
+        let totalSelectionCount = 0;
 
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (Array.isArray(answer)) {
+            totalResponseCount++;
             answer.forEach((value) => {
-              totalResponseCount++;
+              totalSelectionCount++;
               choiceCountMap[value]++;
             });
           }
@@ -445,8 +447,8 @@ export const getQuestionSummary = async (
             imageUrl: choice.imageUrl,
             count: choiceCountMap[choice.id],
             percentage:
-              totalResponseCount > 0
-                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalResponseCount) * 100)
+              totalSelectionCount > 0
+                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalSelectionCount) * 100)
                 : 0,
           });
         });
@@ -455,6 +457,7 @@ export const getQuestionSummary = async (
           type: question.type,
           question,
           responseCount: totalResponseCount,
+          selectionCount: totalSelectionCount,
           choices: values,
         });
 

@@ -2136,6 +2136,7 @@ export const ZSurveyQuestionSummaryPictureSelection = z.object({
   type: z.literal("pictureSelection"),
   question: ZSurveyPictureSelectionQuestion,
   responseCount: z.number(),
+  selectionCount: z.number(),
   choices: z.array(
     z.object({
       id: z.string(),
