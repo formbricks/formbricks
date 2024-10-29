@@ -1,8 +1,8 @@
 import { InsightView } from "@/modules/ee/insights/components/insights-view";
 import Link from "next/link";
 import { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
@@ -111,7 +111,7 @@ export const OpenTextSummary = ({
                             <PersonAvatar personId={response.contact.id} />
                           </div>
                           <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                            {getPersonIdentifier(response.contact, response.contactAttributes)}
+                            {getContactIdentifier(response.contact, response.contactAttributes)}
                           </p>
                         </Link>
                       ) : (

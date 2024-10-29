@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
@@ -136,7 +136,7 @@ export const MultipleChoiceSummary = ({
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                             {otherValue.contact.id && <PersonAvatar personId={otherValue.contact.id} />}
                             <span>
-                              {getPersonIdentifier(otherValue.contact, otherValue.contactAttributes)}
+                              {getContactIdentifier(otherValue.contact, otherValue.contactAttributes)}
                             </span>
                           </div>
                         </Link>

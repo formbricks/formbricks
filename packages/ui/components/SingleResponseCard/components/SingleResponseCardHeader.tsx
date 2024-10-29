@@ -2,8 +2,8 @@ import { LanguagesIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -39,7 +39,7 @@ export const SingleResponseCardHeader = ({
   setDeleteDialogOpen,
 }: SingleResponseCardHeaderProps) => {
   const displayIdentifier = response.contact
-    ? getPersonIdentifier(response.contact, response.contactAttributes)
+    ? getContactIdentifier(response.contact, response.contactAttributes)
     : null;
   const environmentId = survey.environmentId;
   const canResponseBeDeleted = response.finished

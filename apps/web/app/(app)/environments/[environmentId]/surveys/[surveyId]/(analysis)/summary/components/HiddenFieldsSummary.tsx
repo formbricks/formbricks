@@ -1,7 +1,7 @@
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
 import { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys/types";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
@@ -58,7 +58,7 @@ export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFiel
                     <PersonAvatar personId={response.contact.id} />
                   </div>
                   <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                    {getPersonIdentifier(response.contact, response.contactAttributes)}
+                    {getContactIdentifier(response.contact, response.contactAttributes)}
                   </p>
                 </Link>
               ) : (

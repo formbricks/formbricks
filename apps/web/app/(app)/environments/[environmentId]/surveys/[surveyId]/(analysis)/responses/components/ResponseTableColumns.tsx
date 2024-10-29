@@ -4,8 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { processResponseData } from "@formbricks/lib/responses";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
@@ -235,7 +235,7 @@ export const generateResponseTableColumns = (
     size: 275,
     cell: ({ row }) => {
       const personId = row.original.person
-        ? getPersonIdentifier(row.original.person, row.original.contactAttributes)
+        ? getContactIdentifier(row.original.person, row.original.contactAttributes)
         : "Anonymous";
       return <p className="truncate text-slate-900">{personId}</p>;
     },

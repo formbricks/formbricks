@@ -2,7 +2,6 @@ import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getActionClass } from "../actionClass/service";
 import { getApiKey } from "../apiKey/service";
-import { getAttributeClass } from "../attributeClass/service";
 import { getEnvironment } from "../environment/service";
 import { getIntegration } from "../integration/service";
 import { getInvite } from "../invite/service";
@@ -70,15 +69,6 @@ export const getOrganizationIdFromResponseNoteId = async (responseNoteId: string
   }
 
   return await getOrganizationIdFromResponseId(responseNote.responseId);
-};
-
-export const getOrganizationIdFromAttributeClassId = async (attributeClassId: string) => {
-  const attributeClass = await getAttributeClass(attributeClassId);
-  if (!attributeClass) {
-    throw new ResourceNotFoundError("attributeClass", attributeClassId);
-  }
-
-  return await getOrganizationIdFromEnvironmentId(attributeClass.environmentId);
 };
 
 export const getOrganizationIdFromSegmentId = async (segmentId: string) => {

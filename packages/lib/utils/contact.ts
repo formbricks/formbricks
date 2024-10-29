@@ -1,7 +1,7 @@
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TResponseContact } from "@formbricks/types/responses";
 
-export const getPersonIdentifier = (
+export const getContactIdentifier = (
   contact: TResponseContact | null,
   contactAttributes: TContactAttributes | null
 ): string => {
