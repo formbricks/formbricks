@@ -1795,7 +1795,7 @@
         "continue": "Fortfahren",
         "delete_account": "Account löschen",
         "delete_account_description": "Wenn Sie Ihr Konto löschen möchten, können Sie dies tun, indem Sie auf die Schaltfläche unten klicken.",
-        "description": "Mach es zu deinem.",
+        "description": "Personalisieren Sie ihre Erfahrung.",
         "no_membership_found": "„Keine Mitgliedschaft gefunden!“",
         "no_membership_found_description": "Sie sind derzeit kein Mitglied einer Organisation. Wenn Sie glauben, dass dies ein Fehler ist, wenden Sie sich bitte an den Eigentümer der Organisation.",
         "title": "Richten Sie Ihre Organisation ein"
@@ -1803,7 +1803,7 @@
     },
     "signup": {
       "create_administrator": "Administrator erstellen",
-      "this_user_has_all_the_power": "Dieser Benutzer hat alle Macht."
+      "this_user_has_all_the_power": "Dieser Benutzer hat alle Rechte."
     }
   },
   "share": {
