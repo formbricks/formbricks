@@ -249,7 +249,6 @@ export const QuestionsView = ({
         }
       }
     });
-
     setLocalSurvey(updatedSurvey);
     validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
   };
