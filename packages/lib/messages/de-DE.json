@@ -80,7 +80,7 @@
       "please_confirm_your_email_address": "Bitte bestätigen Sie Ihre E-Mail-Adresse.",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
       "verification_email_successfully_sent": "Bestätigungs-E-Mail erfolgreich gesendet. Bitte überprüfen Sie Ihren Posteingang.",
-      "we_sent_an_email_to": "Wir haben eine E-Mail an",
+      "we_sent_an_email_to": "Wir haben eine E-Mail an <email>{email}</email> gesendet. ",
       "you_didnt_receive_an_email_or_your_link_expired": "Hast du keine E-Mail erhalten oder ist dein Link abgelaufen?"
     },
     "verify": {

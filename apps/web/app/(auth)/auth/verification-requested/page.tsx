@@ -17,8 +17,9 @@ const Page = async ({ searchParams }) => {
             {t("auth.verification-requested.please_confirm_your_email_address")}
           </h1>
           <p className="text-center text-sm text-slate-700">
-            {t("auth.verification-requested.we_sent_an_email_to")}{" "}
-            <span className="font-semibold italic">{parsedEmail}</span>.{" "}
+            {t.rich("auth.verification-requested.we_sent_an_email_to", {
+              email: () => <span className="font-semibold italic">{email}</span>,
+            })}
             {t("auth.verification-requested.please_click_the_link_in_the_email_to_activate_your_account")}
           </p>
           <hr className="my-4" />

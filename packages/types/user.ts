@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
-const ZUserLocale = z.enum(["en-US", "hi-IN", "de-DE", "pt-BR"]);
+const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR"]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
 export const ZUserObjective = z.enum([
