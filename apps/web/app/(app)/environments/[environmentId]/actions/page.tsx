@@ -6,6 +6,7 @@ import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
@@ -19,6 +20,7 @@ const Page = async ({ params }) => {
     getActionClasses(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
+  const locale = await findMatchingLocale();
 
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
@@ -34,7 +36,7 @@ const Page = async ({ params }) => {
       <ActionClassesTable environmentId={params.environmentId} actionClasses={actionClasses}>
         <ActionTableHeading />
         {actionClasses.map((actionClass) => (
-          <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />
+          <ActionClassDataRow key={actionClass.id} actionClass={actionClass} locale={locale} />
         ))}
       </ActionClassesTable>
     </PageContentWrapper>

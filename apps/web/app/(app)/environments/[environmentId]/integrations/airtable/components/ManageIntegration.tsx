@@ -15,6 +15,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
@@ -27,6 +28,7 @@ interface ManageIntegrationProps {
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 const tableHeaders = [
@@ -127,7 +129,9 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
               <div className="col-span-2 text-center">{data.surveyName}</div>
               <div className="col-span-2 text-center">{data.tableName}</div>
               <div className="col-span-2 text-center">{data.questions}</div>
-              <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
+              <div className="col-span-2 text-center">
+                {timeSince(data.createdAt.toString(), props.locale)}
+              </div>
             </div>
           ))}
         </div>

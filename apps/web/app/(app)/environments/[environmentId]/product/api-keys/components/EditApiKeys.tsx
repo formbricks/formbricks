@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { TApiKey } from "@formbricks/types/api-keys";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
@@ -17,11 +18,13 @@ export const EditAPIKeys = ({
   environmentType,
   apiKeys,
   environmentId,
+  locale,
 }: {
   environmentTypeId: string;
   environmentType: string;
   apiKeys: TApiKey[];
   environmentId: string;
+  locale: TUserLocale;
 }) => {
   const t = useTranslations();
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
@@ -111,7 +114,9 @@ export const EditAPIKeys = ({
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
                   <ApiKeyDisplay apiKey={apiKey.apiKey} />
                 </div>
-                <div className="col-span-4 sm:col-span-2">{timeSince(apiKey.createdAt.toString())}</div>
+                <div className="col-span-4 sm:col-span-2">
+                  {timeSince(apiKey.createdAt.toString(), locale)}
+                </div>
                 <div className="col-span-1 text-center">
                   <button onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>
                     <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />

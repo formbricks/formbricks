@@ -11,6 +11,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -37,6 +38,8 @@ const Page = async ({ params }) => {
     (integration): integration is TIntegrationGoogleSheets => integration.type === "googleSheets"
   );
 
+  const locale = findMatchingLocale();
+
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
@@ -49,6 +52,7 @@ const Page = async ({ params }) => {
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
           attributeClasses={attributeClasses}
+          locale={locale}
         />
       </div>
     </PageContentWrapper>

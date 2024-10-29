@@ -5,6 +5,7 @@ import { WebhookTableHeading } from "@/app/(app)/environments/[environmentId]/in
 import { getTranslations } from "next-intl/server";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { getWebhooks } from "@formbricks/lib/webhook/service";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -29,6 +30,7 @@ const Page = async ({ params }) => {
   });
 
   const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;
+  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>
@@ -37,7 +39,7 @@ const Page = async ({ params }) => {
       <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (
-          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />
+          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} locale={locale} />
         ))}
       </WebhookTable>
     </PageContentWrapper>

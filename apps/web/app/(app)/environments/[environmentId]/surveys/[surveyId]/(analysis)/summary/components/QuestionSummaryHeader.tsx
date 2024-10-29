@@ -4,6 +4,7 @@ import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
@@ -11,7 +12,7 @@ interface HeadProps {
   additionalInfo?: JSX.Element;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const QuestionSummaryHeader = ({

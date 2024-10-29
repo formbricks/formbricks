@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
@@ -21,6 +22,7 @@ interface ManageIntegrationProps {
     React.SetStateAction<(TIntegrationSlackConfigData & { index: number }) | null>
   >;
   refreshChannels: () => void;
+  locale: TUserLocale;
 }
 
 export const ManageIntegration = ({
@@ -30,6 +32,7 @@ export const ManageIntegration = ({
   setIsConnected,
   setSelectedIntegration,
   refreshChannels,
+  locale,
 }: ManageIntegrationProps) => {
   const t = useTranslations();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -111,7 +114,9 @@ export const ManageIntegration = ({
                     <div className="col-span-2 text-center">{data.surveyName}</div>
                     <div className="col-span-2 text-center">{data.channelName}</div>
                     <div className="col-span-2 text-center">{data.questions}</div>
-                    <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
+                    <div className="col-span-2 text-center">
+                      {timeSince(data.createdAt.toString(), locale)}
+                    </div>
                   </div>
                 );
               })}

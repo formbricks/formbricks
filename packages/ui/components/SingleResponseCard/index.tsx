@@ -167,6 +167,7 @@ export const SingleResponseCard = ({
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           updateFetchedResponses={updateFetchedResponses}
+          locale={locale}
         />
       )}
     </div>

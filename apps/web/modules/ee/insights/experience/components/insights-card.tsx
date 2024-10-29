@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { TUserLocale } from "@formbricks/types/user";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import { InsightView } from "./insight-view";
 
@@ -10,6 +11,7 @@ interface InsightsCardProps {
   productName: string;
   statsFrom?: Date;
   documentsPerPage: number;
+  locale: TUserLocale;
 }
 
 export const InsightsCard = ({
@@ -18,6 +20,7 @@ export const InsightsCard = ({
   productName,
   insightsPerPage: insightsLimit,
   documentsPerPage,
+  locale,
 }: InsightsCardProps) => {
   const t = useTranslations();
   return (
@@ -32,6 +35,7 @@ export const InsightsCard = ({
           environmentId={environmentId}
           documentsPerPage={documentsPerPage}
           insightsPerPage={insightsLimit}
+          locale={locale}
         />
       </CardContent>
     </Card>

@@ -1,10 +1,7 @@
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
-import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import {
-  DEFAULT_LOCALE,
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
   NOTION_OAUTH_CLIENT_SECRET,
@@ -15,7 +12,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { getUserLocale } from "@formbricks/lib/user/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -44,8 +41,7 @@ const Page = async ({ params }) => {
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
     databasesArray = await getNotionDatabases(environment.id);
   }
-  const session = await getServerSession(authOptions);
-  const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
+  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>
@@ -59,7 +55,7 @@ const Page = async ({ params }) => {
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
         attributeClasses={attributeClasses}
-        locale={locale ?? DEFAULT_LOCALE}
+        locale={locale}
       />
     </PageContentWrapper>
   );

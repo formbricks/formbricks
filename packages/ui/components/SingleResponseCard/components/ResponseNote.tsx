@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/responses";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { Button } from "../../Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
 import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
@@ -21,6 +21,7 @@ interface ResponseNotesProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   updateFetchedResponses: () => void;
+  locale: TUserLocale;
 }
 
 export const ResponseNotes = ({
@@ -30,6 +31,7 @@ export const ResponseNotes = ({
   isOpen,
   setIsOpen,
   updateFetchedResponses,
+  locale,
 }: ResponseNotesProps) => {
   const t = useTranslations();
   const [noteText, setNoteText] = useState("");
@@ -161,8 +163,8 @@ export const ResponseNotes = ({
                   {note.user.name}
                   <time
                     className="ml-2 text-xs font-normal text-slate-500"
-                    dateTime={timeSince(note.updatedAt.toISOString())}>
-                    {timeSince(note.updatedAt.toISOString())}
+                    dateTime={timeSince(note.updatedAt.toISOString(), locale)}>
+                    {timeSince(note.updatedAt.toISOString(), locale)}
                   </time>
                   {note.isEdited && (
                     <span className="ml-1 text-[12px] font-normal text-slate-500">{"(edited)"}</span>

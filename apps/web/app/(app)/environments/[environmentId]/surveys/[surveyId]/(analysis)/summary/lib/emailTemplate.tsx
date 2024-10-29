@@ -4,14 +4,14 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getStyling } from "@formbricks/lib/utils/styling";
 
-export const getEmailTemplateHtml = async (surveyId: string, t: (key: string) => string) => {
+export const getEmailTemplateHtml = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
-    throw new Error(t("common.survey_not_found"));
+    throw new Error("Survey not found");
   }
   const product = await getProductByEnvironmentId(survey.environmentId);
   if (!product) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error("Product not found");
   }
 
   const styling = getStyling(product, survey);

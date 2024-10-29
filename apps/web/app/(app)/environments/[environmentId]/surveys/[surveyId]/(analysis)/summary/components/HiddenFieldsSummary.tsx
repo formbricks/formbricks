@@ -5,15 +5,17 @@ import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
 
 interface HiddenFieldsSummaryProps {
   environment: TEnvironment;
   questionSummary: TSurveyQuestionSummaryHiddenFields;
+  locale: TUserLocale;
 }
 
-export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFieldsSummaryProps) => {
+export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: HiddenFieldsSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
   const t = useTranslations();
   const handleLoadMore = () => {
@@ -76,7 +78,7 @@ export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFiel
               {response.value}
             </div>
             <div className="px-4 text-slate-500 md:px-6">
-              {timeSince(new Date(response.updatedAt).toISOString())}
+              {timeSince(new Date(response.updatedAt).toISOString(), locale)}
             </div>
           </div>
         ))}

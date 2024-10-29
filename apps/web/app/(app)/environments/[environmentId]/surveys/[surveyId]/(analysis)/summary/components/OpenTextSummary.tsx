@@ -6,6 +6,7 @@ import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
@@ -26,7 +27,7 @@ interface OpenTextSummaryProps {
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const OpenTextSummary = ({
@@ -95,6 +96,7 @@ export const OpenTextSummary = ({
             questionId={questionSummary.question.id}
             surveyId={survey.id}
             documentsPerPage={documentsPerPage}
+            locale={locale}
           />
         ) : activeTab === "responses" ? (
           <>
@@ -131,7 +133,9 @@ export const OpenTextSummary = ({
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{response.value}</TableCell>
-                    <TableCell width={120}>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
+                    <TableCell width={120}>
+                      {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

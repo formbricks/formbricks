@@ -2,14 +2,17 @@ import { getTranslations } from "next-intl/server";
 import { getApiKeys } from "@formbricks/lib/apiKey/service";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { TUserLocale } from "@formbricks/types/user";
 import { EditAPIKeys } from "./EditApiKeys";
 
 export const ApiKeyList = async ({
   environmentId,
   environmentType,
+  locale,
 }: {
   environmentId: string;
   environmentType: string;
+  locale: TUserLocale;
 }) => {
   const t = await getTranslations();
   const findEnvironmentByType = (environments, targetType) => {
@@ -36,6 +39,7 @@ export const ApiKeyList = async ({
       environmentType={environmentType}
       apiKeys={apiKeys}
       environmentId={environmentId}
+      locale={locale}
     />
   );
 };

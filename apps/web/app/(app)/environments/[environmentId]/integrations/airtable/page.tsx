@@ -7,6 +7,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
@@ -39,6 +40,8 @@ const Page = async ({ params }) => {
     airtableArray = await getAirtableTables(params.environmentId);
   }
 
+  const locale = findMatchingLocale();
+
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
@@ -53,6 +56,7 @@ const Page = async ({ params }) => {
           environment={environment}
           webAppUrl={WEBAPP_URL}
           attributeClasses={attributeClasses}
+          locale={locale}
         />
       </div>
     </PageContentWrapper>

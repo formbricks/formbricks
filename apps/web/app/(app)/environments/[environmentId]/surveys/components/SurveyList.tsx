@@ -11,6 +11,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { SurveyCard } from "./SurveyCard";
 import { SurveyFilters } from "./SurveyFilters";
@@ -24,6 +25,7 @@ interface SurveysListProps {
   userId: string;
   surveysPerPage: number;
   currentProductChannel: TProductConfigChannel;
+  locale: TUserLocale;
 }
 
 export const initialFilters: TSurveyFilters = {
@@ -42,6 +44,7 @@ export const SurveysList = ({
   userId,
   surveysPerPage: surveysLimit,
   currentProductChannel,
+  locale,
 }: SurveysListProps) => {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -160,6 +163,7 @@ export const SurveysList = ({
                   WEBAPP_URL={WEBAPP_URL}
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
+                  locale={locale}
                 />
               );
             })}

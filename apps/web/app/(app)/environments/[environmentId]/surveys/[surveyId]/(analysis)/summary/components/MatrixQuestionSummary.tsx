@@ -7,6 +7,7 @@ import {
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -21,7 +22,7 @@ interface MatrixQuestionSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const MatrixQuestionSummary = ({

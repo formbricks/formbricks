@@ -10,6 +10,7 @@ import {
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { RatingResponse } from "@formbricks/ui/components/RatingResponse";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -25,7 +26,7 @@ interface RatingSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const RatingSummary = ({

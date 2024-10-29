@@ -203,8 +203,8 @@ export const SingleResponseCardHeader = ({
         </div>
 
         <div className="flex items-center space-x-4 text-sm">
-          <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString())}>
-            {timeSince(response.createdAt.toISOString())}
+          <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString(), locale)}>
+            {timeSince(response.createdAt.toISOString(), locale)}
           </time>
           {user &&
             !isViewer &&

@@ -9,6 +9,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 
 interface AirtableWrapperProps {
@@ -20,6 +21,7 @@ interface AirtableWrapperProps {
   isEnabled: boolean;
   webAppUrl: string;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const AirtableWrapper = ({
@@ -31,6 +33,7 @@ export const AirtableWrapper = ({
   isEnabled,
   webAppUrl,
   attributeClasses,
+  locale,
 }: AirtableWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
@@ -53,6 +56,7 @@ export const AirtableWrapper = ({
       setIsConnected={setIsConnected}
       surveys={surveys}
       attributeClasses={attributeClasses}
+      locale={locale}
     />
   ) : (
     <ConnectIntegration

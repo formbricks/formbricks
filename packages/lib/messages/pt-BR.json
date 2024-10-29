@@ -1764,20 +1764,12 @@
   },
   "setup": {
     "intro": {
-      "always": "Sempre.",
-      "craft_irresistible_experiences": "criar experiências irresistíveis",
-      "fastest_growing_open_source_survey_platform": "plataforma de pesquisa de código aberto de crescimento mais rápido",
-      "for_customers_users_and_employees": "para clientes, usuários e funcionários.",
-      "formbricks_is_an_experience_management_suite_built_of_the": "Formbricks é uma suíte de gerenciamento de experiências construída a partir do",
-      "full_control_over_your_data": "controle total sobre seus dados.",
-      "gather_valuable_insights_to": "Coletar insights valiosos para",
       "get_started": "Começar",
       "made_with_love_in": "Feito com 🤍 em",
-      "run_targeted_surveys_on_websites_in_apps_or_anywhere_online": "Realize pesquisas direcionadas em sites, aplicativos ou em qualquer lugar online.",
-      "self_host_to_keep": "Auto-hospedar para manter",
-      "we_re_commited_to_highest_degree_of_data_privacy": "Estamos comprometidos com o mais alto grau de privacidade de dados.",
-      "welcome_to_formbricks": "Bem-vindo ao Formbricks!",
-      "worldwide": "mundial."
+      "paragraph_1": "Formbricks é uma Suite de Gestão de Experiência construída sobre a <b>plataforma de pesquisas de código aberto que mais cresce</b> no mundo.",
+      "paragraph_2": "Execute pesquisas direcionadas em sites, aplicativos ou em qualquer lugar online. Colete insights valiosos para <b>criar experiências irresistíveis</b> para clientes, usuários e funcionários.",
+      "paragraph_3": "Estamos comprometidos com o mais alto grau de privacidade de dados. Faça self-hosting para manter <b>controle total sobre seus dados</b>. Sempre",
+      "welcome_to_formbricks": "Bem-vindo ao Formbricks!"
     },
     "invite": {
       "add_another_member": "Adicionar outro membro",
@@ -1815,6 +1807,7 @@
     "address": "Endereço",
     "address_description": "Peça um endereço de correspondência",
     "address_headline": "Onde você mora?",
+    "back": "Voltar",
     "book_interview": "Agendar entrevista",
     "build_product_roadmap_description": "Identifique a ÚNICA coisa que seus usuários mais desejam e construa-a.",
     "build_product_roadmap_name": "Construir o Roteiro do Produto",
@@ -2172,6 +2165,7 @@
     "file_upload": "Upload de Arquivo",
     "file_upload_description": "Permitir que os respondentes enviem documentos, imagens ou outros arquivos",
     "file_upload_headline": "Upload de Arquivo",
+    "finish": "Finalizar",
     "free_text": "Texto livre",
     "free_text_description": "Coletar feedback aberto",
     "free_text_headline": "Quem deixou os cachorros saírem?",
@@ -2393,6 +2387,7 @@
     "new_integration_survey_question_1_choice_4": "Twilio",
     "new_integration_survey_question_1_choice_5": "Outro",
     "new_integration_survey_question_1_headline": "Quais outras ferramentas você está usando?",
+    "next": "Próximo",
     "nps": "Índice de Promotores Líquidos (NPS)",
     "nps_description": "Medir o Net-Promoter-Score (0-10)",
     "nps_headline": "Qual a probabilidade de você recomendar {{productName}} a um amigo ou colega?",

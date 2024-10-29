@@ -29,6 +29,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 import { SkeletonLoader } from "@formbricks/ui/components/SkeletonLoader";
 import { AddressSummary } from "./AddressSummary";
@@ -42,7 +43,7 @@ interface SummaryListProps {
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const SummaryList = ({
@@ -297,6 +298,7 @@ export const SummaryList = ({
                 key={questionSummary.id}
                 questionSummary={questionSummary}
                 environment={environment}
+                locale={locale}
               />
             );
           }

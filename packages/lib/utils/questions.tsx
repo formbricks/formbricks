@@ -58,6 +58,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       placeholder: { default: translate("free_text_placeholder", locale) },
       longAnswer: true,
       inputType: "text",
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyOpenTextQuestion>,
   },
   {
@@ -78,6 +80,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
         },
       ],
       shuffleOption: "none",
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
@@ -102,6 +106,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
         },
       ],
       shuffleOption: "none",
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
@@ -122,6 +128,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
           imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
         },
       ],
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyPictureSelectionQuestion>,
   },
   {
@@ -135,6 +143,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       range: 5,
       lowerLabel: { default: translate("rating_lower_label", locale) },
       upperLabel: { default: translate("rating_upper_label", locale) },
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyRatingQuestion>,
   },
   {
@@ -146,6 +156,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       headline: { default: translate("nps_headline", locale) },
       lowerLabel: { default: translate("nps_lower_label", locale) },
       upperLabel: { default: translate("nps_upper_label", locale) },
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyNPSQuestion>,
   },
   {
@@ -179,6 +191,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
           label: { default: translate("ranking_option_5", locale) },
         },
       ],
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyRankingQuestion>,
   },
   {
@@ -201,6 +215,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
         { default: translate("matrix_column_3", locale) },
         { default: translate("matrix_column_4", locale) },
       ],
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyMatrixQuestion>,
   },
   {
@@ -216,6 +232,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       buttonLabel: { default: translate("book_interview", locale) },
       buttonExternal: false,
       dismissButtonLabel: { default: translate("skip", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyCTAQuestion>,
   },
   {
@@ -227,6 +244,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       headline: { default: translate("consent_headline", locale) },
       html: { default: "" },
       label: { default: translate("consent_label", locale) },
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyConsentQuestion>,
   },
   {
@@ -237,6 +256,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     preset: {
       headline: { default: translate("file_upload_headline", locale) },
       allowMultipleFiles: false,
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyFileUploadQuestion>,
   },
   {
@@ -247,6 +268,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     preset: {
       headline: { default: translate("date_headline", locale) },
       format: "M-d-y",
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyDateQuestion>,
   },
   {
@@ -257,6 +280,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     preset: {
       headline: { default: translate("schedule_a_meeting_headline", locale) },
       calUserName: "rick/get-rick-rolled",
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyCalQuestion>,
   },
   {
@@ -272,6 +297,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       state: { show: true, required: true },
       zip: { show: true, required: true },
       country: { show: true, required: true },
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyAddressQuestion>,
   },
   {
@@ -286,6 +313,8 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       email: { show: true, required: true },
       phone: { show: true, required: true },
       company: { show: true, required: true },
+      buttonLabel: { default: translate("finish", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyContactInfoQuestion>,
   },
 ];

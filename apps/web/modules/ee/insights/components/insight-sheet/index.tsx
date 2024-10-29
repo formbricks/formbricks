@@ -8,6 +8,7 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
+import { TUserLocale } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardFooter } from "@formbricks/ui/components/Card";
@@ -29,6 +30,7 @@ interface InsightSheetProps {
   handleFeedback: (feedback: "positive" | "negative") => void;
   documentsFilter?: TDocumentFilterCriteria;
   documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const InsightSheet = ({
@@ -40,6 +42,7 @@ export const InsightSheet = ({
   handleFeedback,
   documentsFilter,
   documentsPerPage = 10,
+  locale,
 }: InsightSheetProps) => {
   const t = useTranslations();
   const [documents, setDocuments] = useState<TDocument[]>([]);
@@ -153,7 +156,7 @@ export const InsightSheet = ({
                     <Badge text="Negative" size="tiny" type="error" />
                   ) : null}
                 </p>
-                <p>{timeSince(new Date(document.createdAt).toISOString())}</p>
+                <p>{timeSince(new Date(document.createdAt).toISOString(), locale)}</p>
               </CardFooter>
             </Card>
           ))}

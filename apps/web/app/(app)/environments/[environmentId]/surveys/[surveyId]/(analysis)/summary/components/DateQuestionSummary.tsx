@@ -6,6 +6,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -15,7 +16,7 @@ interface DateQuestionSummary {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const DateQuestionSummary = ({
@@ -79,7 +80,7 @@ export const DateQuestionSummary = ({
                 {formatDateWithOrdinal(new Date(response.value as string))}
               </div>
               <div className="px-4 text-slate-500 md:px-6">
-                {timeSince(new Date(response.updatedAt).toISOString())}
+                {timeSince(new Date(response.updatedAt).toISOString(), locale)}
               </div>
             </div>
           ))}

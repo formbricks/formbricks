@@ -1764,20 +1764,12 @@
   },
   "setup": {
     "intro": {
-      "always": "Always.",
-      "craft_irresistible_experiences": "craft irresistible experiences",
-      "fastest_growing_open_source_survey_platform": "fastest growing open source survey platform",
-      "for_customers_users_and_employees": "for customers, users and employees.",
-      "formbricks_is_an_experience_management_suite_built_of_the": "Formbricks is an Experience Management Suite built of the",
-      "full_control_over_your_data": "full control over your data.",
-      "gather_valuable_insights_to": "Gather valuable insights to",
       "get_started": "Get started",
       "made_with_love_in": "Made with 🤍 in",
-      "run_targeted_surveys_on_websites_in_apps_or_anywhere_online": "Run targeted surveys on websites, in apps or anywhere online.",
-      "self_host_to_keep": "Self-host to keep",
-      "we_re_commited_to_highest_degree_of_data_privacy": "We're commited to highest degree of data privacy.",
-      "welcome_to_formbricks": "Welcome to Formbricks!",
-      "worldwide": "worldwide."
+      "paragraph_1": "Formbricks is an Experience Management Suite built of the <b>fastest growing open source survey platform</b> worldwide.",
+      "paragraph_2": "Run targeted surveys on websites, in apps or anywhere online. Gather valuable insights to <b>craft irresistible experiences</b> for customers, users and employees.",
+      "paragraph_3": "We're commited to highest degree of data privacy. Self-host to keep <b>full control over your data</b>. Always",
+      "welcome_to_formbricks": "Welcome to Formbricks!"
     },
     "invite": {
       "add_another_member": "Add another member",
@@ -1815,6 +1807,7 @@
     "address": "Address",
     "address_description": "Ask for a mailing address",
     "address_headline": "Where do you live?",
+    "back": "Back",
     "book_interview": "Book interview",
     "build_product_roadmap_description": "Identify the ONE thing your users want the most and build it.",
     "build_product_roadmap_name": "Build Product Roadmap",
@@ -2172,6 +2165,7 @@
     "file_upload": "File Upload",
     "file_upload_description": "Enable respondents to upload documents, images, or other files",
     "file_upload_headline": "File Upload",
+    "finish": "Finish",
     "free_text": "Free text",
     "free_text_description": "Collect open-ended feedback",
     "free_text_headline": "Who let the dogs out?",
@@ -2393,6 +2387,7 @@
     "new_integration_survey_question_1_choice_4": "Twilio",
     "new_integration_survey_question_1_choice_5": "Other",
     "new_integration_survey_question_1_headline": "Which other tools are you using?",
+    "next": "Next",
     "nps": "Net Promoter Score (NPS)",
     "nps_description": "Measure Net-Promoter-Score (0-10)",
     "nps_headline": "How likely are you to recommend {{productName}} to a friend or colleague?",

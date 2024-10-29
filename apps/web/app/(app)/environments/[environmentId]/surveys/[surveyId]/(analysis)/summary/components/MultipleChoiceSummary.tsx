@@ -12,6 +12,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
 import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
@@ -31,7 +32,7 @@ interface MultipleChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const MultipleChoiceSummary = ({

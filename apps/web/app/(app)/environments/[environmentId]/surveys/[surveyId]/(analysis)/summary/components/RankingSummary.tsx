@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -9,7 +10,7 @@ interface RankingSummaryProps {
   surveyType: TSurveyType;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const RankingSummary = ({

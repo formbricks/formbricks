@@ -7,6 +7,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { EnvironmentNotice } from "@formbricks/ui/components/EnvironmentNotice";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -31,6 +32,7 @@ const Page = async ({ params }) => {
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
+  const locale = await findMatchingLocale();
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
@@ -50,13 +52,13 @@ const Page = async ({ params }) => {
         <SettingsCard
           title={t("environments.product.api-keys.dev_api_keys")}
           description={t("environments.product.api-keys.dev_api_keys_description")}>
-          <ApiKeyList environmentId={params.environmentId} environmentType="development" />
+          <ApiKeyList environmentId={params.environmentId} environmentType="development" locale={locale} />
         </SettingsCard>
       ) : (
         <SettingsCard
           title={t("environments.product.api-keys.prod_api_keys")}
           description={t("environments.product.api-keys.prod_api_keys_description")}>
-          <ApiKeyList environmentId={params.environmentId} environmentType="production" />
+          <ApiKeyList environmentId={params.environmentId} environmentType="production" locale={locale} />
         </SettingsCard>
       )}
     </PageContentWrapper>

@@ -7,6 +7,7 @@ import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
+import { TUserLocale } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -26,6 +27,7 @@ interface InsightViewProps {
   documentsFilter?: TDocumentFilterCriteria;
   isFetching?: boolean;
   documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const InsightView = ({
@@ -35,6 +37,7 @@ export const InsightView = ({
   documentsFilter,
   isFetching,
   documentsPerPage,
+  locale,
 }: InsightViewProps) => {
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
@@ -167,6 +170,7 @@ export const InsightView = ({
         handleFeedback={handleFeedback}
         documentsFilter={documentsFilter}
         documentsPerPage={documentsPerPage}
+        locale={locale}
       />
     </div>
   );

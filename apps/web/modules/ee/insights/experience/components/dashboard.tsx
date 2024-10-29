@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { Tabs, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
 
 interface DashboardProps {
@@ -19,6 +19,7 @@ interface DashboardProps {
   product: TProduct;
   insightsPerPage: number;
   documentsPerPage: number;
+  locale: TUserLocale;
 }
 
 export const Dashboard = ({
@@ -27,6 +28,7 @@ export const Dashboard = ({
   user,
   insightsPerPage,
   documentsPerPage,
+  locale,
 }: DashboardProps) => {
   const t = useTranslations();
   const [statsPeriod, setStatsPeriod] = useState<TStatsPeriod>("week");
@@ -64,6 +66,7 @@ export const Dashboard = ({
         environmentId={environment.id}
         insightsPerPage={insightsPerPage}
         documentsPerPage={documentsPerPage}
+        locale={locale}
       />
       <TemplatesCard
         environment={environment}

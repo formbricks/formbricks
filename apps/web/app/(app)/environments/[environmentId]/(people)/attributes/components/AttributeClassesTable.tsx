@@ -3,15 +3,17 @@
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TUserLocale } from "@formbricks/types/user";
 import { Switch } from "@formbricks/ui/components/Switch";
 import { AttributeDetailModal } from "./AttributeDetailModal";
 import { AttributeClassDataRow } from "./AttributeRowData";
 
 interface AttributeClassesTableProps {
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
-export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTableProps) => {
+export const AttributeClassesTable = ({ attributeClasses, locale }: AttributeClassesTableProps) => {
   const [isAttributeDetailModalOpen, setAttributeDetailModalOpen] = useState(false);
   const [activeAttributeClass, setActiveAttributeClass] = useState<TAttributeClass | null>(null);
   const [showArchived, setShowArchived] = useState(false);
@@ -59,7 +61,7 @@ export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTabl
               onClick={() => handleOpenAttributeDetailModalClick(attributeClass)}
               className="w-full cursor-default"
               key={attributeClass.id}>
-              <AttributeClassDataRow attributeClass={attributeClass} key={index} />
+              <AttributeClassDataRow attributeClass={attributeClass} key={index} locale={locale} />
             </button>
           ))}
         </div>

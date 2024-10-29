@@ -11,6 +11,7 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
+import { TUserLocale } from "@formbricks/types/user";
 import { SurveyStatusIndicator } from "@formbricks/ui/components/SurveyStatusIndicator";
 import { SurveyDropDownMenu } from "./SurveyDropdownMenu";
 
@@ -22,6 +23,7 @@ interface SurveyCardProps {
   WEBAPP_URL: string;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
+  locale: TUserLocale;
 }
 export const SurveyCard = ({
   survey,
@@ -31,6 +33,7 @@ export const SurveyCard = ({
   WEBAPP_URL,
   deleteSurvey,
   duplicateSurvey,
+  locale,
 }: SurveyCardProps) => {
   const isSurveyCreationDeletionDisabled = isViewer;
   const t = useTranslations();
@@ -99,7 +102,7 @@ export const SurveyCard = ({
           {convertDateString(survey.createdAt.toString())}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-          {timeSince(survey.updatedAt.toString())}
+          {timeSince(survey.updatedAt.toString(), locale)}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
           {survey.creator ? survey.creator.name : "-"}

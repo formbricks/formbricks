@@ -120,6 +120,8 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           headline: { default: translate("card_abandonment_survey_question_3_headline", locale) },
           subheader: { default: translate("card_abandonment_survey_question_3_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
@@ -156,6 +158,8 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
             default: translate("card_abandonment_survey_question_4_headline", locale),
           },
           required: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
         {
@@ -167,6 +171,8 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           range: 5,
           lowerLabel: { default: translate("card_abandonment_survey_question_5_lower_label", locale) },
           upperLabel: { default: translate("card_abandonment_survey_question_5_upper_label", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           isColorCodingEnabled: false,
         },
         {
@@ -176,6 +182,8 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
             default: translate("card_abandonment_survey_question_6_headline", locale),
           },
           subheader: { default: translate("card_abandonment_survey_question_6_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
           choices: [
             {
@@ -236,6 +244,8 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           headline: { default: translate("card_abandonment_survey_question_7_headline", locale) },
           required: false,
           label: { default: translate("card_abandonment_survey_question_7_label", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -245,6 +255,8 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           inputType: "email",
           longAnswer: false,
           placeholder: { default: "example@email.com" },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -252,6 +264,8 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           headline: { default: translate("card_abandonment_survey_question_9_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("finish", locale) },
         },
       ],
     },
@@ -306,6 +320,7 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           headline: { default: translate("site_abandonment_survey_question_2_headline", locale) },
           required: false,
           buttonLabel: { default: translate("site_abandonment_survey_question_2_button_label", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           buttonExternal: false,
           dismissButtonLabel: {
             default: translate("site_abandonment_survey_question_2_dismiss_button_label", locale),
@@ -317,6 +332,8 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           headline: { default: translate("site_abandonment_survey_question_3_headline", locale) },
           subheader: { default: translate("site_abandonment_survey_question_3_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
@@ -353,6 +370,8 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -364,6 +383,8 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           lowerLabel: { default: translate("site_abandonment_survey_question_5_lower_label", locale) },
           upperLabel: { default: translate("site_abandonment_survey_question_5_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -371,6 +392,8 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           headline: {
             default: translate("site_abandonment_survey_question_6_headline", locale),
           },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           subheader: { default: translate("site_abandonment_survey_question_6_subheader", locale) },
           required: true,
           choices: [
@@ -430,6 +453,8 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           ],
           type: TSurveyQuestionTypeEnum.Consent,
           headline: { default: translate("site_abandonment_survey_question_7_headline", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: false,
           label: { default: translate("site_abandonment_survey_question_7_label", locale) },
         },
@@ -437,6 +462,8 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: translate("site_abandonment_survey_question_8_headline", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
           inputType: "email",
           longAnswer: false,
@@ -446,6 +473,8 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: translate("site_abandonment_survey_question_9_headline", locale) },
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: false,
           inputType: "text",
         },
@@ -504,6 +533,7 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
           buttonLabel: {
             default: translate("product_market_fit_superhuman_question_1_button_label", locale),
           },
+          backButtonLabel: { default: translate("back", locale) },
           buttonExternal: false,
           dismissButtonLabel: {
             default: translate("product_market_fit_superhuman_question_1_dismiss_button_label", locale),
@@ -515,6 +545,8 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
           headline: { default: translate("product_market_fit_superhuman_question_2_headline", locale) },
           subheader: { default: translate("product_market_fit_superhuman_question_2_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
@@ -537,6 +569,8 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
           headline: { default: translate("product_market_fit_superhuman_question_3_headline", locale) },
           subheader: { default: translate("product_market_fit_superhuman_question_3_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
@@ -566,6 +600,8 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: translate("product_market_fit_superhuman_question_4_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
         {
@@ -573,6 +609,8 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: { default: translate("product_market_fit_superhuman_question_5_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
         {
@@ -581,6 +619,8 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
           headline: { default: translate("product_market_fit_superhuman_question_6_headline", locale) },
           subheader: { default: translate("product_market_fit_superhuman_question_6_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
       ],
@@ -606,6 +646,8 @@ const onboardingSegmentation = (locale: string): TTemplate => {
           subheader: { default: translate("onboarding_segmentation_question_1_subheader", locale) },
           required: true,
           shuffleOption: "none",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           choices: [
             {
               id: createId(),
@@ -635,6 +677,8 @@ const onboardingSegmentation = (locale: string): TTemplate => {
           headline: { default: translate("onboarding_segmentation_question_2_headline", locale) },
           subheader: { default: translate("onboarding_segmentation_question_2_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
@@ -665,6 +709,8 @@ const onboardingSegmentation = (locale: string): TTemplate => {
           headline: { default: translate("onboarding_segmentation_question_3_headline", locale) },
           subheader: { default: translate("onboarding_segmentation_question_3_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
@@ -712,6 +758,8 @@ const churnSurvey = (locale: string): TTemplate => {
           id: reusableQuestionIds[0],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           logic: [
             {
               id: createId(),
@@ -910,6 +958,7 @@ const churnSurvey = (locale: string): TTemplate => {
             },
           ],
           headline: { default: translate("churn_survey_question_2_headline", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
           buttonLabel: { default: translate("churn_survey_question_2_button_label", locale) },
           inputType: "text",
@@ -951,6 +1000,7 @@ const churnSurvey = (locale: string): TTemplate => {
           buttonUrl: "https://formbricks.com",
           buttonLabel: { default: translate("churn_survey_question_3_button_label", locale) },
           buttonExternal: true,
+          backButtonLabel: { default: translate("back", locale) },
           dismissButtonLabel: { default: translate("churn_survey_question_3_dismiss_button_label", locale) },
         },
         {
@@ -1024,6 +1074,7 @@ const churnSurvey = (locale: string): TTemplate => {
           buttonLabel: { default: translate("churn_survey_question_5_button_label", locale) },
           buttonExternal: true,
           dismissButtonLabel: { default: translate("churn_survey_question_5_dismiss_button_label", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -1090,6 +1141,8 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
           ],
           headline: { default: translate("earned_advocacy_score_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -1124,6 +1177,8 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("earned_advocacy_score_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -1132,6 +1187,8 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("earned_advocacy_score_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -1179,6 +1236,8 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
           ],
           headline: { default: translate("earned_advocacy_score_question_4_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -1187,6 +1246,8 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("earned_advocacy_score_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -1386,6 +1447,8 @@ const improveTrialConversion = (locale: string): TTemplate => {
           headline: { default: translate("improve_trial_conversion_question_1_headline", locale) },
           required: true,
           subheader: { default: translate("improve_trial_conversion_question_1_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -1420,6 +1483,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
           required: true,
           buttonLabel: { default: translate("improve_trial_conversion_question_2_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -1454,6 +1518,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
           required: true,
           buttonLabel: { default: translate("improve_trial_conversion_question_2_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -1495,6 +1560,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
           dismissButtonLabel: {
             default: translate("improve_trial_conversion_question_4_dismiss_button_label", locale),
           },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -1530,6 +1596,7 @@ const improveTrialConversion = (locale: string): TTemplate => {
           subheader: { default: translate("improve_trial_conversion_question_5_subheader", locale) },
           buttonLabel: { default: translate("improve_trial_conversion_question_5_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -1588,6 +1655,8 @@ const improveTrialConversion = (locale: string): TTemplate => {
           required: false,
           subheader: { default: translate("improve_trial_conversion_question_6_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -1648,6 +1717,8 @@ const reviewPrompt = (locale: string): TTemplate => {
           lowerLabel: { default: translate("review_prompt_question_1_lower_label", locale) },
           upperLabel: { default: translate("review_prompt_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -1684,6 +1755,7 @@ const reviewPrompt = (locale: string): TTemplate => {
           buttonUrl: "https://formbricks.com/github",
           buttonLabel: { default: translate("review_prompt_question_2_button_label", locale) },
           buttonExternal: true,
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -1694,6 +1766,7 @@ const reviewPrompt = (locale: string): TTemplate => {
           buttonLabel: { default: translate("review_prompt_question_3_button_label", locale) },
           placeholder: { default: translate("review_prompt_question_3_placeholder", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -1720,6 +1793,7 @@ const interviewPrompt = (locale: string): TTemplate => {
           buttonUrl: "https://cal.com/johannes",
           buttonExternal: true,
           required: false,
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -1884,6 +1958,8 @@ const improveActivationRate = (locale: string): TTemplate => {
             default: translate("improve_activation_rate_question_1_headline", locale),
           },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -1918,6 +1994,8 @@ const improveActivationRate = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("improve_activation_rate_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -1952,6 +2030,8 @@ const improveActivationRate = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("improve_activation_rate_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -1986,6 +2066,8 @@ const improveActivationRate = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("improve_activation_rate_question_4_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -2020,6 +2102,8 @@ const improveActivationRate = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("improve_activation_rate_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -2030,6 +2114,8 @@ const improveActivationRate = (locale: string): TTemplate => {
           subheader: { default: translate("improve_activation_rate_question_6_subheader", locale) },
           placeholder: { default: translate("improve_activation_rate_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2057,6 +2143,8 @@ const employeeSatisfaction = (locale: string): TTemplate => {
           lowerLabel: { default: translate("employee_satisfaction_question_1_lower_label", locale) },
           upperLabel: { default: translate("employee_satisfaction_question_1_upper_label", locale) },
           isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2086,6 +2174,8 @@ const employeeSatisfaction = (locale: string): TTemplate => {
           ],
           headline: { default: translate("employee_satisfaction_question_2_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2094,6 +2184,8 @@ const employeeSatisfaction = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("employee_satisfaction_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2123,6 +2215,8 @@ const employeeSatisfaction = (locale: string): TTemplate => {
           ],
           headline: { default: translate("employee_satisfaction_question_4_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2134,6 +2228,8 @@ const employeeSatisfaction = (locale: string): TTemplate => {
           lowerLabel: { default: translate("employee_satisfaction_question_5_lower_label", locale) },
           upperLabel: { default: translate("employee_satisfaction_question_5_upper_label", locale) },
           isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2142,6 +2238,8 @@ const employeeSatisfaction = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("employee_satisfaction_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2171,6 +2269,8 @@ const employeeSatisfaction = (locale: string): TTemplate => {
           ],
           headline: { default: translate("employee_satisfaction_question_7_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2216,6 +2316,8 @@ const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
           ],
           headline: { default: translate("uncover_strengths_and_weaknesses_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2242,6 +2344,8 @@ const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
           headline: { default: translate("uncover_strengths_and_weaknesses_question_2_headline", locale) },
           required: true,
           subheader: { default: translate("uncover_strengths_and_weaknesses_question_2_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2250,6 +2354,8 @@ const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
           required: false,
           subheader: { default: translate("uncover_strengths_and_weaknesses_question_3_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2288,6 +2394,8 @@ const productMarketFitShort = (locale: string): TTemplate => {
               label: { default: translate("product_market_fit_short_question_1_choice_3", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2296,6 +2404,8 @@ const productMarketFitShort = (locale: string): TTemplate => {
           subheader: { default: translate("product_market_fit_short_question_2_subheader", locale) },
           required: true,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2342,6 +2452,8 @@ const marketAttribution = (locale: string): TTemplate => {
               label: { default: translate("market_attribution_question_1_choice_5", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2387,6 +2499,8 @@ const changingSubscriptionExperience = (locale: string): TTemplate => {
               label: { default: translate("changing_subscription_experience_question_1_choice_5", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2408,6 +2522,8 @@ const changingSubscriptionExperience = (locale: string): TTemplate => {
               label: { default: translate("changing_subscription_experience_question_2_choice_3", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2449,6 +2565,8 @@ const identifyCustomerGoals = (locale: string): TTemplate => {
               label: { default: "Rule the world to make everyone breakfast brussels sprouts." },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2476,6 +2594,8 @@ const featureChaser = (locale: string): TTemplate => {
           lowerLabel: { default: translate("feature_chaser_question_1_lower_label", locale) },
           upperLabel: { default: translate("feature_chaser_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2489,6 +2609,8 @@ const featureChaser = (locale: string): TTemplate => {
           ],
           headline: { default: translate("feature_chaser_question_2_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2516,6 +2638,8 @@ const fakeDoorFollowUp = (locale: string): TTemplate => {
           range: 5,
           scale: "number",
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2541,6 +2665,8 @@ const fakeDoorFollowUp = (locale: string): TTemplate => {
               label: { default: translate("fake_door_follow_up_question_2_choice_4", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2637,6 +2763,8 @@ const feedbackBox = (locale: string): TTemplate => {
           headline: { default: translate("feedback_box_question_1_headline", locale) },
           required: true,
           subheader: { default: translate("feedback_box_question_1_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -2671,6 +2799,8 @@ const feedbackBox = (locale: string): TTemplate => {
           required: true,
           subheader: { default: translate("feedback_box_question_2_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -2733,6 +2863,7 @@ const feedbackBox = (locale: string): TTemplate => {
           buttonLabel: { default: translate("feedback_box_question_3_button_label", locale) },
           buttonExternal: false,
           dismissButtonLabel: { default: translate("feedback_box_question_3_dismiss_button_label", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -2743,6 +2874,7 @@ const feedbackBox = (locale: string): TTemplate => {
           buttonLabel: { default: translate("feedback_box_question_4_button_label", locale) },
           placeholder: { default: translate("feedback_box_question_4_placeholder", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2802,6 +2934,8 @@ const integrationSetupSurvey = (locale: string): TTemplate => {
           lowerLabel: { default: translate("integration_setup_survey_question_1_lower_label", locale) },
           upperLabel: { default: translate("integration_setup_survey_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -2810,6 +2944,8 @@ const integrationSetupSurvey = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("integration_setup_survey_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -2818,6 +2954,8 @@ const integrationSetupSurvey = (locale: string): TTemplate => {
           required: false,
           subheader: { default: translate("integration_setup_survey_question_3_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2863,6 +3001,8 @@ const newIntegrationSurvey = (locale: string): TTemplate => {
               label: { default: translate("new_integration_survey_question_1_choice_5", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2896,6 +3036,8 @@ const docsFeedback = (locale: string): TTemplate => {
               label: { default: translate("docs_feedback_question_1_choice_2", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2903,6 +3045,8 @@ const docsFeedback = (locale: string): TTemplate => {
           headline: { default: translate("docs_feedback_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2910,6 +3054,8 @@ const docsFeedback = (locale: string): TTemplate => {
           headline: { default: translate("docs_feedback_question_3_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2935,6 +3081,8 @@ const NPS = (locale: string): TTemplate => {
           lowerLabel: { default: translate("nps_question_1_lower_label", locale) },
           upperLabel: { default: translate("nps_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -2942,6 +3090,8 @@ const NPS = (locale: string): TTemplate => {
           headline: { default: translate("nps_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -2983,6 +3133,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
           lowerLabel: { default: translate("csat_question_1_lower_label", locale) },
           upperLabel: { default: translate("csat_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -2997,6 +3149,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_2_choice_4", locale) } },
             { id: createId(), label: { default: translate("csat_question_2_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -3018,6 +3172,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_3_choice_9", locale) } },
             { id: createId(), label: { default: translate("csat_question_3_choice_10", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -3032,6 +3188,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_4_choice_4", locale) } },
             { id: createId(), label: { default: translate("csat_question_4_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -3046,6 +3204,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_5_choice_4", locale) } },
             { id: createId(), label: { default: translate("csat_question_5_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -3060,6 +3220,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_6_choice_4", locale) } },
             { id: createId(), label: { default: translate("csat_question_6_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
@@ -3075,6 +3237,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_7_choice_5", locale) } },
             { id: createId(), label: { default: translate("csat_question_7_choice_6", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[7],
@@ -3090,6 +3254,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_8_choice_5", locale) } },
             { id: createId(), label: { default: translate("csat_question_8_choice_6", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[8],
@@ -3104,6 +3270,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
             { id: createId(), label: { default: translate("csat_question_9_choice_4", locale) } },
             { id: createId(), label: { default: translate("csat_question_9_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[9],
@@ -3112,6 +3280,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("csat_question_10_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3179,6 +3349,8 @@ const collectFeedback = (locale: string): TTemplate => {
           lowerLabel: { default: translate("csat_question_1_lower_label", locale) },
           upperLabel: { default: translate("csat_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3214,6 +3386,8 @@ const collectFeedback = (locale: string): TTemplate => {
           longAnswer: true,
           placeholder: { default: translate("collect_feedback_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -3223,6 +3397,8 @@ const collectFeedback = (locale: string): TTemplate => {
           longAnswer: true,
           placeholder: { default: translate("collect_feedback_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -3234,6 +3410,8 @@ const collectFeedback = (locale: string): TTemplate => {
           lowerLabel: { default: translate("collect_feedback_question_4_lower_label", locale) },
           upperLabel: { default: translate("collect_feedback_question_4_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -3243,6 +3421,8 @@ const collectFeedback = (locale: string): TTemplate => {
           longAnswer: true,
           placeholder: { default: translate("collect_feedback_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -3257,6 +3437,8 @@ const collectFeedback = (locale: string): TTemplate => {
           headline: { default: translate("collect_feedback_question_6_headline", locale) },
           required: true,
           shuffleOption: "none",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
@@ -3266,6 +3448,8 @@ const collectFeedback = (locale: string): TTemplate => {
           inputType: "email",
           longAnswer: false,
           placeholder: { default: translate("collect_feedback_question_7_placeholder", locale) },
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3307,6 +3491,8 @@ const identifyUpsellOpportunities = (locale: string): TTemplate => {
               label: { default: translate("identify_upsell_opportunities_question_1_choice_4", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3346,6 +3532,8 @@ const prioritizeFeatures = (locale: string): TTemplate => {
           ],
           headline: { default: translate("prioritize_features_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -3368,6 +3556,8 @@ const prioritizeFeatures = (locale: string): TTemplate => {
           ],
           headline: { default: translate("prioritize_features_question_2_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -3376,6 +3566,8 @@ const prioritizeFeatures = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("prioritize_features_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3403,6 +3595,8 @@ const gaugeFeatureSatisfaction = (locale: string): TTemplate => {
           scale: "number",
           range: 5,
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -3410,6 +3604,8 @@ const gaugeFeatureSatisfaction = (locale: string): TTemplate => {
           headline: { default: translate("gauge_feature_satisfaction_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
       endings: [getDefaultEndingCard([], locale)],
@@ -3449,6 +3645,8 @@ const marketSiteClarity = (locale: string): TTemplate => {
               label: { default: translate("market_site_clarity_question_1_choice_3", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -3456,6 +3654,8 @@ const marketSiteClarity = (locale: string): TTemplate => {
           headline: { default: translate("market_site_clarity_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -3465,6 +3665,7 @@ const marketSiteClarity = (locale: string): TTemplate => {
           buttonLabel: { default: translate("market_site_clarity_question_3_button_label", locale) },
           buttonUrl: "https://app.formbricks.com/auth/signup",
           buttonExternal: true,
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3492,6 +3693,8 @@ const customerEffortScore = (locale: string): TTemplate => {
           lowerLabel: { default: translate("customer_effort_score_question_1_lower_label", locale) },
           upperLabel: { default: translate("customer_effort_score_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -3500,6 +3703,8 @@ const customerEffortScore = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("customer_effort_score_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3559,6 +3764,8 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
           lowerLabel: { default: translate("rate_checkout_experience_question_1_lower_label", locale) },
           upperLabel: { default: translate("rate_checkout_experience_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3593,6 +3800,8 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("rate_checkout_experience_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -3601,6 +3810,8 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("rate_checkout_experience_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3660,6 +3871,8 @@ const measureSearchExperience = (locale: string): TTemplate => {
           lowerLabel: { default: translate("measure_search_experience_question_1_lower_label", locale) },
           upperLabel: { default: translate("measure_search_experience_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3694,6 +3907,8 @@ const measureSearchExperience = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("measure_search_experience_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -3702,6 +3917,8 @@ const measureSearchExperience = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("measure_search_experience_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3761,6 +3978,8 @@ const evaluateContentQuality = (locale: string): TTemplate => {
           lowerLabel: { default: translate("evaluate_content_quality_question_1_lower_label", locale) },
           upperLabel: { default: translate("evaluate_content_quality_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3795,6 +4014,8 @@ const evaluateContentQuality = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("evaluate_content_quality_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -3803,6 +4024,8 @@ const evaluateContentQuality = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("evaluate_content_quality_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -3929,6 +4152,8 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
           ],
           headline: { default: translate("measure_task_accomplishment_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3970,6 +4195,8 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
           lowerLabel: { default: translate("measure_task_accomplishment_question_2_lower_label", locale) },
           upperLabel: { default: translate("measure_task_accomplishment_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -4012,6 +4239,8 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("measure_task_accomplishment_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -4054,6 +4283,7 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
           required: false,
           buttonLabel: { default: translate("measure_task_accomplishment_question_4_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -4063,6 +4293,7 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
           buttonLabel: { default: translate("measure_task_accomplishment_question_5_button_label", locale) },
           placeholder: { default: translate("measure_task_accomplishment_question_5_placeholder", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -4133,6 +4364,7 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           dismissButtonLabel: {
             default: translate("identify_sign_up_barriers_question_1_dismiss_button_label", locale),
           },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -4174,6 +4406,8 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           lowerLabel: { default: translate("identify_sign_up_barriers_question_2_lower_label", locale) },
           upperLabel: { default: translate("identify_sign_up_barriers_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -4345,6 +4579,8 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           ],
           headline: { default: translate("identify_sign_up_barriers_question_3_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -4379,6 +4615,8 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("identify_sign_up_barriers_question_4_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -4413,6 +4651,8 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("identify_sign_up_barriers_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -4447,6 +4687,8 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("identify_sign_up_barriers_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
@@ -4481,6 +4723,8 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("identify_sign_up_barriers_question_7_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[7],
@@ -4489,6 +4733,8 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("identify_sign_up_barriers_question_8_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[8],
@@ -4504,6 +4750,7 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
           dismissButtonLabel: {
             default: translate("identify_sign_up_barriers_question_9_dismiss_button_label", locale),
           },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -4533,6 +4780,8 @@ const buildProductRoadmap = (locale: string): TTemplate => {
           lowerLabel: { default: translate("build_product_roadmap_question_1_lower_label", locale) },
           upperLabel: { default: translate("build_product_roadmap_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -4543,6 +4792,8 @@ const buildProductRoadmap = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("build_product_roadmap_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -4686,6 +4937,8 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
           lowerLabel: { default: translate("understand_purchase_intention_question_1_lower_label", locale) },
           upperLabel: { default: translate("understand_purchase_intention_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -4728,6 +4981,8 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("understand_purchase_intention_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -4736,6 +4991,8 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("understand_purchase_intention_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -4823,6 +5080,8 @@ const improveNewsletterContent = (locale: string): TTemplate => {
           lowerLabel: { default: translate("improve_newsletter_content_question_1_lower_label", locale) },
           upperLabel: { default: translate("improve_newsletter_content_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -4865,6 +5124,8 @@ const improveNewsletterContent = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("improve_newsletter_content_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -4880,6 +5141,7 @@ const improveNewsletterContent = (locale: string): TTemplate => {
           dismissButtonLabel: {
             default: translate("improve_newsletter_content_question_3_dismiss_button_label", locale),
           },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -4922,6 +5184,7 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           dismissButtonLabel: {
             default: translate("evaluate_a_product_idea_question_1_dismiss_button_label", locale),
           },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -4991,6 +5254,8 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           lowerLabel: { default: translate("evaluate_a_product_idea_question_2_lower_label", locale) },
           upperLabel: { default: translate("evaluate_a_product_idea_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
 
         {
@@ -5000,6 +5265,8 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("evaluate_a_product_idea_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -5014,6 +5281,7 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           dismissButtonLabel: {
             default: translate("evaluate_a_product_idea_question_4_dismiss_button_label", locale),
           },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -5083,6 +5351,8 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           lowerLabel: { default: translate("evaluate_a_product_idea_question_5_lower_label", locale) },
           upperLabel: { default: translate("evaluate_a_product_idea_question_5_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -5117,6 +5387,8 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("evaluate_a_product_idea_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
@@ -5125,6 +5397,8 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("evaluate_a_product_idea_question_7_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[7],
@@ -5133,6 +5407,8 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("evaluate_a_product_idea_question_8_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -5324,6 +5600,8 @@ const understandLowEngagement = (locale: string): TTemplate => {
           ],
           headline: { default: translate("understand_low_engagement_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -5358,6 +5636,8 @@ const understandLowEngagement = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("understand_low_engagement_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -5392,6 +5672,8 @@ const understandLowEngagement = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("understand_low_engagement_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -5426,6 +5708,8 @@ const understandLowEngagement = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("understand_low_engagement_question_4_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -5460,6 +5744,8 @@ const understandLowEngagement = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("understand_low_engagement_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -5469,6 +5755,8 @@ const understandLowEngagement = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("understand_low_engagement_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -5501,6 +5789,8 @@ const employeeWellBeing = (locale: string): TTemplate => {
             default: translate("employee_well_being_question_1_upper_label", locale),
           },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5518,6 +5808,8 @@ const employeeWellBeing = (locale: string): TTemplate => {
             default: translate("employee_well_being_question_2_upper_label", locale),
           },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5533,6 +5825,8 @@ const employeeWellBeing = (locale: string): TTemplate => {
             default: translate("employee_well_being_question_3_upper_label", locale),
           },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5541,6 +5835,8 @@ const employeeWellBeing = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("employee_well_being_question_4_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -5569,6 +5865,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           lowerLabel: { default: translate("long_term_retention_check_in_question_1_lower_label", locale) },
           upperLabel: { default: translate("long_term_retention_check_in_question_1_upper_label", locale) },
           isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5577,6 +5875,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("long_term_retention_check_in_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5608,6 +5908,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
             default: translate("long_term_retention_check_in_question_3_headline", locale),
           },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5619,6 +5921,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           lowerLabel: { default: translate("long_term_retention_check_in_question_4_lower_label", locale) },
           upperLabel: { default: translate("long_term_retention_check_in_question_4_upper_label", locale) },
           isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5629,6 +5933,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("long_term_retention_check_in_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5638,6 +5944,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           lowerLabel: { default: translate("long_term_retention_check_in_question_6_lower_label", locale) },
           upperLabel: { default: translate("long_term_retention_check_in_question_6_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5667,6 +5975,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           ],
           headline: { default: translate("long_term_retention_check_in_question_7_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5675,6 +5985,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("long_term_retention_check_in_question_8_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5686,6 +5998,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           lowerLabel: { default: translate("long_term_retention_check_in_question_9_lower_label", locale) },
           upperLabel: { default: translate("long_term_retention_check_in_question_9_upper_label", locale) },
           isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -5694,6 +6008,8 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
           required: false,
           placeholder: { default: translate("long_term_retention_check_in_question_10_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -5757,6 +6073,7 @@ export const getCustomSurveyTemplate = (locale: string): TTemplate => ({
         type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: translate("custom_survey_question_1_headline", locale) },
         placeholder: { default: translate("custom_survey_question_1_placeholder", locale) },
+        buttonLabel: { default: translate("finish", locale) },
         required: true,
         inputType: "text",
       } as TSurveyOpenTextQuestion,

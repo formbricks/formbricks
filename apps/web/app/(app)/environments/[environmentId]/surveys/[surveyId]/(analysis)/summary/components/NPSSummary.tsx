@@ -7,6 +7,7 @@ import {
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { HalfCircle, ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -15,7 +16,7 @@ interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
-  locale: string;
+  locale: TUserLocale;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,

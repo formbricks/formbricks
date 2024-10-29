@@ -2,6 +2,7 @@ import { InboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -10,7 +11,7 @@ interface CTASummaryProps {
   questionSummary: TSurveyQuestionSummaryCta;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const CTASummary = ({ questionSummary, survey, attributeClasses, locale }: CTASummaryProps) => {

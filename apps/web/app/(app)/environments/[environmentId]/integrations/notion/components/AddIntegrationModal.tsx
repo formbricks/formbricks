@@ -23,6 +23,7 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
 import { Label } from "@formbricks/ui/components/Label";
@@ -37,7 +38,7 @@ interface AddIntegrationModalProps {
   databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
   attributeClasses: TAttributeClass[];
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const AddIntegrationModal = ({

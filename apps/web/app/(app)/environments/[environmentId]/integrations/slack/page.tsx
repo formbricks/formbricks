@@ -6,6 +6,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
@@ -30,7 +31,7 @@ const Page = async ({ params }) => {
   if (slackIntegration && slackIntegration.config.key) {
     channelsArray = await getSlackChannels(params.environmentId);
   }
-
+  const locale = await findMatchingLocale();
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
@@ -44,6 +45,7 @@ const Page = async ({ params }) => {
           slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}
           attributeClasses={attributeClasses}
+          locale={locale}
         />
       </div>
     </PageContentWrapper>

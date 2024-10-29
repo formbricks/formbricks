@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
@@ -18,6 +19,7 @@ interface ManageIntegrationProps {
   setSelectedIntegration: React.Dispatch<
     React.SetStateAction<(TIntegrationNotionConfigData & { index: number }) | null>
   >;
+  locale: TUserLocale;
 }
 
 export const ManageIntegration = ({
@@ -26,6 +28,7 @@ export const ManageIntegration = ({
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
+  locale,
 }: ManageIntegrationProps) => {
   const t = useTranslations();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -104,7 +107,9 @@ export const ManageIntegration = ({
                     }}>
                     <div className="col-span-2 text-center">{data.surveyName}</div>
                     <div className="col-span-2 text-center">{data.databaseName}</div>
-                    <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
+                    <div className="col-span-2 text-center">
+                      {timeSince(data.createdAt.toString(), locale)}
+                    </div>
                   </div>
                 );
               })}

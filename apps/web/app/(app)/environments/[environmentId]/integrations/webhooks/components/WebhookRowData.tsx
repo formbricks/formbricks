@@ -1,7 +1,8 @@
 import { useTranslations } from "next-intl";
-import { timeSinceConditionally } from "@formbricks/lib/time";
+import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TWebhook } from "@formbricks/types/webhooks";
 import { Badge } from "@formbricks/ui/components/Badge";
 
@@ -52,7 +53,15 @@ const renderSelectedTriggersText = (webhook: TWebhook, t: (key: string) => strin
   }
 };
 
-export const WebhookRowData = ({ webhook, surveys }: { webhook: TWebhook; surveys: TSurvey[] }) => {
+export const WebhookRowData = ({
+  webhook,
+  surveys,
+  locale,
+}: {
+  webhook: TWebhook;
+  surveys: TSurvey[];
+  locale: TUserLocale;
+}) => {
   const t = useTranslations();
   return (
     <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
@@ -80,7 +89,7 @@ export const WebhookRowData = ({ webhook, surveys }: { webhook: TWebhook; survey
         {renderSelectedTriggersText(webhook, t)}
       </div>
       <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
-        {timeSinceConditionally(webhook.createdAt.toString())}
+        {timeSince(webhook.createdAt.toString(), locale)}
       </div>
       <div className="text-center"></div>
     </div>

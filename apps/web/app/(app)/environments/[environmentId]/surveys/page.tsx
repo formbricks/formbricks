@@ -12,6 +12,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/components/Button";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -69,7 +70,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   const currentProductChannel = product.config.channel ?? null;
-
+  const locale = await findMatchingLocale();
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
@@ -91,6 +92,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
             currentProductChannel={currentProductChannel}
+            locale={locale}
           />
         </>
       ) : isViewer ? (

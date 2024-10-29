@@ -52,7 +52,7 @@ const getChannelTag = (
 
     case 2:
       // Return labels for two channels concatenated with "or", removing "Survey"
-      return labels.map(removeSurveySuffix).join(t(" " + t("common.or") + " ")) + t("common.survey");
+      return labels.map(removeSurveySuffix).join(t(" " + t("common.or") + " "));
 
     case 3:
       return t("environments.surveys.templates.all_channels");

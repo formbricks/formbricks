@@ -9,6 +9,7 @@ import {
   TSurveyQuestionSummaryPictureSelection,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -24,7 +25,7 @@ interface PictureChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const PictureChoiceSummary = ({

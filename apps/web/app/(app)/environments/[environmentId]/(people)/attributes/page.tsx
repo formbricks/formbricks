@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { Button } from "@formbricks/ui/components/Button";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
@@ -17,7 +18,7 @@ const Page = async ({ params }) => {
   let attributeClasses = await getAttributeClasses(params.environmentId);
   const t = await getTranslations();
   const product = await getProductByEnvironmentId(params.environmentId);
-
+  const locale = await findMatchingLocale();
   if (!product) {
     throw new Error(t("common.product_not_found"));
   }
@@ -38,7 +39,7 @@ const Page = async ({ params }) => {
       <PageHeader pageTitle={t("common.people")} cta={HowToAddAttributesButton}>
         <PersonSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
       </PageHeader>
-      <AttributeClassesTable attributeClasses={attributeClasses} />
+      <AttributeClassesTable attributeClasses={attributeClasses} locale={locale} />
     </PageContentWrapper>
   );
 };

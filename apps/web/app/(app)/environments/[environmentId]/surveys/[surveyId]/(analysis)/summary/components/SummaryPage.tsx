@@ -21,7 +21,7 @@ import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
 
@@ -50,7 +50,7 @@ interface SummaryPageProps {
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
-  locale: string;
+  locale: TUserLocale;
 }
 
 export const SummaryPage = ({
