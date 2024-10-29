@@ -112,7 +112,6 @@ model Response {
   createdAt        DateTime          @default(now()) @map(name: "created_at")
   updatedAt        DateTime          @updatedAt @map(name: "updated_at")
   finished         Boolean           @default(false)
-  failed           Boolean           @default(false)
   survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
   person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
@@ -287,7 +286,7 @@ model Survey {
   /// [SurveyEnding]
   endings             Json[]                  @default([])
   thankYouCard        Json? // deprecated
-  failureCard         Json                    @default("{\"enabled\": false}")
+  failureCard         Json? // deprecated
   /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
@@ -339,7 +338,6 @@ model Survey {
   showLanguageSwitch              Boolean?
   documents                       Document[]
   reward                          Float            @default(0)
-  failureChance                   Float            @default(0)
   countries                       Country[]        @relation("SurveyCountries")
   tags                            Tag[]
   limitedCountries                Boolean          @default(false)

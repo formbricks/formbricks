@@ -31,7 +31,6 @@ export const ResponseOptionsCard = ({
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   useState;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
-  const [surveyLinkUsedMessageToggle, setSurveyLinkUsedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
   const [isSingleResponsePerEmailEnabledToggle, setIsSingleResponsePerEmailToggle] = useState(
     localSurvey.isSingleResponsePerEmailEnabled
@@ -112,12 +111,6 @@ export const ResponseOptionsCard = ({
     if (surveyClosedMessageToggle && localSurvey.surveyClosedMessage) {
       setLocalSurvey({ ...localSurvey, surveyClosedMessage: null });
     }
-  };
-
-  const handleSurveyLinkUsedMessageToggle = () => {
-    setSurveyLinkUsedMessageToggle((prev) => !prev);
-
-    setLocalSurvey({ ...localSurvey, singleUse: { enabled: true, isEncrypted: true } });
   };
 
   const handleVerifyEmailToogle = () => {
@@ -386,38 +379,6 @@ export const ResponseOptionsCard = ({
                       name="subheading"
                       defaultValue={surveyClosedMessage.subheading}
                       onChange={(e) => handleClosedSurveyMessageChange({ subheading: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </AdvancedOptionToggle>
-
-              {/* Adjust Survey Link Used Message */}
-              <AdvancedOptionToggle
-                htmlId="adjustSurveyLinkUsedMessage"
-                isChecked={surveyLinkUsedMessageToggle}
-                onToggle={handleSurveyLinkUsedMessageToggle}
-                title="Adjust 'Survey Used' message"
-                description="Change the message visitors see when the survey has been already used."
-                childBorder={true}>
-                <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <Label htmlFor="headline">‘Link Used’ Message</Label>
-                    <Input
-                      autoFocus
-                      id="heading"
-                      className="mb-4 mt-2 bg-white"
-                      name="heading"
-                      defaultValue={singleUseMessage.heading}
-                      onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
-                    />
-
-                    <Label htmlFor="headline">Subheading</Label>
-                    <Input
-                      className="mt-2 bg-white"
-                      id="subheading"
-                      name="subheading"
-                      defaultValue={singleUseMessage.subheading}
-                      onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
                   </div>
                 </div>

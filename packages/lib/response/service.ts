@@ -51,7 +51,6 @@ export const responseSelection = {
   updatedAt: true,
   surveyId: true,
   finished: true,
-  failed: true,
   data: true,
   meta: true,
   ttc: true,
@@ -108,7 +107,6 @@ export const getResponsesByPersonId = reactCache(
           const responsePrisma = await prisma.response.findMany({
             where: {
               personId,
-              failed: false,
             },
             select: responseSelection,
             take: page ? ITEMS_PER_PAGE : undefined,
@@ -256,7 +254,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     surveyId,
     displayId,
     finished,
-    failed,
     data,
     meta,
     singleUseId,
@@ -298,7 +295,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       },
       display: displayId ? { connect: { id: displayId } } : undefined,
       finished: finished,
-      failed: failed,
       panelistId: panelistId,
       data: data,
       language: language,
@@ -602,7 +598,6 @@ export const getResponsesByEnvironmentId = reactCache(
               survey: {
                 environmentId,
               },
-              failed: false,
             },
             select: responseSelection,
             orderBy: [
@@ -684,7 +679,6 @@ export const updateResponse = async (
       },
       data: {
         finished: responseInput.finished,
-        failed: responseInput.failed,
         data,
         ttc,
         language,

@@ -69,7 +69,6 @@ const mockResponseInputWithoutUserId: TResponseInput = {
   surveyId: mockSurveyId,
   singleUseId: mockSingleUseId,
   finished: constantsForTests.boolean,
-  failed: constantsForTests.boolean,
   data: {},
   meta: mockMeta,
 };

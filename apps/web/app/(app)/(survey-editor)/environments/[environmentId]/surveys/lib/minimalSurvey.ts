@@ -18,9 +18,6 @@ export const minimalSurvey: TSurvey = {
   displayLimit: null,
   welcomeCard: welcomeCardDefault,
   questions: [],
-  failureCard: {
-    enabled: false,
-  },
   endings: [getDefaultEndingCard([])],
   hiddenFields: {
     enabled: false,
@@ -47,5 +44,4 @@ export const minimalSurvey: TSurvey = {
   tags: [],
   limitedCountries: false,
   reward: 0,
-  failureChance: 0,
 };

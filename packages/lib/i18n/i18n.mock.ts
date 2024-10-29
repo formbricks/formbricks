@@ -289,7 +289,6 @@ export const mockSurvey: TSurvey = {
       buttonLabel: { default: "Create your own Survey" },
     },
   ],
-  failureChance: 0,
   countries: [],
   limitedCountries: false,
   reward: 0,

@@ -63,11 +63,6 @@ export const getEndingCardText = (
   }
 };
 
-export const getFailCardText = (survey: TSurvey, id: string, surveyLanguageCodes: string[]): TI18nString => {
-  const card = survey.failureCard;
-  return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
-};
-
 export const determineImageUploaderVisibility = (questionIdx: number, localSurvey: TSurvey) => {
   switch (questionIdx) {
     case -1: // Welcome Card
