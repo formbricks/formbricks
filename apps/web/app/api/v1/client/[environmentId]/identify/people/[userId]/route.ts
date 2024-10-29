@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
+import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsPersonIdentifyInput } from "@formbricks/types/js";
@@ -28,6 +29,17 @@ export const GET = async (
         transformErrorToDetails(syncInputValidation.error),
         true
       );
+    }
+
+    if (userId) {
+      // check if contacts are enabled:
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        return responses.forbiddenResponse(
+          "User identification is only available for enterprise users.",
+          true
+        );
+      }
     }
 
     const { device } = userAgent(request);

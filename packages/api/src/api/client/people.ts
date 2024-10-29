@@ -1,5 +1,5 @@
 import { type Result } from "@formbricks/types/error-handlers";
-import { type NetworkError } from "@formbricks/types/errors";
+import { type ForbiddenError, type NetworkError } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/make-request";
 
 export class PeopleAPI {
@@ -11,7 +11,7 @@ export class PeopleAPI {
     this.environmentId = environmentId;
   }
 
-  async create(userId: string): Promise<Result<{ userId: string }, NetworkError | Error>> {
+  async create(userId: string): Promise<Result<{ userId: string }, NetworkError | Error | ForbiddenError>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/people`, "POST", {
       environmentId: this.environmentId,
       userId,

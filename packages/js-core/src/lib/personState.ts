@@ -48,7 +48,7 @@ export const fetchPersonState = async (
     const jsonRes = await response.json();
 
     const error = err({
-      code: "network_error",
+      code: jsonRes.code === "forbidden" ? "forbidden" : "network_error",
       status: response.status,
       message: "Error syncing with backend",
       url: new URL(url),

@@ -1,5 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
+import { ForbiddenError } from "@formbricks/types/errors";
 import { Config } from "./config";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
@@ -88,7 +89,7 @@ export const updateAttributes = async (
   environmentId: string,
   userId: string,
   attributes: TAttributes
-): Promise<Result<TAttributes, NetworkError>> => {
+): Promise<Result<TAttributes, NetworkError | ForbiddenError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
 
@@ -130,10 +131,10 @@ export const updateAttributes = async (
     }
 
     return err({
-      code: "network_error",
-      status: 500,
+      code: (res.error as ForbiddenError).code ?? "network_error",
+      status: (res.error as NetworkError | ForbiddenError).status ?? 500,
       message: `Error updating person with userId ${userId}`,
-      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
       responseMessage: res.error.message,
     });
   }

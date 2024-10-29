@@ -2,6 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
+import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";
 import { updateAttributes } from "./lib/attributes";
@@ -35,6 +36,12 @@ export const PUT = async (
         transformErrorToDetails(parsedInput.error),
         true
       );
+    }
+
+    // check for ee license:
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
 
     const { userId: userIdAttr, ...updatedAttributes } = parsedInput.data.attributes;
