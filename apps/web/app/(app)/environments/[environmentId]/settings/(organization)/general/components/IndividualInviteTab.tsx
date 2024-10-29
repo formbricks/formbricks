@@ -1,8 +1,8 @@
 "use client";
 
+import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { OrganizationRole } from "@prisma/client";
 import { useForm } from "react-hook-form";
-import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -38,7 +38,7 @@ export const IndividualInviteTab = ({
 
   const submitEventClass = async () => {
     const data = getValues();
-    data.organizationRole = data.organizationRole || OrganizationRole.manager;
+    data.organizationRole = data.organizationRole || OrganizationRole.owner;
     await onSubmit([data]);
     setOpen(false);
     reset();

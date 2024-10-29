@@ -5,6 +5,7 @@ import {
   getMultiLanguagePermission,
   getRemoveInAppBrandingPermission,
   getRemoveLinkBrandingPermission,
+  getRoleManagementPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
@@ -48,6 +49,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   return (
     <PageContentWrapper>
@@ -56,6 +58,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="look"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       <SettingsCard

@@ -8,6 +8,7 @@ interface ProductConfigNavigationProps {
   environmentId?: string;
   isMultiLanguageAllowed?: boolean;
   loading?: boolean;
+  canDoRoleManagement?: boolean;
 }
 
 export const ProductConfigNavigation = ({
@@ -15,6 +16,7 @@ export const ProductConfigNavigation = ({
   environmentId,
   isMultiLanguageAllowed,
   loading,
+  canDoRoleManagement,
 }: ProductConfigNavigationProps) => {
   const pathname = usePathname();
   let navigation = [
@@ -59,6 +61,7 @@ export const ProductConfigNavigation = ({
       id: "access",
       label: "Access",
       href: `/environments/${environmentId}/product/access`,
+      hidden: !canDoRoleManagement,
       current: pathname?.includes("/access"),
     },
   ];

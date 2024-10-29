@@ -1,16 +1,14 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/OrganizationActions";
+import { getMembershipsByUserId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { getIsOrganizationAIReady } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import {
-  getMembershipByUserIdOrganizationId,
-  getMembershipsByUserId,
-} from "@formbricks/lib/membership/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -64,6 +62,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.organizationRole}
           activeId="general"
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       <SettingsCard title="Manage members" description="Add or remove members in your organization.">

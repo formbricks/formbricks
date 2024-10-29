@@ -2,7 +2,9 @@ import { getTeamsByOranizationId } from "@/app/(app)/(onboarding)/lib/onboarding
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
 import { XIcon } from "lucide-react";
+import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProducts } from "@formbricks/lib/product/service";
 import { TProductConfigChannel, TProductConfigIndustry, TProductMode } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/components/Button";
@@ -29,6 +31,14 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
 
   const organizationTeams = await getTeamsByOranizationId(params.organizationId);
 
+  const organization = await getOrganization(params.organizationId);
+
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
+
   if (!organizationTeams) {
     throw new Error("Organization teams not found");
   }
@@ -53,6 +63,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         industry={industry}
         defaultBrandColor={DEFAULT_BRAND_COLOR}
         organizationTeams={organizationTeams}
+        canDoRoleManagement={canDoRoleManagement}
       />
       {products.length >= 1 && (
         <Button

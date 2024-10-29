@@ -4,6 +4,7 @@ import { removeTeamMemberAction, updateUserTeamRoleAction } from "@/modules/ee/t
 import { AddTeamMemberModal } from "@/modules/ee/teams/team-details/components/add-team-member-modal";
 import { TOrganizationMember, TTeamMember } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
+import { TeamRoleMapping } from "@/modules/ee/teams/utils/teams";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -26,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@formbricks/ui/components/Table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface TeamMembersProps {
   members: TTeamMember[];
@@ -129,7 +131,14 @@ export const TeamMembers = ({ members, userId, teamId, organizationMembers }: Te
                           </SelectContent>
                         </Select>
                       ) : (
-                        <p className="capitalize">{teamMember.role}</p>
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <p>{TeamRoleMapping[teamMember.role]}</p>
+                            </TooltipTrigger>
+                            <TooltipContent>Org owner and managers can only be admin.</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </TableCell>
                     <TableCell>

@@ -39,17 +39,19 @@ export const updateMembership = async (
       },
     });
 
-    await prisma.teamMembership.updateMany({
-      where: {
-        userId,
-        team: {
-          organizationId,
+    if (data.organizationRole === "owner" || data.organizationRole === "manager") {
+      await prisma.teamMembership.updateMany({
+        where: {
+          userId,
+          team: {
+            organizationId,
+          },
         },
-      },
-      data: {
-        role: "admin",
-      },
-    });
+        data: {
+          role: "admin",
+        },
+      });
+    }
 
     teamCache.revalidate({
       userId,

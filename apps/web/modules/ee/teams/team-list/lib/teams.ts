@@ -69,7 +69,7 @@ const getUserTeams = reactCache(
     )()
 );
 
-const getOtherTeams = reactCache(
+export const getOtherTeams = reactCache(
   (userId: string, organizationId: string): Promise<TOtherTeam[]> =>
     cache(
       async () => {
@@ -122,13 +122,36 @@ const getOtherTeams = reactCache(
 );
 
 export const getTeams = reactCache(
-  (userId: string, organizationId: string): Promise<{ userTeams: TUserTeam[]; otherTeams: TOtherTeam[] }> =>
+  (userId: string, organizationId: string): Promise<{ userTeams: TUserTeam[]; otherTeams?: TOtherTeam[] }> =>
     cache(
       async () => {
-        const [userTeams, otherTeams] = await Promise.all([
-          getUserTeams(userId, organizationId),
-          getOtherTeams(userId, organizationId),
-        ]);
+        const membership = await prisma.membership.findUnique({
+          where: {
+            userId_organizationId: {
+              userId,
+              organizationId,
+            },
+          },
+          select: {
+            organizationRole: true,
+          },
+        });
+
+        if (!membership) {
+          throw new ResourceNotFoundError("Membership", null);
+        }
+
+        const userTeams = await getUserTeams(userId, organizationId);
+
+        if (membership.organizationRole === "member") {
+          return { userTeams };
+        }
+
+        let otherTeams: TOtherTeam[] = [];
+
+        if (membership.organizationRole === "owner" || membership.organizationRole === "manager") {
+          otherTeams = await getOtherTeams(userId, organizationId);
+        }
 
         return { userTeams, otherTeams };
       },

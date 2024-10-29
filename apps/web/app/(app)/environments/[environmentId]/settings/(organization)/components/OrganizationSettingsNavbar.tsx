@@ -5,21 +5,25 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
+interface OrganizationSettingsNavbarProps {
+  environmentId?: string;
+  isFormbricksCloud: boolean;
+  membershipRole?: TOrganizationRole;
+  activeId: string;
+  loading?: boolean;
+  canDoRoleManagement?: boolean;
+}
+
 export const OrganizationSettingsNavbar = ({
   environmentId,
   isFormbricksCloud,
   membershipRole,
   activeId,
   loading,
-}: {
-  environmentId?: string;
-  isFormbricksCloud: boolean;
-  membershipRole?: TOrganizationRole;
-  activeId: string;
-  loading?: boolean;
-}) => {
+  canDoRoleManagement = false,
+}: OrganizationSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { isManager, isOwner } = getAccessFlags(membershipRole);
+  const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
   const isPricingDisabled = !isOwner && !isManager;
 
   const navigation = [
@@ -41,8 +45,7 @@ export const OrganizationSettingsNavbar = ({
       id: "teams",
       label: "Teams",
       href: `/environments/${environmentId}/settings/teams`,
-      // hidden: isFormbricksCloud || isPricingDisabled,
-      hidden: false,
+      hidden: !canDoRoleManagement || isBilling,
       current: pathname?.includes("/teams"),
     },
     {

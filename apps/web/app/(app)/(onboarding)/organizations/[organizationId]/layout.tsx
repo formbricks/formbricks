@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -26,7 +27,8 @@ const ProductOnboardingLayout = async ({ children, params }) => {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
-  if (!membership || membership.organizationRole === "member") return notFound();
+  const { isMember, isBilling } = getAccessFlags(membership?.organizationRole);
+  if (isMember || isBilling) return notFound();
 
   const organization = await getOrganization(params.organizationId);
   if (!organization) {

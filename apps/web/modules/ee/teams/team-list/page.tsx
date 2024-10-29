@@ -2,9 +2,12 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/teams";
 import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
+import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
@@ -19,7 +22,14 @@ export const TeamsPage = async ({ params }) => {
   if (!organization) {
     throw new Error("Organization not found");
   }
+
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const { isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+
+  if (!canDoRoleManagement || isBilling) {
+    notFound();
+  }
 
   const teams = await getTeams(session.user.id, organization.id);
 
@@ -35,9 +45,14 @@ export const TeamsPage = async ({ params }) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.organizationRole}
           activeId="teams"
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
-      <TeamsView teams={teams} organizationId={organization.id} />
+      <TeamsView
+        teams={teams}
+        organizationId={organization.id}
+        membershipRole={currentUserMembership?.organizationRole}
+      />
     </PageContentWrapper>
   );
 };

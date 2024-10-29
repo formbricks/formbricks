@@ -9,15 +9,17 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 import { H3 } from "@formbricks/ui/components/Typography";
 
 interface TeamsViewProps {
   organizationId: string;
-  teams: { userTeams: TUserTeam[]; otherTeams: TOtherTeam[] };
+  teams: { userTeams: TUserTeam[]; otherTeams?: TOtherTeam[] };
+  membershipRole?: TOrganizationRole;
 }
 
-export const TeamsView = ({ organizationId, teams }: TeamsViewProps) => {
+export const TeamsView = ({ organizationId, teams, membershipRole }: TeamsViewProps) => {
   const [openCreateTeamModal, setOpenCreateTeamModal] = useState<boolean>(false);
 
   const router = useRouter();
@@ -52,7 +54,7 @@ export const TeamsView = ({ organizationId, teams }: TeamsViewProps) => {
       </div>
       <div className="flex flex-col gap-6">
         <YourTeams teams={teams.userTeams} leaveTeam={leaveTeam} />
-        <OtherTeams teams={teams.otherTeams} joinTeam={joinTeam} />
+        {teams.otherTeams && <OtherTeams teams={teams.otherTeams} joinTeam={joinTeam} />}
       </div>
       {
         <CreateTeamModal

@@ -1,7 +1,7 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -38,11 +38,12 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
   const isProductNameEditDisabled = isMember || isBilling ? true : false;
 
-  if (isMember) {
+  if (isMember || isBilling) {
     return <ErrorComponent />;
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   return (
     <PageContentWrapper>
@@ -51,6 +52,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="general"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
 

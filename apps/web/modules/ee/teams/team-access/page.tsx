@@ -1,7 +1,7 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { AccessView } from "@/modules/ee/teams/team-access/components/access-view";
 import { getServerSession } from "next-auth";
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -29,10 +29,10 @@ export const TeamAccess = async ({ params }: { params: { environmentId: string }
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  console.log("isBilling", isBilling, "isMember", isMember);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   const teams = await getTeamsByProductId(product.id);
 
@@ -46,6 +46,8 @@ export const TeamAccess = async ({ params }: { params: { environmentId: string }
     throw new Error("Organization Teams not found");
   }
 
+  const isOwnerOrManager = isOwner || isManager;
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle="Configuration">
@@ -53,6 +55,7 @@ export const TeamAccess = async ({ params }: { params: { environmentId: string }
           environmentId={params.environmentId}
           activeId="access"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       <AccessView
@@ -60,6 +63,7 @@ export const TeamAccess = async ({ params }: { params: { environmentId: string }
         organizationTeams={organizationTeams}
         teams={teams}
         product={product}
+        isOwnerOrManager={isOwnerOrManager}
       />
     </PageContentWrapper>
   );

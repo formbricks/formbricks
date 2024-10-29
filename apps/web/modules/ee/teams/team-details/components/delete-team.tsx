@@ -36,13 +36,15 @@ export const DeleteTeam = ({ teamId, membershipRole }: DeleteTeamProps) => {
     setIsDeleting(false);
   };
 
-  const { isManager, isOwner } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
 
-  const isDeleteDisabled = !isManager && !isOwner;
+  const isDeleteDisabled = isMember;
 
   return (
     <div>
-      {!isDeleteDisabled && (
+      {isDeleteDisabled ? (
+        <p className="text-sm text-red-700">Only Organization Owner and manager can delete the team.</p>
+      ) : (
         <div>
           <p className="text-sm text-slate-900">
             This action cannot be undone. If it&apos;s gone, it&apos;s gone.
@@ -57,9 +59,7 @@ export const DeleteTeam = ({ teamId, membershipRole }: DeleteTeamProps) => {
           </Button>
         </div>
       )}
-      {isDeleteDisabled && (
-        <p className="text-sm text-red-700">Only Owner and manager can delete the organization.</p>
-      )}
+
       {isDeleteDialogOpen && (
         <DeleteDialog
           open={isDeleteDialogOpen}

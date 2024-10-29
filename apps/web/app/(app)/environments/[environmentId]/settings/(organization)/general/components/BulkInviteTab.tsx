@@ -45,7 +45,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
             email: email.trim(),
             organizationRole: canDoRoleManagement
               ? (role.trim().toLowerCase() as TOrganizationRole)
-              : OrganizationRole.manager,
+              : OrganizationRole.owner,
           };
         });
         try {
@@ -91,8 +91,8 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
             <AlertDescription className="ml-2">
               <p className="text-sm">
                 <strong>Warning: </strong> Please note that on the Free Plan, all organization members are
-                automatically assigned the &quot;Manager&quot; role regardless of the role specified in the
-                CSV file.
+                automatically assigned the &quot;Owner&quot; role regardless of the role specified in the CSV
+                file.
               </p>
             </AlertDescription>
           </Alert>

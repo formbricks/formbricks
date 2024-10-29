@@ -41,6 +41,7 @@ interface ProductSettingsProps {
   industry: TProductConfigIndustry;
   defaultBrandColor: string;
   organizationTeams: TOrganizationTeam[];
+  canDoRoleManagement: boolean;
 }
 
 export const ProductSettings = ({
@@ -50,6 +51,7 @@ export const ProductSettings = ({
   industry,
   defaultBrandColor,
   organizationTeams,
+  canDoRoleManagement = false,
 }: ProductSettingsProps) => {
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
@@ -163,38 +165,39 @@ export const ProductSettings = ({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="teamIds"
-              render={({ field, fieldState: { error } }) => (
-                <FormItem className="w-full space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <FormLabel>Teams</FormLabel>
-                      <FormDescription>Who all can access this product?</FormDescription>
+            {canDoRoleManagement && (
+              <FormField
+                control={form.control}
+                name="teamIds"
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem className="w-full space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <FormLabel>Teams</FormLabel>
+                        <FormDescription>Who all can access this product?</FormDescription>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        type="button"
+                        onClick={() => setCreateTeamModalOpen(true)}>
+                        Create team
+                      </Button>
                     </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      type="button"
-                      onClick={() => setCreateTeamModalOpen(true)}>
-                      Create team
-                    </Button>
-                  </div>
-                  <FormControl>
-                    <div>
-                      <MultiSelect
-                        value={field.value}
-                        onChange={(teamIds) => field.onChange(teamIds)}
-                        options={organizationTeamsOptions}
-                      />
-                      {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
+                    <FormControl>
+                      <div>
+                        <MultiSelect
+                          value={field.value}
+                          onChange={(teamIds) => field.onChange(teamIds)}
+                          options={organizationTeamsOptions}
+                        />
+                        {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
             <div className="flex w-full justify-end">
               <Button loading={isSubmitting} type="submit">
                 Next

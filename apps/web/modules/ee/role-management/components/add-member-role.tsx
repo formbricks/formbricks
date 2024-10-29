@@ -26,7 +26,7 @@ export function AddMemberRole({ control, canDoRoleManagement }: AddMemberRolePro
         <div>
           <Label>Role</Label>
           <Select
-            defaultValue="manager"
+            defaultValue="owner"
             disabled={!canDoRoleManagement}
             onValueChange={(v) => {
               onChange(v as TOrganizationRole);

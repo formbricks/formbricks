@@ -2,6 +2,7 @@
 
 import { removeAccessAction, updateAccessPermissionAction } from "@/modules/ee/teams/team-access/actions";
 import { TProductTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,9 +30,10 @@ interface AccessTableProps {
   teams: TProductTeam[];
   environmentId: string;
   productId: string;
+  isOwnerOrManager: boolean;
 }
 
-export const AccessTable = ({ teams, environmentId, productId }: AccessTableProps) => {
+export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager }: AccessTableProps) => {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState<boolean>(false);
 
@@ -75,7 +77,7 @@ export const AccessTable = ({ teams, environmentId, productId }: AccessTableProp
             <TableRow className="bg-slate-100">
               <TableHead>Team Name</TableHead>
               <TableHead>Permission level</TableHead>
-              <TableHead>Actions</TableHead>
+              {isOwnerOrManager && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -86,32 +88,38 @@ export const AccessTable = ({ teams, environmentId, productId }: AccessTableProp
                   {team.memberCount} members)
                 </TableCell>
                 <TableCell>
-                  <Select
-                    value={team.permission}
-                    onValueChange={(val: TTeamPermission) => {
-                      handlePermissionChange(team.id, val);
-                    }}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Select type" className="text-sm" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ZTeamPermission.Enum.read}>Read</SelectItem>
-                      <SelectItem value={ZTeamPermission.Enum.readWrite}>Read & write</SelectItem>
-                      <SelectItem value={ZTeamPermission.Enum.manage}>Manage</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {isOwnerOrManager ? (
+                    <Select
+                      value={team.permission}
+                      onValueChange={(val: TTeamPermission) => {
+                        handlePermissionChange(team.id, val);
+                      }}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Select type" className="text-sm" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ZTeamPermission.Enum.read}>Read</SelectItem>
+                        <SelectItem value={ZTeamPermission.Enum.readWrite}>Read & write</SelectItem>
+                        <SelectItem value={ZTeamPermission.Enum.manage}>Manage</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="capitalize">{TeamPermissionMapping[team.permission]}</p>
+                  )}
                 </TableCell>
-                <TableCell>
-                  <Button
-                    variant="warn"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedTeamId(team.id);
-                      setRemoveAccessModalOpen(true);
-                    }}>
-                    Remove
-                  </Button>
-                </TableCell>
+                {isOwnerOrManager && (
+                  <TableCell>
+                    <Button
+                      variant="warn"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTeamId(team.id);
+                        setRemoveAccessModalOpen(true);
+                      }}>
+                      Remove
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

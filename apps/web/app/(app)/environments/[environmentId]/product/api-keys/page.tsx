@@ -1,6 +1,6 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { getServerSession } from "next-auth";
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -33,6 +33,7 @@ const Page = async ({ params }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   return !isMember ? (
     <PageContentWrapper>
@@ -41,6 +42,7 @@ const Page = async ({ params }) => {
           environmentId={params.environmentId}
           activeId="api-keys"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       <EnvironmentNotice environmentId={environment.id} subPageUrl="/product/api-keys" />

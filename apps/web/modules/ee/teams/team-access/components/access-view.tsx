@@ -11,24 +11,38 @@ interface AccessViewProps {
   teams: TProductTeam[];
   environmentId: string;
   organizationTeams: TOrganizationTeam[];
+  isOwnerOrManager: boolean;
 }
 
-export const AccessView = ({ product, teams, organizationTeams, environmentId }: AccessViewProps) => {
+export const AccessView = ({
+  product,
+  teams,
+  organizationTeams,
+  environmentId,
+  isOwnerOrManager,
+}: AccessViewProps) => {
   return (
     <>
       <SettingsCard
         title={`Product teams for ${product.name}`}
         description="These teams and their members have access to this product. They can access surveys of this product. Organization Owners and managers can grant access to this">
         <div className="flex justify-end gap-2">
-          <AddTeam
-            organizationTeams={organizationTeams}
-            productTeams={teams}
-            productId={product.id}
-            organizationId={product.organizationId}
-          />
+          {isOwnerOrManager && (
+            <AddTeam
+              organizationTeams={organizationTeams}
+              productTeams={teams}
+              productId={product.id}
+              organizationId={product.organizationId}
+            />
+          )}
         </div>
         <div className="mt-2">
-          <AccessTable teams={teams} productId={product.id} environmentId={environmentId} />
+          <AccessTable
+            teams={teams}
+            productId={product.id}
+            environmentId={environmentId}
+            isOwnerOrManager={isOwnerOrManager}
+          />
         </div>
       </SettingsCard>
     </>

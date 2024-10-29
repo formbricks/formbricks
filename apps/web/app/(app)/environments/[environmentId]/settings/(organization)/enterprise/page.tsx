@@ -2,7 +2,7 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { CheckIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
+import { getEnterpriseLicense, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -38,6 +38,8 @@ const Page = async ({ params }) => {
   }
 
   const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   const paidFeatures = [
     {
@@ -90,6 +92,7 @@ const Page = async ({ params }) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.organizationRole}
           activeId="enterprise"
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       {isEnterpriseEdition ? (
