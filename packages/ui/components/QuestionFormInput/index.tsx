@@ -96,6 +96,7 @@ export const QuestionFormInput = ({
   const isEndingCard = questionIdx >= localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
+
   const questionId = useMemo(() => {
     return isWelcomeCard
       ? "start"
@@ -482,7 +483,6 @@ export const QuestionFormInput = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-
     const updatedText = {
       ...elementText,
       [usedLanguageCode]: value,
