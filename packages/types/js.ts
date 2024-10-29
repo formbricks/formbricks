@@ -126,7 +126,6 @@ export const ZJsPersonState = z.object({
       })
     ),
     responses: z.array(ZId), // responded survey ids
-    attributes: ZAttributes,
     lastDisplayAt: z.date().nullable(),
   }),
 });
@@ -146,6 +145,7 @@ export const ZJsConfig = z.object({
   environmentState: ZJsEnvironmentState,
   personState: ZJsPersonState,
   filteredSurveys: z.array(ZSurvey).default([]),
+  attributes: z.record(z.string()),
   status: z.object({
     value: z.enum(["success", "error"]),
     expiresAt: z.date().nullable(),

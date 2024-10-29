@@ -5324,6 +5324,129 @@ const employeeWellBeing = (): TTemplate => {
   };
 };
 
+const longTermRetentionCheckIn = (): TTemplate => {
+  return {
+    name: "Long-Term Retention Check-In",
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
+    description:
+      "Gauge long-term user satisfaction, loyalty, and areas for improvement to retain loyal users.",
+    preset: {
+      ...surveyDefault,
+      name: "Long-Term Retention Check-In",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "star",
+          headline: { default: "How satisfied are you with {{productName}} overall?" },
+          required: true,
+          lowerLabel: { default: "Not satisfied" },
+          upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "What do you find most valuable about {{productName}}?" },
+          required: false,
+          placeholder: { default: "Describe the feature or benefit you value most..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Features" } },
+            { id: createId(), label: { default: "Customer support" } },
+            { id: createId(), label: { default: "User experience" } },
+            { id: createId(), label: { default: "Pricing" } },
+            { id: createId(), label: { default: "Reliability and uptime" } },
+          ],
+          headline: {
+            default: "Which aspect of {{productName}} do you find most essential to your experience?",
+          },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: "How well does {{productName}} meet your expectations?" },
+          required: true,
+          lowerLabel: { default: "Falls short" },
+          upperLabel: { default: "Exceeds expectations" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "What challenges or frustrations have you faced while using {{productName}}?",
+          },
+          required: false,
+          placeholder: { default: "Describe any challenges or improvements you’d like to see..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.NPS,
+          headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+          required: false,
+          lowerLabel: { default: "Not likely" },
+          upperLabel: { default: "Very likely" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "New features and improvements" } },
+            { id: createId(), label: { default: "Enhanced customer support" } },
+            { id: createId(), label: { default: "Better pricing options" } },
+            { id: createId(), label: { default: "More integrations" } },
+            { id: createId(), label: { default: "User experience refinements" } },
+          ],
+          headline: { default: "What would make you more likely to remain a long-term user?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "If you could change one thing about {{productName}}, what would it be?" },
+          required: false,
+          placeholder: { default: "Share any changes or features you wish we’d consider..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "smiley",
+          headline: { default: "How happy are you with our product updates and frequency?" },
+          required: true,
+          lowerLabel: { default: "Not happy" },
+          upperLabel: { default: "Very happy" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional feedback or comments?" },
+          required: false,
+          placeholder: { default: "Share any thoughts or feedback that might help us improve..." },
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
 export const templates: TTemplate[] = [
   cartAbandonmentSurvey(),
   siteAbandonmentSurvey(),
@@ -5366,6 +5489,7 @@ export const templates: TTemplate[] = [
   understandLowEngagement(),
   employeeSatisfaction(),
   employeeWellBeing(),
+  longTermRetentionCheckIn(),
 ];
 
 export const customSurvey = {
