@@ -59,7 +59,6 @@ interface QuestionFormInputProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   label: string;
-  minLength?: number;
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
@@ -82,7 +81,6 @@ export const QuestionFormInput = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   maxLength,
-  minLength,
   placeholder,
   onBlur,
   className,
@@ -172,7 +170,6 @@ export const QuestionFormInput = ({
         )
       : []
   );
-  const [hasMinChars, setHasMinChars] = useState(true);
 
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(() => {
     const localizedValue = getLocalizedValue(text, usedLanguageCode);
@@ -485,9 +482,6 @@ export const QuestionFormInput = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (minLength) {
-      setHasMinChars(value.length >= minLength);
-    }
 
     const updatedText = {
       ...elementText,
@@ -587,15 +581,11 @@ export const QuestionFormInput = ({
                 ref={inputRef}
                 onBlur={onBlur}
                 maxLength={maxLength ?? undefined}
-                minLength={minLength ?? undefined}
                 isInvalid={
-                  !!(
-                    (isInvalid &&
-                      text[usedLanguageCode]?.trim() === "" &&
-                      localSurvey.languages?.length > 1 &&
-                      isTranslationIncomplete) ||
-                    (minLength && !hasMinChars)
-                  )
+                  isInvalid &&
+                  text[usedLanguageCode]?.trim() === "" &&
+                  localSurvey.languages?.length > 1 &&
+                  isTranslationIncomplete
                 }
               />
               {enabledLanguages.length > 1 && (

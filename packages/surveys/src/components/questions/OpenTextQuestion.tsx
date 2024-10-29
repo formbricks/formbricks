@@ -70,7 +70,6 @@ export const OpenTextQuestion = ({
     [question.id, autoFocusEnabled, currentQuestionId]
   );
 
-  console.log("boo", question.minLength, question.maxLength);
   return (
     <form
       key={question.id}
@@ -93,6 +92,7 @@ export const OpenTextQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
+
           <div className="fb-mt-4">
             {question.longAnswer === false ? (
               <input

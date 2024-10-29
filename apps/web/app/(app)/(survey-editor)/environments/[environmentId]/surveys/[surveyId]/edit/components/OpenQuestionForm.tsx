@@ -141,7 +141,15 @@ export const OpenQuestionForm = ({
           {showCharLimits && (
             <AdvancedOptionToggle
               isChecked={isCharLimitEnabled}
-              onToggle={(checked: boolean) => setIsCharLimitEnabled(checked)}
+              onToggle={(checked: boolean) => {
+                setIsCharLimitEnabled(checked);
+                if (!checked) {
+                  updateQuestion(questionIdx, {
+                    minLength: undefined,
+                    maxLength: undefined,
+                  });
+                }
+              }}
               htmlId="charLimit"
               description="Limit how short or long an answer can be."
               childBorder
