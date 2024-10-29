@@ -1,4 +1,4 @@
-import { ContactsSecondaryNavigation } from "@/app/(ee)/(contacts)/environments/[environmentId]/contacts/components/contacts-secondary-navigation";
+import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { UsersIcon } from "lucide-react";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";

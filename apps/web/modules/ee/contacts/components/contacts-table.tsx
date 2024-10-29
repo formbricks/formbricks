@@ -59,8 +59,8 @@ export const ContactsTable = ({
   const [parent] = useAutoAnimate();
   // Generate columns
   const columns = useMemo(() => {
-    return generateContactTableColumns(isExpanded ?? false, searchValue, data);
-  }, [isExpanded, searchValue, data]);
+    return generateContactTableColumns(searchValue, data);
+  }, [searchValue, data]);
 
   // Load saved settings from localStorage
   useEffect(() => {

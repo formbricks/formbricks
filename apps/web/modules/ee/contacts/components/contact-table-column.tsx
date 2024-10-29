@@ -6,7 +6,6 @@ import { HighlightedText } from "@formbricks/ui/components/HighlightedText";
 import { TContactTableData } from "../types/contact";
 
 export const generateContactTableColumns = (
-  isExpanded: boolean,
   searchValue: string,
   data: TContactTableData[]
 ): ColumnDef<TContactTableData>[] => {

@@ -265,7 +265,20 @@ export const createContactsFromCSV = async (
     });
 
     // Map emails to existing contacts
-    const emailToContactMap = new Map<string, TContact>();
+    const emailToContactMap = new Map<
+      string,
+      Prisma.ContactGetPayload<{
+        select: {
+          id: true;
+          attributes: {
+            select: {
+              attributeKey: { select: { key: true; id: true } };
+              value: true;
+            };
+          };
+        };
+      }>
+    >();
     existingContactsByEmail.forEach((contact) => {
       const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === "email");
       if (emailAttr) {
@@ -379,6 +392,7 @@ export const createContactsFromCSV = async (
               where: { id: existingContact.id },
               data: {
                 attributes: {
+                  // @ts-expect-error
                   upsert: attributesToUpsert,
                 },
               },
@@ -402,7 +416,10 @@ export const createContactsFromCSV = async (
             });
 
             const newAttributes = Object.entries(record).map(([key, value]) => ({
-              attributeKeyId: attributeKeyMap.get(key),
+              // attributeKeyId: attributeKeyMap.get(key),
+              attributeKey: {
+                connect: { key_environmentId: { key, environmentId } },
+              },
               value,
             }));
 
@@ -429,7 +446,10 @@ export const createContactsFromCSV = async (
       } else {
         // Create new contact
         const newAttributes = Object.entries(record).map(([key, value]) => ({
-          attributeKeyId: attributeKeyMap.get(key),
+          // attributeKeyId: attributeKeyMap.get(key),
+          attributeKey: {
+            connect: { key_environmentId: { key, environmentId } },
+          },
           value,
         }));
 
@@ -455,7 +475,8 @@ export const createContactsFromCSV = async (
     });
 
     const results = await Promise.all(contactPromises);
-    createdContacts.push(...results.filter((contact) => contact !== null));
+    const createdContactsFiltered = results.filter((contact) => contact !== null) as TContact[];
+    createdContacts.push(...createdContactsFiltered);
 
     console.log(`createContactsFromCSV took ${Date.now() - startTime}ms`);
 

@@ -1,4 +1,3 @@
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
@@ -37,7 +36,6 @@ export const SegmentTableDataRowContainer = async ({
       segments={segments}
       contactAttributeKeys={contactAttributeKeys}
       isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
-      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
     />
   );
 };

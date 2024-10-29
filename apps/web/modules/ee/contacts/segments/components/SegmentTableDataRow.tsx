@@ -12,7 +12,6 @@ type TSegmentTableDataRowProps = {
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isAdvancedTargetingAllowed: boolean;
-  isFormbricksCloud: boolean;
 };
 
 export const SegmentTableDataRow = ({
@@ -20,7 +19,6 @@ export const SegmentTableDataRow = ({
   contactAttributeKeys,
   segments,
   isAdvancedTargetingAllowed,
-  isFormbricksCloud,
 }: TSegmentTableDataRowProps) => {
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
@@ -65,7 +63,6 @@ export const SegmentTableDataRow = ({
         contactAttributeKeys={contactAttributeKeys}
         segments={segments}
         isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
-        isFormbricksCloud={isFormbricksCloud}
       />
     </>
   );

@@ -36,7 +36,7 @@ export const UploadContactsCSVButton = ({
 
   const handleFileUpload = (e) => {
     let selectedFiles = Array.from(e.target?.files || []);
-    let csvFile = selectedFiles[0];
+    let csvFile = selectedFiles[0] as File;
 
     if (!csvFile) {
       return;

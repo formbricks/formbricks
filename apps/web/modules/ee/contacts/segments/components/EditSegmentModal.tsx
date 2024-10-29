@@ -15,7 +15,6 @@ interface EditSegmentModalProps {
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isAdvancedTargetingAllowed: boolean;
-  isFormbricksCloud: boolean;
 }
 
 export const EditSegmentModal = ({
@@ -26,7 +25,6 @@ export const EditSegmentModal = ({
   contactAttributeKeys,
   segments,
   isAdvancedTargetingAllowed,
-  isFormbricksCloud,
 }: EditSegmentModalProps) => {
   const SettingsTab = () => {
     if (isAdvancedTargetingAllowed) {
