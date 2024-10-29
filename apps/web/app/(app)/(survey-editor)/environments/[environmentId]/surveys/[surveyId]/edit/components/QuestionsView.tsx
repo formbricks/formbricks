@@ -215,6 +215,7 @@ export const QuestionsView = ({
   };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
+    console.log({ updatedAttributes });
     let updatedSurvey = { ...localSurvey };
     if ("id" in updatedAttributes) {
       // if the survey question whose id is to be changed is linked to logic of any other survey then changing it
@@ -238,7 +239,7 @@ export const QuestionsView = ({
       ...updatedAttributes,
     };
 
-    const attributesToCheck = ["buttonLabel", "upperLabel", "lowerLabel"];
+    const attributesToCheck = ["buttonLabel", "upperLabel", "lowerLabel", "minLength", "maxLength"];
 
     // If the value of buttonLabel, lowerLabel or upperLabel is equal to {default:""}, then delete buttonLabel key
     attributesToCheck.forEach((attribute) => {
@@ -247,8 +248,17 @@ export const QuestionsView = ({
         if (currentLabel && Object.keys(currentLabel).length === 1 && currentLabel["default"].trim() === "") {
           delete updatedSurvey.questions[questionIdx][attribute];
         }
+        // For minLength and maxLength
+        if (attribute === "minLength" || attribute === "maxLength") {
+          if (currentLabel === undefined) {
+            delete updatedSurvey.questions[questionIdx][attribute];
+          }
+        }
       }
     });
+
+    console.log(updatedSurvey.questions[questionIdx]);
+
     setLocalSurvey(updatedSurvey);
     validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
   };
@@ -413,6 +423,8 @@ export const QuestionsView = ({
 
   // Auto animate
   const [parent] = useAutoAnimate();
+
+  console.log({ localSurvey });
 
   return (
     <div className="mt-12 w-full px-5 py-4">

@@ -70,6 +70,7 @@ export const OpenTextQuestion = ({
     [question.id, autoFocusEnabled, currentQuestionId]
   );
 
+  console.log("boo", question.minLength, question.maxLength);
   return (
     <form
       key={question.id}
@@ -109,6 +110,14 @@ export const OpenTextQuestion = ({
                 className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
+                // {...(question.inputType === "text"
+                //   ? { minLength: question.minLength, maxLength: question.maxLength }
+                //   : {})}
+                // minLength={question.inpuwtType === "text" ? question.minLength: "undefined"}  maxLength={question.inputType === "text" ? question.maxLength : "undefined"}
+                {...(question.inputType === "text" && {
+                  minLength: question.minLength,
+                  maxLength: question.maxLength,
+                })}
               />
             ) : (
               <textarea
@@ -127,6 +136,8 @@ export const OpenTextQuestion = ({
                   handleInputChange(e.currentTarget.value);
                   handleInputResize(e);
                 }}
+                minLength={question.inputType === "text" ? question.minLength || undefined : undefined}
+                maxLength={question.inputType === "text" ? question.maxLength || undefined : undefined}
                 className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}

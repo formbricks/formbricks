@@ -475,6 +475,8 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
   insightsEnabled: z.boolean().default(false).optional(),
+  minLength: z.number().optional(),
+  maxLength: z.number().optional(),
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;

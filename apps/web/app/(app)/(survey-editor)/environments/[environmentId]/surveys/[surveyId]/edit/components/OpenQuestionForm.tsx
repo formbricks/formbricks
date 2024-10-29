@@ -2,6 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
+import { useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
@@ -9,7 +10,9 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys/types";
+import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -46,16 +49,24 @@ export const OpenQuestionForm = ({
 }: OpenQuestionFormProps): JSX.Element => {
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
+
+  const [showCharLimits, setShowCharLimits] = useState(true);
+
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
       inputType: inputType,
       placeholder: createI18nString(getPlaceholderByInputType(inputType), surveyLanguageCodes),
       longAnswer: inputType === "text" ? question.longAnswer : false,
+      minLength: undefined,
+      maxLength: undefined,
     };
+    setIsCharLimitEnabled(false);
+    setShowCharLimits(inputType === "text");
     updateQuestion(questionIdx, updatedAttributes);
   };
 
   const [parent] = useAutoAnimate();
+  const [isCharLimitEnabled, setIsCharLimitEnabled] = useState(false);
 
   return (
     <form>
@@ -70,8 +81,6 @@ export const OpenQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
         label={"Question*"}
-        maxLength={50}
-        minLength={3}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -108,23 +117,69 @@ export const OpenQuestionForm = ({
           </Button>
         )}
       </div>
-      <div className="mt-2">
-        <QuestionFormInput
-          id="placeholder"
-          value={
-            question.placeholder
-              ? question.placeholder
-              : createI18nString(defaultPlaceholder, surveyLanguageCodes)
-          }
-          localSurvey={localSurvey}
-          questionIdx={questionIdx}
-          isInvalid={isInvalid}
-          updateQuestion={updateQuestion}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          attributeClasses={attributeClasses}
-          label={"Placeholder"}
-        />
+      <div className="mt-2 flex flex-col gap-6">
+        <div>
+          <QuestionFormInput
+            id="placeholder"
+            value={
+              question.placeholder
+                ? question.placeholder
+                : createI18nString(defaultPlaceholder, surveyLanguageCodes)
+            }
+            localSurvey={localSurvey}
+            questionIdx={questionIdx}
+            isInvalid={isInvalid}
+            updateQuestion={updateQuestion}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
+            attributeClasses={attributeClasses}
+            label={"Placeholder"}
+          />
+        </div>
+
+        <div>
+          {showCharLimits && (
+            <AdvancedOptionToggle
+              isChecked={isCharLimitEnabled}
+              onToggle={(checked: boolean) => setIsCharLimitEnabled(checked)}
+              htmlId="charLimit"
+              description="Limit how short or long an answer can be."
+              childBorder
+              title="Add character limits"
+              customContainerClass="p-0">
+              <div className="flex gap-4 p-4">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="minLength">Minimum</Label>
+                  <Input
+                    id="minLength"
+                    name="minLength"
+                    value={question.minLength || ""}
+                    className="bg-white"
+                    onChange={(e) =>
+                      updateQuestion(questionIdx, {
+                        minLength: e.target.value ? parseInt(e.target.value) : undefined,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="minLength">Maximum</Label>
+                  <Input
+                    id="maxLength"
+                    name="maxLength"
+                    value={question.maxLength || ""}
+                    className="bg-white"
+                    onChange={(e) =>
+                      updateQuestion(questionIdx, {
+                        maxLength: e.target.value ? parseInt(e.target.value) : undefined,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </AdvancedOptionToggle>
+          )}
+        </div>
       </div>
       {/* Add a dropdown to select the question type */}
       <div className="mt-3">
