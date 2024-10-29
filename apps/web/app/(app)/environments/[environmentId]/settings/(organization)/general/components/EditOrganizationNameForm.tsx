@@ -38,7 +38,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
     resolver: zodResolver(ZEditOrganizationNameFormSchema),
   });
 
-  const { isMember } = getAccessFlags(membershipRole);
+  const { isMember, isBilling } = getAccessFlags(membershipRole);
 
   const { isSubmitting, isDirty } = form.formState;
 
@@ -62,7 +62,9 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
     }
   };
 
-  return isMember ? (
+  const isMemberOrBilling = isMember || isBilling;
+
+  return isMemberOrBilling ? (
     <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
   ) : (
     <FormProvider {...form}>

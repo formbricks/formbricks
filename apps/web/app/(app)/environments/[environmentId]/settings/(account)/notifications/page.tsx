@@ -44,6 +44,9 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
+      organizationRole: {
+        not: "billing",
+      },
     },
     select: {
       organization: {

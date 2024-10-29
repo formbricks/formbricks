@@ -23,8 +23,8 @@ export const OrganizationSettingsNavbar = ({
   canDoRoleManagement = false,
 }: OrganizationSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
-  const isPricingDisabled = !isOwner && !isManager;
+  const { isBilling, isMember } = getAccessFlags(membershipRole);
+  const isPricingDisabled = isMember;
 
   const navigation = [
     {

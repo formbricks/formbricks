@@ -4,6 +4,7 @@ import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/comp
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import formbricks from "@formbricks/js";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
@@ -22,9 +23,12 @@ export const TopControlButtons = ({
   membershipRole,
 }: TopControlButtonsProps) => {
   const router = useRouter();
+
+  const { isMember, isBilling } = getAccessFlags(membershipRole);
+
   return (
     <div className="z-50 flex items-center space-x-2">
-      <EnvironmentSwitch environment={environment} environments={environments} />
+      {!isBilling && <EnvironmentSwitch environment={environment} environments={environments} />}
       {isFormbricksCloud && (
         <Button
           variant="minimal"
@@ -47,7 +51,7 @@ export const TopControlButtons = ({
         }}>
         <CircleUserIcon strokeWidth={1.5} className="h-5 w-5" />
       </Button>
-      {membershipRole && membershipRole !== "member" ? (
+      {!isMember && !isBilling ? (
         <Button
           variant="secondary"
           size="icon"

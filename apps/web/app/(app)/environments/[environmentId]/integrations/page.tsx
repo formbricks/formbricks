@@ -9,6 +9,7 @@ import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -56,7 +57,12 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+  if (isBilling) {
+    return redirect(`/environments/${params.environmentId}/settings/billing`);
+  }
+
+  if (isMember) return <ErrorComponent />;
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
@@ -205,8 +211,6 @@ const Page = async ({ params }) => {
     connected: widgetSetupCompleted,
     statusText: widgetSetupCompleted ? "App Connected" : "Not Connected",
   });
-
-  if (isMember) return <ErrorComponent />;
 
   return (
     <PageContentWrapper>

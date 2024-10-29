@@ -81,6 +81,7 @@ const Page = async ({ searchParams }) => {
           ),
         },
       });
+
       return (
         <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
           <Button href="/">Go to app</Button>

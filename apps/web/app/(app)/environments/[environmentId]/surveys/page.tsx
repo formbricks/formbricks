@@ -2,6 +2,7 @@ import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/co
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -55,7 +56,11 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const prefilledFilters = [product?.config.channel, product.config.industry, searchParams.role ?? null];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+
+  if (isBilling) {
+    return redirect(`/environments/${params.environmentId}/settings/billing`);
+  }
 
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
