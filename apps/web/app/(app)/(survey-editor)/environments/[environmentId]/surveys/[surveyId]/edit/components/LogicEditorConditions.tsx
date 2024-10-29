@@ -4,6 +4,7 @@ import {
   getDefaultOperatorForQuestion,
   getMatchValueProps,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
@@ -52,6 +53,8 @@ export function LogicEditorConditions({
   updateQuestion,
   depth = 0,
 }: LogicEditorConditionsProps) {
+  const [parent] = useAutoAnimate();
+
   const handleAddConditionBelow = (resourceId: string) => {
     const operator = getDefaultOperatorForQuestion(question);
 
@@ -334,7 +337,7 @@ export function LogicEditorConditions({
   };
 
   return (
-    <div className="flex flex-col gap-y-2">
+    <div ref={parent} className="flex flex-col gap-y-2">
       {conditions?.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
     </div>
   );

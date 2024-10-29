@@ -86,7 +86,7 @@ export const createDocumentAndAssignInsight = async (
         // create or connect the insight
         insightPromises.push(handleInsightAssignments(documentInput.environmentId, document.id, insight));
       }
-      await Promise.all(insightPromises);
+      await Promise.allSettled(insightPromises);
     }
 
     documentCache.revalidate({

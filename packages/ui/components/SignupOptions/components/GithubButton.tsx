@@ -26,6 +26,7 @@ export const GithubButton = ({
 
   return (
     <Button
+      size="base"
       type="button"
       EndIcon={GithubIcon}
       startIconClassName="ml-2"
@@ -33,7 +34,7 @@ export const GithubButton = ({
       variant="secondary"
       className="relative w-full justify-center">
       {text}
-      {lastUsed && <span className="absolute right-3 text-xs">Last Used</span>}
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">Last Used</span>}
     </Button>
   );
 };

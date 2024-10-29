@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -56,6 +57,9 @@ export const RecontactOptionsCard = ({
     localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
   );
   const [displayLimit, setDisplayLimit] = useState(localSurvey.displayLimit ?? 1);
+
+  // Auto animate
+  const [parent] = useAutoAnimate();
 
   const handleCheckMark = () => {
     if (ignoreWaiting) {
@@ -119,7 +123,7 @@ export const RecontactOptionsCard = ({
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="pb-3">
+      <Collapsible.CollapsibleContent className={`flex flex-col ${open && "pb-3"}`} ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
