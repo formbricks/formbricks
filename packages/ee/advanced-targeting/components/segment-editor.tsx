@@ -1,4 +1,4 @@
-import { MoreVertical, Trash2 } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -224,7 +224,8 @@ export function SegmentEditor({
                     <DropdownMenuItem
                       onClick={() => {
                         handleMoveResource(groupId, "up");
-                      }}>
+                      }}
+                      icon={<ArrowUpIcon className="h-4 w-4" />}>
                       Move up
                     </DropdownMenuItem>
 
@@ -232,7 +233,8 @@ export function SegmentEditor({
                       onClick={() => {
                         if (viewOnly) return;
                         handleMoveResource(groupId, "down");
-                      }}>
+                      }}
+                      icon={<ArrowDownIcon className="h-4 w-4" />}>
                       Move down
                     </DropdownMenuItem>
                   </DropdownMenuContent>

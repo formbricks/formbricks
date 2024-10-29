@@ -75,7 +75,7 @@ p.fb-editor-paragraph {
   --fb-subheading-color: var(--slate-700);
   --fb-placeholder-color: var(--slate-300);
   --fb-info-text-color: var(--slate-500);
-  --fb-signature-text-color: var(--slate-400);
+  --fb-signature-text-color: var(--slate-500);
   --fb-branding-text-color: var(--slate-500);
   --fb-survey-background-color: white;
   --fb-survey-border-color: var(--slate-50);
@@ -101,21 +101,26 @@ p.fb-editor-paragraph {
   from {
     width: 100%;
   }
+
   to {
     width: 0%;
   }
 }
 
 .fb-no-scrollbar {
-  -ms-overflow-style: none !important; /* Internet Explorer 10+ */
-  scrollbar-width: thin !important; /* Firefox */
-  scrollbar-color: transparent transparent !important; /* Firefox */
+  -ms-overflow-style: none !important;
+  /* Internet Explorer 10+ */
+  scrollbar-width: thin !important;
+  /* Firefox */
+  scrollbar-color: transparent transparent !important;
+  /* Firefox */
 
   /* Chrome, Edge, and Safari */
   &::-webkit-scrollbar {
     width: 0 !important;
     background: transparent !important;
   }
+
   &::-webkit-scrollbar-thumb {
     background: transparent !important;
   }

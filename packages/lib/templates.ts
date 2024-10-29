@@ -1950,6 +1950,102 @@ const improveActivationRate = (): TTemplate => {
   };
 };
 
+const employeeSatisfaction = (): TTemplate => {
+  return {
+    name: "Employee Satisfaction",
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
+    description: "Gauge employee satisfaction and identify areas for improvement.",
+    preset: {
+      ...surveyDefault,
+      name: "Employee Satisfaction",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "star",
+          headline: { default: "How satisfied are you with your current role?" },
+          required: true,
+          lowerLabel: { default: "Not satisfied" },
+          upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extremely meaningful" } },
+            { id: createId(), label: { default: "Very meaningful" } },
+            { id: createId(), label: { default: "Moderately meaningful" } },
+            { id: createId(), label: { default: "Slightly meaningful" } },
+            { id: createId(), label: { default: "Not at all meaningful" } },
+          ],
+          headline: { default: "How meaningful do you find your work?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "What do you enjoy most about working here?" },
+          required: false,
+          placeholder: { default: "Type your answer here..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extremely well" } },
+            { id: createId(), label: { default: "Very well" } },
+            { id: createId(), label: { default: "Moderately well" } },
+            { id: createId(), label: { default: "Slightly well" } },
+            { id: createId(), label: { default: "Not at all well" } },
+          ],
+          headline: { default: "How well do you feel your work is recognized?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: "Rate the support you receive from your manager." },
+          required: true,
+          lowerLabel: { default: "Poor" },
+          upperLabel: { default: "Excellent" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "What improvements would you suggest for our workplace?" },
+          required: false,
+          placeholder: { default: "Type your answer here..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Extremely likely" } },
+            { id: createId(), label: { default: "Very likely" } },
+            { id: createId(), label: { default: "Moderately likely" } },
+            { id: createId(), label: { default: "Slightly likely" } },
+            { id: createId(), label: { default: "Not at all likely" } },
+          ],
+          headline: { default: "How likely are you to recommend our company to a friend?" },
+          required: true,
+        },
+      ],
+    },
+  };
+};
+
 const uncoverStrengthsAndWeaknesses = (): TTemplate => {
   return {
     name: "Uncover Strengths & Weaknesses",
@@ -5156,6 +5252,200 @@ const understandLowEngagement = (): TTemplate => {
   };
 };
 
+const employeeWellBeing = (): TTemplate => {
+  return {
+    name: "Employee Well-Being",
+    role: "productManager",
+    industries: ["eCommerce"],
+    channels: ["link"],
+    description: "Assess your employee well-being through work-life balance, workload, and environment.",
+    preset: {
+      ...surveyDefault,
+      name: "Employee Well-Being",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "I feel that I have a good balance between my work and personal life." },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: "Very poor balance",
+          },
+          upperLabel: {
+            default: "Excellent balance",
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: "My workload is manageable, allowing me to stay productive without feeling overwhelmed.",
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: "Overwhelming workload",
+          },
+          upperLabel: {
+            default: "Perfectly manageable",
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: "The work environment supports my physical and mental well-being." },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: "Not supportive",
+          },
+          upperLabel: {
+            default: "Highly supportive",
+          },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "What changes, if any, would improve your overall well-being at work?" },
+          required: false,
+          placeholder: { default: "Type your answer here..." },
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
+const longTermRetentionCheckIn = (): TTemplate => {
+  return {
+    name: "Long-Term Retention Check-In",
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
+    description:
+      "Gauge long-term user satisfaction, loyalty, and areas for improvement to retain loyal users.",
+    preset: {
+      ...surveyDefault,
+      name: "Long-Term Retention Check-In",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "star",
+          headline: { default: "How satisfied are you with {{productName}} overall?" },
+          required: true,
+          lowerLabel: { default: "Not satisfied" },
+          upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "What do you find most valuable about {{productName}}?" },
+          required: false,
+          placeholder: { default: "Describe the feature or benefit you value most..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Features" } },
+            { id: createId(), label: { default: "Customer support" } },
+            { id: createId(), label: { default: "User experience" } },
+            { id: createId(), label: { default: "Pricing" } },
+            { id: createId(), label: { default: "Reliability and uptime" } },
+          ],
+          headline: {
+            default: "Which aspect of {{productName}} do you find most essential to your experience?",
+          },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: "How well does {{productName}} meet your expectations?" },
+          required: true,
+          lowerLabel: { default: "Falls short" },
+          upperLabel: { default: "Exceeds expectations" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "What challenges or frustrations have you faced while using {{productName}}?",
+          },
+          required: false,
+          placeholder: { default: "Describe any challenges or improvements you’d like to see..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.NPS,
+          headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+          required: false,
+          lowerLabel: { default: "Not likely" },
+          upperLabel: { default: "Very likely" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "New features and improvements" } },
+            { id: createId(), label: { default: "Enhanced customer support" } },
+            { id: createId(), label: { default: "Better pricing options" } },
+            { id: createId(), label: { default: "More integrations" } },
+            { id: createId(), label: { default: "User experience refinements" } },
+          ],
+          headline: { default: "What would make you more likely to remain a long-term user?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "If you could change one thing about {{productName}}, what would it be?" },
+          required: false,
+          placeholder: { default: "Share any changes or features you wish we’d consider..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "smiley",
+          headline: { default: "How happy are you with our product updates and frequency?" },
+          required: true,
+          lowerLabel: { default: "Not happy" },
+          upperLabel: { default: "Very happy" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional feedback or comments?" },
+          required: false,
+          placeholder: { default: "Share any thoughts or feedback that might help us improve..." },
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
 export const templates: TTemplate[] = [
   cartAbandonmentSurvey(),
   siteAbandonmentSurvey(),
@@ -5196,6 +5486,9 @@ export const templates: TTemplate[] = [
   improveNewsletterContent(),
   evaluateAProductIdea(),
   understandLowEngagement(),
+  employeeSatisfaction(),
+  employeeWellBeing(),
+  longTermRetentionCheckIn(),
 ];
 
 export const customSurvey = {

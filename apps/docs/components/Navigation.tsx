@@ -7,8 +7,7 @@ import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./Button";
 import { useIsInsideMobileNavigation } from "./MobileNavigation";
 import { useSectionStore } from "./SectionProvider";
@@ -159,7 +158,38 @@ const NavigationGroup = ({
 }) => {
   const isInsideMobileNavigation = useIsInsideMobileNavigation();
   const pathname = usePathname();
-  const isActiveGroup = activeGroup?.title === group.title;
+  const [isActiveGroup, setIsActiveGroup] = useState<boolean>(false);
+
+  // We need to expand the group with the current link so we loop over all links
+  // Until we find the one and then expand the groups
+  useEffect(() => {
+    const findMatchingGroup = () => {
+      for (const group of navigation) {
+        for (const link of group.links) {
+          if (!link.children) continue;
+
+          const matchingChild = link.children.find((child) => pathname && child.href.startsWith(pathname));
+
+          if (matchingChild) {
+            setOpenGroups([`${group.title}-${link.title}`]);
+            setActiveGroup(group);
+            return;
+          }
+        }
+      }
+    };
+
+    findMatchingGroup();
+
+    return () => {
+      setOpenGroups([]);
+      setActiveGroup(null);
+    };
+  }, [pathname, setActiveGroup, setOpenGroups]);
+
+  useEffect(() => {
+    setIsActiveGroup(activeGroup?.title === group.title);
+  }, [activeGroup?.title, group.title]);
 
   const toggleParentTitle = (title: string) => {
     if (openGroups.includes(title)) {
@@ -171,6 +201,13 @@ const NavigationGroup = ({
   };
 
   const isParentOpen = (title: string) => openGroups.includes(title);
+
+  const sortedLinks = group.links.map((link) => {
+    if (link.children) {
+      link.children.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return link;
+  });
 
   return (
     <li className={clsx("relative mt-6", className)}>
@@ -186,8 +223,12 @@ const NavigationGroup = ({
           {isActiveGroup && <ActivePageMarker group={group} pathname={pathname || "/docs"} />}
         </AnimatePresence>
         <ul role="list" className="border-l border-transparent">
-          {group.links.map((link) => (
-            <motion.li key={`${group.title}-${link.title}`} layout="position" className="relative">
+          {sortedLinks.map((link) => (
+            <motion.li
+              key={link.title}
+              layout="position"
+              className="relative"
+              onClick={() => setIsActiveGroup(true)}>
               {link.href ? (
                 <NavLink
                   href={isMobile && link.children ? "" : link.href}

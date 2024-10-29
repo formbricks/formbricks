@@ -1,78 +1,54 @@
-import React, { useState } from "react";
+"use client";
+
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
-import { Label } from "../Label";
 
-interface Option<T> {
-  value: T;
-  label: string;
-  icon?: React.ReactNode;
-}
+const Tabs = TabsPrimitive.Root;
 
-interface TabsProps<T> {
-  id: string;
-  options: Option<T>[];
-  defaultSelected?: T;
-  onChange: (value: T) => void;
-  className?: string;
-  tabsContainerClassName?: string;
+const TabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      "inline-flex h-10 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+      className
+    )}
+    {...props}
+  />
+));
+TabsList.displayName = TabsPrimitive.List.displayName;
 
-  label?: string;
-  subLabel?: string;
-}
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 dark:data-[state=active]:bg-slate-950 dark:data-[state=active]:text-slate-50",
+      className
+    )}
+    {...props}
+  />
+));
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
-export const Tabs = <T extends string | number>({
-  id,
-  options,
-  defaultSelected,
-  onChange,
-  className,
-  tabsContainerClassName,
-  label,
-  subLabel,
-}: TabsProps<T>) => {
-  const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
+const TabsContent = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      "mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300",
+      className
+    )}
+    {...props}
+  />
+));
+TabsContent.displayName = TabsPrimitive.Content.displayName;
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value as T;
-    setSelectedOption(value);
-    onChange(value);
-  };
-
-  return (
-    <div
-      role="radiogroup"
-      aria-labelledby={`${id}-toggle-label`}
-      className={cn("flex flex-col gap-2", className)}>
-      <>
-        {label && <Label className="font-semibold">{label}</Label>}
-        {subLabel && <p className="text-sm font-normal text-slate-500">{subLabel}</p>}
-      </>
-
-      <div
-        className={cn("flex overflow-hidden rounded-md border border-gray-300 p-2", tabsContainerClassName)}>
-        {options.map((option) => (
-          <label
-            key={option.value}
-            htmlFor={option.value.toString()}
-            className={cn(
-              "flex flex-1 cursor-pointer items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
-              selectedOption === option.value ? "bg-slate-100" : "bg-white",
-              "focus:ring-brand-dark focus:outline-none focus:ring-2 focus:ring-opacity-50"
-            )}>
-            <input
-              type="radio"
-              name={id}
-              id={option.value.toString()}
-              value={option.value.toString()}
-              checked={selectedOption === option.value}
-              onChange={handleChange}
-              className="sr-only"
-            />
-            <span className="text-slate-900">{option.label}</span>
-            <div>{option.icon}</div>
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-};
+export { Tabs, TabsContent, TabsList, TabsTrigger };

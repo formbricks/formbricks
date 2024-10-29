@@ -7,7 +7,7 @@ import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { FileInput } from "@formbricks/ui/components/FileInput";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -17,7 +17,7 @@ interface EditWelcomeCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId: string | null;
+  activeQuestionId: TSurveyQuestionId | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -72,14 +72,14 @@ export const EditWelcomeCard = ({
       <Collapsible.Root
         open={open}
         onOpenChange={setOpen}
-        className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
+        className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-200 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
-          className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+          className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Welcome Card</p>
+                <p className="text-sm font-semibold">Welcome card</p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
                     {localSurvey?.welcomeCard?.enabled ? "Shown" : "Hidden"}
@@ -102,7 +102,7 @@ export const EditWelcomeCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`}>
           <form>
             <div className="mt-2">
               <Label htmlFor="companyLogo">Company Logo</Label>
