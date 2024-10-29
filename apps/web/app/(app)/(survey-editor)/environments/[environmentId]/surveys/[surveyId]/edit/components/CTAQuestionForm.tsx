@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -41,9 +42,9 @@ export const CTAQuestionForm = ({
   contactAttributeKeys,
 }: CTAQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
-
+  const [parent] = useAutoAnimate();
   return (
-    <form>
+    <form ref={parent}>
       <QuestionFormInput
         id="headline"
         value={question.headline}

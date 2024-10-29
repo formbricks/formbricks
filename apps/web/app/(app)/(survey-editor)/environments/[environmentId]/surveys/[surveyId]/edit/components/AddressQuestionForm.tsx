@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -91,6 +92,7 @@ export const AddressQuestionForm = ({
     question.country,
   ]);
 
+  const [parent] = useAutoAnimate();
   return (
     <form>
       <QuestionFormInput
@@ -106,7 +108,7 @@ export const AddressQuestionForm = ({
         contactAttributeKeys={contactAttributeKeys}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">

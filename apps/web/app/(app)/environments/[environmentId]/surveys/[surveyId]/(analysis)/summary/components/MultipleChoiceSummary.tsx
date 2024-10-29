@@ -1,3 +1,4 @@
+import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
@@ -68,6 +69,14 @@ export const MultipleChoiceSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         contactAttributeKeys={contactAttributeKeys}
+        additionalInfo={
+          questionSummary.type === "multipleChoiceMulti" ? (
+            <div className="flex items-center rounded-lg bg-slate-100 p-2">
+              <InboxIcon className="mr-2 h-4 w-4" />
+              {`${questionSummary.selectionCount} Selections`}
+            </div>
+          ) : undefined
+        }
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
@@ -92,12 +101,12 @@ export const MultipleChoiceSummary = ({
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(result.percentage, 1)}%
+                    {convertFloatToNDecimal(result.percentage, 2)}%
                   </p>
                 </div>
               </div>
               <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
-                {result.count} {result.count === 1 ? "response" : "responses"}
+                {result.count} {result.count === 1 ? "Selection" : "Selections"}
               </p>
             </div>
             <div className="group-hover:opacity-80">

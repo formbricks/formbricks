@@ -78,7 +78,7 @@ export const RatingSummary = ({
                 </div>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(result.percentage, 1)}%
+                    {convertFloatToNDecimal(result.percentage, 2)}%
                   </p>
                 </div>
               </div>

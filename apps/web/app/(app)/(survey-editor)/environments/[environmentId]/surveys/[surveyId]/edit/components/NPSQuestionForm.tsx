@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -32,6 +33,9 @@ export const NPSQuestionForm = ({
   contactAttributeKeys,
 }: NPSQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+  // Auto animate
+  const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -47,7 +51,7 @@ export const NPSQuestionForm = ({
         contactAttributeKeys={contactAttributeKeys}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">

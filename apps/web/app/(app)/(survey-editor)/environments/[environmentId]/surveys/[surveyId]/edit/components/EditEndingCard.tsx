@@ -203,7 +203,7 @@ export const EditEndingCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="mt-3 px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "mt-3 pb-6"}`}>
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
             tooltipContent={"Redirect To Url is not available on free plan"}

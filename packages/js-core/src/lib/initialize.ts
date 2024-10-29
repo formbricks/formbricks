@@ -163,27 +163,6 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  let updatedAttributes: TAttributes | null = null;
-  if (configInput.attributes) {
-    if (configInput.userId) {
-      const res = await updateAttributes(
-        configInput.apiHost,
-        configInput.environmentId,
-        configInput.userId,
-        configInput.attributes
-      );
-      if (res.ok !== true) {
-        if (res.error.code === "forbidden") {
-          logger.error(`Authorization error: ${res.error.responseMessage}`);
-        }
-        return err(res.error);
-      }
-      updatedAttributes = res.value;
-    } else {
-      updatedAttributes = { ...configInput.attributes };
-    }
-  }
-
   if (
     existingConfig &&
     existingConfig.environmentState &&
@@ -199,13 +178,12 @@ export const initialize = async (
       isEnvironmentStateExpired = true;
     }
 
-    // if the config has a userId and the person state has expired, we need to sync the person state
     if (
       configInput.userId &&
-      existingConfig.personState.expiresAt &&
-      new Date(existingConfig.personState.expiresAt) < new Date()
+      (existingConfig.personState === null ||
+        (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()))
     ) {
-      logger.debug("Person state expired. Syncing.");
+      logger.debug("Person state needs syncing - either null or expired");
       isPersonStateExpired = true;
     }
 
@@ -243,6 +221,7 @@ export const initialize = async (
         environmentState,
         personState,
         filteredSurveys,
+        attributes: configInput.attributes ?? {},
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
@@ -251,11 +230,32 @@ export const initialize = async (
       putFormbricksInErrorState(config);
     }
   } else {
-    logger.debug(
-      "No valid configuration found or it has been expired. Resetting config and creating new one."
-    );
+    logger.debug("No valid configuration found. Resetting config and creating new one.");
     config.resetConfig();
     logger.debug("Syncing.");
+
+    let updatedAttributes: TAttributes | null = null;
+    if (configInput.attributes) {
+      if (configInput.userId) {
+        const res = await updateAttributes(
+          configInput.apiHost,
+          configInput.environmentId,
+          configInput.userId,
+          configInput.attributes
+        );
+
+        if (res.ok !== true) {
+          if (res.error.code === "forbidden") {
+            logger.error(`Authorization error: ${res.error.responseMessage}`);
+          }
+          return err(res.error);
+        }
+
+        updatedAttributes = res.value;
+      } else {
+        updatedAttributes = { ...configInput.attributes };
+      }
+    }
 
     try {
       const environmentState = await fetchEnvironmentState(
@@ -284,6 +284,7 @@ export const initialize = async (
         personState,
         environmentState,
         filteredSurveys,
+        attributes: updatedAttributes ?? {},
       });
     } catch (e) {
       handleErrorOnFirstInit(e as Error);
@@ -291,23 +292,6 @@ export const initialize = async (
 
     // and track the new session event
     await trackNoCodeAction("New Session");
-  }
-
-  // update attributes in config
-  if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
-    config.update({
-      ...config.get(),
-      personState: {
-        ...config.get().personState,
-        data: {
-          ...config.get().personState.data,
-          attributes: {
-            ...config.get().personState.data.attributes,
-            ...updatedAttributes,
-          },
-        },
-      },
-    });
   }
 
   logger.debug("Adding event listeners");

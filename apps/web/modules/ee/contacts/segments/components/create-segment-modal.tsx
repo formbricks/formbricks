@@ -43,7 +43,6 @@ export function CreateSegmentModal({
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegmentState);
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
-
   const handleResetState = () => {
     setSegment(initialSegmentState);
     setOpen(false);

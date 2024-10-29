@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -78,6 +79,9 @@ export const ContactInfoQuestionForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.firstName, question.lastName, question.email, question.phone, question.company]);
 
+  // Auto animate
+  const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
@@ -93,7 +97,7 @@ export const ContactInfoQuestionForm = ({
         contactAttributeKeys={contactAttributeKeys}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">

@@ -10,6 +10,7 @@ import {
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -55,6 +56,7 @@ export const ContactsTable = ({
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
 
+  const [parent] = useAutoAnimate();
   // Generate columns
   const columns = useMemo(() => {
     return generateContactTableColumns(isExpanded ?? false, searchValue, data);
@@ -189,7 +191,7 @@ export const ContactsTable = ({
               ))}
             </TableHeader>
 
-            <TableBody>
+            <TableBody ref={parent}>
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}

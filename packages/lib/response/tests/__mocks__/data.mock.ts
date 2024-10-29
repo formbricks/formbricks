@@ -367,6 +367,7 @@ export const mockSurveySummaryOutput = {
       dropOffCount: 0,
       dropOffPercentage: 0,
       headline: "Question Text",
+      questionType: "openText",
       questionId: "ars2tjk8hsi8oqk1uac00mo8",
       ttc: 0,
       impressions: 0,

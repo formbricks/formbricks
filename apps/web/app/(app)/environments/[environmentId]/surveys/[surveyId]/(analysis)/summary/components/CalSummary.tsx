@@ -26,7 +26,7 @@ export const CalSummary = ({ questionSummary, survey, contactAttributeKeys }: Ca
               <p className="font-semibold text-slate-700">Booked</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {convertFloatToNDecimal(questionSummary.booked.percentage, 1)}%
+                  {convertFloatToNDecimal(questionSummary.booked.percentage, 2)}%
                 </p>
               </div>
             </div>
@@ -42,7 +42,7 @@ export const CalSummary = ({ questionSummary, survey, contactAttributeKeys }: Ca
               <p className="font-semibold text-slate-700">Dismissed</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {convertFloatToNDecimal(questionSummary.skipped.percentage, 1)}%
+                  {convertFloatToNDecimal(questionSummary.skipped.percentage, 2)}%
                 </p>
               </div>
             </div>

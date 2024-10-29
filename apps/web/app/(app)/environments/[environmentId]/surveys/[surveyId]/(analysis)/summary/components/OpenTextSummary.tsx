@@ -119,12 +119,12 @@ export const OpenTextSummary = ({
                           <div className="hidden md:flex">
                             <PersonAvatar personId="anonymous" />
                           </div>
-                          <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                          <p className="break-normal text-slate-600 md:ml-2">Anonymous</p>
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{response.value}</TableCell>
-                    <TableCell>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
+                    <TableCell width={120}>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
