@@ -50,7 +50,7 @@ export const OpenQuestionForm = ({
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
-  const [showCharLimits, setShowCharLimits] = useState(true);
+  const [showCharLimits, setShowCharLimits] = useState(question.inputType === "text");
 
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
@@ -161,6 +161,7 @@ export const OpenQuestionForm = ({
                   <Input
                     id="minLength"
                     name="minLength"
+                    type="number"
                     value={question.minLength || ""}
                     className="bg-white"
                     onChange={(e) =>
@@ -171,10 +172,11 @@ export const OpenQuestionForm = ({
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="minLength">Maximum</Label>
+                  <Label htmlFor="maxLength">Maximum</Label>
                   <Input
                     id="maxLength"
                     name="maxLength"
+                    type="number"
                     value={question.maxLength || ""}
                     className="bg-white"
                     onChange={(e) =>
