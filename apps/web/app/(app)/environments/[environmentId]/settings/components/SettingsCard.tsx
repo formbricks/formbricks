@@ -33,7 +33,7 @@ export const SettingsCard = ({
             {soon && <Badge text="coming soon" size="normal" type="success" />}
           </div>
         </div>
-        <p className="mt-1 text-sm capitalize text-slate-500">{description}</p>
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
       <div className={cn(noPadding ? "" : "px-4 pt-4")}>{children}</div>
     </div>
