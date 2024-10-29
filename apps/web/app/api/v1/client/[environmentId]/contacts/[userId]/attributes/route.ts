@@ -57,7 +57,6 @@ export const PUT = async (
     if (!contact) {
       // return responses.notFoundResponse("PersonByUserId", userId, true);
       // HOTFIX: create person if not found to work around caching issue
-      // contact = await createPerson(environmentId, userId);
       contact = await prisma.contact.create({
         data: {
           environmentId,

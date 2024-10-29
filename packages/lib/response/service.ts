@@ -2,34 +2,25 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TAttributes } from "@formbricks/types/attributes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseContact,
   TResponseFilterCriteria,
-  TResponseInput,
   TResponseUpdateInput,
   ZResponseFilterCriteria,
-  ZResponseInput,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { getAttributes } from "../attribute/service";
 import { cache } from "../cache";
-import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
+import { ITEMS_PER_PAGE, WEBAPP_URL } from "../constants";
 import { deleteDisplay } from "../display/service";
-import { getMonthlyOrganizationResponseCount, getOrganizationByEnvironmentId } from "../organization/service";
-import { createPerson, getPersonByUserId } from "../person/service";
-import { sendPlanLimitsReachedEventToPosthogWeekly } from "../posthogServer";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { deleteFile, putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
-import { captureTelemetry } from "../telemetry";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
@@ -210,131 +201,6 @@ export const getResponseBySingleUseId = reactCache(
       }
     )()
 );
-
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput]);
-  captureTelemetry("response created");
-
-  const {
-    environmentId,
-    language,
-    userId,
-    surveyId,
-    displayId,
-    finished,
-    data,
-    meta,
-    singleUseId,
-    variables,
-    ttc: initialTtc,
-    createdAt,
-    updatedAt,
-  } = responseInput;
-
-  try {
-    let person: TPerson | null = null;
-    let attributes: TAttributes | null = null;
-
-    const organization = await getOrganizationByEnvironmentId(environmentId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", environmentId);
-    }
-
-    if (userId) {
-      person = await getPersonByUserId(environmentId, userId);
-      if (!person) {
-        // create person if it does not exist
-        person = await createPerson(environmentId, userId);
-      }
-    }
-
-    if (person?.id) {
-      attributes = await getAttributes(person?.id as string);
-    }
-
-    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
-
-    const prismaData: Prisma.ResponseCreateInput = {
-      survey: {
-        connect: {
-          id: surveyId,
-        },
-      },
-      display: displayId ? { connect: { id: displayId } } : undefined,
-      finished: finished,
-      data: data,
-      language: language,
-      ...(person?.id && {
-        person: {
-          connect: {
-            id: person.id,
-          },
-        },
-        contactAttributes: attributes,
-      }),
-      ...(meta && ({ meta } as Prisma.JsonObject)),
-      singleUseId,
-      ...(variables && { variables }),
-      ttc: ttc,
-      createdAt,
-      updatedAt,
-    };
-
-    const responsePrisma = await prisma.response.create({
-      data: prismaData,
-      select: responseSelection,
-    });
-
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: getResponseContact(responsePrisma),
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    responseCache.revalidate({
-      environmentId: environmentId,
-      id: response.id,
-      contactId: response.contact?.id,
-      userId: userId ?? undefined,
-      surveyId: response.surveyId,
-      singleUseId: singleUseId ? singleUseId : undefined,
-    });
-
-    responseNoteCache.revalidate({
-      responseId: response.id,
-    });
-
-    if (IS_FORMBRICKS_CLOUD) {
-      const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);
-      const responsesLimit = organization.billing.limits.monthly.responses;
-
-      if (responsesLimit && responsesCount >= responsesLimit) {
-        try {
-          await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: organization.billing.plan,
-            limits: {
-              monthly: {
-                responses: responsesLimit,
-                miu: null,
-              },
-            },
-          });
-        } catch (err) {
-          // Log error but do not throw
-          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
-        }
-      }
-    }
-
-    return response;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
 
 export const getResponse = reactCache(
   (responseId: string): Promise<TResponse | null> =>

@@ -1,9 +1,33 @@
-import "server-only";
 import { contactCache } from "@/lib/cache/contact";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { DatabaseError } from "@formbricks/types/errors";
+
+export const getContact = reactCache((contactId: string) =>
+  cache(
+    async () => {
+      try {
+        const contact = await prisma.contact.findUnique({
+          where: { id: contactId },
+          select: { id: true },
+        });
+
+        return contact;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+      }
+    },
+    [`getContact-responses-api-${contactId}`],
+    {
+      tags: [contactCache.tag.byId(contactId)],
+    }
+  )()
+);
 
 export const getContactByUserId = reactCache(
   (

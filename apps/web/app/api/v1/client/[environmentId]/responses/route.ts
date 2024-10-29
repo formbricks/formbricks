@@ -35,16 +35,6 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const responseInput = await request.json();
 
-  // legacy workaround for formbricks-js 1.2.0 & 1.2.1
-
-  // can we remove this now?
-
-  // if (responseInput.personId && typeof responseInput.personId === "string") {
-  //   const person = await getPerson(responseInput.personId);
-  //   responseInput.userId = person?.userId;
-  //   delete responseInput.personId;
-  // }
-
   const agent = UAParser(request.headers.get("user-agent"));
   const country =
     headers().get("CF-IPCountry") ||
