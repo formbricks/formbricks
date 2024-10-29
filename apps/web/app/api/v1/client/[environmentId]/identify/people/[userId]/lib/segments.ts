@@ -61,7 +61,7 @@ export const getPersonSegmentIds = (
             attributes: contactAttributes,
             deviceType,
             environmentId,
-            personId: contactId,
+            contactId: contactId,
             userId: contactUserId,
           },
           segment.filters

@@ -44,15 +44,25 @@ export const SettingsView = ({
       {localSurvey.type === "app" ? (
         <div>
           {isUserTargetingAllowed && (
-            <TargetingCard
-              key={localSurvey.segment?.id}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              environmentId={environment.id}
-              contactAttributeKeys={contactAttributeKeys}
-              segments={segments}
-              initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
-            />
+            <div className="relative">
+              {/* <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4">
+                <p className="text-lg font-medium text-slate-900">Please Upgrade</p>
+                <Button variant="primary" size="sm" className="w-max">
+                  Upgrade
+                </Button>
+              </div> */}
+              <div className="blur-none">
+                <TargetingCard
+                  key={localSurvey.segment?.id}
+                  localSurvey={localSurvey}
+                  setLocalSurvey={setLocalSurvey}
+                  environmentId={environment.id}
+                  contactAttributeKeys={contactAttributeKeys}
+                  segments={segments}
+                  initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
+                />
+              </div>
+            </div>
           )}
         </div>
       ) : null}

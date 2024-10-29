@@ -268,7 +268,7 @@ export type TSegmentUpdateInput = z.infer<typeof ZSegmentUpdateInput>;
 export type TEvaluateSegmentUserAttributeData = Record<string, string | number>;
 
 export interface TEvaluateSegmentUserData {
-  personId: string;
+  contactId: string;
   userId: string;
   environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;
