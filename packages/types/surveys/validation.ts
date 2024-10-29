@@ -7,6 +7,7 @@ import type {
   TSurveyLanguage,
   TSurveyLogicAction,
   TSurveyQuestion,
+  TSurveyQuestionId,
 } from "./types";
 
 export const FORBIDDEN_IDS = [
@@ -191,7 +192,7 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
   const recStack: Record<string, boolean> = {};
   const cyclicQuestions = new Set<string>();
 
-  const checkForCyclicLogic = (questionId: string): boolean => {
+  const checkForCyclicLogic = (questionId: TSurveyQuestionId): boolean => {
     if (!visited[questionId]) {
       visited[questionId] = true;
       recStack[questionId] = true;

@@ -38,7 +38,7 @@ export const RankingSummary = ({
                   <div className="rounded bg-gray-100 px-2 py-1">{result.value}</div>
                   <span className="ml-auto flex items-center space-x-1">
                     <span className="font-bold text-slate-600">
-                      #{convertFloatToNDecimal(result.avgRanking, 1)}
+                      #{convertFloatToNDecimal(result.avgRanking, 2)}
                     </span>
                     <span>average</span>
                   </span>

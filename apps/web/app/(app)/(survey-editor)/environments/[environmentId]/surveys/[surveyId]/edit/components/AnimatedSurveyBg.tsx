@@ -40,6 +40,17 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     "/animated-bgs/Thumbnails/28_Thumb.mp4": "/animated-bgs/4K/28_4k.mp4",
     "/animated-bgs/Thumbnails/29_Thumb.mp4": "/animated-bgs/4K/29_4k.mp4",
     "/animated-bgs/Thumbnails/30_Thumb.mp4": "/animated-bgs/4K/30_4k.mp4",
+    "/animated-bgs/Thumbnails/31_Thumb.mp4": "/animated-bgs/4K/31_4k.mp4",
+    "/animated-bgs/Thumbnails/32_Thumb.mp4": "/animated-bgs/4K/32_4k.mp4",
+    "/animated-bgs/Thumbnails/33_Thumb.mp4": "/animated-bgs/4K/33_4k.mp4",
+    "/animated-bgs/Thumbnails/34_Thumb.mp4": "/animated-bgs/4K/34_4k.mp4",
+    "/animated-bgs/Thumbnails/35_Thumb.mp4": "/animated-bgs/4K/35_4k.mp4",
+    "/animated-bgs/Thumbnails/36_Thumb.mp4": "/animated-bgs/4K/36_4k.mp4",
+    "/animated-bgs/Thumbnails/37_Thumb.mp4": "/animated-bgs/4K/37_4k.mp4",
+    "/animated-bgs/Thumbnails/38_Thumb.mp4": "/animated-bgs/4K/38_4k.mp4",
+    "/animated-bgs/Thumbnails/39_Thumb.mp4": "/animated-bgs/4K/39_4k.mp4",
+    "/animated-bgs/Thumbnails/40_Thumb.mp4": "/animated-bgs/4K/40_4k.mp4",
+    "/animated-bgs/Thumbnails/41_Thumb.mp4": "/animated-bgs/4K/41_4k.mp4",
   };
 
   const togglePlayback = (index: number, type: "play" | "pause") => {
