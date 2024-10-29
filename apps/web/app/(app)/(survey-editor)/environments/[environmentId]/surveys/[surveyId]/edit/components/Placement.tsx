@@ -87,7 +87,7 @@ export const Placement = ({
           </div>
           <div className="mt-6 space-y-2">
             <Label className="font-semibold">
-              {t("common.allow_users_to_exit_by_clicking_outside_the_study")}
+              {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
             </Label>
             <RadioGroup
               onValueChange={(value) => setClickOutsideClose(value === "allow")}

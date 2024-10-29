@@ -160,7 +160,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold">
-                      {t("common.allow_users_to_exit_by_clicking_outside_the_study")}
+                      {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
                     </FormLabel>
                     <FormControl>
                       <RadioGroup

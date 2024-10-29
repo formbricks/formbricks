@@ -106,7 +106,7 @@
     "add_product": "उत्पाद जोड़ें",
     "all_questions": "सभी प्रश्न",
     "allow": "अनुमति दें",
-    "allow_users_to_exit_by_clicking_outside_the_study": "उपयोगकर्ताओं को अध्ययन के बाहर क्लिक करके बाहर निकलने की अनुमति दें",
+    "allow_users_to_exit_by_clicking_outside_the_survey": "उपयोगकर्ताओं को अध्ययन के बाहर क्लिक करके बाहर निकलने की अनुमति दें",
     "an_unknown_error_occurred_while_deleting_table_items": "जब आप {type}s हटाते हैं, एक अज्ञात त्रुटि हुई",
     "and": "और",
     "and_response_limit_of": "and response limit of",
