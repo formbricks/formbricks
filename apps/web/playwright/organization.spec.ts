@@ -10,6 +10,10 @@ test.describe("Invite, accept and remove organization member", async () => {
   // let inviteLink: string;
 
   test("Invite organization member", async ({ page }) => {
+    page.on("console", (msg) => {
+      console.log(msg);
+    });
+
     await signUpAndLogin(page, name, email, name);
     await finishOnboarding(page, "link");
 
@@ -24,13 +28,13 @@ test.describe("Invite, accept and remove organization member", async () => {
       await expect(dropdownInnerContentWrapper).toBeVisible();
 
       await page.getByRole("link", { name: "Organization" }).click();
-      await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
+      await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
       // Add member button
-      await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
-      await page.getByRole("button", { name: "Add Member" }).click();
+      await expect(page.getByRole("button", { name: "Add member" })).toBeVisible();
+      await page.getByRole("button", { name: "Add member" }).click();
 
       // Fill the member name and email form
       await expect(page.getByLabel("Email")).toBeVisible();

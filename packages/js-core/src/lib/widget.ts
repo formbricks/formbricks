@@ -65,7 +65,7 @@ const renderWidget = async (
   }
 
   const { product } = config.get().environmentState.data ?? {};
-  const { attributes } = config.get().personState.data ?? {};
+  const { attributes } = config.get() ?? {};
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";

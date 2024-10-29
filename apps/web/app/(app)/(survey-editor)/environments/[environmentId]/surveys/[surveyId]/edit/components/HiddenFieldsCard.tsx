@@ -1,13 +1,14 @@
 "use client";
 
 import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -18,8 +19,8 @@ import { Tag } from "@formbricks/ui/components/Tag";
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
 }
 
 export const HiddenFieldsCard = ({
@@ -85,6 +86,9 @@ export const HiddenFieldsCard = ({
     );
   };
 
+  // Auto Animate
+  const [parent] = useAutoAnimate();
+
   return (
     <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
       <div
@@ -100,11 +104,11 @@ export const HiddenFieldsCard = ({
         className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
-          className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+          className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Hidden Fields</p>
+                <p className="text-sm font-semibold">Hidden fields</p>
               </div>
             </div>
 
@@ -124,8 +128,8 @@ export const HiddenFieldsCard = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
-          <div className="flex gap-2">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
+          <div className="flex flex-wrap gap-2" ref={parent}>
             {localSurvey.hiddenFields?.fieldIds && localSurvey.hiddenFields?.fieldIds?.length > 0 ? (
               localSurvey.hiddenFields?.fieldIds?.map((fieldId) => {
                 return (

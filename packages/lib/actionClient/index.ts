@@ -6,14 +6,14 @@ import { getUser } from "../user/service";
 
 export const actionClient = createSafeActionClient({
   handleServerError(e) {
-    if (
-      e instanceof ResourceNotFoundError ||
-      e instanceof AuthorizationError ||
-      e instanceof AuthenticationError
-    ) {
-      throw e;
+    if (e instanceof ResourceNotFoundError) {
+      return e.message;
+    } else if (e instanceof AuthorizationError) {
+      return e.message;
     }
-    throw new Error(DEFAULT_SERVER_ERROR_MESSAGE);
+    console.error("SERVER ERROR: ", e);
+
+    return DEFAULT_SERVER_ERROR_MESSAGE;
   },
 });
 

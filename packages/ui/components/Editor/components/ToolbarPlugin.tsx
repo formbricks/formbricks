@@ -468,7 +468,7 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
               <DropdownMenuContent align="start">
                 {Object.keys(blockTypeToBlockName).map((key) => {
                   return (
-                    <DropdownMenuItem key={key} className="outline-none hover:ring-0 focus:ring-0">
+                    <DropdownMenuItem key={key}>
                       <Button
                         color="minimal"
                         type="button"

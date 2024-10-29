@@ -4,7 +4,7 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx}", // Note the addition of the `app` directory.
     "./pages/**/*.{js,ts,jsx,tsx}",
     // include packages if not transpiling
-    "../../packages/ui/**/*.{ts,tsx}",
+    "../../packages/ui/components/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   CheckIcon,
@@ -126,6 +127,9 @@ export const WhenToSendCard = ({
     }
   }, [localSurvey.type]);
 
+  // Auto animate
+  const [parent] = useAutoAnimate();
+
   const containsEmptyTriggers = useMemo(() => {
     return !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
   }, [localSurvey]);
@@ -167,7 +171,7 @@ export const WhenToSendCard = ({
           </div>
         </Collapsible.CollapsibleTrigger>
 
-        <Collapsible.CollapsibleContent>
+        <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
           <hr className="py-1 text-slate-600" />
 
           <div className="px-3 pb-3 pt-1">
