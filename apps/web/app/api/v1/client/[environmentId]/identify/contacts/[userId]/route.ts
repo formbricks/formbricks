@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { contactCache } from "@/lib/cache/contact";
 import { NextRequest, userAgent } from "next/server";
 import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
-import { personCache } from "@formbricks/lib/person/cache";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsPersonIdentifyInput } from "@formbricks/types/js";
 import { getPersonState } from "./lib/personState";
@@ -31,15 +31,9 @@ export const GET = async (
       );
     }
 
-    if (userId) {
-      // check if contacts are enabled:
-      const isContactsEnabled = await getIsContactsEnabled();
-      if (!isContactsEnabled) {
-        return responses.forbiddenResponse(
-          "User identification is only available for enterprise users.",
-          true
-        );
-      }
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
 
     const { device } = userAgent(request);
@@ -53,10 +47,10 @@ export const GET = async (
       });
 
       if (personState.revalidateProps?.revalidate) {
-        personCache.revalidate({
+        contactCache.revalidate({
           environmentId,
           userId,
-          id: personState.revalidateProps.personId,
+          id: personState.revalidateProps.contactId,
         });
       }
 

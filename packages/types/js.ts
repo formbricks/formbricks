@@ -134,7 +134,7 @@ export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
 export const ZJsPersonIdentifyInput = z.object({
   environmentId: z.string().cuid(),
-  userId: z.string().optional(),
+  userId: z.string(),
 });
 
 export type TJsPersonIdentifyInput = z.infer<typeof ZJsPersonIdentifyInput>;

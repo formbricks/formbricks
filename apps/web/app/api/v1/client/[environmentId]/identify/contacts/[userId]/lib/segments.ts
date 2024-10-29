@@ -1,4 +1,4 @@
-import { getContactAttributes } from "@/app/api/v1/client/[environmentId]/identify/people/[userId]/lib/attributes";
+import { getContactAttributes } from "@/app/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/attributes";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";

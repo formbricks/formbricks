@@ -1,4 +1,4 @@
-import { getContactByUserId } from "@/app/api/v1/client/[environmentId]/identify/people/[userId]/lib/contact";
+import { getContactByUserId } from "@/app/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/contact";
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { prisma } from "@formbricks/database";
@@ -32,7 +32,10 @@ export const getPersonState = async ({
   environmentId: string;
   userId: string;
   device: "phone" | "desktop";
-}): Promise<{ state: TJsPersonState["data"]; revalidateProps?: { personId: string; revalidate: boolean } }> =>
+}): Promise<{
+  state: TJsPersonState["data"];
+  revalidateProps?: { contactId: string; revalidate: boolean };
+}> =>
   cache(
     async () => {
       let revalidatePerson = false;
@@ -113,7 +116,7 @@ export const getPersonState = async ({
 
       return {
         state: userState,
-        revalidateProps: revalidatePerson ? { personId: contact.id, revalidate: true } : undefined,
+        revalidateProps: revalidatePerson ? { contactId: contact.id, revalidate: true } : undefined,
       };
     },
     [`personState-${environmentId}-${userId}-${device}`],

@@ -1,10 +1,9 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { deletePerson } from "@formbricks/lib/person/service";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-import { getContact } from "../lib/contacts";
+import { deleteContact, getContact } from "../lib/contacts";
 
 // Please use the methods provided by the client API to update a person
 
@@ -44,16 +43,16 @@ export const GET = async (
   }
 };
 
-export const DELETE = async (request: Request, { params }: { params: { personId: string } }) => {
+export const DELETE = async (request: Request, { params }: { params: { contactId: string } }) => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const person = await fetchAndAuthorizeContact(authentication, params.personId);
+    const person = await fetchAndAuthorizeContact(authentication, params.contactId);
     if (!person) {
-      return responses.notFoundResponse("Person", params.personId);
+      return responses.notFoundResponse("Contact", params.contactId);
     }
-    await deletePerson(params.personId);
-    return responses.successResponse({ success: "Person deleted successfully" });
+    await deleteContact(params.contactId);
+    return responses.successResponse({ success: "Contact deleted successfully" });
   } catch (error) {
     return handleErrorResponse(error);
   }
