@@ -106,7 +106,7 @@
     "add_product": "Adicionar produto",
     "all_questions": "Todas as perguntas",
     "allow": "Permitir",
-    "allow_users_to_exit_by_clicking_outside_the_study": "Permitir que os usuários saiam clicando fora do estudo",
+    "allow_users_to_exit_by_clicking_outside_the_survey": "Permitir que os usuários saiam clicando fora do estudo",
     "an_unknown_error_occurred_while_deleting_table_items": "Ocorreu um erro desconhecido ao deletar {type}s",
     "and": "E",
     "and_response_limit_of": "e limite de resposta de",

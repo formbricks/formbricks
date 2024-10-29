@@ -41,9 +41,9 @@
     "last_used": "Zuletzt verwendet",
     "login": {
       "an_error_occurred_when_logging_you_in": "Beim Anmelden ist ein Fehler aufgetreten.",
-      "backup_code": "Sicherungscode",
+      "backup_code": "Backup-Code",
       "create_an_account": "Ein Konto erstellen",
-      "enter_your_backup_code": "Geben Sie Ihren Sicherungscode ein",
+      "enter_your_backup_code": "Geben Sie Ihren Backup-Code ein",
       "enter_your_two_factor_authentication_code": "Geben Sie Ihren Zwei-Faktor-Authentifizierungscode ein",
       "forgot_your_password": "Haben Sie Ihr Passwort vergessen?",
       "login_to_your_account": "Loggen Sie sich in Ihr Konto ein",
@@ -69,7 +69,7 @@
       "user_successfully_created": "Benutzer erfolgreich erstellt",
       "user_successfully_created_description": "Ihr neuer Benutzer wurde erfolgreich erstellt. Bitte klicken Sie auf die Schaltfläche unten und melden Sie sich bei Ihrem Konto an."
     },
-    "testimonial_1": "Wir messen die Klarheit unserer Dokumente und lernen aus der Abwanderung alles auf einer Plattform. Großartiges Produkt, sehr reaktionsschnelles Team!",
+    "testimonial_1": "Wir messen die Qualität unserer Dokumentation und erfahren Gründe für Nutzer-Abwanderung alles auf einer Plattform. Großartiges Produkt, sehr reaktionsschnelles Team!",
     "testimonial_all_features_included": "Alle Funktionen enthalten",
     "testimonial_free_and_open_source": "Kostenlos und Open Source",
     "testimonial_no_credit_card_required": "Keine Kreditkarte erforderlich",
@@ -106,7 +106,7 @@
     "add_product": "Produkt hinzufügen",
     "all_questions": "Alle Fragen",
     "allow": "Erlauben",
-    "allow_users_to_exit_by_clicking_outside_the_study": "Benutzern erlauben, durch Klicken außerhalb der Studie auszutreten",
+    "allow_users_to_exit_by_clicking_outside_the_survey": "Benutzern erlauben, durch Klicken außerhalb der Umfrage auszutreten",
     "an_unknown_error_occurred_while_deleting_table_items": "Beim Löschen von {type}s ist ein unbekannter Fehler aufgetreten.",
     "and": "„Und“",
     "and_response_limit_of": "und Antwortgrenze von",
@@ -220,7 +220,7 @@
     "language": "Sprache",
     "languages": "Sprachen",
     "license": "Lizenz",
-    "light_overlay": "Lichtüberlagerung",
+    "light_overlay": "Helle Überlagerung",
     "limits_reached": "Limits erreicht",
     "link": "Link",
     "link_and_email": "Link & E-Mail",
@@ -1787,7 +1787,7 @@
         "continue": "Fortfahren",
         "delete_account": "Account löschen",
         "delete_account_description": "Wenn Sie Ihr Konto löschen möchten, können Sie dies tun, indem Sie auf die Schaltfläche unten klicken.",
-        "description": "Mach es zu deinem.",
+        "description": "Personalisieren Sie ihre Erfahrung.",
         "no_membership_found": "„Keine Mitgliedschaft gefunden!“",
         "no_membership_found_description": "Sie sind derzeit kein Mitglied einer Organisation. Wenn Sie glauben, dass dies ein Fehler ist, wenden Sie sich bitte an den Eigentümer der Organisation.",
         "title": "Richten Sie Ihre Organisation ein"
@@ -1795,7 +1795,7 @@
     },
     "signup": {
       "create_administrator": "Administrator erstellen",
-      "this_user_has_all_the_power": "Dieser Benutzer hat alle Macht."
+      "this_user_has_all_the_power": "Dieser Benutzer hat alle Rechte."
     }
   },
   "share": {
@@ -1818,7 +1818,7 @@
     "build_product_roadmap_question_2_headline": "Was ist EINE Veränderung, die wir vornehmen könnten, um Ihr {{productName}}-Erlebnis am meisten zu verbessern?",
     "build_product_roadmap_question_2_placeholder": "Geben Sie hier Ihre Antwort ein...",
     "card_abandonment_survey": "Warenkorbabbruch-Umfrage",
-    "card_abandonment_survey_description": "Verstehen Sie die Gründe für das Verlassen des Warenkorbs in Ihrem Webshop.",
+    "card_abandonment_survey_description": "Verstehen Sie die Gründe für das Zurücklassen des Warenkorbs in Ihrem Webshop.",
     "card_abandonment_survey_question_1_html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>Wir haben bemerkt, dass Sie einige Artikel in Ihrem Warenkorb gelassen haben. Wir würden gerne verstehen, warum.</span></p>",
     "card_abandonment_survey_question_2_button_label": "Sicher!",
     "card_abandonment_survey_question_2_dismiss_button_label": "„Nein, danke.“",
@@ -2407,7 +2407,7 @@
     "onboarding_segmentation": "Onboarding-Segmentierung",
     "onboarding_segmentation_description": "Erfahren Sie mehr darüber, wer sich für Ihr Produkt angemeldet hat und warum.",
     "onboarding_segmentation_question_1_choice_1": "Gründer",
-    "onboarding_segmentation_question_1_choice_2": "Exekutive",
+    "onboarding_segmentation_question_1_choice_2": "Geschäftsführer",
     "onboarding_segmentation_question_1_choice_3": "Produktmanager",
     "onboarding_segmentation_question_1_choice_4": "Produktverantwortlicher",
     "onboarding_segmentation_question_1_choice_5": "Softwareentwickler",
