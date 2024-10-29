@@ -100,7 +100,6 @@
     "actions": "Aktionen",
     "active_surveys": "Aktive Umfragen",
     "activity": "Aktivität",
-    "add_a_variable_to_calculate": "Fügen Sie eine Variable zur Berechnung hinzu",
     "add_action": "Aktion hinzufügen",
     "add_filter": "Filter hinzufügen",
     "add_logo": "Logo hinzufügen",
@@ -265,7 +264,6 @@
     "on": "Ein",
     "only_one_file_allowed": "Es ist nur eine Datei erlaubt.",
     "only_owners_admins_and_editors_can_perform_this_action": "Nur Eigentümer, Administratoren und Redakteure können diese Aktion ausführen.",
-    "option_used_in_logic_error": "Diese Option wird in der Logik der Frage {questionIndex} verwendet. Bitte entfernen Sie sie zuerst aus der Logik.",
     "or": "oder",
     "organization": "Organisation",
     "organization_not_found": "Organisation nicht gefunden",
@@ -343,6 +341,7 @@
     "survey": "Umfrage",
     "survey_completed": "Umfrage abgeschlossen.",
     "survey_languages": "Umfrage-Sprachen",
+    "survey_live": "Umfrage live",
     "survey_not_found": "Umfrage nicht gefunden",
     "survey_paused": "Umfrage pausiert.",
     "survey_scheduled": "Umfrage geplant.",
@@ -1138,6 +1137,7 @@
         "add_a_delay_or_auto_close_the_survey": "Fügen Sie eine Verzögerung hinzu oder schließen Sie die Umfrage automatisch.",
         "add_a_four_digit_pin": "Fügen Sie eine vierstellige PIN hinzu.",
         "add_a_new_question_to_your_survey": "Fügen Sie Ihrer Umfrage eine neue Frage hinzu",
+        "add_a_variable_to_calculate": "Fügen Sie eine Variable zur Berechnung hinzu",
         "add_action_below": "Aktion unten hinzufügen",
         "add_color_coding": "Farbkodierung hinzufügen",
         "add_color_coding_description": "Fügen Sie rote, orange und grüne Farbcode-Optionen hinzu.",
@@ -1351,6 +1351,7 @@
         "only_lower_case_letters_numbers_and_underscores_are_allowed": "Es sind nur Kleinbuchstaben, Zahlen und Unterstriche erlaubt.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Nur Personen, die Ihrer Zielgruppe entsprechen, können befragt werden.",
         "option_idx": "Option {choiceIndex}",
+        "option_used_in_logic_error": "Diese Option wird in der Logik der Frage {questionIndex} verwendet. Bitte entfernen Sie sie zuerst aus der Logik.",
         "optional": "Optional",
         "options": "Optionen",
         "override_theme_with_individual_styles_for_this_survey": "Übersteuern Sie das Thema mit individuellen Stilen für diese Umfrage.",
@@ -1464,7 +1465,6 @@
         "trigger_survey_when_one_of_the_actions_is_fired": "Umfrage auslösen, wenn eine der Aktionen ausgelöst wird...",
         "try_lollipop_or_mountain": "Versuche 'Lutscher' oder 'Berg'...",
         "type_field_id": "Feld-ID eingeben",
-        "unknown_question_type": "Unbekannter Fragetyp",
         "unsaved_changes_warning": "Sie haben ungespeicherte Änderungen in Ihrer Umfrage. Möchten Sie diese speichern, bevor Sie die Seite verlassen?",
         "until_they_submit_a_response": "Bis sie eine Antwort einreichen",
         "upgrade_to_the_scale_plan": "Upgrade auf den Scale-Plan.",
@@ -1645,6 +1645,7 @@
         "to_connect_your_website_with_formbricks": "um Ihre Website mit Formbricks zu verbinden",
         "to_run_highly_targeted_surveys": "hochgradig zielgerichtete Umfragen durchzuführen.",
         "ttc_tooltip": "Durchschnittliche Zeit zur Beendigung der Umfrage.",
+        "unknown_question_type": "Unbekannter Fragetyp",
         "unpublish": "Unveröffentlichen",
         "unpublish_from_web": "Von der Website entfernen",
         "unsupported_video_tag_warning": "Ihr Browser unterstützt das Video-Tag nicht.",
@@ -1665,12 +1666,9 @@
         "your_survey_is_public": "Ihre Umfrage ist öffentlich.",
         "youre_not_plugged_in_yet": "Du bist noch nicht eingesteckt!"
       },
-      "survey_completed": "Umfrage abgeschlossen",
       "survey_deleted_successfully": "Umfrage erfolgreich gelöscht!",
       "survey_duplicated_successfully": "Umfrage erfolgreich dupliziert.",
       "survey_duplication_error": "Fehler beim Duplizieren der Umfrage.",
-      "survey_live": "Umfrage live",
-      "survey_paused": "Umfrage pausiert",
       "survey_status_tooltip": "Um den Umfrage-Status zu aktualisieren, aktualisieren Sie den Zeitplan und die Schließeinstellungen in den Umfrageantwortoptionen.",
       "templates": {
         "all_channels": "Alle Kanäle",
@@ -1804,7 +1802,6 @@
       }
     },
     "signup": {
-      "continue": "Fortfahren",
       "create_administrator": "Administrator erstellen",
       "this_user_has_all_the_power": "Dieser Benutzer hat alle Macht."
     }

@@ -100,7 +100,6 @@
     "actions": "Actions",
     "active_surveys": "Active surveys",
     "activity": "Activity",
-    "add_a_variable_to_calculate": "Add a variable to calculate",
     "add_action": "Add action",
     "add_filter": "Add filter",
     "add_logo": "Add logo",
@@ -265,7 +264,6 @@
     "on": "On",
     "only_one_file_allowed": "Only one file is allowed",
     "only_owners_admins_and_editors_can_perform_this_action": "Only Owners, Admins and Editors can perform this action.",
-    "option_used_in_logic_error": "This option is used in logic of question {questionIndex}. Please remove it from logic first.",
     "or": "or",
     "organization": "Organization",
     "organization_not_found": "Organization not found",
@@ -343,6 +341,7 @@
     "survey": "Survey",
     "survey_completed": "Survey completed.",
     "survey_languages": "Survey Languages",
+    "survey_live": "Survey live",
     "survey_not_found": "Survey not found",
     "survey_paused": "Survey paused.",
     "survey_scheduled": "Survey scheduled.",
@@ -1138,6 +1137,7 @@
         "add_a_delay_or_auto_close_the_survey": "Add a delay or auto-close the survey",
         "add_a_four_digit_pin": "Add a four digit PIN",
         "add_a_new_question_to_your_survey": "Add a new question to your survey",
+        "add_a_variable_to_calculate": "Add a variable to calculate",
         "add_action_below": "Add action below",
         "add_color_coding": "Add color coding",
         "add_color_coding_description": "Add red, orange and green color codes to the options.",
@@ -1351,6 +1351,7 @@
         "only_lower_case_letters_numbers_and_underscores_are_allowed": "Only lower case letters, numbers, and underscores are allowed.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Only people who match your targeting can be surveyed.",
         "option_idx": "Option {choiceIndex}",
+        "option_used_in_logic_error": "This option is used in logic of question {questionIndex}. Please remove it from logic first.",
         "optional": "Optional",
         "options": "Options",
         "override_theme_with_individual_styles_for_this_survey": "Override the theme with individual styles for this survey.",
@@ -1464,7 +1465,6 @@
         "trigger_survey_when_one_of_the_actions_is_fired": "Trigger survey when one of the actions is fired...",
         "try_lollipop_or_mountain": "Try 'lollipop' or 'mountain'...",
         "type_field_id": "Type field id",
-        "unknown_question_type": "Unknown Question Type",
         "unsaved_changes_warning": "You have unsaved changes in your survey. Would you like to save them before leaving?",
         "until_they_submit_a_response": "Until they submit a response",
         "upgrade_to_the_scale_plan": "upgrade to the Scale plan.",
@@ -1645,6 +1645,7 @@
         "to_connect_your_website_with_formbricks": "to connect your website with Formbricks",
         "to_run_highly_targeted_surveys": "to run highly targeted surveys.",
         "ttc_tooltip": "Average time to complete the survey.",
+        "unknown_question_type": "Unknown Question Type",
         "unpublish": "Unpublish",
         "unpublish_from_web": "Unpublish from web",
         "unsupported_video_tag_warning": "Your browser does not support the video tag.",
@@ -1665,12 +1666,9 @@
         "your_survey_is_public": "Your survey is public",
         "youre_not_plugged_in_yet": "You're not plugged in yet!"
       },
-      "survey_completed": "Survey completed",
       "survey_deleted_successfully": "Survey deleted successfully!",
       "survey_duplicated_successfully": "Survey duplicated successfully.",
       "survey_duplication_error": "Failed to duplicate the survey.",
-      "survey_live": "Survey live",
-      "survey_paused": "Survey paused",
       "survey_status_tooltip": "To update the survey status, update the schedule and close setting in the survey response options.",
       "templates": {
         "all_channels": "All channels",
@@ -1804,7 +1802,6 @@
       }
     },
     "signup": {
-      "continue": "Continue",
       "create_administrator": "Create Administrator",
       "this_user_has_all_the_power": "This user has all the power."
     }

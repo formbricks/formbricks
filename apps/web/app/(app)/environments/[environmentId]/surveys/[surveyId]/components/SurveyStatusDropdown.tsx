@@ -47,11 +47,11 @@ export const SurveyStatusDropdown = ({
               .then(() => {
                 toast.success(
                   value === "inProgress"
-                    ? t("environments.surveys.survey_live")
+                    ? t("common.survey_live")
                     : value === "paused"
-                      ? t("environments.surveys.survey_paused")
+                      ? t("common.survey_paused")
                       : value === "completed"
-                        ? t("environments.surveys.survey_completed")
+                        ? t("common.survey_completed")
                         : ""
                 );
               })

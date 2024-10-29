@@ -63,7 +63,7 @@ export const PictureChoiceSummary = ({
                 questionSummary.question.headline,
                 questionSummary.question.type,
                 t("environments.surveys.summary.includes_all"),
-                [`${t("environments.surveys.summary.picture_idx", { idx: index + 1 })}`]
+                [`${t("environments.surveys.edit.picture_idx", { idx: index + 1 })}`]
               )
             }>
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">

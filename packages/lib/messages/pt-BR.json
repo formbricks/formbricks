@@ -100,7 +100,6 @@
     "actions": "Ações",
     "active_surveys": "Pesquisas ativas",
     "activity": "Atividade",
-    "add_a_variable_to_calculate": "Adicionar uma variável para calcular",
     "add_action": "Adicionar ação",
     "add_filter": "Adicionar filtro",
     "add_logo": "Adicionar logo",
@@ -265,7 +264,6 @@
     "on": "Em",
     "only_one_file_allowed": "Apenas um arquivo é permitido",
     "only_owners_admins_and_editors_can_perform_this_action": "Apenas Proprietários, Administradores e Editores podem realizar esta ação.",
-    "option_used_in_logic_error": "Esta opção é usada na lógica da pergunta {questionIndex}. Por favor, remova-a da lógica primeiro.",
     "or": "ou",
     "organization": "Organização",
     "organization_not_found": "Organização não encontrada",
@@ -343,6 +341,7 @@
     "survey": "Pesquisa",
     "survey_completed": "Pesquisa concluída.",
     "survey_languages": "Idiomas da Pesquisa",
+    "survey_live": "Pesquisa ao vivo",
     "survey_not_found": "Pesquisa não encontrada",
     "survey_paused": "Pesquisa pausada.",
     "survey_scheduled": "Pesquisa agendada.",
@@ -1138,6 +1137,7 @@
         "add_a_delay_or_auto_close_the_survey": "Adicione um atraso ou feche a pesquisa automaticamente",
         "add_a_four_digit_pin": "Adicione um PIN de quatro dígitos.",
         "add_a_new_question_to_your_survey": "Adicione uma nova pergunta à sua pesquisa",
+        "add_a_variable_to_calculate": "Adicionar uma variável para calcular",
         "add_action_below": "Adicionar ação abaixo",
         "add_color_coding": "Adicionar codificação de cores",
         "add_color_coding_description": "Adicione códigos de cores vermelho, laranja e verde às opções.",
@@ -1351,6 +1351,7 @@
         "only_lower_case_letters_numbers_and_underscores_are_allowed": "Apenas letras minúsculas, números e underscores são permitidos.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Apenas pessoas que correspondem ao seu público-alvo podem ser entrevistadas.",
         "option_idx": "Opção {choiceIndex}",
+        "option_used_in_logic_error": "Esta opção é usada na lógica da pergunta {questionIndex}. Por favor, remova-a da lógica primeiro.",
         "optional": "Opcional",
         "options": "Opções",
         "override_theme_with_individual_styles_for_this_survey": "Substitua o tema com estilos individuais para esta pesquisa.",
@@ -1464,7 +1465,6 @@
         "trigger_survey_when_one_of_the_actions_is_fired": "Acionar pesquisa quando uma das ações for disparada...",
         "try_lollipop_or_mountain": "Tente 'pirulito' ou 'montanha'...",
         "type_field_id": "Digite o ID do campo",
-        "unknown_question_type": "Tipo de Pergunta Desconhecido",
         "unsaved_changes_warning": "Você tem alterações não salvas em sua pesquisa. Gostaria de salvá-las antes de sair?",
         "until_they_submit_a_response": "Até que eles enviem uma resposta",
         "upgrade_to_the_scale_plan": "atualize para o plano Scale.",
@@ -1645,6 +1645,7 @@
         "to_connect_your_website_with_formbricks": "conectar seu site com o Formbricks",
         "to_run_highly_targeted_surveys": "realizar pesquisas altamente direcionadas.",
         "ttc_tooltip": "Tempo médio para completar a pesquisa.",
+        "unknown_question_type": "Tipo de Pergunta Desconhecido",
         "unpublish": "Despublicar",
         "unpublish_from_web": "Despublicar da web",
         "unsupported_video_tag_warning": "Seu navegador não suporta a tag de vídeo.",
@@ -1665,12 +1666,9 @@
         "your_survey_is_public": "Sua pesquisa é pública",
         "youre_not_plugged_in_yet": "Você ainda não está conectado!"
       },
-      "survey_completed": "Pesquisa concluída",
       "survey_deleted_successfully": "Pesquisa excluída com sucesso!",
       "survey_duplicated_successfully": "Pesquisa duplicada com sucesso.",
       "survey_duplication_error": "Falha ao duplicar a pesquisa.",
-      "survey_live": "Pesquisa ao vivo",
-      "survey_paused": "Pesquisa pausada",
       "survey_status_tooltip": "Para atualizar o status da pesquisa, atualize o cronograma e feche a configuração nas opções de resposta da pesquisa.",
       "templates": {
         "all_channels": "Todos os canais",
@@ -1804,7 +1802,6 @@
       }
     },
     "signup": {
-      "continue": "Continuar",
       "create_administrator": "Criar Administrador",
       "this_user_has_all_the_power": "Este usuário tem todo o poder."
     }
