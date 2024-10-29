@@ -1,5 +1,6 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
+import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { getIsAIEnabled } from "@/app/lib/utils";
 import type { Session } from "next-auth";
 import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
@@ -51,6 +52,11 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
+  const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
+
+  if (!productPermission) {
+    throw new Error("Product permission not found");
+  }
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
 
@@ -97,12 +103,14 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           membershipRole={currentUserMembership?.organizationRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isAIEnabled={isAIEnabled}
+          productPermission={productPermission}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
             environment={environment}
             environments={environments}
             membershipRole={currentUserMembership?.organizationRole}
+            productPermission={productPermission}
           />
           <div className="mt-14">{children}</div>
         </div>

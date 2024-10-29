@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 import { H3 } from "@formbricks/ui/components/Typography";
@@ -44,25 +45,31 @@ export const TeamsView = ({ organizationId, teams, membershipRole }: TeamsViewPr
     }
   };
 
+  const { isOwner, isManager } = getAccessFlags(membershipRole);
+
+  const isOwnerOrManager = isOwner || isManager;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between">
         <H3>Teams</H3>
-        <Button variant="primary" size="sm" onClick={() => setOpenCreateTeamModal(true)}>
-          Create Team
-        </Button>
+        {isOwnerOrManager && (
+          <Button variant="primary" size="sm" onClick={() => setOpenCreateTeamModal(true)}>
+            Create Team
+          </Button>
+        )}
       </div>
       <div className="flex flex-col gap-6">
         <YourTeams teams={teams.userTeams} leaveTeam={leaveTeam} />
         {teams.otherTeams && <OtherTeams teams={teams.otherTeams} joinTeam={joinTeam} />}
       </div>
-      {
+      {openCreateTeamModal && (
         <CreateTeamModal
           open={openCreateTeamModal}
           setOpen={setOpenCreateTeamModal}
           organizationId={organizationId}
         />
-      }
+      )}
     </div>
   );
 };

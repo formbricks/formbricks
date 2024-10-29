@@ -4,6 +4,8 @@ import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[enviro
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import {
   ArrowUpRightIcon,
   BlendIcon,
@@ -69,6 +71,7 @@ interface NavigationProps {
   isFormbricksCloud?: boolean;
   membershipRole?: TOrganizationRole;
   isAIEnabled?: boolean;
+  productPermission?: TTeamPermission;
 }
 
 export const MainNavigation = ({
@@ -81,6 +84,7 @@ export const MainNavigation = ({
   isFormbricksCloud = true,
   membershipRole,
   isAIEnabled = false,
+  productPermission,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -94,6 +98,7 @@ export const MainNavigation = ({
 
   const product = products.find((product) => product.id === environment.productId);
   const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
+  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
   const isOwnerOrManager = isManager || isOwner;
   const isPricingDisabled = isMember;
 
@@ -202,7 +207,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
-        isHidden: isMember,
+        isHidden: isMember && !hasManageAccess,
       },
     ],
     [environment.id, pathname, isMember]

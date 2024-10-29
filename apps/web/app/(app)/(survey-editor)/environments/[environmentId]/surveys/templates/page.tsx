@@ -1,3 +1,5 @@
+import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -52,7 +54,10 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   );
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  if (isMember) {
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  if (isMember && hasReadAccess) {
     return redirect(`/environments/${environment.id}/surveys`);
   }
 

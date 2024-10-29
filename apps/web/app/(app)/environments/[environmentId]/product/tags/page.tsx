@@ -1,5 +1,7 @@
+import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -7,6 +9,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
@@ -20,11 +23,12 @@ const Page = async ({ params }) => {
     throw new Error("Environment not found");
   }
 
-  const [tags, environmentTagsCount, organization, session] = await Promise.all([
+  const [tags, environmentTagsCount, organization, session, product] = await Promise.all([
     getTagsByEnvironmentId(params.environmentId),
     getTagsOnResponsesCount(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
+    getProductByEnvironmentId(params.environmentId),
   ]);
 
   if (!environment) {
@@ -38,9 +42,17 @@ const Page = async ({ params }) => {
     throw new Error("Unauthenticated");
   }
 
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
-  const isTagSettingDisabled = isMember;
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+
+  const isTagSettingDisabled = isMember && !hasManageAccess;
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);

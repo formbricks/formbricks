@@ -1,4 +1,6 @@
+import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
@@ -35,10 +37,14 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
-  const isProductNameEditDisabled = isMember || isBilling ? true : false;
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
-  if (isMember || isBilling) {
+  const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+
+  const isProductNameEditDisabled = isMember && !hasManageAccess ? true : false;
+
+  if (isMember && !hasManageAccess) {
     return <ErrorComponent />;
   }
 

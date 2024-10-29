@@ -403,3 +403,14 @@ export const Permissions = {
     },
   },
 };
+
+export const teamPermissions = {
+  read: {},
+  readWrite: {},
+  manage: {},
+};
+
+export const teamRolePermissions = {
+  admin: {},
+  contributor: {},
+};

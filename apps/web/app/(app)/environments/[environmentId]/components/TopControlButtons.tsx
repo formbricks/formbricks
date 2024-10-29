@@ -1,6 +1,8 @@
 "use client";
 
 import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
+import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import formbricks from "@formbricks/js";
@@ -14,6 +16,7 @@ interface TopControlButtonsProps {
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
+  productPermission: TTeamPermission;
 }
 
 export const TopControlButtons = ({
@@ -21,10 +24,12 @@ export const TopControlButtons = ({
   environments,
   isFormbricksCloud,
   membershipRole,
+  productPermission,
 }: TopControlButtonsProps) => {
   const router = useRouter();
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 
   return (
     <div className="z-50 flex items-center space-x-2">
@@ -51,7 +56,9 @@ export const TopControlButtons = ({
         }}>
         <CircleUserIcon strokeWidth={1.5} className="h-5 w-5" />
       </Button>
-      {!isMember && !isBilling ? (
+      {isBilling || (isMember && hasReadAccess) ? (
+        <></>
+      ) : (
         <Button
           variant="secondary"
           size="icon"
@@ -62,7 +69,7 @@ export const TopControlButtons = ({
           }}>
           <PlusIcon strokeWidth={1.5} className="h-5 w-5" />
         </Button>
-      ) : null}
+      )}
     </div>
   );
 };

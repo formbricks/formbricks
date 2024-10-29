@@ -1,4 +1,6 @@
+import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
@@ -58,6 +60,9 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
 
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
@@ -95,7 +100,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
             currentProductChannel={currentProductChannel}
           />
         </>
-      ) : isMember ? (
+      ) : isMember && hasReadAccess ? (
         <>
           <h1 className="px-6 text-3xl font-extrabold text-slate-700">No surveys created yet.</h1>
 

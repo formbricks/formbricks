@@ -9,7 +9,9 @@ import { Permissions } from "./permissions";
 export const getOperationPermissions = (
   role: TOrganizationRole,
   entity: TResource,
-  operation: TOperation
+  operation: TOperation,
+  teamPermission?: "read" | "readWrite" | "manage",
+  teamRole?: "admin" | "contributor"
 ) => {
   const permission = Permissions[role][entity][operation];
 

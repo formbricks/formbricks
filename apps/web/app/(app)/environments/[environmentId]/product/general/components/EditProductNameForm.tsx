@@ -103,6 +103,8 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
       </form>
     </FormProvider>
   ) : (
-    <p className="text-sm text-red-700">Only Owners, Managers and admin Members can perform this action.</p>
+    <p className="text-sm text-red-700">
+      Only Owners, Managers and manage permissions team members can perform this action.
+    </p>
   );
 };

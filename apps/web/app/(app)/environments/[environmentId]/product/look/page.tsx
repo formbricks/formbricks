@@ -1,5 +1,7 @@
+import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/components/EditLogo";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import {
   getMultiLanguagePermission,
@@ -44,7 +46,10 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  if (isMember) {
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+
+  if (isMember && !hasManageAccess) {
     return <ErrorComponent />;
   }
 

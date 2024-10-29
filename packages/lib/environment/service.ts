@@ -128,8 +128,38 @@ export const updateEnvironment = async (
   }
 };
 
-export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
+export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<string | null> => {
   try {
+    // const firstMembership = await prisma.membership.findMany({
+    //   where: {
+    //     userId,
+    //     organizationRole: {
+    //       in: ["owner", "manager"],
+    //     }
+    //   }
+    // });
+
+    // if (firstMembership) {
+    //   const firstOrganization = firstMembership[0].organizationId;
+    //   const firstProduct = await prisma.product.findFirst({
+    //     where: {
+    //       organizationId: firstOrganization
+    //     }
+    //   });
+
+    //   if (firstProduct) {
+    //     const firstEnvironment = await prisma.environment.findFirst({
+    //       where: {
+    //         productId: firstProduct.id
+    //       }
+    //     });
+
+    //     if (firstEnvironment) {
+    //       return firstEnvironment.id;
+    //     }
+    //   }
+    // }
+
     const organizations = await getOrganizationsByUserId(userId);
     if (organizations.length === 0) {
       throw new Error(`Unable to get first environment: User ${userId} has no organizations`);
@@ -150,7 +180,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
         `Unable to get first environment: Product ${firstProduct.id} has no production environment`
       );
     }
-    return productionEnvironment;
+    return productionEnvironment.id;
   } catch (error) {
     throw error;
   }

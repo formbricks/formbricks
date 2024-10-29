@@ -3,7 +3,7 @@ import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
+import { getFirstEnvironmentIdByUserId } from "@formbricks/lib/environment/service";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -25,25 +25,25 @@ const Page = async () => {
     return <ClientLogout />;
   }
 
-  let environment: TEnvironment | null = null;
-  try {
-    environment = await getFirstEnvironmentByUserId(session?.user.id);
-  } catch (error) {
-    console.error(`error getting environment: ${error}`);
-  }
-
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
 
   if (userOrganizations.length === 0) {
     return redirect("/setup/organization/create");
   }
 
-  if (!environment) {
+  let environmentId: string | null = null;
+  try {
+    environmentId = await getFirstEnvironmentIdByUserId(session?.user.id);
+  } catch (error) {
+    console.error(`error getting environment: ${error}`);
+  }
+
+  if (!environmentId) {
     console.error("Failed to get first environment of user");
     return redirect(`/organizations/${userOrganizations[0].id}/products/new/mode`);
   }
 
-  return <ClientEnvironmentRedirect environmentId={environment.id} />;
+  return <ClientEnvironmentRedirect environmentId={environmentId} />;
 };
 
 export default Page;
