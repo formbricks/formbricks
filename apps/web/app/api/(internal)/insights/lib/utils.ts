@@ -72,7 +72,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
       return { success: false };
     }
 
-    const insightsEnabledValues = await Promise.all(
+    const insightsEnabledValues = await Promise.allSettled(
       openTextQuestions.map(async (question) => {
         const insightsEnabled = await getInsightsEnabled(question);
 
@@ -80,9 +80,13 @@ export const generateInsightsEnabledForSurveyQuestions = async (
       })
     );
 
-    const insightsEnabledQuestionIds = insightsEnabledValues
-      .filter((value) => value.insightsEnabled)
-      .map((value) => value.id);
+    const fullfilledInsightsEnabledValues = insightsEnabledValues.filter(
+      (value) => value.status === "fulfilled"
+    ) as PromiseFulfilledResult<{ id: string; insightsEnabled: boolean }>[];
+
+    const insightsEnabledQuestionIds = fullfilledInsightsEnabledValues
+      .filter((value) => value.value.insightsEnabled)
+      .map((value) => value.value.id);
 
     const updatedQuestions = survey.questions.map((question) => {
       if (question.type === "openText") {
