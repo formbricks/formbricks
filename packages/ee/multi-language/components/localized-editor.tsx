@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
-import { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
@@ -19,6 +19,8 @@ interface LocalizedEditorProps {
   questionIdx: number;
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
+  showRecallItemSelect?: boolean;
+  stripHtmlTags: (html: string) => string;
 }
 
 const checkIfValueIsIncomplete = (
@@ -44,6 +46,8 @@ export function LocalizedEditor({
   questionIdx,
   firstRender,
   setFirstRender,
+  showRecallItemSelect,
+  stripHtmlTags,
 }: LocalizedEditorProps) {
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -63,6 +67,7 @@ export function LocalizedEditor({
         getText={() => md.render(value ? (value[selectedLanguageCode] ?? "") : "")}
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
+        showRecallItemSelect={showRecallItemSelect}
         setText={(v: string) => {
           if (!value) return;
           const translatedHtml = {

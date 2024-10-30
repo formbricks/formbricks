@@ -10,6 +10,10 @@
   text-decoration: underline !important;
 }
 
+.fb-editor-text-underline {
+  text-decoration: underline !important;
+}
+
 .editor-tokenFunction {
   color: #dd4a68 !important;
 }

@@ -20,5 +20,6 @@ export const exampleTheme = {
   text: {
     bold: "fb-editor-text-bold",
     italic: "fb-editor-text-italic",
+    underline: "fb-editor-text-underline",
   },
 };

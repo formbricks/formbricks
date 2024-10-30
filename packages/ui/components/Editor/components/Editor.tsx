@@ -37,6 +37,7 @@ export type TextEditorProps = {
   updateTemplate?: boolean;
   firstRender?: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
+  showRecallItemSelect?: boolean;
   editable?: boolean;
 };
 
@@ -77,6 +78,7 @@ export const Editor = (props: TextEditorProps) => {
             updateTemplate={props.updateTemplate}
             firstRender={props.firstRender}
             setFirstRender={props.setFirstRender}
+            showRecallItemSelect={props.showRecallItemSelect}
           />
           <div
             className={cn("editor-inner scroll-bar", !editable && "bg-muted")}

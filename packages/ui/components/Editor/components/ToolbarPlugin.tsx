@@ -24,7 +24,7 @@ import {
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
-import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
+import { Bold, ChevronDownIcon, Italic, Link, Underline } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@formbricks/lib/cn";
@@ -230,6 +230,7 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
   const [isLink, setIsLink] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
 
   // save ref to setText to use it in event listeners safely
   const setText = useRef<any>(props.setText);
@@ -329,6 +330,7 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
       }
       setIsBold(selection.hasFormat("bold"));
       setIsItalic(selection.hasFormat("italic"));
+      setIsUnderline(selection.hasFormat("underline")); // Check for underline formatting
 
       const node = getSelectedNode(selection);
       const parent = node.getParent();
@@ -511,6 +513,18 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
               }}
               className={isBold ? "bg-subtle active-button" : "inactive-button"}
+            />
+          )}
+          {!props.excludedToolbarItems?.includes("underline") && (
+            <Button
+              color="minimal"
+              variant="minimal"
+              type="button"
+              StartIcon={Underline}
+              onClick={() => {
+                editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+              }}
+              className={isUnderline ? "bg-subtle active-button" : "inactive-button"}
             />
           )}
           {!props.excludedToolbarItems?.includes("italic") && (

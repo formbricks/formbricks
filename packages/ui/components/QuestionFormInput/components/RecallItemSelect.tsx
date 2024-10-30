@@ -1,4 +1,5 @@
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
+import DOMPurify from "dompurify";
 import {
   CalendarDaysIcon,
   EyeOffIcon,
@@ -48,6 +49,7 @@ interface RecallItemSelectProps {
   selectedLanguageCode: string;
   hiddenFields: TSurveyHiddenFields;
   attributeClasses: TAttributeClass[];
+  stripHtmlTags: (html: string) => string;
 }
 
 export const RecallItemSelect = ({
@@ -58,6 +60,7 @@ export const RecallItemSelect = ({
   recallItems,
   selectedLanguageCode,
   attributeClasses,
+  stripHtmlTags,
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
@@ -147,7 +150,7 @@ export const RecallItemSelect = ({
     ].filter((recallItems) => {
       if (searchValue.trim() === "") return true;
       else {
-        return recallItems.label.toLowerCase().startsWith(searchValue.toLowerCase());
+        return stripHtmlTags(recallItems.label).toLowerCase().startsWith(searchValue.toLowerCase());
       }
     });
   }, [
@@ -222,9 +225,11 @@ export const RecallItemSelect = ({
                     }
                   }}>
                   <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
-                  <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                    {getRecallLabel(recallItem.label)}
-                  </div>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(getRecallLabel(recallItem.label)),
+                    }}
+                    className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm"></div>
                 </DropdownMenuItem>
               );
             })}

@@ -26,7 +26,6 @@ import { TLogicRuleOption, logicRules } from "./logicRuleEngine";
 export const formatTextWithSlashes = (text: string) => {
   const regex = /\/(.*?)\\/g;
   const parts = text.split(regex);
-
   return parts.map((part, index) => {
     // Check if the part was inside slashes
     if (index % 2 !== 0) {
@@ -41,6 +40,20 @@ export const formatTextWithSlashes = (text: string) => {
   });
 };
 
+export const formatTextWithSlashesAsHtml = (text) => {
+  // Remove any existing highlight spans first (cleanup)
+  const cleanText = text.replace(/<span class="mx-1 rounded-md.*?<\/span>/g, "");
+
+  // Replace the slash pattern with highlighted span
+  // Important: We're wrapping just the text content, not the entire paragraph
+  const formattedText = cleanText.replace(/\/(.*?)\\/g, (_, match) => {
+    // Strip HTML tags from the match text to get just the content
+    const textContent = match.replace(/<[^>]*>/g, "");
+    return `<span class="mx-1 rounded-md bg-slate-100 p-1 px-2 text-sm">${textContent}</span>`;
+  });
+
+  return formattedText;
+};
 const questionIconMapping = questionTypes.reduce(
   (prev, curr) => ({
     ...prev,

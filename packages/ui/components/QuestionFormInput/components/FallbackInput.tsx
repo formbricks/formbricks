@@ -26,6 +26,11 @@ export const FallbackInput = ({
         .includes("") || Object.entries(fallbacks).length === 0
     );
   };
+
+  const stripHtmlTags = (html: string): string => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+  };
   return (
     <div className="absolute top-10 z-30 mt-1 rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
       <p className="font-medium">Add a placeholder to show if the question gets skipped:</p>
@@ -39,7 +44,7 @@ export const FallbackInput = ({
                 ref={fallbackInputRef}
                 id="fallback"
                 value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ")}
-                placeholder={"Fallback for " + recallItem.label}
+                placeholder={"Fallback for " + stripHtmlTags(recallItem.label)}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
                     e.preventDefault();

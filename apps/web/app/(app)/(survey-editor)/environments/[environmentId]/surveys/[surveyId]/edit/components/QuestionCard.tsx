@@ -2,7 +2,7 @@
 
 import { ContactInfoQuestionForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/ContactInfoQuestionForm";
 import { RankingQuestionForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RankingQuestionForm";
-import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { formatTextWithSlashesAsHtml } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -196,7 +196,7 @@ export const QuestionCard = ({
                       selectedLanguageCode,
                       attributeClasses
                     )[selectedLanguageCode]
-                      ? formatTextWithSlashes(
+                      ? formatTextWithSlashesAsHtml(
                           recallToHeadline(
                             question.headline,
                             localSurvey,

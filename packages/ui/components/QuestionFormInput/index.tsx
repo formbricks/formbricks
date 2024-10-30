@@ -1,6 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import DOMPurify from "dompurify";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -278,7 +279,7 @@ export const QuestionFormInput = ({
   const checkForRecallSymbol = useCallback(
     (value: TI18nString) => {
       const pattern = /(^|\s)@(\s|$)/;
-      if (pattern.test(getLocalizedValue(value, usedLanguageCode))) {
+      if (pattern.test(stripHtmlTags(getLocalizedValue(value, usedLanguageCode)))) {
         setShowRecallItemSelect(true);
       } else {
         setShowRecallItemSelect(false);
@@ -342,7 +343,6 @@ export const QuestionFormInput = ({
   const handleUpdate = useCallback(
     (updatedText: string) => {
       const translatedText = createUpdatedText(updatedText);
-
       if (isChoice) {
         updateChoiceDetails(translatedText);
       } else if (isEndingCard || isWelcomeCard) {
@@ -366,6 +366,17 @@ export const QuestionFormInput = ({
       updateSurveyDetails,
     ]
   );
+
+  const replaceInHtmlContent = (html: string, pattern: RegExp | string, replacementPattern: string) => {
+    const rawText = stripHtmlTags(html);
+    const updatedText = rawText.replace(pattern, replacementPattern);
+    return html.replace(rawText, updatedText);
+  };
+
+  const stripHtmlTags = (html: string): string => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+  };
 
   // Adds a new recall question to the recallItems array, updates fallbacks, modifies the text with recall details.
   const addRecallItem = useCallback(
@@ -393,13 +404,16 @@ export const QuestionFormInput = ({
       setShowRecallItemSelect(false);
 
       let modifiedHeadlineWithId = { ...elementText };
-      modifiedHeadlineWithId[usedLanguageCode] = getLocalizedValue(
-        modifiedHeadlineWithId,
-        usedLanguageCode
-      ).replace(/(?<=^|\s)@(?=\s|$)/g, `#recall:${recallItem.id}/fallback:# `);
-
+      // modifiedHeadlineWithId[usedLanguageCode] = getLocalizedValue(
+      //   modifiedHeadlineWithId,
+      //   usedLanguageCode
+      // ).replace(/(?<=^|\s)@(?=\s|$)/g, `#recall:${recallItem.id}/fallback:# `);
+      modifiedHeadlineWithId[usedLanguageCode] = replaceInHtmlContent(
+        getLocalizedValue(modifiedHeadlineWithId, usedLanguageCode),
+        /(?<=^|\s)@(?=\s|$)/g,
+        `#recall:${recallItem.id}/fallback:# `
+      );
       handleUpdate(getLocalizedValue(modifiedHeadlineWithId, usedLanguageCode));
-
       const modifiedHeadlineWithName = recallToHeadline(
         modifiedHeadlineWithId,
         localSurvey,
@@ -407,7 +421,6 @@ export const QuestionFormInput = ({
         usedLanguageCode,
         attributeClasses
       );
-
       setText(modifiedHeadlineWithName);
       setShowFallbackInput(true);
     },
@@ -452,10 +465,15 @@ export const QuestionFormInput = ({
           let updatedFallback = { ...fallbacks };
           updatedFallback[recallQuestion.id] = fallBackValue;
           setFallbacks(updatedFallback);
-          headlineWithFallback[usedLanguageCode] = getLocalizedValue(
-            headlineWithFallback,
-            usedLanguageCode
-          ).replace(recallInfo, `#recall:${recallQuestion?.id}/fallback:${fallBackValue}#`);
+          // headlineWithFallback[usedLanguageCode] = getLocalizedValue(
+          //   headlineWithFallback,
+          //   usedLanguageCode
+          // ).replace(recallInfo, `#recall:${recallQuestion?.id}/fallback:${fallBackValue}#`);
+          headlineWithFallback[usedLanguageCode] = replaceInHtmlContent(
+            getLocalizedValue(headlineWithFallback, usedLanguageCode),
+            recallInfo,
+            `#recall:${recallQuestion?.id}/fallback:${fallBackValue}#`
+          );
           handleUpdate(getLocalizedValue(headlineWithFallback, usedLanguageCode));
         }
       }
@@ -485,6 +503,21 @@ export const QuestionFormInput = ({
     [handleUpdate, recallItems, fallbacks]
   );
 
+  useEffect(() => {
+    if (showEditor) {
+      const valueToUse = value || {}; // Default to an empty object if value is undefined
+      const valueTI18nString = recallToHeadline(
+        valueToUse,
+        localSurvey,
+        false,
+        usedLanguageCode,
+        attributeClasses
+      );
+      // Process initial value if showEditor is true
+      checkForRecallSymbol(valueTI18nString);
+    }
+  }, [showEditor, value]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const updatedText = {
@@ -507,10 +540,6 @@ export const QuestionFormInput = ({
     }
 
     debouncedHandleUpdate(value);
-  };
-  const stripHtmlTags = (html: string): string => {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    return doc.body.textContent || "";
   };
 
   const [animationParent] = useAutoAnimate();
@@ -645,6 +674,8 @@ export const QuestionFormInput = ({
                       firstRender={firstRender}
                       setFirstRender={setFirstRender}
                       questionIdx={questionIdx}
+                      showRecallItemSelect={showRecallItemSelect}
+                      stripHtmlTags={stripHtmlTags}
                     />
                   )}
                 </>
@@ -696,13 +727,21 @@ export const QuestionFormInput = ({
             selectedLanguageCode={usedLanguageCode}
             hiddenFields={localSurvey.hiddenFields}
             attributeClasses={attributeClasses}
+            stripHtmlTags={stripHtmlTags}
           />
         )}
       </div>
+
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong>{" "}
-          {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
+          <label
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(
+                recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]
+              ),
+            }}
+          />
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
