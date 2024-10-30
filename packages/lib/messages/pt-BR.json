@@ -569,6 +569,8 @@
       "praise": "elogio",
       "sentiment": "sentimento",
       "sentiment_score": "Pontuação de Sentimento",
+      "templates_card_description": "Escolha um template ou comece do zero",
+      "templates_card_title": "Meça a experiência do seu cliente",
       "this_month": "Este mês",
       "this_quarter": "Esse trimestre",
       "this_week": "Essa semana",
