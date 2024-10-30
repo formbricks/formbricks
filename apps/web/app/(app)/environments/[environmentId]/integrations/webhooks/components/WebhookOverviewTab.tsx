@@ -33,6 +33,25 @@ const convertTriggerIdToName = (triggerId: string): string => {
   }
 };
 
+const renderObject = (obj) => {
+  return (
+    <ul>
+      {Object.entries(obj).map(([key, value]) => (
+        <ul key={key}>
+          <p className="text-xs text-slate-700">{key}:</p>{" "}
+          {value !== undefined ? (
+            <p className="text-xs text-slate-700">
+              {typeof value === "object" ? renderObject(value) : value.toString()}
+            </p>
+          ) : (
+            <p className="text-xs text-slate-700">undefined</p>
+          )}
+        </ul>
+      ))}
+    </ul>
+  );
+};
+
 export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
   return (
     <div className="grid grid-cols-3 pb-2">
@@ -85,6 +104,12 @@ export const WebhookOverviewTab = ({ webhook, surveys }: ActivityTabProps) => {
             {convertDateTimeStringShort(webhook.updatedAt?.toString())}
           </p>
         </div>
+        {webhook.meta !== "" && (
+          <div>
+            <Label className="text-xs font-normal text-slate-500">Meta Information</Label>
+            {renderObject(JSON.parse(webhook.meta as string))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,69 @@
+import { MdxImage } from "@/components/MdxImage";
+
+import IntegrationsTab from "./images/integrations.webp";
+import MattermostServerUrl from "./images/add-mattermost-server-url.webp";
+import MetaInfo from "./images/meta-info.webp";
+
+export const metadata = {
+  title: "Mattermost",
+  description:
+    "The mattermost integration allows you to automatically send responses to a mattermost channel of your choice.",
+};
+
+#### Integrations
+
+# Mattermost
+
+The mattermost integration allows you to automatically send responses to a mattermost channel of your choice.
+
+## Setup to follow
+
+1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) or `https://localhost:3000` if you are running locally and click on the "Manage" button under Mattermost integration.
+
+<MdxImage
+  src={IntegrationsTab}
+  alt="Formbricks Integrations Tab"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+2. This will redirect you to the webhooks integration page. If you want to know more about our webhooks API, refer [here](https://formbricks.com/docs/developer-docs/webhooks)
+
+3. Follow the steps mentioned in that documentation. In order to create a webhook that posts on mattermost, add your mattermost webhook endpoint in the Add Webhook form's URL field. Refer [here](https://developers.mattermost.com/integrate/webhooks/incoming/#create-an-incoming-webhook) to know more about generating your mattermost webhook endpoint.
+
+<MdxImage
+  src={MattermostServerUrl}
+  alt="Mattermost server URL"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. Make sure to add this in the meta information field of that form. This makes sure that the responses goes to your mattermost server.This is an important step. Don't skip it.
+
+   ```json
+      {
+        "webhook_type": "mattermost"
+      }
+
+<MdxImage
+  src={MetaInfo}
+  alt="Adding meta info"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. You can send any of your mattermost supported parameters mentioned [here](https://developers.mattermost.com/integrate/webhooks/incoming/#parameters) in this meta information field.
+
+   ```json
+      {
+        "webhook_type": "mattermost",
+         "channel" : "town-square",
+        "username" : "John Doe"
+      }
+
+
+5. Now you can follow the rest of the steps mentioned in the webhooks documentation.
+
+Congratulations!!! You have succesfully added webhook to connect to your mattermost server. Now whenever a response is submitted for the linked survey, it will be automatically sent to the linked Mattermost channel.
+
+Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

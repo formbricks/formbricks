@@ -13,6 +13,7 @@ export const ZWebhook = z.object({
   environmentId: z.string().cuid2(),
   triggers: z.array(ZPipelineTrigger),
   surveyIds: z.array(z.string().cuid2()),
+  meta: z.unknown(),
 });
 
 export type TWebhook = z.infer<typeof ZWebhook>;
@@ -23,6 +24,7 @@ export const ZWebhookInput = z.object({
   triggers: z.array(ZPipelineTrigger),
   source: ZWebhookSource.optional(),
   surveyIds: z.array(z.string().cuid2()).optional(),
+  meta: z.string().nullish(),
 });
 
 export type TWebhookInput = z.infer<typeof ZWebhookInput>;

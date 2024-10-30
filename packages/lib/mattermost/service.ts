@@ -1,66 +1,42 @@
 import { Prisma } from "@prisma/client";
+import { getWebhooks } from "webhook/service";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
-import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
-import { deleteIntegration, getIntegrationByType } from "../integration/service";
 
-export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
-  let channels: TIntegrationItem[] = [];
-  // `nextCursor` is a pagination token returned by the Slack API. It indicates the presence of additional pages of data.
-  // When `nextCursor` is not empty, it should be included in subsequent requests to fetch the next page of data.
-  let nextCursor: string | undefined = undefined;
+export const writeDataToMattermost = async (
+  serverURL: string,
+  values: string[][],
+  surveyName: string | undefined,
+  meta: any
+) => {
+  try {
+    const [responses, questions] = values;
+    let markdownResponse = `#### Survey results for ${surveyName}\n---\n\n`;
 
-  do {
-    const url = new URL("https://slack.com/api/conversations.list");
-    url.searchParams.append("limit", "200");
-    if (nextCursor) {
-      url.searchParams.append("cursor", nextCursor);
+    for (let i = 0; i < responses.length; i++) {
+      markdownResponse += `${i + 1}. *${questions[i]}*\n`;
+      markdownResponse += `${responses[i]}\n\n`;
     }
 
-    const response = await fetch(url.toString(), {
-      method: "GET",
+    const response = await fetch(`${serverURL}`, {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${slackIntegration.config.key.access_token}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        ...JSON.parse(meta),
+        text: markdownResponse,
+      }),
     });
 
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }
 
-    const data = await response.json();
+    const data = await response.text();
 
-    if (!data.ok) {
-      if (data.error === "token_expired") {
-        // Temporary fix to reset integration if token rotation is enabled
-        await deleteIntegration(slackIntegration.id);
-      }
-      throw new Error(data.error);
+    if (data !== "ok") {
+      throw new Error(data);
     }
-
-    channels = channels.concat(
-      data.channels.map((channel: { name: string; id: string }) => ({
-        name: channel.name,
-        id: channel.id,
-      }))
-    );
-
-    nextCursor = data.response_metadata?.next_cursor;
-  } while (nextCursor);
-
-  return channels;
-};
-
-export const getMattermostChannels = async (environmentId: string): Promise<TIntegrationItem[]> => {
-  let channels: TIntegrationItem[] = [];
-  try {
-    const slackIntegration = (await getIntegrationByType(environmentId, "slack")) as TIntegrationSlack;
-    if (slackIntegration && slackIntegration.config?.key) {
-      channels = await fetchChannels(slackIntegration);
-    }
-
-    return channels;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -69,69 +45,32 @@ export const getMattermostChannels = async (environmentId: string): Promise<TInt
   }
 };
 
-export const writeDataToMattermost = async (
-  credentials: TIntegrationSlackCredential,
-  channelId: string,
-  values: string[][],
-  surveyName: string | undefined
-) => {
+export const getMattermostWebhooks = async (environmentId: string) => {
   try {
-    const [responses, questions] = values;
-    let blockResponse = [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `${surveyName}\n`,
-        },
-      },
-      {
-        type: "divider",
-      },
-    ];
-    for (let i = 0; i < values[0].length; i++) {
-      let questionSection = {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*${questions[i]}*`,
-        },
-      };
-      let responseSection = {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `${responses[i]}\n`,
-        },
-      };
-      blockResponse.push(questionSection, responseSection);
-    }
+    const webhooks = await getWebhooks(environmentId);
 
-    const response = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${credentials.access_token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        channel: channelId,
-        blocks: blockResponse,
-      }),
-    });
+    const mattermostWebhooks = webhooks.filter((webhook) =>
+      webhook.meta ? JSON.parse(webhook.meta as string)?.webhook_type === "mattermost" : false
+    );
 
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-
-    const data = await response.json();
-
-    if (!data.ok) {
-      throw new Error(data.error);
-    }
+    return mattermostWebhooks;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+    if (error instanceof DatabaseError) {
+      throw new DatabaseError(error.message);
     }
-    throw error;
+    throw new Error(error.message);
+  }
+};
+
+export const getMattermostWebhookCount = async (environmentId: string) => {
+  try {
+    const mattermostWebhooks = await getMattermostWebhooks(environmentId);
+
+    return mattermostWebhooks.length;
+  } catch (error) {
+    if (error instanceof DatabaseError) {
+      throw new DatabaseError(error.message);
+    }
+    throw new Error(error.message);
   }
 };

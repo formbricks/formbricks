@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { cn } from "@formbricks/lib/cn";
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhookInput } from "@formbricks/types/webhooks";
@@ -15,6 +16,7 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { Modal } from "@formbricks/ui/components/Modal";
+import { Textarea } from "@formbricks/ui/components/Textarea";
 import { createWebhookAction, testEndpointAction } from "../actions";
 
 interface AddWebhookModalProps {
@@ -111,6 +113,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           source: "user",
           triggers: selectedTriggers,
           surveyIds: selectedSurveys,
+          meta: data.meta,
         };
 
         await createWebhookAction({ environmentId, webhookInput: updatedData });
@@ -221,6 +224,18 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
                   onSelectedSurveyChange={handleSelectedSurveyChange}
                   allowChanges={true}
                 />
+              </div>
+
+              <div className="col-span-1">
+                <Label htmlFor="meta">Meta Information</Label>
+                <div className="mt-1 flex">
+                  <Textarea
+                    id="meta"
+                    {...register("meta")}
+                    className={cn("focus:border-brand-dark focus-visible:ring-transparent")}
+                    placeholder="Optional: Add meta information that you may need for your webhook."
+                  />
+                </div>
               </div>
             </div>
           </div>

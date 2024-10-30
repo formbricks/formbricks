@@ -17,6 +17,8 @@ import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
+import { Textarea } from "@formbricks/ui/components/Textarea";
+import { cn } from "@formbricks/ui/lib/utils";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 
 interface ActionSettingsTabProps {
@@ -33,6 +35,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
       url: webhook.url,
       triggers: webhook.triggers,
       surveyIds: webhook.surveyIds,
+      meta: webhook.meta,
     },
   });
 
@@ -116,6 +119,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
       source: data.source,
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
+      meta: data.meta,
     };
     setIsUpdatingWebhook(true);
     await updateWebhookAction({ webhookId: webhook.id, webhookInput: updatedData });
@@ -199,6 +203,17 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
             onSelectedSurveyChange={handleSelectedSurveyChange}
             allowChanges={webhook.source === "user"}
           />
+        </div>
+        <div className="col-span-1">
+          <Label htmlFor="meta">Meta Information</Label>
+          <div className="mt-1 flex">
+            <Textarea
+              id="meta"
+              className={cn("focus:border-brand-dark focus-visible:ring-transparent")}
+              {...register("meta")}
+              placeholder="Optional: Add meta information that you may want to send to your webhook"
+            />
+          </div>
         </div>
 
         <div className="flex justify-between border-t border-slate-200 py-6">

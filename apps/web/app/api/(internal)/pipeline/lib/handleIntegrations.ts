@@ -208,7 +208,7 @@ const handleSlackIntegration = async (
   }
 };
 
-const extractResponses = async (
+export const extractResponses = async (
   pipelineData: TPipelineInput,
   questionIds: string[],
   survey: TSurvey

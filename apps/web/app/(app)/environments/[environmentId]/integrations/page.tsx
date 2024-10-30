@@ -2,6 +2,7 @@ import AirtableLogo from "@/images/airtableLogo.svg";
 import GoogleSheetsLogo from "@/images/googleSheetsLogo.png";
 import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
+import MattermostLogo from "@/images/mattermostLogo.svg";
 import n8nLogo from "@/images/n8n.png";
 import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
@@ -12,6 +13,7 @@ import Image from "next/image";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getMattermostWebhookCount } from "@formbricks/lib/mattermost/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -34,6 +36,7 @@ const Page = async ({ params }) => {
     zapierWebhookCount,
     makeWebhookCount,
     n8nwebhookCount,
+    mattermostWebhookCount,
   ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
@@ -43,6 +46,7 @@ const Page = async ({ params }) => {
     getWebhookCountBySource(environmentId, "zapier"),
     getWebhookCountBySource(environmentId, "make"),
     getWebhookCountBySource(environmentId, "n8n"),
+    getMattermostWebhookCount(environmentId),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
@@ -63,7 +67,6 @@ const Page = async ({ params }) => {
   const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
   const isSlackIntegrationConnected = isIntegrationConnected("slack");
-  const isMattermostIntegrationConnected = isIntegrationConnected("mattermost");
 
   const widgetSetupCompleted = !!environment?.appSetupCompleted;
   const integrationCards = [
@@ -192,17 +195,22 @@ const Page = async ({ params }) => {
       statusText: isNotionIntegrationConnected ? "Connected" : "Not Connected",
     },
     {
-      connectHref: `/environments/${params.environmentId}/integrations/mattermost`,
-      connectText: `${isMattermostIntegrationConnected ? "Manage" : "Connect"}`,
+      connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
+      connectText: "Manage",
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/integrations/slack",
+      docsHref: "https://formbricks.com/docs/integrations/mattermost",
       docsText: "Docs",
       docsNewTab: true,
       label: "Mattermost",
       description: "Instantly Connect your Mattermost Workspace with Formbricks",
-      icon: <Image src={SlackLogo} alt="Mattermost Logo" />,
-      connected: isMattermostIntegrationConnected,
-      statusText: isMattermostIntegrationConnected ? "Connected" : "Not Connected",
+      icon: <Image src={MattermostLogo} alt="Mattermost Logo" />,
+      connected: mattermostWebhookCount > 0,
+      statusText:
+        mattermostWebhookCount === 1
+          ? "1 integration"
+          : mattermostWebhookCount === 0
+            ? "Not Connected"
+            : `${mattermostWebhookCount} integration`,
     },
   ];
 

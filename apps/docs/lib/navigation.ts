@@ -113,6 +113,7 @@ export const navigation: Array<NavGroup> = [
           { title: "n8n", href: "/developer-docs/integrations/n8n" },
           { title: "Notion", href: "/developer-docs/integrations/notion" },
           { title: "Slack", href: "/developer-docs/integrations/slack" },
+          { title: "Mattermost", href: "/developer-docs/integrations/mattermost" },
           { title: "Wordpress", href: "/developer-docs/integrations/wordpress" },
           { title: "Zapier", href: "/developer-docs/integrations/zapier" },
         ],

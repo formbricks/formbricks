@@ -105,6 +105,7 @@ export const createWebhook = async (
       data: {
         ...webhookInput,
         surveyIds: webhookInput.surveyIds || [],
+        meta: webhookInput.meta ?? {},
         environment: {
           connect: {
             id: environmentId,
@@ -148,6 +149,7 @@ export const updateWebhook = async (
         url: webhookInput.url,
         triggers: webhookInput.triggers,
         surveyIds: webhookInput.surveyIds || [],
+        meta: webhookInput.meta ?? {},
       },
     });
 

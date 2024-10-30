@@ -51,6 +51,7 @@ model Webhook {
   environmentId String
   triggers      PipelineTriggers[]
   surveyIds     String[]
+  meta          Json               @default("{}")
 
   @@index([environmentId])
 }
@@ -374,7 +375,6 @@ enum IntegrationType {
   notion
   airtable
   slack
-  mattermost
 }
 
 model Integration {
