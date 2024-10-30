@@ -29,7 +29,7 @@ import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
 import { WeeklySummaryNotificationEmail } from "./emails/weekly-summary/weekly-summary-notification-email";
-import { translateEmailText } from "@/lib/utils";
+import { translateEmailText } from "./lib/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
