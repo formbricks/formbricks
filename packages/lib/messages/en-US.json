@@ -564,6 +564,7 @@
       "insights_for_product": "Insights for {productName}",
       "negative": "Negative",
       "new_responses": "New Responses",
+      "no_insights_for_this_filter": "No insights for this filter",
       "no_insights_found": "No insights found. Collect more survey responses or enable insights for your existing surveys to get started.",
       "positive": "Positive",
       "praise": "Praise",
