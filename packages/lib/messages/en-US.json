@@ -2017,7 +2017,7 @@
     "default_welcome_card_headline": "Welcome!",
     "default_welcome_card_html": "Thanks for providing your feedback - let's go!",
     "docs_feedback_description": "Measure how clear each page of your developer documentation is.",
-    "docs_feedback_name": "{{productName}} Docs Feedback",
+    "docs_feedback_name": "Docs Feedback",
     "docs_feedback_question_1_choice_1": "Yes 👍",
     "docs_feedback_question_1_choice_2": "No 👎",
     "docs_feedback_question_1_headline": "Was this page helpful?",

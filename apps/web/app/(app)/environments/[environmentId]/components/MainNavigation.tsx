@@ -371,9 +371,11 @@ export const MainNavigation = ({
                             "text-sm text-slate-500 transition-opacity duration-200",
                             isTextVisible ? "opacity-0" : "opacity-100"
                           )}>
-                          {product.config.channel === "link"
+                          {product.config.channel && product.config.channel === "link"
                             ? t("common.link_and_email")
-                            : t(`common.${product.config.channel}`)}
+                            : product.config.channel
+                              ? t(`common.${product.config.channel}`)
+                              : null}
                         </p>
                       </div>
                       <ChevronRightIcon

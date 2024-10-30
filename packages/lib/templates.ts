@@ -6073,7 +6073,7 @@ export const getCustomSurveyTemplate = (locale: string): TTemplate => ({
         type: TSurveyQuestionTypeEnum.OpenText,
         headline: { default: translate("custom_survey_question_1_headline", locale) },
         placeholder: { default: translate("custom_survey_question_1_placeholder", locale) },
-        buttonLabel: { default: translate("finish", locale) },
+        buttonLabel: { default: translate("next", locale) },
         required: true,
         inputType: "text",
       } as TSurveyOpenTextQuestion,

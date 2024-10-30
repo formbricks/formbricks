@@ -2017,7 +2017,7 @@
     "default_welcome_card_headline": "Bem-vindo!",
     "default_welcome_card_html": "Valeu pelo feedback - bora lá!",
     "docs_feedback_description": "Meça a clareza de cada página da sua documentação de desenvolvedor.",
-    "docs_feedback_name": "Feedback dos Docs do {{productName}}",
+    "docs_feedback_name": "Feedback dos Docs",
     "docs_feedback_question_1_choice_1": "Sim 👍",
     "docs_feedback_question_1_choice_2": "Não 👎",
     "docs_feedback_question_1_headline": "Essa página foi útil?",
