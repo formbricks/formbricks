@@ -54,3 +54,8 @@ export const ZGenerateDocumentObjectSchema = z.object({
 });
 
 export type TGenerateDocumentObjectSchema = z.infer<typeof ZGenerateDocumentObjectSchema>;
+
+export type TCreatedDocument = TDocument & {
+  isSpam: boolean;
+  insights: TGenerateDocumentObjectSchema["insights"];
+};
