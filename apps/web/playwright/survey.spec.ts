@@ -381,8 +381,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Very satisfied").click();
     await page.getByPlaceholder("Very satisfied").fill(surveys.germanCreate.ratingQuestion.highLabel);
     await page.getByText("Show Advanced settings").first().click();
-    await page.getByPlaceholder("Next").click();
-    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
 
     // Fill NPS question in german
     await page.getByRole("main").getByText("Net Promoter Score (NPS)").click();
@@ -393,8 +391,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Upper Label").click();
     await page.getByLabel("Upper Label").fill(surveys.germanCreate.npsQuestion.highLabel);
     await page.getByText("Show Advanced settings").first().click();
-    await page.getByPlaceholder("Next").click();
-    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
 
     // Fill Date question in german
     await page.getByRole("main").getByText("Date").click();
