@@ -40,7 +40,7 @@ export function DefaultLanguageSelect({
             onValueChange={(languageCode) => {
               setConfirmationModalInfo({
                 open: true,
-                title: t(`environments.surveys.edit.set_language_as_default_language`, {
+                title: t("environments.surveys.edit.set_language_as_default_language", {
                   language: getLanguageLabel(languageCode, locale),
                 }),
                 text: t(

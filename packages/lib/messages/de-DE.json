@@ -1420,7 +1420,7 @@
         "select_type": "Typ auswählen",
         "send_survey_to_audience_who_match": "Umfrage an das Publikum senden, das übereinstimmt...",
         "send_your_respondents_to_a_page_of_your_choice": "Schicke deine Befragten auf eine Seite deiner Wahl.",
-        "set_language_as_default_language": "Setze {Sprache} als Standardsprache",
+        "set_language_as_default_language": "Setze {language} als Standardsprache",
         "set_the_global_placement_in_the_look_feel_settings": "Stelle die globale Platzierung in den Look & Feel-Einstellungen ein.",
         "seven_points": "7 Punkte",
         "show_advanced_settings": "Erweiterte Einstellungen anzeigen",

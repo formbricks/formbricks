@@ -698,7 +698,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page
         .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)
         .fill("This is my Address");
-      await page.getByRole("button", { name: "Finish" }).click();
+      await page.getByRole("button", { name: "Next" }).click();
 
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
