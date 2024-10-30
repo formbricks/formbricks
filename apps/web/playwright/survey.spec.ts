@@ -199,7 +199,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
-      await page.getByRole("button", { name: "Next" }).click();
+      await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
 
@@ -459,8 +459,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 5").click();
     await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.ranking.choices[4]);
     await page.getByText("Show Advanced settings").first().click();
-    await page.getByPlaceholder("Next").click();
-    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Finish").click();
+    await page.getByPlaceholder("Finish").fill(surveys.germanCreate.next);
 
     // Fill Thank you card in german
     await page.getByText("Ending card").first().click();
