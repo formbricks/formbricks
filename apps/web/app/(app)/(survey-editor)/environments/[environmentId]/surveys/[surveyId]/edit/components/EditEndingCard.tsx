@@ -62,7 +62,7 @@ export const EditEndingCard = ({
     { value: "redirectToUrl", label: "Redirect to Url", disabled: isRedirectToUrlDisabled },
   ];
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { active, attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: endingCard.id,
   });
   let open = activeQuestionId === endingCard.id;
@@ -134,7 +134,8 @@ export const EditEndingCard = ({
         className={cn(
           open ? "bg-slate-50" : "",
           "flex w-10 flex-col items-center justify-between rounded-l-lg border-b border-l border-t py-2 group-aria-expanded:rounded-bl-none",
-          isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
+          isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50",
+          active?.id === endingCard.id && "outline outline-slate-700"
         )}>
         <div className="mt-3 flex w-full justify-center">
           {endingCard.type === "endScreen" ? (
