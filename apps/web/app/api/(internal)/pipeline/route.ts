@@ -173,13 +173,17 @@ export const POST = async (request: Request) => {
               }
               const text = getPromptText(question.headline.default, response.data[question.id] as string);
               // TODO: check if subheadline gives more context and better embeddings
-              await createDocumentAndAssignInsight(survey.name, {
-                environmentId,
-                surveyId,
-                responseId: response.id,
-                questionId: question.id,
-                text,
-              });
+              try {
+                await createDocumentAndAssignInsight(survey.name, {
+                  environmentId,
+                  surveyId,
+                  responseId: response.id,
+                  questionId: question.id,
+                  text,
+                });
+              } catch (e) {
+                console.error(e);
+              }
             }
           }
         }
