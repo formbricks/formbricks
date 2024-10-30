@@ -14,7 +14,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import React, { SetStateAction, useEffect, useMemo } from "react";
+import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -413,6 +413,45 @@ export const QuestionsView = ({
 
   // Auto animate
   const [parent] = useAutoAnimate();
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (activeQuestionId === null) return;
+
+    const currentIndex = localSurvey.questions.findIndex(
+      (question) => question.id === activeQuestionId
+    );
+
+    switch (event.key) {
+      case "ArrowUp":
+        if (currentIndex > 0) {
+          moveQuestion(currentIndex, true);
+        }
+        break;
+      case "ArrowDown":
+        if (currentIndex < localSurvey.questions.length - 1) {
+          moveQuestion(currentIndex, false);
+        }
+        break;
+      case "Enter":
+        setOriginalIndex(null);
+        break;
+      case "Escape":
+        if (originalIndex !== null) {
+          moveQuestion(currentIndex, currentIndex > originalIndex);
+          setOriginalIndex(null);
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeQuestionId, originalIndex, localSurvey.questions]);
 
   return (
     <div className="mt-12 w-full px-5 py-4">

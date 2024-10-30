@@ -4,6 +4,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { QuestionCard } from "./QuestionCard";
+import { useEffect, useState } from "react";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;
@@ -43,6 +44,46 @@ export const QuestionsDroppable = ({
   isCxMode,
 }: QuestionsDraggableProps) => {
   const [parent] = useAutoAnimate();
+  const [originalIndex, setOriginalIndex] = useState<number | null>(null);
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (activeQuestionId === null) return;
+
+    const currentIndex = localSurvey.questions.findIndex(
+      (question) => question.id === activeQuestionId
+    );
+
+    switch (event.key) {
+      case "ArrowUp":
+        if (currentIndex > 0) {
+          moveQuestion(currentIndex, true);
+        }
+        break;
+      case "ArrowDown":
+        if (currentIndex < localSurvey.questions.length - 1) {
+          moveQuestion(currentIndex, false);
+        }
+        break;
+      case "Enter":
+        setOriginalIndex(null);
+        break;
+      case "Escape":
+        if (originalIndex !== null) {
+          moveQuestion(currentIndex, currentIndex > originalIndex);
+          setOriginalIndex(null);
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeQuestionId, originalIndex, localSurvey.questions]);
 
   return (
     <div className="group mb-5 flex w-full flex-col gap-5" ref={parent}>
