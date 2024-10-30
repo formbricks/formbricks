@@ -29,6 +29,7 @@ import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
 import { WeeklySummaryNotificationEmail } from "./emails/weekly-summary/weekly-summary-notification-email";
+import { translateEmailText } from "@/lib/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -84,7 +85,7 @@ export const sendVerificationEmail = async (user: TEmailUser): Promise<void> => 
   const html = await render(VerificationEmail({ verificationRequestLink, verifyLink, locale: user.locale }));
   await sendEmail({
     to: user.email,
-    subject: "Please verify your email to use Formbricks",
+    subject: translateEmailText("verification_email_subject", user.locale),
     html,
   });
 };

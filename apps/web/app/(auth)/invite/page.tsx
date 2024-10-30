@@ -53,7 +53,9 @@ const Page = async ({ searchParams }) => {
       const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
       const encodedEmail = encodeURIComponent(email);
       return (
-        <ContentLayout headline="Happy to have you 🤗" description="Please create an account or login.">
+        <ContentLayout
+          headline={t("auth.invite.happy_to_have_you")}
+          description={t("auth.invite.happy_to_have_you_description")}>
           <Button
             variant="secondary"
             href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
@@ -67,8 +69,8 @@ const Page = async ({ searchParams }) => {
     } else if (user?.email !== email) {
       return (
         <ContentLayout
-          headline="Ooops! Wrong email 🤦"
-          description="The email in the invitation does not match yours.">
+          headline={t("auth.invite.email_does_not_match")}
+          description={t("auth.invite.email_does_not_match_description")}>
           <Button variant="secondary" href="/support">
             {t("auth.invite.contact_support")}
           </Button>
