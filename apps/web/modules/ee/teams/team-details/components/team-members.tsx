@@ -3,6 +3,7 @@
 import { removeTeamMemberAction, updateUserTeamRoleAction } from "@/modules/ee/teams/team-details/actions";
 import { AddTeamMemberModal } from "@/modules/ee/teams/team-details/components/add-team-member-modal";
 import { TOrganizationMember, TTeamMember } from "@/modules/ee/teams/team-details/types/teams";
+import { leaveTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { TeamRoleMapping, getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
 import { InfoIcon } from "lucide-react";
@@ -34,16 +35,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formb
 
 interface TeamMembersProps {
   members: TTeamMember[];
-  userId: string;
+  currentUserId: string;
   teamId: string;
   organizationMembers: TOrganizationMember[];
   membershipRole?: TOrganizationRole;
-  teamRole?: TTeamRole;
+  teamRole: TTeamRole | null;
 }
 
 export const TeamMembers = ({
   members,
-  userId,
+  currentUserId,
   teamId,
   organizationMembers,
   membershipRole,
@@ -78,10 +79,11 @@ export const TeamMembers = ({
   };
 
   const handleRemoveMember = async (userId: string) => {
-    const removeMemberActionResponse = await removeTeamMemberAction({
-      teamId,
-      userId,
-    });
+    const removeMemberActionResponse =
+      currentUserId === userId
+        ? await leaveTeamAction({ teamId })
+        : await removeTeamMemberAction({ teamId, userId });
+
     if (removeMemberActionResponse?.data) {
       toast.success("Member removed successfully");
       router.refresh();
@@ -168,7 +170,7 @@ export const TeamMembers = ({
                       )}
                     </TableCell>
                     <TableCell>
-                      {(teamMember.id === userId || canPerformRoleManagement) && (
+                      {(teamMember.id === currentUserId || canPerformRoleManagement) && (
                         <Button
                           variant="warn"
                           size="sm"
@@ -176,7 +178,7 @@ export const TeamMembers = ({
                             setSelectedTeamMemberId(teamMember.id);
                             setRemoveMemberModalOpen(true);
                           }}>
-                          {teamMember.id === userId ? "Leave" : "Remove"}
+                          {teamMember.id === currentUserId ? "Leave" : "Remove"}
                         </Button>
                       )}
                     </TableCell>

@@ -23,6 +23,7 @@ export const ZResource = z.enum([
   "language",
   "team",
   "teamMembership",
+  "productTeam",
 ]);
 export type TResource = z.infer<typeof ZResource>;
 

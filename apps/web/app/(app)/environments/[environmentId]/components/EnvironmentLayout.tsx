@@ -1,7 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { getIsAIEnabled } from "@/app/lib/utils";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import type { Session } from "next-auth";
 import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";

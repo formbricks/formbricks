@@ -494,3 +494,32 @@ export const getTeam = reactCache(
       }
     )()
 );
+
+export const isProductPartOfOrganization = async (
+  organizationId: string,
+  productId: string
+): Promise<boolean> => {
+  try {
+    const product = await getProduct(productId);
+    if (!product) {
+      throw new ResourceNotFoundError("Product", productId);
+    }
+
+    return product.organizationId === organizationId;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const isTeamPartOfOrganization = async (organizationId: string, teamId: string): Promise<boolean> => {
+  try {
+    const team = await getTeam(teamId);
+    if (!team) {
+      throw new ResourceNotFoundError("Team", teamId);
+    }
+
+    return team.organizationId === organizationId;
+  } catch (error) {
+    throw error;
+  }
+};

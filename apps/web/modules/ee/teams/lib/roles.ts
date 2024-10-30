@@ -1,12 +1,14 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
 import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { membershipCache } from "@formbricks/lib/membership/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZString } from "@formbricks/types/common";
+import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 
 export const getProductPermissionByUserId = reactCache(
@@ -53,6 +55,41 @@ export const getProductPermissionByUserId = reactCache(
       [`getProductPermissionByUserId-${userId}-${productId}`],
       {
         tags: [teamCache.tag.byUserId(userId), teamCache.tag.byProductId(productId)],
+      }
+    )()
+);
+
+export const getTeamRoleByTeamIdUserId = reactCache(
+  (teamId: string, userId: string): Promise<TTeamRole | null> =>
+    cache(
+      async () => {
+        validateInputs([teamId, ZId], [userId, ZId]);
+        try {
+          const teamMembership = await prisma.teamMembership.findUnique({
+            where: {
+              teamId_userId: {
+                teamId,
+                userId,
+              },
+            },
+          });
+
+          if (!teamMembership) {
+            return null;
+          }
+
+          return teamMembership.role;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getTeamMembershipByTeamIdUserId-${teamId}-${userId}`],
+      {
+        tags: [teamCache.tag.byId(teamId), membershipCache.tag.byUserId(userId)],
       }
     )()
 );

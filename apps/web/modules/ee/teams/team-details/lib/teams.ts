@@ -410,38 +410,3 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
     throw error;
   }
 };
-
-export const getTeamRoleByTeamIdUserId = reactCache(
-  (teamId: string, userId: string): Promise<TTeamRole | null> =>
-    cache(
-      async () => {
-        validateInputs([teamId, ZId], [userId, ZId]);
-        try {
-          const teamMembership = await prisma.teamMembership.findUnique({
-            where: {
-              teamId_userId: {
-                teamId,
-                userId,
-              },
-            },
-          });
-
-          if (!teamMembership) {
-            return null;
-          }
-
-          return teamMembership.role;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getTeamMembershipByTeamIdUserId-${teamId}-${userId}`],
-      {
-        tags: [teamCache.tag.byId(teamId), membershipCache.tag.byUserId(userId)],
-      }
-    )()
-);

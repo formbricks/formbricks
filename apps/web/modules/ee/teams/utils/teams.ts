@@ -11,7 +11,7 @@ export const TeamRoleMapping = {
   [TeamRole.contributor]: "Contributor",
 };
 
-export const getTeamAccessFlags = (role?: TeamRole) => {
+export const getTeamAccessFlags = (role?: TeamRole | null) => {
   const isAdmin = role === TeamRole.admin;
   const isContributor = role === TeamRole.contributor;
 

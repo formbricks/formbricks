@@ -1,10 +1,10 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import { createTeam, getTeams, joinTeam, leaveTeam } from "@/modules/ee/teams/team-list/lib/teams";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 
 const ZGetTeamsAction = z.object({
   organizationId: z.string(),
@@ -13,10 +13,15 @@ const ZGetTeamsAction = z.object({
 export const getTeamsAction = authenticatedActionClient
   .schema(ZGetTeamsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["team", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["team", "read"],
+        },
+      ],
     });
 
     return await getTeams(ctx.user.id, parsedInput.organizationId);
@@ -29,10 +34,15 @@ const ZLeaveTeamAction = z.object({
 export const leaveTeamAction = authenticatedActionClient
   .schema(ZLeaveTeamAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
-      rules: ["team", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["teamMembership", "delete"],
+        },
+      ],
     });
 
     return await leaveTeam(ctx.user.id, parsedInput.teamId);
@@ -45,10 +55,15 @@ const ZJoinTeamAction = z.object({
 export const joinTeamAction = authenticatedActionClient
   .schema(ZJoinTeamAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
-      rules: ["teamMembership", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["teamMembership", "create"],
+        },
+      ],
     });
 
     return await joinTeam(ctx.user.id, parsedInput.teamId);
@@ -62,10 +77,15 @@ const ZCreateTeamAction = z.object({
 export const createTeamAction = authenticatedActionClient
   .schema(ZCreateTeamAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["team", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["team", "create"],
+        },
+      ],
     });
 
     return await createTeam(parsedInput.organizationId, parsedInput.name);

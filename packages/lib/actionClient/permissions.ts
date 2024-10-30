@@ -99,6 +99,11 @@ export const Permissions = {
       update: true,
       delete: true,
     },
+    productTeam: {
+      create: true,
+      update: true,
+      delete: true,
+    },
   },
 
   manager: {
@@ -199,6 +204,11 @@ export const Permissions = {
       update: true,
       delete: true,
     },
+    productTeam: {
+      create: true,
+      update: true,
+      delete: true,
+    },
   },
 
   billing: {
@@ -291,13 +301,18 @@ export const Permissions = {
     },
     team: {
       create: false,
-      read: false,
+      read: true,
       update: false,
       delete: false,
     },
     teamMembership: {
       create: false,
       read: false,
+      update: false,
+      delete: false,
+    },
+    productTeam: {
+      create: false,
       update: false,
       delete: false,
     },
@@ -310,7 +325,7 @@ export const Permissions = {
     product: {
       create: false,
       read: true,
-      update: false,
+      update: true,
       delete: false,
     },
     organization: {
@@ -391,26 +406,20 @@ export const Permissions = {
     },
     team: {
       create: false,
-      read: false,
+      read: true,
       update: false,
       delete: false,
     },
     teamMembership: {
       create: false,
-      read: false,
+      read: true,
+      update: true,
+      delete: true,
+    },
+    productTeam: {
+      create: false,
       update: false,
       delete: false,
     },
   },
-};
-
-export const teamPermissions = {
-  read: {},
-  readWrite: {},
-  manage: {},
-};
-
-export const teamRolePermissions = {
-  admin: {},
-  contributor: {},
 };

@@ -14,7 +14,7 @@ interface DetailsViewProps {
   userId: string;
   membershipRole?: TOrganizationRole;
   organizationMembers: TOrganizationMember[];
-  teamRole?: TTeamRole;
+  teamRole: TTeamRole | null;
 }
 
 export const DetailsView = ({
@@ -49,7 +49,7 @@ export const DetailsView = ({
       {activeId === "members" ? (
         <TeamMembers
           members={team.teamMembers}
-          userId={userId}
+          currentUserId={userId}
           teamId={team.id}
           organizationMembers={organizationMembers}
           membershipRole={membershipRole}

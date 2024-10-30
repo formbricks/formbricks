@@ -12,18 +12,42 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
       validateInputs([userId, ZId], [environmentId, ZId]);
 
       try {
-        const environment = await prisma.environment.findUnique({
+        const orgMembership = await prisma.membership.findFirst({
           where: {
-            id: environmentId,
+            userId,
+            organization: {
+              products: {
+                some: {
+                  environments: {
+                    some: {
+                      id: environmentId,
+                    },
+                  },
+                },
+              },
+            },
           },
-          select: {
-            product: {
-              select: {
-                organization: {
-                  select: {
-                    memberships: {
-                      select: {
-                        userId: true,
+        });
+
+        if (!orgMembership) return false;
+
+        if (
+          orgMembership.organizationRole === "owner" ||
+          orgMembership.organizationRole === "manager" ||
+          orgMembership.organizationRole === "billing"
+        )
+          return true;
+
+        const teamMembership = await prisma.teamMembership.findFirst({
+          where: {
+            userId,
+            team: {
+              productTeams: {
+                some: {
+                  product: {
+                    environments: {
+                      some: {
+                        id: environmentId,
                       },
                     },
                   },
@@ -33,9 +57,9 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
           },
         });
 
-        const environmentUsers =
-          environment?.product.organization.memberships.map((member) => member.userId) || [];
-        return environmentUsers.includes(userId);
+        if (teamMembership) return true;
+
+        return false;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);

@@ -1,5 +1,5 @@
-import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";

@@ -1,11 +1,8 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import { DetailsView } from "@/modules/ee/teams/team-details/components/details-view";
 import { TeamsNavigationBreadcrumbs } from "@/modules/ee/teams/team-details/components/team-navigation";
-import {
-  getMembersByOrganizationId,
-  getTeam,
-  getTeamRoleByTeamIdUserId,
-} from "@/modules/ee/teams/team-details/lib/teams";
+import { getMembersByOrganizationId, getTeam } from "@/modules/ee/teams/team-details/lib/teams";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
@@ -33,13 +30,13 @@ export const TeamDetails = async ({ params }) => {
     throw new Error("Team not found");
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
   const teamRole = await getTeamRoleByTeamIdUserId(params.teamId, session.user.id);
 
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
-  if (!canDoRoleManagement || isBilling) {
+  if (!canDoRoleManagement || isBilling || (isMember && !teamRole)) {
     notFound();
   }
 

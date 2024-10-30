@@ -1,5 +1,5 @@
-import { getProductPermissionByUserId } from "@/app/(app)/environments/[environmentId]/lib/productMembership";
 import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
