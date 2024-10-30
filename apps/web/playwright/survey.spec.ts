@@ -357,6 +357,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.pictureSelectQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill Rating question in german
     await page.getByRole("main").getByText("Rating").click();
@@ -368,6 +371,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Not good").fill(surveys.germanCreate.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").click();
     await page.getByPlaceholder("Very satisfied").fill(surveys.germanCreate.ratingQuestion.highLabel);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill NPS question in german
     await page.getByRole("main").getByText("Net Promoter Score (NPS)").click();
@@ -377,6 +383,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Lower Label").fill(surveys.germanCreate.npsQuestion.lowLabel);
     await page.getByLabel("Upper Label").click();
     await page.getByLabel("Upper Label").fill(surveys.germanCreate.npsQuestion.highLabel);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill Date question in german
     await page.getByRole("main").getByText("Date").click();
@@ -384,6 +393,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.dateQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill File upload question in german
     await page.getByRole("main").getByText("File Upload").click();
@@ -391,6 +403,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.fileUploadQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill Matrix question in german
     await page.getByRole("main").getByText("Matrix").click();
@@ -410,6 +425,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator("#column-2").fill(surveys.germanCreate.matrix.columns[2]);
     await page.locator("#column-3").click();
     await page.locator("#column-3").fill(surveys.germanCreate.matrix.columns[3]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill Address question in german
     await page.getByRole("main").getByText("Address").click();
@@ -417,6 +435,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.addressQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill Ranking question in german
     await page.getByRole("main").getByText("Ranking").click();
@@ -432,6 +453,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 4").fill(surveys.germanCreate.ranking.choices[3]);
     await page.getByPlaceholder("Option 5").click();
     await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.ranking.choices[4]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.next);
 
     // Fill Thank you card in german
     await page.getByText("Ending card").first().click();
