@@ -3467,7 +3467,7 @@ const professionalDevelopmentSurvey = (): TTemplate => {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
           headline: {
-            default: "What is the main reason you would want to spend time on professional development?",
+            default: "What are your main reasons for wanting to spend time on professional development?",
           },
           required: true,
           shuffleOption: "exceptLast",
