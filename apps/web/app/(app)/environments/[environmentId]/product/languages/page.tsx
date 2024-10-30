@@ -1,12 +1,14 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { EditLanguage } from "@formbricks/ee/multi-language/components/edit-language";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
@@ -25,9 +27,20 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const locale = findMatchingLocale();
   if (!isMultiLanguageAllowed) {
     notFound();
+  }
+
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Session not found");
+  }
+
+  const user = await getUser(session.user.id);
+
+  if (!user) {
+    throw new Error("User not found");
   }
 
   return (
@@ -42,7 +55,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title={t("environments.product.languages.multi_language_surveys")}
         description={t("environments.product.languages.multi_language_surveys_description")}>
-        <EditLanguage product={product} locale={locale} />
+        <EditLanguage product={product} locale={user.locale} />
       </SettingsCard>
     </PageContentWrapper>
   );
