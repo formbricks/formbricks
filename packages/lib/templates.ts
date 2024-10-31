@@ -2125,8 +2125,8 @@ const improveActivationRate = (locale: string): TTemplate => {
 const employeeSatisfaction = (locale: string): TTemplate => {
   return {
     name: translate("employee_satisfaction_name", locale),
-    role: "productManager",
-    industries: ["saas", "other"],
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
     channels: ["app", "link"],
     description: translate("employee_satisfaction_description", locale),
     preset: {
@@ -3703,6 +3703,291 @@ const customerEffortScore = (locale: string): TTemplate => {
           required: true,
           placeholder: { default: translate("customer_effort_score_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const careerDevelopmentSurvey = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("career_development_survey_name", locale),
+    role: "productManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("career_development_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("career_development_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_1_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_1_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_1_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_2_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_2_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_2_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_3_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_3_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_3_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_4_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_4_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_4_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: translate("career_development_survey_question_5_headline", locale) },
+          subheader: { default: translate("career_development_survey_question_5_subheader", locale) },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("career_development_survey_question_5_choice_6", locale) },
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: translate("career_development_survey_question_6_headline", locale) },
+          subheader: { default: translate("career_development_survey_question_6_subheader", locale) },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("career_development_survey_question_6_choice_6", locale) },
+            },
+          ],
+        },
+      ],
+    },
+  };
+};
+
+const professionalDevelopmentSurvey = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("professional_development_survey_name", locale),
+    role: "productManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("professional_development_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("professional_development_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: {
+            default: translate("professional_development_survey_question_1_headline", locale),
+          },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: translate("yes", locale) } },
+            { id: createId(), label: { default: translate("no", locale) } },
+          ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: translate("professional_development_survey_question_2_headline", locale),
+          },
+          subheader: { default: translate("professional_development_survey_question_2_subheader", locale) },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("professional_development_survey_question_2_choice_6", locale) },
+            },
+          ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: {
+            default: translate("professional_development_survey_question_3_headline", locale),
+          },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_3_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_3_choice_2", locale) },
+            },
+          ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("professional_development_survey_question_4_headline", locale),
+          },
+          lowerLabel: {
+            default: translate("professional_development_survey_question_4_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_survey_question_4_upper_label", locale),
+          },
+          required: true,
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: translate("professional_development_survey_question_5_headline", locale),
+          },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("professional_development_survey_question_5_choice_6", locale) },
+            },
+          ],
           buttonLabel: { default: translate("finish", locale) },
           backButtonLabel: { default: translate("back", locale) },
         },
@@ -5767,8 +6052,8 @@ const employeeWellBeing = (locale: string): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("employee_well_being_name", locale),
-    role: "productManager",
-    industries: ["eCommerce"],
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
     description: translate("employee_well_being_description", locale),
     preset: {
@@ -5847,7 +6132,7 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("long_term_retention_check_in_name", locale),
-    role: "productManager",
+    role: "peopleManager",
     industries: ["saas", "other"],
     channels: ["app", "link"],
     description: translate("long_term_retention_check_in_description", locale),
@@ -6016,6 +6301,358 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
   };
 };
 
+const professionalDevelopmentGrowth = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("professional_development_growth_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("professional_development_growth_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("professional_development_growth_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("professional_development_growth_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("professional_development_growth_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_growth_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("professional_development_growth_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("professional_development_growth_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_growth_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("professional_development_growth_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("professional_development_growth_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_growth_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("professional_development_growth_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("professional_development_growth_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const recognitionAndReward = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("recognition_and_reward_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("recognition_and_reward_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("recognition_and_reward_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("recognition_and_reward_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("recognition_and_reward_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("recognition_and_reward_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("recognition_and_reward_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("recognition_and_reward_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("recognition_and_reward_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("recognition_and_reward_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const alignmentAndEngagement = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("alignment_and_engagement_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("alignment_and_engagement_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: "Alignment and Engagement with Company Vision",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("alignment_and_engagement_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("alignment_and_engagement_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("alignment_and_engagement_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("alignment_and_engagement_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("alignment_and_engagement_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("alignment_and_engagement_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("alignment_and_engagement_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const supportiveWorkCulture = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("supportive_work_culture_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("supportive_work_culture_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("supportive_work_culture_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("supportive_work_culture_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("supportive_work_culture_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("supportive_work_culture_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("supportive_work_culture_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("supportive_work_culture_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("supportive_work_culture_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("supportive_work_culture_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
 export const templates = (locale = defaultLocale): TTemplate[] => [
   cartAbandonmentSurvey(locale),
   siteAbandonmentSurvey(locale),
@@ -6059,6 +6696,12 @@ export const templates = (locale = defaultLocale): TTemplate[] => [
   employeeSatisfaction(locale),
   employeeWellBeing(locale),
   longTermRetentionCheckIn(locale),
+  supportiveWorkCulture(locale),
+  alignmentAndEngagement(locale),
+  recognitionAndReward(locale),
+  professionalDevelopmentGrowth(locale),
+  professionalDevelopmentSurvey(locale),
+  careerDevelopmentSurvey(locale),
 ];
 
 export const getCustomSurveyTemplate = (locale: string): TTemplate => ({

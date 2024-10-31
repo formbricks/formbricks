@@ -24,6 +24,8 @@ const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
       return "border-emerald-300 bg-emerald-50 text-emerald-500";
     case "customerSuccess":
       return "border-violet-300 bg-violet-50 text-violet-500";
+    case "peopleManager":
+      return "border-pink-300 bg-pink-50 text-pink-500";
     default:
       return "border-slate-300 bg-slate-50 text-slate-500";
   }

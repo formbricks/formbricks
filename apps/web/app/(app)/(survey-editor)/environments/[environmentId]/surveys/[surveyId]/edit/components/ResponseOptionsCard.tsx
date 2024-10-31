@@ -347,7 +347,7 @@ export const ResponseOptionsCard = ({
             )}
             childBorder={true}>
             <div className="p-4">
-              <DatePicker date={runOnDate} handleDateChange={handleRunOnDateChange} />
+              <DatePicker date={runOnDate} updateSurveyDate={handleRunOnDateChange} />
             </div>
           </AdvancedOptionToggle>
           {/* Close Survey on Date */}
@@ -361,7 +361,7 @@ export const ResponseOptionsCard = ({
             )}
             childBorder={true}>
             <div className="p-4">
-              <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
+              <DatePicker date={closeOnDate} updateSurveyDate={handleCloseOnDateChange} />
             </div>
           </AdvancedOptionToggle>
 
