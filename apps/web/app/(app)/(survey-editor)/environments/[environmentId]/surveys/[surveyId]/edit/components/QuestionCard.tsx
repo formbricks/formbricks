@@ -8,6 +8,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
@@ -21,6 +22,7 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { Switch } from "@formbricks/ui/components/Switch";
@@ -58,6 +60,7 @@ interface QuestionCardProps {
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
+  locale: TUserLocale;
 }
 
 export const QuestionCard = ({
@@ -79,11 +82,12 @@ export const QuestionCard = ({
   addQuestion,
   isFormbricksCloud,
   isCxMode,
+  locale,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
-
+  const t = useTranslations();
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   const [parent] = useAutoAnimate();
@@ -203,11 +207,13 @@ export const QuestionCard = ({
                           attributeClasses
                         )[selectedLanguageCode] ?? ""
                       )
-                    : getTSurveyQuestionTypeEnumName(question.type)}
+                    : getTSurveyQuestionTypeEnumName(question.type, locale)}
                 </p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {question?.required ? "Required" : "Optional"}
+                    {question?.required
+                      ? t("environments.surveys.edit.required")
+                      : t("environments.surveys.edit.optional")}
                   </p>
                 )}
               </div>
@@ -227,6 +233,7 @@ export const QuestionCard = ({
                 addCard={addQuestion}
                 cardType="question"
                 isCxMode={isCxMode}
+                locale={locale}
               />
             </div>
           </div>
@@ -243,6 +250,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -255,6 +263,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -267,6 +276,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -279,6 +289,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -291,6 +302,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
@@ -303,6 +315,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -314,6 +327,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -326,6 +340,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -338,6 +353,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
@@ -352,6 +368,7 @@ export const QuestionCard = ({
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
               isFormbricksCloud={isFormbricksCloud}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
@@ -364,6 +381,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -376,6 +394,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -388,6 +407,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -400,6 +420,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -412,6 +433,7 @@ export const QuestionCard = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           ) : null}
           <div className="mt-4">
@@ -422,7 +444,9 @@ export const QuestionCard = ({
                 ) : (
                   <ChevronRightIcon className="mr-2 h-4 w-3" />
                 )}
-                {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
+                {openAdvanced
+                  ? t("environments.surveys.edit.hide_advanced_settings")
+                  : t("environments.surveys.edit.show_advanced_settings")}
               </Collapsible.CollapsibleTrigger>
 
               <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
@@ -434,11 +458,11 @@ export const QuestionCard = ({
                       <QuestionFormInput
                         id="buttonLabel"
                         value={question.buttonLabel}
-                        label={`"Next" Button Label`}
+                        label={t("environments.surveys.edit.next_button_label")}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
-                        placeholder={lastQuestion ? "Finish" : "Next"}
+                        placeholder={lastQuestion ? t("common.finish") : t("common.next")}
                         isInvalid={isInvalid}
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
@@ -458,22 +482,24 @@ export const QuestionCard = ({
                           );
                         }}
                         attributeClasses={attributeClasses}
+                        locale={locale}
                       />
                     </div>
                     {questionIdx !== 0 && (
                       <QuestionFormInput
                         id="backButtonLabel"
                         value={question.backButtonLabel}
-                        label={`"Back" Button Label`}
+                        label={t("environments.surveys.edit.back_button_label")}
                         localSurvey={localSurvey}
                         questionIdx={questionIdx}
                         maxLength={48}
-                        placeholder={"Back"}
+                        placeholder={t("common.back")}
                         isInvalid={isInvalid}
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         attributeClasses={attributeClasses}
+                        locale={locale}
                         onBlur={(e) => {
                           if (!question.backButtonLabel) return;
                           let translatedBackButtonLabel = {
@@ -503,6 +529,7 @@ export const QuestionCard = ({
                         selectedLanguageCode={selectedLanguageCode}
                         setSelectedLanguageCode={setSelectedLanguageCode}
                         attributeClasses={attributeClasses}
+                        locale={locale}
                       />
                     </div>
                   )}
@@ -523,7 +550,7 @@ export const QuestionCard = ({
           <div className="mx-4 flex justify-end space-x-6 border-t border-slate-200">
             {question.type === "openText" && (
               <div className="my-4 flex items-center justify-end space-x-2">
-                <Label htmlFor="longAnswer">Long Answer</Label>
+                <Label htmlFor="longAnswer">{t("environments.surveys.edit.long_answer")}</Label>
                 <Switch
                   id="longAnswer"
                   disabled={question.inputType !== "text"}
@@ -539,7 +566,7 @@ export const QuestionCard = ({
             )}
             {
               <div className="my-4 flex items-center justify-end space-x-2">
-                <Label htmlFor="required-toggle">Required</Label>
+                <Label htmlFor="required-toggle">{t("environments.surveys.edit.required")}</Label>
                 <Switch
                   id="required-toggle"
                   checked={question.required}

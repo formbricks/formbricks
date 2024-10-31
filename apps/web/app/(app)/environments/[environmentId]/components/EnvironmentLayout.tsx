@@ -2,6 +2,7 @@ import { MainNavigation } from "@/app/(app)/environments/[environmentId]/compone
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { getIsAIEnabled } from "@/app/lib/utils";
 import type { Session } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -25,6 +26,7 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
+  const t = await getTranslations();
   const [user, environment, organizations, organization] = await Promise.all([
     getUser(session.user.id),
     getEnvironment(environmentId),
@@ -33,11 +35,15 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   ]);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
-  if (!organization || !environment) {
-    throw new Error("Organization or environment not found");
+  if (!organization) {
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
   }
 
   const [products, environments] = await Promise.all([
@@ -46,7 +52,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   ]);
 
   if (!products || !environments || !organizations) {
-    throw new Error("Products, environments or organizations not found");
+    throw new Error(t("environments.products_environments_organizations_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

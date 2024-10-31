@@ -1,4 +1,5 @@
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyVariables } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
@@ -9,6 +10,7 @@ interface HiddenFieldsProps {
 }
 
 export const ResponseVariables = ({ variables, variablesData }: HiddenFieldsProps) => {
+  const t = useTranslations();
   return (
     <div className="mt-6 flex flex-col gap-6">
       {variables.map((variable) => {
@@ -32,7 +34,7 @@ export const ResponseVariables = ({ variables, variablesData }: HiddenFieldsProp
                       )}
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[300px]" side="top">
-                      Variable
+                      {t("common.variable")}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

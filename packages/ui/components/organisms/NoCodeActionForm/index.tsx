@@ -1,4 +1,5 @@
 import { InfoIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { Alert, AlertDescription, AlertTitle } from "../../Alert";
@@ -15,7 +16,7 @@ interface NoCodeActionFormProps {
 
 export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
   const { control, watch } = form;
-
+  const t = useTranslations();
   return (
     <>
       <FormField
@@ -25,16 +26,16 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
           <FormItem>
             <FormControl>
               <div>
-                <Label className="font-semibold">What is the user doing?</Label>
+                <Label className="font-semibold">{t("environments.actions.what_is_the_user_doing")}</Label>
                 <TabToggle
                   id="userAction"
                   {...field}
                   defaultSelected={field.value}
                   options={[
-                    { value: "click", label: "Click" },
-                    { value: "pageView", label: "Page View" },
-                    { value: "exitIntent", label: "Exit Intent" },
-                    { value: "fiftyPercentScroll", label: "50% Scroll" },
+                    { value: "click", label: t("environments.actions.click") },
+                    { value: "pageView", label: t("environments.actions.page_view") },
+                    { value: "exitIntent", label: t("environments.actions.exit_intent") },
+                    { value: "fiftyPercentScroll", label: t("environments.actions.fifty_percent_scroll") },
                   ]}
                 />
               </div>
@@ -64,25 +65,29 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
         {watch("noCodeConfig.type") === "pageView" && (
           <Alert>
             <InfoIcon className="h-4 w-4" />
-            <AlertTitle>Page View</AlertTitle>
-            <AlertDescription>This action will be triggered when the page is loaded.</AlertDescription>
+            <AlertTitle>{t("environments.actions.page_view")}</AlertTitle>
+            <AlertDescription>
+              {t("environments.actions.this_action_will_be_triggered_when_the_page_is_loaded")}
+            </AlertDescription>
           </Alert>
         )}
         {watch("noCodeConfig.type") === "exitIntent" && (
           <Alert>
             <InfoIcon className="h-4 w-4" />
-            <AlertTitle>Exit Intent</AlertTitle>
+            <AlertTitle>{t("environments.actions.exit_intent")}</AlertTitle>
             <AlertDescription>
-              This action will be triggered when the user tries to leave the page.
+              {t("environments.actions.this_action_will_be_triggered_when_the_user_tries_to_leave_the_page")}
             </AlertDescription>
           </Alert>
         )}
         {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
           <Alert>
             <InfoIcon className="h-4 w-4" />
-            <AlertTitle>50% Scroll</AlertTitle>
+            <AlertTitle>{t("environments.actions.fifty_percent_scroll")}</AlertTitle>
             <AlertDescription>
-              This action will be triggered when the user scrolls 50% of the page.
+              {t(
+                "environments.actions.this_action_will_be_triggered_when_the_user_scrolls_50_percent_of_the_page"
+              )}
             </AlertDescription>
           </Alert>
         )}

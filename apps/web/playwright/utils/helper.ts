@@ -563,7 +563,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Show Advanced Settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
-  await page.getByRole("option", { name: "equals one of" }).click();
+  await page.getByRole("option", { name: "Equals one of" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[1] }).click();
@@ -591,7 +591,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Show Advanced Settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
-  await page.getByRole("option", { name: "includes all of" }).click();
+  await page.getByRole("option", { name: "Includes all of" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[1] }).click();

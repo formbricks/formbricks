@@ -11,6 +11,11 @@ export const POST = async (request: Request) => {
       where: {
         id: id,
       },
+      select: {
+        id: true,
+        email: true,
+        locale: true,
+      },
     });
     if (!user) {
       return Response.json({ error: "Invalid token provided or no longer valid" }, { status: 409 });

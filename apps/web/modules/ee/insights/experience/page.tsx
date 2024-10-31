@@ -8,6 +8,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 
 export const ExperiencePage = async ({ params }) => {
@@ -44,6 +45,7 @@ export const ExperiencePage = async ({ params }) => {
   if (!isAIEnabled) {
     notFound();
   }
+  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>
@@ -53,6 +55,7 @@ export const ExperiencePage = async ({ params }) => {
         product={product}
         user={user}
         documentsPerPage={DOCUMENTS_PER_PAGE}
+        locale={locale}
       />
     </PageContentWrapper>
   );

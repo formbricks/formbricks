@@ -1,4 +1,5 @@
 import { UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface SegmentTitleProps {
   title?: string;
@@ -7,10 +8,14 @@ interface SegmentTitleProps {
 }
 
 export const SegmentTitle = ({ title, description, isPrivate }: SegmentTitleProps) => {
+  const t = useTranslations();
+
   if (isPrivate) {
     return (
       <div className="mb-4">
-        <p className="text-sm font-semibold text-slate-800">Send survey to audience who match...</p>
+        <p className="text-sm font-semibold text-slate-800">
+          {t("environments.surveys.edit.send_survey_to_audience_who_match")}
+        </p>
       </div>
     );
   }

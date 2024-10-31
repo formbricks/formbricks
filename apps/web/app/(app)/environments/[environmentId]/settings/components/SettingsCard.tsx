@@ -27,7 +27,7 @@ export const SettingsCard = ({
       id={title}>
       <div className="border-b border-slate-200 px-4 pb-4">
         <div className="flex">
-          <h3 className="text-lg font-medium leading-6 text-slate-900">{title}</h3>
+          <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{title}</h3>
           <div className="ml-2">
             {beta && <Badge text="Beta" size="normal" type="warning" />}
             {soon && <Badge text="coming soon" size="normal" type="success" />}

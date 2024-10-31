@@ -2,13 +2,14 @@
 
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
-import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
+import { getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import {
   TProductConfigChannel,
   TProductConfigIndustry,
@@ -36,6 +37,7 @@ interface ProductSettingsProps {
   channel: TProductConfigChannel;
   industry: TProductConfigIndustry;
   defaultBrandColor: string;
+  locale: string;
 }
 
 export const ProductSettings = ({
@@ -44,9 +46,10 @@ export const ProductSettings = ({
   channel,
   industry,
   defaultBrandColor,
+  locale,
 }: ProductSettingsProps) => {
   const router = useRouter();
-
+  const t = useTranslations();
   const addProduct = async (data: TProductUpdateInput) => {
     try {
       const createProductResponse = await createProductAction({
@@ -107,8 +110,10 @@ export const ProductSettings = ({
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
                   <div>
-                    <FormLabel>Brand color</FormLabel>
-                    <FormDescription>Match the main color of surveys with your brand.</FormDescription>
+                    <FormLabel>{t("organizations.products.new.settings.brand_color")}</FormLabel>
+                    <FormDescription>
+                      {t("organizations.products.new.settings.brand_color_description")}
+                    </FormDescription>
                   </div>
                   <FormControl>
                     <div>
@@ -129,8 +134,10 @@ export const ProductSettings = ({
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
                   <div>
-                    <FormLabel>Product name</FormLabel>
-                    <FormDescription>What is your product called?</FormDescription>
+                    <FormLabel>{t("organizations.products.new.settings.product_name")}</FormLabel>
+                    <FormDescription>
+                      {t("organizations.products.new.settings.product_name_description")}
+                    </FormDescription>
                   </div>
                   <FormControl>
                     <div>
@@ -150,7 +157,7 @@ export const ProductSettings = ({
 
             <div className="flex w-full justify-end">
               <Button loading={isSubmitting} type="submit">
-                Next
+                {t("common.next")}
               </Button>
             </div>
           </form>
@@ -167,10 +174,10 @@ export const ProductSettings = ({
             className="absolute left-2 top-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
           />
         )}
-        <p className="text-sm text-slate-400">Preview</p>
+        <p className="text-sm text-slate-400">{t("common.preview")}</p>
         <div className="h-3/4 w-3/4">
           <SurveyInline
-            survey={PREVIEW_SURVEY}
+            survey={getPreviewSurvey(locale)}
             styling={{ brandColor: { light: brandColor } }}
             isBrandingEnabled={false}
             languageCode="default"

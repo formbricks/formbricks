@@ -6,6 +6,7 @@ import {
   manageSubscriptionAction,
   upgradePlanAction,
 } from "@/app/(ee)/(billing)/environments/[environmentId]/settings/(organization)/billing/actions";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -44,6 +45,7 @@ export const PricingTable = ({
   responseCount,
   stripePriceLookupKeys,
 }: PricingTableProps) => {
+  const t = useTranslations();
   const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
     organization.billing.period ?? "monthly"
   );
@@ -86,24 +88,24 @@ export const PricingTable = ({
       });
 
       if (!upgradePlanResponse?.data) {
-        throw new Error("Something went wrong");
+        throw new Error(t("common.something_went_wrong_please_try_again"));
       }
 
       const { status, newPlan, url } = upgradePlanResponse.data;
 
       if (status != 200) {
-        throw new Error("Something went wrong");
+        throw new Error(t("common.something_went_wrong_please_try_again"));
       }
       if (!newPlan) {
-        toast.success("Plan upgraded successfully");
+        toast.success(t("environments.settings.billing.plan_upgraded_successfully"));
       } else if (newPlan && url) {
         router.push(url);
       } else {
-        throw new Error("Something went wrong");
+        throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
       console.log({ err });
-      toast.error("Unable to upgrade plan");
+      toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
     }
   };
 
@@ -130,7 +132,7 @@ export const PricingTable = ({
     }
 
     if (planId === "free") {
-      toast.error("Everybody has the free plan by default!");
+      toast.error(t("environments.settings.billing.everybody_has_the_free_plan_by_default"));
       return;
     }
   };
@@ -146,7 +148,8 @@ export const PricingTable = ({
         <div className="flex flex-col">
           <div className="flex w-full">
             <h2 className="mb-3 mr-2 inline-flex w-full text-2xl font-bold text-slate-700">
-              Current Plan: {capitalizeFirstLetter(organization.billing.plan)}
+              {t("environments.settings.billing.current_plan")}:{" "}
+              {capitalizeFirstLetter(organization.billing.plan)}
               {cancellingOn && (
                 <Badge
                   className="mx-2"
@@ -164,7 +167,7 @@ export const PricingTable = ({
                   variant="secondary"
                   className="justify-center py-2 shadow-sm"
                   onClick={openCustomerPortal}>
-                  Manage Card Details
+                  {t("environments.settings.billing.manage_card_details")}
                 </Button>
               </div>
             )}
@@ -176,18 +179,24 @@ export const PricingTable = ({
                 "relative mx-8 mb-8 flex flex-col gap-4",
                 responsesUnlimitedCheck && "mb-0 flex-row"
               )}>
-              <p className="text-md font-semibold text-slate-700">Responses</p>
+              <p className="text-md font-semibold text-slate-700">{t("common.responses")}</p>
               {organization.billing.limits.monthly.responses && (
                 <BillingSlider
                   className="slider-class mb-8"
                   value={responseCount}
                   max={organization.billing.limits.monthly.responses * 1.5}
                   freeTierLimit={organization.billing.limits.monthly.responses}
-                  metric={"Responses"}
+                  metric={t("common.responses")}
                 />
               )}
 
-              {responsesUnlimitedCheck && <Badge text="Unlimited Responses" type="success" size="normal" />}
+              {responsesUnlimitedCheck && (
+                <Badge
+                  text={t("environments.settings.billing.unlimited_responses")}
+                  type="success"
+                  size="normal"
+                />
+              )}
             </div>
 
             <div
@@ -195,7 +204,9 @@ export const PricingTable = ({
                 "relative mx-8 flex flex-col gap-4 pb-12",
                 peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
-              <p className="text-md font-semibold text-slate-700">Monthly Identified Users</p>
+              <p className="text-md font-semibold text-slate-700">
+                {t("environments.settings.billing.monthly_identified_users")}
+              </p>
               {organization.billing.limits.monthly.miu && (
                 <BillingSlider
                   className="slider-class"
@@ -219,16 +230,16 @@ export const PricingTable = ({
                   planPeriod === "monthly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                 }`}
                 onClick={() => handleMonthlyToggle("monthly")}>
-                Monthly
+                {t("environments.settings.billing.monthly")}
               </div>
               <div
                 className={`items-centerrounded-md flex-1 whitespace-nowrap py-0.5 pl-4 pr-2 text-center ${
                   planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                 }`}
                 onClick={() => handleMonthlyToggle("yearly")}>
-                Annually
+                {t("environments.settings.billing.annually")}
                 <span className="ml-2 inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                  Get 2 months free 🔥
+                  {t("environments.settings.billing.get_2_months_free")} 🔥
                 </span>
               </div>
             </div>

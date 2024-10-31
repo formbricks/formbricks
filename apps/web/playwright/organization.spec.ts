@@ -1,24 +1,16 @@
 import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
-import { finishOnboarding, signUpAndLogin } from "./utils/helper";
-import { invites, mockUsers } from "./utils/mock";
+import { invites } from "./utils/mock";
 
 test.describe("Invite, accept and remove organization member", async () => {
-  test.describe.configure({ mode: "serial" });
-
-  const { email, name } = mockUsers.organization[0];
-  // let inviteLink: string;
-
-  test("Invite organization member", async ({ page }) => {
-    page.on("console", (msg) => {
-      console.log(msg);
-    });
-
-    await signUpAndLogin(page, name, email, name);
-    await finishOnboarding(page, "link");
+  test.beforeEach(async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  });
 
+  test("Invite organization member", async ({ page }) => {
     await test.step("Invite User", async () => {
       const dropdownTrigger = page.locator("#userDropdownTrigger");
       await expect(dropdownTrigger).toBeVisible();
@@ -40,8 +32,8 @@ test.describe("Invite, accept and remove organization member", async () => {
       await expect(page.getByLabel("Email")).toBeVisible();
       await page.getByLabel("Full Name").fill(invites.addMember.name);
 
-      await expect(page.getByLabel("Email Address")).toBeVisible();
-      await page.getByLabel("Email Address").fill(invites.addMember.email);
+      await expect(page.getByLabel("Email")).toBeVisible();
+      await page.getByLabel("Email").fill(invites.addMember.email);
 
       await page.getByRole("button", { name: "Send Invitation", exact: true }).click();
 
