@@ -2,6 +2,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryConsent,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
@@ -14,7 +15,7 @@ interface ConsentSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
@@ -69,7 +70,7 @@ export const ConsentSummary = ({
                   </p>
                   <div>
                     <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                      {convertFloatToNDecimal(summaryItem.percentage, 1)}%
+                      {convertFloatToNDecimal(summaryItem.percentage, 2)}%
                     </p>
                   </div>
                 </div>

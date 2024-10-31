@@ -4,6 +4,7 @@ import {
   getDefaultOperatorForQuestion,
   getMatchValueProps,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
@@ -52,6 +53,8 @@ export function LogicEditorConditions({
   updateQuestion,
   depth = 0,
 }: LogicEditorConditionsProps) {
+  const [parent] = useAutoAnimate();
+
   const handleAddConditionBelow = (resourceId: string) => {
     const operator = getDefaultOperatorForQuestion(question);
 
@@ -216,18 +219,16 @@ export function LogicEditorConditions({
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem
-                  className="flex items-center gap-2"
                   onClick={() => {
                     handleAddConditionBelow(condition.id);
-                  }}>
-                  <PlusIcon className="h-4 w-4" />
+                  }}
+                  icon={<PlusIcon className="h-4 w-4" />}>
                   Add condition below
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="flex items-center gap-2"
                   disabled={depth === 0 && conditions.conditions.length === 1}
-                  onClick={() => handleRemoveCondition(condition.id)}>
-                  <TrashIcon className="h-4 w-4" />
+                  onClick={() => handleRemoveCondition(condition.id)}
+                  icon={<TrashIcon className="h-4 w-4" />}>
                   Remove
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -307,30 +308,26 @@ export function LogicEditorConditions({
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
-              className="flex items-center gap-2"
               onClick={() => {
                 handleAddConditionBelow(condition.id);
-              }}>
-              <PlusIcon className="h-4 w-4" />
+              }}
+              icon={<PlusIcon className="h-4 w-4" />}>
               Add condition below
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2"
               disabled={depth === 0 && conditions.conditions.length === 1}
-              onClick={() => handleRemoveCondition(condition.id)}>
-              <TrashIcon className="h-4 w-4" />
+              onClick={() => handleRemoveCondition(condition.id)}
+              icon={<TrashIcon className="h-4 w-4" />}>
               Remove
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2"
-              onClick={() => handleDuplicateCondition(condition.id)}>
-              <CopyIcon className="h-4 w-4" />
+              onClick={() => handleDuplicateCondition(condition.id)}
+              icon={<CopyIcon className="h-4 w-4" />}>
               Duplicate
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="flex items-center gap-2"
-              onClick={() => handleCreateGroup(condition.id)}>
-              <WorkflowIcon className="h-4 w-4" />
+              onClick={() => handleCreateGroup(condition.id)}
+              icon={<WorkflowIcon className="h-4 w-4" />}>
               Create group
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -340,7 +337,7 @@ export function LogicEditorConditions({
   };
 
   return (
-    <div className="flex flex-col gap-y-2">
+    <div ref={parent} className="flex flex-col gap-y-2">
       {conditions?.conditions.map((condition, index) => renderCondition(condition, index, conditions))}
     </div>
   );

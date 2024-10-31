@@ -2,6 +2,7 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
@@ -14,7 +15,7 @@ interface NPSSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
@@ -75,7 +76,7 @@ export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilte
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(questionSummary[group]?.percentage, 1)}%
+                    {convertFloatToNDecimal(questionSummary[group]?.percentage, 2)}%
                   </p>
                 </div>
               </div>

@@ -29,9 +29,8 @@ export const TemplateFilters = ({
       {allFilters.map((filters, index) => {
         if (prefilledFilters[index] !== null) return;
         return (
-          <div className="mt-2 flex flex-wrap gap-1 last:border-r-0">
+          <div key={filters[0]?.value || index} className="mt-2 flex flex-wrap gap-1 last:border-r-0">
             <button
-              key={index}
               type="button"
               onClick={() => handleFilterSelect(null, index)}
               disabled={templateSearch && templateSearch.length > 0 ? true : false}

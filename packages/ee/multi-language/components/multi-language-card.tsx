@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import Link from "next/link";
@@ -8,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
-import type { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
+import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
@@ -22,8 +23,8 @@ interface MultiLanguageCardProps {
   localSurvey: TSurvey;
   product: TProduct;
   setLocalSurvey: (survey: TSurvey) => void;
-  activeQuestionId: string | null;
-  setActiveQuestionId: (questionId: string | null) => void;
+  activeQuestionId: TSurveyQuestionId | null;
+  setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
   setSelectedLanguageCode: (language: string) => void;
@@ -169,6 +170,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     setLocalSurvey({ ...localSurvey, ...{ showLanguageSwitch: !localSurvey.showLanguageSwitch } });
   };
 
+  const [parent] = useAutoAnimate();
+
   return (
     <div
       className={cn(
@@ -190,11 +193,11 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         open={open}>
         <Collapsible.CollapsibleTrigger
           asChild
-          className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+          className="flex cursor-pointer justify-between rounded-r-lg p-4 hover:bg-slate-50">
           <div>
             <div className="inline-flex">
               <div>
-                <p className="text-sm font-semibold">Multiple Languages</p>
+                <p className="text-sm font-semibold">Multiple languages</p>
               </div>
             </div>
 
@@ -212,7 +215,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
           <div className="space-y-4">
             {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
