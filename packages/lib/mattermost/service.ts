@@ -68,14 +68,7 @@ export const getMattermostWebhooks = async (environmentId: string) => {
 };
 
 export const getMattermostWebhookCount = async (environmentId: string) => {
-  try {
-    const mattermostWebhooks = await getMattermostWebhooks(environmentId);
+  const mattermostWebhooks = await getMattermostWebhooks(environmentId);
 
-    return mattermostWebhooks.length;
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      throw new DatabaseError(error.message);
-    }
-    throw new Error(error.message);
-  }
+  return mattermostWebhooks.length;
 };
