@@ -1,6 +1,7 @@
 import { RemovedFromOrganization } from "@/app/setup/organization/create/components/RemovedFromOrganization";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -18,9 +19,10 @@ export const metadata: Metadata = {
 };
 
 const Page = async () => {
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
 
-  if (!session) throw new AuthenticationError("Not Authenticated");
+  if (!session) throw new AuthenticationError(t("common.session_not_found"));
 
   const user = await getUser(session.user.id);
   if (!user) {

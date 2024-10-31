@@ -36,22 +36,25 @@ export const replacePresetPlaceholders = (template: TTemplate, product: any) => 
   return { ...template, preset };
 };
 
-export const channelMapping: { value: TProductConfigChannel; label: string }[] = [
-  { value: "website", label: "Website Survey" },
-  { value: "app", label: "App Survey" },
-  { value: "link", label: "Link Survey" },
+export const channelMapping: {
+  value: TProductConfigChannel;
+  label: string;
+}[] = [
+  { value: "website", label: "common.website_survey" },
+  { value: "app", label: "common.app_survey" },
+  { value: "link", label: "common.link_survey" },
 ];
 
 export const industryMapping: { value: TProductConfigIndustry; label: string }[] = [
-  { value: "eCommerce", label: "E-Commerce" },
-  { value: "saas", label: "SaaS" },
-  { value: "other", label: "Other" },
+  { value: "eCommerce", label: "common.e_commerce" },
+  { value: "saas", label: "common.saas" },
+  { value: "other", label: "common.other" },
 ];
 
 export const roleMapping: { value: TTemplateRole; label: string }[] = [
-  { value: "productManager", label: "Product Manager" },
-  { value: "customerSuccess", label: "Customer Success" },
-  { value: "marketing", label: "Marketing" },
-  { value: "sales", label: "Sales" },
-  { value: "peopleManager", label: "People Manager" },
+  { value: "productManager", label: "common.product_manager" },
+  { value: "customerSuccess", label: "common.customer_success" },
+  { value: "marketing", label: "common.marketing" },
+  { value: "sales", label: "common.sales" },
+  { value: "peopleManager", label: "common.people_manager" },
 ];

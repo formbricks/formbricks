@@ -2,21 +2,25 @@
 
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useTranslations } from "next-intl";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = () => {
+  const t = useTranslations();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation activeId="tags" />
       </PageHeader>
-      <SettingsCard title="Manage Tags" description="Merge and remove response tags.">
+      <SettingsCard
+        title={t("environments.product.tags.manage_tags")}
+        description={t("environments.product.tags.manage_tags_description")}>
         <div className="w-full">
           <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-2">Tag</div>
-            <div className="col-span-1 text-center">Count</div>
-            <div className="col-span-1 flex justify-center text-center">Actions</div>
+            <div className="col-span-2">{t("environments.product.tags.tag")}</div>
+            <div className="col-span-1 text-center">{t("environments.product.tags.count")}</div>
+            <div className="col-span-1 flex justify-center text-center">{t("common.actions")}</div>
           </div>
           <div className="w-full">
             {[...Array(3)].map((_, idx) => (

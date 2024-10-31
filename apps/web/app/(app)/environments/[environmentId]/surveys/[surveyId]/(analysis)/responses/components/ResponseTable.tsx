@@ -15,12 +15,14 @@ import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   DataTableHeader,
@@ -43,6 +45,7 @@ interface ResponseTableProps {
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   isFetchingFirstPage: boolean;
+  locale: TUserLocale;
 }
 
 export const ResponseTable = ({
@@ -58,7 +61,9 @@ export const ResponseTable = ({
   deleteResponses,
   updateResponse,
   isFetchingFirstPage,
+  locale,
 }: ResponseTableProps) => {
+  const t = useTranslations();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
@@ -69,7 +74,7 @@ export const ResponseTable = ({
   const [parent] = useAutoAnimate();
 
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer, t);
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -222,7 +227,7 @@ export const ResponseTable = ({
                 {table.getRowModel().rows.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No results.
+                      {t("common.no_results")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -234,7 +239,7 @@ export const ResponseTable = ({
         {data && hasMore && data.length > 0 && (
           <div className="mt-4 flex justify-center">
             <Button onClick={fetchNextPage} className="bg-blue-500 text-white">
-              Load More
+              {t("common.load_more")}
             </Button>
           </div>
         )}
@@ -261,6 +266,7 @@ export const ResponseTable = ({
             setSelectedResponseId={setSelectedResponseId}
             selectedResponseId={selectedResponseId}
             open={selectedResponse !== null}
+            locale={locale}
             setOpen={(open) => {
               if (!open) {
                 setSelectedResponseId(null);

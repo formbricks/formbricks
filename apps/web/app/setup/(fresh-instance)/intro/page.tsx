@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@formbricks/ui/components/Button";
 
 export const metadata: Metadata = {
@@ -6,29 +7,33 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = () => {
+const Page = async () => {
+  const t = await getTranslations();
   return (
     <div className="flex flex-col items-center">
-      <h2 className="mb-6 text-xl font-medium">Welcome to Formbricks!</h2>
+      <h2 className="mb-6 text-xl font-medium">{t("setup.intro.welcome_to_formbricks")}</h2>
       <div className="mx-auto max-w-sm space-y-4 text-sm leading-6 text-slate-600">
         <p>
-          Formbricks is an Experience Management Suite built of the{" "}
-          <b>fastest growing open source survey platform</b> worldwide.
+          {t.rich("setup.intro.paragraph_1", {
+            b: (chunks) => <b>{chunks}</b>,
+          })}
         </p>
         <p>
-          Run targeted surveys on websites, in apps or anywhere online. Gather valuable insights to{" "}
-          <b>craft irresistible experiences</b> for customers, users and employees.
+          {t.rich("setup.intro.paragraph_2", {
+            b: (chunks) => <b>{chunks}</b>,
+          })}
         </p>
         <p>
-          We&apos;re commited to highest degree of data privacy. Self-host to keep{" "}
-          <b>full control over your data.</b> Always.
+          {t.rich("setup.intro.paragraph_3", {
+            b: (chunks) => <b>{chunks}</b>,
+          })}
         </p>
       </div>
       <Button href="/setup/signup" className="mt-6">
-        Get started
+        {t("setup.intro.get_started")}
       </Button>
 
-      <p className="pt-6 text-xs text-slate-400">Made with 🤍 in Kiel, Germany</p>
+      <p className="pt-6 text-xs text-slate-400">{t("setup.intro.made_with_love_in_kiel")}</p>
     </div>
   );
 };

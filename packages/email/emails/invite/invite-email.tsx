@@ -3,21 +3,30 @@ import React from "react";
 import { EmailButton } from "../../components/email-button";
 import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";
+import { translateEmailText } from "../../lib/utils";
 
 interface InviteEmailProps {
   inviteeName: string;
   inviterName: string;
   verifyLink: string;
+  locale: string;
 }
 
-export function InviteEmail({ inviteeName, inviterName, verifyLink }: InviteEmailProps): React.JSX.Element {
+export function InviteEmail({
+  inviteeName,
+  inviterName,
+  verifyLink,
+  locale,
+}: InviteEmailProps): React.JSX.Element {
   return (
     <EmailTemplate>
       <Container>
-        <Text>Hey {inviteeName},</Text>
         <Text>
-          Your colleague {inviterName} invited you to join them at Formbricks. To accept the invitation,
-          please click the link below:
+          {translateEmailText("invite_email_heading", locale)} {inviteeName},
+        </Text>
+        <Text>
+          {translateEmailText("invite_email_text_par1", locale)} {inviterName}{" "}
+          {translateEmailText("invite_email_text_par2", locale)}
         </Text>
         <EmailButton href={verifyLink} label="Join organization" />
         <EmailFooter />

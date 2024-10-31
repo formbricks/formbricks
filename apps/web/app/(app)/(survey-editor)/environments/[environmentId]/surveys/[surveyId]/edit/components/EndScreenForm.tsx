@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
@@ -18,6 +20,7 @@ interface EndScreenFormProps {
   attributeClasses: TAttributeClass[];
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
+  locale: TUserLocale;
 }
 
 export const EndScreenForm = ({
@@ -29,7 +32,9 @@ export const EndScreenForm = ({
   attributeClasses,
   updateSurvey,
   endingCard,
+  locale,
 }: EndScreenFormProps) => {
+  const t = useTranslations();
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
@@ -38,7 +43,7 @@ export const EndScreenForm = ({
     <form>
       <QuestionFormInput
         id="headline"
-        label="Note*"
+        label={t("common.note") + "*"}
         value={endingCard.headline}
         localSurvey={localSurvey}
         questionIdx={localSurvey.questions.length + endingCardIndex}
@@ -47,12 +52,13 @@ export const EndScreenForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <QuestionFormInput
         id="subheader"
         value={endingCard.subheader}
-        label={"Description"}
+        label={t("common.description")}
         localSurvey={localSurvey}
         questionIdx={localSurvey.questions.length + endingCardIndex}
         isInvalid={isInvalid}
@@ -60,6 +66,7 @@ export const EndScreenForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="mt-4">
         <div className="flex items-center space-x-1">
@@ -71,7 +78,7 @@ export const EndScreenForm = ({
                 updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
               } else {
                 updateSurvey({
-                  buttonLabel: { default: "Create your own Survey" },
+                  buttonLabel: { default: t("environments.surveys.edit.create_your_own_survey") },
                   buttonLink: "https://formbricks.com",
                 });
               }
@@ -80,9 +87,11 @@ export const EndScreenForm = ({
           />
           <Label htmlFor="showButton" className="cursor-pointer">
             <div className="ml-2">
-              <h3 className="text-sm font-semibold text-slate-700">Show Button</h3>
+              <h3 className="text-sm font-semibold text-slate-700">
+                {t("environments.surveys.edit.show_button")}
+              </h3>
               <p className="text-xs font-normal text-slate-500">
-                Send your respondents to a page of your choice.
+                {t("environments.surveys.edit.send_your_respondents_to_a_page_of_your_choice")}
               </p>
             </div>
           </Label>
@@ -92,8 +101,8 @@ export const EndScreenForm = ({
             <div className="space-y-2">
               <QuestionFormInput
                 id="buttonLabel"
-                label="Button Label"
-                placeholder="Create your own Survey"
+                label={t("environments.surveys.edit.button_label")}
+                placeholder={t("environments.surveys.edit.create_your_own_survey")}
                 className="bg-white"
                 value={endingCard.buttonLabel}
                 localSurvey={localSurvey}
@@ -103,10 +112,11 @@ export const EndScreenForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
             <div className="space-y-2">
-              <Label>Button Link</Label>
+              <Label>{t("environments.surveys.edit.button_url")}</Label>
               <Input
                 id="buttonLink"
                 name="buttonLink"

@@ -1,26 +1,32 @@
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
 import { EmailTemplate } from "../../components/email-template";
+import { translateEmailText } from "../../lib/utils";
 
 interface EmbedSurveyPreviewEmailProps {
   html: string;
   environmentId: string;
+  locale: string;
 }
 
 export function EmbedSurveyPreviewEmail({
   html,
   environmentId,
+  locale,
 }: EmbedSurveyPreviewEmailProps): React.JSX.Element {
   return (
     <EmailTemplate>
       <Container>
-        <Heading>Preview Email Embed</Heading>
-        <Text>This is how the code snippet looks embedded into an email:</Text>
+        <Heading>{translateEmailText("embed_survey_preview_email_heading", locale)}</Heading>
+        <Text>{translateEmailText("embed_survey_preview_email_text", locale)}</Text>
         <Text className="text-sm">
-          <b>Didn&apos;t request this?</b> Help us fight spam and forward this mail to hola@formbricks.com
+          <b>{translateEmailText("embed_survey_preview_email_didnt_request", locale)}</b>{" "}
+          {translateEmailText("embed_survey_preview_email_fight_spam", locale)}
         </Text>
         <div dangerouslySetInnerHTML={{ __html: html }} />
-        <Text className="text-center text-sm text-slate-700">Environment ID: {environmentId}</Text>
+        <Text className="text-center text-sm text-slate-700">
+          {translateEmailText("embed_survey_preview_email_environment_id", locale)}: {environmentId}
+        </Text>
       </Container>
     </EmailTemplate>
   );
