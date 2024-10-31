@@ -328,8 +328,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByText("Show Advanced settings").first().click();
     await page.getByPlaceholder("Next").click();
     await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
-    await page.getByPlaceholder("Back").click();
-    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Single select question in german
     await page.getByRole("main").getByText("Single-Select").click();
