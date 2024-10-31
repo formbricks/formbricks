@@ -1,21 +1,13 @@
-import { ChevronDownIcon } from "lucide-react";
-import React from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TBadgeProps } from "@formbricks/types/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../DropdownMenu";
 
-// Adjust the import path as necessary
+interface BadgeProps {
+  text: string;
+  type: "warning" | "success" | "error" | "gray";
+  size: "tiny" | "normal" | "large";
+  className?: string;
+}
 
-export const Badge: React.FC<TBadgeProps & { isLoading?: boolean }> = ({
-  text,
-  type,
-  options,
-  selectedIndex = 0,
-  onChange,
-  size,
-  className,
-  isLoading = false,
-}) => {
+export const Badge: React.FC<BadgeProps> = ({ text, type, size, className }) => {
   const bgColor = {
     warning: "bg-amber-100",
     success: "bg-emerald-100",
@@ -45,56 +37,18 @@ export const Badge: React.FC<TBadgeProps & { isLoading?: boolean }> = ({
 
   const textSize = size === "large" ? "text-sm" : "text-xs";
 
-  const currentOption = options ? options[selectedIndex] : { text, type: type || "gray" };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <span className="animate-pulse" aria-busy="true">
-          <span className={cn("inline-block h-2 w-8 rounded-full bg-black/10")}></span>
-        </span>
-      );
-    }
-    return (
-      <>
-        {currentOption.text}
-        {options && <ChevronDownIcon className="ml-1 h-3 w-3" aria-hidden="true" />}
-      </>
-    );
-  };
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <span
-          className={cn(
-            "inline-flex items-center rounded-full border border-opacity-50 font-medium",
-            options && !isLoading ? "cursor-pointer hover:border-opacity-100" : "pointer-events-none",
-            bgColor[currentOption.type],
-            borderColor[currentOption.type],
-            textColor[currentOption.type],
-            padding[size],
-            textSize,
-            className
-          )}>
-          {renderContent()}
-        </span>
-      </DropdownMenuTrigger>
-      {options && (
-        <DropdownMenuContent className="mt-1 bg-white shadow-lg">
-          {options.map((option, index) => (
-            <DropdownMenuItem
-              key={index}
-              className={cn("cursor-pointer px-4 py-2 hover:bg-slate-100", textSize)}
-              onClick={(event) => {
-                event.stopPropagation();
-                onChange?.(index);
-              }}>
-              {option.text}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      )}
-    </DropdownMenu>
+    <span
+      className={cn(
+        "inline-flex cursor-default items-center rounded-full border font-medium",
+        bgColor[type],
+        borderColor[type],
+        textColor[type],
+        padding[size],
+        textSize,
+        className
+      )}>
+      {text}
+    </span>
   );
 };
