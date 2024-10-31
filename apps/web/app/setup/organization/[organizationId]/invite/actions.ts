@@ -45,7 +45,9 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         parsedInput.email,
         ctx.user.name ?? "",
         "",
-        false // is onboarding invite
+        false, // is onboarding invite
+        undefined,
+        ctx.user.locale
       );
     }
 

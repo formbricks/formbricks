@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -7,8 +8,8 @@ import {
   GOOGLE_OAUTH_ENABLED,
   OIDC_DISPLAY_NAME,
   OIDC_OAUTH_ENABLED,
-  PASSWORD_RESET_DISABLED,
 } from "@formbricks/lib/constants";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupOptions } from "@formbricks/ui/components/SignupOptions";
 
 export const metadata: Metadata = {
@@ -16,17 +17,18 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = () => {
+const Page = async () => {
+  const locale = findMatchingLocale();
+  const t = await getTranslations();
   return (
     <div className="flex flex-col items-center">
-      <h2 className="mb-6 text-xl font-medium">Create Administrator</h2>
-      <p className="text-sm text-slate-800">This user has all the power.</p>
+      <h2 className="mb-6 text-xl font-medium">{t("setup.signup.create_administrator")}</h2>
+      <p className="text-sm text-slate-800">{t("setup.signup.this_user_has_all_the_power")}</p>
       <hr className="my-6 w-full border-slate-200" />
       <SignupOptions
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         emailFromSearchParams={""}
         emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
-        passwordResetEnabled={!PASSWORD_RESET_DISABLED}
         googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
         githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
         azureOAuthEnabled={AZURE_OAUTH_ENABLED}
@@ -34,6 +36,7 @@ const Page = () => {
         inviteToken={""}
         callbackUrl={""}
         oidcDisplayName={OIDC_DISPLAY_NAME}
+        userLocale={locale}
       />
     </div>
   );

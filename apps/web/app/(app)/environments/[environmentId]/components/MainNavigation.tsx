@@ -28,6 +28,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -84,7 +85,7 @@ export const MainNavigation = ({
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
-
+  const t = useTranslations();
   const [currentOrganizationName, setCurrentOrganizationName] = useState("");
   const [currentOrganizationId, setCurrentOrganizationId] = useState("");
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
@@ -162,21 +163,21 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: "Experience",
+        name: t("common.experience"),
         href: `/environments/${environment.id}/experience`,
         icon: GaugeIcon,
         isActive: pathname?.includes("/experience"),
         isHidden: !isAIEnabled,
       },
       {
-        name: "Surveys",
+        name: t("common.surveys"),
         href: `/environments/${environment.id}/surveys`,
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
         isHidden: false,
       },
       {
-        name: "People",
+        name: t("common.people"),
         href: `/environments/${environment.id}/people`,
         icon: UserIcon,
         isActive:
@@ -185,20 +186,20 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
-        name: "Actions",
+        name: t("common.actions"),
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
       },
       {
-        name: "Integrations",
+        name: t("common.integrations"),
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),
         isHidden: isViewer,
       },
       {
-        name: "Configuration",
+        name: t("common.configuration"),
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
@@ -210,35 +211,35 @@ export const MainNavigation = ({
 
   const dropdownNavigation = [
     {
-      label: "Account",
+      label: t("common.account"),
       href: `/environments/${environment.id}/settings/profile`,
       icon: UserCircleIcon,
     },
     {
-      label: "Organization",
+      label: t("common.organization"),
       href: `/environments/${environment.id}/settings/general`,
       icon: UsersIcon,
     },
     {
-      label: "Billing",
+      label: t("common.billing"),
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
     },
     {
-      label: "License",
+      label: t("common.license"),
       href: `/environments/${environment.id}/settings/enterprise`,
       hidden: isFormbricksCloud || isPricingDisabled,
       icon: KeyIcon,
     },
     {
-      label: "Documentation",
+      label: t("common.documentation"),
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
     {
-      label: "Join Discord",
+      label: t("common.join_discord"),
       href: "https://formbricks.com/discord",
       target: "_blank",
       icon: AiOutlineDiscord,
@@ -280,7 +281,7 @@ export const MainNavigation = ({
                     "flex items-center justify-center transition-opacity duration-100",
                     isTextVisible ? "opacity-0" : "opacity-100"
                   )}>
-                  <Image src={FBLogo} width={160} height={30} alt="Formbricks Logo" />
+                  <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
                 </Link>
               )}
               <Button
@@ -328,7 +329,7 @@ export const MainNavigation = ({
                 className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
                 <p className="flex items-center justify-center gap-x-2 text-xs">
                   <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
-                  Formbricks {latestVersion} is here. Upgrade now!
+                  {t("common.new_version_available", { version: latestVersion })}
                 </p>
               </Link>
             )}
@@ -370,9 +371,11 @@ export const MainNavigation = ({
                             "text-sm text-slate-500 transition-opacity duration-200",
                             isTextVisible ? "opacity-0" : "opacity-100"
                           )}>
-                          {product.config.channel === "link"
-                            ? "Link & Email"
-                            : capitalizeFirstLetter(product.config.channel)}
+                          {product.config.channel && product.config.channel === "link"
+                            ? t("common.link_and_email")
+                            : product.config.channel
+                              ? t(`common.${product.config.channel}`)
+                              : null}
                         </p>
                       </div>
                       <ChevronRightIcon
@@ -419,7 +422,7 @@ export const MainNavigation = ({
                   <DropdownMenuItem
                     onClick={() => handleAddProduct(organization.id)}
                     icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                    <span>Add product</span>
+                    <span>{t("common.add_product")}</span>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -489,7 +492,7 @@ export const MainNavigation = ({
                       await formbricksLogout();
                     }}
                     icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
-                    Logout
+                    {t("common.logout")}
                   </DropdownMenuItem>
 
                   {/* Organization Switch */}
@@ -499,7 +502,7 @@ export const MainNavigation = ({
                       <DropdownMenuSubTrigger className="rounded-lg">
                         <div>
                           <p>{currentOrganizationName}</p>
-                          <p className="block text-xs text-slate-500">Switch organization</p>
+                          <p className="block text-xs text-slate-500">{t("common.switch_organization")}</p>
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
@@ -523,7 +526,7 @@ export const MainNavigation = ({
                             <DropdownMenuItem
                               onClick={() => setShowCreateOrganizationModal(true)}
                               icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                              <span>Create new organization</span>
+                              <span>{t("common.create_new_organization")}</span>
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuSubContent>

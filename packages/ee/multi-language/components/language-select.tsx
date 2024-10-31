@@ -1,9 +1,11 @@
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { TIso639Language } from "@formbricks/lib/i18n/utils";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import type { TLanguage } from "@formbricks/types/product";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
 
@@ -11,9 +13,11 @@ interface LanguageSelectProps {
   language: TLanguage;
   onLanguageChange: (newLanguage: TLanguage) => void;
   disabled: boolean;
+  locale: TUserLocale;
 }
 
-export function LanguageSelect({ language, onLanguageChange, disabled }: LanguageSelectProps) {
+export function LanguageSelect({ language, onLanguageChange, disabled, locale }: LanguageSelectProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(
@@ -38,7 +42,9 @@ export function LanguageSelect({ language, onLanguageChange, disabled }: Languag
     setIsOpen(false);
   };
 
-  const filteredItems = items.filter((item) => item.english.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredItems = items.filter((item) =>
+    item.label[locale].toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Focus the input when the dropdown is opened
   useEffect(() => {
@@ -54,7 +60,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled }: Languag
         disabled={disabled}
         onClick={toggleDropdown}
         variant="minimal">
-        <span className="mr-2">{selectedOption?.english ?? "Select"}</span>
+        <span className="mr-2">{selectedOption?.label[locale] ?? t("common.select")}</span>
         <ChevronDown className="h-4 w-4" />
       </Button>
       <div
@@ -64,7 +70,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled }: Languag
           onChange={(e) => {
             setSearchTerm(e.target.value);
           }}
-          placeholder="Search items"
+          placeholder={t("environments.product.languages.search_items")}
           ref={inputRef}
           type="text"
           value={searchTerm}
@@ -77,7 +83,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled }: Languag
               onClick={() => {
                 handleOptionSelect(item);
               }}>
-              {item.english}
+              {item.label[locale]}
             </div>
           ))}
         </div>

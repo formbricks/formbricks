@@ -1,4 +1,5 @@
 import { LightbulbIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 
@@ -8,6 +9,7 @@ interface EnvironmentNoticeProps {
 }
 
 export const EnvironmentNotice = async ({ environmentId, subPageUrl }: EnvironmentNoticeProps) => {
+  const t = await getTranslations();
   const environment = await getEnvironment(environmentId);
   if (!environment) {
     throw new Error("Environment not found");
@@ -20,11 +22,14 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
     <div className="mt-4 flex max-w-4xl items-center space-y-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
       <LightbulbIcon className="mr-3 h-4 w-4 text-blue-400" />
       <p className="text-sm">
-        {`You're currently in the ${environment.type} environment.`}
+        {t("common.environment_notice", { environment: environment.type })}
         <a
           href={`${WEBAPP_URL}/environments/${otherEnvironmentId}${subPageUrl}`}
           className="ml-1 cursor-pointer text-sm underline">
-          Switch to {environment.type === "production" ? "Development" : "Production"} now.
+          {t("common.switch_to", {
+            environment: environment.type === "production" ? "Development" : "Production",
+          })}
+          .
         </a>
       </p>
     </div>

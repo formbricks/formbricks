@@ -1,10 +1,12 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { FileInput } from "@formbricks/ui/components/FileInput";
 import { Label } from "@formbricks/ui/components/Label";
@@ -21,6 +23,7 @@ interface PictureSelectionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const PictureSelectionForm = ({
@@ -32,10 +35,11 @@ export const PictureSelectionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   attributeClasses,
+  locale,
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-
+  const t = useTranslations();
   const handleChoiceDeletion = (choiceValue: string) => {
     // Filter out the deleted choice from the choices array
     const newChoices = question.choices?.filter((choice) => choice.id !== choiceValue) || [];
@@ -71,7 +75,7 @@ export const PictureSelectionForm = ({
     <form>
       <QuestionFormInput
         id="headline"
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -80,6 +84,7 @@ export const PictureSelectionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -88,7 +93,7 @@ export const PictureSelectionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -96,6 +101,7 @@ export const PictureSelectionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>
@@ -112,18 +118,18 @@ export const PictureSelectionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
       <div className="mt-2">
         <Label htmlFor="Images">
-          Images{" "}
+          {t("common.images")}{" "}
           <span
             className={cn("text-slate-400", {
               "text-red-600": isInvalid && question.choices?.length < 2,
             })}>
-            (Upload at least 2 images)
+            ({t("environments.surveys.edit.upload_at_least_2_images")})
           </span>
         </Label>
         <div className="mt-3 flex w-full items-center justify-center">
@@ -149,8 +155,12 @@ export const PictureSelectionForm = ({
         />
         <Label htmlFor="multi-select-toggle" className="cursor-pointer">
           <div className="ml-2">
-            <h3 className="text-sm font-semibold text-slate-700">Allow Multi Select</h3>
-            <p className="text-xs font-normal text-slate-500">Allow users to select more than one image.</p>
+            <h3 className="text-sm font-semibold text-slate-700">
+              {t("environments.surveys.edit.allow_multi_select")}
+            </h3>
+            <p className="text-xs font-normal text-slate-500">
+              {t("environments.surveys.edit.allow_users_to_select_more_than_one_image")}
+            </p>
           </div>
         </Label>
       </div>

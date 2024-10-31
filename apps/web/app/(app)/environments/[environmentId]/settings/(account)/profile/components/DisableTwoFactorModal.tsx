@@ -1,6 +1,7 @@
 "use client";
 
 import { disableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
@@ -24,6 +25,7 @@ type TDisableTwoFactorModalProps = {
 };
 
 export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const { handleSubmit, control, setValue } = useForm<TDisableTwoFactorFormState>();
   const [backupCodeInputVisible, setBackupCodeInputVisible] = useState(false);
@@ -62,16 +64,18 @@ export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalP
       <>
         <div>
           <div className="p-6">
-            <h1 className="text-lg font-semibold">Disable two factor authentication</h1>
+            <h1 className="text-lg font-semibold">
+              {t("environments.settings.profile.disable_two_factor_authentication")}
+            </h1>
             <p className="text-sm text-slate-700">
-              If you need to disable 2FA, we recommend re-enabling it as soon as possible.
+              {t("environments.settings.profile.disable_two_factor_authentication_description")}
             </p>
           </div>
 
           <form className="flex flex-col space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-2 px-6">
               <label htmlFor="password" className="text-sm font-medium text-slate-700">
-                Password
+                {t("common.password")}
               </label>
               <Controller
                 name="password"
@@ -101,13 +105,19 @@ export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalP
             <div className="px-6">
               <div className="flex flex-col gap-2">
                 <label htmlFor="code" className="text-sm font-medium text-slate-700">
-                  {backupCodeInputVisible ? "Backup Code" : "Two-Factor Code"}
+                  {backupCodeInputVisible
+                    ? t("environments.settings.profile.backup_code")
+                    : t("environments.settings.profile.two_factor_code")}
                 </label>
 
                 <p className="text-sm text-slate-700">
                   {backupCodeInputVisible
-                    ? "Each backup code can be used exactly once to grant access without your authenticator."
-                    : "Two-factor authentication enabled. Please enter the six-digit code from your authenticator app."}
+                    ? t(
+                        "environments.settings.profile.each_backup_code_can_be_used_exactly_once_to_grant_access_without_your_authenticator"
+                      )
+                    : t(
+                        "environments.settings.profile.two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app"
+                      )}
                 </p>
               </div>
 
@@ -140,15 +150,17 @@ export const DisableTwoFactorModal = ({ open, setOpen }: TDisableTwoFactorModalP
                   size="sm"
                   type="button"
                   onClick={() => setBackupCodeInputVisible((prev) => !prev)}>
-                  {backupCodeInputVisible ? "Go Back" : "Lost access"}
+                  {backupCodeInputVisible
+                    ? t("common.go_back")
+                    : t("environments.settings.profile.lost_access")}
                 </Button>
               </div>
               <div className="flex items-center space-x-4">
                 <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
 
-                <Button size="sm">Disable</Button>
+                <Button size="sm">{t("common.disable")}</Button>
               </div>
             </div>
           </form>
