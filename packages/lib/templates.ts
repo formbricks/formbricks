@@ -5519,7 +5519,7 @@ const employeeWellBeing = (): TTemplate => {
 const longTermRetentionCheckIn = (): TTemplate => {
   return {
     name: "Long-Term Retention Check-In",
-    role: "productManager",
+    role: "peopleManager",
     industries: ["saas", "other"],
     channels: ["app", "link"],
     description:
@@ -5971,7 +5971,6 @@ export const templates: TTemplate[] = [
   recognitionAndReward(),
   alignmentAndEngagement(),
   supportiveWorkCulture(),
-  longTermRetentionCheckIn(),
 ];
 
 export const customSurvey = {
