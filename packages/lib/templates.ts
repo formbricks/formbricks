@@ -3398,7 +3398,7 @@ const professionalDevelopmentSurvey = (): TTemplate => {
     role: "productManager",
     industries: ["saas", "eCommerce", "other"],
     channels: ["link"],
-    description: "Assess employee satisfaction with Professional growth and development opportunities.",
+    description: "Assess employee satisfaction with professional growth and development opportunities.",
     preset: {
       ...surveyDefault,
       name: "Professional Development Survey",
