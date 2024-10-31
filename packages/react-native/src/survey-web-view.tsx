@@ -142,7 +142,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   return (
     <Modal
       animationType="slide"
-      visible={showSurvey ? !isSurveyRunning : null}
+      visible={showSurvey ? !isSurveyRunning : undefined}
       transparent
       onRequestClose={() => {
         setShowSurvey(false);

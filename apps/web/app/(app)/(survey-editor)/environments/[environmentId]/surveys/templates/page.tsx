@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -22,11 +23,12 @@ interface SurveyTemplateProps {
 }
 
 const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
 
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   const [user, environment, product] = await Promise.all([
@@ -36,15 +38,15 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   ]);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session?.user.id,

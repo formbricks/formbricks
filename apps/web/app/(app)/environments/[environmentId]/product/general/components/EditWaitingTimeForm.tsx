@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -27,6 +28,7 @@ const ZProductRecontactDaysInput = ZProduct.pick({ recontactDays: true });
 type EditWaitingTimeFormValues = z.infer<typeof ZProductRecontactDaysInput>;
 
 export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product }) => {
+  const t = useTranslations();
   const form = useForm<EditWaitingTimeFormValues>({
     defaultValues: {
       recontactDays: product.recontactDays,
@@ -41,7 +43,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
     try {
       const updatedProductResponse = await updateProductAction({ productId: product.id, data });
       if (updatedProductResponse?.data) {
-        toast.success("Waiting period updated successfully.");
+        toast.success(t("environments.product.general.waiting_period_updated_successfully"));
         form.resetField("recontactDays", { defaultValue: updatedProductResponse.data.recontactDays });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedProductResponse);
@@ -62,7 +64,9 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
           name="recontactDays"
           render={({ field }) => (
             <FormItem>
-              <FormLabel htmlFor="recontactDays">Wait X days before showing next survey:</FormLabel>
+              <FormLabel htmlFor="recontactDays">
+                {t("environments.product.general.wait_x_days_before_showing_next_survey")}
+              </FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -89,7 +93,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
           className="w-fit"
           loading={isSubmitting}
           disabled={isSubmitting || !isDirty}>
-          Update
+          {t("common.update")}
         </Button>
       </form>
     </FormProvider>

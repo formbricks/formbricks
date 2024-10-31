@@ -1,4 +1,5 @@
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
@@ -20,6 +21,7 @@ export const QuestionSkip = ({
   isFirstQuestionAnswered,
   responseData,
 }: QuestionSkipProps) => {
+  const t = useTranslations();
   return (
     <div>
       {skippedQuestions && (
@@ -38,7 +40,7 @@ export const QuestionSkip = ({
                   <CheckCircle2Icon className="p-0.25 absolute top-0 w-[1.5rem] min-w-[1.5rem] rounded-full bg-white text-slate-400" />
                 </div>
               }
-              <div className="ml-6 flex flex-col text-slate-700">Welcome Card</div>
+              <div className="ml-6 flex flex-col text-slate-700">{t("common.welcome_card")}</div>
             </div>
           )}
           {status === "skipped" && (
@@ -56,7 +58,7 @@ export const QuestionSkip = ({
                         <ChevronsDownIcon className="w-[1.25rem] min-w-[1.25rem] rounded-full bg-slate-400 p-0.5 text-white" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Respondent skipped these questions.</p>
+                        <p>{t("environments.surveys.responses.respondent_skipped_questions")}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -95,7 +97,7 @@ export const QuestionSkip = ({
               </div>
               <div className="mb-2 ml-4 flex flex-col">
                 <p className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
-                  Survey closed
+                  {t("environments.surveys.responses.survey_closed")}
                 </p>
                 {skippedQuestions &&
                   skippedQuestions.map((questionId) => {

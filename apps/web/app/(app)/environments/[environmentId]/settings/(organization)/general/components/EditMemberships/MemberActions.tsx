@@ -8,6 +8,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { ShareInviteModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/ShareInviteModal";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -28,6 +29,7 @@ type MemberActionsProps = {
 
 export const MemberActions = ({ organization, member, invite, showDeleteButton }: MemberActionsProps) => {
   const router = useRouter();
+  const t = useTranslations();
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showShareInviteModal, setShowShareInviteModal] = useState(false);
@@ -41,14 +43,14 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
         // This is an invite
 
         await deleteInviteAction({ inviteId: invite?.id, organizationId: organization.id });
-        toast.success("Invite deleted successfully");
+        toast.success(t("environments.settings.general.invite_deleted_successfully"));
       }
 
       if (member && !invite) {
         // This is a member
 
         await deleteMembershipAction({ userId: member.userId, organizationId: organization.id });
-        toast.success("Member deleted successfully");
+        toast.success(t("environments.settings.general.member_deleted_successfully"));
       }
 
       setIsDeleting(false);
@@ -56,7 +58,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
     } catch (err) {
       console.log({ err });
       setIsDeleting(false);
-      toast.error("Something went wrong");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
 
@@ -84,7 +86,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`${t("common.error")}: ${err.message}`);
     }
   };
 
@@ -93,9 +95,9 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       if (!invite) return;
 
       await resendInviteAction({ inviteId: invite.id, organizationId: organization.id });
-      toast.success("Invitation sent once more.");
+      toast.success(t("environments.settings.general.invitation_sent_once_more"));
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`${t("common.error")}: ${err.message}`);
     }
   };
 
@@ -121,7 +123,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
               </button>
             </TooltipTrigger>
             <TooltipContent className="TooltipContent" sideOffset={5}>
-              Share Invite Link
+              {t("environments.settings.general.share_invite_link")}
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -136,7 +138,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
               </button>
             </TooltipTrigger>
             <TooltipContent className="TooltipContent" sideOffset={5}>
-              Resend Invitation Email
+              {t("environments.settings.general.resend_invitation_email")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -145,7 +147,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       <DeleteDialog
         open={isDeleteMemberModalOpen}
         setOpen={setDeleteMemberModalOpen}
-        deleteWhat={memberName + " from your organization"}
+        deleteWhat={`${memberName} ${t("environments.settings.general.from_your_organization")}`}
         onDelete={handleDeleteMember}
         isDeleting={isDeleting}
       />

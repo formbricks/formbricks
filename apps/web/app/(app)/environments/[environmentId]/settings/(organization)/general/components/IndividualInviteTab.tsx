@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
 import { Button } from "@formbricks/ui/components/Button";
@@ -22,6 +23,7 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
 }: IndividualInviteTabProps) => {
+  const t = useTranslations();
   const {
     register,
     getValues,
@@ -47,7 +49,7 @@ export const IndividualInviteTab = ({
       <div className="flex justify-between rounded-lg">
         <div className="w-full space-y-4">
           <div>
-            <Label htmlFor="memberNameInput">Full Name</Label>
+            <Label htmlFor="memberNameInput">{t("common.full_name")}</Label>
             <Input
               id="memberNameInput"
               placeholder="e.g. Hans Wurst"
@@ -55,7 +57,7 @@ export const IndividualInviteTab = ({
             />
           </div>
           <div>
-            <Label htmlFor="memberEmailInput">Email Address</Label>
+            <Label htmlFor="memberEmailInput">{t("common.email")}</Label>
             <Input
               id="memberEmailInput"
               type="email"
@@ -68,15 +70,15 @@ export const IndividualInviteTab = ({
             {!canDoRoleManagement &&
               (isFormbricksCloud ? (
                 <UpgradePlanNotice
-                  message="To manage access roles,"
+                  message={t("environments.settings.general.upgrade_plan_notice_message")}
                   url={`/environments/${environmentId}/settings/billing`}
-                  textForUrl="please upgrade your plan."
+                  textForUrl={t("environments.settings.general.upgrade_plan_notice_text_for_url_cloud")}
                 />
               ) : (
                 <UpgradePlanNotice
-                  message="To manage access roles for your team,"
+                  message={t("environments.settings.general.upgrade_plan_notice_message")}
                   url={`/environments/${environmentId}/settings/enterprise`}
-                  textForUrl="get an Enterprise License."
+                  textForUrl={t("environments.settings.general.upgrade_plan_notice_text_for_url_enterprise")}
                 />
               ))}
           </div>
@@ -91,10 +93,10 @@ export const IndividualInviteTab = ({
             onClick={() => {
               setOpen(false);
             }}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" size="sm" loading={isSubmitting}>
-            Send Invitation
+            {t("environments.settings.general.send_invitation")}
           </Button>
         </div>
       </div>
