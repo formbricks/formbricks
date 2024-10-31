@@ -51,7 +51,6 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     "/animated-bgs/Thumbnails/39_Thumb.mp4": "/animated-bgs/4K/39_4k.mp4",
     "/animated-bgs/Thumbnails/40_Thumb.mp4": "/animated-bgs/4K/40_4k.mp4",
     "/animated-bgs/Thumbnails/41_Thumb.mp4": "/animated-bgs/4K/41_4k.mp4",
-    "/animated-bgs/Thumbnails/42_Thumb.mp4": "/animated-bgs/4K/42_4k.mp4",
   };
 
   const togglePlayback = (index: number, type: "play" | "pause") => {
