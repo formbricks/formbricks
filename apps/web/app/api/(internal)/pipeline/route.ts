@@ -41,6 +41,14 @@ export const POST = async (request: Request) => {
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
 
+  // fetch survey info
+  const survey = await getSurvey(surveyId);
+
+  if (!survey) {
+    console.error(`Survey with id ${surveyId} not found`);
+    return new Response("Survey not found", { status: 404 });
+  }
+
   // Fetch webhooks
   const getWebhooksForPipeline = cache(
     async (environmentId: string, event: TPipelineTrigger, surveyId: string) => {
@@ -61,13 +69,33 @@ export const POST = async (request: Request) => {
   const webhooks: TWebhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
   // Prepare webhook and email promises
 
-  const nonMattermostWebhooks = webhooks.filter((webhook) =>
-    webhook.meta ? JSON.parse(webhook.meta as string)?.webhook_type !== "mattermost" : true
-  );
+  const nonMattermostWebhooks = webhooks.filter((webhook) => {
+    if (webhook.meta) {
+      let meta;
+      try {
+        meta = JSON.parse(webhook.meta as string);
+      } catch (e) {
+        console.error(`Invalid JSON in webhook.meta for webhook ${webhook.id}:`, e);
+        return true; // Default to non-Mattermost webhook
+      }
+      return meta?.webhook_type !== "mattermost";
+    }
+    return true;
+  });
 
-  const mattermostWebhooks = webhooks.filter((webhook) =>
-    webhook.meta ? JSON.parse(webhook.meta as string)?.webhook_type === "mattermost" : false
-  );
+  const mattermostWebhooks = webhooks.filter((webhook) => {
+    if (webhook.meta) {
+      let meta;
+      try {
+        meta = JSON.parse(webhook.meta as string);
+      } catch (e) {
+        console.error(`Invalid JSON in webhook.meta for webhook ${webhook.id}:`, e);
+        return false; // Exclude from Mattermost webhooks
+      }
+      return meta?.webhook_type === "mattermost";
+    }
+    return false;
+  });
 
   // Fetch with timeout of 5 seconds to prevent hanging
   const fetchWithTimeout = (url: string, options: RequestInit, timeout: number = 5000): Promise<Response> => {
@@ -95,31 +123,20 @@ export const POST = async (request: Request) => {
   let mattermostWebhookPromises: Promise<void>[] = [];
 
   if (mattermostWebhooks.length > 0) {
-    const survey = await getSurvey(surveyId);
-
-    if (!survey) {
-      console.error(`Survey with id ${surveyId} not found`);
-      return new Response("Survey not found", { status: 404 });
-    }
-
     const values = await extractResponses(inputValidation.data, Object.keys(response.data), survey);
 
     mattermostWebhookPromises = mattermostWebhooks.map((webhook) =>
-      writeDataToMattermost(webhook.url, values, survey?.name, webhook.meta as string)
+      writeDataToMattermost(webhook.url, values, survey?.name, webhook.meta as string).catch((error) => {
+        console.error(`Mattermost webhook call to ${webhook.url} failed:`, error);
+      })
     );
   }
   if (event === "responseFinished") {
-    // Fetch integrations, survey, and responseCount in parallel
-    const [integrations, survey, responseCount] = await Promise.all([
+    // Fetch integrations, and responseCount in parallel
+    const [integrations, responseCount] = await Promise.all([
       getIntegrations(environmentId),
-      getSurvey(surveyId),
       getResponseCountBySurveyId(surveyId),
     ]);
-
-    if (!survey) {
-      console.error(`Survey with id ${surveyId} not found`);
-      return new Response("Survey not found", { status: 404 });
-    }
 
     if (integrations.length > 0) {
       await handleIntegrations(integrations, inputValidation.data, survey);

@@ -18,7 +18,7 @@ The mattermost integration allows you to automatically send responses to a matte
 
 ## Setup to follow
 
-1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) or `https://localhost:3000` if you are running locally and click on the "Manage" button under Mattermost integration.
+1. Go to the Integrations tab in your [Formbricks Cloud dashboard](https://app.formbricks.com/) or `http://localhost:3000` if you are running locally and click on the "Manage" button under Mattermost integration.
 
 <MdxImage
   src={IntegrationsTab}
@@ -38,7 +38,7 @@ The mattermost integration allows you to automatically send responses to a matte
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-4. Make sure to add this in the meta information field of that form. This makes sure that the responses goes to your mattermost server.This is an important step. Don't skip it.
+4. Add the following JSON in the meta information field. This configuration is required to ensure responses are sent to your Mattermost server. This is a crucial step - do not skip it.
 
    ```json
       {
@@ -52,7 +52,7 @@ The mattermost integration allows you to automatically send responses to a matte
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-4. You can send any of your mattermost supported parameters mentioned [here](https://developers.mattermost.com/integrate/webhooks/incoming/#parameters) in this meta information field.
+5. You can send any of your mattermost supported parameters mentioned [here](https://developers.mattermost.com/integrate/webhooks/incoming/#parameters) in this meta information field.
 
    ```json
       {
@@ -64,6 +64,6 @@ The mattermost integration allows you to automatically send responses to a matte
 
 5. Now you can follow the rest of the steps mentioned in the webhooks documentation.
 
-Congratulations!!! You have succesfully added webhook to connect to your mattermost server. Now whenever a response is submitted for the linked survey, it will be automatically sent to the linked Mattermost channel.
+Congratulations! You have successfully added a webhook to connect to your Mattermost server. Now whenever a response is submitted for the linked survey, it will be automatically sent to the linked Mattermost channel.
 
-Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
+Still struggling or something not working as expected? [Join our Discord](https://formbricks.com/discord) and we'll be glad to assist you!

@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { getWebhooks } from "webhook/service";
 import { DatabaseError } from "@formbricks/types/errors";
 
@@ -38,9 +37,6 @@ export const writeDataToMattermost = async (
       throw new Error(data);
     }
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
     throw error;
   }
 };
@@ -49,9 +45,18 @@ export const getMattermostWebhooks = async (environmentId: string) => {
   try {
     const webhooks = await getWebhooks(environmentId);
 
-    const mattermostWebhooks = webhooks.filter((webhook) =>
-      webhook.meta ? JSON.parse(webhook.meta as string)?.webhook_type === "mattermost" : false
-    );
+    const mattermostWebhooks = webhooks.filter((webhook) => {
+      if (webhook.meta) {
+        try {
+          return JSON.parse(webhook.meta as string)?.webhook_type === "mattermost";
+        } catch (e) {
+          // Invalid JSON in meta; exclude this webhook
+          return false;
+        }
+      } else {
+        return false;
+      }
+    });
 
     return mattermostWebhooks;
   } catch (error) {

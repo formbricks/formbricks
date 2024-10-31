@@ -207,10 +207,10 @@ const Page = async ({ params }) => {
       connected: mattermostWebhookCount > 0,
       statusText:
         mattermostWebhookCount === 1
-          ? "1 integration"
+          ? "1 webhook"
           : mattermostWebhookCount === 0
             ? "Not Connected"
-            : `${mattermostWebhookCount} integration`,
+            : `${mattermostWebhookCount} webhooks`,
     },
   ];
 
