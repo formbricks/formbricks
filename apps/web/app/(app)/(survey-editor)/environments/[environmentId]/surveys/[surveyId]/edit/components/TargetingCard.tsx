@@ -3,6 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -51,6 +52,7 @@ export const TargetingCard = ({
   initialSegment,
   isFormbricksCloud,
 }: TargetingCardProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
   const [open, setOpen] = useState(false);
@@ -114,16 +116,16 @@ export const TargetingCard = ({
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
-      if (!segment) throw new Error("Invalid segment");
+      if (!segment) throw new Error(t("environments.surveys.edit.invalid_segment"));
       await updateBasicSegmentAction({ segmentId: segment?.id, data });
 
       router.refresh();
-      toast.success("Segment saved successfully");
+      toast.success(t("environments.surveys.edit.segment_saved_successfully"));
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
     } catch (err) {
-      toast.error(err.message ?? "Error Saving Segment");
+      toast.error(err.message ?? t("environments.surveys.edit.error_saving_segment"));
     }
   };
 
@@ -134,7 +136,7 @@ export const TargetingCard = ({
       });
       return resetBasicSegmentFiltersResponse?.data;
     } catch (err) {
-      toast.error("Error resetting filters");
+      toast.error(t("environments.surveys.edit.error_resetting_filters"));
     }
   };
 
@@ -173,8 +175,10 @@ export const TargetingCard = ({
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Target Audience</p>
-            <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
+            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.target_audience")}</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("environments.surveys.edit.pre_segment_your_users_with_attributes_filters")}
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -195,7 +199,9 @@ export const TargetingCard = ({
                   />
 
                   <p className="text-sm italic text-slate-600">
-                    This is an advanced segment. Please upgrade your plan to edit it.
+                    {t(
+                      "environments.surveys.edit.this_is_an_advanced_segment_please_upgrade_your_plan_to_edit_it"
+                    )}
                   </p>
                 </div>
               ) : (
@@ -211,7 +217,7 @@ export const TargetingCard = ({
                         ) : (
                           <div className="mb-4">
                             <p className="text-sm font-semibold text-slate-800">
-                              Send survey to audience who match...
+                              {t("environments.surveys.edit.send_survey_to_audience_who_match")}
                             </p>
                           </div>
                         )}
@@ -236,7 +242,7 @@ export const TargetingCard = ({
                           segment?.isPrivate && !segment?.filters?.length && "mt-0"
                         )}>
                         <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
-                          Add filter
+                          {t("common.add_filter")}
                         </Button>
 
                         {isSegmentEditorOpen && !segment?.isPrivate && (
@@ -246,7 +252,7 @@ export const TargetingCard = ({
                             onClick={() => {
                               handleSaveSegment({ filters: segment?.filters ?? [] });
                             }}>
-                            Save changes
+                            {t("common.save_changes")}
                           </Button>
                         )}
 
@@ -263,7 +269,7 @@ export const TargetingCard = ({
                                 setSegment(initialSegment);
                               }
                             }}>
-                            Cancel
+                            {t("common.cancel")}
                           </Button>
                         )}
                       </div>
@@ -297,7 +303,7 @@ export const TargetingCard = ({
                           onClick={() => {
                             setSegmentEditorViewOnly(!segmentEditorViewOnly);
                           }}>
-                          {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
+                          {segmentEditorViewOnly ? t("common.hide_filters") : t("common.view_filters")}{" "}
                           {segmentEditorViewOnly ? (
                             <ChevronUpIcon className="ml-2 h-3 w-3" />
                           ) : (
@@ -312,7 +318,7 @@ export const TargetingCard = ({
                             onClick={() => {
                               handleCloneSegment();
                             }}>
-                            Clone & Edit Segment
+                            {t("environments.surveys.edit.clone_edit_segment")}
                           </Button>
                         )}
 
@@ -323,7 +329,7 @@ export const TargetingCard = ({
                             onClick={() => {
                               handleEditSegment();
                             }}>
-                            Edit Segment
+                            {t("environments.surveys.edit.edit_segment")}
                             <PencilIcon className="ml-2 h-3 w-3" />
                           </Button>
                         )}
@@ -331,7 +337,7 @@ export const TargetingCard = ({
                       {isSegmentUsedInOtherSurveys && (
                         <p className="mt-1 flex items-center text-xs text-slate-500">
                           <AlertCircle className="mr-1 inline h-3 w-3" />
-                          This segment is used in other surveys. Make changes{" "}
+                          {t("environments.surveys.edit.this_segment_is_used_in_other_surveys_make_changes")}
                           <Link
                             href={`/environments/${environmentId}/segments`}
                             target="_blank"
@@ -349,12 +355,12 @@ export const TargetingCard = ({
 
           <div className="flex w-full gap-3">
             <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
-              Load Segment
+              {t("environments.surveys.edit.load_segment")}
             </Button>
 
             {!segment?.isPrivate && !!segment?.filters?.length && (
               <Button variant="secondary" size="sm" onClick={() => setResetAllFiltersModalOpen(true)}>
-                Reset all filters
+                {t("common.reset_all_filters")}
               </Button>
             )}
 
@@ -364,21 +370,21 @@ export const TargetingCard = ({
                 size="sm"
                 className="flex items-center gap-2"
                 onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-                Save as new Segment
+                {t("environments.surveys.edit.save_as_new_segment")}
               </Button>
             )}
           </div>
           <div className="-mt-1.5">
             {isFormbricksCloud ? (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="upgrade to the Scale plan."
+                message={t("environments.surveys.edit.for_advanced_targeting_please")}
+                textForUrl={t("environments.surveys.edit.upgrade_to_the_scale_plan")}
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="request an Enterprise license."
+                message={t("environments.surveys.edit.for_advanced_targeting_please")}
+                textForUrl={t("common.request_an_enterprise_license")}
                 url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
@@ -421,19 +427,19 @@ export const TargetingCard = ({
         )}
 
         <AlertDialog
-          headerText="Are you sure?"
+          headerText={t("common.are_you_sure")}
           open={resetAllFiltersModalOpen}
           setOpen={setResetAllFiltersModalOpen}
-          mainText="This action resets all filters in this survey."
-          declineBtnLabel="Cancel"
+          mainText={t("environments.surveys.edit.this_action_resets_all_filters_in_this_survey")}
+          declineBtnLabel={t("common.cancel")}
           onDecline={() => {
             setResetAllFiltersModalOpen(false);
           }}
-          confirmBtnLabel="Remove all filters"
+          confirmBtnLabel={t("environments.surveys.edit.remove_all_filters")}
           onConfirm={async () => {
             const segment = await handleResetAllFilters();
             if (segment) {
-              toast.success("Filters reset successfully");
+              toast.success(t("common.filters_reset_successfully"));
               router.refresh();
               setSegment(segment);
               setResetAllFiltersModalOpen(false);
@@ -445,14 +451,14 @@ export const TargetingCard = ({
           <Alert className="flex items-center rounded-none bg-slate-50">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
-                User targeting is currently only available when{" "}
+                {t("environments.surveys.edit.user_targeting_is_currently_only_available_when")}
                 <Link
                   href="https://formbricks.com//docs/app-surveys/user-identification"
                   target="blank"
                   className="underline">
-                  identifying users
+                  {t("environments.surveys.edit.identifying_users")}
                 </Link>{" "}
-                with the Formbricks SDK.
+                {t("environments.surveys.edit.with_the_formbricks_sdk")}
               </span>
             </AlertDescription>
           </Alert>

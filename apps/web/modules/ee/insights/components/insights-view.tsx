@@ -2,11 +2,13 @@
 
 import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
 import { UserIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
+import { TUserLocale } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -26,6 +28,7 @@ interface InsightViewProps {
   documentsFilter?: TDocumentFilterCriteria;
   isFetching?: boolean;
   documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const InsightView = ({
@@ -35,7 +38,9 @@ export const InsightView = ({
   documentsFilter,
   isFetching,
   documentsPerPage,
+  locale,
 }: InsightViewProps) => {
+  const t = useTranslations();
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
@@ -83,36 +88,35 @@ export const InsightView = ({
     <div className={cn("mt-2")}>
       <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
         <TabsList className={cn("ml-2")}>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="complaint">Complaint</TabsTrigger>
-          <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>
-          <TabsTrigger value="praise">Praise</TabsTrigger>
-          <TabsTrigger value="other">Other</TabsTrigger>
+          <TabsTrigger value="all">{t("environments.experience.all")}</TabsTrigger>
+          <TabsTrigger value="complaint">{t("environments.experience.complaint")}</TabsTrigger>
+          <TabsTrigger value="featureRequest">{t("environments.experience.feature_request")}</TabsTrigger>
+          <TabsTrigger value="praise">{t("environments.experience.praise")}</TabsTrigger>
+          <TabsTrigger value="other">{t("common.other")}</TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab}>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>{t("common.title")}</TableHead>
+                <TableHead>{t("common.description")}</TableHead>
+                <TableHead>{t("environments.experience.category")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isFetching ? null : insights.length === 0 ? (
                 <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">
-                      No insights found. Collect more survey responses or enable insights for your existing
-                      surveys to get started.
-                    </p>
+                    <p className="text-slate-500">{t("environments.experience.no_insights_found")}</p>
                   </TableCell>
                 </TableRow>
               ) : localInsights.length === 0 ? (
                 <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">No insights found for this filter.</p>
+                    <p className="text-slate-500">
+                      {t("environments.experience.no_insights_for_this_filter")}
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -133,13 +137,17 @@ export const InsightView = ({
                     </TableCell>
                     <TableCell>
                       {insight.category === "complaint" ? (
-                        <Badge text="Complaint" type="error" size="tiny" />
+                        <Badge text={t("environments.experience.complaint")} type="error" size="tiny" />
                       ) : insight.category === "featureRequest" ? (
-                        <Badge text="Feature Request" type="warning" size="tiny" />
+                        <Badge
+                          text={t("environments.experience.feature_request")}
+                          type="warning"
+                          size="tiny"
+                        />
                       ) : insight.category === "praise" ? (
-                        <Badge text="Praise" type="success" size="tiny" />
+                        <Badge text={t("environments.experience.praise")} type="success" size="tiny" />
                       ) : insight.category === "other" ? (
-                        <Badge text="Other" type="gray" size="tiny" />
+                        <Badge text={t("common.other")} type="gray" size="tiny" />
                       ) : null}
                     </TableCell>
                   </TableRow>
@@ -167,6 +175,7 @@ export const InsightView = ({
         handleFeedback={handleFeedback}
         documentsFilter={documentsFilter}
         documentsPerPage={documentsPerPage}
+        locale={locale}
       />
     </div>
   );

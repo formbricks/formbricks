@@ -1,6 +1,7 @@
 "use client";
 
 import { Variants, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Fragment, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
@@ -56,7 +57,7 @@ export const ThemeStylingPreviewSurvey = ({
   const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink] = useState(false);
-
+  const t = useTranslations();
   const { productOverwrites } = survey || {};
 
   const previewScreenVariants: Variants = {
@@ -209,13 +210,13 @@ export const ThemeStylingPreviewSurvey = ({
         <div
           className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("link")}>
-          Link survey
+          {t("common.link_survey")}
         </div>
 
         <div
           className={`${isAppSurvey ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("app")}>
-          App survey
+          {t("common.app_survey")}
         </div>
       </div>
     </div>

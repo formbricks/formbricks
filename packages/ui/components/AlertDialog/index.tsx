@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 
@@ -19,16 +20,19 @@ export const AlertDialog = ({
   open,
   setOpen,
   headerText,
-  mainText = "Are you sure? This action cannot be undone.",
+  mainText,
   declineBtnLabel,
   onDecline,
   confirmBtnLabel,
   declineBtnVariant = "minimal",
   onConfirm,
 }: AlertDialogProps) => {
+  const t = useTranslations();
   return (
     <Modal open={open} setOpen={setOpen} title={headerText}>
-      <p className="mb-6 text-slate-900">{mainText}</p>
+      <p className="mb-6 text-slate-900">
+        {mainText ?? t("common.are_you_sure_this_action_cannot_be_undone")}
+      </p>
       <div className="space-x-2 text-right">
         <Button variant={declineBtnVariant} onClick={onDecline}>
           {declineBtnLabel || "Discard"}

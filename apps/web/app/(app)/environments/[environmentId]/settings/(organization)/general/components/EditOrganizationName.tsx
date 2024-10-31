@@ -1,6 +1,7 @@
 "use client";
 
 import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
@@ -24,6 +25,7 @@ interface EditOrganizationNameProps {
 }
 
 export const EditOrganizationName = ({ organization, membershipRole }: EditOrganizationNameProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const {
     register,
@@ -58,7 +60,7 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
 
       if (updatedOrganizationResponse?.data) {
         setIsUpdatingOrganization(false);
-        toast.success("Organization name updated successfully.");
+        toast.success(t("environments.settings.general.organization_name_updated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(updatedOrganizationResponse);
         toast.error(errorMessage);
@@ -66,22 +68,22 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
       router.refresh();
     } catch (err) {
       setIsUpdatingOrganization(false);
-      toast.error(`Error: ${err.message}`);
+      toast.error(`${t("common.error")}: ${err.message}`);
     }
   };
 
   return isViewer ? (
-    <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
+    <p className="text-sm text-red-700">{t("common.not_authorized")}</p>
   ) : (
     <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(handleUpdateOrganizationName)}>
-      <Label htmlFor="organizationname">Organization Name</Label>
+      <Label htmlFor="organizationname">{t("environments.settings.general.organization_name")}</Label>
       <Input
         type="text"
         id="organizationname"
         defaultValue={organization?.name ?? ""}
         {...register("name", {
           required: {
-            message: "Organization name is required.",
+            message: t("environments.settings.general.organization_name_required"),
             value: true,
           },
         })}
@@ -95,7 +97,7 @@ export const EditOrganizationName = ({ organization, membershipRole }: EditOrgan
         size="sm"
         loading={isUpdatingOrganization}
         disabled={isOrganizationNameInputEmpty || currentOrganizationName === previousOrganizationName}>
-        Update
+        {t("common.update")}
       </Button>
     </form>
   );

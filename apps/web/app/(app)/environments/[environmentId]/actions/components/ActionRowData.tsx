@@ -1,8 +1,15 @@
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-import { timeSinceConditionally } from "@formbricks/lib/time";
+import { timeSince } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { TUserLocale } from "@formbricks/types/user";
 
-export const ActionClassDataRow = ({ actionClass }: { actionClass: TActionClass }) => {
+export const ActionClassDataRow = ({
+  actionClass,
+  locale,
+}: {
+  actionClass: TActionClass;
+  locale: TUserLocale;
+}) => {
   return (
     <div className="m-2 grid h-16 grid-cols-6 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100">
       <div className="col-span-4 flex items-center pl-6 text-sm">
@@ -23,7 +30,7 @@ export const ActionClassDataRow = ({ actionClass }: { actionClass: TActionClass 
         </div>
       </div>
       <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
-        {timeSinceConditionally(actionClass.createdAt.toString())}
+        {timeSince(actionClass.createdAt.toString(), locale)}
       </div>
       <div className="text-center"></div>
     </div>

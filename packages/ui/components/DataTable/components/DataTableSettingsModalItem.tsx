@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Column } from "@tanstack/react-table";
 import { capitalize } from "lodash";
 import { GripVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -14,6 +15,7 @@ interface DataTableSettingsModalItemProps<T> {
 }
 
 export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSettingsModalItemProps<T>) => {
+  const t = useTranslations();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.id,
   });
@@ -21,19 +23,19 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
   const getLabelFromColumnId = () => {
     switch (column.id) {
       case "createdAt":
-        return "Date";
+        return t("common.date");
       case "addressLine1":
-        return "Address Line 1";
+        return t("environments.surveys.edit.address_line_1");
       case "addressLine2":
-        return "Address Line 2";
+        return t("environments.surveys.edit.address_line_2");
       case "city":
-        return "City / Town";
+        return t("environments.surveys.edit.city");
       case "state":
-        return "State / Region";
+        return t("environments.surveys.edit.state");
       case "zip":
-        return "ZIP / Post Code";
+        return t("environments.surveys.edit.zip");
       case "verifiedEmail":
-        return "Verified Email";
+        return t("common.verified_email");
       default:
         return capitalize(column.id);
     }

@@ -1,6 +1,7 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
@@ -13,6 +14,7 @@ import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
+  const t = await getTranslations();
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -23,17 +25,19 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Account Settings">
+      <PageHeader pageTitle={t("common.account_settings")}>
         <AccountSettingsNavbar environmentId={environmentId} activeId="profile" />
       </PageHeader>
       {user && (
         <div>
-          <SettingsCard title="Personal information" description="Update your personal information.">
+          <SettingsCard
+            title={t("environments.settings.profile.personal_information")}
+            description={t("environments.settings.profile.update_personal_info")}>
             <EditProfileDetailsForm user={user} />
           </SettingsCard>
           <SettingsCard
-            title="Avatar"
-            description="Assist your organization in identifying you on Formbricks.">
+            title={t("common.avatar")}
+            description={t("environments.settings.profile.organization_identification")}>
             {user && (
               <EditProfileAvatarForm
                 session={session}
@@ -43,17 +47,19 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             )}
           </SettingsCard>
           {user.identityProvider === "email" && (
-            <SettingsCard title="Security" description="Manage your password and other security settings.">
+            <SettingsCard
+              title={t("common.security")}
+              description={t("environments.settings.profile.security_description")}>
               <AccountSecurity user={user} />
             </SettingsCard>
           )}
 
           <SettingsCard
-            title="Delete account"
-            description="Delete your account with all of your personal information and data.">
+            title={t("environments.settings.profile.delete_account")}
+            description={t("environments.settings.profile.confirm_delete_account")}>
             <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
           </SettingsCard>
-          <SettingsId title="Profile" id={user.id}></SettingsId>
+          <SettingsId title={t("common.profile")} id={user.id}></SettingsId>
         </div>
       )}
     </PageContentWrapper>
