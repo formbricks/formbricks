@@ -1,7 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, LanguagesIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -36,6 +36,7 @@ interface EditorCardMenuProps {
   lastCard: boolean;
   duplicateCard: (cardIdx: number) => void;
   deleteCard: (cardIdx: number) => void;
+  translateCard: (cardIdx: number) => void;
   moveCard: (cardIdx: number, up: boolean) => void;
   card: TSurveyQuestion | TSurveyEndScreenCard | TSurveyRedirectUrlCard;
   updateCard: (cardIdx: number, updatedAttributes: any) => void;
@@ -52,6 +53,7 @@ export const EditorCardMenu = ({
   lastCard,
   duplicateCard,
   deleteCard,
+  translateCard,
   moveCard,
   product,
   card,
@@ -74,6 +76,8 @@ export const EditorCardMenu = ({
     cardType === "question"
       ? survey.questions.length === 1
       : survey.type === "link" && survey.endings.length === 1;
+
+  const isTranslateDisabled = survey.languages.length <= 1;
 
   const availableQuestionTypes = isCxMode ? getCXQuestionNameMap(locale) : getQuestionNameMap(locale);
 
@@ -142,6 +146,17 @@ export const EditorCardMenu = ({
 
   return (
     <div className="flex space-x-2">
+      <LanguagesIcon
+        className={cn(
+          "h-4 cursor-pointer text-slate-500",
+          isTranslateDisabled ? "cursor-not-allowed opacity-50" : "hover:text-slate-600"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isTranslateDisabled) return;
+          translateCard(cardIdx);
+        }}
+      />
       <CopyIcon
         className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
         onClick={(e) => {

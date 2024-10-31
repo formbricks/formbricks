@@ -26,6 +26,7 @@
     "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
+    "@google-cloud/translate": "8.5.0",
     "@hookform/resolvers": "3.9.0",
     "@json2csv/node": "7.0.6",
     "@opentelemetry/api-logs": "0.53.0",

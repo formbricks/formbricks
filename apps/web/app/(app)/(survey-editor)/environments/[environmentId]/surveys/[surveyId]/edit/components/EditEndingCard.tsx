@@ -1,5 +1,6 @@
 "use client";
 
+import { translateText } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { EditorCardMenu } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EditorCardMenu";
 import { EndScreenForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EndScreenForm";
 import { RedirectUrlForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RedirectUrlForm";
@@ -9,6 +10,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
@@ -21,6 +24,7 @@ import {
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
@@ -105,6 +109,60 @@ export const EditEndingCard = ({
     zIndex: isDragging ? 10 : 1,
   };
 
+  const [loading, setLoading] = useState(false);
+
+  const translateEndingCard = async (endingCardIdx: number) => {
+    setLoading(true);
+    const updatedSurvey = { ...localSurvey };
+    const endingCardToTranslate = updatedSurvey.endings[endingCardIdx];
+
+    const textsToTranslate = extractTextsToTranslateFromEndingCard(endingCardToTranslate);
+
+    for (const language of localSurvey.languages) {
+      const languageCode = language.language.code;
+      if (languageCode !== "en" && languageCode !== "default") {
+        const translatedTexts = await translateText(languageCode, textsToTranslate);
+        updateEndingCardWithTranslatedTexts(endingCardToTranslate, translatedTexts, languageCode);
+      }
+    }
+
+    updatedSurvey.endings[endingCardIdx] = endingCardToTranslate;
+    setLocalSurvey(updatedSurvey);
+    setLoading(false);
+    toast.success("Ending card translated.");
+  };
+
+  const extractTextsToTranslateFromEndingCard = (endingCard) => {
+    const textsToTranslate = {};
+    if (endingCard.type === "endScreen") {
+      if (endingCard.headline) {
+        textsToTranslate["headline"] = endingCard.headline["default"];
+      }
+      if (endingCard.subheader) {
+        textsToTranslate["subheader"] = endingCard.subheader["default"];
+      }
+      if (endingCard.buttonLabel) {
+        textsToTranslate["buttonLabel"] = endingCard.buttonLabel["default"];
+      }
+    }
+    return textsToTranslate;
+  };
+
+  const updateEndingCardWithTranslatedTexts = (endingCard, translatedTexts, languageCode: string) => {
+    if (endingCard.type === "endScreen") {
+      if (endingCard.headline) {
+        endingCard.headline[languageCode] = translatedTexts["headline"];
+      }
+      if (endingCard.subheader) {
+        endingCard.subheader[languageCode] = translatedTexts["subheader"];
+      }
+      if (endingCard.buttonLabel) {
+        endingCard.buttonLabel[languageCode] = translatedTexts["buttonLabel"];
+      }
+    }
+  };
+
+
   const duplicateEndingCard = () => {
     setLocalSurvey((prevSurvey) => {
       const endingToDuplicate = prevSurvey.endings[endingCardIndex];
@@ -136,6 +194,11 @@ export const EditEndingCard = ({
       ref={setNodeRef}
       style={style}
       id={endingCard.id}>
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
+          <LoadingSpinner />
+        </div>
+      )}
       <div
         {...listeners}
         {...attributes}
@@ -205,6 +268,7 @@ export const EditEndingCard = ({
                 lastCard={endingCardIndex === localSurvey.endings.length - 1}
                 duplicateCard={duplicateEndingCard}
                 deleteCard={deleteEndingCard}
+                translateCard={translateEndingCard}
                 moveCard={moveEndingCard}
                 card={endingCard}
                 updateCard={() => {}}

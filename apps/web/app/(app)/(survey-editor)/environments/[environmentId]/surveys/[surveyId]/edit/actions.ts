@@ -24,6 +24,7 @@ import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
+import { TranslationServiceClient } from "@google-cloud/translate";
 
 export const updateSurveyAction = authenticatedActionClient
   .schema(ZSurvey)
@@ -275,3 +276,55 @@ export const createActionClassAction = authenticatedActionClient
 
     return await createActionClass(parsedInput.action.environmentId, parsedInput.action);
   });
+
+const service_key = process.env.GOOGLE_TRANSLATE_SERVICE_KEY;
+
+if (!service_key) {
+  throw new Error("Google Translate service key must be set in environment variables.");
+}
+
+const credential = JSON.parse(Buffer.from(service_key, "base64").toString());
+
+const translationClient = new TranslationServiceClient({
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+  credentials: {
+    client_email: credential.client_email,
+    private_key: credential.private_key,
+  },
+});
+
+export async function translateText(
+  targetLanguageCode: string,
+  texts: { [key: string]: string }
+): Promise<{ [key: string]: string }> {
+  const keys = Object.keys(texts);
+  const values = Object.values(texts);
+
+  const request = {
+    parent: `projects/${process.env.GOOGLE_CLOUD_PROJECT_ID}/locations/global`,
+    contents: values,
+    mimeType: "text/plain",
+    sourceLanguageCode: "en",
+    targetLanguageCode: targetLanguageCode,
+  };
+
+  try {
+    const [response] = await translationClient.translateText(request);
+    if (response.translations) {
+      const translatedTexts = response.translations.map(
+        (translation) => translation.translatedText || "!!! TRANSLATION FAILED !!!"
+      );
+      const translatedDict: { [key: string]: string } = {};
+      keys.forEach((key, index) => {
+        translatedDict[key] = translatedTexts[index];
+      });
+      return translatedDict;
+    } else {
+      console.error("No translations found in the response.");
+      return {};
+    }
+  } catch (error) {
+    console.error("Error translating text:", error);
+    throw error;
+  }
+}
