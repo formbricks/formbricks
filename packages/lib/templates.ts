@@ -3292,6 +3292,199 @@ const marketSiteClarity = (): TTemplate => {
   };
 };
 
+const careerDevelopmentSurvey = (): TTemplate => {
+  return {
+    name: "Career Development Survey",
+    role: "productManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: "Assess employee satisfaction with career growth and development opportunities.",
+    preset: {
+      ...surveyDefault,
+      name: "Career Development Survey",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default:
+              "I am satisfied with the opportunities for personal and professional growth at {{productName}}.",
+          },
+          lowerLabel: { default: "Strongly disagree" },
+          upperLabel: { default: "Strongly agree" },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default:
+              "I am pleased with the career advancement opportunities available to me at {{productName}}.",
+          },
+          lowerLabel: { default: "Strongly disagree" },
+          upperLabel: { default: "Strongly agree" },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: "I am satisfied with the job-related training my organization offers." },
+          lowerLabel: { default: "Strongly disagree" },
+          upperLabel: { default: "Strongly agree" },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: "I am satisfied with the investment my organization makes in training and education.",
+          },
+          lowerLabel: { default: "Strongly disagree" },
+          upperLabel: { default: "Strongly agree" },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "Which function do you work in?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Accounting" } },
+            { id: createId(), label: { default: "Public Relations" } },
+            { id: createId(), label: { default: "Marketing" } },
+            { id: createId(), label: { default: "Operations" } },
+            { id: createId(), label: { default: "Product Development" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: "Which of the following best describes your current job level?" },
+          subheader: { default: "Please select one of the following options:" },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            { id: createId(), label: { default: "Individual Contributor" } },
+            { id: createId(), label: { default: "Manager" } },
+            { id: createId(), label: { default: "Senior Manager" } },
+            { id: createId(), label: { default: "Vice President" } },
+            { id: createId(), label: { default: "Executive" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+      ],
+    },
+  };
+};
+
+const professionalDevelopmentSurvey = (): TTemplate => {
+  return {
+    name: "Professional Development Survey",
+    role: "productManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: "Assess employee satisfaction with professional growth and development opportunities.",
+    preset: {
+      ...surveyDefault,
+      name: "Professional Development Survey",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: {
+            default: "Are you interested in professional development activities?",
+          },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Yes" } },
+            { id: createId(), label: { default: "No" } },
+          ],
+        },
+
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default:
+              "What types of professional development activities do you think would be most valuable for your growth?",
+          },
+          subheader: { default: "Select all that apply" },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            { id: createId(), label: { default: "Courses or workshops" } },
+            { id: createId(), label: { default: "Conferences or seminars" } },
+            { id: createId(), label: { default: "Mentoring" } },
+            { id: createId(), label: { default: "Individual research" } },
+            { id: createId(), label: { default: "Networking events" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: {
+            default: "Have you dedicated time to your professional development in the past?",
+          },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Yes" } },
+            { id: createId(), label: { default: "No" } },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default:
+              "How supported do you feel in your workplace when it comes to pursuing professional development?",
+          },
+          lowerLabel: { default: "Not at all supported" },
+          upperLabel: { default: "Extremely supported" },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: "What are your main reasons for wanting to spend time on professional development?",
+          },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            { id: createId(), label: { default: "Looking for a new job" } },
+            { id: createId(), label: { default: "Advancing on my current career path" } },
+            { id: createId(), label: { default: "Improving my skills" } },
+            { id: createId(), label: { default: "To gain more responsibilities" } },
+            { id: createId(), label: { default: "For my own knowledge" } },
+            { id: "other", label: { default: "Other" } },
+          ],
+        },
+      ],
+    },
+  };
+};
+
 const customerEffortScore = (): TTemplate => {
   return {
     name: "Customer Effort Score (CES)",
@@ -5323,6 +5516,129 @@ const employeeWellBeing = (): TTemplate => {
   };
 };
 
+const longTermRetentionCheckIn = (): TTemplate => {
+  return {
+    name: "Long-Term Retention Check-In",
+    role: "productManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
+    description:
+      "Gauge long-term user satisfaction, loyalty, and areas for improvement to retain loyal users.",
+    preset: {
+      ...surveyDefault,
+      name: "Long-Term Retention Check-In",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "star",
+          headline: { default: "How satisfied are you with {{productName}} overall?" },
+          required: true,
+          lowerLabel: { default: "Not satisfied" },
+          upperLabel: { default: "Very satisfied" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "What do you find most valuable about {{productName}}?" },
+          required: false,
+          placeholder: { default: "Describe the feature or benefit you value most..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "Features" } },
+            { id: createId(), label: { default: "Customer support" } },
+            { id: createId(), label: { default: "User experience" } },
+            { id: createId(), label: { default: "Pricing" } },
+            { id: createId(), label: { default: "Reliability and uptime" } },
+          ],
+          headline: {
+            default: "Which aspect of {{productName}} do you find most essential to your experience?",
+          },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: "How well does {{productName}} meet your expectations?" },
+          required: true,
+          lowerLabel: { default: "Falls short" },
+          upperLabel: { default: "Exceeds expectations" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: "What challenges or frustrations have you faced while using {{productName}}?",
+          },
+          required: false,
+          placeholder: { default: "Describe any challenges or improvements you’d like to see..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.NPS,
+          headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+          required: false,
+          lowerLabel: { default: "Not likely" },
+          upperLabel: { default: "Very likely" },
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          shuffleOption: "none",
+          choices: [
+            { id: createId(), label: { default: "New features and improvements" } },
+            { id: createId(), label: { default: "Enhanced customer support" } },
+            { id: createId(), label: { default: "Better pricing options" } },
+            { id: createId(), label: { default: "More integrations" } },
+            { id: createId(), label: { default: "User experience refinements" } },
+          ],
+          headline: { default: "What would make you more likely to remain a long-term user?" },
+          required: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "If you could change one thing about {{productName}}, what would it be?" },
+          required: false,
+          placeholder: { default: "Share any changes or features you wish we’d consider..." },
+          inputType: "text",
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "smiley",
+          headline: { default: "How happy are you with our product updates and frequency?" },
+          required: true,
+          lowerLabel: { default: "Not happy" },
+          upperLabel: { default: "Very happy" },
+          isColorCodingEnabled: true,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: "Any additional feedback or comments?" },
+          required: false,
+          placeholder: { default: "Share any thoughts or feedback that might help us improve..." },
+          inputType: "text",
+        },
+      ],
+    },
+  };
+};
+
 export const templates: TTemplate[] = [
   cartAbandonmentSurvey(),
   siteAbandonmentSurvey(),
@@ -5352,6 +5668,8 @@ export const templates: TTemplate[] = [
   prioritizeFeatures(),
   gaugeFeatureSatisfaction(),
   marketSiteClarity(),
+  careerDevelopmentSurvey(),
+  professionalDevelopmentSurvey(),
   customerEffortScore(),
   rateCheckoutExperience(),
   measureSearchExperience(),
@@ -5365,6 +5683,7 @@ export const templates: TTemplate[] = [
   understandLowEngagement(),
   employeeSatisfaction(),
   employeeWellBeing(),
+  longTermRetentionCheckIn(),
 ];
 
 export const customSurvey = {

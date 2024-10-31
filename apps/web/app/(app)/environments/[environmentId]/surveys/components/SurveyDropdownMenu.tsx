@@ -69,7 +69,7 @@ export const SurveyDropDownMenu = ({
       setDeleteDialogOpen(false);
       toast.success("Survey deleted successfully.");
     } catch (error) {
-      toast.error("An error occured while deleting survey");
+      toast.error("An error occurred while deleting survey");
     }
     setLoading(false);
   };

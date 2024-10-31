@@ -6,9 +6,8 @@ import { prisma } from "@formbricks/database";
 import { embeddingsModel, llmModel } from "@formbricks/lib/aiModels";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import {
-  TDocument,
+  TCreatedDocument,
   TDocumentCreateInput,
-  TGenerateDocumentObjectSchema,
   ZDocumentCreateInput,
   ZGenerateDocumentObjectSchema,
 } from "@formbricks/types/documents";
@@ -17,7 +16,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 export const createDocument = async (
   surveyName: string,
   documentInput: TDocumentCreateInput
-): Promise<TDocument & { isSpam: Boolean; insights: TGenerateDocumentObjectSchema["insights"] }> => {
+): Promise<TCreatedDocument> => {
   validateInputs([surveyName, z.string()], [documentInput, ZDocumentCreateInput]);
 
   try {
