@@ -1,6 +1,7 @@
 "use client";
 
 import { TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -16,7 +17,7 @@ interface DeletePersonButtonProps {
 
 export const DeletePersonButton = ({ environmentId, personId, isMember }: DeletePersonButtonProps) => {
   const router = useRouter();
-
+  const t = useTranslations();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
 
@@ -28,7 +29,7 @@ export const DeletePersonButton = ({ environmentId, personId, isMember }: Delete
       if (deletePersonResponse?.data) {
         router.refresh();
         router.push(`/environments/${environmentId}/people`);
-        toast.success("Person deleted successfully.");
+        toast.success(t("environments.people.person_deleted_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(deletePersonResponse);
         toast.error(errorMessage);

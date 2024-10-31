@@ -10,6 +10,7 @@ import {
   SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -35,6 +36,7 @@ export const WhenToSendCard = ({
   propActionClasses,
   membershipRole,
 }: WhenToSendCardProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
@@ -165,8 +167,10 @@ export const WhenToSendCard = ({
             </div>
 
             <div>
-              <p className="font-semibold text-slate-800">Survey Trigger</p>
-              <p className="mt-1 text-sm text-slate-500">Choose the actions which trigger the survey.</p>
+              <p className="font-semibold text-slate-800">{t("environments.surveys.edit.survey_trigger")}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {t("environments.surveys.edit.choose_the_actions_which_trigger_the_survey")}
+              </p>
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
@@ -177,7 +181,7 @@ export const WhenToSendCard = ({
           <div className="px-3 pb-3 pt-1">
             <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-800">
-                Trigger survey when one of the actions is fired...
+                {t("environments.surveys.edit.trigger_survey_when_one_of_the_actions_is_fired")}
               </p>
 
               {localSurvey.triggers.filter(Boolean).map((trigger, idx) => {
@@ -207,14 +211,14 @@ export const WhenToSendCard = ({
                           )}
                           {trigger.actionClass.type === "code" && (
                             <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                              Key: <b>{trigger.actionClass.key}</b>
+                              {t("environments.surveys.edit.key")}: <b>{trigger.actionClass.key}</b>
                             </span>
                           )}
                           {trigger.actionClass.type === "noCode" &&
                             trigger.actionClass.noCodeConfig?.type === "click" &&
                             trigger.actionClass.noCodeConfig?.elementSelector.cssSelector && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                CSS Selector:{" "}
+                                {t("environments.surveys.edit.css_selector")}:{" "}
                                 <b>{trigger.actionClass.noCodeConfig?.elementSelector.cssSelector}</b>
                               </span>
                             )}
@@ -222,7 +226,7 @@ export const WhenToSendCard = ({
                             trigger.actionClass.noCodeConfig?.type === "click" &&
                             trigger.actionClass.noCodeConfig?.elementSelector.innerHtml && (
                               <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                                Inner Text:{" "}
+                                {t("environments.surveys.edit.inner_text")}:{" "}
                                 <b>{trigger.actionClass.noCodeConfig?.elementSelector.innerHtml}</b>
                               </span>
                             )}
@@ -230,7 +234,7 @@ export const WhenToSendCard = ({
                           trigger.actionClass.noCodeConfig?.urlFilters &&
                           trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
                             <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
-                              URL Filters:{" "}
+                              {t("environments.surveys.edit.url_filters")}:{" "}
                               {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
                                 <span key={index}>
                                   {urlFilter.rule} <b>{urlFilter.value}</b>
@@ -261,29 +265,35 @@ export const WhenToSendCard = ({
                     setAddActionModalOpen(true);
                   }}>
                   <PlusIcon className="mr-2 h-4 w-4" />
-                  Add action
+                  {t("common.add_action")}
                 </Button>
               </div>
             </div>
 
             {/* Survey Display Settings */}
             <div className="mb-4 mt-8 space-y-1 px-4">
-              <h3 className="font-semibold text-slate-800">Survey Display Settings</h3>
-              <p className="text-sm text-slate-500">Add a delay or auto-close the survey</p>
+              <h3 className="font-semibold text-slate-800">
+                {t("environments.surveys.edit.survey_display_settings")}
+              </h3>
+              <p className="text-sm text-slate-500">
+                {t("environments.surveys.edit.add_a_delay_or_auto_close_the_survey")}
+              </p>
             </div>
             <AdvancedOptionToggle
               htmlId="delay"
               isChecked={delay}
               onToggle={handleDelayToggle}
-              title="Add delay before showing survey"
-              description="Wait a few seconds after the trigger before showing the survey"
+              title={t("environments.surveys.edit.add_delay_before_showing_survey")}
+              description={t(
+                "environments.surveys.edit.wait_a_few_seconds_after_the_trigger_before_showing_the_survey"
+              )}
               childBorder={true}>
               <label
                 htmlFor="triggerDelay"
                 className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
-                    Wait
+                    {t("environments.surveys.edit.wait")}
                     <Input
                       type="number"
                       min="0"
@@ -292,7 +302,7 @@ export const WhenToSendCard = ({
                       onChange={(e) => handleTriggerDelay(e)}
                       className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
-                    seconds before showing the survey.
+                    {t("environments.surveys.edit.seconds_before_showing_the_survey")}
                   </p>
                 </div>
               </label>
@@ -301,12 +311,14 @@ export const WhenToSendCard = ({
               htmlId="autoClose"
               isChecked={autoClose}
               onToggle={handleAutoCloseToggle}
-              title="Auto close on inactivity"
-              description="Automatically close the survey if the user does not respond after certain number of seconds"
+              title={t("environments.surveys.edit.auto_close_on_inactivity")}
+              description={t(
+                "environments.surveys.edit.automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds"
+              )}
               childBorder={true}>
               <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  Automatically close survey after
+                  {t("environments.surveys.edit.automatically_close_survey_after")}
                   <Input
                     type="number"
                     min="1"
@@ -315,7 +327,9 @@ export const WhenToSendCard = ({
                     onChange={(e) => handleInputSeconds(e)}
                     className="mx-2 inline w-16 bg-white text-center text-sm"
                   />
-                  seconds with no initial interaction.
+                  {t(
+                    "environments.surveys.edit.seconds_after_trigger_the_survey_will_be_closed_if_no_response"
+                  )}
                 </p>
               </label>
             </AdvancedOptionToggle>
@@ -323,12 +337,14 @@ export const WhenToSendCard = ({
               htmlId="randomizer"
               isChecked={randomizerToggle}
               onToggle={handleDisplayPercentageToggle}
-              title="Show survey to % of users"
-              description="Only display the survey to a subset of the users"
+              title={t("environments.surveys.edit.show_survey_to_users")}
+              description={t("environments.surveys.edit.only_display_the_survey_to_a_subset_of_the_users")}
               childBorder={true}>
               <label htmlFor="small-range" className="cursor-pointer p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  Show to {localSurvey.displayPercentage}% of targeted users
+                  {t("environments.surveys.edit.show_to_x_percentage_of_targeted_users", {
+                    percentage: localSurvey.displayPercentage,
+                  })}
                   <Input
                     id="small-range"
                     type="number"

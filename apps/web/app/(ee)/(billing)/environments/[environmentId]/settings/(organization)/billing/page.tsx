@@ -1,5 +1,6 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -15,14 +16,15 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { PricingTable } from "./components/PricingTable";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error(t("common.not_authorized"));
   }
 
   const [peopleCount, responseCount] = await Promise.all([
@@ -36,7 +38,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Organization Settings">
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}

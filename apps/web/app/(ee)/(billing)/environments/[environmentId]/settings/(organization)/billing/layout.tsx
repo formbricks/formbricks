@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 const BillingLayout = async ({ children, params }) => {
+  const t = await getTranslations();
   if (!IS_FORMBRICKS_CLOUD) {
     notFound();
   }
@@ -21,10 +23,10 @@ const BillingLayout = async ({ children, params }) => {
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error(t("common.not_authorized"));
   }
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

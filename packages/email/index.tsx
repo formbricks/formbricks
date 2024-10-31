@@ -29,6 +29,7 @@ import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
 import { WeeklySummaryNotificationEmail } from "./emails/weekly-summary/weekly-summary-notification-email";
+import { translateEmailText } from "./lib/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
 
@@ -43,6 +44,7 @@ interface SendEmailDataProps {
 interface TEmailUser {
   id: string;
   email: string;
+  locale: string;
 }
 
 const getEmailSubject = (productName: string): string => {
@@ -80,20 +82,20 @@ export const sendVerificationEmail = async (user: TEmailUser): Promise<void> => 
   const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?email=${encodeURIComponent(
     user.email
   )}`;
-  const html = await render(VerificationEmail({ verificationRequestLink, verifyLink }));
+  const html = await render(VerificationEmail({ verificationRequestLink, verifyLink, locale: user.locale }));
   await sendEmail({
     to: user.email,
-    subject: "Please verify your email to use Formbricks",
+    subject: translateEmailText("verification_email_subject", user.locale),
     html,
   });
 };
 
-export const sendForgotPasswordEmail = async (user: TEmailUser): Promise<void> => {
+export const sendForgotPasswordEmail = async (user: TEmailUser, locale: string): Promise<void> => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
-  const html = await render(ForgotPasswordEmail({ verifyLink }));
+  const html = await render(ForgotPasswordEmail({ verifyLink, locale }));
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
@@ -102,7 +104,7 @@ export const sendForgotPasswordEmail = async (user: TEmailUser): Promise<void> =
 };
 
 export const sendPasswordResetNotifyEmail = async (user: TEmailUser): Promise<void> => {
-  const html = await render(PasswordResetNotifyEmail());
+  const html = await render(PasswordResetNotifyEmail({ locale: user.locale }));
   await sendEmail({
     to: user.email,
     subject: "Your Formbricks password has been changed",
@@ -116,7 +118,8 @@ export const sendInviteMemberEmail = async (
   inviterName: string,
   inviteeName: string,
   isOnboardingInvite?: boolean,
-  inviteMessage?: string
+  inviteMessage?: string,
+  locale = "en-US"
 ): Promise<void> => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
@@ -125,14 +128,14 @@ export const sendInviteMemberEmail = async (
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
   if (isOnboardingInvite && inviteMessage) {
-    const html = await render(OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName }));
+    const html = await render(OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, locale }));
     await sendEmail({
       to: email,
       subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
       html,
     });
   } else {
-    const html = await render(InviteEmail({ inviteeName, inviterName, verifyLink }));
+    const html = await render(InviteEmail({ inviteeName, inviterName, verifyLink, locale }));
     await sendEmail({
       to: email,
       subject: `You're invited to collaborate on Formbricks!`,
@@ -144,9 +147,10 @@ export const sendInviteMemberEmail = async (
 export const sendInviteAcceptedEmail = async (
   inviterName: string,
   inviteeName: string,
-  email: string
+  email: string,
+  locale: string
 ): Promise<void> => {
-  const html = await render(InviteAcceptedEmail({ inviteeName, inviterName }));
+  const html = await render(InviteAcceptedEmail({ inviteeName, inviterName, locale }));
   await sendEmail({
     to: email,
     subject: `You've got a new organization member!`,
@@ -159,7 +163,8 @@ export const sendResponseFinishedEmail = async (
   environmentId: string,
   survey: TSurvey,
   response: TResponse,
-  responseCount: number
+  responseCount: number,
+  locale: string
 ): Promise<void> => {
   const personEmail = response.personAttributes?.email;
   const organization = await getOrganizationByEnvironmentId(environmentId);
@@ -176,6 +181,7 @@ export const sendResponseFinishedEmail = async (
       WEBAPP_URL,
       environmentId,
       organization,
+      locale,
     })
   );
 
@@ -193,9 +199,10 @@ export const sendEmbedSurveyPreviewEmail = async (
   to: string,
   subject: string,
   innerHtml: string,
-  environmentId: string
+  environmentId: string,
+  locale: string
 ): Promise<void> => {
-  const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId }));
+  const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, locale }));
   await sendEmail({
     to,
     subject,
@@ -208,6 +215,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const email = data.email;
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
+  const locale = data.locale;
   const token = createTokenForLinkSurvey(surveyId, email);
   const getSurveyLink = (): string => {
     if (singleUseId) {
@@ -217,7 +225,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   };
   const surveyLink = getSurveyLink();
 
-  const html = await render(LinkSurveyEmail({ surveyName, surveyLink }));
+  const html = await render(LinkSurveyEmail({ surveyName, surveyLink, locale }));
   await sendEmail({
     to: data.email,
     subject: "Your survey is ready to be filled out.",
@@ -227,7 +235,8 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
 
 export const sendWeeklySummaryNotificationEmail = async (
   email: string,
-  notificationData: TWeeklySummaryNotificationResponse
+  notificationData: TWeeklySummaryNotificationResponse,
+  locale: string
 ): Promise<void> => {
   const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
     "default",
@@ -246,6 +255,7 @@ export const sendWeeklySummaryNotificationEmail = async (
       endDate,
       startYear,
       endYear,
+      locale,
     })
   );
   await sendEmail({
@@ -257,7 +267,8 @@ export const sendWeeklySummaryNotificationEmail = async (
 
 export const sendNoLiveSurveyNotificationEmail = async (
   email: string,
-  notificationData: TWeeklySummaryNotificationResponse
+  notificationData: TWeeklySummaryNotificationResponse,
+  locale: string
 ): Promise<void> => {
   const startDate = `${notificationData.lastWeekDate.getDate().toString()} ${notificationData.lastWeekDate.toLocaleString(
     "default",
@@ -276,6 +287,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
       endDate,
       startYear,
       endYear,
+      locale,
     })
   );
   await sendEmail({

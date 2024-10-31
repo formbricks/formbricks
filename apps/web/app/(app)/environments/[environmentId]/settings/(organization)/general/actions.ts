@@ -179,7 +179,9 @@ export const resendInviteAction = authenticatedActionClient
       parsedInput.inviteId,
       updatedInvite.email,
       invite?.creator.name ?? "",
-      updatedInvite.name ?? ""
+      updatedInvite.name ?? "",
+      undefined,
+      ctx.user.locale
     );
   });
 
@@ -218,7 +220,9 @@ export const inviteUserAction = authenticatedActionClient
         parsedInput.email,
         ctx.user.name ?? "",
         parsedInput.name ?? "",
-        false
+        false,
+        undefined,
+        ctx.user.locale
       );
     }
 

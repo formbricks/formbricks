@@ -78,7 +78,7 @@ export const POST = async (request: Request) => {
         await sendVerificationEmail(user);
       }
 
-      await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
+      await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email, user.locale);
       await deleteInvite(inviteId);
 
       return Response.json(user);

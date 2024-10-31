@@ -9,7 +9,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 import { SingleResponseCard } from "@formbricks/ui/components/SingleResponseCard";
 
@@ -20,6 +20,7 @@ interface ResponseTimelineProps {
   environment: TEnvironment;
   environmentTags: TTag[];
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const ResponseFeed = ({
@@ -29,6 +30,7 @@ export const ResponseFeed = ({
   user,
   environmentTags,
   attributeClasses,
+  locale,
 }: ResponseTimelineProps) => {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
@@ -62,6 +64,7 @@ export const ResponseFeed = ({
             deleteResponses={deleteResponses}
             updateResponse={updateResponse}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         ))
       )}
@@ -78,6 +81,7 @@ const ResponseSurveyCard = ({
   deleteResponses,
   updateResponse,
   attributeClasses,
+  locale,
 }: {
   response: TResponse;
   surveys: TSurvey[];
@@ -87,6 +91,7 @@ const ResponseSurveyCard = ({
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, response: TResponse) => void;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }) => {
   const survey = surveys.find((survey) => {
     return survey.id === response.surveyId;
@@ -108,6 +113,7 @@ const ResponseSurveyCard = ({
           deleteResponses={deleteResponses}
           updateResponse={updateResponse}
           isMember={isMember}
+          locale={locale}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/comp
 import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import formbricks from "@formbricks/js";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -26,6 +27,7 @@ export const TopControlButtons = ({
   membershipRole,
   productPermission,
 }: TopControlButtonsProps) => {
+  const t = useTranslations();
   const router = useRouter();
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);
@@ -38,7 +40,7 @@ export const TopControlButtons = ({
         <Button
           variant="minimal"
           size="icon"
-          tooltip="Share feedback"
+          tooltip={t("common.share_feedback")}
           className="h-fit w-fit bg-slate-50 p-1"
           onClick={() => {
             formbricks.track("Top Menu: Product Feedback");
@@ -49,7 +51,7 @@ export const TopControlButtons = ({
       <Button
         variant="minimal"
         size="icon"
-        tooltip="Account"
+        tooltip={t("common.account")}
         className="h-fit w-fit bg-slate-50 p-1"
         onClick={() => {
           router.push(`/environments/${environment.id}/settings/profile`);
@@ -62,7 +64,7 @@ export const TopControlButtons = ({
         <Button
           variant="secondary"
           size="icon"
-          tooltip="New survey"
+          tooltip={t("common.new_survey")}
           className="h-fit w-fit p-1"
           onClick={() => {
             router.push(`/environments/${environment.id}/surveys/templates`);

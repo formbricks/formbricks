@@ -2,10 +2,14 @@ import { getTeamsByOranizationId } from "@/app/(app)/(onboarding)/lib/onboarding
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
 import { XIcon } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
-import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { DEFAULT_BRAND_COLOR, DEFAULT_LOCALE } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProducts } from "@formbricks/lib/product/service";
+import { getUserLocale } from "@formbricks/lib/user/service";
 import { TProductConfigChannel, TProductConfigIndustry, TProductMode } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
@@ -22,10 +26,12 @@ interface ProductSettingsPageProps {
 }
 
 const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
+  const t = await getTranslations();
+  const session = await getServerSession(authOptions);
   const channel = searchParams.channel || null;
   const industry = searchParams.industry || null;
   const mode = searchParams.mode || "surveys";
-
+  const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
   const customHeadline = getCustomHeadline(channel);
   const products = await getProducts(params.organizationId);
 
@@ -47,13 +53,13 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       {channel === "link" || mode === "cx" ? (
         <Header
-          title="Match your brand, get 2x more responses."
-          subtitle="When people recognize your brand, they are much more likely to start and complete responses."
+          title={t("organizations.products.new.settings.channel_settings_title")}
+          subtitle={t("organizations.products.new.settings.channel_settings_subtitle")}
         />
       ) : (
         <Header
-          title={customHeadline}
-          subtitle="Get 2x more responses matching surveys with your brand and UI"
+          title={t(customHeadline)}
+          subtitle={t("organizations.products.new.settings.channel_settings_description")}
         />
       )}
       <ProductSettings
@@ -64,6 +70,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
         defaultBrandColor={DEFAULT_BRAND_COLOR}
         organizationTeams={organizationTeams}
         canDoRoleManagement={canDoRoleManagement}
+        locale={locale ?? DEFAULT_LOCALE}
       />
       {products.length >= 1 && (
         <Button

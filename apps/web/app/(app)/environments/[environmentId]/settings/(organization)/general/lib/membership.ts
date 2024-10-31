@@ -1,6 +1,7 @@
 import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { organizationCache } from "@/lib/cache/organization";
+import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -62,11 +63,20 @@ export const getMembersByOrganizationId = reactCache(
     )()
 );
 
-export const deleteMembership = async (userId: string, organizationId: string): Promise<TMembership> => {
+export const deleteMembership = async (
+  userId: string,
+  organizationId: string
+): Promise<
+  {
+    userId: string;
+    role: "admin" | "contributor";
+    teamId: string;
+  }[]
+> => {
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
-    const deletedTeamMemberships = prisma.teamMembership.findMany({
+    const deletedTeamMemberships = await prisma.teamMembership.findMany({
       where: {
         userId,
         team: {
@@ -114,7 +124,7 @@ export const deleteMembership = async (userId: string, organizationId: string): 
       organizationId,
     });
 
-    return deletedMembership;
+    return deletedTeamMemberships;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

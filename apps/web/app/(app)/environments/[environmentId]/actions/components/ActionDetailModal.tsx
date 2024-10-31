@@ -1,4 +1,5 @@
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
@@ -22,13 +23,14 @@ export const ActionDetailModal = ({
   actionClasses,
   membershipRole,
 }: ActionDetailModalProps) => {
+  const t = useTranslations();
   const tabs = [
     {
-      title: "Activity",
+      title: t("common.activity"),
       children: <ActionActivityTab actionClass={actionClass} environmentId={environmentId} />,
     },
     {
-      title: "Settings",
+      title: t("common.settings"),
       children: (
         <ActionSettingsTab
           actionClass={actionClass}

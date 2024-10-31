@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -25,18 +26,19 @@ export const OrganizationSettingsNavbar = ({
   const pathname = usePathname();
   const { isBilling, isMember } = getAccessFlags(membershipRole);
   const isPricingDisabled = isMember;
+  const t = useTranslations();
 
   const navigation = [
     {
       id: "general",
-      label: "General",
+      label: t("common.general"),
       href: `/environments/${environmentId}/settings/general`,
       current: pathname?.includes("/general"),
       hidden: false,
     },
     {
       id: "billing",
-      label: "Billing & Plan",
+      label: t("common.billing"),
       href: `/environments/${environmentId}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled || loading,
       current: pathname?.includes("/billing"),
@@ -50,7 +52,7 @@ export const OrganizationSettingsNavbar = ({
     },
     {
       id: "enterprise",
-      label: "Enterprise License",
+      label: t("common.enterprise_license"),
       href: `/environments/${environmentId}/settings/enterprise`,
       hidden: isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/enterprise"),

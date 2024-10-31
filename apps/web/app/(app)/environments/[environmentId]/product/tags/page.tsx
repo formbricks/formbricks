@@ -3,6 +3,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -18,6 +19,7 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { EditTagsWrapper } from "./components/EditTagsWrapper";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
     throw new Error("Environment not found");
@@ -32,14 +34,14 @@ const Page = async ({ params }) => {
   ]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   if (!session) {
-    throw new Error("Unauthenticated");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!product) {
@@ -59,7 +61,7 @@ const Page = async ({ params }) => {
 
   return !isTagSettingDisabled ? (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation
           environmentId={params.environmentId}
           activeId="tags"
@@ -67,7 +69,9 @@ const Page = async ({ params }) => {
           canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
-      <SettingsCard title="Manage Tags" description="Merge and remove response tags.">
+      <SettingsCard
+        title={t("environments.product.tags.manage_tags")}
+        description={t("environments.product.tags.manage_tags_description")}>
         <EditTagsWrapper
           environment={environment}
           environmentTags={tags}

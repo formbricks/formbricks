@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { CustomDialog } from "@formbricks/ui/components/CustomDialog";
@@ -21,7 +22,7 @@ export function TransferOwnershipModal({
   isLoading,
 }: TransferOwnershipModalProps) {
   const [inputValue, setInputValue] = useState("");
-
+  const t = useTranslations();
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -39,14 +40,20 @@ export function TransferOwnershipModal({
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
-            There can only be one owner of each organization. If you transfer your ownership to{" "}
-            <b>{memberName}</b>, you will lose all of your ownership rights.
+            {t("environments.settings.general.there_can_only_be_one_owner_of_each_organization")}
+            <b>{memberName}</b>,{" "}
+            {t("environments.settings.general.you_will_lose_all_of_your_ownership_rights")}
           </li>
-          <li>When you transfer the ownership, you will remain manager of the organization.</li>
+          <li>
+            {t(
+              "environments.settings.general.when_you_transfer_the_ownership_you_will_remain_an_admin_of_the_organization"
+            )}
+          </li>
         </ul>
         <form>
           <label htmlFor="transferOwnershipConfirmation">
-            Type in <b>{memberName}</b> to confirm:
+            {t("environments.settings.general.type_in")} <b>{memberName}</b>{" "}
+            {t("environments.settings.general.to_confirm")}:
           </label>
           <Input
             className="mt-5"

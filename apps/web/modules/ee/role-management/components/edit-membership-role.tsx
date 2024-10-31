@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -48,6 +49,7 @@ export function EditMembershipRole({
   currentUserRole,
   doesOrgHaveMoreThanOneOwner,
 }: Role) {
+  const t = useTranslations();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   // const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
@@ -66,30 +68,12 @@ export function EditMembershipRole({
         await updateInviteAction({ inviteId: inviteId, organizationId, data: { organizationRole } });
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
 
     setLoading(false);
     router.refresh();
   };
-
-  // const handleOwnershipTransfer = async () => {
-  //   setLoading(true);
-  //   try {
-  //     if (memberId) {
-  //       await transferOwnershipAction({ organizationId, newOwnerId: memberId });
-  //     }
-
-  //     setLoading(false);
-  //     setTransferOwnershipModalOpen(false);
-  //     toast.success("Ownership transferred successfully");
-  //     router.refresh();
-  //   } catch (err: any) {
-  //     toast.error(`Error: ${err.message}`);
-  //     setLoading(false);
-  //     setTransferOwnershipModalOpen(false);
-  //   }
-  // };
 
   const handleRoleChange = (role: TOrganizationRole) => {
     handleMemberRoleUpdate(role);

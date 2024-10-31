@@ -15,38 +15,38 @@ import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
 import { RenderResponse } from "@formbricks/ui/components/SingleResponseCard/components/RenderResponse";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
-const getAddressFieldLabel = (field: string) => {
+const getAddressFieldLabel = (field: string, t: (key: string) => string) => {
   switch (field) {
     case "addressLine1":
-      return "Address Line 1";
+      return t("environments.surveys.responses.address_line_1");
     case "addressLine2":
-      return "Address Line 2";
+      return t("environments.surveys.responses.address_line_2");
     case "city":
-      return "City / Town";
+      return t("environments.surveys.responses.city");
     case "state":
-      return "State / Region";
+      return t("environments.surveys.responses.state_region");
     case "zip":
-      return "ZIP / Post code";
+      return t("environments.surveys.responses.zip_post_code");
     case "country":
-      return "Country";
+      return t("environments.surveys.responses.country");
 
     default:
       break;
   }
 };
 
-const getContactInfoFieldLabel = (field: string) => {
+const getContactInfoFieldLabel = (field: string, t: (key: string) => string) => {
   switch (field) {
     case "firstName":
-      return "First Name";
+      return t("environments.surveys.responses.first_name");
     case "lastName":
-      return "Last Name";
+      return t("environments.surveys.responses.last_name");
     case "email":
-      return "Email";
+      return t("environments.surveys.responses.email");
     case "phone":
-      return "Phone";
+      return t("environments.surveys.responses.phone");
     case "company":
-      return "Company";
+      return t("environments.surveys.responses.company");
     default:
       break;
   }
@@ -55,7 +55,8 @@ const getContactInfoFieldLabel = (field: string) => {
 const getQuestionColumnsData = (
   question: TSurveyQuestion,
   survey: TSurvey,
-  isExpanded: boolean
+  isExpanded: boolean,
+  t: (key: string) => string
 ): ColumnDef<TResponseTableData>[] => {
   switch (question.type) {
     case "matrix":
@@ -91,7 +92,7 @@ const getQuestionColumnsData = (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 overflow-hidden">
                   <span className="h-4 w-4">{QUESTIONS_ICON_MAP["address"]}</span>
-                  <span className="truncate">{getAddressFieldLabel(addressField)}</span>
+                  <span className="truncate">{getAddressFieldLabel(addressField, t)}</span>
                 </div>
               </div>
             );
@@ -115,7 +116,7 @@ const getQuestionColumnsData = (
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 overflow-hidden">
                   <span className="h-4 w-4">{QUESTIONS_ICON_MAP["contactInfo"]}</span>
-                  <span className="truncate">{getContactInfoFieldLabel(contactInfoField)}</span>
+                  <span className="truncate">{getContactInfoFieldLabel(contactInfoField, t)}</span>
                 </div>
               </div>
             );
@@ -167,15 +168,16 @@ const getQuestionColumnsData = (
 export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
-  isMember: boolean
+  isMember: boolean,
+  t: (key: string) => string
 ): ColumnDef<TResponseTableData>[] => {
   const questionColumns = survey.questions.flatMap((question) =>
-    getQuestionColumnsData(question, survey, isExpanded)
+    getQuestionColumnsData(question, survey, isExpanded, t)
   );
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
-    header: () => "Date",
+    header: () => t("common.date"),
     size: 200,
     cell: ({ row }) => {
       const isoDateString = row.original.createdAt;
@@ -206,26 +208,26 @@ export const generateResponseTableColumns = (
     accessorKey: "personId",
     header: () => (
       <div className="flex items-center gap-x-1.5">
-        Person
+        {t("common.person")}
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger>
               <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
             </TooltipTrigger>
             <TooltipContent side="bottom" className="font-normal">
-              How to identify users for{" "}
+              {t("environments.surveys.responses.how_to_identify_users")}
               <Link
                 className="underline underline-offset-2 hover:text-slate-900"
                 href="https://formbricks.com/docs/link-surveys/user-identification"
                 target="_blank">
-                link surveys
+                {t("common.link_surveys")}
               </Link>{" "}
               or{" "}
               <Link
                 className="underline underline-offset-2 hover:text-slate-900"
                 href="https://formbricks.com/docs/app-surveys/user-identification"
                 target="_blank">
-                in-app surveys.
+                {t("common.app_survey")}
               </Link>
             </TooltipContent>
           </Tooltip>
@@ -236,7 +238,7 @@ export const generateResponseTableColumns = (
     cell: ({ row }) => {
       const personId = row.original.person
         ? getPersonIdentifier(row.original.person, row.original.personAttributes)
-        : "Anonymous";
+        : t("common.anonymous");
       return <p className="truncate text-slate-900">{personId}</p>;
     },
   };
@@ -244,7 +246,7 @@ export const generateResponseTableColumns = (
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
     size: 200,
-    header: "Status",
+    header: t("common.status"),
     cell: ({ row }) => {
       const status = row.original.status;
       return <ResponseBadges items={[status]} />;
@@ -253,7 +255,7 @@ export const generateResponseTableColumns = (
 
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
-    header: "Tags",
+    header: t("common.tags"),
     cell: ({ row }) => {
       const tags = row.original.tags;
       if (Array.isArray(tags)) {
@@ -271,7 +273,7 @@ export const generateResponseTableColumns = (
 
   const notesColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "notes",
-    header: "Notes",
+    header: t("common.notes"),
     cell: ({ row }) => {
       const notes = row.original.notes;
       if (Array.isArray(notes)) {
@@ -328,7 +330,7 @@ export const generateResponseTableColumns = (
         <span className="h-4 w-4">
           <MailIcon className="h-4 w-4" />
         </span>
-        <span className="truncate">Verified Email</span>
+        <span className="truncate">{t("common.verified_email")}</span>
       </div>
     ),
   };

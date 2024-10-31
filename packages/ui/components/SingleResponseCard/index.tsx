@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -10,6 +11,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
+import { TUserLocale } from "@formbricks/types/user";
 import { DeleteDialog } from "../DeleteDialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";
@@ -29,6 +31,7 @@ interface SingleResponseCardProps {
   deleteResponses?: (responseIds: string[]) => void;
   isMember: boolean;
   setSelectedResponseId?: (responseId: string | null) => void;
+  locale: TUserLocale;
 }
 
 export const SingleResponseCard = ({
@@ -42,7 +45,9 @@ export const SingleResponseCard = ({
   deleteResponses,
   isMember,
   setSelectedResponseId,
+  locale,
 }: SingleResponseCardProps) => {
+  const t = useTranslations();
   const environmentId = survey.environmentId;
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -90,13 +95,13 @@ export const SingleResponseCard = ({
     setIsDeleting(true);
     try {
       if (isMember) {
-        throw new Error("You are not authorized to perform this action.");
+        throw new Error(t("common.not_authorized"));
       }
       await deleteResponseAction({ responseId: response.id });
       deleteResponses?.([response.id]);
       router.refresh();
       if (setSelectedResponseId) setSelectedResponseId(null);
-      toast.success("Response deleted successfully.");
+      toast.success(t("environments.surveys.responses.response_deleted_successfully"));
       setDeleteDialogOpen(false);
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
@@ -132,6 +137,7 @@ export const SingleResponseCard = ({
           user={user}
           isMember={isMember}
           setDeleteDialogOpen={setDeleteDialogOpen}
+          locale={locale}
         />
 
         <SingleResponseCardBody survey={survey} response={response} skippedQuestions={skippedQuestions} />
@@ -161,6 +167,7 @@ export const SingleResponseCard = ({
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           updateFetchedResponses={updateFetchedResponses}
+          locale={locale}
         />
       )}
     </div>

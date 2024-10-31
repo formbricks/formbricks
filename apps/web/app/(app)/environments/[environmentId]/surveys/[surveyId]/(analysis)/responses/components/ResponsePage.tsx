@@ -19,7 +19,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -29,6 +29,7 @@ interface ResponsePageProps {
   user?: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
+  locale: TUserLocale;
 }
 
 export const ResponsePage = ({
@@ -39,6 +40,7 @@ export const ResponsePage = ({
   user,
   environmentTags,
   responsesPerPage,
+  locale,
 }: ResponsePageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -193,6 +195,7 @@ export const ResponsePage = ({
         deleteResponses={deleteResponses}
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
+        locale={locale}
       />
     </>
   );

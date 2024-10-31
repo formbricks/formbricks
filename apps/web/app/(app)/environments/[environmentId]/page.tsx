@@ -1,5 +1,6 @@
 import { getIsAIEnabled } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -8,6 +9,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 
 const Page = async ({ params }) => {
   const session = await getServerSession(authOptions);
+  const t = await getTranslations();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!session) {
@@ -15,7 +17,7 @@ const Page = async ({ params }) => {
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

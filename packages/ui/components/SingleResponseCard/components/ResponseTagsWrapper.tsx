@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircleIcon, SettingsIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -31,6 +32,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   updateFetchedResponses,
   isMember,
 }) => {
+  const t = useTranslations();
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = React.useState(false);
@@ -42,7 +44,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       await deleteTagOnResponseAction({ responseId, tagId });
       updateFetchedResponses();
     } catch (e) {
-      toast.error("An error occurred deleting the tag");
+      toast.error(t("environments.surveys.responses.an_error_occurred_deleting_the_tag"));
     }
   };
 
@@ -118,12 +120,12 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
               } else {
                 const errorMessage = getFormattedErrorMessage(createTagResponse);
                 if (errorMessage.includes("Unique constraint failed on the fields")) {
-                  toast.error("Tag already exists", {
+                  toast.error(t("environments.surveys.responses.tag_already_exists"), {
                     duration: 2000,
                     icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
                   });
                 } else {
-                  toast.error(errorMessage ?? "Something went wrong", {
+                  toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
                     duration: 2000,
                   });
                 }

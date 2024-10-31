@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { BulkInviteTab } from "./BulkInviteTab";
@@ -22,9 +23,10 @@ export const AddMemberModal = ({
   isFormbricksCloud,
   environmentId,
 }: AddMemberModalProps) => {
+  const t = useTranslations();
   const tabs = [
     {
-      title: "Individual Invite",
+      title: t("environments.settings.general.individual_invite"),
       children: (
         <IndividualInviteTab
           setOpen={setOpen}
@@ -36,7 +38,7 @@ export const AddMemberModal = ({
       ),
     },
     {
-      title: "Bulk Invite",
+      title: t("environments.settings.general.bulk_invite"),
       children: (
         <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} canDoRoleManagement={canDoRoleManagement} />
       ),
@@ -49,7 +51,7 @@ export const AddMemberModal = ({
         open={open}
         setOpen={setOpen}
         tabs={tabs}
-        label={"Invite Organization Member"}
+        label={t("environments.settings.general.invite_organization_member")}
         closeOnOutsideClick={true}
       />
     </>

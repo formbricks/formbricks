@@ -1,8 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface AccountSettingsNavbarProps {
@@ -13,16 +12,17 @@ interface AccountSettingsNavbarProps {
 
 export const AccountSettingsNavbar = ({ environmentId, activeId, loading }: AccountSettingsNavbarProps) => {
   const pathname = usePathname();
+  const t = useTranslations();
   const navigation = [
     {
       id: "profile",
-      label: "Profile",
+      label: t("common.profile"),
       href: `/environments/${environmentId}/settings/profile`,
       current: pathname?.includes("/profile"),
     },
     {
       id: "notifications",
-      label: "Notifications",
+      label: t("common.notifications"),
       href: `/environments/${environmentId}/settings/notifications`,
       current: pathname?.includes("/notifications"),
     },

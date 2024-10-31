@@ -1,6 +1,7 @@
 "use client";
 
 import { handleFileUpload } from "@/app/lib/fileUpload";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -20,6 +21,7 @@ interface EditLogoProps {
 }
 
 export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) => {
+  const t = useTranslations();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(product.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(product.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!product.logo?.bgColor);
@@ -38,7 +40,7 @@ export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) =>
       }
       setLogoUrl(uploadResult.url);
     } catch (error) {
-      toast.error("Logo upload failed. Please try again.");
+      toast.error(t("environments.product.look.logo_upload_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -62,9 +64,9 @@ export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) =>
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       await updateProductAction({ productId: product.id, data: updatedProduct });
-      toast.success("Logo updated successfully");
+      toast.success(t("environments.product.look.logo_updated_successfully"));
     } catch (error) {
-      toast.error("Failed to update the logo");
+      toast.error(t("environments.product.look.failed_to_update_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -84,9 +86,9 @@ export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) =>
         logo: { url: undefined, bgColor: undefined },
       };
       await updateProductAction({ productId: product.id, data: updatedProduct });
-      toast.success("Logo removed successfully", { icon: "🗑️" });
+      toast.success(t("environments.product.look.logo_removed_successfully"));
     } catch (error) {
-      toast.error("Failed to remove the logo");
+      toast.error(t("environments.product.look.failed_to_remove_logo"));
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -138,22 +140,22 @@ export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) =>
         <>
           <div className="flex gap-2">
             <Button onClick={() => fileInputRef.current?.click()} variant="secondary" size="sm">
-              Replace Logo
+              {t("environments.product.look.replace_logo")}
             </Button>
             <Button
               variant="warn"
               size="sm"
               onClick={() => setConfirmRemoveLogoModalOpen(true)}
               disabled={!isEditing}>
-              Remove Logo
+              {t("environments.product.look.remove_logo")}
             </Button>
           </div>
           <AdvancedOptionToggle
             isChecked={isBgColorEnabled}
             onToggle={toggleBackgroundColor}
             htmlId="addBackgroundColor"
-            title="Add background color"
-            description="Add a background color to the logo container."
+            title={t("environments.product.look.add_background_color")}
+            description={t("environments.product.look.add_background_color_description")}
             childBorder
             customContainerClass="p-0"
             disabled={!isEditing}>
@@ -171,14 +173,14 @@ export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) =>
       )}
       {logoUrl && (
         <Button onClick={saveChanges} disabled={isLoading || isMember} size="sm">
-          {isEditing ? "Save" : "Edit"}
+          {isEditing ? t("common.save") : t("common.edit")}
         </Button>
       )}
       <DeleteDialog
         open={confirmRemoveLogoModalOpen}
         setOpen={setConfirmRemoveLogoModalOpen}
-        deleteWhat="Logo"
-        text="Are you sure you want to remove the logo?"
+        deleteWhat={t("common.logo")}
+        text={t("environments.product.look.remove_logo_confirmation")}
         onDelete={removeLogo}
       />
     </div>

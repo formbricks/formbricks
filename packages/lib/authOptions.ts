@@ -29,6 +29,7 @@ import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
 import { createOrganization, getOrganization } from "./organization/service";
 import { createUser, getUserByEmail, updateUser } from "./user/service";
+import { findMatchingLocale } from "./utils/locale";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -256,6 +257,7 @@ export const authOptions: NextAuthOptions = {
           emailVerified: new Date(Date.now()),
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
+          locale: findMatchingLocale(),
         });
 
         // Default organization assignment if env variable is set

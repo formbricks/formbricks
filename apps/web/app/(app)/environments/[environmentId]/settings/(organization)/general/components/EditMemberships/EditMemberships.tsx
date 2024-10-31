@@ -1,5 +1,6 @@
 import { MembersInfo } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/MembersInfo";
 import { getMembersByOrganizationId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
+import { getTranslations } from "next-intl/server";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
 import { TMembership } from "@formbricks/types/memberships";
@@ -19,7 +20,7 @@ export const EditMemberships = async ({
 }: EditMembershipsProps) => {
   const members = await getMembersByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
-
+  const t = await getTranslations();
   const currentUserRole = membership?.organizationRole;
   const isUserManagerOrOwner =
     membership?.organizationRole === "manager" || membership?.organizationRole === "owner";
@@ -29,9 +30,9 @@ export const EditMemberships = async ({
     <div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-5">Fullname</div>
-          <div className="col-span-5">Email</div>
-          {canDoRoleManagement && <div className="col-span-5">Role</div>}
+          <div className="col-span-5">{t("common.full_name")}</div>
+          <div className="col-span-5">{t("common.email")}</div>
+          {canDoRoleManagement && <div className="col-span-5">{t("common.role")}</div>}
           <div className="col-span-5"></div>
         </div>
 

@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -12,17 +13,19 @@ export const metadata: Metadata = {
 };
 
 const ConfigLayout = async ({ children, params }) => {
+  const t = await getTranslations();
+
   const [organization, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
   ]);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   if (!session) {
-    throw new Error("Unauthenticated");
+    throw new Error(t("common.session_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);

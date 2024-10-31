@@ -2,13 +2,7 @@ import clsx from "clsx";
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@formbricks/ui/components/Command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "../Command";
 
 interface TOption<T> {
   label: string;
