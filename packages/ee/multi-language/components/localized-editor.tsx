@@ -1,10 +1,15 @@
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
+import type {
+  TI18nString,
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
 import { Editor } from "@formbricks/ui/components/Editor";
 import { LanguageIndicator } from "./language-indicator";
 
@@ -13,14 +18,15 @@ interface LocalizedEditorProps {
   value: TI18nString | undefined;
   localSurvey: TSurvey;
   isInvalid: boolean;
-  updateQuestion: any;
+  updateQuestion?: any;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   questionIdx: number;
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   showRecallItemSelect?: boolean;
-  stripHtmlTags: (html: string) => string;
+  stripHtmlTags?: (html: string) => string;
+  updateSurvey?: (data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard>) => void;
 }
 
 const checkIfValueIsIncomplete = (
@@ -48,7 +54,10 @@ export function LocalizedEditor({
   setFirstRender,
   showRecallItemSelect,
   stripHtmlTags,
+  updateSurvey,
 }: LocalizedEditorProps) {
+  const isEndingCard = questionIdx >= localSurvey.questions.length;
+  const isWelcomeCard = questionIdx === -1;
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
     [localSurvey.languages]
@@ -74,9 +83,10 @@ export function LocalizedEditor({
             ...value,
             [selectedLanguageCode]: v,
           };
-          if (questionIdx === -1) {
-            // welcome card
-            updateQuestion({ [id]: translatedHtml });
+          if (isWelcomeCard || isEndingCard) {
+            if (updateSurvey) {
+              updateSurvey({ [id]: translatedHtml });
+            }
             return;
           }
           updateQuestion(questionIdx, { [id]: translatedHtml });

@@ -2,8 +2,9 @@
 
 import { EditorCardMenu } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EditorCardMenu";
 import { EndScreenForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EndScreenForm";
+import { HtmlHeader } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/HtmlHeader";
 import { RedirectUrlForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RedirectUrlForm";
-import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { formatTextWithSlashesAsHtml } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
@@ -158,16 +159,10 @@ export const EditEndingCard = ({
             <div className="inline-flex">
               <div>
                 <p className="text-sm font-semibold">
-                  {endingCard.type === "endScreen" &&
-                    (endingCard.headline &&
-                    recallToHeadline(
-                      endingCard.headline,
-                      localSurvey,
-                      true,
-                      selectedLanguageCode,
-                      attributeClasses
-                    )[selectedLanguageCode]
-                      ? formatTextWithSlashes(
+                  {endingCard.type === "endScreen" && endingCard.headline && (
+                    <>
+                      <HtmlHeader
+                        htmlString={
                           recallToHeadline(
                             endingCard.headline,
                             localSurvey,
@@ -175,8 +170,21 @@ export const EditEndingCard = ({
                             selectedLanguageCode,
                             attributeClasses
                           )[selectedLanguageCode]
-                        )
-                      : "Ending card")}
+                            ? formatTextWithSlashesAsHtml(
+                                recallToHeadline(
+                                  endingCard.headline,
+                                  localSurvey,
+                                  true,
+                                  selectedLanguageCode,
+                                  attributeClasses
+                                )[selectedLanguageCode] ?? ""
+                              )
+                            : "Ending card"
+                        }
+                        questionId="endingCard"
+                      />
+                    </>
+                  )}
                   {endingCard.type === "redirectToUrl" && (endingCard.label || "Redirect to Url")}
                 </p>
                 {!open && (

@@ -676,6 +676,7 @@ export const QuestionFormInput = ({
                       questionIdx={questionIdx}
                       showRecallItemSelect={showRecallItemSelect}
                       stripHtmlTags={stripHtmlTags}
+                      updateSurvey={updateSurvey}
                     />
                   )}
                 </>

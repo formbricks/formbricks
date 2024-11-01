@@ -62,6 +62,11 @@ const questionIconMapping = questionTypes.reduce(
   {}
 );
 
+const stripHtmlTags = (html: string): string => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return doc.body.textContent || "";
+};
+
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   currQuestionIdx: number
@@ -76,7 +81,7 @@ export const getConditionValueOptions = (
     .map((question) => {
       return {
         icon: questionIconMapping[question.type],
-        label: getLocalizedValue(question.headline, "default"),
+        label: stripHtmlTags(getLocalizedValue(question.headline, "default")),
         value: question.id,
         meta: {
           type: "question",
