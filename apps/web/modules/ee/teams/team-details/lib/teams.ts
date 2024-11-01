@@ -38,7 +38,7 @@ export const getTeam = reactCache(
             throw new ResourceNotFoundError("team", teamId);
           }
 
-          const teamMemberships = await prisma.teamMembership.findMany({
+          const teamMemberships = await prisma.teamUser.findMany({
             where: {
               teamId,
             },

@@ -378,6 +378,8 @@ enum IntegrationType {
 
 model Integration {
   id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   type          IntegrationType
   environmentId String
   /// @zod.custom(imports.ZIntegrationConfig)
@@ -484,6 +486,8 @@ enum MembershipRole {
 }
 
 model Membership {
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId   String
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -614,7 +618,7 @@ model User {
   /// [Locale]
   locale                    String           @default("en-US")
   surveys                   Survey[]
-  teamMemberships           TeamMembership[]
+  teamUsers                 TeamUser[]
 
   @@index([email])
 }
@@ -658,6 +662,8 @@ model Language {
 }
 
 model SurveyLanguage {
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @updatedAt @map(name: "updated_at")
   language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
   languageId String
   surveyId   String
@@ -691,6 +697,8 @@ model Insight {
 }
 
 model DocumentInsight {
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @updatedAt @map(name: "updated_at")
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   insightId  String
@@ -728,49 +736,51 @@ model Document {
 }
 
 model Team {
-  id             String           @id @default(cuid())
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id             String        @id @default(cuid())
+  createdAt      DateTime      @default(now()) @map(name: "created_at")
+  updatedAt      DateTime      @updatedAt @map(name: "updated_at")
   name           String
-  organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  teamMembers    TeamMembership[]
+  organizationId String        @map(name: "organization_id")
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamUsers      TeamUser[]
   productTeams   ProductTeam[]
 
   @@unique([organizationId, name])
-  @@index([organizationId])
 }
 
-enum TeamRole {
+enum TeamUserRole {
   admin
   contributor
 }
 
-model TeamMembership {
-  teamId String
-  team   Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  userId String
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role   TeamRole
+model TeamUser {
+  createdAt DateTime     @default(now()) @map(name: "created_at")
+  updatedAt DateTime     @updatedAt @map(name: "updated_at")
+  teamId    String       @map(name: "team_id")
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String       @map(name: "user_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TeamUserRole
 
   @@id([teamId, userId])
   @@index([userId])
 }
 
-enum PermissionLevel {
+enum ProductTeamPermission {
   read
   readWrite
   manage
 }
 
 model ProductTeam {
-  productId  String
-  product    Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  teamId     String
-  team       Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  permission PermissionLevel @default(read)
+  createdAt  DateTime              @default(now()) @map(name: "created_at")
+  updatedAt  DateTime              @updatedAt @map(name: "updated_at")
+  productId  String                @map(name: "product_id")
+  product    Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  teamId     String                @map(name: "team_id")
+  team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  permission ProductTeamPermission @default(read)
 
   @@id([productId, teamId])
-  @@index([productId])
   @@index([teamId])
 }

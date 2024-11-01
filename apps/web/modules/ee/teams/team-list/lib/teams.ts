@@ -1,7 +1,7 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
 import { TOtherTeam, TTeamRole, TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
-import { Prisma, TeamRole } from "@prisma/client";
+import { Prisma, TeamUserRole } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
@@ -20,7 +20,7 @@ const getUserTeams = reactCache(
           const teams = await prisma.team.findMany({
             where: {
               organizationId,
-              teamMembers: {
+              teamUsers: {
                 some: {
                   userId,
                 },
@@ -29,14 +29,14 @@ const getUserTeams = reactCache(
             select: {
               id: true,
               name: true,
-              teamMembers: {
+              teamUsers: {
                 select: {
                   role: true,
                 },
               },
               _count: {
                 select: {
-                  teamMembers: true,
+                  teamUsers: true,
                 },
               },
             },
@@ -45,8 +45,8 @@ const getUserTeams = reactCache(
           const userTeams = teams.map((team) => ({
             id: team.id,
             name: team.name,
-            userRole: team.teamMembers[0].role,
-            memberCount: team._count.teamMembers,
+            userRole: team.teamUsers[0].role,
+            memberCount: team._count.teamUsers,
           }));
 
           return userTeams;
@@ -78,7 +78,7 @@ export const getOtherTeams = reactCache(
           const teams = await prisma.team.findMany({
             where: {
               organizationId,
-              teamMembers: {
+              teamUsers: {
                 none: {
                   userId,
                 },
@@ -89,7 +89,7 @@ export const getOtherTeams = reactCache(
               name: true,
               _count: {
                 select: {
-                  teamMembers: true,
+                  teamUsers: true,
                 },
               },
             },
@@ -98,7 +98,7 @@ export const getOtherTeams = reactCache(
           const otherTeams = teams.map((team) => ({
             id: team.id,
             name: team.name,
-            memberCount: team._count.teamMembers,
+            memberCount: team._count.teamUsers,
           }));
 
           return otherTeams;
@@ -187,7 +187,7 @@ export const leaveTeam = async (userId: string, teamId: string): Promise<boolean
       throw new ResourceNotFoundError("Team", teamId);
     }
 
-    const deletedMembership = await prisma.teamMembership.delete({
+    const deletedMembership = await prisma.teamUser.delete({
       where: {
         teamId_userId: {
           teamId,
@@ -252,13 +252,13 @@ export const joinTeam = async (userId: string, teamId: string): Promise<TTeamRol
       throw new ResourceNotFoundError("Membership", null);
     }
 
-    let role: TeamRole = "contributor";
+    let role: TeamUserRole = "contributor";
 
     if (membership.organizationRole === "owner" || membership.organizationRole === "manager") {
       role = "admin";
     }
 
-    const createdMembership = await prisma.teamMembership.create({
+    const createdMembership = await prisma.teamUser.create({
       data: {
         teamId,
         userId,

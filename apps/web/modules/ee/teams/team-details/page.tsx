@@ -46,18 +46,7 @@ export const TeamDetails = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <div className="">
-        <PageHeader pageTitle="Organization Settings">
-          <OrganizationSettingsNavbar
-            environmentId={params.environmentId}
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            membershipRole={currentUserMembership?.organizationRole}
-            activeId="teams"
-            canDoRoleManagement={canDoRoleManagement}
-          />
-        </PageHeader>
-        <TeamsNavigationBreadcrumbs teamName={team.name} />
-      </div>
+      <TeamsNavigationBreadcrumbs teamName={team.name} />
       <DetailsView
         team={team}
         organizationMembers={organizationMembers}

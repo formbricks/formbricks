@@ -57,7 +57,10 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const membershipRole = currentUserMembership?.organizationRole;
+
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
+
   const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
 
   if (!productPermission) {
@@ -106,7 +109,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           products={products}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.organizationRole}
+          membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isAIEnabled={isAIEnabled}
           productPermission={productPermission}
@@ -115,7 +118,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           <TopControlBar
             environment={environment}
             environments={environments}
-            membershipRole={currentUserMembership?.organizationRole}
+            membershipRole={membershipRole}
             productPermission={productPermission}
           />
           <div className="mt-14">{children}</div>

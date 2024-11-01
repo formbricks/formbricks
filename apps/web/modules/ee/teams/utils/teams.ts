@@ -1,19 +1,19 @@
-import { PermissionLevel, TeamRole } from "@prisma/client";
+import { ProductTeamPermission, TeamUserRole } from "@prisma/client";
 
 export const TeamPermissionMapping = {
-  [PermissionLevel.read]: "Read",
-  [PermissionLevel.readWrite]: "Read & write",
-  [PermissionLevel.manage]: "Manage",
+  [ProductTeamPermission.read]: "Read",
+  [ProductTeamPermission.readWrite]: "Read & write",
+  [ProductTeamPermission.manage]: "Manage",
 };
 
 export const TeamRoleMapping = {
-  [TeamRole.admin]: "Admin",
-  [TeamRole.contributor]: "Contributor",
+  [TeamUserRole.admin]: "Admin",
+  [TeamUserRole.contributor]: "Contributor",
 };
 
-export const getTeamAccessFlags = (role?: TeamRole | null) => {
-  const isAdmin = role === TeamRole.admin;
-  const isContributor = role === TeamRole.contributor;
+export const getTeamAccessFlags = (role?: TeamUserRole | null) => {
+  const isAdmin = role === TeamUserRole.admin;
+  const isContributor = role === TeamUserRole.contributor;
 
   return {
     isAdmin,
@@ -21,10 +21,10 @@ export const getTeamAccessFlags = (role?: TeamRole | null) => {
   };
 };
 
-export const getTeamPermissionFlags = (permissionLevel?: PermissionLevel | null) => {
-  const hasReadAccess = permissionLevel === PermissionLevel.read;
-  const hasReadWriteAccess = permissionLevel === PermissionLevel.readWrite;
-  const hasManageAccess = permissionLevel === PermissionLevel.manage;
+export const getTeamPermissionFlags = (permissionLevel?: ProductTeamPermission | null) => {
+  const hasReadAccess = permissionLevel === ProductTeamPermission.read;
+  const hasReadWriteAccess = permissionLevel === ProductTeamPermission.readWrite;
+  const hasManageAccess = permissionLevel === ProductTeamPermission.manage;
 
   return {
     hasReadAccess,

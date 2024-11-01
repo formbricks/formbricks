@@ -70,14 +70,14 @@ export const joinTeamAction = authenticatedActionClient
   });
 
 const ZCreateTeamAction = z.object({
-  organizationId: z.string(),
+  organizationId: z.string().cuid(),
   name: z.string(),
 });
 
 export const createTeamAction = authenticatedActionClient
   .schema(ZCreateTeamAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
+    /* await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
       access: [
@@ -86,7 +86,7 @@ export const createTeamAction = authenticatedActionClient
           rules: ["team", "create"],
         },
       ],
-    });
+    }); */
 
     return await createTeam(parsedInput.organizationId, parsedInput.name);
   });

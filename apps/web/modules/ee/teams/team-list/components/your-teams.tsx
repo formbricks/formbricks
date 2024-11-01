@@ -1,8 +1,12 @@
 "use client";
 
+import { leaveTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
@@ -17,15 +21,21 @@ import {
 
 interface YourTeamsProps {
   teams: TUserTeam[];
-  leaveTeam: (teamId: string) => void;
 }
 
-export const YourTeams = ({ teams, leaveTeam }: YourTeamsProps) => {
+export const YourTeams = ({ teams }: YourTeamsProps) => {
+  const router = useRouter();
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [leaveTeamModalOpen, setLeaveTeamModalOpen] = useState<boolean>(false);
 
-  const handleLeaveTeam = (teamId: string) => {
-    leaveTeam(teamId);
+  const handleLeaveTeam = async (teamId: string) => {
+    const leaveTeamActionResponse = await leaveTeamAction({ teamId });
+    if (leaveTeamActionResponse?.data) {
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(leaveTeamActionResponse);
+      toast.error(errorMessage);
+    }
     setLeaveTeamModalOpen(false);
     setSelectedTeamId(null);
   };
@@ -47,6 +57,13 @@ export const YourTeams = ({ teams, leaveTeam }: YourTeamsProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {teams.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center">
+                      You are not part of any team.
+                    </TableCell>
+                  </TableRow>
+                )}
                 {teams.map((team) => (
                   <TableRow key={team.id}>
                     <TableCell>

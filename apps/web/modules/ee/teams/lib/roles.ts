@@ -22,7 +22,7 @@ export const getProductPermissionByUserId = reactCache(
             where: {
               productId: productId,
               team: {
-                teamMembers: {
+                teamUsers: {
                   some: {
                     userId,
                   },
@@ -65,7 +65,7 @@ export const getTeamRoleByTeamIdUserId = reactCache(
       async () => {
         validateInputs([teamId, ZId], [userId, ZId]);
         try {
-          const teamMembership = await prisma.teamMembership.findUnique({
+          const teamUser = await prisma.teamUser.findUnique({
             where: {
               teamId_userId: {
                 teamId,
@@ -74,11 +74,11 @@ export const getTeamRoleByTeamIdUserId = reactCache(
             },
           });
 
-          if (!teamMembership) {
+          if (!teamUser) {
             return null;
           }
 
-          return teamMembership.role;
+          return teamUser.role;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);

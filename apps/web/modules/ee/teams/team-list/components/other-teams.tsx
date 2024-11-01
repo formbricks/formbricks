@@ -1,7 +1,11 @@
 "use client";
 
+import { joinTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TOtherTeam } from "@/modules/ee/teams/team-list/types/teams";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import {
@@ -15,10 +19,21 @@ import {
 
 interface OtherTeamsProps {
   teams: TOtherTeam[];
-  joinTeam: (teamId: string) => void;
 }
 
-export const OtherTeams = ({ teams, joinTeam }: OtherTeamsProps) => {
+export const OtherTeams = ({ teams }: OtherTeamsProps) => {
+  const router = useRouter();
+
+  const joinTeam = async (teamId: string) => {
+    const joinTeamActionResponse = await joinTeamAction({ teamId });
+    if (joinTeamActionResponse?.data) {
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(joinTeamActionResponse);
+      toast.error(errorMessage);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -34,6 +49,13 @@ export const OtherTeams = ({ teams, joinTeam }: OtherTeamsProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {teams.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={2} className="text-center">
+                    No other teams found
+                  </TableCell>
+                </TableRow>
+              )}
               {teams.map((team) => (
                 <TableRow key={team.id}>
                   <TableCell>
