@@ -557,7 +557,7 @@
       "category": "Category",
       "complaint": "Complaint",
       "did_you_find_this_insight_helpful": "Did you find this insight helpful?",
-      "feature_request": "Feature Request",
+      "feature_request": "Request",
       "good_afternoon": "🌤️ Good afternoon",
       "good_evening": "🌙 Good evening",
       "good_morning": "☀️ Good morning",
@@ -1775,7 +1775,7 @@
   "setup": {
     "intro": {
       "get_started": "Get started",
-      "made_with_love_in_kiel": "Made with 🤍 in Kiel, Germany",
+      "made_with_love_in_kiel": "Made with 🤍 in Germany",
       "paragraph_1": "Formbricks is an Experience Management Suite built of the <b>fastest growing open source survey platform</b> worldwide.",
       "paragraph_2": "Run targeted surveys on websites, in apps or anywhere online. Gather valuable insights to <b>craft irresistible experiences</b> for customers, users and employees.",
       "paragraph_3": "We're commited to highest degree of data privacy. Self-host to keep <b>full control over your data</b>. Always",

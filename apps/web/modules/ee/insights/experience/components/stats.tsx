@@ -2,19 +2,12 @@
 
 import { getStatsAction } from "@/modules/ee/insights/experience/actions";
 import { TStats } from "@/modules/ee/insights/experience/types/stats";
-import {
-  ActivityIcon,
-  FrownIcon,
-  GaugeIcon,
-  InboxIcon,
-  MehIcon,
-  MessageCircleIcon,
-  SmileIcon,
-} from "lucide-react";
+import { ActivityIcon, GaugeIcon, InboxIcon, MessageCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { Badge } from "@formbricks/ui/components/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { cn } from "@formbricks/ui/lib/utils";
@@ -100,11 +93,11 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
                 <div className="flex items-center font-medium text-slate-700">
                   <TooltipRenderer tooltipContent={`${stat.value} positive`}>
                     {stats.overallSentiment === "positive" ? (
-                      <SmileIcon className="h-10 w-10" strokeWidth={1.5} />
+                      <Badge text="Positive" type="success" size="large" />
                     ) : stats.overallSentiment === "negative" ? (
-                      <FrownIcon className="h-10 w-10" strokeWidth={1.5} />
+                      <Badge text="Negative" type="error" size="large" />
                     ) : (
-                      <MehIcon className="h-10 w-10" strokeWidth={1.5} />
+                      <Badge text="Neutral" type="gray" size="large" />
                     )}
                   </TooltipRenderer>
                 </div>
