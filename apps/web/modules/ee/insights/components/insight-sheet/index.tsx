@@ -1,12 +1,14 @@
 "use client";
 
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardFooter } from "@formbricks/ui/components/Card";
 import {
@@ -30,6 +32,7 @@ interface InsightSheetProps {
   handleFeedback: (feedback: "positive" | "negative") => void;
   documentsFilter?: TDocumentFilterCriteria;
   documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const InsightSheet = ({
@@ -42,7 +45,9 @@ export const InsightSheet = ({
   handleFeedback,
   documentsFilter,
   documentsPerPage = 10,
+  locale,
 }: InsightSheetProps) => {
+  const t = useTranslations();
   const [documents, setDocuments] = useState<TDocument[]>([]);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false); // New state for loading
@@ -132,9 +137,8 @@ export const InsightSheet = ({
             <CategoryBadge category={insight.category} environmentId={environmentId} insightId={insight.id} />
           </SheetTitle>
           <SheetDescription>{insight.description}</SheetDescription>
-
-          <div className="mt-1 flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">
-            <p>Is this insight helpful?</p>
+          <div className="flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">
+            <p>{t("environments.experience.did_you_find_this_insight_helpful")}</p>
             <ThumbsUpIcon
               className="upvote h-4 w-4 cursor-pointer text-slate-700 hover:text-emerald-500"
               onClick={() => handleFeedbackClick("positive")}
@@ -162,7 +166,7 @@ export const InsightSheet = ({
                     environmentId={environmentId}
                   />
                 </p>
-                <p>{timeSince(new Date(document.createdAt).toISOString())}</p>
+                <p>{timeSince(new Date(document.createdAt).toISOString(), locale)}</p>
               </CardFooter>
             </Card>
           ))}

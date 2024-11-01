@@ -1,17 +1,19 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React from "react";
 import { useFormContext } from "react-hook-form";
 import { Input } from "@formbricks/ui/components/Input";
 
 export const TwoFactorBackup = () => {
   const { register } = useFormContext();
+  const t = useTranslations();
 
   return (
     <>
       <div className="mb-2 transition-all duration-500 ease-in-out">
         <label htmlFor="totpBackup" className="sr-only">
-          Backup code
+          {t("auth.login.backup_code")}
         </label>
         <Input
           id="totpBackup"

@@ -2,19 +2,21 @@
 
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useTranslations } from "next-intl";
 import { LanguageLabels } from "@formbricks/ee/multi-language/components/language-labels";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = () => {
+  const t = useTranslations();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation activeId="languages" loading />
       </PageHeader>
       <SettingsCard
-        title="Multi-language surveys"
-        description="Add languages to create multi-language surveys.">
+        title={t("environments.product.languages.multi_language_surveys")}
+        description={t("environments.product.languages.multi_language_surveys_description")}>
         <div className="flex flex-col space-y-4">
           <LanguageLabels />
           {[...Array(3)].map((_, idx) => (

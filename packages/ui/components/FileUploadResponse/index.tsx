@@ -1,6 +1,7 @@
 "use client";
 
 import { DownloadIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 
 interface FileUploadResponseProps {
@@ -8,8 +9,9 @@ interface FileUploadResponseProps {
 }
 
 export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
+  const t = useTranslations();
   if (selected.length === 0) {
-    return <div className="font-semibold text-slate-500">skipped</div>;
+    return <div className="font-semibold text-slate-500">{t("common.skipped")}</div>;
   }
 
   return (

@@ -74,12 +74,12 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
   }
 };
 
-export const getPlaceHolderById = (id: string) => {
+export const getPlaceHolderById = (id: string, t: (key: string) => string) => {
   switch (id) {
     case "headline":
-      return "Your question here. Recall information with @";
+      return t("environments.surveys.edit.your_question_here_recall_information_with");
     case "subheader":
-      return "Your description here. Recall information with @";
+      return t("environments.surveys.edit.your_description_here_recall_information_with");
     default:
       return "";
   }

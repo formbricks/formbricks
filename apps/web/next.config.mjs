@@ -1,11 +1,12 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
+import createNextIntlPlugin from "next-intl/plugin";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
@@ -297,4 +298,4 @@ const exportConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
   ? withSentryConfig(nextConfig, sentryOptions, sentryConfig)
   : nextConfig;
 
-export default exportConfig;
+export default withNextIntl(nextConfig);

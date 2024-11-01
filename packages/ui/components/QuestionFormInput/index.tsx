@@ -3,6 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -28,6 +29,7 @@ import {
   TSurveyRecallItem,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { LanguageIndicator } from "../../../ee/multi-language/components/language-indicator";
 import { createI18nString } from "../../../lib/i18n/utils";
 import { FileInput } from "../FileInput";
@@ -65,6 +67,7 @@ interface QuestionFormInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const QuestionFormInput = ({
@@ -85,7 +88,9 @@ export const QuestionFormInput = ({
   onBlur,
   className,
   attributeClasses,
+  locale,
 }: QuestionFormInputProps) => {
+  const t = useTranslations();
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
@@ -367,7 +372,7 @@ export const QuestionFormInput = ({
   const addRecallItem = useCallback(
     (recallItem: TSurveyRecallItem) => {
       if (recallItem.label.trim() === "") {
-        toast.error("Cannot add question with empty headline as recall");
+        toast.error(t("environments.surveys.edit.cannot_add_question_with_empty_headline_as_recall"));
         return;
       }
 
@@ -557,7 +562,7 @@ export const QuestionFormInput = ({
                     e.preventDefault();
                     setShowFallbackInput(true);
                   }}>
-                  Edit Recall
+                  {t("environments.surveys.edit.edit_recall")}
                   <PencilIcon className="ml-2 h-3 w-3" />
                 </button>
               )}
@@ -567,7 +572,7 @@ export const QuestionFormInput = ({
                 className={`absolute top-0 text-black caret-black ${
                   localSurvey.languages?.length > 1 ? "pr-24" : ""
                 } ${className}`}
-                placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
+                placeholder={placeholder ? placeholder : getPlaceHolderById(id, t)}
                 id={id}
                 name={id}
                 aria-label={label}
@@ -593,6 +598,7 @@ export const QuestionFormInput = ({
                   selectedLanguageCode={usedLanguageCode}
                   surveyLanguages={enabledLanguages}
                   setSelectedLanguageCode={setSelectedLanguageCode}
+                  locale={locale}
                 />
               )}
               {!showRecallItemSelect && showFallbackInput && recallItems.length > 0 && (
@@ -639,12 +645,14 @@ export const QuestionFormInput = ({
       </div>
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-slate-500">
-          <strong>Translate:</strong>{" "}
+          <strong>{t("environments.product.languages.translate")}:</strong>{" "}
           {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
-        <div className="mt-1 text-xs text-red-400">Incomplete translations</div>
+        <div className="mt-1 text-xs text-red-400">
+          {t("environments.product.languages.incomplete_translations")}
+        </div>
       )}
     </div>
   );

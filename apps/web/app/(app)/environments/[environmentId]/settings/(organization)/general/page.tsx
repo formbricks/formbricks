@@ -3,6 +3,7 @@ import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(org
 import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/OrganizationActions";
 import { getIsOrganizationAIReady } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -32,14 +33,15 @@ const MembersLoading = () => (
 );
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("Unauthenticated");
+    throw new Error(t("common.session_not_found"));
   }
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
@@ -58,7 +60,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Organization Settings">
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
@@ -66,7 +68,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           activeId="general"
         />
       </PageHeader>
-      <SettingsCard title="Manage members" description="Add or remove members in your organization.">
+      <SettingsCard
+        title={t("environments.settings.general.manage_members")}
+        description={t("environments.settings.general.manage_members_description")}>
         {currentUserRole && (
           <OrganizationActions
             organization={organization}
@@ -92,7 +96,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           </Suspense>
         )}
       </SettingsCard>
-      <SettingsCard title="Organization Name" description="Give your organization a descriptive name.">
+      <SettingsCard
+        title={t("environments.settings.general.organization_name")}
+        description={t("environments.settings.general.organization_name_description")}>
         <EditOrganizationNameForm
           organization={organization}
           environmentId={params.environmentId}
@@ -101,8 +107,8 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       </SettingsCard>
       {isOrganizationAIReady && (
         <SettingsCard
-          title="Formbricks AI"
-          description="Get personalised insights from your survey responses with Formbricks AI">
+          title={t("environments.settings.general.formbricks_ai")}
+          description={t("environments.settings.general.formbricks_ai_description")}>
           <AIToggle
             environmentId={params.environmentId}
             organization={organization}
@@ -112,8 +118,8 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       )}
       {isMultiOrgEnabled && (
         <SettingsCard
-          title="Delete Organization"
-          description="Delete organization with all its products including all surveys, responses, people, actions and attributes">
+          title={t("environments.settings.general.delete_organization")}
+          description={t("environments.settings.general.delete_organization_description")}>
           <DeleteOrganization
             organization={organization}
             isDeleteDisabled={isDeleteDisabled}
@@ -123,7 +129,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         </SettingsCard>
       )}
 
-      <SettingsId title="Organization" id={organization.id}></SettingsId>
+      <SettingsId title={t("common.organization")} id={organization.id}></SettingsId>
     </PageContentWrapper>
   );
 };

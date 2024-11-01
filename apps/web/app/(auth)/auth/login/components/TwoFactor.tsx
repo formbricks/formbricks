@@ -1,17 +1,19 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { OTPInput } from "@formbricks/ui/components/OTPInput";
 
 export const TwoFactor = () => {
   const { control } = useFormContext();
+  const t = useTranslations();
 
   return (
     <>
       <div className="mb-2 transition-all duration-500 ease-in-out">
         <label htmlFor="totp" className="sr-only">
-          Two-factor authentication code
+          {t("auth.login.enter_your_two_factor_authentication_code")}
         </label>
 
         <Controller

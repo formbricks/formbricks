@@ -121,11 +121,18 @@ export const POST = async (request: Request) => {
           equals: true,
         },
       },
-      select: { email: true },
+      select: { email: true, locale: true },
     });
 
     const emailPromises = usersWithNotifications.map((user) =>
-      sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
+      sendResponseFinishedEmail(
+        user.email,
+        environmentId,
+        survey,
+        response,
+        responseCount,
+        user.locale
+      ).catch((error) => {
         console.error(`Failed to send email to ${user.email}:`, error);
       })
     );
@@ -166,13 +173,17 @@ export const POST = async (request: Request) => {
               }
               const text = getPromptText(question.headline.default, response.data[question.id] as string);
               // TODO: check if subheadline gives more context and better embeddings
-              await createDocumentAndAssignInsight(survey.name, {
-                environmentId,
-                surveyId,
-                responseId: response.id,
-                questionId: question.id,
-                text,
-              });
+              try {
+                await createDocumentAndAssignInsight(survey.name, {
+                  environmentId,
+                  surveyId,
+                  responseId: response.id,
+                  questionId: question.id,
+                  text,
+                });
+              } catch (e) {
+                console.error(e);
+              }
             }
           }
         }

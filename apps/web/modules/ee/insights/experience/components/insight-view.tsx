@@ -2,11 +2,13 @@
 
 import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
 import { ArchiveIcon, ArchiveRestoreIcon, UserIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import formbricks from "@formbricks/js";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { Switch } from "@formbricks/ui/components/Switch";
@@ -28,6 +30,7 @@ interface InsightViewProps {
   environmentId: string;
   documentsPerPage: number;
   insightsPerPage: number;
+  locale: TUserLocale;
 }
 
 export const InsightView = ({
@@ -35,7 +38,9 @@ export const InsightView = ({
   environmentId,
   insightsPerPage,
   documentsPerPage,
+  locale,
 }: InsightViewProps) => {
+  const t = useTranslations();
   const [insights, setInsights] = useState<TInsight[]>([]);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -156,14 +161,14 @@ export const InsightView = ({
       <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
         <div className="flex items-center justify-between">
           <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="complaint">Complaint</TabsTrigger>
-            <TabsTrigger value="featureRequest">Request</TabsTrigger>
-            <TabsTrigger value="praise">Praise</TabsTrigger>
-            <TabsTrigger value="other">Other</TabsTrigger>
+            <TabsTrigger value="all">{t("environments.experience.all")}</TabsTrigger>
+            <TabsTrigger value="complaint">{t("environments.experience.complaint")}</TabsTrigger>
+            <TabsTrigger value="featureRequest">{t("environments.experience.feature_request")}</TabsTrigger>
+            <TabsTrigger value="praise">{t("environments.experience.praise")}</TabsTrigger>
+            <TabsTrigger value="other">{t("common.other")}</TabsTrigger>
           </TabsList>
           <div className="flex items-center space-x-2">
-            <Label htmlFor="archived-toggle">Archive</Label>
+            <Label htmlFor="archived-toggle">{t("common.archive")}</Label>
             <Switch
               id="archived-toggle"
               checked={showArchived}
@@ -176,19 +181,16 @@ export const InsightView = ({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>{t("common.title")}</TableHead>
+                <TableHead>{t("common.description")}</TableHead>
+                <TableHead>{t("environments.experience.category")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredInsights.length === 0 && !isFetching ? (
                 <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">
-                      No insights found. Collect more survey responses or enable insights for your existing
-                      surveys to get started.
-                    </p>
+                    <p className="text-slate-500">{t("environments.experience.no_insights_found")}</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -242,7 +244,7 @@ export const InsightView = ({
       {hasMore && !isFetching && (
         <div className="flex justify-center py-5">
           <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
-            Load more
+            {t("common.load_more")}
           </Button>
         </div>
       )}
@@ -255,6 +257,7 @@ export const InsightView = ({
         handleFeedback={handleFeedback}
         documentsFilter={documentsFilter}
         documentsPerPage={documentsPerPage}
+        locale={locale}
       />
     </div>
   );

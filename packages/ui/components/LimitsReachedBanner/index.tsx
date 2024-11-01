@@ -1,6 +1,7 @@
 "use client";
 
 import { TriangleAlertIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -18,6 +19,7 @@ export const LimitsReachedBanner = ({
   responseCount,
   environmentId,
 }: LimitsReachedBannerProps) => {
+  const t = useTranslations();
   const orgBillingPeopleLimit = organization.billing?.limits?.monthly?.miu;
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
 
@@ -40,23 +42,29 @@ export const LimitsReachedBanner = ({
                     <TriangleAlertIcon className="text-error h-6 w-6" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
-                    <p className="text-base font-medium text-slate-900">Limits Reached</p>
+                    <p className="text-base font-medium text-slate-900">{t("common.limits_reached")}</p>
                     <p className="mt-1 text-sm text-slate-500">
                       {isPeopleLimitReached && isResponseLimitReached ? (
                         <>
-                          You have reached your monthly MIU limit of <span>{orgBillingPeopleLimit}</span> and
-                          response limit of {orgBillingResponseLimit}.{" "}
+                          {t("common.you_have_reached_your_monthly_miu_limit_of")}{" "}
+                          <span>{orgBillingPeopleLimit}</span> {t("common.and_response_limit_of")}{" "}
+                          {orgBillingResponseLimit}.{" "}
                         </>
                       ) : null}
                       {isPeopleLimitReached && !isResponseLimitReached ? (
-                        <>You have reached your monthly MIU limit of {orgBillingPeopleLimit}. </>
+                        <>
+                          {t("common.you_have_reached_your_monthly_miu_limit_of")} {orgBillingPeopleLimit}.{" "}
+                        </>
                       ) : null}
                       {!isPeopleLimitReached && isResponseLimitReached ? (
-                        <>You have reached your monthly response limit of {orgBillingResponseLimit}. </>
+                        <>
+                          {t("common.you_have_reached_your_monthly_response_limit_of")}{" "}
+                          {orgBillingResponseLimit}.{" "}
+                        </>
                       ) : null}
                     </p>
                     <Link href={`/environments/${environmentId}/settings/billing`}>
-                      <span className="text-sm text-slate-900">Learn more</span>
+                      <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>
                 </div>

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { AdvancedOptionToggle } from "../../../AdvancedOptionToggle";
@@ -10,6 +11,7 @@ interface CssSelectorProps {
 
 export const CssSelector = ({ form }: CssSelectorProps) => {
   const { watch, control } = form;
+  const t = useTranslations();
   return (
     <FormField
       control={control}
@@ -23,14 +25,16 @@ export const CssSelector = ({ form }: CssSelectorProps) => {
               onToggle={(checked) => {
                 field.onChange(checked ? "" : undefined);
               }}
-              title="CSS Selector"
-              description="If a user clicks a button with a specific CSS class or id"
+              title={t("environments.actions.css_selector")}
+              description={t(
+                "environments.actions.if_a_user_clicks_a_button_with_a_specific_css_class_or_id"
+              )}
               childBorder={true}>
               <div className="w-full rounded-lg border border-slate-100 p-4">
                 <Input
                   type="text"
                   className="bg-white"
-                  placeholder="Add .css-class or #css-id"
+                  placeholder={t("environments.actions.add_css_class_or_id")}
                   {...field}
                   isInvalid={!!error}
                 />

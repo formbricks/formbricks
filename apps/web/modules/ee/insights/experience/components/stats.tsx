@@ -11,6 +11,7 @@ import {
   MessageCircleIcon,
   SmileIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
@@ -24,6 +25,7 @@ interface ExperiencePageStatsProps {
 }
 
 export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePageStatsProps) => {
+  const t = useTranslations();
   const [stats, setStats] = useState<TStats>({
     activeSurveys: 0,
     newResponses: 0,
@@ -51,28 +53,28 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
   const statsData = [
     {
       key: "sentimentScore",
-      title: "Sentiment Score",
+      title: t("environments.experience.sentiment_score"),
       value: stats.sentimentScore ? `${Math.floor(stats.sentimentScore * 100)}%` : "-",
       icon: GaugeIcon,
       width: "w-20",
     },
     {
       key: "activeSurveys",
-      title: "Active Surveys",
+      title: t("common.active_surveys"),
       value: stats.activeSurveys,
       icon: MessageCircleIcon,
       width: "w-10",
     },
     {
       key: "newResponses",
-      title: "New Responses",
+      title: t("environments.experience.new_responses"),
       value: stats.newResponses,
       icon: InboxIcon,
       width: "w-10",
     },
     {
       key: "analysedFeedbacks",
-      title: "Analysed Feedbacks",
+      title: t("environments.experience.analysed_feedbacks"),
       value: stats.analysedFeedbacks,
       icon: ActivityIcon,
       width: "w-10",
