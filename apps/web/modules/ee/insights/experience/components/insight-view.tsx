@@ -130,7 +130,7 @@ export const InsightView = ({
 
   return (
     <div>
-      <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
+      <Tabs defaultValue="featureRequest" onValueChange={handleFilterSelect}>
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="all">{t("environments.experience.all")}</TabsTrigger>
