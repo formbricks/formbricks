@@ -77,6 +77,15 @@ export function ConditionalLogic({
           objective: "jumpToQuestion",
           target: "",
         },
+        {
+          id: createId(),
+          objective: "setVariable",
+          variableId: "",
+          value: {
+            type: "question",
+            value: "",
+          },
+        },
       ],
     };
 
