@@ -38,8 +38,11 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
       setIsLoading(true);
       const getStatsResponse = await getStatsAction({ environmentId, statsFrom });
 
+      console.log("getStatsResponse:", getStatsResponse);
+
       if (getStatsResponse?.data) {
         setStats(getStatsResponse.data);
+        console.log("Stats set to:", getStatsResponse.data);
       } else {
         const errorMessage = getFormattedErrorMessage(getStatsResponse);
         toast.error(errorMessage);
@@ -89,24 +92,26 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
             <stat.icon className="text-muted-foreground h-4 w-4" />
           </CardHeader>
-          <CardContent className={cn(isLoading && "animate-pulse")}>
-            {stat.key === "sentimentScore" && stats.overallSentiment && (
-              <div className="flex items-center font-medium text-slate-700">
-                {stats.overallSentiment === "positive" ? (
-                  <TooltipRenderer tooltipContent="Mostly positive">
-                    <SmileIcon className="h-10 w-10" strokeWidth={1.5} />
+          <CardContent className="flex items-center justify-between">
+            <div className="text-2xl font-bold capitalize">
+              {isLoading ? (
+                <div className={cn("h-4 animate-pulse rounded-full bg-slate-200", stat.width)}></div>
+              ) : stat.key === "sentimentScore" ? (
+                <div className="flex items-center font-medium text-slate-700">
+                  <TooltipRenderer tooltipContent={`${stat.value} positive`}>
+                    {stats.overallSentiment === "positive" ? (
+                      <SmileIcon className="h-10 w-10" strokeWidth={1.5} />
+                    ) : stats.overallSentiment === "negative" ? (
+                      <FrownIcon className="h-10 w-10" strokeWidth={1.5} />
+                    ) : (
+                      <MehIcon className="h-10 w-10" strokeWidth={1.5} />
+                    )}
                   </TooltipRenderer>
-                ) : stats.overallSentiment === "negative" ? (
-                  <TooltipRenderer tooltipContent="Mostly negative">
-                    <FrownIcon className="h-10 w-10" strokeWidth={1.5} />
-                  </TooltipRenderer>
-                ) : (
-                  <TooltipRenderer tooltipContent="Balanced out">
-                    <MehIcon className="h-10 w-10" strokeWidth={1.5} />
-                  </TooltipRenderer>
-                )}
-              </div>
-            )}
+                </div>
+              ) : (
+                (stat.value ?? "-")
+              )}
+            </div>
           </CardContent>
         </Card>
       ))}

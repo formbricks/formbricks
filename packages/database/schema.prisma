@@ -677,7 +677,7 @@ model Insight {
   description      String
   vector           Unsupported("vector(512)")?
   documentInsights DocumentInsight[]
-  archived         Boolean                     @default(false)
+  isArchived       Boolean                     @default(false)
 }
 
 model DocumentInsight {

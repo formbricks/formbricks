@@ -137,12 +137,12 @@ export const InsightView = ({
       await updateInsightAction({
         environmentId,
         insightId,
-        updates: { archived: shouldArchive },
+        updates: { isArchived: shouldArchive },
       });
       // Update the local state to reflect the change
       setInsights((prevInsights) =>
         prevInsights.map((insight) =>
-          insight.id === insightId ? { ...insight, archived: shouldArchive } : insight
+          insight.id === insightId ? { ...insight, isArchived: shouldArchive } : insight
         )
       );
       toast.success(`Insight ${shouldArchive ? "archived" : "unarchived"} successfully.`);
@@ -153,7 +153,7 @@ export const InsightView = ({
   };
 
   const filteredInsights = useMemo(() => {
-    return insights.filter((insight) => (showArchived ? insight.archived : !insight.archived));
+    return insights.filter((insight) => (showArchived ? insight.isArchived : !insight.isArchived));
   }, [insights, showArchived]);
 
   return (
@@ -219,13 +219,13 @@ export const InsightView = ({
                         variant="minimal"
                         size="icon"
                         className="hover:bg-white"
-                        tooltip={insight.archived ? "Unarchive insight" : "Archive insight"}
+                        tooltip={insight.isArchived ? "Unarchive insight" : "Archive insight"}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          handleArchiveToggle(insight.id, !insight.archived);
+                          handleArchiveToggle(insight.id, !insight.isArchived);
                         }}>
-                        {insight.archived ? (
+                        {insight.isArchived ? (
                           <ArchiveRestoreIcon className="h-4 w-4" />
                         ) : (
                           <ArchiveIcon className="h-4 w-4" />

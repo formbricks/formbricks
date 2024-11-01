@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { TBadgeOption } from "@formbricks/types/badge";
 import { TDocument, TDocumentSentiment } from "@formbricks/types/documents";
-import { Badge } from "@formbricks/ui/components/Badge";
+import { BadgeSelect, TBadgeSelectOption } from "@formbricks/ui/components/BadgeSelect";
 import { updateDocumentAction } from "./insight-sheet/actions";
 
 interface SentimentSelectProps {
@@ -11,7 +10,7 @@ interface SentimentSelectProps {
   insightId: string;
 }
 
-const sentimentOptions: TBadgeOption[] = [
+const sentimentOptions: TBadgeSelectOption[] = [
   { text: "Positive", type: "success" },
   { text: "Neutral", type: "gray" },
   { text: "Negative", type: "error" },
@@ -52,7 +51,7 @@ const SentimentSelect = ({ sentiment, environmentId, documentId, insightId }: Se
   };
 
   return (
-    <Badge
+    <BadgeSelect
       options={sentimentOptions}
       selectedIndex={getSentimentIndex(currentSentiment)}
       onChange={(newIndex) => {

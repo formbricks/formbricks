@@ -553,7 +553,7 @@
     "experience": {
       "all": "All",
       "all_time": "All time",
-      "analysed_feedbacks": "Analysed Feedbacks",
+      "analysed_feedbacks": "Analysed Free Text Answers",
       "category": "Category",
       "complaint": "Complaint",
       "did_you_find_this_insight_helpful": "Did you find this insight helpful?",
@@ -564,7 +564,7 @@
       "insights_description": "All insights generated from responses across all your surveys",
       "insights_for_product": "Insights for {productName}",
       "negative": "Negative",
-      "new_responses": "New Responses",
+      "new_responses": "Responses",
       "no_insights_for_this_filter": "No insights for this filter",
       "no_insights_found": "No insights found. Collect more survey responses or enable insights for your existing surveys to get started.",
       "positive": "Positive",

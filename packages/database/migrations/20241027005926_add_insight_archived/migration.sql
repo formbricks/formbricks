@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "Insight" ADD COLUMN     "archived" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Insight" ADD COLUMN     "isArchived" BOOLEAN NOT NULL DEFAULT false;

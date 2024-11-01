@@ -16,7 +16,7 @@ export const ZInsight = z.object({
   _count: z.object({
     documentInsights: z.number(),
   }),
-  archived: z.boolean().optional(),
+  isArchived: z.boolean(),
 });
 
 export type TInsight = z.infer<typeof ZInsight>;

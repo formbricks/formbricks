@@ -1,12 +1,29 @@
 import { ChevronDownIcon } from "lucide-react";
 import React from "react";
+import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
-import { TBadgeProps } from "@formbricks/types/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../DropdownMenu";
 
-// Adjust the import path as necessary
+const ZBadgeSelectOptionSchema = z.object({
+  text: z.string(),
+  type: z.enum(["warning", "success", "error", "gray"]),
+});
 
-export const Badge: React.FC<TBadgeProps & { isLoading?: boolean }> = ({
+const ZBadgeSelectPropsSchema = z.object({
+  text: z.string().optional(),
+  type: z.enum(["warning", "success", "error", "gray"]).optional(),
+  options: z.array(ZBadgeSelectOptionSchema).optional(),
+  selectedIndex: z.number().optional(),
+  onChange: z.function().args(z.number()).returns(z.void()).optional(),
+  size: z.enum(["tiny", "normal", "large"]),
+  className: z.string().optional(),
+  isLoading: z.boolean().optional(),
+});
+
+export type TBadgeSelectOption = z.infer<typeof ZBadgeSelectOptionSchema>;
+export type TBadgeSelectProps = z.infer<typeof ZBadgeSelectPropsSchema>;
+
+export const BadgeSelect: React.FC<TBadgeSelectProps & { isLoading?: boolean }> = ({
   text,
   type,
   options,

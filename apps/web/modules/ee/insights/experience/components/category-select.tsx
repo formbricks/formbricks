@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { TBadgeOption } from "@formbricks/types/badge";
 import { TInsight } from "@formbricks/types/insights";
-import { Badge } from "@formbricks/ui/components/Badge";
+import { BadgeSelect, TBadgeSelectOption } from "@formbricks/ui/components/BadgeSelect";
 import { updateInsightAction } from "../actions";
 
 interface CategoryBadgeProps {
@@ -11,7 +10,7 @@ interface CategoryBadgeProps {
   insightId: string;
 }
 
-const categoryOptions: TBadgeOption[] = [
+const categoryOptions: TBadgeSelectOption[] = [
   { text: "Complaint", type: "error" },
   { text: "Request", type: "warning" },
   { text: "Praise", type: "success" },
@@ -55,7 +54,7 @@ const CategoryBadge = ({ category, environmentId, insightId }: CategoryBadgeProp
   };
 
   return (
-    <Badge
+    <BadgeSelect
       options={categoryOptions}
       selectedIndex={getCategoryIndex(category)}
       onChange={(newIndex) => {
