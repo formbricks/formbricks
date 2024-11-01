@@ -4,6 +4,7 @@ import { LinkSurveyWrapper } from "@/app/s/[surveyId]/components/LinkSurveyWrapp
 import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
@@ -43,6 +44,7 @@ interface LinkSurveyProps {
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
+  locale: string;
 }
 
 export const LinkSurvey = ({
@@ -61,7 +63,9 @@ export const LinkSurvey = ({
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
+  locale,
 }: LinkSurveyProps) => {
+  const t = useTranslations();
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
@@ -170,6 +174,7 @@ export const LinkSurvey = ({
           languageCode={languageCode}
           styling={product.styling}
           attributeClasses={attributeClasses}
+          locale={locale}
         />
       );
     }
@@ -181,6 +186,7 @@ export const LinkSurvey = ({
         languageCode={languageCode}
         styling={product.styling}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
     );
   }
@@ -252,7 +258,7 @@ export const LinkSurvey = ({
               surveyId: survey.id,
             });
             if (!res.ok) {
-              throw new Error("Could not create display");
+              throw new Error(t("s.could_not_create_display"));
             }
             const { id } = res.data;
 

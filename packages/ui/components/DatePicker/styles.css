@@ -47,7 +47,6 @@
 }
 
 .react-calendar__tile--hasActive {
-  background-color: var(--fb-brand) !important;
-  color: white !important;
+  background-color: var(--fb-brand-color) !important;
   border-radius: 6% !important;
 }

@@ -3,12 +3,13 @@
 import clsx from "clsx";
 import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/responses";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { Button } from "../../Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
 import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
@@ -20,6 +21,7 @@ interface ResponseNotesProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   updateFetchedResponses: () => void;
+  locale: TUserLocale;
 }
 
 export const ResponseNotes = ({
@@ -29,7 +31,9 @@ export const ResponseNotes = ({
   isOpen,
   setIsOpen,
   updateFetchedResponses,
+  locale,
 }: ResponseNotesProps) => {
+  const t = useTranslations();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
@@ -46,7 +50,7 @@ export const ResponseNotes = ({
       setIsCreatingNote(false);
       setNoteText("");
     } catch (e) {
-      toast.error("An error occurred creating a new note");
+      toast.error(t("environments.surveys.responses.an_error_occurred_creating_a_new_note"));
       setIsCreatingNote(false);
     }
   };
@@ -60,7 +64,7 @@ export const ResponseNotes = ({
       }
       updateFetchedResponses();
     } catch (e) {
-      toast.error("An error occurred resolving a note");
+      toast.error(t("environments.surveys.responses.an_error_occurred_resolving_a_note"));
       setIsUpdatingNote(false);
     }
   };
@@ -81,7 +85,7 @@ export const ResponseNotes = ({
       setIsUpdatingNote(false);
       setNoteText("");
     } catch (e) {
-      toast.error("An error occurred updating a note");
+      toast.error(t("environments.surveys.responses.an_error_occurred_updating_a_note"));
       setIsUpdatingNote(false);
     }
   };
@@ -119,7 +123,7 @@ export const ResponseNotes = ({
             {!unresolvedNotes.length ? (
               <div className="flex items-center justify-end">
                 <div className="group flex items-center">
-                  <h3 className="float-left ml-4 pb-1 text-sm text-slate-600">Note</h3>
+                  <h3 className="float-left ml-4 pb-1 text-sm text-slate-600">{t("common.note")}</h3>
                 </div>
               </div>
             ) : (
@@ -141,7 +145,7 @@ export const ResponseNotes = ({
           <div className="rounded-t-lg bg-amber-50 px-4 pb-3 pt-4">
             <div className="flex items-center justify-between">
               <div className="group flex items-center">
-                <h3 className="pb-1 text-sm text-amber-500">Note</h3>
+                <h3 className="pb-1 text-sm text-amber-500">{t("common.note")}</h3>
               </div>
               <button
                 className="h-6 w-6 cursor-pointer"
@@ -159,8 +163,8 @@ export const ResponseNotes = ({
                   {note.user.name}
                   <time
                     className="ml-2 text-xs font-normal text-slate-500"
-                    dateTime={timeSince(note.updatedAt.toISOString())}>
-                    {timeSince(note.updatedAt.toISOString())}
+                    dateTime={timeSince(note.updatedAt.toISOString(), locale)}>
+                    {timeSince(note.updatedAt.toISOString(), locale)}
                   </time>
                   {note.isEdited && (
                     <span className="ml-1 text-[12px] font-normal text-slate-500">{"(edited)"}</span>
@@ -189,7 +193,7 @@ export const ResponseNotes = ({
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
-                        <span className="text-slate-700">Resolve</span>
+                        <span className="text-slate-700">{t("environments.surveys.responses.resolve")}</span>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -240,11 +244,11 @@ export const ResponseNotes = ({
                     onClick={() => {
                       setIsTextAreaOpen(!isTextAreaOpen);
                     }}>
-                    {isTextAreaOpen ? "Hide" : "Show"}
+                    {isTextAreaOpen ? t("common.hide") : t("common.show")}
                   </Button>
                   {isTextAreaOpen && (
                     <Button size="sm" type="submit" loading={isCreatingNote}>
-                      {isUpdatingNote ? "Save" : "Send"}
+                      {isUpdatingNote ? t("common.save") : t("common.send")}
                     </Button>
                   )}
                 </div>

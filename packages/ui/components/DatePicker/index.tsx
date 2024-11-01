@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 import { CalendarCheckIcon, CalendarIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import Calendar from "react-calendar";
 import { cn } from "@formbricks/lib/cn";
@@ -29,6 +30,7 @@ interface DatePickerProps {
 }
 
 export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
+  const t = useTranslations();
   const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
   const [formattedDate, setFormattedDate] = useState<string | undefined>(
     date ? format(new Date(date), "do MMM, yyyy") : undefined
@@ -73,7 +75,7 @@ export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
             onClick={() => setIsOpen(true)}
             ref={btnRef}>
             <CalendarIcon className="mr-2 h-4 w-4" />
-            <span>Pick a date</span>
+            <span>{t("common.pick_a_date")}</span>
           </Button>
         )}
       </PopoverTrigger>

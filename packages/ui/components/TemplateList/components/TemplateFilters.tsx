@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TTemplateFilter } from "@formbricks/types/templates";
 import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
@@ -15,6 +16,7 @@ export const TemplateFilters = ({
   templateSearch,
   prefilledFilters,
 }: TemplateFiltersProps) => {
+  const t = useTranslations();
   const handleFilterSelect = (filterValue: TTemplateFilter, index: number) => {
     // If the filter value at a particular index is null, it indicates that no filter has been chosen, therefore all results are displayed
     const newFilter = [...selectedFilter];
@@ -40,7 +42,11 @@ export const TemplateFilters = ({
                   : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                 "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
               )}>
-              {index === 0 ? "All channels" : index === 1 ? "All industries" : "All roles"}
+              {index === 0
+                ? t("environments.surveys.templates.all_channels")
+                : index === 1
+                  ? t("environments.surveys.templates.all_industries")
+                  : t("environments.surveys.templates.all_roles")}
             </button>
             {filters.map((filter) => (
               <button
@@ -54,7 +60,7 @@ export const TemplateFilters = ({
                     : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
                   "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
                 )}>
-                {filter.label}
+                {t(filter.label)}
               </button>
             ))}
           </div>

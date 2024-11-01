@@ -1,4 +1,5 @@
 import { CheckCircle2Icon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 import { TSurveySingleUse } from "@formbricks/types/surveys/types";
@@ -8,9 +9,10 @@ type SurveyLinkUsedProps = {
   singleUseMessage: TSurveySingleUse | null;
 };
 
-export const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
-  const defaultHeading = "The survey has already been answered.";
-  const defaultSubheading = "You can only use this link once.";
+export const SurveyLinkUsed = async ({ singleUseMessage }: SurveyLinkUsedProps) => {
+  const t = await getTranslations();
+  const defaultHeading = t("s.survey_already_answered_heading");
+  const defaultSubheading = t("s.survey_already_answered_subheading");
   return (
     <div className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-tr from-slate-200 to-slate-50 py-8 text-center">
       <div></div>

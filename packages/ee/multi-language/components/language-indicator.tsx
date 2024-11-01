@@ -9,12 +9,14 @@ interface LanguageIndicatorProps {
   surveyLanguages: TSurveyLanguage[];
   setSelectedLanguageCode: (languageCode: string) => void;
   setFirstRender?: (firstRender: boolean) => void;
+  locale: string;
 }
 export function LanguageIndicator({
   surveyLanguages,
   selectedLanguageCode,
   setSelectedLanguageCode,
   setFirstRender,
+  locale,
 }: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const toggleDropdown = () => {
@@ -50,7 +52,7 @@ export function LanguageIndicator({
         onClick={toggleDropdown}
         tabIndex={-1}
         type="button">
-        {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed.language.code) : ""}
+        {languageToBeDisplayed ? getLanguageLabel(languageToBeDisplayed.language.code, locale) : ""}
         <ChevronDown className="ml-1 h-4 w-4" />
       </button>
       {showLanguageDropdown ? (
@@ -67,7 +69,7 @@ export function LanguageIndicator({
                     changeLanguage(language);
                   }}
                   type="button">
-                  {getLanguageLabel(language.language.code)}
+                  {getLanguageLabel(language.language.code, locale)}
                 </button>
               )
           )}

@@ -1,11 +1,11 @@
 "use client";
 
-import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
 import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { validWebHookURL } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/lib/utils";
 import clsx from "clsx";
 import { TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -26,6 +26,7 @@ interface ActionSettingsTabProps {
 }
 
 export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettingsTabProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: {
@@ -55,16 +56,16 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
       setHittingEndpoint(true);
       await testEndpointAction({ url: testEndpointInput });
       setHittingEndpoint(false);
-      if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
+      if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
       return true;
     } catch (err) {
       setHittingEndpoint(false);
       toast.error(
-        `Unable to ping the webhook! \n ${err.message.length < 250 ? `Error:  ${err.message}` : "Please check the console for more details"}`,
+        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${err.message.length < 250 ? `${t("common.error")}:  ${err.message}` : t("environments.integrations.webhooks.please_check_console")}`,
         { className: err.message.length < 250 ? "break-all" : "" }
       );
-      console.error("Webhook Test Failed due to: ", err.message);
+      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), err.message);
       setEndpointAccessible(false);
       return false;
     }
@@ -97,12 +98,12 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
 
   const onSubmit = async (data) => {
     if (selectedTriggers.length === 0) {
-      toast.error("Please select at least one trigger");
+      toast.error(t("common.please_select_at_least_one_trigger"));
       return;
     }
 
     if (!selectedAllSurveys && selectedSurveys.length === 0) {
-      toast.error("Please select at least one survey");
+      toast.error(t("common.please_select_at_least_one_survey"));
       return;
     }
     const endpointHitSuccessfully = await handleTestEndpoint(false);
@@ -119,7 +120,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
     };
     setIsUpdatingWebhook(true);
     await updateWebhookAction({ webhookId: webhook.id, webhookInput: updatedData });
-    toast.success("Webhook updated successfully.");
+    toast.success(t("environments.integrations.webhooks.webhook_updated_successfully"));
     router.refresh();
     setIsUpdatingWebhook(false);
     setOpen(false);
@@ -129,20 +130,20 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
     <div>
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="col-span-1">
-          <Label htmlFor="Name">Name</Label>
+          <Label htmlFor="Name">{t("common.name")}</Label>
           <div className="mt-1 flex">
             <Input
               type="text"
               id="name"
               {...register("name")}
               defaultValue={webhook.name ?? ""}
-              placeholder="Optional: Label your webhook for easy identification"
+              placeholder={t("environments.integrations.webhooks.webhook_name_placeholder")}
             />
           </div>
         </div>
 
         <div className="col-span-1">
-          <Label htmlFor="URL">URL</Label>
+          <Label htmlFor="URL">{t("common.url")}</Label>
           <div className="mt-1 flex">
             <Input
               {...register("url", {
@@ -164,7 +165,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
                       ? "border-slate-200 bg-white"
                       : null
               )}
-              placeholder="Paste the URL you want the event to trigger on"
+              placeholder={t("environments.integrations.webhooks.webhook_url_placeholder")}
             />
             <Button
               type="button"
@@ -174,15 +175,14 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
               onClick={() => {
                 handleTestEndpoint(true);
               }}>
-              Test Endpoint
+              {t("environments.integrations.webhooks.test_endpoint")}
             </Button>
           </div>
         </div>
 
         <div>
-          <Label htmlFor="Triggers">Triggers</Label>
+          <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
           <TriggerCheckboxGroup
-            triggers={triggers}
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
             allowChanges={webhook.source === "user"}
@@ -190,7 +190,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
         </div>
 
         <div>
-          <Label htmlFor="Surveys">Surveys</Label>
+          <Label htmlFor="Surveys">{t("common.surveys")}</Label>
           <SurveyCheckboxGroup
             surveys={surveys}
             selectedSurveys={selectedSurveys}
@@ -210,7 +210,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
                 onClick={() => setOpenDeleteDialog(true)}
                 StartIcon={TrashIcon}
                 className="mr-3">
-                Delete
+                {t("common.delete")}
               </Button>
             )}
 
@@ -218,13 +218,13 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
               variant="secondary"
               href="https://formbricks.com/docs/api/management/webhooks"
               target="_blank">
-              Read Docs
+              {t("common.read_docs")}
             </Button>
           </div>
 
           <div className="flex space-x-2">
             <Button type="submit" loading={isUpdatingWebhook}>
-              Save changes
+              {t("common.save_changes")}
             </Button>
           </div>
         </div>
@@ -232,16 +232,16 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
       <DeleteDialog
         open={openDeleteDialog}
         setOpen={setOpenDeleteDialog}
-        deleteWhat={"Webhook"}
-        text="Are you sure you want to delete this Webhook? This will stop sending you any further notifications."
+        deleteWhat={t("common.webhook")}
+        text={t("environments.integrations.webhooks.webhook_delete_confirmation")}
         onDelete={async () => {
           setOpen(false);
           try {
             await deleteWebhookAction({ id: webhook.id });
             router.refresh();
-            toast.success("Webhook deleted successfully");
+            toast.success(t("environments.integrations.webhooks.webhook_deleted_successfully"));
           } catch (error) {
-            toast.error("Something went wrong. Please try again.");
+            toast.error(t("common.something_went_wrong_please_try_again"));
           }
         }}
       />
