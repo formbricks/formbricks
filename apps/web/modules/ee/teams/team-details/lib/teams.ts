@@ -3,7 +3,7 @@ import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
 import { TOrganizationMember, TTeam, ZTeam } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
-import { Prisma, TeamRole } from "@prisma/client";
+import { Prisma, TeamUserRole } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
@@ -171,7 +171,7 @@ export const updateUserTeamRole = async (
 ): Promise<boolean> => {
   validateInputs([teamId, ZId], [userId, ZId], [role, ZTeamRole]);
   try {
-    const teamMembership = await prisma.teamMembership.findUnique({
+    const teamMembership = await prisma.teamUser.findUnique({
       where: {
         teamId_userId: {
           teamId,
@@ -211,7 +211,7 @@ export const updateUserTeamRole = async (
       throw new AuthorizationError(`Organization ${orgMembership.organizationRole} cannot be a contributor`);
     }
 
-    await prisma.teamMembership.update({
+    await prisma.teamUser.update({
       where: {
         teamId_userId: {
           teamId,
@@ -259,7 +259,7 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
       throw new ResourceNotFoundError("team", teamId);
     }
 
-    const teamMembership = await prisma.teamMembership.findUnique({
+    const teamMembership = await prisma.teamUser.findUnique({
       where: {
         teamId_userId: {
           teamId,
@@ -272,7 +272,7 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
       throw new ResourceNotFoundError("teamMembership", null);
     }
 
-    await prisma.teamMembership.delete({
+    await prisma.teamUser.delete({
       where: {
         teamId_userId: {
           teamId,
@@ -382,13 +382,13 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
         throw new ResourceNotFoundError("Membership", null);
       }
 
-      let role: TeamRole = "contributor";
+      let role: TeamUserRole = "contributor";
 
       if (membership.organizationRole === "owner" || membership.organizationRole === "manager") {
         role = "admin";
       }
 
-      await prisma.teamMembership.create({
+      await prisma.teamUser.create({
         data: {
           teamId,
           userId,

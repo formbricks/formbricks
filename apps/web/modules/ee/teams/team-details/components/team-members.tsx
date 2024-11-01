@@ -131,6 +131,13 @@ export const TeamMembers = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {members.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center">
+                      No members found
+                    </TableCell>
+                  </TableRow>
+                )}
                 {members.map((teamMember) => (
                   <TableRow key={teamMember.id}>
                     <TableCell>

@@ -51,7 +51,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   const role = await getMembershipRole(userId, organizationId);
   const { isOwner, isManager } = getAccessFlags(role);
 
-  let result: boolean = false;
+  let isAccessGranted: boolean = false;
 
   for (let accessItem of access) {
     if (accessItem.type === "organization") {
@@ -77,7 +77,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
       if (accessItem.type === "product") {
         const productPermission = await getProductPermissionByUserId(userId, accessItem.productId);
         if (!productPermission) {
-          result = false;
+          isAccessGranted = false;
           continue;
         }
 
@@ -85,7 +85,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
           const requiredPermission = teamPermissionWeight[accessItem.minPermission];
 
           if (teamPermissionWeight[productPermission] < requiredPermission) {
-            result = false;
+            isAccessGranted = false;
             continue;
           }
         }
@@ -93,7 +93,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
         // const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
         const teamRole = "admin";
         if (!teamRole) {
-          result = false;
+          isAccessGranted = false;
           continue;
         }
 
@@ -101,7 +101,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
           const requiredRole = teamRoleWeight[accessItem.minPermission];
 
           if (teamRoleWeight[teamRole] < requiredRole) {
-            result = false;
+            isAccessGranted = false;
             continue;
           }
         }
@@ -109,7 +109,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
     }
   }
 
-  if (!result) {
+  if (!isAccessGranted) {
     throw new AuthorizationError("Not authorized");
   }
 };
