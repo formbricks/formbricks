@@ -7,6 +7,7 @@ import {
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getUpdatedActionBody } from "@formbricks/lib/surveyLogic/utils";
 import {
   TActionNumberVariableCalculateOperator,
@@ -44,7 +45,7 @@ export function LogicEditorActions({
   questionIdx,
 }: LogicEditorActions) {
   const actions = logicItem.actions;
-
+  const t = useTranslations();
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
     actionIdx: number,
@@ -93,7 +94,9 @@ export function LogicEditorActions({
       <div className="flex grow flex-col gap-y-2">
         {actions?.map((action, idx) => (
           <div key={action.id} className="flex grow items-center justify-between gap-x-2">
-            <div className="block w-9 shrink-0">{idx === 0 ? "Then" : "and"}</div>
+            <div className="block w-9 shrink-0">
+              {idx === 0 ? t("environments.surveys.edit.then") : t("common.and")}
+            </div>
             <div className="flex grow items-center gap-x-2">
               <InputCombobox
                 id={`action-${idx}-objective`}
@@ -111,7 +114,7 @@ export function LogicEditorActions({
                   id={`action-${idx}-target`}
                   key={`target-${action.id}`}
                   showSearch={false}
-                  options={getActionTargetOptions(action, localSurvey, questionIdx)}
+                  options={getActionTargetOptions(action, localSurvey, questionIdx, t)}
                   value={action.target}
                   onChangeValue={(val: string) => {
                     handleValuesChange(idx, {
@@ -139,13 +142,14 @@ export function LogicEditorActions({
                       });
                     }}
                     comboboxClasses="grow"
-                    emptyDropdownText="Add a variable to calculate"
+                    emptyDropdownText={t("environments.surveys.edit.add_a_variable_to_calculate")}
                   />
                   <InputCombobox
                     id={`action-${idx}-operator`}
                     key={`operator-${action.id}`}
                     showSearch={false}
                     options={getActionOperatorOptions(
+                      t,
                       localSurvey.variables.find((v) => v.id === action.variableId)?.type
                     )}
                     value={action.operator}
@@ -168,7 +172,7 @@ export function LogicEditorActions({
                       placeholder: "Value",
                       type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
                     }}
-                    groupedOptions={getActionValueOptions(action.variableId, localSurvey)}
+                    groupedOptions={getActionValueOptions(action.variableId, localSurvey, t)}
                     onChangeValue={(val, option, fromInput) => {
                       const fieldType = option?.meta?.type as TActionVariableValueType;
 
@@ -204,7 +208,7 @@ export function LogicEditorActions({
                     handleActionsChange("addBelow", idx);
                   }}
                   icon={<PlusIcon className="h-4 w-4" />}>
-                  Add action below
+                  {t("environments.surveys.edit.add_action_below")}
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -213,7 +217,7 @@ export function LogicEditorActions({
                     handleActionsChange("remove", idx);
                   }}
                   icon={<TrashIcon className="h-4 w-4" />}>
-                  Remove
+                  {t("common.remove")}
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -221,7 +225,7 @@ export function LogicEditorActions({
                     handleActionsChange("duplicate", idx);
                   }}
                   icon={<CopyIcon className="h-4 w-4" />}>
-                  Duplicate
+                  {t("common.duplicate")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

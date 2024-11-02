@@ -1,6 +1,7 @@
 "use client";
 
 import { XCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -10,6 +11,7 @@ import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 import { IsPasswordValid } from "@formbricks/ui/components/SignupOptions/components/IsPasswordValid";
 
 export const ResetPasswordForm = () => {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
@@ -21,13 +23,13 @@ export const ResetPasswordForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("auth.forgot-password.reset.passwords_do_not_match"));
       return;
     }
     setLoading(true);
     const token = searchParams?.get("token");
     try {
-      if (!token) throw new Error("No token provided");
+      if (!token) throw new Error(t("auth.forgot-password.reset.no_token_provided"));
       await resetPassword(token, e.target.elements.password.value);
 
       router.push("/auth/forgot-password/reset/success");
@@ -47,7 +49,9 @@ export const ResetPasswordForm = () => {
               <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">An error occurred when logging you in</h3>
+              <h3 className="text-sm font-medium text-red-800">
+                {t("auth.forgot-password.an_error_occurred_when_logging_you_in")}
+              </h3>
               <div className="mt-2 text-sm text-red-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>
@@ -59,7 +63,7 @@ export const ResetPasswordForm = () => {
         <div className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-              New password
+              {t("auth.forgot-password.reset.new_password")}
             </label>
             <PasswordInput
               id="password"
@@ -74,7 +78,7 @@ export const ResetPasswordForm = () => {
           </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-              Confirm password
+              {t("auth.forgot-password.reset.confirm_password")}
             </label>
             <PasswordInput
               id="confirmPassword"
@@ -93,7 +97,7 @@ export const ResetPasswordForm = () => {
 
         <div>
           <Button type="submit" disabled={!isValid} className="w-full justify-center" loading={loading}>
-            Reset password
+            {t("auth.forgot-password.reset_password")}
           </Button>
         </div>
       </form>

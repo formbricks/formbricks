@@ -1,6 +1,7 @@
 "use client";
 
 import { CopyIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
@@ -23,6 +24,7 @@ export const CodeBlock = ({
   customCodeClass = "",
   showCopyToClipboard = true,
 }: CodeBlockProps) => {
+  const t = useTranslations();
   useEffect(() => {
     Prism.highlightAll();
   }, [children]);
@@ -35,7 +37,7 @@ export const CodeBlock = ({
             onClick={() => {
               const childText = children?.toString() || "";
               navigator.clipboard.writeText(childText);
-              toast.success("Copied to clipboard");
+              toast.success(t("common.copied_to_clipboard"));
             }}
             className="h-4 w-4"
           />

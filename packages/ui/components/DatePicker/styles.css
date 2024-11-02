@@ -1,0 +1,52 @@
+.react-calendar__navigation button {
+  margin: 1% !important ;
+  border-radius: 6%;
+}
+
+.react-calendar__navigation button:disabled {
+  background-color: var(--slate-100) !important;
+  color: var(--slate-300) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: var(--slate-200) !important;
+}
+
+.react-calendar__month-view__weekdays {
+  text-decoration-style: dotted !important;
+  text-decoration: underline;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: var(--fb-brand) !important;
+}
+.react-calendar__tile:disabled {
+  background-color: var(--slate-100) !important;
+  color: var(--slate-400) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background-color: var(--slate-200) !important;
+  color: var(--slate-900) !important;
+}
+
+.react-calendar__tile--now {
+  background: none !important;
+}
+
+.react-calendar__tile .react-calendar__year-view__months__month {
+  margin: 20px !important;
+  background-color: var(--slate-100) !important;
+  color: var(--slate-900) !important;
+}
+
+.react-calendar__tile--hasActive {
+  background-color: var(--fb-brand-color) !important;
+  border-radius: 6% !important;
+}

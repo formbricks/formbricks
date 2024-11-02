@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 
@@ -30,6 +31,7 @@ export const CustomDialog = ({
   cancelBtnText,
   disabled,
 }: CustomDialogProps) => {
+  const t = useTranslations();
   return (
     <Modal open={open} setOpen={setOpen} title={title}>
       <p>{text}</p>
@@ -43,10 +45,10 @@ export const CustomDialog = ({
             }
             setOpen(false);
           }}>
-          {cancelBtnText || "Cancel"}
+          {cancelBtnText || t("common.cancel")}
         </Button>
         <Button variant="warn" onClick={onOk} loading={isLoading} disabled={disabled}>
-          {okBtnText || "Yes"}
+          {okBtnText || t("common.yes")}
         </Button>
       </div>
     </Modal>

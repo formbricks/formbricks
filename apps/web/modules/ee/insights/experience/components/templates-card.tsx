@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TTemplateFilter } from "@formbricks/types/templates";
@@ -15,11 +16,12 @@ interface TemplatesCardProps {
 }
 
 export const TemplatesCard = ({ environment, product, user, prefilledFilters }: TemplatesCardProps) => {
+  const t = useTranslations();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Measure your customer experience</CardTitle>
-        <CardDescription>Choose a template or start from scratch</CardDescription>
+        <CardTitle>{t("environments.experience.templates_card_title")}</CardTitle>
+        <CardDescription>{t("environments.experience.templates_card_description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <TemplateList

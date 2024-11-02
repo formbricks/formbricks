@@ -1,12 +1,14 @@
 "use client";
 
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
+import { TUserLocale } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardFooter } from "@formbricks/ui/components/Card";
@@ -28,6 +30,7 @@ interface InsightSheetProps {
   handleFeedback: (feedback: "positive" | "negative") => void;
   documentsFilter?: TDocumentFilterCriteria;
   documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const InsightSheet = ({
@@ -39,7 +42,9 @@ export const InsightSheet = ({
   handleFeedback,
   documentsFilter,
   documentsPerPage = 10,
+  locale,
 }: InsightSheetProps) => {
+  const t = useTranslations();
   const [documents, setDocuments] = useState<TDocument[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -122,7 +127,7 @@ export const InsightSheet = ({
           </SheetTitle>
           <SheetDescription>{insight.description}</SheetDescription>
           <div className="flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">
-            <p>Did you find this insight helpful?</p>
+            <p>{t("environments.experience.did_you_find_this_insight_helpful")}</p>
             <ThumbsUpIcon
               className="upvote h-4 w-4 cursor-pointer hover:text-black"
               onClick={() => handleFeedbackClick("positive")}
@@ -142,16 +147,16 @@ export const InsightSheet = ({
               </CardContent>
               <CardFooter className="flex justify-between bg-slate-50 px-4 py-3 text-xs text-slate-600">
                 <p>
-                  Sentiment:{" "}
+                  {t("environments.experience.sentiment")}:{" "}
                   {document.sentiment === "positive" ? (
-                    <Badge text="Positive" size="tiny" type="success" />
+                    <Badge text={t("environments.experience.positive")} size="tiny" type="success" />
                   ) : document.sentiment === "neutral" ? (
                     <Badge text="Neutral" size="tiny" type="gray" />
                   ) : document.sentiment === "negative" ? (
                     <Badge text="Negative" size="tiny" type="error" />
                   ) : null}
                 </p>
-                <p>{timeSince(new Date(document.createdAt).toISOString())}</p>
+                <p>{timeSince(new Date(document.createdAt).toISOString(), locale)}</p>
               </CardFooter>
             </Card>
           ))}

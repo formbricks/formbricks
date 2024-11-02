@@ -1,20 +1,22 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { TagIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Loading = () => {
+const Loading = async () => {
+  const t = await getTranslations();
   return (
     <>
       <PageContentWrapper>
-        <PageHeader pageTitle="People">
+        <PageHeader pageTitle={t("common.people")}>
           <PersonSecondaryNavigation activeId="attributes" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="grid h-12 grid-cols-5 content-center border-b text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-3 pl-6">Name</div>
-            <div className="text-center">Created</div>
-            <div className="text-center">Last Updated</div>
+            <div className="col-span-3 pl-6">{t("common.name")}</div>
+            <div className="text-center">{t("common.created_at")}</div>
+            <div className="text-center">{t("common.updated_at")}</div>
           </div>
           <div className="w-full">
             {[...Array(3)].map((_, index) => (

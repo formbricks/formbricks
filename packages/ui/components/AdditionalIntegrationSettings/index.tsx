@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Checkbox } from "../Checkbox";
 import { Label } from "../Label";
 
@@ -18,9 +19,10 @@ export const AdditionalIntegrationSettings = ({
   setIncludeHiddenFields,
   setIncludeMetadata,
 }: AdditionalIntegrationSettingsProps) => {
+  const t = useTranslations();
   return (
     <div className="mt-4">
-      <Label htmlFor="Surveys">Additional Settings</Label>
+      <Label htmlFor="Surveys">{t("environments.integrations.additional_settings")}</Label>
       <div className="text-sm">
         <div className="my-1 flex items-center space-x-2">
           <label htmlFor={"includeVariables"} className="flex cursor-pointer items-center">
@@ -34,7 +36,9 @@ export const AdditionalIntegrationSettings = ({
                 setIncludeVariables(!includeVariables);
               }}
             />
-            <span className="ml-2 w-[30rem] truncate">Include Variables</span>
+            <span className="ml-2 w-[30rem] truncate">
+              {t("environments.integrations.include_variables")}
+            </span>
           </label>
         </div>
         <div className="my-1 flex items-center space-x-2">
@@ -49,7 +53,9 @@ export const AdditionalIntegrationSettings = ({
                 setIncludeHiddenFields(!includeHiddenFields);
               }}
             />
-            <span className="ml-2 w-[30rem] truncate">Include Hidden Fields</span>
+            <span className="ml-2 w-[30rem] truncate">
+              {t("environments.integrations.include_hidden_fields")}
+            </span>
           </label>
         </div>
         <div className="my-1 flex items-center space-x-2">
@@ -64,7 +70,7 @@ export const AdditionalIntegrationSettings = ({
                 setIncludeMetadata(!includeMetadata);
               }}
             />
-            <span className="ml-2 w-[30rem] truncate">Include Metadata (Browser, Country, etc.)</span>
+            <span className="ml-2 w-[30rem] truncate">{t("environments.integrations.include_metadata")}</span>
           </label>
         </div>
       </div>

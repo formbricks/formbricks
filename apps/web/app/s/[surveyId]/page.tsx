@@ -13,6 +13,7 @@ import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service"
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
 import { getEmailVerificationDetails } from "./lib/helpers";
@@ -45,7 +46,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
     notFound();
   }
   const survey = await getSurvey(params.surveyId);
-
+  const locale = findMatchingLocale();
   const suId = searchParams.suId;
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
@@ -172,6 +173,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         languageCode={languageCode}
         attributeClasses={attributeClasses}
         isEmbed={isEmbed}
+        locale={locale}
       />
     );
   }
@@ -193,6 +195,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      locale={locale}
     />
   ) : null;
 };

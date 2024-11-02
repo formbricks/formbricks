@@ -5,10 +5,12 @@ import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surv
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { getIsAIEnabled } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import {
+  DEFAULT_LOCALE,
   DOCUMENTS_PER_PAGE,
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   WEBAPP_URL,
@@ -25,9 +27,10 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error(t("common.session_not_found"));
   }
 
   const surveyId = params.surveyId;
@@ -42,26 +45,26 @@ const Page = async ({ params }) => {
     getAttributeClasses(params.environmentId),
   ]);
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
   if (!survey) {
-    throw new Error("Survey not found");
+    throw new Error(t("common.survey_not_found"));
   }
 
   const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
@@ -110,6 +113,7 @@ const Page = async ({ params }) => {
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
+        locale={user.locale ?? DEFAULT_LOCALE}
       />
     </PageContentWrapper>
   );

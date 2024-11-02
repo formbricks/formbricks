@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 
 interface TOption {
@@ -20,7 +21,7 @@ export const OptionsSwitch = ({
 }: OptionsSwitchProps) => {
   const [highlightStyle, setHighlightStyle] = useState({});
   const containerRef = useRef<HTMLDivElement>(null);
-
+  const t = useTranslations();
   useEffect(() => {
     if (containerRef.current) {
       const activeElement = containerRef.current.querySelector(`[data-value="${currentOption}"]`);
@@ -55,7 +56,7 @@ export const OptionsSwitch = ({
                 : "cursor-pointer hover:bg-slate-50"
           }`}>
           <div className="flex items-center justify-center space-x-2">
-            <span className="text-sm text-slate-900">{type.label}</span>
+            <span className="text-sm text-slate-900">{t(type.label)}</span>
             {type.icon && <div className="h-4 w-4 text-slate-600 hover:text-slate-800">{type.icon}</div>}
           </div>
         </div>

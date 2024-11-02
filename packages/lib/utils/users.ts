@@ -4,6 +4,7 @@ export const createUser = async (
   name: string,
   email: string,
   password: string,
+  locale: string,
   inviteToken?: string | null
 ): Promise<any> => {
   const hashedPassword = await hashPassword(password);
@@ -15,6 +16,7 @@ export const createUser = async (
         name,
         email,
         password: hashedPassword,
+        locale,
         inviteToken,
       }),
     });

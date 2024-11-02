@@ -1,4 +1,5 @@
 import { EyeOffIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
@@ -9,6 +10,7 @@ interface HiddenFieldsProps {
 }
 
 export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) => {
+  const t = useTranslations();
   const fieldIds = hiddenFields.fieldIds ?? [];
   return (
     <div className="mt-6 flex flex-col gap-6">
@@ -25,7 +27,7 @@ export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) 
                       <EyeOffIcon className="h-4 w-4" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[300px]" side="top">
-                      Hidden field
+                      {t("common.hidden_field")}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
