@@ -1,6 +1,7 @@
 "use client";
 
 import { UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -44,7 +45,7 @@ export const SaveAsNewSegmentModal = ({
   } = useForm<SaveAsNewSegmentModalForm>();
 
   const [isLoading, setIsLoading] = useState(false);
-
+  const t = useTranslations();
   const handleReset = () => {
     setValue("title", "");
     setValue("description", "");
@@ -69,7 +70,7 @@ export const SaveAsNewSegmentModal = ({
 
       setIsSegmentEditorOpen(false);
       setIsLoading(false);
-      toast.success("Segment created successfully");
+      toast.success(t("environments.segments.segment_created_successfully"));
       handleReset();
     };
 
@@ -83,7 +84,7 @@ export const SaveAsNewSegmentModal = ({
           filters: segment?.filters,
         });
 
-        toast.success("Segment updated successfully");
+        toast.success(t("environments.segments.segment_updated_successfully"));
         setSegment(updatedSegment);
 
         setIsSegmentEditorOpen(false);
@@ -129,9 +130,9 @@ export const SaveAsNewSegmentModal = ({
               <UsersIcon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-medium">Save as new segment</h3>
+              <h3 className="text-base font-medium">{t("environments.segments.save_as_new_segment")}</h3>
               <p className="text-sm text-slate-600">
-                Save your filters as a Segment to use it in other surveys
+                {t("environments.segments.save_your_filters_as_a_segment_to_use_it_in_other_surveys")}
               </p>
             </div>
           </div>
@@ -143,18 +144,18 @@ export const SaveAsNewSegmentModal = ({
             <div className="flex flex-col gap-4">
               <div>
                 <label htmlFor="title" className="text-sm font-medium text-slate-700">
-                  Name
+                  {t("common.name")}
                 </label>
 
                 <Input
                   {...register("title", {
                     required: {
                       value: true,
-                      message: "Name is required",
+                      message: t("environments.segments.title_is_required"),
                     },
                   })}
                   type="text"
-                  placeholder="Name e.g. Power Users"
+                  placeholder={t("environments.segments.ex_power_users")}
                   className="w-full p-2"
                 />
                 {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
@@ -162,12 +163,12 @@ export const SaveAsNewSegmentModal = ({
 
               <div>
                 <label htmlFor="description" className="text-sm font-medium text-slate-700">
-                  Description
+                  {t("common.description")}
                 </label>
                 <Input
                   {...register("description")}
                   type="text"
-                  placeholder="Most active users in the last 30 days"
+                  placeholder={t("environments.segments.most_active_users_in_the_last_30_days")}
                   className="w-full p-2"
                 />
                 {errors?.title?.message && <p className="text-xs text-red-500">{errors?.title?.message}</p>}
@@ -183,10 +184,10 @@ export const SaveAsNewSegmentModal = ({
                 onClick={() => {
                   handleReset();
                 }}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" loading={isLoading}>
-                Save
+                {t("common.save")}
               </Button>
             </div>
           </div>

@@ -97,6 +97,7 @@ export const getProductsByOrganizationId = async (
                 select: {
                   email: true,
                   notificationSettings: true,
+                  locale: true,
                 },
               },
             },

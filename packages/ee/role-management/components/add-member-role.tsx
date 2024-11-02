@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type { Control } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { Label } from "@formbricks/ui/components/Label";
@@ -23,13 +24,14 @@ interface AddMemberRoleProps {
 }
 
 export function AddMemberRole({ control, canDoRoleManagement }: AddMemberRoleProps) {
+  const t = useTranslations();
   return (
     <Controller
       control={control}
       name="role"
       render={({ field: { onChange, value } }) => (
         <div>
-          <Label>Role</Label>
+          <Label>{t("common.role")}</Label>
           <Select
             defaultValue="admin"
             disabled={!canDoRoleManagement}

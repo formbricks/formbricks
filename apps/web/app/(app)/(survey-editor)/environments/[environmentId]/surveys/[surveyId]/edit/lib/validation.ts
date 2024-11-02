@@ -198,10 +198,10 @@ export const isEndingCardValid = (
   }
 };
 
-export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string) => {
+export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: (key: string) => string) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
-    toast.error("Fallback missing");
+    toast.error(t("environments.surveys.edit.fallback_missing"));
     return false;
   }
 
@@ -212,7 +212,7 @@ export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string) => 
     if (!parsedFilters.success) {
       const errMsg =
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
-        "Invalid targeting: Please check your audience filters";
+        t("environments.surveys.edit.invalid_targeting");
       toast.error(errMsg);
       return;
     }

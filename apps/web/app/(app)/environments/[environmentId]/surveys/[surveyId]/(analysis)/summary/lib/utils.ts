@@ -13,15 +13,28 @@ export const constructToastMessage = (
   filterValue: string,
   survey: TSurvey,
   questionId: TSurveyQuestionId,
+  t: (key: string, options?: Record<string, any>) => string,
   filterComboBoxValue?: string | string[]
 ) => {
   const questionIdx = survey.questions.findIndex((question) => question.id === questionId);
   if (questionType === "matrix") {
-    return `Added filter for responses where answer to question ${questionIdx + 1} is ${filterComboBoxValue} - ${filterValue}`;
+    return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question", {
+      questionIdx: questionIdx + 1,
+      filterComboBoxValue,
+      filterValue,
+    });
   } else if (filterComboBoxValue === undefined) {
-    return `Added filter for responses where answer to question ${questionIdx + 1} is skipped`;
+    return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question_is_skipped", {
+      questionIdx: questionIdx + 1,
+    });
   } else {
-    return `Added filter for responses where answer to question ${questionIdx + 1} ${filterValue} ${Array.isArray(filterComboBoxValue) ? filterComboBoxValue.join(",") : filterComboBoxValue}`;
+    return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question", {
+      questionIdx: questionIdx + 1,
+      filterComboBoxValue: Array.isArray(filterComboBoxValue)
+        ? filterComboBoxValue.join(",")
+        : filterComboBoxValue,
+      filterValue,
+    });
   }
 };
 

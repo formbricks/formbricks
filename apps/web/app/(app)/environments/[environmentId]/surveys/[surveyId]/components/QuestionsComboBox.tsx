@@ -22,6 +22,7 @@ import {
   StarIcon,
   User,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
@@ -141,6 +142,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
+  const t = useTranslations();
   const commandRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState("");
   useClickOutside(commandRef, () => setOpen(false));
@@ -161,7 +163,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
           <CommandInput
             value={inputValue}
             onValueChange={setInputValue}
-            placeholder="Search..."
+            placeholder={t("common.search") + "..."}
             className="h-5 border-none border-transparent p-0 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
           />
         )}
@@ -177,7 +179,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
             <CommandList>
-              <CommandEmpty>No result found.</CommandEmpty>
+              <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               {options?.map((data) => (
                 <>
                   {data?.option.length > 0 && (

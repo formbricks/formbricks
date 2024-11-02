@@ -39,7 +39,8 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       ctx.user.email,
       "Formbricks Email Survey Preview",
       emailHtml,
-      survey.environmentId
+      survey.environmentId,
+      ctx.user.locale
     );
   });
 

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
@@ -19,6 +20,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
   onSelectedSurveyChange,
   allowChanges,
 }) => {
+  const t = useTranslations();
   return (
     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
@@ -37,7 +39,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
             className={`flex cursor-pointer items-center ${selectedAllSurveys ? "font-semibold" : ""} ${
               !allowChanges ? "cursor-not-allowed opacity-50" : ""
             }`}>
-            All current and new surveys
+            {t("environments.integrations.webhooks.all_current_and_new_surveys")}
           </label>
         </div>
         {surveys.map((survey) => (

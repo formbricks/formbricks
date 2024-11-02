@@ -575,12 +575,13 @@ enum Intention {
 }
 
 model User {
-  id                        String           @id @default(cuid())
-  createdAt                 DateTime         @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
-  name                      String
-  email                     String           @unique
-  emailVerified             DateTime?        @map(name: "email_verified")
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  name          String
+  email         String    @unique
+  emailVerified DateTime? @map(name: "email_verified")
+
   imageUrl                  String?
   twoFactorSecret           String?
   twoFactorEnabled          Boolean          @default(false)
@@ -600,6 +601,9 @@ model User {
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
+  /// @zod.custom(imports.ZUserLocale)
+  /// [Locale]
+  locale                    String           @default("en-US")
   surveys                   Survey[]
 
   @@index([email])
