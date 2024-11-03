@@ -1,17 +1,35 @@
 import { createId } from "@paralleldrive/cuid2";
-import { getDefaultEndingCard } from "@formbricks/lib/templates";
-import { translate } from "@formbricks/lib/templates";
+import { getDefaultEndingCard, translate } from "@formbricks/lib/templates";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 
-export const getXMSurveyDefault = (locale: string): TXMTemplate => ({
-  name: "",
-  endings: [getDefaultEndingCard([], locale)],
-  questions: [],
-  styling: {
-    overwriteThemeStyling: true,
-  },
-});
+function validateLocale(locale: string): boolean {
+  // Add logic to validate the locale, e.g., check against a list of supported locales
+  return typeof locale === "string" && locale.length > 0;
+}
+
+function logError(error: Error, context: string) {
+  console.error(`Error in ${context}:`, error);
+}
+
+export const getXMSurveyDefault = (locale: string): TXMTemplate => {
+  try {
+    if (!validateLocale(locale)) {
+      throw new Error("Invalid locale");
+    }
+    return {
+      name: "",
+      endings: [getDefaultEndingCard([], locale)],
+      questions: [],
+      styling: {
+        overwriteThemeStyling: true,
+      },
+    };
+  } catch (error) {
+    logError(error, "getXMSurveyDefault");
+    throw error; // Re-throw after logging
+  }
+};
 
 const NPSSurvey = (locale: string): TXMTemplate => {
   return {
@@ -397,11 +415,21 @@ const eNPSSurvey = (locale: string): TXMTemplate => {
   };
 };
 
-export const getXMTemplates = (locale: string): TXMTemplate[] => [
-  NPSSurvey(locale),
-  StarRatingSurvey(locale),
-  CSATSurvey(locale),
-  CESSurvey(locale),
-  SmileysRatingSurvey(locale),
-  eNPSSurvey(locale),
-];
+export const getXMTemplates = (locale: string): TXMTemplate[] => {
+  try {
+    if (!validateLocale(locale)) {
+      throw new Error("Invalid locale");
+    }
+    return [
+      NPSSurvey(locale),
+      StarRatingSurvey(locale),
+      CSATSurvey(locale),
+      CESSurvey(locale),
+      SmileysRatingSurvey(locale),
+      eNPSSurvey(locale),
+    ];
+  } catch (error) {
+    logError(error, "getXMTemplates");
+    return []; // Return an empty array or handle as needed
+  }
+};
