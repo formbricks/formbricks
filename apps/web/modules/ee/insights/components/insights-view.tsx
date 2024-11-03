@@ -29,7 +29,6 @@ interface InsightViewProps {
   isFetching?: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
-  environmentId: string;
 }
 
 export const InsightView = ({
@@ -40,7 +39,6 @@ export const InsightView = ({
   isFetching,
   documentsPerPage,
   locale,
-  environmentId,
 }: InsightViewProps) => {
   const t = useTranslations();
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
@@ -149,11 +147,7 @@ export const InsightView = ({
                       {insight.description}
                     </TableCell>
                     <TableCell>
-                      <CategoryBadge
-                        category={insight.category}
-                        environmentId={environmentId}
-                        insightId={insight.id}
-                      />
+                      <CategoryBadge category={insight.category} insightId={insight.id} />
                     </TableCell>
                   </TableRow>
                 ))
@@ -172,7 +166,6 @@ export const InsightView = ({
       )}
 
       <InsightSheet
-        environmentId={environmentId}
         isOpen={isInsightSheetOpen}
         setIsOpen={setIsInsightSheetOpen}
         insight={currentInsight}

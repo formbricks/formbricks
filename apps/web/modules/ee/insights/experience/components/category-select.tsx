@@ -6,7 +6,6 @@ import { updateInsightAction } from "../actions";
 
 interface CategoryBadgeProps {
   category: TInsight["category"];
-  environmentId: string;
   insightId: string;
 }
 
@@ -37,13 +36,13 @@ const getCategoryIndex = (category: TInsight["category"]) => {
   }
 };
 
-const CategoryBadge = ({ category, environmentId, insightId }: CategoryBadgeProps) => {
+const CategoryBadge = ({ category, insightId }: CategoryBadgeProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleUpdateCategory = async (newCategory: TInsight["category"]) => {
     setIsUpdating(true);
     try {
-      await updateInsightAction({ environmentId, insightId, updates: { category: newCategory } });
+      await updateInsightAction({ insightId, data: { category: newCategory } });
       toast.success("Category updated successfully!");
     } catch (error) {
       console.error("Failed to update insight:", error);

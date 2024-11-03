@@ -23,7 +23,6 @@ import SentimentSelect from "../sentiment-select";
 import { getDocumentsByInsightIdAction, getDocumentsByInsightIdSurveyIdQuestionIdAction } from "./actions";
 
 interface InsightSheetProps {
-  environmentId: string;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   insight: TInsight | null;
@@ -36,7 +35,6 @@ interface InsightSheetProps {
 }
 
 export const InsightSheet = ({
-  environmentId,
   isOpen,
   setIsOpen,
   insight,
@@ -134,7 +132,7 @@ export const InsightSheet = ({
         <SheetHeader className="flex flex-col gap-1.5">
           <SheetTitle className="flex items-center gap-x-2">
             <span>{insight.title}</span>
-            <CategoryBadge category={insight.category} environmentId={environmentId} insightId={insight.id} />
+            <CategoryBadge category={insight.category} insightId={insight.id} />
           </SheetTitle>
           <SheetDescription>{insight.description}</SheetDescription>
           <div className="flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">

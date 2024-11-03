@@ -1,8 +1,11 @@
 "use server";
 
+import { insightCache } from "@/lib/cache/insight";
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { cache } from "@formbricks/lib/cache";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZInsight, ZInsightFilterCriteria } from "@formbricks/types/insights";
@@ -51,26 +54,44 @@ export const getStatsAction = authenticatedActionClient
   });
 
 const ZUpdateInsightAction = z.object({
-  environmentId: ZId,
   insightId: ZId,
-  updates: ZInsight.partial(),
+  data: ZInsight.partial(),
 });
 
 export const updateInsightAction = authenticatedActionClient
   .schema(ZUpdateInsightAction)
   .action(async ({ ctx, parsedInput }) => {
     try {
+      const insight = await cache(
+        () =>
+          prisma.insight.findUnique({
+            where: {
+              id: parsedInput.insightId,
+            },
+            select: {
+              environmentId: true,
+            },
+          }),
+        [`getInsight-${parsedInput.insightId}`],
+        {
+          tags: [insightCache.tag.byId(parsedInput.insightId)],
+        }
+      )();
+
+      if (!insight) {
+        throw new Error("Insight not found");
+      }
+
       await checkAuthorization({
         userId: ctx.user.id,
-        organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+        organizationId: await getOrganizationIdFromEnvironmentId(insight.environmentId),
         rules: ["response", "update"],
       });
 
-      return await updateInsight(parsedInput.insightId, parsedInput.updates);
+      return await updateInsight(parsedInput.insightId, parsedInput.data);
     } catch (error) {
       console.error("Error updating insight:", {
         insightId: parsedInput.insightId,
-        environmentId: parsedInput.environmentId,
         error,
       });
       if (error instanceof Error) {

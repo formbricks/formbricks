@@ -176,11 +176,7 @@ export const InsightView = ({
                         {insight.description}
                       </TableCell>
                       <TableCell className="flex items-center justify-between gap-2">
-                        <CategoryBadge
-                          category={insight.category}
-                          environmentId={environmentId}
-                          insightId={insight.id}
-                        />
+                        <CategoryBadge category={insight.category} insightId={insight.id} />
                       </TableCell>
                     </TableRow>
                   ))
@@ -200,7 +196,6 @@ export const InsightView = ({
       )}
 
       <InsightSheet
-        environmentId={environmentId}
         isOpen={isInsightSheetOpen}
         setIsOpen={setIsInsightSheetOpen}
         insight={currentInsight}
