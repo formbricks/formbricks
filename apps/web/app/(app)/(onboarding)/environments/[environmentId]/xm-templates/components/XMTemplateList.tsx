@@ -48,9 +48,7 @@ export const XMTemplateList = ({ product, user, environmentId }: XMTemplateListP
   const handleTemplateClick = (templateIdx) => {
     setActiveTemplateId(templateIdx);
     const template = getXMTemplates(user.locale)[templateIdx];
-    console.log("Selected Template:", template);
     const newTemplate = replacePresetPlaceholders(template, product);
-    console.log("New Template after placeholder replacement:", newTemplate);
     createSurvey(newTemplate);
   };
 
