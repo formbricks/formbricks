@@ -158,13 +158,7 @@ export const InsightSheet = ({
               </CardContent>
               <CardFooter className="flex justify-between rounded-bl-xl rounded-br-xl border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
                 <p>
-                  Sentiment:{" "}
-                  <SentimentSelect
-                    documentId={document.id}
-                    insightId={insight.id}
-                    sentiment={document.sentiment}
-                    environmentId={environmentId}
-                  />
+                  Sentiment: <SentimentSelect documentId={document.id} sentiment={document.sentiment} />
                 </p>
                 <p>{timeSince(new Date(document.createdAt).toISOString(), locale)}</p>
               </CardFooter>

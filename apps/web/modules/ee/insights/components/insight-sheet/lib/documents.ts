@@ -159,42 +159,16 @@ export const getDocumentById = reactCache(
     )()
 );
 
-export const updateDocument = async (
-  documentId: string,
-  updates: Partial<TDocument>,
-  environmentId: string,
-  insightId?: string
-): Promise<TDocument> => {
-  validateInputs(
-    [documentId, ZId],
-    [updates, ZDocument.partial()],
-    [environmentId, ZId],
-    [insightId, ZId.optional()]
-  );
+export const updateDocument = async (documentId: string, data: Partial<TDocument>): Promise<TDocument> => {
+  validateInputs([documentId, ZId], [data, ZDocument.partial()]);
   try {
-    const updatedDocument = await prisma.$transaction(async (tx) => {
-      const document = await tx.document.findFirst({
-        where: {
-          id: documentId,
-          environment: {
-            id: environmentId,
-          },
-        },
-      });
-
-      if (!document) {
-        throw new Error("Document not found or access denied");
-      }
-
-      return tx.document.update({
-        where: { id: documentId },
-        data: updates,
-      });
+    const updatedDocument = await prisma.document.update({
+      where: { id: documentId },
+      data,
     });
-    documentCache.revalidate({ environmentId: environmentId });
-    if (insightId) {
-      insightCache.revalidate({ id: insightId });
-    }
+
+    documentCache.revalidate({ environmentId: updatedDocument.environmentId });
+
     return updatedDocument;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

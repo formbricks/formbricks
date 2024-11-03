@@ -5,9 +5,7 @@ import { updateDocumentAction } from "./insight-sheet/actions";
 
 interface SentimentSelectProps {
   sentiment: TDocument["sentiment"];
-  environmentId: string;
   documentId: string;
-  insightId: string;
 }
 
 const sentimentOptions: TBadgeSelectOption[] = [
@@ -29,7 +27,7 @@ const getSentimentIndex = (sentiment: TDocumentSentiment) => {
   }
 };
 
-const SentimentSelect = ({ sentiment, environmentId, documentId, insightId }: SentimentSelectProps) => {
+const SentimentSelect = ({ sentiment, documentId }: SentimentSelectProps) => {
   const [currentSentiment, setCurrentSentiment] = useState(sentiment);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -37,10 +35,8 @@ const SentimentSelect = ({ sentiment, environmentId, documentId, insightId }: Se
     setIsUpdating(true);
     try {
       await updateDocumentAction({
-        environmentId,
         documentId,
-        insightId,
-        updates: { sentiment: newSentiment },
+        data: { sentiment: newSentiment },
       });
       setCurrentSentiment(newSentiment); // Update the state with the new sentiment
     } catch (error) {

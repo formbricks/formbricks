@@ -98,9 +98,7 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
 
 const ZUpdateDocumentAction = z.object({
   documentId: ZId,
-  environmentId: ZId,
-  insightId: ZId.optional(),
-  updates: z
+  data: z
     .object({
       sentiment: z.enum(["positive", "negative", "neutral"]).optional(),
     })
@@ -115,19 +113,12 @@ export const updateDocumentAction = authenticatedActionClient
     if (!document) {
       throw new Error("Document not found");
     }
-    if (document.environmentId !== parsedInput.environmentId) {
-      throw new Error("Document does not belong to the specified environment");
-    }
+
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(document.environmentId),
       rules: ["response", "update"],
     });
 
-    return await updateDocument(
-      parsedInput.documentId,
-      parsedInput.updates,
-      document.environmentId,
-      parsedInput.insightId
-    );
+    return await updateDocument(parsedInput.documentId, parsedInput.data);
   });
