@@ -66,7 +66,7 @@ export const SignupOptions = ({
   const form = useForm<TSignupInput>({
     defaultValues: {
       name: "",
-      email: "",
+      email: emailFromSearchParams || "",
       password: "",
     },
     resolver: zodResolver(ZSignupInput),
