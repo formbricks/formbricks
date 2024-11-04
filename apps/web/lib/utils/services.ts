@@ -495,6 +495,38 @@ export const getTeam = reactCache(
     )()
 );
 
+export const getInsight = reactCache(
+  (insightId: string): Promise<{ environmentId: string } | null> =>
+    cache(
+      async () => {
+        validateInputs([insightId, ZId]);
+
+        try {
+          const insight = await prisma.insight.findUnique({
+            where: {
+              id: insightId,
+            },
+            select: {
+              environmentId: true,
+            },
+          });
+
+          return insight;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`utils-getInsight-${insightId}`],
+      {
+        tags: [tagCache.tag.byId(insightId)],
+      }
+    )()
+);
+
 export const isProductPartOfOrganization = async (
   organizationId: string,
   productId: string

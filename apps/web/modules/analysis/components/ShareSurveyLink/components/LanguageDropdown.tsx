@@ -5,7 +5,7 @@ import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "../../Button";
+import { Button } from "@formbricks/ui/components/Button";
 
 interface LanguageDropdownProps {
   survey: TSurvey;

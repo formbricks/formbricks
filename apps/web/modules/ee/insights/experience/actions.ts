@@ -1,8 +1,8 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZInsightFilterCriteria } from "@formbricks/types/insights";
@@ -19,10 +19,15 @@ const ZGetEnvironmentInsightsAction = z.object({
 export const getEnvironmentInsightsAction = authenticatedActionClient
   .schema(ZGetEnvironmentInsightsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "read"],
+        },
+      ],
     });
 
     return await getInsights(
@@ -41,10 +46,15 @@ const ZGetStatsAction = z.object({
 export const getStatsAction = authenticatedActionClient
   .schema(ZGetStatsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "read"],
+        },
+      ],
     });
 
     return await getStats(parsedInput.environmentId, parsedInput.statsFrom);

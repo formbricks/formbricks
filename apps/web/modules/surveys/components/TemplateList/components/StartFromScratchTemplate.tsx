@@ -4,7 +4,7 @@ import { cn } from "@formbricks/lib/cn";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import { TProduct } from "@formbricks/types/product";
 import { TTemplate } from "@formbricks/types/templates";
-import { Button } from "../../Button";
+import { Button } from "@formbricks/ui/components/Button";
 import { replacePresetPlaceholders } from "../lib/utils";
 
 interface StartFromScratchTemplateProps {

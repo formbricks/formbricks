@@ -9,9 +9,9 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { PersonAvatar } from "../../Avatars";
-import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { PersonAvatar } from "@formbricks/ui/components/Avatars";
+import { SurveyStatusIndicator } from "@formbricks/ui/components/SurveyStatusIndicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import { isSubmissionTimeMoreThan5Minutes } from "../util";
 
 interface TooltipRendererProps {

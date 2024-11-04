@@ -4,7 +4,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface QuestionSkipProps {
   skippedQuestions: string[] | undefined;

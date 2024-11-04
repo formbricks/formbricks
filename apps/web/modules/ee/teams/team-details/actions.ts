@@ -23,7 +23,7 @@ const ZUpdateTeamNameAction = z.object({
 export const updateTeamNameAction = authenticatedActionClient
   .schema(ZUpdateTeamNameAction)
   .action(async ({ ctx, parsedInput }) => {
-    /* await checkAuthorizationUpdated({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
       access: [
@@ -32,7 +32,7 @@ export const updateTeamNameAction = authenticatedActionClient
           rules: ["team", "update"],
         },
       ],
-    }); */
+    });
 
     return await updateTeamName(parsedInput.teamId, parsedInput.name);
   });
@@ -44,7 +44,7 @@ const ZDeleteTeamAction = z.object({
 export const deleteTeamAction = authenticatedActionClient
   .schema(ZDeleteTeamAction)
   .action(async ({ ctx, parsedInput }) => {
-    /* await checkAuthorizationUpdated({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
       access: [
@@ -53,7 +53,7 @@ export const deleteTeamAction = authenticatedActionClient
           rules: ["team", "delete"],
         },
       ],
-    }); */
+    });
 
     return await deleteTeam(parsedInput.teamId);
   });
@@ -67,7 +67,7 @@ const ZUpdateUserTeamRoleAction = z.object({
 export const updateUserTeamRoleAction = authenticatedActionClient
   .schema(ZUpdateUserTeamRoleAction)
   .action(async ({ ctx, parsedInput }) => {
-    /* await checkAuthorizationUpdated({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
       access: [
@@ -81,7 +81,7 @@ export const updateUserTeamRoleAction = authenticatedActionClient
           minPermission: "admin",
         },
       ],
-    }); */
+    });
 
     return await updateUserTeamRole(parsedInput.teamId, parsedInput.userId, parsedInput.role);
   });
@@ -94,7 +94,7 @@ const ZRemoveTeamMemberAction = z.object({
 export const removeTeamMemberAction = authenticatedActionClient
   .schema(ZRemoveTeamMemberAction)
   .action(async ({ ctx, parsedInput }) => {
-    /* await checkAuthorizationUpdated({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
       access: [
@@ -108,7 +108,7 @@ export const removeTeamMemberAction = authenticatedActionClient
           minPermission: "admin",
         },
       ],
-    }); */
+    });
 
     return await removeTeamMember(parsedInput.teamId, parsedInput.userId);
   });
@@ -121,7 +121,7 @@ const ZAddTeamMembersAction = z.object({
 export const addTeamMembersAction = authenticatedActionClient
   .schema(ZAddTeamMembersAction)
   .action(async ({ ctx, parsedInput }) => {
-    /* await checkAuthorizationUpdated({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
       access: [
@@ -129,8 +129,13 @@ export const addTeamMembersAction = authenticatedActionClient
           type: "organization",
           rules: ["teamMembership", "create"],
         },
+        {
+          type: "team",
+          teamId: parsedInput.teamId,
+          minPermission: "admin",
+        },
       ],
-    }); */
+    });
 
     return await addTeamMembers(parsedInput.teamId, parsedInput.userIds);
   });

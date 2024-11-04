@@ -63,7 +63,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
           return returnValidationErrors(resultSchema, formatErrors(parsedResult.error.issues));
         }
       } else {
-        getOperationPermissions(role, ...accessItem.rules);
+        isAccessGranted = getOperationPermissions(role, ...accessItem.rules);
       }
     } else {
       if (isOwner || isManager) {

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
-import { TooltipRenderer } from "../../Tooltip";
+import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {

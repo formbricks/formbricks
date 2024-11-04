@@ -1,5 +1,3 @@
-import { ZProductUpdateInput } from "@formbricks/types/product";
-
 export const Permissions = {
   owner: {
     environment: {
@@ -31,8 +29,8 @@ export const Permissions = {
     },
     survey: {
       create: true,
-      update: true,
       read: true,
+      update: true,
       delete: true,
     },
     tag: {
@@ -67,7 +65,6 @@ export const Permissions = {
     },
     apiKey: {
       create: true,
-      update: true,
       delete: true,
     },
     subscription: {
@@ -172,7 +169,6 @@ export const Permissions = {
     },
     apiKey: {
       create: true,
-      update: true,
       delete: true,
     },
     subscription: {
@@ -218,10 +214,8 @@ export const Permissions = {
     product: {
       create: false,
       read: true,
-      update: ZProductUpdateInput.omit({
-        name: true,
-      }),
-      delete: true,
+      update: false,
+      delete: false,
     },
     organization: {
       read: true,
@@ -234,59 +228,58 @@ export const Permissions = {
       delete: false,
     },
     person: {
-      delete: true,
+      delete: false,
     },
     response: {
-      read: true,
-      update: true,
-      delete: true,
+      read: false,
+      update: false,
+      delete: false,
     },
     survey: {
-      create: true,
-      read: true,
-      update: true,
-      delete: true,
-    },
-    tag: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    responseNote: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    segment: {
-      create: true,
-      read: true,
-      update: true,
-      delete: true,
-    },
-    actionClass: {
-      create: true,
-      delete: true,
-    },
-    integration: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    webhook: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    apiKey: {
-      create: true,
-      update: true,
-      delete: true,
-    },
-    subscription: {
       create: false,
       read: false,
       update: false,
       delete: false,
+    },
+    tag: {
+      create: false,
+      update: false,
+      delete: false,
+    },
+    responseNote: {
+      create: false,
+      update: false,
+      delete: false,
+    },
+    segment: {
+      create: false,
+      read: false,
+      update: false,
+      delete: false,
+    },
+    actionClass: {
+      create: false,
+      delete: false,
+    },
+    integration: {
+      create: false,
+      update: false,
+      delete: false,
+    },
+    webhook: {
+      create: false,
+      update: false,
+      delete: false,
+    },
+    apiKey: {
+      create: false,
+      delete: false,
+    },
+    subscription: {
+      create: true,
+      read: true,
+      update: true,
+      delete: true,
     },
     invite: {
       create: false,
@@ -343,49 +336,48 @@ export const Permissions = {
     },
     response: {
       read: true,
-      update: false,
-      delete: false,
+      update: true,
+      delete: true,
     },
     survey: {
-      create: false,
+      create: true,
       read: true,
-      update: false,
-      delete: false,
+      update: true,
+      delete: true,
     },
     tag: {
-      create: false,
-      update: false,
-      delete: false,
+      create: true,
+      update: true,
+      delete: true,
     },
     responseNote: {
-      create: false,
-      update: false,
-      delete: false,
+      create: true,
+      update: true,
+      delete: true,
     },
     segment: {
-      create: false,
+      create: true,
       read: true,
-      update: false,
-      delete: false,
+      update: true,
+      delete: true,
     },
     actionClass: {
-      create: false,
-      delete: false,
+      create: true,
+      delete: true,
     },
     integration: {
-      create: false,
+      create: true,
       update: true,
-      delete: false,
+      delete: true,
     },
     webhook: {
-      create: false,
-      update: false,
-      delete: false,
+      create: true,
+      update: true,
+      delete: true,
     },
     apiKey: {
-      create: false,
-      update: false,
-      delete: false,
+      create: true,
+      delete: true,
     },
     subscription: {
       create: false,
@@ -400,9 +392,9 @@ export const Permissions = {
       delete: false,
     },
     language: {
-      create: false,
-      update: false,
-      delete: false,
+      create: true,
+      update: true,
+      delete: true,
     },
     team: {
       create: false,
@@ -411,7 +403,7 @@ export const Permissions = {
       delete: false,
     },
     teamMembership: {
-      create: false,
+      create: true,
       read: true,
       update: true,
       delete: true,

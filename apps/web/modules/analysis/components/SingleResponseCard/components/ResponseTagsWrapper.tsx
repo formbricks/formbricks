@@ -7,9 +7,9 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TTag } from "@formbricks/types/tags";
-import { Button } from "../../Button";
-import { Tag } from "../../Tag";
-import { TagsCombobox } from "../../TagsCombobox";
+import { Button } from "@formbricks/ui/components/Button";
+import { Tag } from "@formbricks/ui/components/Tag";
+import { TagsCombobox } from "@formbricks/ui/components/TagsCombobox";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {

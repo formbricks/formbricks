@@ -3,6 +3,7 @@
 import { createCustomerPortalSession } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createCustomerPortalSession";
 import { createSubscription } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createSubscription";
 import { isSubscriptionCancelled } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -21,11 +22,17 @@ const ZUpgradePlanAction = z.object({
 export const upgradePlanAction = authenticatedActionClient
   .schema(ZUpgradePlanAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["subscription", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["subscription", "create"],
+        },
+      ],
     });
+
     const organization = await getOrganization(parsedInput.organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("organization", parsedInput.organizationId);
@@ -46,11 +53,17 @@ const ZManageSubscriptionAction = z.object({
 export const manageSubscriptionAction = authenticatedActionClient
   .schema(ZManageSubscriptionAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["subscription", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["subscription", "read"],
+        },
+      ],
     });
+
     const organization = await getOrganization(parsedInput.organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("organization", parsedInput.organizationId);
@@ -73,10 +86,15 @@ const ZIsSubscriptionCancelledAction = z.object({
 export const isSubscriptionCancelledAction = authenticatedActionClient
   .schema(ZIsSubscriptionCancelledAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["subscription", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["subscription", "read"],
+        },
+      ],
     });
 
     return await isSubscriptionCancelled(parsedInput.organizationId);

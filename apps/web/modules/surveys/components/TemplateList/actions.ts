@@ -1,9 +1,9 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { createSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
@@ -16,10 +16,20 @@ const ZCreateSurveyAction = z.object({
 export const createSurveyAction = authenticatedActionClient
   .schema(ZCreateSurveyAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["survey", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["survey", "create"],
+        },
+        {
+          type: "product",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
     return await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);

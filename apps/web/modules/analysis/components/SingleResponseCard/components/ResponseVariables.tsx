@@ -2,7 +2,7 @@ import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyVariables } from "@formbricks/types/surveys/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface HiddenFieldsProps {
   variables: TSurveyVariables;

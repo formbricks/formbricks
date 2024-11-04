@@ -4,17 +4,17 @@ import {
   deleteMembership,
   getMembershipsByUserId,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { sendInviteMemberEmail } from "@formbricks/email";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
-import { getOrganizationIdFromInviteId } from "@formbricks/lib/organization/utils";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
@@ -28,13 +28,19 @@ const ZUpdateOrganizationNameAction = z.object({
 export const updateOrganizationNameAction = authenticatedActionClient
   .schema(ZUpdateOrganizationNameAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
-      schema: ZOrganizationUpdateInput.pick({ name: true }),
-      data: parsedInput.data,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["organization", "update"],
+      access: [
+        {
+          type: "organization",
+          schema: ZOrganizationUpdateInput.pick({ name: true }),
+          data: parsedInput.data,
+          rules: ["organization", "update"],
+        },
+      ],
     });
+
     return await updateOrganization(parsedInput.organizationId, parsedInput.data);
   });
 
@@ -46,12 +52,17 @@ const ZUpdateOrganizationAIEnabledAction = z.object({
 export const updateOrganizationAIEnabledAction = authenticatedActionClient
   .schema(ZUpdateOrganizationAIEnabledAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
-      schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
-      data: parsedInput.data,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["organization", "update"],
+      access: [
+        {
+          type: "organization",
+          schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
+          data: parsedInput.data,
+          rules: ["organization", "update"],
+        },
+      ],
     });
 
     return await updateOrganization(parsedInput.organizationId, parsedInput.data);
@@ -65,10 +76,15 @@ const ZDeleteInviteAction = z.object({
 export const deleteInviteAction = authenticatedActionClient
   .schema(ZDeleteInviteAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["invite", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["invite", "delete"],
+        },
+      ],
     });
     return await deleteInvite(parsedInput.inviteId);
   });
@@ -81,10 +97,15 @@ const ZDeleteMembershipAction = z.object({
 export const deleteMembershipAction = authenticatedActionClient
   .schema(ZDeleteMembershipAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["membership", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["membership", "delete"],
+        },
+      ],
     });
 
     if (parsedInput.userId === ctx.user.id) {
@@ -100,10 +121,15 @@ const ZLeaveOrganizationAction = z.object({
 export const leaveOrganizationAction = authenticatedActionClient
   .schema(ZLeaveOrganizationAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["organization", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["membership", "delete"],
+        },
+      ],
     });
 
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
@@ -131,10 +157,15 @@ const ZCreateInviteTokenAction = z.object({
 export const createInviteTokenAction = authenticatedActionClient
   .schema(ZCreateInviteTokenAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
-      rules: ["invite", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["invite", "create"],
+        },
+      ],
     });
 
     const invite = await getInvite(parsedInput.inviteId);
@@ -160,16 +191,26 @@ export const resendInviteAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["invite", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["invite", "update"],
+        },
+      ],
     });
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
-      rules: ["invite", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["invite", "update"],
+        },
+      ],
     });
 
     const invite = await getInvite(parsedInput.inviteId);
@@ -199,10 +240,15 @@ export const inviteUserAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["invite", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["invite", "create"],
+        },
+      ],
     });
 
     const invite = await inviteUser({
@@ -239,10 +285,15 @@ export const deleteOrganizationAction = authenticatedActionClient
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
     if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["organization", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["organization", "delete"],
+        },
+      ],
     });
 
     return await deleteOrganization(parsedInput.organizationId);

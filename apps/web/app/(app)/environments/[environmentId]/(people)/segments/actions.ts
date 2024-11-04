@@ -1,9 +1,9 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromSegmentId, getProductIdFromSegmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromSegmentId } from "@formbricks/lib/organization/utils";
 import { deleteSegment, updateSegment } from "@formbricks/lib/segment/service";
 import { ZId } from "@formbricks/types/common";
 import { ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
@@ -15,10 +15,20 @@ const ZDeleteBasicSegmentAction = z.object({
 export const deleteBasicSegmentAction = authenticatedActionClient
   .schema(ZDeleteBasicSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["segment", "delete"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+          minPermission: "manage",
+        },
+      ],
     });
 
     return await deleteSegment(parsedInput.segmentId);
@@ -32,10 +42,20 @@ const ZUpdateBasicSegmentAction = z.object({
 export const updateBasicSegmentAction = authenticatedActionClient
   .schema(ZUpdateBasicSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["segment", "update"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+          minPermission: "manage",
+        },
+      ],
     });
 
     const { filters } = parsedInput.data;

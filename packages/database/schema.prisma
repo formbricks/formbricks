@@ -378,8 +378,6 @@ enum IntegrationType {
 
 model Integration {
   id            String          @id @default(cuid())
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
   type          IntegrationType
   environmentId String
   /// @zod.custom(imports.ZIntegrationConfig)
@@ -486,8 +484,6 @@ enum MembershipRole {
 }
 
 model Membership {
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
   organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId   String
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -662,8 +658,6 @@ model Language {
 }
 
 model SurveyLanguage {
-  createdAt  DateTime @default(now()) @map(name: "created_at")
-  updatedAt  DateTime @updatedAt @map(name: "updated_at")
   language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
   languageId String
   surveyId   String
@@ -697,8 +691,6 @@ model Insight {
 }
 
 model DocumentInsight {
-  createdAt  DateTime @default(now()) @map(name: "created_at")
-  updatedAt  DateTime @updatedAt @map(name: "updated_at")
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   insightId  String

@@ -1,9 +1,9 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
@@ -70,12 +70,17 @@ export const createProductAction = authenticatedActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { user } = ctx;
 
-    await checkAuthorization({
-      schema: ZProductUpdateInput,
-      data: parsedInput.data,
+    await checkAuthorizationUpdated({
       userId: user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["product", "create"],
+      access: [
+        {
+          data: parsedInput.data,
+          schema: ZProductUpdateInput,
+          type: "organization",
+          rules: ["product", "create"],
+        },
+      ],
     });
 
     const product = await createProduct(parsedInput.organizationId, parsedInput.data);

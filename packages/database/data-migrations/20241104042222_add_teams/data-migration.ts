@@ -195,7 +195,7 @@ async function runMigration(): Promise<void> {
                 data: {
                   organizationId,
                   name: "all access",
-                  teamMembers: {
+                  teamUsers: {
                     create: [...developerMembership, ...editorMembership].map((membership) => ({
                       userId: membership.userId,
                       role: "admin",
@@ -229,7 +229,7 @@ async function runMigration(): Promise<void> {
                 data: {
                   organizationId,
                   name: "read only",
-                  teamMembers: {
+                  teamUsers: {
                     create: viewerMembership.map((membership) => ({
                       userId: membership.userId,
                       role: "contributor",

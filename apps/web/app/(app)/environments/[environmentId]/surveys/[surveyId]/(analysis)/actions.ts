@@ -1,11 +1,11 @@
 "use server";
 
 import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromSurveyId, getProductIdFromSurveyId } from "@/lib/utils/helper";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
 import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
@@ -25,10 +25,21 @@ const ZGetResponsesAction = z.object({
 export const getResponsesAction = authenticatedActionClient
   .schema(ZGetResponsesAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          schema: ZResponseFilterCriteria,
+          data: parsedInput.filterCriteria,
+          rules: ["response", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
     });
 
     return getResponses(
@@ -47,10 +58,21 @@ const ZGetSurveySummaryAction = z.object({
 export const getSurveySummaryAction = authenticatedActionClient
   .schema(ZGetSurveySummaryAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          schema: ZResponseFilterCriteria,
+          data: parsedInput.filterCriteria,
+          rules: ["response", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
     });
 
     return getSurveySummary(parsedInput.surveyId, parsedInput.filterCriteria);
@@ -64,10 +86,21 @@ const ZGetResponseCountAction = z.object({
 export const getResponseCountAction = authenticatedActionClient
   .schema(ZGetResponseCountAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          schema: ZResponseFilterCriteria,
+          data: parsedInput.filterCriteria,
+          rules: ["response", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
@@ -80,10 +113,22 @@ const ZGenerateInsightsForSurveyAction = z.object({
 export const generateInsightsForSurveyAction = authenticatedActionClient
   .schema(ZGenerateInsightsForSurveyAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "update"],
+      access: [
+        {
+          type: "organization",
+          schema: ZGenerateInsightsForSurveyAction,
+          data: parsedInput,
+          rules: ["survey", "update"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     generateInsightsForSurvey(parsedInput.surveyId);

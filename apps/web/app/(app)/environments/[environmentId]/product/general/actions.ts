@@ -1,5 +1,6 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -14,13 +15,17 @@ const ZProductDeleteAction = z.object({
 export const deleteProductAction = authenticatedActionClient
   .schema(ZProductDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
-    // get organizationId from productId
     const organizationId = await getOrganizationIdFromProductId(parsedInput.productId);
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: organizationId,
-      rules: ["product", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["product", "delete"],
+        },
+      ],
     });
 
     const availableProducts = (await getProducts(organizationId)) ?? null;

@@ -13,12 +13,12 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
-import { ArrayResponse } from "../../ArrayResponse";
-import { FileUploadResponse } from "../../FileUploadResponse";
-import { PictureSelectionResponse } from "../../PictureSelectionResponse";
-import { RankingRespone } from "../../RankingResponse";
-import { RatingResponse } from "../../RatingResponse";
-import { ResponseBadges } from "../../ResponseBadges";
+import { ArrayResponse } from "@formbricks/ui/components/ArrayResponse";
+import { FileUploadResponse } from "@formbricks/ui/components/FileUploadResponse";
+import { PictureSelectionResponse } from "@formbricks/ui/components/PictureSelectionResponse";
+import { RankingRespone } from "@formbricks/ui/components/RankingResponse";
+import { RatingResponse } from "@formbricks/ui/components/RatingResponse";
+import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
 
 interface RenderResponseProps {
   responseData: string | number | string[] | Record<string, string>;

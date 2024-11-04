@@ -1,16 +1,17 @@
 "use server";
 
-import { insightCache } from "@/lib/cache/insight";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import {
+  getOrganizationIdFromInsightId,
+  getProductIdFromInsightId,
+  getProductIdFromSurveyId,
+} from "@/lib/utils/helper";
 import {
   getDocumentsByInsightId,
   getDocumentsByInsightIdSurveyIdQuestionId,
 } from "@/modules/ee/insights/components/insight-sheet/lib/documents";
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { cache } from "@formbricks/lib/cache";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
@@ -23,43 +24,22 @@ const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   offset: z.number().optional(),
 });
 
-const getOrganizationIdFromInsightId = async (insightId: string) =>
-  cache(
-    async () => {
-      const insight = await prisma.insight.findUnique({
-        where: {
-          id: insightId,
-        },
-        select: {
-          environmentId: true,
-        },
-      });
-
-      if (!insight) {
-        throw new Error("Insight not found");
-      }
-
-      return await getOrganizationIdFromEnvironmentId(insight.environmentId);
-    },
-    [`getInsight-${insightId}`],
-    {
-      tags: [insightCache.tag.byId(insightId)],
-    }
-  )();
-
 export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActionClient
   .schema(ZGetDocumentsByInsightIdSurveyIdQuestionIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    const insight = await getOrganizationIdFromInsightId(parsedInput.insightId);
-
-    if (!insight) {
-      throw new Error("Insight not found");
-    }
-
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromInsightId(parsedInput.insightId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
     });
 
     return await getDocumentsByInsightIdSurveyIdQuestionId(
@@ -81,10 +61,19 @@ const ZGetDocumentsByInsightIdAction = z.object({
 export const getDocumentsByInsightIdAction = authenticatedActionClient
   .schema(ZGetDocumentsByInsightIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromInsightId(parsedInput.insightId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromInsightId(parsedInput.insightId),
+        },
+      ],
     });
 
     return await getDocumentsByInsightId(

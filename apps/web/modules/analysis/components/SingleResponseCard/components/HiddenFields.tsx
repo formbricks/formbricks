@@ -2,7 +2,7 @@ import { EyeOffIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyHiddenFields } from "@formbricks/types/surveys/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface HiddenFieldsProps {
   hiddenFields: TSurveyHiddenFields;

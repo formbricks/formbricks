@@ -2,10 +2,6 @@
   Warnings:
 
   - You are about to drop the column `accepted` on the `Invite` table. All the data in the column will be lost.
-  - Added the required column `updated_at` to the `DocumentInsight` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `updatedAt` to the `Integration` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `updatedAt` to the `Membership` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `updated_at` to the `SurveyLanguage` table without a default value. This is not possible if the table is not empty.
 
 */
 -- CreateEnum
@@ -18,28 +14,14 @@ CREATE TYPE "TeamUserRole" AS ENUM ('admin', 'contributor');
 CREATE TYPE "ProductTeamPermission" AS ENUM ('read', 'readWrite', 'manage');
 
 -- AlterTable
-ALTER TABLE "DocumentInsight" ADD COLUMN     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL;
-
--- AlterTable
-ALTER TABLE "Integration" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL;
-
--- AlterTable
 ALTER TABLE "Invite" DROP COLUMN "accepted",
 ADD COLUMN     "organizationRole" "OrganizationRole" NOT NULL DEFAULT 'member',
 ALTER COLUMN "role" DROP NOT NULL,
 ALTER COLUMN "role" DROP DEFAULT;
 
 -- AlterTable
-ALTER TABLE "Membership" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "organizationRole" "OrganizationRole" NOT NULL DEFAULT 'member',
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL,
+ALTER TABLE "Membership" ADD COLUMN     "organizationRole" "OrganizationRole" NOT NULL DEFAULT 'member',
 ALTER COLUMN "role" DROP NOT NULL;
-
--- AlterTable
-ALTER TABLE "SurveyLanguage" ADD COLUMN     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL;
 
 -- CreateTable
 CREATE TABLE "Team" (

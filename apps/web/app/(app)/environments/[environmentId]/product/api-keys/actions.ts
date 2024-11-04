@@ -1,13 +1,15 @@
 "use server";
 
-import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { createApiKey, deleteApiKey } from "@formbricks/lib/apiKey/service";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromApiKeyId,
   getOrganizationIdFromEnvironmentId,
-} from "@formbricks/lib/organization/utils";
+  getProductIdFromApiKeyId,
+  getProductIdFromEnvironmentId,
+} from "@/lib/utils/helper";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { createApiKey, deleteApiKey } from "@formbricks/lib/apiKey/service";
 import { ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { ZId } from "@formbricks/types/common";
 
@@ -18,10 +20,20 @@ const ZDeleteApiKeyAction = z.object({
 export const deleteApiKeyAction = authenticatedActionClient
   .schema(ZDeleteApiKeyAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromApiKeyId(parsedInput.id),
-      rules: ["apiKey", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["apiKey", "delete"],
+        },
+        {
+          type: "product",
+          minPermission: "manage",
+          productId: await getProductIdFromApiKeyId(parsedInput.id),
+        },
+      ],
     });
 
     return await deleteApiKey(parsedInput.id);
@@ -35,10 +47,20 @@ const ZCreateApiKeyAction = z.object({
 export const createApiKeyAction = authenticatedActionClient
   .schema(ZCreateApiKeyAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["apiKey", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["apiKey", "create"],
+        },
+        {
+          type: "product",
+          minPermission: "manage",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
     return await createApiKey(parsedInput.environmentId, parsedInput.apiKeyData);

@@ -1,9 +1,9 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { ZId } from "@formbricks/types/common";
 
@@ -14,10 +14,20 @@ const ZRefreshChannelsAction = z.object({
 export const refreshChannelsAction = authenticatedActionClient
   .schema(ZRefreshChannelsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["integration", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["integration", "update"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          minPermission: "manage",
+        },
+      ],
     });
 
     return await getSlackChannels(parsedInput.environmentId);

@@ -1,5 +1,7 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -23,10 +25,20 @@ export const createAISurveyAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
-      rules: ["survey", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["survey", "create"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     const organization = await getOrganization(organizationId);

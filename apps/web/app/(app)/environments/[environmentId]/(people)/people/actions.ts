@@ -1,8 +1,9 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getPeople } from "@formbricks/lib/person/service";
@@ -17,10 +18,15 @@ const ZGetPersonsAction = z.object({
 export const getPersonsAction = authenticatedActionClient
   .schema(ZGetPersonsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
+      access: [
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
     return getPeople(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
@@ -34,10 +40,15 @@ const ZGetPersonAttributesAction = z.object({
 export const getPersonAttributesAction = authenticatedActionClient
   .schema(ZGetPersonAttributesAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
+      access: [
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
     return getAttributes(parsedInput.personId);

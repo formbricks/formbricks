@@ -3,6 +3,7 @@ import {
   getApiKey,
   getAttributeClass,
   getEnvironment,
+  getInsight,
   getIntegration,
   getInvite,
   getLanguage,
@@ -164,4 +165,77 @@ export const getOrganizationIdFromTeamId = async (teamId: string) => {
   }
 
   return team.organizationId;
+};
+
+export const getOrganizationIdFromInsightId = async (insightId: string) => {
+  const insight = await getInsight(insightId);
+  if (!insight) {
+    throw new ResourceNotFoundError("insight", insightId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(insight.environmentId);
+};
+
+// product id helpers
+export const getProductIdFromEnvironmentId = async (environmentId: string) => {
+  const environment = await getEnvironment(environmentId);
+  if (!environment) {
+    throw new ResourceNotFoundError("environment", environmentId);
+  }
+
+  return environment.productId;
+};
+
+export const getProductIdFromSurveyId = async (surveyId: string) => {
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    throw new ResourceNotFoundError("survey", surveyId);
+  }
+
+  return await getProductIdFromEnvironmentId(survey.environmentId);
+};
+
+export const getProductIdFromInsightId = async (insightId: string) => {
+  const insight = await getInsight(insightId);
+  if (!insight) {
+    throw new ResourceNotFoundError("insight", insightId);
+  }
+
+  return await getProductIdFromEnvironmentId(insight.environmentId);
+};
+
+export const getProductIdFromSegmentId = async (segmentId: string) => {
+  const segment = await getSegment(segmentId);
+  if (!segment) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
+
+  return await getProductIdFromEnvironmentId(segment.environmentId);
+};
+
+export const getProductIdFromApiKeyId = async (apiKeyId: string) => {
+  const apiKey = await getApiKey(apiKeyId);
+  if (!apiKey) {
+    throw new ResourceNotFoundError("apiKey", apiKeyId);
+  }
+
+  return await getProductIdFromEnvironmentId(apiKey.environmentId);
+};
+
+export const getProductIdFromActionClassId = async (actionClassId: string) => {
+  const actionClass = await getActionClass(actionClassId);
+  if (!actionClass) {
+    throw new ResourceNotFoundError("actionClass", actionClassId);
+  }
+
+  return await getProductIdFromEnvironmentId(actionClass.environmentId);
+};
+
+export const getProductIdFromTagId = async (tagId: string) => {
+  const tag = await getTag(tagId);
+  if (!tag) {
+    throw new ResourceNotFoundError("tag", tagId);
+  }
+
+  return await getProductIdFromEnvironmentId(tag.environmentId);
 };

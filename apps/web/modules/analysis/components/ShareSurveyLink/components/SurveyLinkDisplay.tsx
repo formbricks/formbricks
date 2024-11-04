@@ -1,4 +1,4 @@
-import { Input } from "../../Input";
+import { Input } from "@formbricks/ui/components/Input";
 
 interface SurveyLinkDisplayProps {
   surveyUrl: string;

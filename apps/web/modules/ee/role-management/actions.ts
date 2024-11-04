@@ -1,9 +1,9 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { transferOwnership, updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { isOwner } from "@formbricks/lib/auth";
 import { updateInvite } from "@formbricks/lib/invite/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -49,12 +49,17 @@ const ZUpdateInviteAction = z.object({
 export const updateInviteAction = authenticatedActionClient
   .schema(ZUpdateInviteAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      data: parsedInput.data,
-      schema: ZInviteUpdateInput,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["invite", "update"],
+      access: [
+        {
+          data: parsedInput.data,
+          schema: ZInviteUpdateInput,
+          type: "organization",
+          rules: ["invite", "update"],
+        },
+      ],
     });
 
     return await updateInvite(parsedInput.inviteId, parsedInput.data);
@@ -69,12 +74,17 @@ const ZUpdateMembershipAction = z.object({
 export const updateMembershipAction = authenticatedActionClient
   .schema(ZUpdateMembershipAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      data: parsedInput.data,
-      schema: ZMembershipUpdateInput,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["membership", "update"],
+      access: [
+        {
+          data: parsedInput.data,
+          schema: ZMembershipUpdateInput,
+          type: "organization",
+          rules: ["membership", "update"],
+        },
+      ],
     });
 
     return await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);

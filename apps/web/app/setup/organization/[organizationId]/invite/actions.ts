@@ -1,9 +1,9 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { z } from "zod";
 import { sendInviteMemberEmail } from "@formbricks/email";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
@@ -22,10 +22,15 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["membership", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["membership", "create"],
+        },
+      ],
     });
 
     const organizations = await getOrganizationsByUserId(ctx.user.id);

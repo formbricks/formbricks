@@ -12,7 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { TUserLocale } from "@formbricks/types/user";
-import { DeleteDialog } from "../DeleteDialog";
+import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
