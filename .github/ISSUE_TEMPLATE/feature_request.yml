@@ -1,8 +1,7 @@
 name: Feature request
 description: "Suggest an idea for this project \U0001F680"
-title: ""
-labels: enhancement
-assignees: []
+labels:
+  - enhancement
 body:
   - type: textarea
     id: problem-description
@@ -26,7 +25,6 @@ body:
     validations:
       required: false
   - type: markdown
-    id: formbricks-info
     attributes:
       value: |
         ### Additional resources 🤓
