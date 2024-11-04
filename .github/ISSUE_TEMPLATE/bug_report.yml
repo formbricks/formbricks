@@ -1,16 +1,13 @@
 name: Bug report
 description: "Found a bug? Please fill out the sections below. \U0001F44D"
-title: ""
-labels: bug
-assignees: []
+labels:
+  - bug
 body:
   - type: textarea
     id: issue-summary
     attributes:
       label: Issue Summary
       description: A summary of the issue. This needs to be a clear detailed-rich summary.
-    validations:
-      required: true
     validations:
       required: true
   - type: textarea
@@ -24,5 +21,5 @@ body:
     attributes:
       label: Your Environment
       options:
-        - label: Formbricks Cloud (app.formbricks.com)
-        - label: Self-hosted Formbricks
+        - Formbricks Cloud (app.formbricks.com)
+        - Self-hosted Formbricks
