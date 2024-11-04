@@ -14,7 +14,7 @@ import {
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
-import { getProducts } from "@formbricks/lib/product/service";
+import { getUserProducts } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
 import { LimitsReachedBanner } from "@formbricks/ui/components/LimitsReachedBanner";
@@ -48,7 +48,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const [products, environments] = await Promise.all([
-    getProducts(organization.id),
+    getUserProducts(user.id, organization.id),
     getEnvironments(environment.productId),
   ]);
 

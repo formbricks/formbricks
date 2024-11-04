@@ -1,10 +1,8 @@
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -27,10 +25,6 @@ const ProductOnboardingLayout = async ({ children, params }) => {
   if (!isAuthorized) {
     throw AuthorizationError;
   }
-
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
-  const { isMember, isBilling } = getAccessFlags(membership?.organizationRole);
-  if (isMember || isBilling) return notFound();
 
   const organization = await getOrganization(params.organizationId);
   if (!organization) {

@@ -4,7 +4,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import { getOrganizationIdFromProductId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { deleteProduct, getProducts } from "@formbricks/lib/product/service";
+import { deleteProduct, getUserProducts } from "@formbricks/lib/product/service";
 import { ZId } from "@formbricks/types/common";
 
 const ZProductDeleteAction = z.object({
@@ -27,7 +27,7 @@ export const deleteProductAction = authenticatedActionClient
       ],
     });
 
-    const availableProducts = (await getProducts(organizationId)) ?? null;
+    const availableProducts = (await getUserProducts(ctx.user.id, organizationId)) ?? null;
 
     if (!!availableProducts && availableProducts?.length <= 1) {
       throw new Error("You can't delete the last product in the environment.");

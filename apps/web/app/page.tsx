@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getFirstEnvironmentIdByUserId } from "@formbricks/lib/environment/service";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { ClientLogout } from "@formbricks/ui/components/ClientLogout";
 
@@ -37,9 +39,19 @@ const Page = async () => {
     console.error(`error getting environment: ${error}`);
   }
 
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(
+    session?.user.id,
+    userOrganizations[0].id
+  );
+  const { isManager, isOwner } = getAccessFlags(currentUserMembership?.organizationRole);
+
   if (!environmentId) {
     console.error("Failed to get first environment of user");
-    return redirect(`/organizations/${userOrganizations[0].id}/products/new/mode`);
+    if (isOwner || isManager) {
+      return redirect(`/organizations/${userOrganizations[0].id}/products/new/mode`);
+    } else {
+      return redirect(`/organizations/${userOrganizations[0].id}/landing`);
+    }
   }
 
   return <ClientEnvironmentRedirect environmentId={environmentId} />;

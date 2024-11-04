@@ -5,7 +5,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProducts } from "@formbricks/lib/product/service";
+import { getUserProducts } from "@formbricks/lib/product/service";
 import { TProduct } from "@formbricks/types/product";
 
 type DeleteProductProps = {
@@ -23,7 +23,7 @@ export const DeleteProduct = async ({ environmentId, product }: DeleteProductPro
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
-  const availableProducts = organization ? await getProducts(organization.id) : null;
+  const availableProducts = organization ? await getUserProducts(session.user.id, organization.id) : null;
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   if (!membership) {

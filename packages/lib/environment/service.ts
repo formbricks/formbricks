@@ -18,7 +18,7 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { getProducts } from "../product/service";
+import { getUserProducts } from "../product/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
@@ -130,42 +130,12 @@ export const updateEnvironment = async (
 
 export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<string | null> => {
   try {
-    // const firstMembership = await prisma.membership.findMany({
-    //   where: {
-    //     userId,
-    //     organizationRole: {
-    //       in: ["owner", "manager"],
-    //     }
-    //   }
-    // });
-
-    // if (firstMembership) {
-    //   const firstOrganization = firstMembership[0].organizationId;
-    //   const firstProduct = await prisma.product.findFirst({
-    //     where: {
-    //       organizationId: firstOrganization
-    //     }
-    //   });
-
-    //   if (firstProduct) {
-    //     const firstEnvironment = await prisma.environment.findFirst({
-    //       where: {
-    //         productId: firstProduct.id
-    //       }
-    //     });
-
-    //     if (firstEnvironment) {
-    //       return firstEnvironment.id;
-    //     }
-    //   }
-    // }
-
     const organizations = await getOrganizationsByUserId(userId);
     if (organizations.length === 0) {
       throw new Error(`Unable to get first environment: User ${userId} has no organizations`);
     }
     const firstOrganization = organizations[0];
-    const products = await getProducts(firstOrganization.id);
+    const products = await getUserProducts(userId, firstOrganization.id);
     if (products.length === 0) {
       throw new Error(
         `Unable to get first environment: Organization ${firstOrganization.id} has no products`

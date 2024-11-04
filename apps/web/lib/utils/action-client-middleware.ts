@@ -61,6 +61,8 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
         if (!parsedResult.success) {
           // @ts-expect-error -- TODO: match dynamic next-safe-action types
           return returnValidationErrors(resultSchema, formatErrors(parsedResult.error.issues));
+        } else {
+          isAccessGranted = true;
         }
       } else {
         isAccessGranted = getOperationPermissions(role, ...accessItem.rules);

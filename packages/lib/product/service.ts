@@ -35,6 +35,70 @@ const selectProduct = {
   logo: true,
 };
 
+export const getUserProducts = reactCache(
+  (userId: string, organizationId: string, page?: number): Promise<TProduct[]> =>
+    cache(
+      async () => {
+        validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
+
+        console.log(userId, organizationId, "randi ka beej");
+        const orgMembership = await prisma.membership.findFirst({
+          where: {
+            userId,
+            organizationId,
+          },
+        });
+
+        if (!orgMembership) {
+          throw new ValidationError("User is not a member of this organization");
+        }
+
+        console.log(orgMembership, "randi ka beej");
+
+        let productWhereClause: Prisma.ProductWhereInput = {};
+
+        if (orgMembership.organizationRole === "member") {
+          productWhereClause = {
+            productTeams: {
+              some: {
+                team: {
+                  teamUsers: {
+                    some: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          };
+        }
+
+        try {
+          const products = await prisma.product.findMany({
+            where: {
+              organizationId,
+              ...productWhereClause,
+            },
+            select: selectProduct,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+          return products;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getUserProducts-${userId}-${organizationId}-${page}`],
+      {
+        tags: [productCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
 export const getProducts = reactCache(
   (organizationId: string, page?: number): Promise<TProduct[]> =>
     cache(
