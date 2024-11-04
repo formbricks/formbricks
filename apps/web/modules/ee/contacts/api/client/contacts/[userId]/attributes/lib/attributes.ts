@@ -81,7 +81,12 @@ export const updateAttributes = async (
             },
           })
           .then(() => {
-            contactAttributeCache.revalidate({ environmentId, contactId, userId, key });
+            contactAttributeCache.revalidate({
+              environmentId,
+              contactId,
+              userId,
+              key,
+            });
           })
       );
     } else {

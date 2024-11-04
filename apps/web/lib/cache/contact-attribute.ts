@@ -18,8 +18,15 @@ export const contactAttributeCache = {
     byKeyAndContactId(key: string, contactId: string): string {
       return `contact-${contactId}-contactAttribute-${key}`;
     },
+    byEnvironmentId(environmentId: string): string {
+      return `contactAttributes-${environmentId}`;
+    },
   },
   revalidate({ contactId, environmentId, userId, key }: RevalidateProps): void {
+    if (environmentId) {
+      revalidateTag(this.tag.byEnvironmentId(environmentId));
+    }
+
     if (environmentId && userId) {
       revalidateTag(this.tag.byEnvironmentIdAndUserId(environmentId, userId));
     }
