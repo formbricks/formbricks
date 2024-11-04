@@ -185,7 +185,7 @@ export const SignupOptions = ({
             {showLogin && (
               <Button
                 type="submit"
-                className="w-full justify-center"
+                className="h-10 w-full justify-center"
                 loading={signingUp}
                 disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
                 {t("auth.continue_with_email")}
@@ -201,7 +201,7 @@ export const SignupOptions = ({
                   // Add a slight delay before focusing the input field to ensure it's visible
                   setTimeout(() => nameRef.current?.focus(), 100);
                 }}
-                className="w-full justify-center">
+                className="h-10 w-full justify-center">
                 {t("auth.continue_with_email")}
               </Button>
             )}
