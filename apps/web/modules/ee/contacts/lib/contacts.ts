@@ -303,7 +303,7 @@ export const createContactsFromCSV = async (
 
       if (existingUserIds.length > 0) {
         throw new ValidationError(
-          `Contact with userId ${existingUserIds[0].value} already exist for this environment`
+          `${existingUserIds.length} contacts with the same userId already exist in the environment. Please ensure userIds are unique.`
         );
       }
     }
@@ -357,7 +357,9 @@ export const createContactsFromCSV = async (
     // Process contacts in parallel
     const contactPromises = csvData.map(async (record) => {
       // Skip records without email
-      if (!record.email) return null;
+      if (!record.email) {
+        throw new ValidationError("Email is required for all contacts");
+      }
 
       const existingContact = emailToContactMap.get(record.email);
 
@@ -388,7 +390,7 @@ export const createContactsFromCSV = async (
             }));
 
             // Update contact with upserted attributes
-            const updatedContact = await prisma.contact.update({
+            const updatedContact = prisma.contact.update({
               where: { id: existingContact.id },
               data: {
                 attributes: {
@@ -416,14 +418,13 @@ export const createContactsFromCSV = async (
             });
 
             const newAttributes = Object.entries(record).map(([key, value]) => ({
-              // attributeKeyId: attributeKeyMap.get(key),
               attributeKey: {
                 connect: { key_environmentId: { key, environmentId } },
               },
               value,
             }));
 
-            const updatedContact = await prisma.contact.update({
+            const updatedContact = prisma.contact.update({
               where: { id: existingContact.id },
               data: {
                 attributes: {
@@ -446,14 +447,13 @@ export const createContactsFromCSV = async (
       } else {
         // Create new contact
         const newAttributes = Object.entries(record).map(([key, value]) => ({
-          // attributeKeyId: attributeKeyMap.get(key),
           attributeKey: {
             connect: { key_environmentId: { key, environmentId } },
           },
           value,
         }));
 
-        const newContact = await prisma.contact.create({
+        const newContact = prisma.contact.create({
           data: {
             environmentId,
             attributes: {

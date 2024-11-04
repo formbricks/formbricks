@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZJsPeopleUpdateAttributeInput } from "@formbricks/types/js";
+import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { updateAttributes } from "./lib/attributes";
 
 export const OPTIONS = async () => {
@@ -29,7 +29,7 @@ export const PUT = async (
 
     const jsonInput = await req.json();
 
-    const parsedInput = ZJsPeopleUpdateAttributeInput.safeParse(jsonInput);
+    const parsedInput = ZJsContactsUpdateAttributeInput.safeParse(jsonInput);
     if (!parsedInput.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",

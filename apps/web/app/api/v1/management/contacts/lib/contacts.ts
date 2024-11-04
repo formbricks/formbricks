@@ -62,7 +62,7 @@ export const getContacts = reactCache((environmentId: string) =>
         throw error;
       }
     },
-    [`getContacts-${environmentId}`],
+    [`getContacts-management-api-${environmentId}`],
     {
       tags: [contactCache.tag.byEnvironmentId(environmentId)],
     }
@@ -93,7 +93,7 @@ export const getContact = reactCache((contactId: string) =>
         throw error;
       }
     },
-    [`getContact-${contactId}`],
+    [`getContact-management-api-${contactId}`],
     {
       tags: [contactCache.tag.byId(contactId)],
     }

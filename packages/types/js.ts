@@ -191,11 +191,11 @@ export const ZJsPeopleUserIdInput = z.object({
   userId: z.string().min(1).max(255),
 });
 
-export const ZJsPeopleUpdateAttributeInput = z.object({
+export const ZJsContactsUpdateAttributeInput = z.object({
   attributes: ZAttributes,
 });
 
-export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsPeopleUpdateAttributeInput>;
+export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsContactsUpdateAttributeInput>;
 
 export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
 

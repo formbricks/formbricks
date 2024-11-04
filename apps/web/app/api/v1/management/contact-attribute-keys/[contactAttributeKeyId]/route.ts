@@ -1,14 +1,15 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   deleteContactAttributeKey,
   getContactAttributeKey,
   updateContactAttributeKey,
-} from "../lib/contact-attribute-key";
-import { ZContactAttributeKeyUpdateInput } from "../types/contact-attribute-key";
+} from "../lib/contact-attribute-keys";
+import { ZContactAttributeKeyUpdateInput } from "../types/contact-attribute-keys";
 
 const fetchAndAuthorizeContactAttributeKey = async (
   authentication: TAuthenticationApiKey,
@@ -31,6 +32,12 @@ export const GET = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
+
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
+    }
+
     const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
       authentication,
       params.contactAttributeKeyId
@@ -51,6 +58,12 @@ export const DELETE = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
+
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
+    }
+
     const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
       authentication,
       params.contactAttributeKeyId
@@ -75,6 +88,12 @@ export const PUT = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
+
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
+    }
+
     const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
       authentication,
       params.contactAttributeKeyId

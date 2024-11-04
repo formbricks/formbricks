@@ -66,10 +66,10 @@ interface NavigationProps {
   organization: TOrganization;
   products: TProduct[];
   isMultiOrgEnabled: boolean;
+  isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TMembershipRole;
   isAIEnabled: boolean;
-  isEnterpriseLicenseEnabled: boolean;
 }
 
 export const MainNavigation = ({
@@ -82,7 +82,7 @@ export const MainNavigation = ({
   membershipRole,
   isFormbricksCloud,
   isAIEnabled,
-  isEnterpriseLicenseEnabled,
+  isContactsEnabled,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -182,7 +182,7 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/contacts`,
         icon: UserIcon,
         isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
-        isPaywall: !isEnterpriseLicenseEnabled,
+        isPaywall: !isContactsEnabled,
       },
       {
         name: "Actions",
@@ -205,7 +205,7 @@ export const MainNavigation = ({
         isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, isAIEnabled, isContactsEnabled, isViewer]
   );
 
   const dropdownNavigation = [

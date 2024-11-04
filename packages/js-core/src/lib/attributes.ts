@@ -19,7 +19,7 @@ export const updateAttribute = async (
       changed: boolean;
       message: string;
     },
-    Error | NetworkError
+    NetworkError | ForbiddenError
   >
 > => {
   const { apiHost, environmentId } = config.get();
@@ -30,7 +30,7 @@ export const updateAttribute = async (
       code: "network_error",
       status: 500,
       message: "Missing userId",
-      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      url: `${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`,
       responseMessage: "Missing userId",
     });
   }
@@ -54,11 +54,12 @@ export const updateAttribute = async (
         },
       };
     }
+
     return err({
-      code: "network_error",
-      status: 500,
-      message: res.error.message ?? `Error updating person with userId ${userId}`,
-      url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      code: (res.error as ForbiddenError).code ?? "network_error",
+      status: (res.error as NetworkError | ForbiddenError).status ?? 500,
+      message: `Error updating person with userId ${userId}`,
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
       responseMessage: res.error.message,
     });
   }
@@ -173,6 +174,11 @@ export const setAttributeInApp = async (
     }
 
     return okVoid();
+  } else {
+    const error = result.error;
+    if (error && error.code === "forbidden") {
+      logger.error(`Authorization error: ${error.responseMessage}`);
+    }
   }
 
   return err(result.error as NetworkError);

@@ -15,7 +15,7 @@ import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/error
 import {
   TContactAttributeKeyUpdateInput,
   ZContactAttributeKeyUpdateInput,
-} from "../types/contact-attribute-key";
+} from "../types/contact-attribute-keys";
 
 export const getContactAttributeKey = reactCache(
   (contactAttributeKeyId: string): Promise<TContactAttributeKey | null> =>

@@ -1,4 +1,5 @@
 import "server-only";
+import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -26,7 +27,7 @@ export const getContactAttributeKeys = reactCache((environmentId: string) =>
 
       return contactAttributes;
     },
-    [`updateAttributes-getContactAttributeKeys-${environmentId}`],
+    [`getContactAttributeKeys-attributes-api-${environmentId}`],
     {
       tags: [contactAttributeKeyCache.tag.byEnvironmentId(environmentId)],
     }
@@ -80,7 +81,7 @@ export const updateAttributes = async (
             },
           })
           .then(() => {
-            // attributeCache.revalidate({ environmentId, personId: contactId, userId, name: key });
+            contactAttributeCache.revalidate({ environmentId, contactId, userId, key });
           })
       );
     } else {
@@ -131,7 +132,7 @@ export const updateAttributes = async (
         })
         .then(({ id }) => {
           contactAttributeKeyCache.revalidate({ id, environmentId, key });
-          // attributeCache.revalidate({ environmentId, personId: contactId, userId, name: key });
+          contactAttributeCache.revalidate({ environmentId, contactId, userId, key });
         })
     );
   }

@@ -53,6 +53,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
+  const isContactsEnabled = features?.isContactsEnabled ?? false;
 
   let peopleCount = 0;
   let responseCount = 0;
@@ -96,8 +97,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          isContactsEnabled={isContactsEnabled}
           isAIEnabled={isAIEnabled}
-          isEnterpriseLicenseEnabled={active}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar

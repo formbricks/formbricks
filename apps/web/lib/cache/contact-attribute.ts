@@ -1,8 +1,10 @@
 import { revalidateTag } from "next/cache";
 
 interface RevalidateProps {
-  id?: string;
+  environmentId?: string;
   contactId?: string;
+  userId?: string;
+  key?: string;
 }
 
 export const contactAttributeCache = {
@@ -17,9 +19,15 @@ export const contactAttributeCache = {
       return `contact-${contactId}-contactAttribute-${key}`;
     },
   },
-  revalidate({ contactId }: RevalidateProps): void {
+  revalidate({ contactId, environmentId, userId, key }: RevalidateProps): void {
+    if (environmentId && userId) {
+      revalidateTag(this.tag.byEnvironmentIdAndUserId(environmentId, userId));
+    }
     if (contactId) {
       revalidateTag(this.tag.byContactId(contactId));
+    }
+    if (contactId && key) {
+      revalidateTag(this.tag.byKeyAndContactId(key, contactId));
     }
   },
 };

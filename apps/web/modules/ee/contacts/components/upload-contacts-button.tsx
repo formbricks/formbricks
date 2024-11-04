@@ -42,6 +42,13 @@ export const UploadContactsCSVButton = ({
       return;
     }
 
+    // Max file size check (800KB)
+    const maxSizeInBytes = 800 * 1024; // 800KB
+    if (csvFile.size > maxSizeInBytes) {
+      setErrror("File size exceeds the maximum limit of 800KB");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       setErrror("");
