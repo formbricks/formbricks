@@ -19,10 +19,10 @@ body:
       label: Other information (incl. screenshots, Formbricks version, steps to reproduce,...)
     validations:
       required: false
-  - type: checkboxes
+  - type: dropdown
     id: environment
     attributes:
-      label: Environment
+      label: Your Environment
       options:
         - label: Formbricks Cloud (app.formbricks.com)
         - label: Self-hosted Formbricks
