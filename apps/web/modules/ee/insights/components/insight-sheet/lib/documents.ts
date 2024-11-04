@@ -130,7 +130,7 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
     )()
 );
 
-export const getDocumentById = reactCache(
+export const getDocument = reactCache(
   (documentId: string): Promise<TDocument | null> =>
     cache(
       async () => {

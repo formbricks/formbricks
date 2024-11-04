@@ -14,7 +14,7 @@ import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization
 import { ZId } from "@formbricks/types/common";
 import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { getDocumentById, updateDocument } from "./lib/documents";
+import { getDocument, updateDocument } from "./lib/documents";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
@@ -108,7 +108,7 @@ const ZUpdateDocumentAction = z.object({
 export const updateDocumentAction = authenticatedActionClient
   .schema(ZUpdateDocumentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const document = await getDocumentById(parsedInput.documentId);
+    const document = await getDocument(parsedInput.documentId);
 
     if (!document) {
       throw new Error("Document not found");
