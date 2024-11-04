@@ -66,49 +66,62 @@ interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDifferenceOfDays = (from, to) => {
-  if (differenceInDays(to, from) === 7) {
-    return FilterDropDownLabels.LAST_7_DAYS;
-  } else if (differenceInDays(to, from) === 30) {
-    return FilterDropDownLabels.LAST_30_DAYS;
-  } else if (
-    format(from, "yyyy-MM-dd") === format(startOfMonth(new Date()), "yyyy-MM-dd") &&
-    format(to, "yyyy-MM-dd") === format(getTodayDate(), "yyyy-MM-dd")
-  ) {
-    return FilterDropDownLabels.THIS_MONTH;
-  } else if (
-    format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd") &&
-    format(to, "yyyy-MM-dd") === format(endOfMonth(subMonths(getTodayDate(), 1)), "yyyy-MM-dd")
-  ) {
-    return FilterDropDownLabels.LAST_MONTH;
-  } else if (
-    format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 6)), "yyyy-MM-dd") &&
-    format(to, "yyyy-MM-dd") === format(endOfMonth(getTodayDate()), "yyyy-MM-dd")
-  ) {
-    return FilterDropDownLabels.LAST_6_MONTHS;
-  } else if (
-    format(from, "yyyy-MM-dd") === format(startOfQuarter(new Date()), "yyyy-MM-dd") &&
-    format(to, "yyyy-MM-dd") === format(endOfQuarter(getTodayDate()), "yyyy-MM-dd")
-  ) {
-    return FilterDropDownLabels.THIS_QUARTER;
-  } else if (
-    format(from, "yyyy-MM-dd") === format(startOfQuarter(subQuarters(new Date(), 1)), "yyyy-MM-dd") &&
-    format(to, "yyyy-MM-dd") === format(endOfQuarter(subQuarters(getTodayDate(), 1)), "yyyy-MM-dd")
-  ) {
-    return FilterDropDownLabels.LAST_QUARTER;
-  } else if (
-    format(from, "yyyy-MM-dd") === format(startOfYear(new Date()), "yyyy-MM-dd") &&
-    format(to, "yyyy-MM-dd") === format(endOfYear(getTodayDate()), "yyyy-MM-dd")
-  ) {
-    return FilterDropDownLabels.THIS_YEAR;
-  } else if (
-    format(from, "yyyy-MM-dd") === format(startOfYear(subYears(new Date(), 1)), "yyyy-MM-dd") &&
-    format(to, "yyyy-MM-dd") === format(endOfYear(subYears(getTodayDate(), 1)), "yyyy-MM-dd")
-  ) {
-    return FilterDropDownLabels.LAST_YEAR;
-  }
+const getDateRangeLabel = (from: Date, to: Date): FilterDropDownLabels => {
+  const dateRanges = [
+    {
+      label: FilterDropDownLabels.LAST_7_DAYS,
+      matches: () => differenceInDays(to, from) === 7,
+    },
+    {
+      label: FilterDropDownLabels.LAST_30_DAYS,
+      matches: () => differenceInDays(to, from) === 30,
+    },
+    {
+      label: FilterDropDownLabels.THIS_MONTH,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfMonth(new Date()), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(getTodayDate(), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_MONTH,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfMonth(subMonths(getTodayDate(), 1)), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_6_MONTHS,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 6)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfMonth(getTodayDate()), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.THIS_QUARTER,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfQuarter(new Date()), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfQuarter(getTodayDate()), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_QUARTER,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfQuarter(subQuarters(new Date(), 1)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfQuarter(subQuarters(getTodayDate(), 1)), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.THIS_YEAR,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfYear(new Date()), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfYear(getTodayDate()), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_YEAR,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfYear(subYears(new Date(), 1)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfYear(subYears(getTodayDate(), 1)), "yyyy-MM-dd"),
+    },
+  ];
 
-  return FilterDropDownLabels.CUSTOM_RANGE;
+  const matchedRange = dateRanges.find((range) => range.matches());
+  return matchedRange ? matchedRange.label : FilterDropDownLabels.CUSTOM_RANGE;
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
@@ -118,7 +131,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
-      ? getDifferenceOfDays(dateRange.from, dateRange.to)
+      ? getDateRangeLabel(dateRange.from, dateRange.to)
       : FilterDropDownLabels.ALL_TIME
   );
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
