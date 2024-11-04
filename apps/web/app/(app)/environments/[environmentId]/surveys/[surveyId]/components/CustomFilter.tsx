@@ -6,7 +6,21 @@ import {
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
-import { differenceInDays, format, startOfDay, subDays } from "date-fns";
+import {
+  differenceInDays,
+  endOfMonth,
+  endOfQuarter,
+  endOfYear,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfQuarter,
+  startOfYear,
+  subDays,
+  subMonths,
+  subQuarters,
+  subYears,
+} from "date-fns";
 import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -38,6 +52,13 @@ enum FilterDropDownLabels {
   ALL_TIME = "environments.surveys.summary.all_time",
   LAST_7_DAYS = "environments.surveys.summary.last_7_days",
   LAST_30_DAYS = "environments.surveys.summary.last_30_days",
+  THIS_MONTH = "environments.surveys.summary.this_month",
+  LAST_MONTH = "environments.surveys.summary.last_month",
+  LAST_6_MONTHS = "environments.surveys.summary.last_6_months",
+  THIS_QUARTER = "environments.surveys.summary.this_quarter",
+  LAST_QUARTER = "environments.surveys.summary.last_quarter",
+  THIS_YEAR = "environments.surveys.summary.this_year",
+  LAST_YEAR = "environments.surveys.summary.last_year",
   CUSTOM_RANGE = "environments.surveys.summary.custom_range",
 }
 
@@ -46,14 +67,48 @@ interface CustomFilterProps {
 }
 
 const getDifferenceOfDays = (from, to) => {
-  const days = differenceInDays(to, from);
-  if (days === 7) {
+  if (differenceInDays(to, from) === 7) {
     return FilterDropDownLabels.LAST_7_DAYS;
-  } else if (days === 30) {
+  } else if (differenceInDays(to, from) === 30) {
     return FilterDropDownLabels.LAST_30_DAYS;
-  } else {
-    return FilterDropDownLabels.CUSTOM_RANGE;
+  } else if (
+    format(from, "yyyy-MM-dd") === format(startOfMonth(new Date()), "yyyy-MM-dd") &&
+    format(to, "yyyy-MM-dd") === format(getTodayDate(), "yyyy-MM-dd")
+  ) {
+    return FilterDropDownLabels.THIS_MONTH;
+  } else if (
+    format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd") &&
+    format(to, "yyyy-MM-dd") === format(endOfMonth(subMonths(getTodayDate(), 1)), "yyyy-MM-dd")
+  ) {
+    return FilterDropDownLabels.LAST_MONTH;
+  } else if (
+    format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 6)), "yyyy-MM-dd") &&
+    format(to, "yyyy-MM-dd") === format(endOfMonth(getTodayDate()), "yyyy-MM-dd")
+  ) {
+    return FilterDropDownLabels.LAST_6_MONTHS;
+  } else if (
+    format(from, "yyyy-MM-dd") === format(startOfQuarter(new Date()), "yyyy-MM-dd") &&
+    format(to, "yyyy-MM-dd") === format(endOfQuarter(getTodayDate()), "yyyy-MM-dd")
+  ) {
+    return FilterDropDownLabels.THIS_QUARTER;
+  } else if (
+    format(from, "yyyy-MM-dd") === format(startOfQuarter(subQuarters(new Date(), 1)), "yyyy-MM-dd") &&
+    format(to, "yyyy-MM-dd") === format(endOfQuarter(subQuarters(getTodayDate(), 1)), "yyyy-MM-dd")
+  ) {
+    return FilterDropDownLabels.LAST_QUARTER;
+  } else if (
+    format(from, "yyyy-MM-dd") === format(startOfYear(new Date()), "yyyy-MM-dd") &&
+    format(to, "yyyy-MM-dd") === format(endOfYear(getTodayDate()), "yyyy-MM-dd")
+  ) {
+    return FilterDropDownLabels.THIS_YEAR;
+  } else if (
+    format(from, "yyyy-MM-dd") === format(startOfYear(subYears(new Date(), 1)), "yyyy-MM-dd") &&
+    format(to, "yyyy-MM-dd") === format(endOfYear(subYears(getTodayDate(), 1)), "yyyy-MM-dd")
+  ) {
+    return FilterDropDownLabels.LAST_YEAR;
   }
+
+  return FilterDropDownLabels.CUSTOM_RANGE;
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
@@ -243,6 +298,67 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">{t(FilterDropDownLabels.LAST_30_DAYS)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.THIS_MONTH);
+                  setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.THIS_MONTH)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_MONTH);
+                  setDateRange({
+                    from: startOfMonth(subMonths(new Date(), 1)),
+                    to: endOfMonth(subMonths(getTodayDate(), 1)),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_MONTH)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.THIS_QUARTER);
+                  setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.THIS_QUARTER)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_QUARTER);
+                  setDateRange({
+                    from: startOfQuarter(subQuarters(new Date(), 1)),
+                    to: endOfQuarter(subQuarters(getTodayDate(), 1)),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_QUARTER)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_6_MONTHS);
+                  setDateRange({
+                    from: startOfMonth(subMonths(new Date(), 6)),
+                    to: endOfMonth(getTodayDate()),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_6_MONTHS)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.THIS_YEAR);
+                  setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.THIS_YEAR)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_YEAR);
+                  setDateRange({
+                    from: startOfYear(subYears(new Date(), 1)),
+                    to: endOfYear(subYears(getTodayDate(), 1)),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_YEAR)}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
