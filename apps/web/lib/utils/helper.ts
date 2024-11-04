@@ -239,3 +239,49 @@ export const getProductIdFromTagId = async (tagId: string) => {
 
   return await getProductIdFromEnvironmentId(tag.environmentId);
 };
+
+export const getProductIdFromLanguageId = async (languageId: string) => {
+  const language = await getLanguage(languageId);
+  if (!language) {
+    throw new ResourceNotFoundError("language", languageId);
+  }
+
+  return language.productId;
+};
+
+export const getProductIdFromResponseId = async (responseId: string) => {
+  const response = await getResponse(responseId);
+  if (!response) {
+    throw new ResourceNotFoundError("response", responseId);
+  }
+
+  return await getProductIdFromSurveyId(response.surveyId);
+};
+
+export const getProductIdFromResponseNoteId = async (responseNoteId: string) => {
+  const responseNote = await getResponseNote(responseNoteId);
+  if (!responseNote) {
+    throw new ResourceNotFoundError("responseNote", responseNoteId);
+  }
+
+  return await getProductIdFromResponseId(responseNote.responseId);
+};
+
+// environment id helpers
+export const getEnvironmentIdFromSurveyId = async (surveyId: string) => {
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    throw new ResourceNotFoundError("survey", surveyId);
+  }
+
+  return survey.environmentId;
+};
+
+export const getEnvironmentIdFromResponseId = async (responseId: string) => {
+  const response = await getResponse(responseId);
+  if (!response) {
+    throw new ResourceNotFoundError("response", responseId);
+  }
+
+  return await getEnvironmentIdFromSurveyId(response.surveyId);
+};

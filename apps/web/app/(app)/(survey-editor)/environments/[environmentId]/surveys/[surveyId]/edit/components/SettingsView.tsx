@@ -1,4 +1,4 @@
-import { AdvancedTargetingCard } from "@formbricks/ee/advanced-targeting/components/advanced-targeting-card";
+import { AdvancedTargetingCard } from "@/modules/ee/advanced-targeting/components/advanced-targeting-card";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";

@@ -1,6 +1,7 @@
 import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import {
   DndContext,
   type DragEndEvent,
@@ -171,6 +172,10 @@ export const ResponseTable = ({
     }
   };
 
+  const deleteResponse = async (responseId: string) => {
+    await deleteResponseAction({ responseId });
+  };
+
   return (
     <div>
       <DndContext
@@ -186,6 +191,7 @@ export const ResponseTable = ({
           table={table}
           deleteRows={deleteResponses}
           type="response"
+          deleteAction={deleteResponse}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">

@@ -1,18 +1,19 @@
 "use server";
 
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import {
+  getOrganizationIdFromLanguageId,
+  getOrganizationIdFromProductId,
+  getProductIdFromLanguageId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import {
   createLanguage,
   deleteLanguage,
   getSurveysUsingGivenLanguage,
   updateLanguage,
 } from "@formbricks/lib/language/service";
-import {
-  getOrganizationIdFromLanguageId,
-  getOrganizationIdFromProductId,
-} from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZLanguageInput } from "@formbricks/types/product";
 
@@ -24,12 +25,22 @@ const ZCreateLanguageAction = z.object({
 export const createLanguageAction = authenticatedActionClient
   .schema(ZCreateLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      data: parsedInput.languageInput,
-      schema: ZLanguageInput,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
-      rules: ["language", "create"],
+      access: [
+        {
+          type: "organization",
+          schema: ZLanguageInput,
+          data: parsedInput.languageInput,
+          rules: ["language", "create"],
+        },
+        {
+          type: "product",
+          productId: parsedInput.productId,
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await createLanguage(parsedInput.productId, parsedInput.languageInput);
@@ -43,10 +54,20 @@ const ZDeleteLanguageAction = z.object({
 export const deleteLanguageAction = authenticatedActionClient
   .schema(ZDeleteLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
-      rules: ["language", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["language", "delete"],
+        },
+        {
+          type: "product",
+          productId: parsedInput.productId,
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await deleteLanguage(parsedInput.languageId, parsedInput.productId);
@@ -59,10 +80,20 @@ const ZGetSurveysUsingGivenLanguageAction = z.object({
 export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   .schema(ZGetSurveysUsingGivenLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
-      rules: ["survey", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["survey", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromLanguageId(parsedInput.languageId),
+          minPermission: "read",
+        },
+      ],
     });
 
     return await getSurveysUsingGivenLanguage(parsedInput.languageId);
@@ -77,12 +108,22 @@ const ZUpdateLanguageAction = z.object({
 export const updateLanguageAction = authenticatedActionClient
   .schema(ZUpdateLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      data: parsedInput.languageInput,
-      schema: ZLanguageInput,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
-      rules: ["language", "update"],
+      access: [
+        {
+          type: "organization",
+          schema: ZLanguageInput,
+          data: parsedInput.languageInput,
+          rules: ["language", "update"],
+        },
+        {
+          type: "product",
+          productId: parsedInput.productId,
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await updateLanguage(parsedInput.productId, parsedInput.languageId, parsedInput.languageInput);

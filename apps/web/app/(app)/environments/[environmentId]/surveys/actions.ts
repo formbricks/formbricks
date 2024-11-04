@@ -11,7 +11,6 @@ import {
 import { getEnvironment } from "@/lib/utils/services";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getProducts } from "@formbricks/lib/product/service";
 import { copySurveyToOtherEnvironment, deleteSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
@@ -99,10 +98,15 @@ export const getProductsByEnvironmentIdAction = authenticatedActionClient
   .schema(ZGetProductsByEnvironmentIdAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: organizationId,
-      rules: ["product", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["product", "read"],
+        },
+      ],
     });
 
     // todo: add userId to getProducts

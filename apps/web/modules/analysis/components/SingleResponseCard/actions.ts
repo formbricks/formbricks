@@ -1,14 +1,18 @@
 "use server";
 
-import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
+  getEnvironmentIdFromResponseId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromResponseNoteId,
-  getOrganizationIdFromTagId,
-} from "@formbricks/lib/organization/utils";
+  getProductIdFromEnvironmentId,
+  getProductIdFromResponseId,
+  getProductIdFromResponseNoteId,
+} from "@/lib/utils/helper";
+import { getTag } from "@/lib/utils/services";
+import { z } from "zod";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import {
   createResponseNote,
@@ -27,10 +31,20 @@ const ZCreateTagAction = z.object({
 export const createTagAction = authenticatedActionClient
   .schema(ZCreateTagAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["tag", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["tag", "create"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await createTag(parsedInput.environmentId, parsedInput.tagName);
@@ -44,16 +58,35 @@ const ZCreateTagToResponseAction = z.object({
 export const createTagToResponseAction = authenticatedActionClient
   .schema(ZCreateTagToResponseAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
+    const tagEnvironment = await getTag(parsedInput.tagId);
+
+    if (!responseEnvironmentId || !tagEnvironment) {
+      throw new Error("Environment not found");
+    }
+
+    if (responseEnvironmentId !== tagEnvironment.environmentId) {
+      throw new Error("Response and tag are not in the same environment");
+    }
+
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
-      rules: ["response", "update"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
-      rules: ["tag", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "update"],
+        },
+        {
+          type: "organization",
+          rules: ["tag", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(responseEnvironmentId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await addTagToRespone(parsedInput.responseId, parsedInput.tagId);
@@ -67,16 +100,35 @@ const ZDeleteTagOnResponseAction = z.object({
 export const deleteTagOnResponseAction = authenticatedActionClient
   .schema(ZDeleteTagOnResponseAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    const responseEnvironmentId = await getEnvironmentIdFromResponseId(parsedInput.responseId);
+    const tagEnvironment = await getTag(parsedInput.tagId);
+
+    if (!responseEnvironmentId || !tagEnvironment) {
+      throw new Error("Environment not found");
+    }
+
+    if (responseEnvironmentId !== tagEnvironment.environmentId) {
+      throw new Error("Response and tag are not in the same environment");
+    }
+
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
-      rules: ["response", "update"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
-      rules: ["tag", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "update"],
+        },
+        {
+          type: "organization",
+          rules: ["tag", "delete"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(responseEnvironmentId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await deleteTagOnResponse(parsedInput.responseId, parsedInput.tagId);
@@ -89,10 +141,20 @@ const ZDeleteResponseAction = z.object({
 export const deleteResponseAction = authenticatedActionClient
   .schema(ZDeleteResponseAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
-      rules: ["response", "delete"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "delete"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromResponseId(parsedInput.responseId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await deleteResponse(parsedInput.responseId);
@@ -106,10 +168,20 @@ const ZUpdateResponseNoteAction = z.object({
 export const updateResponseNoteAction = authenticatedActionClient
   .schema(ZUpdateResponseNoteAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
-      rules: ["response", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["responseNote", "update"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromResponseNoteId(parsedInput.responseNoteId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await updateResponseNote(parsedInput.responseNoteId, parsedInput.text);
@@ -122,10 +194,20 @@ const ZResolveResponseNoteAction = z.object({
 export const resolveResponseNoteAction = authenticatedActionClient
   .schema(ZResolveResponseNoteAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseNoteId(parsedInput.responseNoteId),
-      rules: ["responseNote", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["responseNote", "update"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromResponseNoteId(parsedInput.responseNoteId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     await resolveResponseNote(parsedInput.responseNoteId);
@@ -139,10 +221,20 @@ const ZCreateResponseNoteAction = z.object({
 export const createResponseNoteAction = authenticatedActionClient
   .schema(ZCreateResponseNoteAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
-      rules: ["responseNote", "create"],
+      access: [
+        {
+          type: "organization",
+          rules: ["responseNote", "create"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromResponseId(parsedInput.responseId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await createResponseNote(parsedInput.responseId, ctx.user.id, parsedInput.text);
@@ -155,10 +247,19 @@ const ZGetResponseAction = z.object({
 export const getResponseAction = authenticatedActionClient
   .schema(ZGetResponseAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromResponseId(parsedInput.responseId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "read"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromResponseId(parsedInput.responseId),
+        },
+      ],
     });
 
     return await getResponse(parsedInput.responseId);

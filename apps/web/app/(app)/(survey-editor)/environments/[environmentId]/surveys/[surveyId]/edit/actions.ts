@@ -138,6 +138,8 @@ export const updateBasicSegmentAction = authenticatedActionClient
       organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
       access: [
         {
+          schema: ZSegmentUpdateInput,
+          data: parsedInput.data,
           type: "organization",
           rules: ["segment", "update"],
         },
@@ -262,7 +264,7 @@ export const resetBasicSegmentFiltersAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["segment", "update"],
+          rules: ["survey", "update"],
         },
         {
           type: "product",

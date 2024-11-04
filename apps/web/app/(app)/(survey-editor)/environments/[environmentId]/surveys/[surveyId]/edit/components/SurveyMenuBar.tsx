@@ -1,13 +1,13 @@
 "use client";
 
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";

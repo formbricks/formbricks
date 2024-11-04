@@ -1,10 +1,9 @@
 "use server";
 
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
 import { ZAttributeClass } from "@formbricks/types/attribute-classes";
 import { ZId } from "@formbricks/types/common";

@@ -1,12 +1,15 @@
 "use server";
 
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromPersonId,
+  getProductIdFromEnvironmentId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { getAttributes } from "@formbricks/lib/attribute/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
-import { getPeople } from "@formbricks/lib/person/service";
+import { deletePerson, getPeople } from "@formbricks/lib/person/service";
 import { ZId } from "@formbricks/types/common";
 
 const ZGetPersonsAction = z.object({
@@ -22,6 +25,10 @@ export const getPersonsAction = authenticatedActionClient
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       access: [
+        {
+          type: "organization",
+          rules: ["person", "read"],
+        },
         {
           type: "product",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
@@ -45,6 +52,10 @@ export const getPersonAttributesAction = authenticatedActionClient
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       access: [
         {
+          type: "organization",
+          rules: ["person", "read"],
+        },
+        {
           type: "product",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
@@ -52,4 +63,29 @@ export const getPersonAttributesAction = authenticatedActionClient
     });
 
     return getAttributes(parsedInput.personId);
+  });
+
+const ZPersonDeleteAction = z.object({
+  personId: ZId,
+});
+
+export const deletePersonAction = authenticatedActionClient
+  .schema(ZPersonDeleteAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromPersonId(parsedInput.personId),
+      access: [
+        {
+          type: "organization",
+          rules: ["person", "delete"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(parsedInput.personId),
+        },
+      ],
+    });
+
+    return await deletePerson(parsedInput.personId);
   });

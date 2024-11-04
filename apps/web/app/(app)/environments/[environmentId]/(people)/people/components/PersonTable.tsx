@@ -1,5 +1,6 @@
 "use client";
 
+import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { generatePersonTableColumns } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTableColumn";
 import {
   DndContext,
@@ -162,6 +163,10 @@ export const PersonTable = ({
     }
   };
 
+  const deletePerson = async (personId: string) => {
+    await deletePersonAction({ personId });
+  };
+
   return (
     <div className="w-full">
       <SearchBar
@@ -181,6 +186,7 @@ export const PersonTable = ({
           table={table}
           deleteRows={deletePersons}
           type="person"
+          deleteAction={deletePerson}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>

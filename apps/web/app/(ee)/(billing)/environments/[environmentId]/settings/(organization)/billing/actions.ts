@@ -6,7 +6,6 @@ import { isSubscriptionCancelled } from "@/app/(ee)/(billing)/api/billing/stripe
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";

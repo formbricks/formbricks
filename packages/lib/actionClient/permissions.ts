@@ -20,6 +20,7 @@ export const Permissions = {
       delete: true,
     },
     person: {
+      read: true,
       delete: true,
     },
     response: {
@@ -124,6 +125,7 @@ export const Permissions = {
       delete: true,
     },
     person: {
+      read: true,
       delete: true,
     },
     response: {
@@ -228,6 +230,7 @@ export const Permissions = {
       delete: false,
     },
     person: {
+      read: false,
       delete: false,
     },
     response: {
@@ -332,7 +335,8 @@ export const Permissions = {
       delete: false,
     },
     person: {
-      delete: false,
+      read: true,
+      delete: true,
     },
     response: {
       read: true,

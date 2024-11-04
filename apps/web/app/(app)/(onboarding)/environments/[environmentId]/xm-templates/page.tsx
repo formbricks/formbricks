@@ -1,10 +1,10 @@
 import { XMTemplateList } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/components/XMTemplateList";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getProductByEnvironmentId, getProducts } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/components/Button";

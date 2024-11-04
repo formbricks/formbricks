@@ -43,6 +43,7 @@ export const ZOrganization = z.object({
 });
 
 export const ZOrganizationCreateInput = z.object({
+  id: z.string().cuid2().optional(),
   name: z.string(),
 });
 

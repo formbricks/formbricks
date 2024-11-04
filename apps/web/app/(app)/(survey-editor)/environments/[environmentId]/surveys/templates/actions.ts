@@ -1,15 +1,13 @@
 "use server";
 
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { llmModel } from "@formbricks/lib/aiModels";
 import { getOrganization } from "@formbricks/lib/organization/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { createSurvey } from "@formbricks/lib/survey/service";
 import { getIsAIEnabled } from "@formbricks/lib/utils/ai";
 import { ZId, ZString } from "@formbricks/types/common";
