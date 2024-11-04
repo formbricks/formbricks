@@ -24,8 +24,12 @@ import {
   TSurveyQuestionId,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys/types";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
-import { Input } from "../../Input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@formbricks/ui/components/DropdownMenu";
+import { Input } from "@formbricks/ui/components/Input";
 
 const questionIconMapping = {
   openText: MessageSquareTextIcon,

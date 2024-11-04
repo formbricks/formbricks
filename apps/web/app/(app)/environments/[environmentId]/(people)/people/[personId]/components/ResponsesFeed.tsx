@@ -1,5 +1,6 @@
 "use client";
 
+import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { useEffect, useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -11,7 +12,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
-import { SingleResponseCard } from "@formbricks/ui/components/SingleResponseCard";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];

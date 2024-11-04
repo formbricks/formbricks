@@ -1,5 +1,6 @@
 "use client";
 
+import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
@@ -7,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import {
@@ -30,11 +32,9 @@ import {
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { LanguageIndicator } from "../../../ee/multi-language/components/language-indicator";
-import { createI18nString } from "../../../lib/i18n/utils";
-import { FileInput } from "../FileInput";
-import { Input } from "../Input";
-import { Label } from "../Label";
+import { FileInput } from "@formbricks/ui/components/FileInput";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
 import { FallbackInput } from "./components/FallbackInput";
 import { RecallItemSelect } from "./components/RecallItemSelect";
 import {

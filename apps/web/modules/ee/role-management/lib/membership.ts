@@ -27,7 +27,7 @@ export const updateMembership = async (
       data,
     });
 
-    const teamMemberships = await prisma.teamMembership.findMany({
+    const teamMemberships = await prisma.teamUser.findMany({
       where: {
         userId,
         team: {
@@ -40,7 +40,7 @@ export const updateMembership = async (
     });
 
     if (data.organizationRole === "owner" || data.organizationRole === "manager") {
-      await prisma.teamMembership.updateMany({
+      await prisma.teamUser.updateMany({
         where: {
           userId,
           team: {

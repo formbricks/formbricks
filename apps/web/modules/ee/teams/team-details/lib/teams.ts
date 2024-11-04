@@ -79,7 +79,7 @@ export const getTeam = reactCache(
           return {
             id: team.id,
             name: team.name,
-            teamMembers,
+            teamUsers: teamMembers,
           };
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {

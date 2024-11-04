@@ -16,7 +16,7 @@ export const ZTeam = z.object({
   name: z.string({ message: "Team name is required" }).trim().min(1, {
     message: "Team name must be at least 1 character long",
   }),
-  teamMembers: z.array(ZTeamMember),
+  teamUsers: z.array(ZTeamMember),
 });
 
 export type TTeam = z.infer<typeof ZTeam>;

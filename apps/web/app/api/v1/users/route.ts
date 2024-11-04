@@ -1,6 +1,6 @@
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { prisma } from "@formbricks/database";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
   DEFAULT_ORGANIZATION_ID,
   DEFAULT_ORGANIZATION_ROLE,

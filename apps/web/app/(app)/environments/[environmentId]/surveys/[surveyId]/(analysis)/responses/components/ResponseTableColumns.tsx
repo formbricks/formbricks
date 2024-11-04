@@ -1,5 +1,6 @@
 "use client";
 
+import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { ColumnDef } from "@tanstack/react-table";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
@@ -12,7 +13,6 @@ import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
 import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
-import { RenderResponse } from "@formbricks/ui/components/SingleResponseCard/components/RenderResponse";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 const getAddressFieldLabel = (field: string, t: (key: string) => string) => {

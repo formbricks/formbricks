@@ -76,7 +76,7 @@ export const deleteMembership = async (
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
-    const deletedTeamMemberships = await prisma.teamMembership.findMany({
+    const deletedTeamMemberships = await prisma.teamUser.findMany({
       where: {
         userId,
         team: {
@@ -86,7 +86,7 @@ export const deleteMembership = async (
     });
 
     await prisma.$transaction([
-      prisma.teamMembership.deleteMany({
+      prisma.teamUser.deleteMany({
         where: {
           userId,
           team: {

@@ -22,7 +22,6 @@ export const getRatingNumberOptionColor = (range: number, idx: number): string =
 const defaultLocale = "en-US";
 
 const getMessages = (locale: string): Record<string, string> => {
-  /* eslint-disable-next-line @typescript-eslint/no-var-requires -- Dynamic import is necessary for localization */
   const messages = require(`@formbricks/lib/messages/${locale}.json`) as { emails: Record<string, string> };
   return messages.emails;
 };

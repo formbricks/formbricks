@@ -13,7 +13,7 @@ interface TeamSettingsProps {
 
 export const TeamSettings = ({ team, membershipRole }: TeamSettingsProps) => {
   return (
-    <div className="">
+    <div>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">
         <EditTeamNameForm team={team} membershipRole={membershipRole} />
       </SettingsCard>

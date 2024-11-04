@@ -6,9 +6,9 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { sendInviteMemberEmail } from "@/modules/email";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { sendInviteMemberEmail } from "@formbricks/email";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";

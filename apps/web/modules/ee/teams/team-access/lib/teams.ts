@@ -52,7 +52,7 @@ export const getTeamsByProductId = reactCache(
               },
               _count: {
                 select: {
-                  teamMembers: true,
+                  teamUsers: true,
                 },
               },
             },
@@ -62,7 +62,7 @@ export const getTeamsByProductId = reactCache(
             id: team.id,
             name: team.name,
             permission: team.productTeams[0].permission,
-            memberCount: team._count.teamMembers,
+            memberCount: team._count.teamUsers,
           }));
 
           return productTeams;

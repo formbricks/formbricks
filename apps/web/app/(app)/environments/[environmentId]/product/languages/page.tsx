@@ -1,10 +1,10 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { EditLanguage } from "@/modules/ee/multi-language-surveys/components/edit-language";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
-import { EditLanguage } from "@formbricks/ee/multi-language/components/edit-language";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";

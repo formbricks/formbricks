@@ -1,3 +1,4 @@
+import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -7,7 +8,6 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Modal } from "@formbricks/ui/components/Modal";
-import { SingleResponseCard } from "@formbricks/ui/components/SingleResponseCard";
 
 interface ResponseCardModalProps {
   responses: TResponse[];

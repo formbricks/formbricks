@@ -48,7 +48,7 @@ export const DetailsView = ({
       </div>
       {activeId === "members" ? (
         <TeamMembers
-          members={team.teamMembers}
+          members={team.teamUsers}
           currentUserId={userId}
           teamId={team.id}
           organizationMembers={organizationMembers}

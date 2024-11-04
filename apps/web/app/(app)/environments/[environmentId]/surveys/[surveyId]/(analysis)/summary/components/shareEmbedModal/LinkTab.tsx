@@ -1,8 +1,8 @@
+import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { ShareSurveyLink } from "@formbricks/ui/components/ShareSurveyLink";
 
 interface LinkTabProps {
   survey: TSurvey;

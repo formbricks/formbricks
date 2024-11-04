@@ -1,3 +1,4 @@
+import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import {
   Column,
   Container,
@@ -17,7 +18,6 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
-import { RatingSmiley } from "@formbricks/ui/components/RatingSmiley";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
 interface PreviewEmailTemplateProps {

@@ -38,7 +38,7 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
         )
           return true;
 
-        const teamMembership = await prisma.teamMembership.findFirst({
+        const teamMembership = await prisma.teamUser.findFirst({
           where: {
             userId,
             team: {

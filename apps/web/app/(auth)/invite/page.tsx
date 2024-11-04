@@ -1,6 +1,6 @@
+import { sendInviteAcceptedEmail } from "@/modules/email";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { sendInviteAcceptedEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
