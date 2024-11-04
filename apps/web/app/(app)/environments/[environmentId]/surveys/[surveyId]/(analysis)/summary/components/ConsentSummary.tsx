@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -6,6 +7,7 @@ import {
   TSurveyQuestionSummaryConsent,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -21,6 +23,7 @@ interface ConsentSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
+  locale: TUserLocale;
 }
 
 export const ConsentSummary = ({
@@ -28,15 +31,17 @@ export const ConsentSummary = ({
   survey,
   attributeClasses,
   setFilter,
+  locale,
 }: ConsentSummaryProps) => {
+  const t = useTranslations();
   const summaryItems = [
     {
-      title: "Accepted",
+      title: t("common.accepted"),
       percentage: questionSummary.accepted.percentage,
       count: questionSummary.accepted.count,
     },
     {
-      title: "Dismissed",
+      title: t("common.dismissed"),
       percentage: questionSummary.dismissed.percentage,
       count: questionSummary.dismissed.count,
     },
@@ -47,6 +52,7 @@ export const ConsentSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
@@ -70,12 +76,12 @@ export const ConsentSummary = ({
                   </p>
                   <div>
                     <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                      {convertFloatToNDecimal(summaryItem.percentage, 1)}%
+                      {convertFloatToNDecimal(summaryItem.percentage, 2)}%
                     </p>
                   </div>
                 </div>
                 <p className="flex w-32 items-end justify-end text-slate-600">
-                  {summaryItem.count} {summaryItem.count === 1 ? "response" : "responses"}
+                  {summaryItem.count} {summaryItem.count === 1 ? t("common.response") : t("common.responses")}
                 </p>
               </div>
               <div className="group-hover:opacity-80">

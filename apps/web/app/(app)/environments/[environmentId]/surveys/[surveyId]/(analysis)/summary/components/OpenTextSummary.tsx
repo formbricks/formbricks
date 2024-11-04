@@ -1,10 +1,12 @@
 import { InsightView } from "@/modules/ee/insights/components/insights-view";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
@@ -25,6 +27,7 @@ interface OpenTextSummaryProps {
   attributeClasses: TAttributeClass[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const OpenTextSummary = ({
@@ -34,7 +37,9 @@ export const OpenTextSummary = ({
   attributeClasses,
   isAIEnabled,
   documentsPerPage,
+  locale,
 }: OpenTextSummaryProps) => {
+  const t = useTranslations();
   const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
@@ -51,12 +56,12 @@ export const OpenTextSummary = ({
   const tabNavigation = [
     {
       id: "insights",
-      label: "Insights",
+      label: t("common.insights"),
       onClick: () => setActiveTab("insights"),
     },
     {
       id: "responses",
-      label: "Responses",
+      label: t("common.responses"),
       onClick: () => setActiveTab("responses"),
     },
   ];
@@ -67,10 +72,13 @@ export const OpenTextSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (
             <div className="flex items-center space-x-2">
-              <div className="flex items-center rounded-lg bg-slate-100 p-2">Insights disabled</div>
+              <div className="flex items-center rounded-lg bg-slate-100 p-2">
+                {t("environments.surveys.summary.insights_disabled")}
+              </div>
             </div>
           ) : undefined
         }
@@ -88,21 +96,22 @@ export const OpenTextSummary = ({
             questionId={questionSummary.question.id}
             surveyId={survey.id}
             documentsPerPage={documentsPerPage}
+            locale={locale}
           />
         ) : activeTab === "responses" ? (
           <>
             <Table>
               <TableHeader className="bg-slate-100">
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Response</TableHead>
-                  <TableHead>Time</TableHead>
+                  <TableHead>{t("common.user")}</TableHead>
+                  <TableHead>{t("common.response")}</TableHead>
+                  <TableHead>{t("common.time")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {questionSummary.samples.slice(0, visibleResponses).map((response) => (
                   <TableRow key={response.id}>
-                    <TableCell>
+                    <TableCell width={180}>
                       {response.person ? (
                         <Link
                           className="ph-no-capture group flex items-center"
@@ -110,7 +119,7 @@ export const OpenTextSummary = ({
                           <div className="hidden md:flex">
                             <PersonAvatar personId={response.person.id} />
                           </div>
-                          <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
+                          <p className="ph-no-capture break-normal text-slate-600 group-hover:underline md:ml-2">
                             {getPersonIdentifier(response.person, response.personAttributes)}
                           </p>
                         </Link>
@@ -119,12 +128,14 @@ export const OpenTextSummary = ({
                           <div className="hidden md:flex">
                             <PersonAvatar personId="anonymous" />
                           </div>
-                          <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                          <p className="break-normal text-slate-600 md:ml-2">{t("common.anonymous")}</p>
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{response.value}</TableCell>
-                    <TableCell>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
+                    <TableCell width={120}>
+                      {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -132,7 +143,7 @@ export const OpenTextSummary = ({
             {visibleResponses < questionSummary.samples.length && (
               <div className="flex justify-center py-4">
                 <Button onClick={handleLoadMore} variant="secondary" size="sm">
-                  Load more
+                  {t("common.load_more")}
                 </Button>
               </div>
             )}

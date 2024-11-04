@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -23,7 +23,6 @@ interface SignupOptionsProps {
   emailFromSearchParams: string;
   setError?: (error: string) => void;
   emailVerificationDisabled: boolean;
-  passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
@@ -31,6 +30,7 @@ interface SignupOptionsProps {
   inviteToken: string | null;
   callbackUrl: string;
   oidcDisplayName?: string;
+  userLocale: string;
 }
 
 export const SignupOptions = ({
@@ -38,7 +38,6 @@ export const SignupOptions = ({
   emailFromSearchParams,
   setError,
   emailVerificationDisabled,
-  passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
@@ -46,12 +45,13 @@ export const SignupOptions = ({
   inviteToken,
   callbackUrl,
   oidcDisplayName,
+  userLocale,
 }: SignupOptionsProps) => {
   const [showLogin, setShowLogin] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [isButtonEnabled, setButtonEnabled] = useState(true);
+  const t = useTranslations();
 
   const ZSignupInput = z.object({
     name: ZUserName,
@@ -92,7 +92,7 @@ export const SignupOptions = ({
     setSigningUp(true);
 
     try {
-      await createUser(data.name, data.email, data.password, inviteToken);
+      await createUser(data.name, data.email, data.password, userLocale, inviteToken);
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
         : `/auth/verification-requested?email=${encodeURIComponent(data.email)}`;
@@ -169,7 +169,6 @@ export const SignupOptions = ({
                               autoComplete="current-password"
                               placeholder="*******"
                               aria-placeholder="password"
-                              onFocus={() => setIsPasswordFocused(true)}
                               required
                               className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
                             />
@@ -180,16 +179,6 @@ export const SignupOptions = ({
                     )}
                   />
                 </div>
-
-                {passwordResetEnabled && isPasswordFocused && (
-                  <div className="text-right transition-all duration-500 ease-in-out">
-                    <Link
-                      href="/auth/forgot-password"
-                      className="hover:text-brand-dark text-xs text-slate-500">
-                      Forgot your password?
-                    </Link>
-                  </div>
-                )}
                 <IsPasswordValid password={form.watch("password")} setIsValid={setIsValid} />
               </div>
             )}
@@ -199,7 +188,7 @@ export const SignupOptions = ({
                 className="w-full justify-center"
                 loading={signingUp}
                 disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
-                Continue with Email
+                {t("auth.continue_with_email")}
               </Button>
             )}
 
@@ -213,7 +202,7 @@ export const SignupOptions = ({
                   setTimeout(() => nameRef.current?.focus(), 100);
                 }}
                 className="w-full justify-center">
-                Continue with Email
+                {t("auth.continue_with_email")}
               </Button>
             )}
           </form>
@@ -221,22 +210,22 @@ export const SignupOptions = ({
       )}
       {googleOAuthEnabled && (
         <>
-          <GoogleButton inviteUrl={callbackUrl} />
+          <GoogleButton inviteUrl={callbackUrl} text={t("auth.continue_with_google")} />
         </>
       )}
       {githubOAuthEnabled && (
         <>
-          <GithubButton inviteUrl={callbackUrl} />
+          <GithubButton inviteUrl={callbackUrl} text={t("auth.continue_with_github")} />
         </>
       )}
       {azureOAuthEnabled && (
         <>
-          <AzureButton inviteUrl={callbackUrl} />
+          <AzureButton inviteUrl={callbackUrl} text={t("auth.continue_with_azure")} />
         </>
       )}
       {oidcOAuthEnabled && (
         <>
-          <OpenIdButton inviteUrl={callbackUrl} text={`Continue with ${oidcDisplayName}`} />
+          <OpenIdButton inviteUrl={callbackUrl} text={t("auth.continue_with_oidc", { oidcDisplayName })} />
         </>
       )}
     </div>

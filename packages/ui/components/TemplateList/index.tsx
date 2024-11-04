@@ -74,7 +74,7 @@ export const TemplateList = ({
   };
 
   const filteredTemplates = useMemo(() => {
-    return templates.filter((template) => {
+    return templates(user.locale).filter((template) => {
       if (templateSearch) {
         return template.name.toLowerCase().includes(templateSearch.toLowerCase());
       }
@@ -123,6 +123,7 @@ export const TemplateList = ({
           createSurvey={createSurvey}
           loading={loading}
           noPreview={noPreview}
+          locale={user.locale}
         />
         {(process.env.NODE_ENV === "development" ? [...filteredTemplates] : filteredTemplates).map(
           (template: TTemplate) => {

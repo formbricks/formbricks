@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -12,6 +13,7 @@ import {
   TSurveyQuestionChoice,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
@@ -34,6 +36,7 @@ interface ChoiceProps {
   ) => void;
   surveyLanguageCodes: string[];
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const QuestionOptionChoice = ({
@@ -52,7 +55,9 @@ export const QuestionOptionChoice = ({
   surveyLanguageCodes,
   updateQuestion,
   attributeClasses,
+  locale,
 }: ChoiceProps) => {
+  const t = useTranslations();
   const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
@@ -75,7 +80,11 @@ export const QuestionOptionChoice = ({
         <QuestionFormInput
           key={choice.id}
           id={`choice-${choiceIdx}`}
-          placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+          placeholder={
+            choice.id === "other"
+              ? t("common.other")
+              : t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 })
+          }
           label={""}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
@@ -88,18 +97,19 @@ export const QuestionOptionChoice = ({
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
           attributeClasses={attributeClasses}
+          locale={locale}
         />
         {choice.id === "other" && (
           <QuestionFormInput
             id="otherOptionPlaceholder"
             localSurvey={localSurvey}
-            placeholder={"Please specify"}
+            placeholder={t("environments.surveys.edit.please_specify")}
             label={""}
             questionIdx={questionIdx}
             value={
               question.otherOptionPlaceholder
                 ? question.otherOptionPlaceholder
-                : createI18nString("Please specify", surveyLanguageCodes)
+                : createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
@@ -109,6 +119,7 @@ export const QuestionOptionChoice = ({
             }
             className="border border-dashed"
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         )}
       </div>

@@ -12,6 +12,7 @@ interface WeeklySummaryNotificationEmailProps {
   endDate: string;
   startYear: number;
   endYear: number;
+  locale: string;
 }
 
 export function WeeklySummaryNotificationEmail({
@@ -20,6 +21,7 @@ export function WeeklySummaryNotificationEmail({
   endDate,
   startYear,
   endYear,
+  locale,
 }: WeeklySummaryNotificationEmailProps): React.JSX.Element {
   return (
     <EmailTemplate>
@@ -29,13 +31,15 @@ export function WeeklySummaryNotificationEmail({
         productName={notificationData.productName}
         startDate={startDate}
         startYear={startYear}
+        locale={locale}
       />
-      <NotificationInsight insights={notificationData.insights} />
+      <NotificationInsight insights={notificationData.insights} locale={locale} />
       <LiveSurveyNotification
         environmentId={notificationData.environmentId}
         surveys={notificationData.surveys}
+        locale={locale}
       />
-      <NotificationFooter environmentId={notificationData.environmentId} />
+      <NotificationFooter environmentId={notificationData.environmentId} locale={locale} />
     </EmailTemplate>
   );
 }

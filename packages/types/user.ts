@@ -2,6 +2,9 @@ import { z } from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
+const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR"]);
+
+export type TUserLocale = z.infer<typeof ZUserLocale>;
 export const ZUserObjective = z.enum([
   "increase_conversion",
   "improve_user_retention",
@@ -40,6 +43,7 @@ export const ZUser = z.object({
   role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
+  locale: ZUserLocale,
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -52,6 +56,7 @@ export const ZUserUpdateInput = z.object({
   objective: ZUserObjective.nullish(),
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
+  locale: ZUserLocale.optional(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
@@ -64,6 +69,7 @@ export const ZUserCreateInput = z.object({
   objective: ZUserObjective.nullish(),
   identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
   identityProviderAccountId: z.string().optional(),
+  locale: ZUserLocale.optional(),
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;

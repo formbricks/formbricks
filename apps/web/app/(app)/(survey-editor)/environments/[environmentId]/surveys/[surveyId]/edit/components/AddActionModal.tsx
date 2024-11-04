@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
@@ -27,9 +28,10 @@ export const AddActionModal = ({
   isViewer,
   environmentId,
 }: AddActionModalProps) => {
+  const t = useTranslations();
   const tabs = [
     {
-      title: "Select saved action",
+      title: t("environments.surveys.edit.select_saved_action"),
       children: (
         <SavedActionsTab
           actionClasses={actionClasses}
@@ -40,7 +42,7 @@ export const AddActionModal = ({
       ),
     },
     {
-      title: "Capture new action",
+      title: t("environments.surveys.edit.capture_new_action"),
       children: (
         <CreateNewActionTab
           actionClasses={actionClasses}
@@ -55,8 +57,8 @@ export const AddActionModal = ({
   ];
   return (
     <ModalWithTabs
-      label="Add action"
-      description="Capture a new action to trigger a survey on."
+      label={t("common.add_action")}
+      description={t("environments.surveys.edit.capture_a_new_action_to_trigger_a_survey_on")}
       open={open}
       setOpen={setOpen}
       tabs={tabs}
