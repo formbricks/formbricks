@@ -81,7 +81,7 @@ export const EditTeamNameForm = ({ membershipRole, team }: EditTeamNameProps) =>
                   {...field}
                   type="text"
                   isInvalid={!!fieldState.error?.message}
-                  placeholder="Team Name"
+                  placeholder={t("environments.settings.teams.team_name")}
                   required
                 />
               </FormControl>

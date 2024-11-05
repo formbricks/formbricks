@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "../Command";
@@ -27,7 +28,7 @@ export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TO
   onChange,
 }: MultiSelectProps<T, K>) => {
   const [open, setOpen] = useState(false);
-
+  const t = useTranslations();
   const isOptionSelected = (optionValue: T) => {
     if (Array.isArray(value)) {
       return value.includes(optionValue);
@@ -88,7 +89,7 @@ export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TO
             </div>
           )
         ) : (
-          <p className="text-slate-400">Select...</p>
+          <p className="text-slate-400">{t("common.select")}...</p>
         )}
         <div>
           {open ? (
@@ -102,7 +103,7 @@ export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TO
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md border bg-white outline-none">
             <CommandList>
-              <CommandEmpty>No result found.</CommandEmpty>
+              <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               <CommandGroup>
                 {filteredOptions.map((o) => (
                   <CommandItem
