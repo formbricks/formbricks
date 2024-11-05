@@ -1,12 +1,16 @@
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { AuthorizationError } from "@formbricks/types/errors";
 
 const ConfigLayout = async ({ children, params }) => {
+  const t = await getTranslations();
   const [organization, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -18,6 +22,11 @@ const ConfigLayout = async ({ children, params }) => {
 
   if (!session) {
     throw new Error("Unauthenticated");
+  }
+
+  const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
+  if (!hasAccess) {
+    throw new AuthorizationError(t("common.not_authorized"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);

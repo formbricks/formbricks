@@ -8,7 +8,7 @@ interface SideBarProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   membershipRole?: TOrganizationRole;
-  productPermission: TTeamPermission;
+  productPermission: TTeamPermission | null;
 }
 
 export const TopControlBar = ({

@@ -8,6 +8,7 @@ import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
@@ -58,12 +59,15 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const membershipRole = currentUserMembership?.organizationRole;
+  const { isOwner, isManager } = getAccessFlags(membershipRole);
+
+  const isOwnerOrManager = isOwner || isManager;
 
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
   const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
 
-  if (!productPermission) {
+  if (!isOwnerOrManager && !productPermission) {
     throw new Error("Product permission not found");
   }
 

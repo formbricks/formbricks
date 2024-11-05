@@ -17,7 +17,7 @@ interface TopControlButtonsProps {
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
-  productPermission: TTeamPermission;
+  productPermission: TTeamPermission | null;
 }
 
 export const TopControlButtons = ({

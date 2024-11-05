@@ -72,7 +72,7 @@ interface NavigationProps {
   isFormbricksCloud?: boolean;
   membershipRole?: TOrganizationRole;
   isAIEnabled?: boolean;
-  productPermission?: TTeamPermission;
+  productPermission: TTeamPermission | null;
 }
 
 export const MainNavigation = ({
