@@ -55,7 +55,9 @@ export const AIToggle = ({ organization, isUserManagerOrOwner }: AIToggleProps) 
   };
 
   return !isUserManagerOrOwner ? (
-    <p className="text-sm text-red-700">{t("common.you_are_not_authorised_to_perform_this_action")}</p>
+    <p className="text-sm text-red-700">
+      {t("environments.settings.general.only_org_owner_can_perform_action")}
+    </p>
   ) : (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">

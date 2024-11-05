@@ -62,7 +62,7 @@ export const EditTeamNameForm = ({ membershipRole, team }: EditTeamNameProps) =>
   };
 
   return isMember ? (
-    <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
+    <p className="text-sm text-red-700">Only organization owners and managers can access this setting.</p>
   ) : (
     <FormProvider {...form}>
       <form className="w-full max-w-sm items-center" onSubmit={form.handleSubmit(handleUpdateTeamName)}>

@@ -67,7 +67,9 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
   const isMemberOrBilling = isMember || isBilling;
 
   return isMemberOrBilling ? (
-    <p className="text-sm text-red-700">{t("common.not_authorized")}</p>
+    <p className="text-sm text-red-700">
+      {t("environments.settings.general.only_org_owner_can_perform_action")}
+    </p>
   ) : (
     <FormProvider {...form}>
       <form

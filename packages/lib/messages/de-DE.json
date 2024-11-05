@@ -1049,7 +1049,7 @@
         "member_deleted_successfully": "Mitglied erfolgreich gelöscht",
         "member_invited_successfully": "Mitglied erfolgreich eingeladen",
         "once_its_gone_its_gone": "Watt fott is, is fott.",
-        "only_owner_can_delete_organization": "Nur der Besitzer kann die Organisation löschen.",
+        "only_org_owner_can_perform_action": "Nur der Besitzer kann die Organisation löschen.",
         "organization_created_successfully": "Organisation erfolgreich erstellt!",
         "organization_deleted_successfully": "Organisation erfolgreich gelöscht.",
         "organization_invite_link_ready": "Dein Einladungslink für die Organisation ist fertig!",

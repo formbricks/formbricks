@@ -1047,7 +1047,7 @@
         "member_deleted_successfully": "Member deleted successfully",
         "member_invited_successfully": "Member invited successfully",
         "once_its_gone_its_gone": "Once it's gone, it's gone.",
-        "only_owner_can_delete_organization": "Only Owner can delete the organization.",
+        "only_org_owner_can_perform_action": "Only organization owners can access this setting.",
         "organization_created_successfully": "Organization created successfully!",
         "organization_deleted_successfully": "Organization deleted successfully.",
         "organization_invite_link_ready": "Your organization invite link is ready!",
