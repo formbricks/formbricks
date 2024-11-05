@@ -41,6 +41,7 @@ interface PersonTableProps {
   environmentId: string;
   searchValue: string;
   setSearchValue: (value: string) => void;
+  isReadOnly: boolean;
 }
 
 export const PersonTable = ({
@@ -52,6 +53,7 @@ export const PersonTable = ({
   environmentId,
   searchValue,
   setSearchValue,
+  isReadOnly,
 }: PersonTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -64,7 +66,7 @@ export const PersonTable = ({
   const [parent] = useAutoAnimate();
   // Generate columns
   const columns = useMemo(
-    () => generatePersonTableColumns(isExpanded ?? false, searchValue, t),
+    () => generatePersonTableColumns(isExpanded ?? false, searchValue, t, isReadOnly),
     [isExpanded, searchValue]
   );
 

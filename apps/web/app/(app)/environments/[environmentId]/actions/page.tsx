@@ -57,10 +57,6 @@ const Page = async ({ params }) => {
 
   const isReadOnly = isMember && hasReadAccess;
 
-  if (isReadOnly) {
-    return redirect(`/environments/${params.environmentId}/surveys`);
-  }
-
   const renderAddActionButton = () => (
     <AddActionModal
       environmentId={params.environmentId}
@@ -71,7 +67,7 @@ const Page = async ({ params }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.actions")} cta={renderAddActionButton()} />
+      <PageHeader pageTitle={t("common.actions")} cta={!isReadOnly ? renderAddActionButton() : undefined} />
       <ActionClassesTable
         environmentId={params.environmentId}
         actionClasses={actionClasses}

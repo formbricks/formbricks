@@ -55,12 +55,11 @@ const Page = async ({ params }) => {
   const { hasManageAccess } = getTeamPermissionFlags(productPermission);
 
   const isReadOnly = isMember && !hasManageAccess;
-  const isTagSettingDisabled = isReadOnly;
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
-  return !isTagSettingDisabled ? (
+  return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation
@@ -80,8 +79,6 @@ const Page = async ({ params }) => {
         />
       </SettingsCard>
     </PageContentWrapper>
-  ) : (
-    <ErrorComponent />
   );
 };
 

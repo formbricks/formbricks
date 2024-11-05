@@ -18,6 +18,7 @@ interface EditSegmentModalProps {
   attributeClasses: TAttributeClass[];
   isAdvancedTargetingAllowed: boolean;
   isFormbricksCloud: boolean;
+  isReadOnly: boolean;
 }
 
 export const EditSegmentModal = ({
@@ -29,10 +30,11 @@ export const EditSegmentModal = ({
   segments,
   isAdvancedTargetingAllowed,
   isFormbricksCloud,
+  isReadOnly,
 }: EditSegmentModalProps) => {
   const t = useTranslations();
   const SettingsTab = () => {
-    if (isAdvancedTargetingAllowed) {
+    if (isAdvancedTargetingAllowed || false) {
       return (
         <SegmentSettings
           attributeClasses={attributeClasses}
@@ -40,6 +42,7 @@ export const EditSegmentModal = ({
           initialSegment={currentSegment}
           segments={segments}
           setOpen={setOpen}
+          isReadOnly={isReadOnly}
         />
       );
     }
@@ -51,6 +54,7 @@ export const EditSegmentModal = ({
         initialSegment={currentSegment}
         setOpen={setOpen}
         isFormbricksCloud={isFormbricksCloud}
+        isReadOnly={isReadOnly}
       />
     );
   };

@@ -52,10 +52,6 @@ const Page = async ({ params }) => {
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
-  if (isReadOnly) {
-    return <ErrorComponent />;
-  }
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.configuration")}>

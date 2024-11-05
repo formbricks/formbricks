@@ -107,7 +107,9 @@ const ResponseSurveyCard = ({
   const { membershipRole } = useMembershipRole(survey?.environmentId || "");
   const { isMember } = getAccessFlags(membershipRole);
 
-  const {} = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
 
   return (
     <div key={response.id}>
@@ -121,7 +123,7 @@ const ResponseSurveyCard = ({
           environment={environment}
           deleteResponses={deleteResponses}
           updateResponse={updateResponse}
-          isReadOnly={isMember}
+          isReadOnly={isReadOnly}
           locale={locale}
         />
       )}

@@ -1,5 +1,5 @@
 import { isProductPartOfOrganization, isTeamPartOfOrganization } from "@/lib/utils/services";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProductPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { returnValidationErrors } from "next-safe-action";
@@ -51,7 +51,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   const role = await getMembershipRole(userId, organizationId);
   const { isOwner, isManager } = getAccessFlags(role);
 
-  let isAccessGranted: boolean = false;
+  let isAccessGranted: boolean = true;
 
   for (let accessItem of access) {
     if (accessItem.type === "organization") {
@@ -92,8 +92,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
           }
         }
       } else {
-        // const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
-        const teamRole = "admin";
+        const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
         if (!teamRole) {
           isAccessGranted = false;
           continue;

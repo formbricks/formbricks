@@ -48,10 +48,6 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
 
   const isReadOnly = isMember && hasReadAccess;
 
-  if (isReadOnly) {
-    return <ErrorComponent />;
-  }
-
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 

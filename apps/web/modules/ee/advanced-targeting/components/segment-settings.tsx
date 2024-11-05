@@ -23,6 +23,7 @@ interface TSegmentSettingsTabProps {
   initialSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
+  isReadOnly: boolean;
 }
 
 export function SegmentSettings({
@@ -31,6 +32,7 @@ export function SegmentSettings({
   setOpen,
   attributeClasses,
   segments,
+  isReadOnly,
 }: TSegmentSettingsTabProps) {
   const router = useRouter();
   const t = useTranslations();
@@ -146,6 +148,7 @@ export function SegmentSettings({
                       title: e.target.value,
                     }));
                   }}
+                  disabled={isReadOnly}
                   placeholder={t("environments.segments.ex_power_users")}
                   value={segment.title}
                 />
@@ -163,6 +166,7 @@ export function SegmentSettings({
                       description: e.target.value,
                     }));
                   }}
+                  disabled={isReadOnly}
                   placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                   value={segment.description ?? ""}
                 />
@@ -188,6 +192,7 @@ export function SegmentSettings({
               segment={segment}
               segments={segments}
               setSegment={setSegment}
+              viewOnly={isReadOnly}
             />
 
             <div>
@@ -196,6 +201,7 @@ export function SegmentSettings({
                   setAddFilterModalOpen(true);
                 }}
                 size="sm"
+                disabled={isReadOnly}
                 variant="secondary">
                 {t("common.add_filter")}
               </Button>
@@ -213,26 +219,30 @@ export function SegmentSettings({
           </div>
 
           <div className="flex w-full items-center justify-between pt-4">
-            <Button
-              EndIcon={Trash2}
-              endIconClassName="p-0.5"
-              loading={isDeletingSegment}
-              onClick={() => {
-                setIsDeleteSegmentModalOpen(true);
-              }}
-              type="button"
-              variant="warn">
-              {t("common.delete")}
-            </Button>
-            <Button
-              disabled={isSaveDisabled}
-              loading={isUpdatingSegment}
-              onClick={() => {
-                handleUpdateSegment();
-              }}
-              type="submit">
-              {t("common.save_changes")}
-            </Button>
+            {!isReadOnly && (
+              <>
+                <Button
+                  EndIcon={Trash2}
+                  endIconClassName="p-0.5"
+                  loading={isDeletingSegment}
+                  onClick={() => {
+                    setIsDeleteSegmentModalOpen(true);
+                  }}
+                  type="button"
+                  variant="warn">
+                  {t("common.delete")}
+                </Button>
+                <Button
+                  disabled={isSaveDisabled}
+                  loading={isUpdatingSegment}
+                  onClick={() => {
+                    handleUpdateSegment();
+                  }}
+                  type="submit">
+                  {t("common.save_changes")}
+                </Button>
+              </>
+            )}
 
             {isDeleteSegmentModalOpen ? (
               <ConfirmDeleteSegmentModal

@@ -537,6 +537,7 @@
     "attributes": {
       "ex_user_property": "Ex. Propriedade do usuário",
       "how_to_add_attributes": "Como adicionar Atributos",
+      "show_archived": "Mostrar arquivados",
       "this_attribute_was_added_automatically_you_cannot_make_changes_to_it": "Esse atributo foi adicionado automaticamente. Você não pode fazer alterações nele.",
       "this_is_a_code_attribute_you_can_only_change_the_description": "Esse é um atributo de código. Você só pode mudar a descrição."
     },

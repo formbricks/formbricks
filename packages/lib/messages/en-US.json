@@ -537,6 +537,7 @@
     "attributes": {
       "ex_user_property": "Ex. User property",
       "how_to_add_attributes": "How to add Attributes",
+      "show_archived": "Show archived",
       "this_attribute_was_added_automatically_you_cannot_make_changes_to_it": "This attribute was added automatically. You cannot make changes to it.",
       "this_is_a_code_attribute_you_can_only_change_the_description": "This is a code attribute. You can only change the description."
     },

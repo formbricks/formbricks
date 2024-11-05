@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
@@ -69,7 +70,7 @@ export function CreateSegmentModal({ environmentId, attributeClasses, segments }
 
     try {
       setIsCreatingSegment(true);
-      await createSegmentAction({
+      const createSegmentResponse = await createSegmentAction({
         title: segment.title,
         description: segment.description ?? "",
         isPrivate: segment.isPrivate,
@@ -78,8 +79,14 @@ export function CreateSegmentModal({ environmentId, attributeClasses, segments }
         surveyId: "",
       });
 
+      if (createSegmentResponse?.data) {
+        toast.success(t("environments.segments.segment_saved_successfully"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(createSegmentResponse);
+        toast.error(errorMessage);
+      }
+
       setIsCreatingSegment(false);
-      toast.success(t("environments.segments.segment_saved_successfully"));
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);

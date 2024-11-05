@@ -31,7 +31,7 @@ export const CodeActionForm = ({ form, isEdit }: CodeActionFormProps) => {
                   value={field.value ?? ""}
                   isInvalid={!!error?.message}
                   readOnly={isEdit}
-                  disabled={isEdit}
+                  disabled={!isEdit}
                 />
               </FormControl>
             </FormItem>

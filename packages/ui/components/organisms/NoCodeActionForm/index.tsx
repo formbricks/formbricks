@@ -12,9 +12,10 @@ import { PageUrlSelector } from "./components/PageUrlSelector";
 
 interface NoCodeActionFormProps {
   form: UseFormReturn<TActionClassInput>;
+  isEdit: boolean;
 }
 
-export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
+export const NoCodeActionForm = ({ form, isEdit }: NoCodeActionFormProps) => {
   const { control, watch } = form;
   const t = useTranslations();
   return (
@@ -28,6 +29,7 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
               <div>
                 <Label className="font-semibold">{t("environments.actions.what_is_the_user_doing")}</Label>
                 <TabToggle
+                  disabled={!isEdit}
                   id="userAction"
                   {...field}
                   defaultSelected={field.value}
@@ -53,8 +55,8 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
               <FormItem>
                 <FormControl>
                   <>
-                    <CssSelector form={form} />
-                    <InnerHtmlSelector form={form} />
+                    <CssSelector form={form} disabled={!isEdit} />
+                    <InnerHtmlSelector form={form} disabled={!isEdit} />
                   </>
                 </FormControl>
                 <FormError />
@@ -91,7 +93,7 @@ export const NoCodeActionForm = ({ form }: NoCodeActionFormProps) => {
             </AlertDescription>
           </Alert>
         )}
-        <PageUrlSelector form={form} />
+        <PageUrlSelector form={form} isEdit={isEdit} />
       </div>
     </>
   );

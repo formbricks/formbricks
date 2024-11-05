@@ -139,6 +139,7 @@ export const ActionSettingsTab = ({
                 <FormField
                   control={control}
                   name="name"
+                  disabled={isReadOnly}
                   render={({ field, fieldState: { error } }) => (
                     <FormItem>
                       <FormLabel htmlFor="actionNameSettingsInput">
@@ -154,7 +155,7 @@ export const ActionSettingsTab = ({
                           {...field}
                           placeholder={t("environments.actions.eg_clicked_download")}
                           isInvalid={!!error?.message}
-                          disabled={actionClass.type === "automatic" ? true : false}
+                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
                         />
                       </FormControl>
 
@@ -163,43 +164,42 @@ export const ActionSettingsTab = ({
                   )}
                 />
               </div>
-              {!isReadOnly && (
-                <div className="col-span-1">
-                  <FormField
-                    control={control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="actionDescriptionSettingsInput">
-                          {t("common.description")}
-                        </FormLabel>
 
-                        <FormControl>
-                          <Input
-                            type="text"
-                            id="actionDescriptionSettingsInput"
-                            {...field}
-                            placeholder={t("environments.actions.user_clicked_download_button")}
-                            value={field.value ?? ""}
-                            disabled={actionClass.type === "automatic" ? true : false}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
+              <div className="col-span-1">
+                <FormField
+                  control={control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="actionDescriptionSettingsInput">
+                        {t("common.description")}
+                      </FormLabel>
+
+                      <FormControl>
+                        <Input
+                          type="text"
+                          id="actionDescriptionSettingsInput"
+                          {...field}
+                          placeholder={t("environments.actions.user_clicked_download_button")}
+                          value={field.value ?? ""}
+                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {actionClass.type === "code" ? (
               <>
-                <CodeActionForm form={form} isEdit={true} />
+                <CodeActionForm form={form} isEdit={!isReadOnly} />
                 <p className="text-sm text-slate-600">
                   {t("environments.actions.this_is_a_code_action_please_make_changes_in_your_code_base")}
                 </p>
               </>
             ) : actionClass.type === "noCode" ? (
-              <NoCodeActionForm form={form} />
+              <NoCodeActionForm form={form} isEdit={!isReadOnly} />
             ) : (
               <p className="text-sm text-slate-600">
                 {t(
@@ -228,7 +228,7 @@ export const ActionSettingsTab = ({
               </Button>
             </div>
 
-            {actionClass.type !== "automatic" && (
+            {!isReadOnly && actionClass.type !== "automatic" && (
               <div className="flex space-x-2">
                 <Button type="submit" loading={isUpdatingAction}>
                   {t("common.save_changes")}

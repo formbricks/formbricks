@@ -247,9 +247,9 @@ export const CreateNewActionTab = ({
             <hr className="border-slate-200" />
 
             {watch("type") === "code" ? (
-              <CodeActionForm form={form} isEdit={false} />
+              <CodeActionForm form={form} isEdit={!isReadOnly} />
             ) : (
-              <NoCodeActionForm form={form} />
+              <NoCodeActionForm form={form} isEdit={!isReadOnly} />
             )}
           </div>
           <div className="flex justify-end pt-6">

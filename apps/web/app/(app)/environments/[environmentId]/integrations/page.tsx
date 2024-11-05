@@ -75,10 +75,6 @@ const Page = async ({ params }) => {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  if (isReadOnly) {
-    return redirect(`/environments/${params.environmentId}/surveys`);
-  }
-
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
   const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
@@ -104,6 +100,7 @@ const Page = async ({ params }) => {
           : zapierWebhookCount === 0
             ? t("common.not_connected")
             : `${zapierWebhookCount} zaps`,
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
@@ -122,6 +119,7 @@ const Page = async ({ params }) => {
           : userWebhookCount === 0
             ? t("common.not_connected")
             : `${userWebhookCount} webhooks`,
+      disabled: false,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
@@ -135,6 +133,7 @@ const Page = async ({ params }) => {
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
       connected: isGoogleSheetsIntegrationConnected,
       statusText: isGoogleSheetsIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/airtable`,
@@ -148,6 +147,7 @@ const Page = async ({ params }) => {
       icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
       connected: isAirtableIntegrationConnected,
       statusText: isAirtableIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/slack`,
@@ -161,6 +161,7 @@ const Page = async ({ params }) => {
       icon: <Image src={SlackLogo} alt="Slack Logo" />,
       connected: isSlackIntegrationConnected,
       statusText: isSlackIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
@@ -179,6 +180,7 @@ const Page = async ({ params }) => {
           : n8nwebhookCount === 0
             ? t("common.not_connected")
             : `${n8nwebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -197,6 +199,7 @@ const Page = async ({ params }) => {
           : makeWebhookCount === 0
             ? t("common.not_connected")
             : `${makeWebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/notion`,
@@ -210,6 +213,7 @@ const Page = async ({ params }) => {
       icon: <Image src={notionLogo} alt="Notion Logo" />,
       connected: isNotionIntegrationConnected,
       statusText: isNotionIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
   ];
 
@@ -225,6 +229,7 @@ const Page = async ({ params }) => {
     icon: <Image src={JsLogo} alt="Javascript Logo" />,
     connected: widgetSetupCompleted,
     statusText: widgetSetupCompleted ? t("common.connected") : t("common.not_connected"),
+    disabled: false,
   });
 
   return (
@@ -245,6 +250,7 @@ const Page = async ({ params }) => {
             icon={card.icon}
             connected={card.connected}
             statusText={card.statusText}
+            disabled={card.disabled}
           />
         ))}
       </div>
