@@ -223,7 +223,7 @@ export const MainNavigation = ({
     {
       label: t("common.billing"),
       href: `/environments/${environment.id}/settings/billing`,
-      hidden: !isFormbricksCloud || isPricingDisabled,
+      hidden: !isFormbricksCloud,
       icon: CreditCardIcon,
     },
     {

@@ -24,6 +24,7 @@ export const OrganizationSettingsNavbar = ({
   const { isAdmin, isOwner } = getAccessFlags(membershipRole);
   const isPricingDisabled = !isOwner && !isAdmin;
   const t = useTranslations();
+
   const navigation = [
     {
       id: "general",
@@ -38,7 +39,7 @@ export const OrganizationSettingsNavbar = ({
       label: t("common.billing"),
       href: `/environments/${environmentId}/settings/billing`,
       icon: <CreditCardIcon className="h-5 w-5" />,
-      hidden: !isFormbricksCloud || isPricingDisabled,
+      hidden: !isFormbricksCloud,
       current: pathname?.includes("/billing"),
     },
     {
