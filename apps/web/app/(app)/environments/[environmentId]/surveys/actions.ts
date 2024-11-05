@@ -34,7 +34,7 @@ export const getSurveyAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -75,7 +75,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: sourceEnvironment.productId,
           minPermission: "readWrite",
         },
@@ -128,7 +128,7 @@ export const deleteSurveyAction = authenticatedActionClient
           rules: ["survey", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
@@ -155,7 +155,7 @@ export const generateSingleUseIdAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
@@ -186,7 +186,7 @@ export const getSurveysAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],

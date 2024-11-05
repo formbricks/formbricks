@@ -18,7 +18,7 @@ export type TAccess<T extends z.ZodRawShape> =
       rules: [TResource, TOperation];
     }
   | {
-      type: "product";
+      type: "productTeam";
       minPermission?: TTeamPermission;
       productId: string;
     }
@@ -69,14 +69,14 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
       }
     } else {
       if (isOwner || isManager) {
-        if (accessItem.type === "product") {
+        if (accessItem.type === "productTeam") {
           return await isProductPartOfOrganization(organizationId, accessItem.productId);
         } else if (accessItem.type === "team") {
           return await isTeamPartOfOrganization(organizationId, accessItem.teamId);
         }
       }
 
-      if (accessItem.type === "product") {
+      if (accessItem.type === "productTeam") {
         const productPermission = await getProductPermissionByUserId(userId, accessItem.productId);
         if (!productPermission) {
           isAccessGranted = false;

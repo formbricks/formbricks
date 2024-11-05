@@ -162,7 +162,7 @@ export const updateTeamProductPermissionAction = authenticatedActionClient
           rules: ["productTeam", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: parsedInput.productId,
         },
       ],
@@ -192,7 +192,7 @@ export const removeTeamProductAction = authenticatedActionClient
           rules: ["productTeam", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: parsedInput.productId,
         },
       ],

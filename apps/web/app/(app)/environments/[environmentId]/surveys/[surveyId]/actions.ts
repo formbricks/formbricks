@@ -30,7 +30,7 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -61,7 +61,7 @@ export const getSurveyFilterDataAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -91,7 +91,7 @@ export const updateSurveyAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.survey.id),
           minPermission: "readWrite",
         },

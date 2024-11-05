@@ -27,7 +27,7 @@ export const updateProductAction = authenticatedActionClient
           rules: ["product", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: parsedInput.productId,
           minPermission: "manage",
         },

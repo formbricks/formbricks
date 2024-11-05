@@ -29,7 +29,7 @@ export const deleteApiKeyAction = authenticatedActionClient
           rules: ["apiKey", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "manage",
           productId: await getProductIdFromApiKeyId(parsedInput.id),
         },
@@ -56,7 +56,7 @@ export const createApiKeyAction = authenticatedActionClient
           rules: ["apiKey", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "manage",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },

@@ -27,7 +27,7 @@ export const deleteActionClassAction = authenticatedActionClient
           rules: ["actionClass", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "manage",
           productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
         },
@@ -59,7 +59,7 @@ export const updateActionClassAction = authenticatedActionClient
           rules: ["actionClass", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "manage",
           productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
         },
@@ -89,7 +89,7 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "read",
           productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
         },

@@ -36,7 +36,7 @@ export const getResponsesAction = authenticatedActionClient
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -69,7 +69,7 @@ export const getSurveySummaryAction = authenticatedActionClient
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -97,7 +97,7 @@ export const getResponseCountAction = authenticatedActionClient
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -124,7 +124,7 @@ export const generateInsightsForSurveyAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },

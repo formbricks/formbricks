@@ -41,7 +41,7 @@ export const updateSurveyAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.id),
           minPermission: "readWrite",
         },
@@ -67,7 +67,7 @@ export const refetchProductAction = authenticatedActionClient
           rules: ["product", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: parsedInput.productId,
         },
       ],
@@ -97,7 +97,7 @@ export const createBasicSegmentAction = authenticatedActionClient
           rules: ["segment", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
@@ -144,7 +144,7 @@ export const updateBasicSegmentAction = authenticatedActionClient
           rules: ["segment", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSegmentId(parsedInput.segmentId),
         },
@@ -198,7 +198,7 @@ export const loadNewBasicSegmentAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
@@ -241,7 +241,7 @@ export const cloneBasicSegmentAction = authenticatedActionClient
           rules: ["segment", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
@@ -267,7 +267,7 @@ export const resetBasicSegmentFiltersAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
@@ -372,7 +372,7 @@ export const createActionClassAction = authenticatedActionClient
           rules: ["actionClass", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromEnvironmentId(parsedInput.action.environmentId),
         },

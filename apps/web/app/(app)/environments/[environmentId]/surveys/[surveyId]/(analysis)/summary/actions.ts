@@ -27,7 +27,7 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -69,7 +69,7 @@ export const generateResultShareUrlAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
@@ -107,7 +107,7 @@ export const getResultShareUrlAction = authenticatedActionClient
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
@@ -142,7 +142,7 @@ export const deleteResultShareUrlAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
@@ -173,7 +173,7 @@ export const getEmailHtmlAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],

@@ -39,7 +39,7 @@ export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActi
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -73,7 +73,7 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromInsightId(parsedInput.insightId),
         },
       ],
@@ -114,7 +114,7 @@ export const updateDocumentAction = authenticatedActionClient
           rules: ["response", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(document.environmentId),
         },
       ],

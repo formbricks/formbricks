@@ -23,7 +23,7 @@ export const refreshChannelsAction = authenticatedActionClient
           rules: ["integration", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "manage",
         },

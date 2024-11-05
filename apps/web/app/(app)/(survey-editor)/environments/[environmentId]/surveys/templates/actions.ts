@@ -32,7 +32,7 @@ export const createAISurveyAction = authenticatedActionClient
           rules: ["survey", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },

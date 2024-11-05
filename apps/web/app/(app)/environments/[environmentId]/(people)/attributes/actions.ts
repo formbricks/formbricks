@@ -21,7 +21,7 @@ export const getSegmentsByAttributeClassAction = authenticatedActionClient
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       access: [
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],

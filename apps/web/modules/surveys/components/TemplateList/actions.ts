@@ -25,7 +25,7 @@ export const createSurveyAction = authenticatedActionClient
           rules: ["survey", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },

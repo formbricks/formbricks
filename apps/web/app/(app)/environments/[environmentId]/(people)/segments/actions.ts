@@ -24,7 +24,7 @@ export const deleteBasicSegmentAction = authenticatedActionClient
           rules: ["segment", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSegmentId(parsedInput.segmentId),
           minPermission: "manage",
         },
@@ -51,7 +51,7 @@ export const updateBasicSegmentAction = authenticatedActionClient
           rules: ["segment", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromSegmentId(parsedInput.segmentId),
           minPermission: "manage",
         },

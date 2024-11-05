@@ -101,7 +101,7 @@ export const updateInsightAction = authenticatedActionClient
             rules: ["response", "update"],
           },
           {
-            type: "product",
+            type: "productTeam",
             productId: await getProductIdFromEnvironmentId(insight.environmentId),
             minPermission: "readWrite",
           },

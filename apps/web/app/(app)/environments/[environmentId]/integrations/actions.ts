@@ -25,7 +25,7 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
           rules: ["integration", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "manage",
         },
@@ -51,7 +51,7 @@ export const deleteIntegrationAction = authenticatedActionClient
           rules: ["integration", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.integrationId),
           minPermission: "manage",
         },

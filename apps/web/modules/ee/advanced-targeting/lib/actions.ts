@@ -35,7 +35,7 @@ export const createSegmentAction = authenticatedActionClient
           rules: ["segment", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
@@ -72,7 +72,7 @@ export const updateSegmentAction = authenticatedActionClient
           rules: ["segment", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSegmentId(parsedInput.segmentId),
         },
@@ -126,7 +126,7 @@ export const loadNewSegmentAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
@@ -169,7 +169,7 @@ export const cloneSegmentAction = authenticatedActionClient
           rules: ["segment", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
@@ -195,7 +195,7 @@ export const deleteSegmentAction = authenticatedActionClient
           rules: ["segment", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSegmentId(parsedInput.segmentId),
         },
@@ -221,7 +221,7 @@ export const resetSegmentFiltersAction = authenticatedActionClient
           rules: ["survey", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },

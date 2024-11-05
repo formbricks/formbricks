@@ -25,7 +25,7 @@ export const deleteTagAction = authenticatedActionClient
           rules: ["tag", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromTagId(parsedInput.tagId),
         },
@@ -52,7 +52,7 @@ export const updateTagNameAction = authenticatedActionClient
           rules: ["tag", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromTagId(parsedInput.tagId),
         },
@@ -90,7 +90,7 @@ export const mergeTagsAction = authenticatedActionClient
           rules: ["tag", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           minPermission: "readWrite",
           productId: await getProductIdFromTagId(parsedInput.originalTagId),
         },

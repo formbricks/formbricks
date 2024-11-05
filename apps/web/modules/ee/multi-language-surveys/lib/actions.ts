@@ -36,7 +36,7 @@ export const createLanguageAction = authenticatedActionClient
           rules: ["language", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: parsedInput.productId,
           minPermission: "readWrite",
         },
@@ -63,7 +63,7 @@ export const deleteLanguageAction = authenticatedActionClient
           rules: ["language", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: parsedInput.productId,
           minPermission: "readWrite",
         },
@@ -89,7 +89,7 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
           rules: ["survey", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromLanguageId(parsedInput.languageId),
           minPermission: "read",
         },
@@ -119,7 +119,7 @@ export const updateLanguageAction = authenticatedActionClient
           rules: ["language", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: parsedInput.productId,
           minPermission: "readWrite",
         },

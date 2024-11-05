@@ -40,7 +40,7 @@ export const createTagAction = authenticatedActionClient
           rules: ["tag", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },
@@ -82,7 +82,7 @@ export const createTagToResponseAction = authenticatedActionClient
           rules: ["tag", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(responseEnvironmentId),
           minPermission: "readWrite",
         },
@@ -124,7 +124,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
           rules: ["tag", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(responseEnvironmentId),
           minPermission: "readWrite",
         },
@@ -150,7 +150,7 @@ export const deleteResponseAction = authenticatedActionClient
           rules: ["response", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromResponseId(parsedInput.responseId),
           minPermission: "readWrite",
         },
@@ -177,7 +177,7 @@ export const updateResponseNoteAction = authenticatedActionClient
           rules: ["responseNote", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromResponseNoteId(parsedInput.responseNoteId),
           minPermission: "readWrite",
         },
@@ -203,7 +203,7 @@ export const resolveResponseNoteAction = authenticatedActionClient
           rules: ["responseNote", "update"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromResponseNoteId(parsedInput.responseNoteId),
           minPermission: "readWrite",
         },
@@ -230,7 +230,7 @@ export const createResponseNoteAction = authenticatedActionClient
           rules: ["responseNote", "create"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromResponseId(parsedInput.responseId),
           minPermission: "readWrite",
         },
@@ -256,7 +256,7 @@ export const getResponseAction = authenticatedActionClient
           rules: ["response", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromResponseId(parsedInput.responseId),
         },
       ],

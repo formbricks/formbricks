@@ -30,7 +30,7 @@ export const getPersonsAction = authenticatedActionClient
           rules: ["person", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
@@ -56,7 +56,7 @@ export const getPersonAttributesAction = authenticatedActionClient
           rules: ["person", "read"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
@@ -81,7 +81,7 @@ export const deletePersonAction = authenticatedActionClient
           rules: ["person", "delete"],
         },
         {
-          type: "product",
+          type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.personId),
         },
       ],
