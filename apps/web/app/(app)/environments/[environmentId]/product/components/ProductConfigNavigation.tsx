@@ -67,11 +67,11 @@ export const ProductConfigNavigation = ({
       current: pathname?.includes("/app-connection"),
     },
     {
-      id: "access",
-      label: "Access",
-      href: `/environments/${environmentId}/product/access`,
+      id: "teams",
+      label: "Teams",
+      href: `/environments/${environmentId}/product/teams`,
       hidden: !canDoRoleManagement,
-      current: pathname?.includes("/access"),
+      current: pathname?.includes("/teams"),
     },
   ];
 
