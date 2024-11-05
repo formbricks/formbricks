@@ -98,7 +98,7 @@ export const POST = async (request: Request) => {
         });
         isNewOrganization = true;
       }
-      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "manager";
+      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "owner";
       await createMembership(organization.id, user.id, { organizationRole: role, accepted: true });
       const updatedNotificationSettings = {
         ...user.notificationSettings,

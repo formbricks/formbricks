@@ -41,6 +41,86 @@ const setCompleteNotificationSettings = (
   return newNotificationSettings;
 };
 
+// const getMemberships = async (userId: string): Promise<Membership[]> => {
+//   const memberships = await prisma.membership.findMany({
+//     where: {
+//       userId,
+//       organizationRole: {
+//         not: "billing",
+//       },
+//       OR: [
+//         {
+//           organizationRole: "owner"
+//         },
+//         {
+//           organizationRole: "manager"
+//         },
+//         {
+//           organization: {
+//             products: {
+//               some: {
+//                 productTeams: {
+//                   some: {
+//                     team: {
+//                       teamUsers: {
+//                         some: {
+//                           userId
+//                         }
+//                       }
+//                     }
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         },
+//       ]
+//     },
+//     select: {
+//       organization: {
+//         select: {
+//           id: true,
+//           name: true,
+//           products: {
+//             // where: {
+//             //   productTeams: {
+//             //     some: {
+//             //       team: {
+//             //         teamUsers: {
+//             //           some: {
+//             //             userId
+//             //           }
+//             //         }
+//             //       }
+//             //     }
+//             //   }
+//             // },
+//             select: {
+//               id: true,
+//               name: true,
+//               environments: {
+//                 where: {
+//                   type: "production",
+//                 },
+//                 select: {
+//                   id: true,
+//                   surveys: {
+//                     select: {
+//                       id: true,
+//                       name: true,
+//                     },
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       },
+//     },
+//   });
+//   return memberships;
+// };
+
 const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
@@ -48,6 +128,34 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
       organizationRole: {
         not: "billing",
       },
+      OR: [
+        {
+          // Fetch all products if user role is owner or manager
+          organizationRole: {
+            in: ["owner", "manager"],
+          },
+        },
+        {
+          // Filter products based on team membership if user is not owner or manager
+          organization: {
+            products: {
+              some: {
+                productTeams: {
+                  some: {
+                    team: {
+                      teamUsers: {
+                        some: {
+                          userId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
     },
     select: {
       organization: {
@@ -55,6 +163,38 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
           id: true,
           name: true,
           products: {
+            // Apply conditional filtering based on user's role
+            where: {
+              OR: [
+                {
+                  // Fetch all products if user is owner or manager
+                  organization: {
+                    memberships: {
+                      some: {
+                        userId,
+                        organizationRole: {
+                          in: ["owner", "manager"],
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  // Only include products accessible through teams if user is not owner or manager
+                  productTeams: {
+                    some: {
+                      team: {
+                        teamUsers: {
+                          some: {
+                            userId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
             select: {
               id: true,
               name: true,
@@ -98,7 +238,7 @@ const Page = async ({ params, searchParams }) => {
   if (user?.notificationSettings) {
     user.notificationSettings = setCompleteNotificationSettings(user.notificationSettings, memberships);
   }
-
+  console.log("user.notificationSettings", memberships);
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>

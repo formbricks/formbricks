@@ -158,7 +158,7 @@ x-environment: &environment
     # Insert an existing organization id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
     # (Role Management is an Enterprise feature)
     # DEFAULT_ORGANIZATION_ID:
-    # DEFAULT_ORGANIZATION_ROLE: manager
+    # DEFAULT_ORGANIZATION_ROLE: owner
 
 services:
   postgres:

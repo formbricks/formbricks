@@ -2,11 +2,15 @@
 
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
+import { ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
 import {
   addTeamMembers,
+  addTeamProducts,
   deleteTeam,
   removeTeamMember,
+  removeTeamProduct,
   updateTeamName,
+  updateTeamProductPermission,
   updateUserTeamRole,
 } from "@/modules/ee/teams/team-details/lib/teams";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
@@ -138,4 +142,83 @@ export const addTeamMembersAction = authenticatedActionClient
     });
 
     return await addTeamMembers(parsedInput.teamId, parsedInput.userIds);
+  });
+
+const ZUpdateTeamProductPermissionAction = z.object({
+  teamId: ZId,
+  productId: ZId,
+  permission: ZTeamPermission,
+});
+
+export const updateTeamProductPermissionAction = authenticatedActionClient
+  .schema(ZUpdateTeamProductPermissionAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      access: [
+        {
+          type: "organization",
+          rules: ["productTeam", "update"],
+        },
+        {
+          type: "product",
+          productId: parsedInput.productId,
+        },
+      ],
+    });
+
+    return await updateTeamProductPermission(
+      parsedInput.teamId,
+      parsedInput.productId,
+      parsedInput.permission
+    );
+  });
+
+const ZRemoveTeamProductAction = z.object({
+  teamId: ZId,
+  productId: ZId,
+});
+
+export const removeTeamProductAction = authenticatedActionClient
+  .schema(ZRemoveTeamProductAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      access: [
+        {
+          type: "organization",
+          rules: ["productTeam", "delete"],
+        },
+        {
+          type: "product",
+          productId: parsedInput.productId,
+        },
+      ],
+    });
+
+    return await removeTeamProduct(parsedInput.teamId, parsedInput.productId);
+  });
+
+const ZAddTeamProductsAction = z.object({
+  teamId: ZId,
+  productIds: z.array(ZId),
+});
+
+export const addTeamProductsAction = authenticatedActionClient
+  .schema(ZAddTeamProductsAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      access: [
+        {
+          type: "organization",
+          rules: ["productTeam", "create"],
+        },
+      ],
+    });
+
+    return await addTeamProducts(parsedInput.teamId, parsedInput.productIds);
   });
