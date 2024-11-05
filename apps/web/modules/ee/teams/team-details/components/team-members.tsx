@@ -2,13 +2,17 @@
 
 import { removeTeamMemberAction, updateUserTeamRoleAction } from "@/modules/ee/teams/team-details/actions";
 import { AddTeamMemberModal } from "@/modules/ee/teams/team-details/components/add-team-member-modal";
-import { TOrganizationMember, TTeamMember } from "@/modules/ee/teams/team-details/types/teams";
+import {
+  TOrganizationMember,
+  TOrganizationProduct,
+  TTeamMember,
+} from "@/modules/ee/teams/team-details/types/teams";
 import { leaveTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { TeamRoleMapping, getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
 import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -95,12 +99,16 @@ export const TeamMembers = ({
     setRemoveMemberModalOpen(false);
   };
 
-  const organizationMemberOptions = organizationMembers
-    .filter((member) => !members.find((teamMember) => teamMember.id === member.id))
-    .map((member) => ({
-      label: member.name,
-      value: member.id,
-    }));
+  const organizationMemberOptions = useMemo(
+    () =>
+      organizationMembers
+        .filter((member) => !members.find((teamMember) => teamMember.id === member.id))
+        .map((member) => ({
+          label: member.name,
+          value: member.id,
+        })),
+    [members, organizationMembers]
+  );
 
   return (
     <>

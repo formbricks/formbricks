@@ -1,7 +1,12 @@
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import { DetailsView } from "@/modules/ee/teams/team-details/components/details-view";
 import { TeamsNavigationBreadcrumbs } from "@/modules/ee/teams/team-details/components/team-navigation";
-import { getMembersByOrganizationId, getTeam } from "@/modules/ee/teams/team-details/lib/teams";
+import {
+  getMembersByOrganizationId,
+  getProductsByOrganizationId,
+  getTeam,
+  getTeamProducts,
+} from "@/modules/ee/teams/team-details/lib/teams";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
@@ -26,6 +31,7 @@ export const TeamDetails = async ({ params }) => {
   if (!team) {
     throw new Error("Team not found");
   }
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
@@ -41,6 +47,10 @@ export const TeamDetails = async ({ params }) => {
 
   const organizationMembers = await getMembersByOrganizationId(organization.id);
 
+  const teamProducts = await getTeamProducts(params.teamId);
+
+  const organizationProducts = await getProductsByOrganizationId(organization.id);
+
   return (
     <PageContentWrapper>
       <TeamsNavigationBreadcrumbs teamName={team.name} />
@@ -50,6 +60,8 @@ export const TeamDetails = async ({ params }) => {
         userId={userId}
         membershipRole={currentUserMembership?.organizationRole}
         teamRole={teamRole}
+        products={teamProducts}
+        organizationProducts={organizationProducts}
       />
     </PageContentWrapper>
   );

@@ -1,8 +1,14 @@
 "use client";
 
 import { TeamMembers } from "@/modules/ee/teams/team-details/components/team-members";
+import { TeamProducts } from "@/modules/ee/teams/team-details/components/team-products";
 import { TeamSettings } from "@/modules/ee/teams/team-details/components/team-settings";
-import { TOrganizationMember, TTeam } from "@/modules/ee/teams/team-details/types/teams";
+import {
+  TOrganizationMember,
+  TOrganizationProduct,
+  TTeam,
+  TTeamProduct,
+} from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { useState } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -15,6 +21,8 @@ interface DetailsViewProps {
   membershipRole?: TOrganizationRole;
   organizationMembers: TOrganizationMember[];
   teamRole: TTeamRole | null;
+  products: TTeamProduct[];
+  organizationProducts: TOrganizationProduct[];
 }
 
 export const DetailsView = ({
@@ -23,14 +31,21 @@ export const DetailsView = ({
   membershipRole,
   organizationMembers,
   teamRole,
+  products,
+  organizationProducts,
 }: DetailsViewProps) => {
-  const [activeId, setActiveId] = useState<"members" | "settings">("members");
+  const [activeId, setActiveId] = useState<"members" | "settings" | "products">("members");
 
   const navigation = [
     {
       id: "members",
       label: "Members",
       onClick: () => setActiveId("members"),
+    },
+    {
+      id: "products",
+      label: "Products",
+      onClick: () => setActiveId("products"),
     },
     {
       id: "settings",
@@ -46,7 +61,7 @@ export const DetailsView = ({
       <div className="mt-2 border-b">
         <SecondaryNavigation navigation={navigation} activeId={activeId} />
       </div>
-      {activeId === "members" ? (
+      {activeId === "members" && (
         <TeamMembers
           members={team.teamUsers}
           currentUserId={userId}
@@ -55,9 +70,16 @@ export const DetailsView = ({
           membershipRole={membershipRole}
           teamRole={teamRole}
         />
-      ) : (
-        <TeamSettings team={team} membershipRole={membershipRole} />
       )}
+      {activeId === "products" && (
+        <TeamProducts
+          organizationProducts={organizationProducts}
+          membershipRole={membershipRole}
+          products={products}
+          teamId={team.id}
+        />
+      )}
+      {activeId === "settings" && <TeamSettings team={team} membershipRole={membershipRole} />}
     </div>
   );
 };

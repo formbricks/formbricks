@@ -1,13 +1,21 @@
 import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
-import { TOrganizationMember, TTeam, ZTeam } from "@/modules/ee/teams/team-details/types/teams";
+import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import {
+  TOrganizationMember,
+  TOrganizationProduct,
+  TTeam,
+  TTeamProduct,
+  ZTeam,
+} from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { Prisma, TeamUserRole } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { productCache } from "@formbricks/lib/product/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
@@ -387,7 +395,9 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
 
       let role: TeamUserRole = "contributor";
 
-      if (membership.organizationRole === "owner" || membership.organizationRole === "manager") {
+      const { isOwner, isManager } = getAccessFlags(membership.organizationRole);
+
+      if (isOwner || isManager) {
         role = "admin";
       }
 
@@ -404,6 +414,229 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
     }
 
     teamCache.revalidate({ id: teamId, organizationId: team.organizationId });
+
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getTeamProducts = reactCache(
+  (teamId: string): Promise<TTeamProduct[]> =>
+    cache(
+      async () => {
+        validateInputs([teamId, ZId]);
+
+        try {
+          const products = await prisma.productTeam.findMany({
+            where: {
+              teamId,
+            },
+            select: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+              permission: true,
+            },
+          });
+
+          return products.map((product) => ({
+            id: product.product.id,
+            name: product.product.name,
+            permission: product.permission,
+          }));
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getTeamProducts-${teamId}`],
+      { tags: [teamCache.tag.byId(teamId)] }
+    )()
+);
+
+export const updateTeamProductPermission = async (
+  teamId: string,
+  productId: string,
+  permission: TTeamPermission
+): Promise<boolean> => {
+  validateInputs([teamId, ZId], [productId, ZId], [permission, ZTeamPermission]);
+  try {
+    const productTeam = await prisma.productTeam.findUnique({
+      where: {
+        productId_teamId: {
+          productId,
+          teamId,
+        },
+      },
+    });
+
+    if (!productTeam) {
+      throw new ResourceNotFoundError("productTeam", null);
+    }
+
+    await prisma.productTeam.update({
+      where: {
+        productId_teamId: {
+          productId,
+          teamId,
+        },
+      },
+      data: {
+        permission,
+      },
+    });
+
+    teamCache.revalidate({ id: teamId, productId });
+    productCache.revalidate({ id: productId });
+
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const removeTeamProduct = async (teamId: string, productId: string): Promise<boolean> => {
+  validateInputs([teamId, ZId], [productId, ZId]);
+  try {
+    const productTeam = await prisma.productTeam.findUnique({
+      where: {
+        productId_teamId: {
+          productId,
+          teamId,
+        },
+      },
+    });
+
+    if (!productTeam) {
+      throw new ResourceNotFoundError("productTeam", null);
+    }
+
+    await prisma.productTeam.delete({
+      where: {
+        productId_teamId: {
+          productId,
+          teamId,
+        },
+      },
+    });
+
+    teamCache.revalidate({ id: teamId, productId });
+    productCache.revalidate({ id: productId });
+
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getProductsByOrganizationId = reactCache(
+  (organizationId: string): Promise<TOrganizationProduct[]> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZString]);
+
+        try {
+          const products = await prisma.product.findMany({
+            where: {
+              organizationId,
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          });
+
+          return products.map((product) => ({
+            id: product.id,
+            name: product.name,
+          }));
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw new UnknownError("Error while fetching products");
+        }
+      },
+      [`getProductsByOrganizationId-${organizationId}`],
+      {
+        tags: [productCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
+export const addTeamProducts = async (teamId: string, productIds: string[]): Promise<boolean> => {
+  validateInputs([teamId, ZId], [productIds, z.array(ZId)]);
+  try {
+    const team = await prisma.team.findUnique({
+      where: {
+        id: teamId,
+      },
+      select: {
+        organizationId: true,
+      },
+    });
+
+    if (!team) {
+      throw new ResourceNotFoundError("team", teamId);
+    }
+
+    for (const productId of productIds) {
+      const product = await prisma.product.findUnique({
+        where: {
+          id: productId,
+          organizationId: team.organizationId,
+        },
+      });
+
+      if (!product) {
+        throw new ResourceNotFoundError("product", productId);
+      }
+
+      const productTeam = await prisma.productTeam.findUnique({
+        where: {
+          productId_teamId: {
+            productId,
+            teamId,
+          },
+        },
+      });
+
+      if (productTeam) {
+        continue;
+      }
+
+      await prisma.productTeam.create({
+        data: {
+          productId,
+          teamId,
+          permission: "read",
+        },
+      });
+
+      teamCache.revalidate({ id: teamId, productId });
+      productCache.revalidate({ id: productId });
+    }
 
     return true;
   } catch (error) {
