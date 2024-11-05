@@ -24,7 +24,7 @@ export const renderEmailResponseValue = (
           {Array.isArray(response) &&
             response.map((responseItem) => (
               <Link
-                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm"
+                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-black shadow-sm"
                 href={responseItem}
                 key={responseItem}>
                 <FileIcon />
@@ -57,8 +57,8 @@ export const renderEmailResponseValue = (
                 (item, index) =>
                   item && (
                     <Row key={item} className="mb-1 flex items-center">
-                      <Column className="w-6 text-gray-400">#{index + 1}</Column>
-                      <Column className="rounded bg-gray-100 px-2 py-1">{item}</Column>
+                      <Column className="w-6 text-slate-400">#{index + 1}</Column>
+                      <Column className="rounded bg-slate-100 px-2 py-1">{item}</Column>
                     </Row>
                   )
               )}

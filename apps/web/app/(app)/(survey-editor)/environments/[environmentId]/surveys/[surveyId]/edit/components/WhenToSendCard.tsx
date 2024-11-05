@@ -205,7 +205,7 @@ export const WhenToSendCard = ({
 
                           <h4 className="text-sm font-semibold text-slate-600">{trigger.actionClass.name}</h4>
                         </div>
-                        <div className="mt-1 text-xs text-gray-500">
+                        <div className="mt-1 text-xs text-slate-500">
                           {trigger.actionClass.description && (
                             <span className="mr-1">{trigger.actionClass.description}</span>
                           )}
