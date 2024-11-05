@@ -60,7 +60,7 @@ export const WithValue: Story = {
 
 export const WithCustomClass: Story = {
   args: {
-    className: "rounded-lg bg-gray-50 text-base",
+    className: "rounded-lg bg-slate-50 text-base",
     isInvalid: false,
     disabled: false,
     placeholder: "Input with custom class",

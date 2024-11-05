@@ -96,7 +96,7 @@ export const LiveSurveyNotification = ({
           </Text>
 
           <Text
-            className={`ml-2 inline ${isInProgress ? "bg-green-400 text-gray-100" : "bg-gray-300 text-blue-800"} rounded-full px-2 py-1 text-sm`}>
+            className={`ml-2 inline ${isInProgress ? "bg-green-400 text-slate-100" : "bg-slate-300 text-blue-800"} rounded-full px-2 py-1 text-sm`}>
             {displayStatus}
           </Text>
           {noResponseLastWeek ? (
