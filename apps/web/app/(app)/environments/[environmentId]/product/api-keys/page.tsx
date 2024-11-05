@@ -46,12 +46,13 @@ const Page = async ({ params }) => {
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
-  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 
+  const isReadOnly = isMember && hasReadAccess;
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
-  if (isMember && !hasManageAccess) {
+  if (isReadOnly) {
     return <ErrorComponent />;
   }
 

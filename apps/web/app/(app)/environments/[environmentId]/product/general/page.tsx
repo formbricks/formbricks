@@ -42,11 +42,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
-  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+  const { hasManageAccess, hasReadAccess } = getTeamPermissionFlags(productPermission);
 
   const isProductNameEditDisabled = isMember && !hasManageAccess ? true : false;
 
-  if (isMember && !hasManageAccess) {
+  const isReadOnly = isMember && hasReadAccess;
+
+  if (isReadOnly) {
     return <ErrorComponent />;
   }
 

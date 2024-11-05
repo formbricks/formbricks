@@ -102,7 +102,6 @@ export const MainNavigation = ({
   const { hasManageAccess, hasReadAccess } = getTeamPermissionFlags(productPermission);
   const isOwnerOrManager = isManager || isOwner;
   const isPricingDisabled = isMember;
-
   const isReadOnly = isMember && hasReadAccess;
 
   const toggleSidebar = () => {

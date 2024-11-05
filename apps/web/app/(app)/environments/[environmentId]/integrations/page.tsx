@@ -7,6 +7,8 @@ import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
@@ -57,13 +59,24 @@ const Page = async ({ params }) => {
     throw new Error(t("common.organization_not_found"));
   }
 
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
+  }
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+
+  const productPermission = await getProductPermissionByUserId(session?.user.id, environment?.productId);
+
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  if (isMember) return <ErrorComponent />;
+  if (isReadOnly) return <ErrorComponent />;
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");

@@ -32,6 +32,7 @@ export const TopControlButtons = ({
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const isReadOnly = isMember && hasReadAccess;
 
   return (
     <div className="z-50 flex items-center space-x-2">
@@ -58,7 +59,7 @@ export const TopControlButtons = ({
         }}>
         <CircleUserIcon strokeWidth={1.5} className="h-5 w-5" />
       </Button>
-      {isBilling || (isMember && hasReadAccess) ? (
+      {isBilling || isReadOnly ? (
         <></>
       ) : (
         <Button
