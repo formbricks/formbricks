@@ -77,7 +77,7 @@ export const SignupOptions = ({
         e.target.elements.email.value,
         e.target.elements.password.value,
         userLocale,
-        inviteToken
+        inviteToken || ""
       );
       const emailTokenActionResponse = await createEmailTokenAction({ email: e.target.elements.email.value });
       if (emailTokenActionResponse?.serverError) {
