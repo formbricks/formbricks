@@ -24,7 +24,7 @@ import { createActionClassAction } from "../actions";
 interface CreateNewActionTabProps {
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
-  isMember: boolean;
+  isReadOnly: boolean;
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
@@ -34,7 +34,7 @@ export const CreateNewActionTab = ({
   actionClasses,
   setActionClasses,
   setOpen,
-  isMember,
+  isReadOnly,
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
@@ -87,7 +87,7 @@ export const CreateNewActionTab = ({
   const submitHandler = async (data: TActionClassInput) => {
     const { type } = data;
     try {
-      if (isMember) {
+      if (isReadOnly) {
         throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
 

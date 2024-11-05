@@ -21,7 +21,7 @@ interface ResponseTagsWrapperProps {
   responseId: string;
   environmentTags: TTag[];
   updateFetchedResponses: () => void;
-  isMember?: boolean;
+  isReadOnly?: boolean;
 }
 
 export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -30,7 +30,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   responseId,
   environmentTags,
   updateFetchedResponses,
-  isMember,
+  isReadOnly,
 }) => {
   const t = useTranslations();
   const router = useRouter();
@@ -60,7 +60,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   return (
     <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
-      {!isMember && (
+      {!isReadOnly && (
         <Button
           variant="minimal"
           size="sm"
@@ -81,11 +81,11 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             tags={tagsState}
             setTagsState={setTagsState}
             highlight={tagIdToHighlight === tag.tagId}
-            allowDelete={!isMember}
+            allowDelete={!isReadOnly}
           />
         ))}
 
-        {!isMember && (
+        {!isReadOnly && (
           <TagsCombobox
             open={open}
             setOpen={setOpen}

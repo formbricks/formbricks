@@ -40,7 +40,7 @@ interface ResponseTableProps {
   environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
-  isMember: boolean;
+  isReadOnly: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
@@ -56,7 +56,7 @@ export const ResponseTable = ({
   user,
   environment,
   environmentTags,
-  isMember,
+  isReadOnly,
   fetchNextPage,
   hasMore,
   deleteResponses,
@@ -75,7 +75,7 @@ export const ResponseTable = ({
   const [parent] = useAutoAnimate();
 
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isMember, t);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t);
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -266,7 +266,7 @@ export const ResponseTable = ({
             user={user}
             environment={environment}
             environmentTags={environmentTags}
-            isMember={isMember}
+            isReadOnly={isReadOnly}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
             setSelectedResponseId={setSelectedResponseId}

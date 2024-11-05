@@ -13,9 +13,7 @@ import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
@@ -27,14 +25,14 @@ interface ActionSettingsTabProps {
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   setOpen: (v: boolean) => void;
-  membershipRole?: TOrganizationRole;
+  isReadOnly: boolean;
 }
 
 export const ActionSettingsTab = ({
   actionClass,
   actionClasses,
   setOpen,
-  membershipRole,
+  isReadOnly,
 }: ActionSettingsTabProps) => {
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
@@ -42,7 +40,7 @@ export const ActionSettingsTab = ({
   const t = useTranslations();
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
-  const { isMember } = getAccessFlags(membershipRole);
+
   const actionClassNames = useMemo(
     () =>
       actionClasses.filter((action) => action.id !== actionClass.id).map((actionClass) => actionClass.name),
@@ -72,7 +70,7 @@ export const ActionSettingsTab = ({
 
   const onSubmit = async (data: TActionClassInput) => {
     try {
-      if (isMember) {
+      if (isReadOnly) {
         throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
       setIsUpdatingAction(true);
@@ -165,7 +163,7 @@ export const ActionSettingsTab = ({
                   )}
                 />
               </div>
-              {!isMember && (
+              {!isReadOnly && (
                 <div className="col-span-1">
                   <FormField
                     control={control}
@@ -213,7 +211,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between border-t border-slate-200 py-6">
             <div>
-              {!isMember && actionClass.type !== "automatic" && (
+              {!isReadOnly && actionClass.type !== "automatic" && (
                 <Button
                   type="button"
                   variant="warn"

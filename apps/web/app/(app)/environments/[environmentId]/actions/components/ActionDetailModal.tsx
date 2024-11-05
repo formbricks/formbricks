@@ -12,7 +12,7 @@ interface ActionDetailModalProps {
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
   actionClasses: TActionClass[];
-  membershipRole?: TOrganizationRole;
+  isReadOnly: boolean;
 }
 
 export const ActionDetailModal = ({
@@ -21,7 +21,7 @@ export const ActionDetailModal = ({
   setOpen,
   actionClass,
   actionClasses,
-  membershipRole,
+  isReadOnly,
 }: ActionDetailModalProps) => {
   const t = useTranslations();
   const tabs = [
@@ -36,7 +36,7 @@ export const ActionDetailModal = ({
           actionClass={actionClass}
           actionClasses={actionClasses}
           setOpen={setOpen}
-          membershipRole={membershipRole}
+          isReadOnly={isReadOnly}
         />
       ),
     },

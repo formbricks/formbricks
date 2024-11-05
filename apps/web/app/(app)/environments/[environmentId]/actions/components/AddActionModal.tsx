@@ -4,32 +4,25 @@ import { CreateNewActionTab } from "@/app/(app)/(survey-editor)/environments/[en
 import { MousePointerClickIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { Button } from "@formbricks/ui/components/Button";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddActionModalProps {
   environmentId: string;
   actionClasses: TActionClass[];
+  isReadOnly: boolean;
 }
 
-export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalProps) => {
+export const AddActionModal = ({ environmentId, actionClasses, isReadOnly }: AddActionModalProps) => {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
-  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
-  const { isMember } = getAccessFlags(membershipRole);
-  const [newActionClasses, setNewActionClasses] = useState<TActionClass[]>(actionClasses);
 
-  if (error) {
-    return <ErrorComponent />;
-  }
+  const [newActionClasses, setNewActionClasses] = useState<TActionClass[]>(actionClasses);
 
   return (
     <>
-      <Button size="sm" loading={isLoading} onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+      <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
         {t("common.add_action")}
       </Button>
       <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>
@@ -56,7 +49,7 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
           <CreateNewActionTab
             actionClasses={newActionClasses}
             environmentId={environmentId}
-            isMember={isMember}
+            isReadOnly={isReadOnly}
             setActionClasses={setNewActionClasses}
             setOpen={setOpen}
           />

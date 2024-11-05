@@ -21,10 +21,6 @@ export const GET = async (_: Request, context: { params: { organizationId: strin
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
   const { isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
 
-  if (isBilling) {
-    return redirect(`/organizations/${organizationId}/settings/billing`);
-  }
-
   // redirect to first product's production environment
   const products = await getUserProducts(session.user.id, organizationId);
   if (products.length === 0) {
@@ -35,5 +31,10 @@ export const GET = async (_: Request, context: { params: { organizationId: strin
   const environments = await getEnvironments(firstProduct.id);
   const prodEnvironment = environments.find((e) => e.type === "production");
   if (!prodEnvironment) return notFound();
+
+  if (isBilling) {
+    return redirect(`/environments/${prodEnvironment.id}/settings/billing`);
+  }
+
   redirect(`/environments/${prodEnvironment.id}/`);
 };

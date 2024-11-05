@@ -12,10 +12,10 @@ import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 interface DeletePersonButtonProps {
   environmentId: string;
   personId: string;
-  isMember: boolean;
+  isReadOnly: boolean;
 }
 
-export const DeletePersonButton = ({ environmentId, personId, isMember }: DeletePersonButtonProps) => {
+export const DeletePersonButton = ({ environmentId, personId, isReadOnly }: DeletePersonButtonProps) => {
   const router = useRouter();
   const t = useTranslations();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -42,7 +42,7 @@ export const DeletePersonButton = ({ environmentId, personId, isMember }: Delete
     }
   };
 
-  if (isMember) {
+  if (isReadOnly) {
     return null;
   }
 

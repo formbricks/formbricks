@@ -4,6 +4,8 @@ import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { getIsAIEnabled } from "@/app/lib/utils";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -63,6 +65,11 @@ const Page = async ({ params }) => {
 
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
+  const permission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(permission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
   const isAIEnabled = await getIsAIEnabled(organization);
   const shouldGenerateInsights = needsInsightsGeneration(survey);
   const locale = findMatchingLocale();
@@ -75,7 +82,7 @@ const Page = async ({ params }) => {
           <SurveyAnalysisCTA
             environment={environment}
             survey={survey}
-            isMember={isMember}
+            isReadOnly={isReadOnly}
             webAppUrl={WEBAPP_URL}
             user={user}
           />
@@ -104,6 +111,7 @@ const Page = async ({ params }) => {
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
         locale={locale}
+        isReadOnly={!isReadOnly}
       />
     </PageContentWrapper>
   );

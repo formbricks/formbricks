@@ -1,5 +1,6 @@
 "use client";
 
+import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -39,6 +40,7 @@ interface SurveyEditorProps {
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
+  productPermission: TTeamPermission | null;
 }
 
 export const SurveyEditor = ({
@@ -58,6 +60,7 @@ export const SurveyEditor = ({
   plan,
   isCxMode = false,
   locale,
+  productPermission,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -209,6 +212,7 @@ export const SurveyEditor = ({
               isUserTargetingAllowed={isUserTargetingAllowed}
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
+              productPermission={productPermission}
             />
           )}
         </main>

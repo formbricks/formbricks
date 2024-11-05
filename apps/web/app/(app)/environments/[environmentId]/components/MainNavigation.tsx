@@ -99,9 +99,11 @@ export const MainNavigation = ({
 
   const product = products.find((product) => product.id === environment.productId);
   const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
-  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+  const { hasManageAccess, hasReadAccess } = getTeamPermissionFlags(productPermission);
   const isOwnerOrManager = isManager || isOwner;
   const isPricingDisabled = isMember;
+
+  const isReadOnly = isMember && hasReadAccess;
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -185,6 +187,7 @@ export const MainNavigation = ({
         name: t("common.people"),
         href: `/environments/${environment.id}/people`,
         icon: UserIcon,
+        isHidden: isReadOnly,
         isActive:
           pathname?.includes("/people") ||
           pathname?.includes("/segments") ||
@@ -195,13 +198,14 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
+        isHidden: isReadOnly,
       },
       {
         name: t("common.integrations"),
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),
-        isHidden: isMember,
+        isHidden: isReadOnly,
       },
       {
         name: t("common.configuration"),

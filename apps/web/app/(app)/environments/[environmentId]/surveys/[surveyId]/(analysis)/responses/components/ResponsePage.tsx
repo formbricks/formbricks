@@ -30,6 +30,7 @@ interface ResponsePageProps {
   environmentTags: TTag[];
   responsesPerPage: number;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
 export const ResponsePage = ({
@@ -41,6 +42,7 @@ export const ResponsePage = ({
   environmentTags,
   responsesPerPage,
   locale,
+  isReadOnly,
 }: ResponsePageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -189,7 +191,7 @@ export const ResponsePage = ({
         user={user}
         environment={environment}
         environmentTags={environmentTags}
-        isMember={isSharingPage}
+        isReadOnly={isReadOnly}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
         deleteResponses={deleteResponses}

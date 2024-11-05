@@ -8,6 +8,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { productCache } from "@formbricks/lib/product/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
@@ -287,6 +288,8 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
       organizationId: team.organizationId,
     });
 
+    productCache.revalidate({ userId });
+
     for (const productTeam of team.productTeams) {
       teamCache.revalidate({ productId: productTeam.productId });
     }
@@ -397,6 +400,7 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
       });
 
       teamCache.revalidate({ userId });
+      productCache.revalidate({ userId });
     }
 
     teamCache.revalidate({ id: teamId, organizationId: team.organizationId });

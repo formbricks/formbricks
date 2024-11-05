@@ -84,7 +84,7 @@ const Page = async ({ params }) => {
           <SurveyAnalysisCTA
             environment={environment}
             survey={survey}
-            isMember={isMember}
+            isReadOnly={isMember}
             webAppUrl={WEBAPP_URL}
             user={user}
           />

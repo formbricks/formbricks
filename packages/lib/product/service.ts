@@ -41,7 +41,6 @@ export const getUserProducts = reactCache(
       async () => {
         validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
 
-        console.log(userId, organizationId, "randi ka beej");
         const orgMembership = await prisma.membership.findFirst({
           where: {
             userId,
@@ -52,8 +51,6 @@ export const getUserProducts = reactCache(
         if (!orgMembership) {
           throw new ValidationError("User is not a member of this organization");
         }
-
-        console.log(orgMembership, "randi ka beej");
 
         let productWhereClause: Prisma.ProductWhereInput = {};
 
@@ -94,7 +91,7 @@ export const getUserProducts = reactCache(
       },
       [`getUserProducts-${userId}-${organizationId}-${page}`],
       {
-        tags: [productCache.tag.byOrganizationId(organizationId)],
+        tags: [productCache.tag.byUserId(userId), productCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );

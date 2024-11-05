@@ -11,6 +11,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { productCache } from "@formbricks/lib/product/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -106,6 +107,9 @@ export const removeTeamAccess = async (productId: string, teamId: string): Promi
       id: teamId,
       productId,
     });
+    productCache.revalidate({
+      id: productId,
+    });
 
     return true;
   } catch (error) {
@@ -144,6 +148,9 @@ export const addTeamAccess = async (productId: string, teamIds: string[]): Promi
 
     teamCache.revalidate({
       productId,
+    });
+    productCache.revalidate({
+      id: productId,
     });
 
     teamIds.forEach((teamId) => {
@@ -234,6 +241,10 @@ export const updateTeamAccessPermission = async (
     teamCache.revalidate({
       id: teamId,
       productId,
+    });
+
+    productCache.revalidate({
+      id: productId,
     });
 
     return true;

@@ -25,7 +25,7 @@ import {
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
   environment: TEnvironment;
-  isMember: boolean;
+  isReadOnly: boolean;
   webAppUrl: string;
   user: TUser;
 }
@@ -40,7 +40,7 @@ interface ModalState {
 export const SurveyAnalysisCTA = ({
   survey,
   environment,
-  isMember,
+  isReadOnly,
   webAppUrl,
   user,
 }: SurveyAnalysisCTAProps) => {
@@ -124,7 +124,7 @@ export const SurveyAnalysisCTA = ({
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 
-      {!isMember && (
+      {!isReadOnly && (
         <Button
           variant="secondary"
           size="sm"
@@ -144,7 +144,7 @@ export const SurveyAnalysisCTA = ({
         </Button>
       )}
 
-      {!isMember && (
+      {!isReadOnly && (
         <Button
           href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
           EndIcon={SquarePenIcon}
@@ -153,7 +153,7 @@ export const SurveyAnalysisCTA = ({
         </Button>
       )}
 
-      {!isMember && (
+      {!isReadOnly && (
         <div id={`${survey.name.toLowerCase().replace(/\s+/g, "-")}-survey-actions`}>
           <DropdownMenu
             open={modalState.dropdown}

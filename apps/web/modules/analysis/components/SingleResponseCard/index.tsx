@@ -29,7 +29,7 @@ interface SingleResponseCardProps {
   environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
   deleteResponses?: (responseIds: string[]) => void;
-  isMember: boolean;
+  isReadOnly: boolean;
   setSelectedResponseId?: (responseId: string | null) => void;
   locale: TUserLocale;
 }
@@ -43,7 +43,7 @@ export const SingleResponseCard = ({
   environment,
   updateResponse,
   deleteResponses,
-  isMember,
+  isReadOnly,
   setSelectedResponseId,
   locale,
 }: SingleResponseCardProps) => {
@@ -94,7 +94,7 @@ export const SingleResponseCard = ({
   const handleDeleteResponse = async () => {
     setIsDeleting(true);
     try {
-      if (isMember) {
+      if (isReadOnly) {
         throw new Error(t("common.not_authorized"));
       }
       await deleteResponseAction({ responseId: response.id });
@@ -135,7 +135,7 @@ export const SingleResponseCard = ({
           survey={survey}
           environment={environment}
           user={user}
-          isMember={isMember}
+          isReadOnly={isReadOnly}
           setDeleteDialogOpen={setDeleteDialogOpen}
           locale={locale}
         />
@@ -148,7 +148,7 @@ export const SingleResponseCard = ({
           tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
           environmentTags={environmentTags}
           updateFetchedResponses={updateFetchedResponses}
-          isMember={isMember}
+          isReadOnly={isReadOnly}
         />
 
         <DeleteDialog

@@ -1,6 +1,8 @@
 "use client";
 
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
+import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { useEffect, useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -21,6 +23,7 @@ interface ResponseTimelineProps {
   environmentTags: TTag[];
   attributeClasses: TAttributeClass[];
   locale: TUserLocale;
+  productPermission: TTeamPermission | null;
 }
 
 export const ResponseFeed = ({
@@ -31,6 +34,7 @@ export const ResponseFeed = ({
   environmentTags,
   attributeClasses,
   locale,
+  productPermission,
 }: ResponseTimelineProps) => {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
@@ -65,6 +69,7 @@ export const ResponseFeed = ({
             updateResponse={updateResponse}
             attributeClasses={attributeClasses}
             locale={locale}
+            productPermission={productPermission}
           />
         ))
       )}
@@ -82,6 +87,7 @@ const ResponseSurveyCard = ({
   updateResponse,
   attributeClasses,
   locale,
+  productPermission,
 }: {
   response: TResponse;
   surveys: TSurvey[];
@@ -92,6 +98,7 @@ const ResponseSurveyCard = ({
   updateResponse: (responseId: string, response: TResponse) => void;
   attributeClasses: TAttributeClass[];
   locale: TUserLocale;
+  productPermission: TTeamPermission | null;
 }) => {
   const survey = surveys.find((survey) => {
     return survey.id === response.surveyId;
@@ -99,6 +106,8 @@ const ResponseSurveyCard = ({
 
   const { membershipRole } = useMembershipRole(survey?.environmentId || "");
   const { isMember } = getAccessFlags(membershipRole);
+
+  const {} = getTeamPermissionFlags(productPermission);
 
   return (
     <div key={response.id}>
@@ -112,7 +121,7 @@ const ResponseSurveyCard = ({
           environment={environment}
           deleteResponses={deleteResponses}
           updateResponse={updateResponse}
-          isMember={isMember}
+          isReadOnly={isMember}
           locale={locale}
         />
       )}

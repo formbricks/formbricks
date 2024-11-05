@@ -1,5 +1,7 @@
 "use client";
 
+import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
@@ -27,6 +29,7 @@ interface WhenToSendCardProps {
   environmentId: string;
   propActionClasses: TActionClass[];
   membershipRole?: TOrganizationRole;
+  productPermission: TTeamPermission | null;
 }
 
 export const WhenToSendCard = ({
@@ -35,6 +38,7 @@ export const WhenToSendCard = ({
   setLocalSurvey,
   propActionClasses,
   membershipRole,
+  productPermission,
 }: WhenToSendCardProps) => {
   const t = useTranslations();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
@@ -43,6 +47,9 @@ export const WhenToSendCard = ({
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
   const { isMember } = getAccessFlags(membershipRole);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
 
   const autoClose = localSurvey.autoClose !== null;
   const delay = localSurvey.delay !== 0;
@@ -367,7 +374,7 @@ export const WhenToSendCard = ({
         setOpen={setAddActionModalOpen}
         actionClasses={actionClasses}
         setActionClasses={setActionClasses}
-        isMember={isMember}
+        isReadOnly={isReadOnly}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
       />

@@ -59,7 +59,8 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 
-  if (isMember && hasReadAccess) {
+  const isReadOnly = isMember && hasReadAccess;
+  if (isReadOnly) {
     return redirect(`/environments/${environment.id}/surveys`);
   }
 
