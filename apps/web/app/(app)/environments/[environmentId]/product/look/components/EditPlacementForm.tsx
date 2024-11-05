@@ -51,7 +51,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
   const clickOutsideClose = form.watch("clickOutsideClose");
   const isSubmitting = form.formState.isSubmitting;
 
-  const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-gray-700/80" : "bg-slate-200";
+  const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-slate-700/80" : "bg-slate-200";
 
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
     try {

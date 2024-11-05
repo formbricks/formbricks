@@ -78,7 +78,7 @@ export const SavedActionsTab = ({
 
                         <h4 className="text-sm font-semibold text-slate-600">{action.name}</h4>
                       </div>
-                      <p className="mt-1 text-xs text-gray-500">{action.description}</p>
+                      <p className="mt-1 text-xs text-slate-500">{action.description}</p>
                     </div>
                   ))}
                 </div>
