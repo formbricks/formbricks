@@ -70,7 +70,7 @@ export const EmbedView = ({
                     ? "border-slate-200 bg-slate-100 font-semibold text-slate-900"
                     : "border-transparent text-slate-500 hover:text-slate-700"
                 )}
-                autoFocus={tab.id === activeId ? true : false}
+                autoFocus={tab.id === activeId}
                 aria-current={tab.id === activeId ? "page" : undefined}>
                 {tab.label}
               </Button>
