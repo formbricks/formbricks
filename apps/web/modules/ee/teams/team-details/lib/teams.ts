@@ -16,6 +16,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { organizationCache } from "@formbricks/lib/organization/cache";
 import { productCache } from "@formbricks/lib/product/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
@@ -513,6 +514,24 @@ export const updateTeamProductPermission = async (
 export const removeTeamProduct = async (teamId: string, productId: string): Promise<boolean> => {
   validateInputs([teamId, ZId], [productId, ZId]);
   try {
+    const product = await prisma.product.findUnique({
+      where: {
+        id: productId,
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        environments: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    if (!product) {
+      throw new ResourceNotFoundError("product", productId);
+    }
     const productTeam = await prisma.productTeam.findUnique({
       where: {
         productId_teamId: {
@@ -536,7 +555,11 @@ export const removeTeamProduct = async (teamId: string, productId: string): Prom
     });
 
     teamCache.revalidate({ id: teamId, productId });
-    productCache.revalidate({ id: productId });
+    productCache.revalidate({ id: productId, organizationId: product.organizationId });
+
+    for (const environment of product.environments) {
+      organizationCache.revalidate({ environmentId: environment.id });
+    }
 
     return true;
   } catch (error) {
@@ -607,6 +630,13 @@ export const addTeamProducts = async (teamId: string, productIds: string[]): Pro
           id: productId,
           organizationId: team.organizationId,
         },
+        select: {
+          environments: {
+            select: {
+              id: true,
+            },
+          },
+        },
       });
 
       if (!product) {
@@ -635,7 +665,11 @@ export const addTeamProducts = async (teamId: string, productIds: string[]): Pro
       });
 
       teamCache.revalidate({ id: teamId, productId });
-      productCache.revalidate({ id: productId });
+      productCache.revalidate({ id: productId, organizationId: team.organizationId });
+
+      for (const environment of product.environments) {
+        organizationCache.revalidate({ environmentId: environment.id });
+      }
     }
 
     return true;
