@@ -1,4 +1,5 @@
 import { type ZodIssue, z } from "zod";
+import { _SurveyFollowUpModel } from "@formbricks/database/zod/surveyfollowup";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
@@ -764,6 +765,7 @@ export const ZSurvey = z
         });
       }
     }),
+    followUps: z.array(_SurveyFollowUpModel),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
     runOnDate: z.date().nullable(),
@@ -2076,7 +2078,7 @@ export interface TSurveyDates {
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
-export type TSurveyEditorTabs = "questions" | "settings" | "styling";
+export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps";
 
 export const ZSurveyQuestionSummaryOpenText = z.object({
   type: z.literal("openText"),

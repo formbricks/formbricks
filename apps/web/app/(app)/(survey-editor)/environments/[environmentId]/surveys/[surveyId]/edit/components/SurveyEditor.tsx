@@ -1,5 +1,6 @@
 "use client";
 
+import { FollowUpsView } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpsView";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -210,6 +211,10 @@ export const SurveyEditor = ({
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
             />
+          )}
+
+          {activeView === "followUps" && (
+            <FollowUpsView localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
           )}
         </main>
 

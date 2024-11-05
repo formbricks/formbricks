@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { _SurveyFollowUpModel } from "@formbricks/database/zod/surveyfollowup";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -24,6 +25,7 @@ import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
+import { createSurveyFollowUp } from "./lib/survey-follow-up";
 
 export const updateSurveyAction = authenticatedActionClient
   .schema(ZSurvey)
@@ -274,4 +276,29 @@ export const createActionClassAction = authenticatedActionClient
     });
 
     return await createActionClass(parsedInput.action.environmentId, parsedInput.action);
+  });
+
+const ZCreateSurveyFollowUpAction = z.object({
+  surveyId: ZId,
+  followUpData: z.object({
+    name: z.string().min(1, "Name must be at least 1 character long"),
+    trigger: _SurveyFollowUpModel.pick({ trigger: true }),
+    action: _SurveyFollowUpModel.pick({ action: true }),
+  }),
+});
+
+export const createSurveyFollowUpAction = authenticatedActionClient
+  .schema(ZCreateSurveyFollowUpAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    return await createSurveyFollowUp(parsedInput.surveyId, {
+      name: parsedInput.followUpData.name,
+      trigger: parsedInput.followUpData.trigger.trigger,
+      action: parsedInput.followUpData.action.action,
+    });
   });

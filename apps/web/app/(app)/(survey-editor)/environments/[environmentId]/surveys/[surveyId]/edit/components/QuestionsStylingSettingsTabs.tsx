@@ -1,4 +1,4 @@
-import { PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
+import { PaintbrushIcon, Rows3Icon, SettingsIcon, WorkflowIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -25,6 +25,11 @@ const tabs: Tab[] = [
     id: "settings",
     label: "common.settings",
     icon: <SettingsIcon className="h-5 w-5" />,
+  },
+  {
+    id: "followUps",
+    label: "environments.surveys.edit.follow_ups",
+    icon: <WorkflowIcon className="h-5 w-5" />,
   },
 ];
 
