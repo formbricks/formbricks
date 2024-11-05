@@ -1,6 +1,6 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
-import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";

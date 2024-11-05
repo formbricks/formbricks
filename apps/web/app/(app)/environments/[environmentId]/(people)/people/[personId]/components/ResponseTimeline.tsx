@@ -1,7 +1,7 @@
 "use client";
 
 import { ResponseFeed } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponsesFeed";
-import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";

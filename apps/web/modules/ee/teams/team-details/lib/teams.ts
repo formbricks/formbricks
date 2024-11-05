@@ -1,7 +1,7 @@
 import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
-import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import {
   TOrganizationMember,
   TOrganizationProduct,

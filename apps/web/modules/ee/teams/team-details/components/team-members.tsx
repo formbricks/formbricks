@@ -168,7 +168,7 @@ export const TeamMembers = ({
                             <SelectValue placeholder="Select type" className="text-sm" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value={ZTeamRole.Enum.admin}>Admin</SelectItem>
+                            <SelectItem value={ZTeamRole.Enum.admin}>Team Admin</SelectItem>
                             <SelectItem value={ZTeamRole.Enum.contributor}>Contributor</SelectItem>
                           </SelectContent>
                         </Select>
@@ -179,7 +179,7 @@ export const TeamMembers = ({
                               <p>{TeamRoleMapping[teamMember.role]}</p>
                               <InfoIcon className="h-4 w-4 text-gray-500" />
                             </TooltipTrigger>
-                            <TooltipContent>Org owner and managers can only be admin.</TooltipContent>
+                            <TooltipContent>Org owner and managers can only be team admin.</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       ) : (

@@ -5,7 +5,7 @@ import {
   TProductTeam,
   TTeamPermission,
   ZTeamPermission,
-} from "@/modules/ee/teams/team-access/types/teams";
+} from "@/modules/ee/teams/product-teams/types/teams";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";

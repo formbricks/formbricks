@@ -1,7 +1,7 @@
 "use client";
 
 import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
-import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";

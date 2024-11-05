@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";

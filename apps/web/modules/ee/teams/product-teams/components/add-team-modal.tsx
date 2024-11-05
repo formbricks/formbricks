@@ -1,6 +1,6 @@
 "use client";
 
-import { addAccessAction } from "@/modules/ee/teams/team-access/actions";
+import { addAccessAction } from "@/modules/ee/teams/product-teams/actions";
 import { UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

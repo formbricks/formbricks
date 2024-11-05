@@ -1,5 +1,5 @@
 import { TopControlButtons } from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
-import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";

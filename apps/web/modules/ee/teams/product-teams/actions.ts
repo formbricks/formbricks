@@ -6,7 +6,7 @@ import {
   addTeamAccess,
   removeTeamAccess,
   updateTeamAccessPermission,
-} from "@/modules/ee/teams/team-access/lib/teams";
+} from "@/modules/ee/teams/product-teams/lib/teams";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { ZId } from "@formbricks/types/common";

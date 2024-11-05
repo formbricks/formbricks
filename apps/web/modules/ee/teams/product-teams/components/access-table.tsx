@@ -1,7 +1,7 @@
 "use client";
 
-import { removeAccessAction, updateAccessPermissionAction } from "@/modules/ee/teams/team-access/actions";
-import { TProductTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { removeAccessAction, updateAccessPermissionAction } from "@/modules/ee/teams/product-teams/actions";
+import { TProductTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

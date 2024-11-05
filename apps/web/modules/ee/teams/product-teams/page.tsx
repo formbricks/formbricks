@@ -1,5 +1,5 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import { AccessView } from "@/modules/ee/teams/team-access/components/access-view";
+import { AccessView } from "@/modules/ee/teams/product-teams/components/access-view";
 import { getServerSession } from "next-auth";
 import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -11,7 +11,7 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { getTeamsByOranizationId, getTeamsByProductId } from "./lib/teams";
 
-export const TeamAccess = async ({ params }: { params: { environmentId: string } }) => {
+export const ProductTeams = async ({ params }: { params: { environmentId: string } }) => {
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),

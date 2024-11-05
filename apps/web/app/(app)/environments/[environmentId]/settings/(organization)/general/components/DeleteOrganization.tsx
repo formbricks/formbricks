@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { Input } from "@formbricks/ui/components/Input";
@@ -65,7 +66,11 @@ export const DeleteOrganization = ({
           </Button>
         </div>
       )}
-      {isDeleteDisabled && <p className="text-sm text-red-700">{deleteDisabledWarning}</p>}
+      {isDeleteDisabled && (
+        <Alert variant="warning">
+          <AlertDescription>{deleteDisabledWarning}</AlertDescription>
+        </Alert>
+      )}
       <DeleteOrganizationModal
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}

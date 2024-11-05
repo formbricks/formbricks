@@ -1,7 +1,7 @@
 "use client";
 
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
-import { TTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { useEffect, useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";

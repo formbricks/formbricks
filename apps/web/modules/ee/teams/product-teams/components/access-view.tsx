@@ -1,9 +1,9 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { AccessTable } from "@/modules/ee/teams/team-access/components/access-table";
-import { AddTeam } from "@/modules/ee/teams/team-access/components/add-team";
-import { TOrganizationTeam, TProductTeam } from "@/modules/ee/teams/team-access/types/teams";
+import { AccessTable } from "@/modules/ee/teams/product-teams/components/access-table";
+import { AddTeam } from "@/modules/ee/teams/product-teams/components/add-team";
+import { TOrganizationTeam, TProductTeam } from "@/modules/ee/teams/product-teams/types/teams";
 import { TProduct } from "@formbricks/types/product";
 
 interface AccessViewProps {

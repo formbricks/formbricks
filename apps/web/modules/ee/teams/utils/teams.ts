@@ -7,7 +7,7 @@ export const TeamPermissionMapping = {
 };
 
 export const TeamRoleMapping = {
-  [TeamUserRole.admin]: "Admin",
+  [TeamUserRole.admin]: "Team Admin",
   [TeamUserRole.contributor]: "Contributor",
 };
 

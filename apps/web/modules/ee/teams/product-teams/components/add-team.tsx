@@ -1,8 +1,8 @@
 "use client";
 
-import { addAccessAction } from "@/modules/ee/teams/team-access/actions";
-import { AddTeamModal } from "@/modules/ee/teams/team-access/components/add-team-modal";
-import { TOrganizationTeam, TProductTeam } from "@/modules/ee/teams/team-access/types/teams";
+import { addAccessAction } from "@/modules/ee/teams/product-teams/actions";
+import { AddTeamModal } from "@/modules/ee/teams/product-teams/components/add-team-modal";
+import { TOrganizationTeam, TProductTeam } from "@/modules/ee/teams/product-teams/types/teams";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { useState } from "react";
 import { Button } from "@formbricks/ui/components/Button";

@@ -2,7 +2,7 @@
 
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
-import { ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import {
   addTeamMembers,
   addTeamProducts,

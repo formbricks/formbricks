@@ -7,6 +7,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TOrganization } from "@formbricks/types/organizations";
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
 import { Label } from "@formbricks/ui/components/Label";
 import { Switch } from "@formbricks/ui/components/Switch";
 
@@ -54,38 +55,43 @@ export const AIToggle = ({ organization, isUserManagerOrOwner }: AIToggleProps) 
     }
   };
 
-  return !isUserManagerOrOwner ? (
-    <p className="text-sm text-red-700">
-      {t("environments.settings.general.only_org_owner_can_perform_action")}
-    </p>
-  ) : (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <Label htmlFor="formbricks-ai-toggle" className="cursor-pointer">
-          {isAIEnabled ? t("common.disable") : t("common.enable")}{" "}
-          {t("environments.settings.general.formbricks_ai")}
-        </Label>
-        <Switch
-          id="formbricks-ai-toggle"
-          disabled={isSubmitting}
-          checked={isAIEnabled}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleUpdateOrganization({ enabled: !organization.isAIEnabled });
-          }}
-        />
+  return (
+    <>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="formbricks-ai-toggle" className="cursor-pointer">
+            {isAIEnabled ? t("common.disable") : t("common.enable")}{" "}
+            {t("environments.settings.general.formbricks_ai")}
+          </Label>
+          <Switch
+            id="formbricks-ai-toggle"
+            disabled={!isUserManagerOrOwner || isSubmitting}
+            checked={isAIEnabled}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleUpdateOrganization({ enabled: !organization.isAIEnabled });
+            }}
+          />
+        </div>
+        <div className="mt-3 text-xs text-slate-600">
+          {t("environments.settings.general.formbricks_ai_privacy_policy_text")}{" "}
+          <Link
+            className="underline"
+            href={"https://formbricks.com/privacy-policy"}
+            rel="noreferrer"
+            target="_blank">
+            {t("common.privacy_policy")}
+          </Link>
+          .
+        </div>
       </div>
-      <div className="mt-3 text-xs text-slate-600">
-        {t("environments.settings.general.formbricks_ai_privacy_policy_text")}{" "}
-        <Link
-          className="underline"
-          href={"https://formbricks.com/privacy-policy"}
-          rel="noreferrer"
-          target="_blank">
-          {t("common.privacy_policy")}
-        </Link>
-        .
-      </div>
-    </div>
+      {!isUserManagerOrOwner && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("environments.settings.general.only_org_owner_can_perform_action")}
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
   );
 };

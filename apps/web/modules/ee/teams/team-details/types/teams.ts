@@ -1,4 +1,4 @@
-import { ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { z } from "zod";
 

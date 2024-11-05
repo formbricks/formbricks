@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/team-access/types/teams";
+import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { updateTeamProductPermissionAction } from "@/modules/ee/teams/team-details/actions";
 import { AddTeamProductModal } from "@/modules/ee/teams/team-details/components/add-team-product-modal";
 import { TOrganizationProduct, TTeamProduct } from "@/modules/ee/teams/team-details/types/teams";

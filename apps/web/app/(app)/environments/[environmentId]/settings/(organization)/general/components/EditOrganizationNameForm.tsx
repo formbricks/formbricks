@@ -10,6 +10,7 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   FormControl,
@@ -66,45 +67,51 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
 
   const isMemberOrBilling = isMember || isBilling;
 
-  return isMemberOrBilling ? (
-    <p className="text-sm text-red-700">
-      {t("environments.settings.general.only_org_owner_can_perform_action")}
-    </p>
-  ) : (
-    <FormProvider {...form}>
-      <form
-        className="w-full max-w-sm items-center"
-        onSubmit={form.handleSubmit(handleUpdateOrganizationName)}>
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field, fieldState }) => (
-            <FormItem>
-              <FormLabel>{t("environments.settings.general.organization_name")}</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="text"
-                  isInvalid={!!fieldState.error?.message}
-                  placeholder={t("environments.settings.general.organization_name_placeholder")}
-                  required
-                />
-              </FormControl>
+  return (
+    <>
+      <FormProvider {...form}>
+        <form
+          className="w-full max-w-sm items-center"
+          onSubmit={form.handleSubmit(handleUpdateOrganizationName)}>
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>{t("environments.settings.general.organization_name")}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="text"
+                    disabled={isMemberOrBilling}
+                    isInvalid={!!fieldState.error?.message}
+                    placeholder={t("environments.settings.general.organization_name_placeholder")}
+                    required
+                  />
+                </FormControl>
 
-              <FormError />
-            </FormItem>
-          )}
-        />
+                <FormError />
+              </FormItem>
+            )}
+          />
 
-        <Button
-          type="submit"
-          className="mt-4"
-          size="sm"
-          loading={isSubmitting}
-          disabled={isSubmitting || !isDirty}>
-          {t("common.update")}
-        </Button>
-      </form>
-    </FormProvider>
+          <Button
+            type="submit"
+            className="mt-4"
+            size="sm"
+            loading={isSubmitting}
+            disabled={isSubmitting || !isDirty || isMemberOrBilling}>
+            {t("common.update")}
+          </Button>
+        </form>
+      </FormProvider>
+      {isMemberOrBilling && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("environments.settings.general.only_org_owner_can_perform_action")}
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
   );
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-access/types/teams";
+import { TOrganizationTeam } from "@/modules/ee/teams/product-teams/types/teams";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
