@@ -92,7 +92,7 @@ export const SignupOptions = ({
     setSigningUp(true);
 
     try {
-      await createUser(data.name, data.email, data.password, userLocale, inviteToken);
+      await createUser(data.name, data.email, data.password, userLocale, inviteToken || "");
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
         : `/auth/verification-requested?email=${encodeURIComponent(data.email)}`;
