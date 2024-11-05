@@ -51,63 +51,63 @@ export const InsightSheet = ({
   const [isLoading, setIsLoading] = useState(false); // New state for loading
   const [hasMore, setHasMore] = useState(false);
 
-  const fetchDocuments = useCallback(async () => {
-    if (!insight) return;
-    if (isLoading) return; // Prevent fetching if already loading
-    setIsLoading(true); // Set loading state to true
-
-    try {
-      let documentsResponse;
-      if (questionId && surveyId) {
-        documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
-          insightId: insight.id,
-          surveyId,
-          questionId,
-          limit: documentsPerPage,
-          offset: (page - 1) * documentsPerPage,
-        });
-      } else {
-        documentsResponse = await getDocumentsByInsightIdAction({
-          insightId: insight.id,
-          filterCriteria: documentsFilter,
-          limit: documentsPerPage,
-          offset: (page - 1) * documentsPerPage,
-        });
-      }
-
-      if (!documentsResponse?.data) {
-        const errorMessage = getFormattedErrorMessage(documentsResponse);
-        console.error(errorMessage);
-        return;
-      }
-
-      const fetchedDocuments = documentsResponse.data;
-
-      setDocuments((prevDocuments) => {
-        // Remove duplicates based on document ID
-        const uniqueDocuments = new Map<string, TDocument>([
-          ...prevDocuments.map((doc) => [doc.id, doc]),
-          ...fetchedDocuments.map((doc) => [doc.id, doc]),
-        ]);
-        return Array.from(uniqueDocuments.values()) as TDocument[];
-      });
-
-      setHasMore(fetchedDocuments.length === documentsPerPage);
-    } finally {
-      setIsLoading(false); // Reset loading state
-    }
-  }, [insight, page, surveyId, questionId, documentsFilter]);
-
   useEffect(() => {
     if (isOpen) {
       setDocuments([]);
       setPage(1);
       setHasMore(false); // Reset hasMore when the sheet is opened
     }
-    if (insight) {
+    if (isOpen && insight) {
       fetchDocuments();
     }
-  }, [fetchDocuments, isOpen, insight]);
+
+    async function fetchDocuments() {
+      if (!insight) return;
+      if (isLoading) return; // Prevent fetching if already loading
+      setIsLoading(true); // Set loading state to true
+
+      try {
+        let documentsResponse;
+        if (questionId && surveyId) {
+          documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
+            insightId: insight.id,
+            surveyId,
+            questionId,
+            limit: documentsPerPage,
+            offset: (page - 1) * documentsPerPage,
+          });
+        } else {
+          documentsResponse = await getDocumentsByInsightIdAction({
+            insightId: insight.id,
+            filterCriteria: documentsFilter,
+            limit: documentsPerPage,
+            offset: (page - 1) * documentsPerPage,
+          });
+        }
+
+        if (!documentsResponse?.data) {
+          const errorMessage = getFormattedErrorMessage(documentsResponse);
+          console.error(errorMessage);
+          return;
+        }
+
+        const fetchedDocuments = documentsResponse.data;
+
+        setDocuments((prevDocuments) => {
+          // Remove duplicates based on document ID
+          const uniqueDocuments = new Map<string, TDocument>([
+            ...prevDocuments.map((doc) => [doc.id, doc]),
+            ...fetchedDocuments.map((doc) => [doc.id, doc]),
+          ]);
+          return Array.from(uniqueDocuments.values()) as TDocument[];
+        });
+
+        setHasMore(fetchedDocuments.length === documentsPerPage);
+      } finally {
+        setIsLoading(false); // Reset loading state
+      }
+    }
+  }, [isOpen, insight]);
 
   const deferredDocuments = useDeferredValue(documents);
 

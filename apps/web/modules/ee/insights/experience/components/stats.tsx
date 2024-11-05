@@ -31,11 +31,8 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
       setIsLoading(true);
       const getStatsResponse = await getStatsAction({ environmentId, statsFrom });
 
-      console.log("getStatsResponse:", getStatsResponse);
-
       if (getStatsResponse?.data) {
         setStats(getStatsResponse.data);
-        console.log("Stats set to:", getStatsResponse.data);
       } else {
         const errorMessage = getFormattedErrorMessage(getStatsResponse);
         toast.error(errorMessage);

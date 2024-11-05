@@ -72,12 +72,6 @@ export const Dashboard = ({
         documentsPerPage={documentsPerPage}
         locale={locale}
       />
-      {/* <TemplatesCard
-        environment={environment}
-        product={product}
-        user={user}
-        prefilledFilters={["link", null, "customerSuccess"]}
-      /> */}
     </div>
   );
 };
