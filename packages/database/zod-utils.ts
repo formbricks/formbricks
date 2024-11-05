@@ -24,6 +24,8 @@ export {
   ZSurveyEnding,
 } from "@formbricks/types/surveys/types";
 
+export { ZSurveyFollowUpAction, ZSurveyFollowUpTrigger } from "./types/survey-follow-up";
+
 export { ZSegmentFilters } from "@formbricks/types/segment";
 export { ZOrganizationBilling } from "@formbricks/types/organizations";
 export { ZUserNotificationSettings } from "@formbricks/types/user";

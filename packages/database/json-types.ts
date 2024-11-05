@@ -21,6 +21,7 @@ import {
   type TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { type TUserLocale, type TUserNotificationSettings } from "@formbricks/types/user";
+import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "./types/survey-follow-up";
 
 declare global {
   namespace PrismaJson {
@@ -45,5 +46,7 @@ declare global {
     export type SegmentFilter = TBaseFilters;
     export type Styling = TProductStyling;
     export type Locale = TUserLocale;
+    export type SurveyFollowUpTrigger = TSurveyFollowUpTrigger;
+    export type SurveyFollowUpAction = TSurveyFollowUpAction;
   }
 }
