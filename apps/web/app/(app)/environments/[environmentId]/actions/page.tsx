@@ -30,10 +30,10 @@ const Page = async ({ params }) => {
     getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);
-  const locale = await findMatchingLocale();
+  const locale = findMatchingLocale();
 
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!organization) {

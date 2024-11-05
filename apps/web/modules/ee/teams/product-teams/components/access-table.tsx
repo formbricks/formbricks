@@ -3,6 +3,7 @@
 import { removeAccessAction, updateAccessPermissionAction } from "@/modules/ee/teams/product-teams/actions";
 import { TProductTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,6 +35,7 @@ interface AccessTableProps {
 }
 
 export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager }: AccessTableProps) => {
+  const t = useTranslations();
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState<boolean>(false);
 
@@ -75,8 +77,8 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-100">
-              <TableHead>Team Name</TableHead>
-              <TableHead>Permission</TableHead>
+              <TableHead>{t("environments.product.teams.team_name")}</TableHead>
+              <TableHead>{t("environments.product.teams.permission")}</TableHead>
               {isOwnerOrManager && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
@@ -84,7 +86,7 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
             {teams.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center">
-                  No teams added
+                  {t("environments.product.teams.no_items_added")}
                 </TableCell>
               </TableRow>
             )}
@@ -105,9 +107,15 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
                         <SelectValue placeholder="Select type" className="text-sm" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={ZTeamPermission.Enum.read}>Read</SelectItem>
-                        <SelectItem value={ZTeamPermission.Enum.readWrite}>Read & write</SelectItem>
-                        <SelectItem value={ZTeamPermission.Enum.manage}>Manage</SelectItem>
+                        <SelectItem value={ZTeamPermission.Enum.read}>
+                          {t("environments.product.teams.read")}
+                        </SelectItem>
+                        <SelectItem value={ZTeamPermission.Enum.readWrite}>
+                          {t("environments.product.teams.read_write")}
+                        </SelectItem>
+                        <SelectItem value={ZTeamPermission.Enum.manage}>
+                          {t("environments.product.teams.manage")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
@@ -123,7 +131,7 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
                         setSelectedTeamId(team.id);
                         setRemoveAccessModalOpen(true);
                       }}>
-                      Remove
+                      {t("common.remove")}
                     </Button>
                   </TableCell>
                 )}
@@ -137,9 +145,9 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
         <AlertDialog
           open={removeAccessModalOpen}
           setOpen={setRemoveAccessModalOpen}
-          headerText="Remove Access"
-          mainText="Are you sure you want to remove access for this team?"
-          confirmBtnLabel="Confirm"
+          headerText={t("environments.product.teams.remove_access")}
+          mainText={t("environments.product.teams.remove_access_confirmation")}
+          confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
             setSelectedTeamId(null);
             setRemoveAccessModalOpen(false);

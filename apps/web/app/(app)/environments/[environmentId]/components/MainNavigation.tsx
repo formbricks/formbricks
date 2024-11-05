@@ -435,7 +435,7 @@ export const MainNavigation = ({
                       <DropdownMenuItem
                         onClick={() => handleAddProduct(organization.id)}
                         icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                        <span>Add product</span>
+                        <span>{t("common.add_product")}</span>
                       </DropdownMenuItem>
                     </>
                   )}

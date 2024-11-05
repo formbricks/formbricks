@@ -2,6 +2,7 @@
 
 import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -22,7 +23,7 @@ interface CreateTeamModalProps {
 export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: CreateTeamModalProps) => {
   const [teamName, setTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const t = useTranslations();
   const router = useRouter();
 
   const handleTeamCreation = async (e) => {
@@ -32,7 +33,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
     const name = teamName.trim();
     const createTeamActionResponse = await createTeamAction({ name, organizationId });
     if (createTeamActionResponse?.data) {
-      toast.success("Team created successfully");
+      toast.success(t("environments.settings.teams.team_created_successfully"));
       if (typeof onCreate === "function") {
         onCreate(createTeamActionResponse.data);
       }
@@ -52,14 +53,14 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UsersIcon className="h-5 w-5" />
-            <H4>Create Team</H4>
+            <H4>{t("environments.settings.teams.create_team")}</H4>
           </div>
         </div>
       </div>
       <form onSubmit={handleTeamCreation}>
         <div className="flex flex-col overflow-auto rounded-lg bg-white p-6">
           <Label htmlFor="team-name" className="mb-1 text-sm font-medium text-slate-900">
-            Team name
+            {t("environments.settings.teams.team_name")}
           </Label>
           <Input
             id="team-name"
@@ -67,7 +68,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
             onChange={(e) => {
               setTeamName(e.target.value);
             }}
-            placeholder="Enter team name"
+            placeholder={t("environments.settings.teams.enter_team_name")}
           />
         </div>
         <div className="flex items-end justify-end gap-2 p-6 pt-0">
@@ -78,10 +79,10 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
               setOpen(false);
               setTeamName("");
             }}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button variant="primary" disabled={!teamName || isLoading} loading={isLoading} type="submit">
-            Create
+            {t("environments.settings.teams.create")}
           </Button>
         </div>
       </form>

@@ -2,6 +2,7 @@
 
 import { leaveTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,7 +28,7 @@ export const YourTeams = ({ teams }: YourTeamsProps) => {
   const router = useRouter();
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [leaveTeamModalOpen, setLeaveTeamModalOpen] = useState<boolean>(false);
-
+  const t = useTranslations();
   const handleLeaveTeam = async (teamId: string) => {
     const leaveTeamActionResponse = await leaveTeamAction({ teamId });
     if (leaveTeamActionResponse?.data) {
@@ -44,23 +45,23 @@ export const YourTeams = ({ teams }: YourTeamsProps) => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Your Teams</CardTitle>
+          <CardTitle>{t("environments.settings.teams.your_teams")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-100">
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t("common.name")}</TableHead>
+                  <TableHead>{t("common.role")}</TableHead>
+                  <TableHead>{t("common.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teams.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      You are not part of any team.
+                      {t("environments.settings.teams.you_are_not_part_of_any_team")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -70,7 +71,7 @@ export const YourTeams = ({ teams }: YourTeamsProps) => {
                       <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
                         {team.name}
                       </Link>{" "}
-                      ({team.memberCount} members)
+                      ({team.memberCount} {t("common.members")})
                     </TableCell>
                     <TableCell className="capitalize">{team.userRole}</TableCell>
                     <TableCell>
@@ -81,7 +82,7 @@ export const YourTeams = ({ teams }: YourTeamsProps) => {
                           setSelectedTeamId(team.id);
                           setLeaveTeamModalOpen(true);
                         }}>
-                        Leave Team
+                        {t("environments.settings.teams.leave_team")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -95,9 +96,9 @@ export const YourTeams = ({ teams }: YourTeamsProps) => {
         <AlertDialog
           open={leaveTeamModalOpen}
           setOpen={setLeaveTeamModalOpen}
-          headerText="Leave Team"
-          mainText="Are you sure you want to leave this team?"
-          confirmBtnLabel="Confirm"
+          headerText={t("environments.settings.teams.leave_team")}
+          mainText={t("environments.settings.teams.leave_team_confirmation")}
+          confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
             setSelectedTeamId(null);
             setLeaveTeamModalOpen(false);

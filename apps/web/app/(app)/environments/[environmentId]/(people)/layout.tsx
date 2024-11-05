@@ -19,11 +19,11 @@ const ConfigLayout = async ({ children, params }) => {
   ]);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   if (!session) {
-    throw new Error("Unauthenticated");
+    throw new Error(t("common.session_not_found"));
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
@@ -40,7 +40,7 @@ const ConfigLayout = async ({ children, params }) => {
 
   const product = await getProductByEnvironmentId(params.environmentId);
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);

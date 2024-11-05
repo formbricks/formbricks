@@ -2,6 +2,7 @@
 
 import { addTeamProductsAction } from "@/modules/ee/teams/team-details/actions";
 import { UserIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -20,6 +21,7 @@ interface AddTeamProductModalProps {
 }
 
 export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: AddTeamProductModalProps) => {
+  const t = useTranslations();
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,7 +37,7 @@ export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: A
       productIds: selectedProducts,
     });
     if (addMembersActionResponse?.data) {
-      toast.success("Members added successfully");
+      toast.success(t("environments.settings.teams.members_added_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(addMembersActionResponse);
@@ -53,13 +55,15 @@ export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: A
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UserIcon className="h-5 w-5" />
-            <H4>Add products</H4>
+            <H4>{t("environments.settings.teams.add_products")}</H4>
           </div>
         </div>
       </div>
       <form onSubmit={handleAddProducts}>
         <div className="overflow-visible p-6">
-          <Label className="mb-1 text-sm font-medium text-slate-900">Organization Products</Label>
+          <Label className="mb-1 text-sm font-medium text-slate-900">
+            {t("environments.settings.teams.organization_products")}
+          </Label>
           <MultiSelect
             value={selectedProducts}
             options={productOptions}
@@ -79,7 +83,7 @@ export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: A
             Cancel
           </Button>
           <Button variant="primary" disabled={isLoading} loading={isLoading} type="submit">
-            Add
+            {t("common.add")}
           </Button>
         </div>
       </form>

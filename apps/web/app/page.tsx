@@ -1,6 +1,7 @@
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getFirstEnvironmentIdByUserId } from "@formbricks/lib/environment/service";
@@ -11,6 +12,7 @@ import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { ClientLogout } from "@formbricks/ui/components/ClientLogout";
 
 const Page = async () => {
+  const t = await getTranslations();
   const session: Session | null = await getServerSession(authOptions);
   const isFreshInstance = await getIsFreshInstance();
 
@@ -46,7 +48,7 @@ const Page = async () => {
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.organizationRole);
 
   if (!environmentId) {
-    console.error("Failed to get first environment of user");
+    console.error(t("common.failed_to_get_first_environment_of_user"));
     if (isOwner || isManager) {
       return redirect(`/organizations/${userOrganizations[0].id}/products/new/mode`);
     } else {

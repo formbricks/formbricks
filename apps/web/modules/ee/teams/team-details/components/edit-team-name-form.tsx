@@ -3,6 +3,7 @@
 import { updateTeamNameAction } from "@/modules/ee/teams/team-details/actions";
 import { TTeam, ZTeam } from "@/modules/ee/teams/team-details/types/teams";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -29,6 +30,7 @@ const ZEditTeamNameFormSchema = ZTeam.pick({ name: true });
 type EditTeamNameForm = z.infer<typeof ZEditTeamNameFormSchema>;
 
 export const EditTeamNameForm = ({ membershipRole, team }: EditTeamNameProps) => {
+  const t = useTranslations();
   const form = useForm<EditTeamNameForm>({
     defaultValues: {
       name: team.name,
@@ -62,7 +64,9 @@ export const EditTeamNameForm = ({ membershipRole, team }: EditTeamNameProps) =>
   };
 
   return isMember ? (
-    <p className="text-sm text-red-700">Only organization owners and managers can access this setting.</p>
+    <p className="text-sm text-red-700">
+      {t("environments.settings.teams.only_organization_owners_and_managers_can_access_this_setting")}
+    </p>
   ) : (
     <FormProvider {...form}>
       <form className="w-full max-w-sm items-center" onSubmit={form.handleSubmit(handleUpdateTeamName)}>
@@ -71,7 +75,7 @@ export const EditTeamNameForm = ({ membershipRole, team }: EditTeamNameProps) =>
           name="name"
           render={({ field, fieldState }) => (
             <FormItem>
-              <FormLabel>Team Name</FormLabel>
+              <FormLabel>{t("environments.settings.teams.team_name")}</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -93,7 +97,7 @@ export const EditTeamNameForm = ({ membershipRole, team }: EditTeamNameProps) =>
           size="sm"
           loading={isSubmitting}
           disabled={isSubmitting || !isDirty}>
-          Update
+          {t("common.update")}
         </Button>
       </form>
     </FormProvider>

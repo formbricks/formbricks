@@ -22,7 +22,7 @@ const Page = async ({ params }) => {
   const t = await getTranslations();
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   const [tags, environmentTagsCount, organization, session, product] = await Promise.all([
@@ -45,7 +45,7 @@ const Page = async ({ params }) => {
   }
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

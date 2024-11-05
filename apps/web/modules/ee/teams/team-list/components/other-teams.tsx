@@ -2,6 +2,7 @@
 
 import { joinTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TOtherTeam } from "@/modules/ee/teams/team-list/types/teams";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -22,6 +23,7 @@ interface OtherTeamsProps {
 }
 
 export const OtherTeams = ({ teams }: OtherTeamsProps) => {
+  const t = useTranslations();
   const router = useRouter();
 
   const joinTeam = async (teamId: string) => {
@@ -37,22 +39,22 @@ export const OtherTeams = ({ teams }: OtherTeamsProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Other Teams</CardTitle>
+        <CardTitle>{t("environments.settings.teams.other_teams")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-100">
-                <TableHead>Team Name</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t("environments.settings.teams.team_name")}</TableHead>
+                <TableHead>{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {teams.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={2} className="text-center">
-                    No other teams found
+                    {t("environments.settings.teams.no_other_teams_found")}
                   </TableCell>
                 </TableRow>
               )}
@@ -66,7 +68,7 @@ export const OtherTeams = ({ teams }: OtherTeamsProps) => {
                   </TableCell>
                   <TableCell>
                     <Button variant="secondary" size="sm" onClick={() => joinTeam(team.id)}>
-                      Join Team
+                      {t("environments.settings.teams.join_team")}
                     </Button>
                   </TableCell>
                 </TableRow>

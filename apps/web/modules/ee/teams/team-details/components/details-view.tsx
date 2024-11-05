@@ -10,6 +10,7 @@ import {
   TTeamProduct,
 } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
@@ -34,22 +35,23 @@ export const DetailsView = ({
   products,
   organizationProducts,
 }: DetailsViewProps) => {
+  const t = useTranslations();
   const [activeId, setActiveId] = useState<"members" | "settings" | "products">("members");
 
   const navigation = [
     {
       id: "members",
-      label: "Members",
+      label: t("common.members"),
       onClick: () => setActiveId("members"),
     },
     {
       id: "products",
-      label: "Products",
+      label: t("common.products"),
       onClick: () => setActiveId("products"),
     },
     {
       id: "settings",
-      label: "Settings",
+      label: t("common.settings"),
       onClick: () => setActiveId("settings"),
     },
   ];

@@ -5,6 +5,7 @@ import { updateTeamProductPermissionAction } from "@/modules/ee/teams/team-detai
 import { AddTeamProductModal } from "@/modules/ee/teams/team-details/components/add-team-product-modal";
 import { TOrganizationProduct, TTeamProduct } from "@/modules/ee/teams/team-details/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -44,6 +45,7 @@ export const TeamProducts = ({
   teamId,
   organizationProducts,
 }: TeamProductsProps) => {
+  const t = useTranslations();
   const [openAddProductModal, setOpenAddProductModal] = useState<boolean>(false);
   const [removeProductModalOpen, setRemoveProductModalOpen] = useState<boolean>(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export const TeamProducts = ({
     });
 
     if (removeProductActionResponse?.data) {
-      toast.success("Product removed successfully");
+      toast.success(t("environments.settings.teams.product_removed_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(removeProductActionResponse);
@@ -77,7 +79,7 @@ export const TeamProducts = ({
       permission,
     });
     if (updateTeamPermissionResponse?.data) {
-      toast.success("Permission updated successfully");
+      toast.success(t("environments.settings.teams.permission_updated_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateTeamPermissionResponse);
@@ -100,11 +102,11 @@ export const TeamProducts = ({
     <>
       <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Team products</CardTitle>
+          <CardTitle>{t("environments.settings.teams.team_products")}</CardTitle>
           <div className="flex gap-2">
             {isOwnerOrManager && (
               <Button variant="primary" size="sm" onClick={() => setOpenAddProductModal(true)}>
-                Add Product
+                {t("environments.settings.teams.add_product")}
               </Button>
             )}
           </div>
@@ -114,16 +116,16 @@ export const TeamProducts = ({
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-100">
-                  <TableHead>Product name</TableHead>
-                  <TableHead>Permission</TableHead>
-                  {isOwnerOrManager && <TableHead>Actions</TableHead>}
+                  <TableHead>{t("environments.settings.teams.product_name")}</TableHead>
+                  <TableHead>{t("environments.settings.teams.permission")}</TableHead>
+                  {isOwnerOrManager && <TableHead>{t("common.actions")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {products.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      No products found
+                      {t("environments.settings.teams.no_products_found")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -141,9 +143,15 @@ export const TeamProducts = ({
                             <SelectValue placeholder="Select type" className="text-sm" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value={ZTeamPermission.Enum.read}>Read</SelectItem>
-                            <SelectItem value={ZTeamPermission.Enum.readWrite}>Read & Write</SelectItem>
-                            <SelectItem value={ZTeamPermission.Enum.manage}>Manage</SelectItem>
+                            <SelectItem value={ZTeamPermission.Enum.read}>
+                              {t("environments.settings.teams.read")}
+                            </SelectItem>
+                            <SelectItem value={ZTeamPermission.Enum.readWrite}>
+                              {t("environments.settings.teams.read_write")}
+                            </SelectItem>
+                            <SelectItem value={ZTeamPermission.Enum.manage}>
+                              {t("environments.settings.teams.manage")}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
@@ -160,7 +168,7 @@ export const TeamProducts = ({
                             setSelectedProductId(product.id);
                             setRemoveProductModalOpen(true);
                           }}>
-                          Remove
+                          {t("common.remove")}
                         </Button>
                       </TableCell>
                     )}
@@ -183,9 +191,9 @@ export const TeamProducts = ({
         <AlertDialog
           open={removeProductModalOpen}
           setOpen={setRemoveProductModalOpen}
-          headerText="Remove product"
-          mainText="Are you sure you want to remove this product?"
-          confirmBtnLabel="Confirm"
+          headerText={t("environments.settings.teams.remove_product")}
+          mainText={t("environments.settings.teams.remove_product_confirmation")}
+          confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
             setSelectedProductId(null);
             setRemoveProductModalOpen(false);

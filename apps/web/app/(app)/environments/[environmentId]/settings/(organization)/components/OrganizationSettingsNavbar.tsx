@@ -45,7 +45,7 @@ export const OrganizationSettingsNavbar = ({
     },
     {
       id: "teams",
-      label: "Teams",
+      label: t("common.teams"),
       href: `/environments/${environmentId}/settings/teams`,
       hidden: !canDoRoleManagement || isBilling,
       current: pathname?.includes("/teams"),

@@ -39,7 +39,7 @@ const Page = async ({ params }) => {
   const locale = await findMatchingLocale();
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

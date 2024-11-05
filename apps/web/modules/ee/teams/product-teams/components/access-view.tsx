@@ -4,6 +4,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { AccessTable } from "@/modules/ee/teams/product-teams/components/access-table";
 import { AddTeam } from "@/modules/ee/teams/product-teams/components/add-team";
 import { TOrganizationTeam, TProductTeam } from "@/modules/ee/teams/product-teams/types/teams";
+import { useTranslations } from "next-intl";
 import { TProduct } from "@formbricks/types/product";
 
 interface AccessViewProps {
@@ -21,11 +22,12 @@ export const AccessView = ({
   environmentId,
   isOwnerOrManager,
 }: AccessViewProps) => {
+  const t = useTranslations();
   return (
     <>
       <SettingsCard
-        title={`Teams`}
-        description="Teams and their members can access this product and its surveys. Organization owners and managers can grant this access.">
+        title={t("common.teams")}
+        description={t("environments.product.teams.team_settings_description")}>
         <div className="flex justify-end gap-2">
           {isOwnerOrManager && (
             <AddTeam

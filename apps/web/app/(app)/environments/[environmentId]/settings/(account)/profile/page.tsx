@@ -20,19 +20,19 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
 
   if (!membership) {
-    throw new Error("Membership not found");
+    throw new Error(t("common.membership_not_found"));
   }
 
   const user = session && session.user ? await getUser(session.user.id) : null;

@@ -46,13 +46,13 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
   const organization = await getOrganization(params.organizationId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   if (!organizationTeams) {
-    throw new Error("Organization teams not found");
+    throw new Error(t("common.organization_teams_not_found"));
   }
 
   return (

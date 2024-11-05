@@ -2,6 +2,7 @@
 
 import { addAccessAction } from "@/modules/ee/teams/product-teams/actions";
 import { UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -20,6 +21,7 @@ interface AddTeamModalProps {
 }
 
 export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamModalProps) => {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
 
@@ -54,14 +56,14 @@ export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamM
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UsersIcon className="h-5 w-5" />
-            <H4>Add Team</H4>
+            <H4>{t("environments.product.teams.add_team")}</H4>
           </div>
         </div>
       </div>
       <form onSubmit={handleAddTeam}>
         <div className="overflow-visible p-6">
           <Label htmlFor="team-name" className="mb-1 text-sm font-medium text-slate-900">
-            Select teams
+            {t("environments.product.teams.select_teams")}
           </Label>
           <MultiSelect
             value={selectedTeams}
@@ -79,10 +81,10 @@ export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamM
               setOpen(false);
               setSelectedTeams([]);
             }}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button variant="primary" disabled={isLoading} loading={isLoading} type="submit">
-            Add
+            {t("common.add")}
           </Button>
         </div>
       </form>

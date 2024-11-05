@@ -2,6 +2,7 @@
 
 import { addTeamMembersAction } from "@/modules/ee/teams/team-details/actions";
 import { UserIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -25,6 +26,7 @@ export const AddTeamMemberModal = ({
   teamId,
   organizationMemberOptions,
 }: AddTeamMemberModalProps) => {
+  const t = useTranslations();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,7 +41,7 @@ export const AddTeamMemberModal = ({
       userIds: selectedUsers,
     });
     if (addMembersActionResponse?.data) {
-      toast.success("Members added successfully");
+      toast.success(t("environments.settings.teams.members_added_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(addMembersActionResponse);
@@ -57,13 +59,15 @@ export const AddTeamMemberModal = ({
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UserIcon className="h-5 w-5" />
-            <H4>Add members</H4>
+            <H4>{t("environments.settings.teams.add_members")}</H4>
           </div>
         </div>
       </div>
       <form onSubmit={handleAddMembers}>
         <div className="overflow-visible p-6">
-          <Label className="mb-1 text-sm font-medium text-slate-900">Organization Members</Label>
+          <Label className="mb-1 text-sm font-medium text-slate-900">
+            {t("environments.settings.teams.organization_members")}
+          </Label>
           <MultiSelect
             value={selectedUsers}
             options={organizationMemberOptions}
@@ -80,10 +84,10 @@ export const AddTeamMemberModal = ({
               setOpen(false);
               setSelectedUsers([]);
             }}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button variant="primary" disabled={isLoading} loading={isLoading} type="submit">
-            Add
+            {t("common.add")}
           </Button>
         </div>
       </form>

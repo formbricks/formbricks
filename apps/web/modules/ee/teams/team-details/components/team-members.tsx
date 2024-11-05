@@ -2,15 +2,12 @@
 
 import { removeTeamMemberAction, updateUserTeamRoleAction } from "@/modules/ee/teams/team-details/actions";
 import { AddTeamMemberModal } from "@/modules/ee/teams/team-details/components/add-team-member-modal";
-import {
-  TOrganizationMember,
-  TOrganizationProduct,
-  TTeamMember,
-} from "@/modules/ee/teams/team-details/types/teams";
+import { TOrganizationMember, TTeamMember } from "@/modules/ee/teams/team-details/types/teams";
 import { leaveTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { TeamRoleMapping, getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
 import { InfoIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -59,7 +56,7 @@ export const TeamMembers = ({
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
 
   const router = useRouter();
-
+  const t = useTranslations();
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const { isAdmin: isTeamAdmin } = getTeamAccessFlags(teamRole);
 
@@ -74,7 +71,7 @@ export const TeamMembers = ({
       role,
     });
     if (updateAccessPermissionActionResponse?.data) {
-      toast.success("Role updated successfully");
+      toast.success(t("environments.settings.teams.role_updated_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateAccessPermissionActionResponse);
@@ -89,7 +86,7 @@ export const TeamMembers = ({
         : await removeTeamMemberAction({ teamId, userId });
 
     if (removeMemberActionResponse?.data) {
-      toast.success("Member removed successfully");
+      toast.success(t("environments.settings.teams.member_removed_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(removeMemberActionResponse);
@@ -114,16 +111,16 @@ export const TeamMembers = ({
     <>
       <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Team members</CardTitle>
+          <CardTitle>{t("environments.settings.teams.team_members")}</CardTitle>
           <div className="flex gap-2">
             {isOwnerOrManager && (
               <Button variant="secondary" size="sm" href="../general">
-                Invite Member
+                {t("environments.settings.teams.invite_member")}
               </Button>
             )}
             {canPerformRoleManagement && (
               <Button variant="primary" size="sm" onClick={() => setOpenAddMemberModal(true)}>
-                Add Member
+                {t("environments.settings.teams.add_member")}
               </Button>
             )}
           </div>
@@ -133,16 +130,16 @@ export const TeamMembers = ({
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-100">
-                  <TableHead>Member</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t("common.member")}</TableHead>
+                  <TableHead>{t("common.role")}</TableHead>
+                  <TableHead>{t("common.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {members.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      No members found
+                      {t("environments.settings.teams.no_members_found")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -165,11 +162,18 @@ export const TeamMembers = ({
                             handleRoleChange(teamMember.id, val);
                           }}>
                           <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Select type" className="text-sm" />
+                            <SelectValue
+                              placeholder={t("environments.settings.teams.select_type")}
+                              className="text-sm"
+                            />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value={ZTeamRole.Enum.admin}>Team Admin</SelectItem>
-                            <SelectItem value={ZTeamRole.Enum.contributor}>Contributor</SelectItem>
+                            <SelectItem value={ZTeamRole.Enum.admin}>
+                              {t("environments.settings.teams.team_admin")}
+                            </SelectItem>
+                            <SelectItem value={ZTeamRole.Enum.contributor}>
+                              {t("environments.settings.teams.contributor")}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       ) : canPerformRoleManagement && currentUserId !== teamMember.id ? (
@@ -179,7 +183,9 @@ export const TeamMembers = ({
                               <p>{TeamRoleMapping[teamMember.role]}</p>
                               <InfoIcon className="h-4 w-4 text-gray-500" />
                             </TooltipTrigger>
-                            <TooltipContent>Org owner and managers can only be team admin.</TooltipContent>
+                            <TooltipContent>
+                              {t("environments.settings.teams.org_owner_and_managers_can_only_be_team_admin")}
+                            </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       ) : (
@@ -195,7 +201,9 @@ export const TeamMembers = ({
                             setSelectedTeamMemberId(teamMember.id);
                             setRemoveMemberModalOpen(true);
                           }}>
-                          {teamMember.id === currentUserId ? "Leave" : "Remove"}
+                          {teamMember.id === currentUserId
+                            ? t("environments.settings.teams.leave")
+                            : t("common.remove")}
                         </Button>
                       )}
                     </TableCell>
@@ -218,9 +226,9 @@ export const TeamMembers = ({
         <AlertDialog
           open={removeMemberModalOpen}
           setOpen={setRemoveMemberModalOpen}
-          headerText="Leave Team"
-          mainText="Are you sure you want to remove this member?"
-          confirmBtnLabel="Confirm"
+          headerText={t("environments.settings.teams.leave_team")}
+          mainText={t("environments.settings.teams.leave_team_confirmation")}
+          confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
             setSelectedTeamMemberId(null);
             setRemoveMemberModalOpen(false);

@@ -1,7 +1,7 @@
 import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseTimeline";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
@@ -30,7 +30,7 @@ export const ResponseSection = async ({
   const surveyIds = responses?.map((response) => response.surveyId) || [];
   const surveys: TSurvey[] = surveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
   const session = await getServerSession(authOptions);
-  const t = await getTranslations();
+  const t = useTranslations();
   if (!session) {
     throw new Error(t("common.no_session_found"));
   }
