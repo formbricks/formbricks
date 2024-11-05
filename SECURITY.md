@@ -51,13 +51,13 @@ In the interest of responsibly managing vulnerabilities, please adhere to the fo
 > Do not reveal the problem to others until it has been resolved.
 
 1. **Send a Detailed Report**:
-   - Address emails to [security@formbricks.com](mailto:security@formbricks.com).
+   - Raise a security report on [Github](https://github.com/formbricks/formbricks/issues/new/choose) or send an email to [security@formbricks.com](mailto:security@formbricks.com).
    - Include:
      - Problem description.
      - Detailed, reproducible steps, with screenshots where possible.
      - Affected version(s).
      - Known possible mitigations.
-     - Your Discord username or preferred contact method.
+     - Your preferred contact method.
 2. **Acknowledgement of Receipt**:
    - Our security team will acknowledge receipt and provide an initial response within 48 hours.
    - Following verification of the vulnerability and the fix, a release plan will be formulated, with the fix deployed between 7 to 28 days, depending on the severity and complexity.
