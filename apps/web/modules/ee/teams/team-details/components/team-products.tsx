@@ -116,7 +116,7 @@ export const TeamProducts = ({
                 <TableRow className="bg-slate-100">
                   <TableHead>Product name</TableHead>
                   <TableHead>Permission</TableHead>
-                  <TableHead>Actions</TableHead>
+                  {isOwnerOrManager && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -150,17 +150,20 @@ export const TeamProducts = ({
                         <p>{TeamPermissionMapping[product.permission]}</p>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="warn"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedProductId(product.id);
-                          setRemoveProductModalOpen(true);
-                        }}>
-                        Remove
-                      </Button>
-                    </TableCell>
+                    {isOwnerOrManager && (
+                      <TableCell>
+                        <Button
+                          disabled={!isOwnerOrManager}
+                          variant="warn"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedProductId(product.id);
+                            setRemoveProductModalOpen(true);
+                          }}>
+                          Remove
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
