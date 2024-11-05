@@ -39,7 +39,7 @@ export const Card: React.FC<CardProps> = ({
           </span>
         ) : (
           <span className="relative mr-1 flex h-2 w-2">
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-gray-400"></span>
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-slate-400"></span>
           </span>
         )}
         {statusText}

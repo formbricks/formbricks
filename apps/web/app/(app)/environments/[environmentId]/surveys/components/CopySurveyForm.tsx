@@ -105,7 +105,7 @@ export const CopySurveyForm = ({
                                             field.onChange([...field.value, environment.id]);
                                           }
                                         }}
-                                        className="mr-2 h-4 w-4 appearance-none border-gray-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
+                                        className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
                                         id={environment.id}
                                       />
                                       <Label htmlFor={environment.id}>

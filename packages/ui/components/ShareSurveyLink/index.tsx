@@ -73,6 +73,7 @@ export const ShareSurveyLink = ({
       <div className="mt-2 flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
+          size="base"
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
           aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
           onClick={() => {
@@ -88,6 +89,7 @@ export const ShareSurveyLink = ({
           {t("common.preview")}
         </Button>
         <Button
+          size="base"
           variant="secondary"
           title={t("environments.surveys.copy_survey_link_to_clipboard")}
           aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}

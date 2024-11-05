@@ -82,3 +82,22 @@ export const getInsights = reactCache(
       }
     )()
 );
+
+export const updateInsight = async (insightId: string, updates: Partial<TInsight>): Promise<void> => {
+  try {
+    await prisma.insight.update({
+      where: { id: insightId },
+      data: updates,
+    });
+
+    // Invalidate the cache for the updated insight
+    insightCache.revalidate({ id: insightId });
+  } catch (error) {
+    console.error("Error in updateInsight:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

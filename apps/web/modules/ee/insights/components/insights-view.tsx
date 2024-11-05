@@ -9,7 +9,6 @@ import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
 import { TUserLocale } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   Table,
@@ -20,6 +19,7 @@ import {
   TableRow,
 } from "@formbricks/ui/components/Table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
+import CategoryBadge from "../experience/components/category-select";
 
 interface InsightViewProps {
   insights: TInsight[];
@@ -78,7 +78,18 @@ export const InsightView = ({
 
   useEffect(() => {
     handleFilterSelect(activeTab);
-  }, [insights]);
+
+    // Update currentInsight if it exists in the new insights array
+    if (currentInsight) {
+      const updatedInsight = insights.find((insight) => insight.id === currentInsight.id);
+      if (updatedInsight) {
+        setCurrentInsight(updatedInsight);
+      } else {
+        setCurrentInsight(null);
+        setIsInsightSheetOpen(false);
+      }
+    }
+  }, [insights, activeTab, handleFilterSelect]);
 
   const handleLoadMore = () => {
     setVisibleInsights((prevVisibleInsights) => Math.min(prevVisibleInsights + 10, insights.length));
@@ -136,19 +147,7 @@ export const InsightView = ({
                       {insight.description}
                     </TableCell>
                     <TableCell>
-                      {insight.category === "complaint" ? (
-                        <Badge text={t("environments.experience.complaint")} type="error" size="tiny" />
-                      ) : insight.category === "featureRequest" ? (
-                        <Badge
-                          text={t("environments.experience.feature_request")}
-                          type="warning"
-                          size="tiny"
-                        />
-                      ) : insight.category === "praise" ? (
-                        <Badge text={t("environments.experience.praise")} type="success" size="tiny" />
-                      ) : insight.category === "other" ? (
-                        <Badge text={t("common.other")} type="gray" size="tiny" />
-                      ) : null}
+                      <CategoryBadge category={insight.category} insightId={insight.id} />
                     </TableCell>
                   </TableRow>
                 ))
