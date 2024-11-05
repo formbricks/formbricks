@@ -24,8 +24,8 @@ export const AccessView = ({
   return (
     <>
       <SettingsCard
-        title={`Product teams for ${product.name}`}
-        description="These teams and their members have access to this product. They can access surveys of this product. Organization Owners and managers can grant access to this">
+        title={`Teams`}
+        description="Teams and their members can access this product and its surveys. Organization owners and managers can grant this access.">
         <div className="flex justify-end gap-2">
           {isOwnerOrManager && (
             <AddTeam

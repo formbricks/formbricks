@@ -76,15 +76,22 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
           <TableHeader>
             <TableRow className="bg-slate-100">
               <TableHead>Team Name</TableHead>
-              <TableHead>Permission level</TableHead>
+              <TableHead>Permission</TableHead>
               {isOwnerOrManager && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
+            {teams.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center">
+                  No teams added
+                </TableCell>
+              </TableRow>
+            )}
             {teams.map((team) => (
               <TableRow key={team.id}>
                 <TableCell>
-                  <Link href={`/environments/${environmentId}/settings/teams/${team.id}`}>{team.name}</Link>(
+                  <Link href={`/environments/${environmentId}/settings/teams/${team.id}`}>{team.name}</Link> (
                   {team.memberCount} members)
                 </TableCell>
                 <TableCell>
