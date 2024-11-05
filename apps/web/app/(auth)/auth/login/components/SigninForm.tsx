@@ -13,6 +13,7 @@ import { cn } from "@formbricks/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { Button } from "@formbricks/ui/components/Button";
 import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
+import { createEmailTokenAction } from "@formbricks/ui/components/SignupOptions/action";
 import { AzureButton } from "@formbricks/ui/components/SignupOptions/components/AzureButton";
 import { GithubButton } from "@formbricks/ui/components/SignupOptions/components/GithubButton";
 import { GoogleButton } from "@formbricks/ui/components/SignupOptions/components/GoogleButton";
@@ -76,7 +77,12 @@ export const SigninForm = ({
       }
 
       if (signInResponse?.error === "Email Verification is Pending") {
-        router.push(`/auth/verification-requested?email=${data.email}`);
+        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+        if (emailTokenActionResponse?.serverError) {
+          setSignInError(emailTokenActionResponse.serverError);
+          return;
+        }
+        router.push(`/auth/verification-requested?token=${emailTokenActionResponse?.data}`);
         return;
       }
 

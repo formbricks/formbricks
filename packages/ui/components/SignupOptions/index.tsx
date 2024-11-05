@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { createUser } from "@formbricks/lib/utils/users";
+import { createEmailTokenAction } from "@formbricks/ui/components/SignupOptions/action";
 import { Button } from "../Button";
 import { PasswordInput } from "../PasswordInput";
 import { AzureButton } from "./components/AzureButton";
@@ -77,9 +79,15 @@ export const SignupOptions = ({
         userLocale,
         inviteToken
       );
+      const emailTokenActionResponse = await createEmailTokenAction({ email: e.target.elements.email.value });
+      if (emailTokenActionResponse?.serverError) {
+        toast.error(emailTokenActionResponse.serverError);
+        return;
+      }
+      const token = emailTokenActionResponse?.data;
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
-        : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
+        : `/auth/verification-requested?token=${token}`;
 
       router.push(url);
     } catch (e: any) {

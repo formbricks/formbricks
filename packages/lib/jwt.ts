@@ -9,6 +9,15 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
   return jwt.sign({ email: userEmail }, env.NEXTAUTH_SECRET + surveyId);
 };
 
+export const createEmailToken = (email: string): string => {
+  return jwt.sign({ email }, env.NEXTAUTH_SECRET);
+};
+
+export const getEmailFromEmailToken = (token: string): string => {
+  const payload = jwt.verify(token, env.NEXTAUTH_SECRET);
+  return (payload as jwt.JwtPayload).email;
+};
+
 export const createInviteToken = (inviteId: string, email: string, options = {}): string => {
   return jwt.sign({ inviteId, email }, env.NEXTAUTH_SECRET, options);
 };
