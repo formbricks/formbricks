@@ -1,19 +1,11 @@
 "use client";
 
+import { IconBar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/IconBar";
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import {
-  BellRing,
-  Code2Icon,
-  CopyIcon,
-  EyeIcon,
-  MoreVertical,
-  SquarePenIcon,
-  UsersRound,
-} from "lucide-react";
+import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -21,14 +13,6 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
@@ -132,81 +116,47 @@ export const SurveyAnalysisCTA = ({
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 
-      {!isReadOnly && (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => handleModalState("embed")(true)}
-          EndIcon={Code2Icon}>
-          {t("common.embed")}
-        </Button>
-      )}
+      <div className="border-formbricks-border-primary flex items-center justify-center rounded-lg border bg-transparent">
+        {survey.type === "link" && (
+          <IconBar
+            icon={<Eye />}
+            tooltip={t("common.preview")}
+            onClick={() => window.open(getPreviewUrl(), "_blank")}
+          />
+        )}
 
-      {survey.type === "link" && (
-        <Button variant="secondary" size="sm" onClick={handleCopyLink} EndIcon={CopyIcon}>
-          {t("common.copy_link")}
-        </Button>
-      )}
-
-      {!isReadOnly && (
-        <Button
-          href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
-          EndIcon={SquarePenIcon}
-          size="base">
-          {t("common.edit")}
-        </Button>
-      )}
-
-      {!isReadOnly && (
-        <div id={`${survey.name.toLowerCase().replace(/\s+/g, "-")}-survey-actions`}>
-          <DropdownMenu
-            open={modalState.dropdown}
-            onOpenChange={(open) => setModalState((prev) => ({ ...prev, dropdown: open }))}>
-            <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-              <Button variant="secondary" className="p-2">
-                <MoreVertical className="h-7 w-4" />
-                <span className="sr-only">{t("environments.surveys.summary.open_options")}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="mr-8 w-40">
-              <DropdownMenuGroup>
-                {survey.type === "link" && (
-                  <DropdownMenuItem>
-                    <button
-                      onClick={() => window.open(getPreviewUrl(), "_blank")}
-                      className="flex w-full items-center">
-                      <EyeIcon className="mr-2 h-4 w-4" />
-                      {t("common.preview")}
-                    </button>
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuItem>
-                  <button
-                    onClick={() => {
-                      handleModalState("panel")(true);
-                      setModalState((prev) => ({ ...prev, dropdown: false }));
-                    }}
-                    className="flex w-full items-center">
-                    <UsersRound className="mr-2 h-4 w-4" />
-                    {t("environments.surveys.summary.send_to_panel")}
-                  </button>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem>
-                  <Link
-                    href={`/environments/${survey.environmentId}/settings/notifications`}
-                    className="flex w-full items-center"
-                    onClick={() => setModalState((prev) => ({ ...prev, dropdown: false }))}>
-                    <BellRing className="mr-2 h-4 w-4" />
-                    {t("environments.surveys.summary.configure_alerts")}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
+        {!isReadOnly && (
+          <div>
+            {survey.type === "link" && (
+              <IconBar icon={<LinkIcon />} tooltip={t("common.copy_link")} onClick={handleCopyLink} />
+            )}
+            <IconBar
+              icon={<Code2Icon />}
+              tooltip={t("common.embed")}
+              onClick={() => handleModalState("embed")(true)}
+            />
+            <IconBar
+              icon={<BellRing />}
+              tooltip={t("environments.surveys.summary.configure_alerts")}
+              href={`/environments/${survey.environmentId}/settings/notifications`}
+              onClick={() => setModalState((prev) => ({ ...prev, dropdown: false }))}
+            />
+            <IconBar
+              icon={<UsersRound />}
+              tooltip={t("environments.surveys.summary.send_to_panel")}
+              onClick={() => {
+                handleModalState("panel")(true);
+                setModalState((prev) => ({ ...prev, dropdown: false }));
+              }}
+            />
+            <IconBar
+              icon={<SquarePenIcon />}
+              tooltip={t("common.edit")}
+              href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
+            />
+          </div>
+        )}
+      </div>
 
       {user && (
         <>
