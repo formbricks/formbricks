@@ -2,7 +2,9 @@
 
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
+  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromInsightId,
+  getProductIdFromEnvironmentId,
   getProductIdFromInsightId,
   getProductIdFromSurveyId,
 } from "@/lib/utils/helper";
@@ -103,10 +105,19 @@ export const updateDocumentAction = authenticatedActionClient
       throw new Error("Document not found");
     }
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(document.environmentId),
-      rules: ["response", "update"],
+      access: [
+        {
+          type: "organization",
+          rules: ["response", "update"],
+        },
+        {
+          type: "product",
+          productId: await getProductIdFromEnvironmentId(document.environmentId),
+        },
+      ],
     });
 
     return await updateDocument(parsedInput.documentId, parsedInput.data);
