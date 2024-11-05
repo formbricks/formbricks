@@ -57,6 +57,10 @@ const Page = async ({ params }) => {
 
   const isReadOnly = isMember && hasReadAccess;
 
+  if (isReadOnly) {
+    return redirect(`/environments/${params.environmentId}/surveys`);
+  }
+
   const renderAddActionButton = () => (
     <AddActionModal
       environmentId={params.environmentId}

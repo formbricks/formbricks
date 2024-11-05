@@ -17,10 +17,10 @@ import { updateProductAction } from "../../actions";
 interface EditLogoProps {
   product: TProduct;
   environmentId: string;
-  isMember: boolean;
+  isReadOnly: boolean;
 }
 
-export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) => {
+export const EditLogo = ({ product, environmentId, isReadOnly }: EditLogoProps) => {
   const t = useTranslations();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(product.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(product.logo?.bgColor || undefined);
@@ -172,7 +172,7 @@ export const EditLogo = ({ product, environmentId, isMember }: EditLogoProps) =>
         </>
       )}
       {logoUrl && (
-        <Button onClick={saveChanges} disabled={isLoading || isMember} size="sm">
+        <Button onClick={saveChanges} disabled={isLoading || isReadOnly} size="sm">
           {isEditing ? t("common.save") : t("common.edit")}
         </Button>
       )}

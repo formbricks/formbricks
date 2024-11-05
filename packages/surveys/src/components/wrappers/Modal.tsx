@@ -73,7 +73,7 @@ export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, 
           "fb-relative fb-h-full fb-w-full",
           isCenter
             ? darkOverlay
-              ? "fb-bg-gray-700/80"
+              ? "fb-bg-slate-700/80"
               : "fb-bg-white/50"
             : "fb-bg-none fb-transition-all fb-duration-500 fb-ease-in-out"
         )}>

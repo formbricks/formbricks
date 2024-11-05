@@ -54,7 +54,8 @@ const Page = async ({ params }) => {
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
   const { hasManageAccess } = getTeamPermissionFlags(productPermission);
 
-  const isTagSettingDisabled = isMember && !hasManageAccess;
+  const isReadOnly = isMember && !hasManageAccess;
+  const isTagSettingDisabled = isReadOnly;
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);

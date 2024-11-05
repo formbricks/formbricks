@@ -52,7 +52,9 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
   const { hasManageAccess } = getTeamPermissionFlags(productPermission);
 
-  if (isMember && !hasManageAccess) {
+  const isReadOnly = isMember && !hasManageAccess;
+
+  if (isReadOnly) {
     return <ErrorComponent />;
   }
 
@@ -84,7 +86,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title={t("common.logo")}
         description={t("environments.product.look.logo_settings_description")}>
-        <EditLogo product={product} environmentId={params.environmentId} isMember={isMember} />
+        <EditLogo product={product} environmentId={params.environmentId} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
         title={t("environments.product.look.app_survey_placement")}

@@ -65,6 +65,8 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 
+  const isReadOnly = isMember && hasReadAccess;
+
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
@@ -93,11 +95,11 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle={t("common.surveys")} cta={isMember ? <></> : <CreateSurveyButton />} />
+          <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}
-            isMember={isMember}
+            isReadOnly={isReadOnly}
             WEBAPP_URL={WEBAPP_URL}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
@@ -105,7 +107,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
             locale={locale}
           />
         </>
-      ) : isMember && hasReadAccess ? (
+      ) : isReadOnly ? (
         <>
           <h1 className="px-6 text-3xl font-extrabold text-slate-700">
             {t("environments.surveys.no_surveys_created_yet")}

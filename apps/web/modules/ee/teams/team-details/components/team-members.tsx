@@ -147,7 +147,9 @@ export const TeamMembers = ({
                       </div>
                     </TableCell>
                     <TableCell>
-                      {canPerformRoleManagement && teamMember.isRoleEditable ? (
+                      {canPerformRoleManagement &&
+                      teamMember.isRoleEditable &&
+                      currentUserId !== teamMember.id ? (
                         <Select
                           disabled={!teamMember.isRoleEditable}
                           value={teamMember.role}
@@ -162,7 +164,7 @@ export const TeamMembers = ({
                             <SelectItem value={ZTeamRole.Enum.contributor}>Contributor</SelectItem>
                           </SelectContent>
                         </Select>
-                      ) : canPerformRoleManagement ? (
+                      ) : canPerformRoleManagement && currentUserId !== teamMember.id ? (
                         <TooltipProvider delayDuration={0}>
                           <Tooltip>
                             <TooltipTrigger className="flex items-center gap-2">

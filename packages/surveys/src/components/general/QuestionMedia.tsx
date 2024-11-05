@@ -64,7 +64,7 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
         href={!!imgUrl ? imgUrl : parseVideoUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
-        className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-gray-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
+        className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
