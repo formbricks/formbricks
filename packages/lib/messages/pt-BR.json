@@ -1049,7 +1049,7 @@
         "member_deleted_successfully": "Membro deletado com sucesso",
         "member_invited_successfully": "Membro convidado com sucesso",
         "once_its_gone_its_gone": "Uma vez que se foi, se foi.",
-        "only_owner_can_delete_organization": "Somente o Dono pode deletar a organização.",
+        "only_org_owner_can_perform_action": "Somente o Dono pode deletar a organização.",
         "organization_created_successfully": "Organização criada com sucesso!",
         "organization_deleted_successfully": "Organização deletada com sucesso.",
         "organization_invite_link_ready": "O link de convite da sua organização está pronto!",

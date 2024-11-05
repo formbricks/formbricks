@@ -45,7 +45,7 @@ export const DeleteOrganization = ({
   const deleteDisabledWarning = useMemo(() => {
     if (isUserOwner) return t("environments.settings.general.cannot_delete_only_organization");
 
-    return t("environments.settings.general.only_owner_can_delete_organization");
+    return t("environments.settings.general.only_org_owner_can_perform_action");
   }, [isUserOwner]);
 
   return (
