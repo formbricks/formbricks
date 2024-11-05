@@ -2,14 +2,13 @@
 
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
 import { TUserLocale } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardFooter } from "@formbricks/ui/components/Card";
 import {
@@ -19,6 +18,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@formbricks/ui/components/Sheet";
+import CategoryBadge from "../../experience/components/category-select";
+import SentimentSelect from "../sentiment-select";
 import { getDocumentsByInsightIdAction, getDocumentsByInsightIdSurveyIdQuestionIdAction } from "./actions";
 
 interface InsightSheetProps {
@@ -47,54 +48,68 @@ export const InsightSheet = ({
   const t = useTranslations();
   const [documents, setDocuments] = useState<TDocument[]>([]);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-
-  const fetchDocuments = useCallback(async () => {
-    if (!insight) return;
-
-    let documentsResponse;
-    if (questionId && surveyId) {
-      documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
-        insightId: insight.id,
-        surveyId,
-        questionId,
-        limit: documentsPerPage,
-        offset: (page - 1) * documentsPerPage,
-      });
-    } else {
-      documentsResponse = await getDocumentsByInsightIdAction({
-        insightId: insight.id,
-        filterCriteria: documentsFilter,
-        limit: documentsPerPage,
-        offset: (page - 1) * documentsPerPage,
-      });
-    }
-
-    if (!documentsResponse?.data) {
-      const errorMessage = getFormattedErrorMessage(documentsResponse);
-      console.error(errorMessage);
-      return;
-    }
-
-    const fetchedDocuments = documentsResponse.data;
-
-    if (fetchedDocuments.length < documentsPerPage) {
-      setHasMore(false); // No more documents to fetch
-    }
-
-    setDocuments((prevDocuments) => [...prevDocuments, ...fetchedDocuments]);
-  }, [insight, page, surveyId, questionId, documentsFilter]);
+  const [isLoading, setIsLoading] = useState(false); // New state for loading
+  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setDocuments([]);
       setPage(1);
-      setHasMore(true);
+      setHasMore(false); // Reset hasMore when the sheet is opened
     }
-    if (insight) {
+    if (isOpen && insight) {
       fetchDocuments();
     }
-  }, [fetchDocuments, isOpen]);
+
+    async function fetchDocuments() {
+      if (!insight) return;
+      if (isLoading) return; // Prevent fetching if already loading
+      setIsLoading(true); // Set loading state to true
+
+      try {
+        let documentsResponse;
+        if (questionId && surveyId) {
+          documentsResponse = await getDocumentsByInsightIdSurveyIdQuestionIdAction({
+            insightId: insight.id,
+            surveyId,
+            questionId,
+            limit: documentsPerPage,
+            offset: (page - 1) * documentsPerPage,
+          });
+        } else {
+          documentsResponse = await getDocumentsByInsightIdAction({
+            insightId: insight.id,
+            filterCriteria: documentsFilter,
+            limit: documentsPerPage,
+            offset: (page - 1) * documentsPerPage,
+          });
+        }
+
+        if (!documentsResponse?.data) {
+          const errorMessage = getFormattedErrorMessage(documentsResponse);
+          console.error(errorMessage);
+          return;
+        }
+
+        const fetchedDocuments = documentsResponse.data;
+
+        setDocuments((prevDocuments) => {
+          // Remove duplicates based on document ID
+          const uniqueDocuments = new Map<string, TDocument>([
+            ...prevDocuments.map((doc) => [doc.id, doc]),
+            ...fetchedDocuments.map((doc) => [doc.id, doc]),
+          ]);
+          return Array.from(uniqueDocuments.values()) as TDocument[];
+        });
+
+        setHasMore(fetchedDocuments.length === documentsPerPage);
+      } finally {
+        setIsLoading(false); // Reset loading state
+      }
+    }
+  }, [isOpen, insight]);
+
+  const deferredDocuments = useDeferredValue(documents);
 
   const handleFeedbackClick = (feedback: "positive" | "negative") => {
     setIsOpen(false);
@@ -113,48 +128,35 @@ export const InsightSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={(v) => setIsOpen(v)}>
-      <SheetContent className="flex h-full w-[400rem] flex-col bg-white lg:max-w-lg xl:max-w-2xl">
-        <SheetHeader>
-          <SheetTitle>
-            <span className="mr-3">{insight.title}</span>
-            {insight.category === "complaint" ? (
-              <Badge text="Complaint" type="error" size="tiny" />
-            ) : insight.category === "featureRequest" ? (
-              <Badge text="Feature Request" type="warning" size="tiny" />
-            ) : insight.category === "praise" ? (
-              <Badge text="Praise" type="success" size="tiny" />
-            ) : null}
+      <SheetContent className="flex h-full flex-col bg-white">
+        <SheetHeader className="flex flex-col gap-1.5">
+          <SheetTitle className="flex items-center gap-x-2">
+            <span>{insight.title}</span>
+            <CategoryBadge category={insight.category} insightId={insight.id} />
           </SheetTitle>
           <SheetDescription>{insight.description}</SheetDescription>
           <div className="flex w-fit items-center gap-2 rounded-lg border border-slate-300 px-2 py-1 text-sm text-slate-600">
             <p>{t("environments.experience.did_you_find_this_insight_helpful")}</p>
             <ThumbsUpIcon
-              className="upvote h-4 w-4 cursor-pointer hover:text-black"
+              className="upvote h-4 w-4 cursor-pointer text-slate-700 hover:text-emerald-500"
               onClick={() => handleFeedbackClick("positive")}
             />
             <ThumbsDownIcon
-              className="downvote h-4 w-4 cursor-pointer hover:text-black"
+              className="downvote h-4 w-4 cursor-pointer text-slate-700 hover:text-amber-600"
               onClick={() => handleFeedbackClick("negative")}
             />
           </div>
         </SheetHeader>
-
-        <div className="flex flex-1 flex-col space-y-2 overflow-auto pt-4">
-          {documents.map((document) => (
-            <Card key={document.id}>
+        <hr className="my-2" />
+        <div className="flex flex-1 flex-col gap-y-2 overflow-auto">
+          {deferredDocuments.map((document, index) => (
+            <Card key={`${document.id}-${index}`} className="transition-opacity duration-200">
               <CardContent className="p-4 text-sm">
                 <Markdown className="whitespace-pre-wrap">{document.text}</Markdown>
               </CardContent>
-              <CardFooter className="flex justify-between bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <CardFooter className="flex justify-between rounded-bl-xl rounded-br-xl border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
                 <p>
-                  {t("environments.experience.sentiment")}:{" "}
-                  {document.sentiment === "positive" ? (
-                    <Badge text={t("environments.experience.positive")} size="tiny" type="success" />
-                  ) : document.sentiment === "neutral" ? (
-                    <Badge text="Neutral" size="tiny" type="gray" />
-                  ) : document.sentiment === "negative" ? (
-                    <Badge text="Negative" size="tiny" type="error" />
-                  ) : null}
+                  Sentiment: <SentimentSelect documentId={document.id} sentiment={document.sentiment} />
                 </p>
                 <p>{timeSince(new Date(document.createdAt).toISOString(), locale)}</p>
               </CardFooter>

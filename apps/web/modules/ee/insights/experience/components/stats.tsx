@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
+import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { cn } from "@formbricks/ui/lib/utils";
 
 interface ExperiencePageStatsProps {
@@ -84,20 +85,23 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
           <CardContent className="flex items-center justify-between">
             <div className="text-2xl font-bold capitalize">
               {isLoading ? (
-                <div className={cn("h-8 animate-pulse rounded bg-gray-200", stat.width)}></div>
+                <div className={cn("h-4 animate-pulse rounded-full bg-slate-200", stat.width)}></div>
+              ) : stat.key === "sentimentScore" ? (
+                <div className="flex items-center font-medium text-slate-700">
+                  <TooltipRenderer tooltipContent={`${stat.value} positive`}>
+                    {stats.overallSentiment === "positive" ? (
+                      <Badge text="Positive" type="success" size="large" />
+                    ) : stats.overallSentiment === "negative" ? (
+                      <Badge text="Negative" type="error" size="large" />
+                    ) : (
+                      <Badge text="Neutral" type="gray" size="large" />
+                    )}
+                  </TooltipRenderer>
+                </div>
               ) : (
                 (stat.value ?? "-")
               )}
             </div>
-            {stat.key === "sentimentScore" && stats.overallSentiment && (
-              <div>
-                {stats.overallSentiment === "positive" ? (
-                  <Badge text={t("environments.experience.positive")} type="success" size="tiny" />
-                ) : (
-                  <Badge text={t("environments.experience.negative")} type="error" size="tiny" />
-                )}
-              </div>
-            )}
           </CardContent>
         </Card>
       ))}

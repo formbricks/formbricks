@@ -15,6 +15,7 @@ import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { ZId } from "@formbricks/types/common";
 import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getDocument, updateDocument } from "./lib/documents";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
@@ -82,4 +83,31 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
       parsedInput.offset,
       parsedInput.filterCriteria
     );
+  });
+
+const ZUpdateDocumentAction = z.object({
+  documentId: ZId,
+  data: z
+    .object({
+      sentiment: z.enum(["positive", "negative", "neutral"]).optional(),
+    })
+    .strict(),
+});
+
+export const updateDocumentAction = authenticatedActionClient
+  .schema(ZUpdateDocumentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const document = await getDocument(parsedInput.documentId);
+
+    if (!document) {
+      throw new Error("Document not found");
+    }
+
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(document.environmentId),
+      rules: ["response", "update"],
+    });
+
+    return await updateDocument(parsedInput.documentId, parsedInput.data);
   });

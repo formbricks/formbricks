@@ -93,7 +93,7 @@ export const ShareEmbedSurvey = ({
             <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
               <DialogTitle>
                 <p className="pt-2 text-xl font-semibold text-slate-800">
-                  {t("environments.surveys.summary.results_are_public")} 🎉
+                  {t("environments.surveys.summary.your_survey_is_public")} 🎉
                 </p>
               </DialogTitle>
               <DialogDescription className="hidden" />

@@ -76,7 +76,9 @@ const Page = async ({ params }) => {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  if (isReadOnly) return <ErrorComponent />;
+  if (isReadOnly) {
+    return redirect(`/environments/${params.environmentId}/surveys`);
+  }
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");

@@ -135,7 +135,7 @@ export const Modal = ({
       aria-live="assertive"
       className={cn(
         "relative h-full w-full overflow-hidden rounded-b-md",
-        overlayVisible ? (darkOverlay ? "bg-gray-700/80" : "bg-white/50") : "",
+        overlayVisible ? (darkOverlay ? "bg-slate-700/80" : "bg-white/50") : "",
         "transition-all duration-500 ease-in-out"
       )}>
       <div

@@ -115,7 +115,7 @@ export function PreviewEmailTemplate({
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section
                 className={cn("w-full overflow-hidden", {
-                  "border border-solid border-gray-200": firstQuestion.scale === "number",
+                  "border border-solid border-slate-200": firstQuestion.scale === "number",
                 })}>
                 <Column className="mb-4 flex w-full justify-between gap-0">
                   {Array.from({ length: 11 }, (_, i) => (
