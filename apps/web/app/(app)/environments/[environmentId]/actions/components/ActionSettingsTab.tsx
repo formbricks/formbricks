@@ -193,13 +193,13 @@ export const ActionSettingsTab = ({
 
             {actionClass.type === "code" ? (
               <>
-                <CodeActionForm form={form} isEdit={!isReadOnly} />
+                <CodeActionForm form={form} isReadOnly={true} />
                 <p className="text-sm text-slate-600">
                   {t("environments.actions.this_is_a_code_action_please_make_changes_in_your_code_base")}
                 </p>
               </>
             ) : actionClass.type === "noCode" ? (
-              <NoCodeActionForm form={form} isEdit={!isReadOnly} />
+              <NoCodeActionForm form={form} isReadOnly={isReadOnly} />
             ) : (
               <p className="text-sm text-slate-600">
                 {t(

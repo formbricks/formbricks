@@ -6,10 +6,10 @@ import { Input } from "../../Input";
 
 interface CodeActionFormProps {
   form: any;
-  isEdit: boolean;
+  isReadOnly: boolean;
 }
 
-export const CodeActionForm = ({ form, isEdit }: CodeActionFormProps) => {
+export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
   const { control, watch } = form;
   const t = useTranslations();
   return (
@@ -30,8 +30,8 @@ export const CodeActionForm = ({ form, isEdit }: CodeActionFormProps) => {
                   className="mb-2 w-1/2"
                   value={field.value ?? ""}
                   isInvalid={!!error?.message}
-                  readOnly={isEdit}
-                  disabled={!isEdit}
+                  readOnly={isReadOnly}
+                  disabled={isReadOnly}
                 />
               </FormControl>
             </FormItem>

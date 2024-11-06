@@ -12,10 +12,10 @@ import { PageUrlSelector } from "./components/PageUrlSelector";
 
 interface NoCodeActionFormProps {
   form: UseFormReturn<TActionClassInput>;
-  isEdit: boolean;
+  isReadOnly: boolean;
 }
 
-export const NoCodeActionForm = ({ form, isEdit }: NoCodeActionFormProps) => {
+export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) => {
   const { control, watch } = form;
   const t = useTranslations();
   return (
@@ -29,7 +29,7 @@ export const NoCodeActionForm = ({ form, isEdit }: NoCodeActionFormProps) => {
               <div>
                 <Label className="font-semibold">{t("environments.actions.what_is_the_user_doing")}</Label>
                 <TabToggle
-                  disabled={!isEdit}
+                  disabled={isReadOnly}
                   id="userAction"
                   {...field}
                   defaultSelected={field.value}
@@ -55,8 +55,8 @@ export const NoCodeActionForm = ({ form, isEdit }: NoCodeActionFormProps) => {
               <FormItem>
                 <FormControl>
                   <>
-                    <CssSelector form={form} disabled={!isEdit} />
-                    <InnerHtmlSelector form={form} disabled={!isEdit} />
+                    <CssSelector form={form} disabled={isReadOnly} />
+                    <InnerHtmlSelector form={form} disabled={isReadOnly} />
                   </>
                 </FormControl>
                 <FormError />
@@ -93,7 +93,7 @@ export const NoCodeActionForm = ({ form, isEdit }: NoCodeActionFormProps) => {
             </AlertDescription>
           </Alert>
         )}
-        <PageUrlSelector form={form} isEdit={isEdit} />
+        <PageUrlSelector form={form} isReadOnly={isReadOnly} />
       </div>
     </>
   );

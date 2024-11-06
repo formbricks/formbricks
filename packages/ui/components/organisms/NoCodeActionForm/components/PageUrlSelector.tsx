@@ -21,10 +21,10 @@ import { TabToggle } from "../../../TabToggle";
 
 interface PageUrlSelectorProps {
   form: UseFormReturn<TActionClassInput>;
-  isEdit: boolean;
+  isReadOnly: boolean;
 }
 
-export const PageUrlSelector = ({ form, isEdit }: PageUrlSelectorProps) => {
+export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const t = useTranslations();
@@ -75,7 +75,7 @@ export const PageUrlSelector = ({ form, isEdit }: PageUrlSelectorProps) => {
                 {t("environments.actions.limit_the_pages_on_which_this_action_gets_captured")}
               </p>
               <TabToggle
-                disabled={!isEdit}
+                disabled={isReadOnly}
                 id="filter"
                 onChange={(value) => {
                   setFilterType(value);
@@ -93,8 +93,13 @@ export const PageUrlSelector = ({ form, isEdit }: PageUrlSelectorProps) => {
       {filterType === "specific" && (
         <div className="mb-2 mt-4 w-full space-y-3 pe-2">
           <Label>{t("environments.actions.url")}</Label>
-          <UrlInput control={form.control} fields={fields} removeUrlRule={removeUrlRule} disabled={!isEdit} />
-          <Button variant="secondary" size="sm" type="button" onClick={handleAddMore} disabled={!isEdit}>
+          <UrlInput
+            control={form.control}
+            fields={fields}
+            removeUrlRule={removeUrlRule}
+            disabled={isReadOnly}
+          />
+          <Button variant="secondary" size="sm" type="button" onClick={handleAddMore} disabled={isReadOnly}>
             <PlusIcon className="mr-2 h-4 w-4" />
             {t("environments.actions.add_url")}
           </Button>
