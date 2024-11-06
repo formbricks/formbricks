@@ -429,8 +429,6 @@ export const QuestionsView = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  console.log({ localSurvey });
-
   // Auto animate
   const [parent] = useAutoAnimate();
 
