@@ -2,7 +2,7 @@
 
 import { Variants, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "@formbricks/ui/components/ClientLogo";
@@ -13,7 +13,6 @@ import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
-  setQuestionId: (_: string) => void;
   product: TProduct;
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
@@ -51,7 +50,6 @@ export const ThemeStylingPreviewSurvey = ({
   product,
   previewType,
   setPreviewType,
-  setQuestionId,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -104,9 +102,10 @@ export const ThemeStylingPreviewSurvey = ({
   const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
 
   const highlightBorderColor = product.styling.highlightBorderColor?.light;
+  const [surveyFormKey, setSurveyFormKey] = useState<number>(Date.now());
 
   const resetQuestionProgress = () => {
-    setQuestionId(survey?.questions[0]?.id);
+    setSurveyFormKey(Date.now());
   };
 
   const isAppSurvey = previewType === "app";
@@ -161,18 +160,17 @@ export const ThemeStylingPreviewSurvey = ({
               previewMode="desktop"
               background={product.styling.cardBackgroundColor?.light}
               borderRadius={product.styling.roundness ?? 8}>
-              <SurveyInline
-                survey={{ ...survey, type: "app" }}
-                isBrandingEnabled={product.inAppSurveyBranding}
-                isRedirectDisabled={true}
-                onFileUpload={async (file) => file.name}
-                styling={product.styling}
-                isCardBorderVisible={!highlightBorderColor}
-                languageCode="default"
-                getSetQuestionId={(f: (value: string) => void) => {
-                  setQuestionId = f;
-                }}
-              />
+              <Fragment key={surveyFormKey}>
+                <SurveyInline
+                  survey={{ ...survey, type: "app" }}
+                  isBrandingEnabled={product.inAppSurveyBranding}
+                  isRedirectDisabled={true}
+                  onFileUpload={async (file) => file.name}
+                  styling={product.styling}
+                  isCardBorderVisible={!highlightBorderColor}
+                  languageCode="default"
+                />
+              </Fragment>
             </Modal>
           ) : (
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
@@ -182,6 +180,7 @@ export const ThemeStylingPreviewSurvey = ({
                 </div>
               )}
               <div
+                key={surveyFormKey}
                 className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   survey={{ ...survey, type: "link" }}
@@ -191,9 +190,6 @@ export const ThemeStylingPreviewSurvey = ({
                   responseCount={42}
                   styling={product.styling}
                   languageCode="default"
-                  getSetQuestionId={(f: (value: string) => void) => {
-                    setQuestionId = f;
-                  }}
                 />
               </div>
             </MediaBackground>
