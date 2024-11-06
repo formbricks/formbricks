@@ -77,7 +77,7 @@ export const getTeamsByProductId = reactCache(
       },
       [`getTeamsByProductId-${productId}`],
       {
-        tags: [teamCache.tag.byProductId(productId)],
+        tags: [teamCache.tag.byProductId(productId), productCache.tag.byId(productId)],
       }
     )()
 );

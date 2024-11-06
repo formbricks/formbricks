@@ -52,6 +52,7 @@ export const TeamsPage = async ({ params }) => {
         teams={teams}
         organizationId={organization.id}
         membershipRole={currentUserMembership?.organizationRole}
+        currentUserId={session.user.id}
       />
     </PageContentWrapper>
   );

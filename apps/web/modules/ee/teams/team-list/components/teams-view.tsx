@@ -10,9 +10,10 @@ interface TeamsViewProps {
   organizationId: string;
   teams: { userTeams: TUserTeam[]; otherTeams?: TOtherTeam[] };
   membershipRole?: TOrganizationRole;
+  currentUserId: string;
 }
 
-export const TeamsView = ({ organizationId, teams, membershipRole }: TeamsViewProps) => {
+export const TeamsView = ({ organizationId, teams, membershipRole, currentUserId }: TeamsViewProps) => {
   const { isOwner, isManager } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isOwner || isManager;
@@ -24,7 +25,11 @@ export const TeamsView = ({ organizationId, teams, membershipRole }: TeamsViewPr
         {isOwnerOrManager && <CreateTeamButton organizationId={organizationId} />}
       </div>
       <div className="flex flex-col gap-6">
-        <YourTeams teams={teams.userTeams} />
+        <YourTeams
+          teams={teams.userTeams}
+          currentUserId={currentUserId}
+          isOwnerOrManager={isOwnerOrManager}
+        />
         {teams.otherTeams && <OtherTeams teams={teams.otherTeams} />}
       </div>
     </div>

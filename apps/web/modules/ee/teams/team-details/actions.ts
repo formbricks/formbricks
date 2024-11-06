@@ -16,6 +16,8 @@ import {
 } from "@/modules/ee/teams/team-details/lib/teams";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { z } from "zod";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZTeam } from "./types/teams";
 
@@ -98,6 +100,17 @@ const ZRemoveTeamMemberAction = z.object({
 export const removeTeamMemberAction = authenticatedActionClient
   .schema(ZRemoveTeamMemberAction)
   .action(async ({ ctx, parsedInput }) => {
+    const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, teamOrganizationId);
+
+    const { isOwner, isManager } = getAccessFlags(membership?.organizationRole);
+
+    const isOwnerOrManager = isOwner || isManager;
+
+    if (!isOwnerOrManager && ctx.user.id !== parsedInput.userId) {
+      throw new Error("You can only remove yourself from the team");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),

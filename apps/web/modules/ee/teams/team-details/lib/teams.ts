@@ -370,6 +370,15 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
       },
       select: {
         organizationId: true,
+        organization: {
+          select: {
+            products: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -414,6 +423,11 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
       productCache.revalidate({ userId });
     }
 
+    for (const product of team.organization.products) {
+      teamCache.revalidate({ productId: product.id });
+    }
+
+    productCache.revalidate({ organizationId: team.organizationId });
     teamCache.revalidate({ id: teamId, organizationId: team.organizationId });
 
     return true;

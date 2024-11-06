@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { leaveTeamAction } from "@/modules/ee/teams/team-list/actions";
+import { removeTeamMemberAction } from "@/modules/ee/teams/team-details/actions";
 import { TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -22,15 +22,17 @@ import {
 
 interface YourTeamsProps {
   teams: TUserTeam[];
+  currentUserId: string;
+  isOwnerOrManager: boolean;
 }
 
-export const YourTeams = ({ teams }: YourTeamsProps) => {
+export const YourTeams = ({ teams, currentUserId, isOwnerOrManager }: YourTeamsProps) => {
   const router = useRouter();
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [leaveTeamModalOpen, setLeaveTeamModalOpen] = useState<boolean>(false);
   const t = useTranslations();
   const handleLeaveTeam = async (teamId: string) => {
-    const leaveTeamActionResponse = await leaveTeamAction({ teamId });
+    const leaveTeamActionResponse = await removeTeamMemberAction({ userId: currentUserId, teamId });
     if (leaveTeamActionResponse?.data) {
       router.refresh();
     } else {
@@ -54,7 +56,7 @@ export const YourTeams = ({ teams }: YourTeamsProps) => {
                 <TableRow className="bg-slate-100">
                   <TableHead>{t("common.name")}</TableHead>
                   <TableHead>{t("common.role")}</TableHead>
-                  <TableHead>{t("common.actions")}</TableHead>
+                  {isOwnerOrManager && <TableHead>{t("common.actions")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -74,17 +76,19 @@ export const YourTeams = ({ teams }: YourTeamsProps) => {
                       ({team.memberCount} {t("common.members")})
                     </TableCell>
                     <TableCell className="capitalize">{team.userRole}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="warn"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedTeamId(team.id);
-                          setLeaveTeamModalOpen(true);
-                        }}>
-                        {t("environments.settings.teams.leave_team")}
-                      </Button>
-                    </TableCell>
+                    {isOwnerOrManager && (
+                      <TableCell>
+                        <Button
+                          variant="warn"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTeamId(team.id);
+                            setLeaveTeamModalOpen(true);
+                          }}>
+                          {t("environments.settings.teams.leave_team")}
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

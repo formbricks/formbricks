@@ -167,57 +167,6 @@ export const getTeams = reactCache(
     )()
 );
 
-export const leaveTeam = async (userId: string, teamId: string): Promise<boolean> => {
-  validateInputs([userId, z.string()], [teamId, ZId]);
-  try {
-    const team = await prisma.team.findUnique({
-      where: {
-        id: teamId,
-      },
-      select: {
-        organizationId: true,
-        productTeams: {
-          select: {
-            productId: true,
-          },
-        },
-      },
-    });
-
-    if (!team) {
-      throw new ResourceNotFoundError("Team", teamId);
-    }
-
-    const deletedMembership = await prisma.teamUser.delete({
-      where: {
-        teamId_userId: {
-          teamId,
-          userId,
-        },
-      },
-    });
-
-    if (!deletedMembership) {
-      throw new ResourceNotFoundError("Membership", null);
-    }
-
-    teamCache.revalidate({ id: teamId, userId });
-    productCache.revalidate({ userId });
-
-    for (const productTeam of team.productTeams) {
-      teamCache.revalidate({ productId: productTeam.productId });
-    }
-
-    return true;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
 export const joinTeam = async (userId: string, teamId: string): Promise<TTeamRole> => {
   validateInputs([userId, z.string()], [teamId, ZId]);
   try {

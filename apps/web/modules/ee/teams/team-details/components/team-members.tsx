@@ -4,7 +4,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { removeTeamMemberAction, updateUserTeamRoleAction } from "@/modules/ee/teams/team-details/actions";
 import { AddTeamMemberModal } from "@/modules/ee/teams/team-details/components/add-team-member-modal";
 import { TOrganizationMember, TTeamMember } from "@/modules/ee/teams/team-details/types/teams";
-import { leaveTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { TeamRoleMapping, getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
 import { InfoIcon } from "lucide-react";
@@ -80,10 +79,7 @@ export const TeamMembers = ({
   };
 
   const handleRemoveMember = async (userId: string) => {
-    const removeMemberActionResponse =
-      currentUserId === userId
-        ? await leaveTeamAction({ teamId })
-        : await removeTeamMemberAction({ teamId, userId });
+    const removeMemberActionResponse = await removeTeamMemberAction({ teamId, userId });
 
     if (removeMemberActionResponse?.data) {
       toast.success(t("environments.settings.teams.member_removed_successfully"));
