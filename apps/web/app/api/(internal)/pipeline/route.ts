@@ -116,6 +116,36 @@ export const POST = async (request: Request) => {
             },
           },
         },
+        OR: [
+          {
+            memberships: {
+              every: {
+                organizationRole: {
+                  in: ["owner", "manager"],
+                },
+              },
+            },
+          },
+          {
+            teamUsers: {
+              some: {
+                team: {
+                  productTeams: {
+                    some: {
+                      product: {
+                        environments: {
+                          some: {
+                            id: environmentId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
         notificationSettings: {
           path: ["alert", surveyId],
           equals: true,

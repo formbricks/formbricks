@@ -128,7 +128,7 @@ export const TeamMembers = ({
                 <TableRow className="bg-slate-100">
                   <TableHead>{t("common.member")}</TableHead>
                   <TableHead>{t("common.role")}</TableHead>
-                  <TableHead>{t("common.actions")}</TableHead>
+                  {canPerformRoleManagement && <TableHead>{t("common.actions")}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -188,21 +188,24 @@ export const TeamMembers = ({
                         <p>{TeamRoleMapping[teamMember.role]}</p>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {(teamMember.id === currentUserId || canPerformRoleManagement) && (
-                        <Button
-                          variant="warn"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedTeamMemberId(teamMember.id);
-                            setRemoveMemberModalOpen(true);
-                          }}>
-                          {teamMember.id === currentUserId
-                            ? t("environments.settings.teams.leave")
-                            : t("common.remove")}
-                        </Button>
-                      )}
-                    </TableCell>
+                    {canPerformRoleManagement && (
+                      <TableCell>
+                        {(teamMember.id !== currentUserId ||
+                          (teamMember.id === currentUserId && !isTeamAdmin)) && (
+                          <Button
+                            variant="warn"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedTeamMemberId(teamMember.id);
+                              setRemoveMemberModalOpen(true);
+                            }}>
+                            {teamMember.id === currentUserId
+                              ? t("environments.settings.teams.leave")
+                              : t("common.remove")}
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

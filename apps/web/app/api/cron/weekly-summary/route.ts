@@ -2,6 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@/modules/email";
 import { headers } from "next/headers";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getNotificationResponse } from "./lib/notificationResponse";
 import { getOrganizationIds } from "./lib/organization";
 import { getProductsByOrganizationId } from "./lib/product";
@@ -43,25 +44,29 @@ export const POST = async (): Promise<Response> => {
 
         if (notificationResponse.insights.numLiveSurvey === 0) {
           for (const organizationMember of organizationMembersWithNotificationEnabled) {
+            if (await hasUserEnvironmentAccess(organizationMember.user.id, product.environments[0].id)) {
+              emailSendingPromises.push(
+                sendNoLiveSurveyNotificationEmail(
+                  organizationMember.user.email,
+                  notificationResponse,
+                  organizationMember.user.locale
+                )
+              );
+            }
+          }
+          continue;
+        }
+
+        for (const organizationMember of organizationMembersWithNotificationEnabled) {
+          if (await hasUserEnvironmentAccess(organizationMember.user.id, product.environments[0].id)) {
             emailSendingPromises.push(
-              sendNoLiveSurveyNotificationEmail(
+              sendWeeklySummaryNotificationEmail(
                 organizationMember.user.email,
                 notificationResponse,
                 organizationMember.user.locale
               )
             );
           }
-          continue;
-        }
-
-        for (const organizationMember of organizationMembersWithNotificationEnabled) {
-          emailSendingPromises.push(
-            sendWeeklySummaryNotificationEmail(
-              organizationMember.user.email,
-              notificationResponse,
-              organizationMember.user.locale
-            )
-          );
         }
       }
     }
