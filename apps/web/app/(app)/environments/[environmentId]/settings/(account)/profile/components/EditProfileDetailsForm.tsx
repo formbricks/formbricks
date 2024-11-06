@@ -45,7 +45,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
       const name = data.name.trim();
       const locale = data.locale;
       await updateUserAction({ name, locale });
-      toast.success(t("common.profile_updated_successfully"));
+      toast.success(t("environments.settings.profile.profile_updated_successfully"));
       window.location.reload();
       form.reset({ name, locale });
     } catch (error) {
