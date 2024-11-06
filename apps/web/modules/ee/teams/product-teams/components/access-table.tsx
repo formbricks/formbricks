@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { removeAccessAction, updateAccessPermissionAction } from "@/modules/ee/teams/product-teams/actions";
 import { TProductTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
@@ -8,7 +9,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
 import {

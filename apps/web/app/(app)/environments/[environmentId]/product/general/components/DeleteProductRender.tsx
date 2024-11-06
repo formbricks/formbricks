@@ -1,11 +1,11 @@
 "use client";
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/product/general/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
 import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";

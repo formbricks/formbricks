@@ -6,12 +6,12 @@ import {
   updateTagNameAction,
 } from "@/app/(app)/environments/[environmentId]/product/tags/actions";
 import { MergeTagsCombobox } from "@/app/(app)/environments/[environmentId]/product/tags/components/MergeTagsCombobox";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { AlertCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";

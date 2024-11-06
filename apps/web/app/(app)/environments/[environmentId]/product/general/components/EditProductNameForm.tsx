@@ -1,11 +1,11 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
 import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";

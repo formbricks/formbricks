@@ -3,23 +3,56 @@ import { getProductPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modul
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { returnValidationErrors } from "next-safe-action";
-import { z } from "zod";
-import {
-  formatErrors,
-  getOperationPermissions,
-  getRoleBasedSchema,
-} from "@formbricks/lib/actionClient/utils";
+import { ZodIssue, z } from "zod";
 import { getMembershipRole } from "@formbricks/lib/membership/hooks/actions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOperation, TResource } from "@formbricks/types/action-client";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { TOrganizationRole } from "@formbricks/types/memberships";
+
+export const getOperationPermissions = (
+  role: TOrganizationRole,
+  entity: TResource,
+  operation: TOperation
+) => {
+  const permission = Permissions[role][entity][operation];
+
+  if (typeof permission === "boolean" && !permission) {
+    throw new AuthorizationError("Not authorized");
+  }
+
+  return permission;
+};
+
+export const getRoleBasedSchema = <T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>,
+  role: TOrganizationRole,
+  entity: TResource,
+  operation: TOperation
+): z.ZodObject<T> => {
+  const data = getOperationPermissions(role, entity, operation);
+
+  return typeof data === "boolean" && data === true ? schema.strict() : data;
+};
+
+export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
+  return {
+    ...issues.reduce((acc, issue) => {
+      acc[issue.path.join(".")] = {
+        _errors: [issue.message],
+      };
+      return acc;
+    }, {}),
+  };
+};
 
 export type TAccess<T extends z.ZodRawShape> =
   | {
       type: "organization";
       schema?: z.ZodObject<T>;
       data?: z.ZodObject<T>["_output"];
-      rules: [TResource, TOperation];
+      rules?: [TResource, TOperation];
+      roles: TOrganizationRole[];
     }
   | {
       type: "productTeam";

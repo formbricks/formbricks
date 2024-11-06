@@ -1,12 +1,12 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { addTeamMembersAction } from "@/modules/ee/teams/team-details/actions";
 import { UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { Modal } from "@formbricks/ui/components/Modal";

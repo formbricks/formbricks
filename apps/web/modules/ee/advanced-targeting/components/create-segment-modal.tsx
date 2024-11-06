@@ -1,11 +1,11 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";

@@ -1,9 +1,9 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProduct, ZProductConfigChannel, ZProductConfigIndustry } from "@formbricks/types/product";

@@ -4,6 +4,7 @@ import { BackgroundStylingCard } from "@/app/(app)/(survey-editor)/environments/
 import { CardStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/product/look/components/ThemeStylingPreviewSurvey";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcwIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { COLOR_DEFAULTS, getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";

@@ -1,13 +1,13 @@
 import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getUser } from "@formbricks/lib/user/service";
 import {
   AuthenticationError,
   AuthorizationError,
   InvalidInputError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
-import { authOptions } from "../authOptions";
-import { getUser } from "../user/service";
 
 export const actionClient = createSafeActionClient({
   handleServerError(e) {

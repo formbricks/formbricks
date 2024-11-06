@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateTeamNameAction } from "@/modules/ee/teams/team-details/actions";
 import { TTeam, ZTeam } from "@/modules/ee/teams/team-details/types/teams";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +8,6 @@ import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";

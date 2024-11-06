@@ -1,10 +1,10 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { TUserLocale } from "@formbricks/types/user";

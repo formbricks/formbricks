@@ -1,12 +1,12 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { joinTeamAction } from "@/modules/ee/teams/team-list/actions";
 import { TOtherTeam } from "@/modules/ee/teams/team-list/types/teams";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Button } from "@formbricks/ui/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import {

@@ -1,10 +1,10 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TApiKey } from "@formbricks/types/api-keys";

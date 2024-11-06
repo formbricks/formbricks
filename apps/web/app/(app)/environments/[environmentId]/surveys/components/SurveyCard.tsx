@@ -3,11 +3,11 @@
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { SurveyTypeIndicator } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyTypeIndicator";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";

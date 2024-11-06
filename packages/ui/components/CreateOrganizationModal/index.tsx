@@ -1,10 +1,10 @@
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { createOrganizationAction } from "../../../../apps/web/app/(app)/environments/[environmentId]/actions";
 import { Button } from "../Button";
 import { Input } from "../Input";

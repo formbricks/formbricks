@@ -1,11 +1,11 @@
 "use client";
 
 import { updateOrganizationAIEnabledAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Label } from "@formbricks/ui/components/Label";

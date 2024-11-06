@@ -1,6 +1,7 @@
 "use client";
 
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/product-teams/types/teams";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import {

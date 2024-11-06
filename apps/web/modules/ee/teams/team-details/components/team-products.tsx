@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { updateTeamProductPermissionAction } from "@/modules/ee/teams/team-details/actions";
 import { AddTeamProductModal } from "@/modules/ee/teams/team-details/components/add-team-product-modal";
@@ -9,7 +10,6 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";

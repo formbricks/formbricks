@@ -1,11 +1,11 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TTag } from "@formbricks/types/tags";
 import { Button } from "@formbricks/ui/components/Button";
 import { Tag } from "@formbricks/ui/components/Tag";
