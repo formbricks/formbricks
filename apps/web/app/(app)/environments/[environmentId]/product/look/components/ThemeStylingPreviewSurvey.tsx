@@ -13,7 +13,6 @@ import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
-  setQuestionId: (_: string) => void;
   product: TProduct;
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
@@ -51,7 +50,6 @@ export const ThemeStylingPreviewSurvey = ({
   product,
   previewType,
   setPreviewType,
-  setQuestionId,
 }: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
@@ -171,9 +169,6 @@ export const ThemeStylingPreviewSurvey = ({
                   styling={product.styling}
                   isCardBorderVisible={!highlightBorderColor}
                   languageCode="default"
-                  getSetQuestionId={(f: (value: string) => void) => {
-                    setQuestionId = f;
-                  }}
                 />
               </Fragment>
             </Modal>
@@ -195,9 +190,6 @@ export const ThemeStylingPreviewSurvey = ({
                   responseCount={42}
                   styling={product.styling}
                   languageCode="default"
-                  getSetQuestionId={(f: (value: string) => void) => {
-                    setQuestionId = f;
-                  }}
                 />
               </div>
             </MediaBackground>
