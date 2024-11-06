@@ -18,7 +18,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../settings/components/SettingsCard";
@@ -110,9 +110,11 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             />
           </div>
         ) : (
-          <p className="text-sm text-red-700">
-            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-          </p>
+          <Alert variant="warning">
+            <AlertDescription>
+              {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+            </AlertDescription>
+          </Alert>
         )}
       </SettingsCard>
     </PageContentWrapper>

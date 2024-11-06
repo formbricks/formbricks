@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
@@ -64,11 +65,13 @@ export const DeleteProductRender = ({
       )}
 
       {isDeleteDisabled && (
-        <p className="text-sm text-red-700">
-          {!isOwnerOrManager
-            ? t("environments.product.general.only_owners_or_managers_can_delete_products")
-            : t("environments.product.general.cannot_delete_only_product")}
-        </p>
+        <Alert variant="warning">
+          <AlertDescription>
+            {!isOwnerOrManager
+              ? t("environments.product.general.only_owners_or_managers_can_delete_products")
+              : t("environments.product.general.cannot_delete_only_product")}
+          </AlertDescription>
+        </Alert>
       )}
 
       <DeleteDialog

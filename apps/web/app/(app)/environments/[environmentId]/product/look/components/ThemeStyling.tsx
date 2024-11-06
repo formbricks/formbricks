@@ -15,6 +15,7 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { COLOR_DEFAULTS, getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -155,9 +156,11 @@ export const ThemeStyling = ({
 
   if (isReadOnly) {
     return (
-      <p className="text-sm text-red-700">
-        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-      </p>
+      <Alert variant="warning">
+        <AlertDescription>
+          {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+        </AlertDescription>
+      </Alert>
     );
   }
   return (

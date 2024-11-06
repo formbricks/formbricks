@@ -38,7 +38,7 @@ export const createLanguageAction = authenticatedActionClient
         {
           type: "productTeam",
           productId: parsedInput.productId,
-          minPermission: "readWrite",
+          minPermission: "manage",
         },
       ],
     });

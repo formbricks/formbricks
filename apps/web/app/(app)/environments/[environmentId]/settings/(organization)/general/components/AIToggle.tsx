@@ -7,7 +7,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Label } from "@formbricks/ui/components/Label";
 import { Switch } from "@formbricks/ui/components/Switch";
 

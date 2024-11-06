@@ -7,6 +7,7 @@ import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
@@ -107,9 +108,11 @@ export const EditLogo = ({ product, environmentId, isReadOnly }: EditLogoProps) 
 
   if (isReadOnly) {
     return (
-      <p className="text-sm text-red-700">
-        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-      </p>
+      <Alert variant="warning">
+        <AlertDescription>
+          {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+        </AlertDescription>
+      </Alert>
     );
   }
 

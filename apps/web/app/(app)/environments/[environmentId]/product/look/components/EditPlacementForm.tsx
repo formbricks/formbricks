@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/components/Form";
 import { Label } from "@formbricks/ui/components/Label";
@@ -73,9 +74,11 @@ export const EditPlacementForm = ({ product, isReadOnly }: EditPlacementProps) =
 
   if (isReadOnly) {
     return (
-      <p className="text-sm text-red-700">
-        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-      </p>
+      <Alert variant="warning">
+        <AlertDescription>
+          {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+        </AlertDescription>
+      </Alert>
     );
   }
 

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   FormControl,
@@ -107,8 +108,10 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
       </form>
     </FormProvider>
   ) : (
-    <p className="text-sm text-red-700">
-      {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-    </p>
+    <Alert variant="warning">
+      <AlertDescription>
+        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+      </AlertDescription>
+    </Alert>
   );
 };

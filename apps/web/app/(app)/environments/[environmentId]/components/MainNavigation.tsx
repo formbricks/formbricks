@@ -4,8 +4,6 @@ import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[enviro
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import {
   ArrowUpRightIcon,
   BlendIcon,
