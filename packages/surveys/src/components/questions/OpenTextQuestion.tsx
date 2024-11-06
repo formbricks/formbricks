@@ -43,11 +43,13 @@ export const OpenTextQuestion = ({
   currentQuestionId,
 }: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const [currentLength, setCurrentLength] = useState(value.length || 0);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const handleInputChange = (inputValue: string) => {
+    setCurrentLength(inputValue.length);
     onChange({ [question.id]: inputValue });
   };
 
@@ -92,7 +94,6 @@ export const OpenTextQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-
           <div className="fb-mt-4">
             {question.longAnswer === false ? (
               <input
@@ -136,6 +137,12 @@ export const OpenTextQuestion = ({
                 minlength={question.inputType === "text" ? question.minLength || undefined : undefined}
                 maxlength={question.inputType === "text" ? question.maxLength || undefined : undefined}
               />
+            )}
+            {question.inputType === "text" && question.maxLength && (
+              <span
+                className={`fb-text-xs ${currentLength >= question.maxLength ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
+                {currentLength}/{question.maxLength}
+              </span>
             )}
           </div>
         </div>

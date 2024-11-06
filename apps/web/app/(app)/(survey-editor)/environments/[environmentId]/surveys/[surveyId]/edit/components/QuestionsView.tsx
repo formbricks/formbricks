@@ -221,6 +221,19 @@ export const QuestionsView = ({
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = { ...localSurvey };
+
+    const minLength = updatedAttributes.minLength ?? updatedSurvey.questions[questionIdx]["minLength"];
+    const maxLength = updatedAttributes.maxLength ?? updatedSurvey.questions[questionIdx]["maxLength"];
+
+    if (minLength !== undefined && maxLength !== undefined && minLength > maxLength) {
+      toast.error(t("environments.surveys.edit.minimum_length_validation_text"));
+      return;
+    }
+
+    if (minLength < 0 || maxLength < 0) {
+      toast.error(t("environments.surveys.edit.assert_positive_values"));
+      return;
+    }
     if ("id" in updatedAttributes) {
       // if the survey question whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
@@ -415,6 +428,8 @@ export const QuestionsView = ({
     const updatedSurvey = { ...localSurvey, endings: newEndings };
     setLocalSurvey(updatedSurvey);
   };
+
+  console.log({ localSurvey });
 
   // Auto animate
   const [parent] = useAutoAnimate();

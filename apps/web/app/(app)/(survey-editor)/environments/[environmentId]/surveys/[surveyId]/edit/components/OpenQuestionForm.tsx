@@ -88,6 +88,7 @@ export const OpenQuestionForm = ({
         label={t("environments.surveys.edit.question") + "*"}
         locale={locale}
       />
+
       <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
@@ -124,80 +125,24 @@ export const OpenQuestionForm = ({
           </Button>
         )}
       </div>
-      <div className="mt-2 flex flex-col gap-6">
-        <div>
-          <QuestionFormInput
-            id="placeholder"
-            value={
-              question.placeholder
-                ? question.placeholder
-                : createI18nString(defaultPlaceholder, surveyLanguageCodes)
-            }
-            localSurvey={localSurvey}
-            questionIdx={questionIdx}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            attributeClasses={attributeClasses}
-            label={t("common.placeholder")}
-            locale={locale}
-          />
-        </div>
-
-        <div>
-          {showCharLimits && (
-            <AdvancedOptionToggle
-              isChecked={isCharLimitEnabled}
-              onToggle={(checked: boolean) => {
-                setIsCharLimitEnabled(checked);
-                if (!checked) {
-                  updateQuestion(questionIdx, {
-                    minLength: undefined,
-                    maxLength: undefined,
-                  });
-                }
-              }}
-              htmlId="charLimit"
-              description="Limit how short or long an answer can be."
-              childBorder
-              title="Add character limits"
-              customContainerClass="p-0">
-              <div className="flex gap-4 p-4">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="minLength">Minimum</Label>
-                  <Input
-                    id="minLength"
-                    name="minLength"
-                    type="number"
-                    value={question.minLength || ""}
-                    className="bg-white"
-                    onChange={(e) =>
-                      updateQuestion(questionIdx, {
-                        minLength: e.target.value ? parseInt(e.target.value) : undefined,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="maxLength">Maximum</Label>
-                  <Input
-                    id="maxLength"
-                    name="maxLength"
-                    type="number"
-                    value={question.maxLength || ""}
-                    className="bg-white"
-                    onChange={(e) =>
-                      updateQuestion(questionIdx, {
-                        maxLength: e.target.value ? parseInt(e.target.value) : undefined,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </AdvancedOptionToggle>
-          )}
-        </div>
+      <div className="mt-2">
+        <QuestionFormInput
+          id="placeholder"
+          value={
+            question.placeholder
+              ? question.placeholder
+              : createI18nString(defaultPlaceholder, surveyLanguageCodes)
+          }
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          isInvalid={isInvalid}
+          updateQuestion={updateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          attributeClasses={attributeClasses}
+          label={t("common.placeholder")}
+          locale={locale}
+        />
       </div>
       {/* Add a dropdown to select the question type */}
       <div className="mt-3">
@@ -209,6 +154,59 @@ export const OpenQuestionForm = ({
             handleOptionChange={handleInputChange} // Use the merged function
           />
         </div>
+      </div>
+      <div className="mt-3">
+        {showCharLimits && (
+          <AdvancedOptionToggle
+            isChecked={isCharLimitEnabled}
+            onToggle={(checked: boolean) => {
+              setIsCharLimitEnabled(checked);
+              if (!checked) {
+                updateQuestion(questionIdx, {
+                  minLength: undefined,
+                  maxLength: undefined,
+                });
+              }
+            }}
+            htmlId="charLimit"
+            description={t("environments.surveys.edit.character_limit_toggle_description")}
+            childBorder
+            title={t("environments.surveys.edit.character_limit_toggle_title")}
+            customContainerClass="p-0">
+            <div className="flex gap-4 p-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="minLength">{t("common.minimum")}</Label>
+                <Input
+                  id="minLength"
+                  name="minLength"
+                  type="number"
+                  value={question.minLength || ""}
+                  className="bg-white"
+                  onChange={(e) =>
+                    updateQuestion(questionIdx, {
+                      minLength: e.target.value ? parseInt(e.target.value) : undefined,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="maxLength">{t("common.maximum")}</Label>
+                <Input
+                  id="maxLength"
+                  name="maxLength"
+                  type="number"
+                  value={question.maxLength || ""}
+                  className="bg-white"
+                  onChange={(e) =>
+                    updateQuestion(questionIdx, {
+                      maxLength: e.target.value ? parseInt(e.target.value) : undefined,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </AdvancedOptionToggle>
+        )}
       </div>
     </form>
   );
