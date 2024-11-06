@@ -1,11 +1,28 @@
+import {
+  createSurveyFollowUpAction,
+  updateSurveyFollowUpAction,
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpActionMultiEmailInput";
-import { CheckIcon, EyeOffIcon, HandshakeIcon, WorkflowIcon } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { EyeOffIcon, HandshakeIcon, WorkflowIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
+import { Checkbox } from "@formbricks/ui/components/Checkbox";
 import { Editor } from "@formbricks/ui/components/Editor";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@formbricks/ui/components/Form";
 import { Input } from "@formbricks/ui/components/Input";
 import { Modal } from "@formbricks/ui/components/Modal";
 import {
@@ -15,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui/components/Select";
-import { cn } from "@formbricks/ui/lib/utils";
+import { TCreateSurveyFollowUpForm, ZCreateSurveyFollowUpFormSchema } from "../types/survey-follow-up";
 
 interface AddFollowUpModalProps {
   localSurvey: TSurvey;
@@ -24,6 +41,8 @@ interface AddFollowUpModalProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectedLanguageCode: string;
   mailFrom: string;
+  defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
+  mode?: "create" | "edit";
 }
 
 type EmailSendToOption = {
@@ -34,16 +53,15 @@ type EmailSendToOption = {
 
 export const AddFollowUpModal = ({
   localSurvey,
-  setLocalSurvey,
   open,
   setOpen,
   selectedLanguageCode,
   mailFrom,
+  defaultValues,
+  mode = "create",
 }: AddFollowUpModalProps) => {
+  const router = useRouter();
   const [firstRender, setFirstRender] = useState(true);
-  const [followUpName, setFollowUpName] = useState("");
-  const [triggerType, setTriggerType] = useState("response");
-  const [selectedEndings, setSelectedEndings] = useState<string[]>([]);
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
     const { questions } = localSurvey;
@@ -78,14 +96,23 @@ export const AddFollowUpModal = ({
     ];
   }, [localSurvey, selectedLanguageCode]);
 
-  const [selectedEmailSendToOption, setSelectedEmailSendToOption] = useState<EmailSendToOption>(
-    emailSendToOptions[0]
-  );
+  const form = useForm<TCreateSurveyFollowUpForm>({
+    defaultValues: {
+      name: defaultValues?.name ?? "",
+      triggerType: defaultValues?.triggerType ?? "response",
+      endingIds: defaultValues?.endingIds || null,
+      emailTo: defaultValues?.emailTo ?? emailSendToOptions[0].id,
+      replyTo: defaultValues?.replyTo ?? [],
+      subject: defaultValues?.subject ?? "",
+      body: defaultValues?.body ?? "",
+    },
+    resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
+    mode: "onChange",
+  });
 
-  const [replyToEmails, setReplyToEmails] = useState<string[]>([]);
-
-  const [actionEmailSubject, setActionEmailSubject] = useState("");
-  const [actionEmailContent, setActionEmailContent] = useState("");
+  const formErrors = form.formState.errors;
+  const formSubmitting = form.formState.isSubmitting;
+  const triggerType = form.watch("triggerType");
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding size="xl">
@@ -109,230 +136,396 @@ export const AddFollowUpModal = ({
         </div>
       </div>
 
-      <div className="mb-12 max-h-[600px] overflow-auto px-6 py-4">
-        <div className="flex flex-col space-y-4">
-          {/* workflow name */}
-          <div className="flex flex-col space-y-2">
-            <h2 className="font-medium text-slate-900">Follow-up name:</h2>
-            <Input
-              value={followUpName}
-              onChange={(e) => setFollowUpName(e.target.value)}
-              className="max-w-80"
-            />
-          </div>
+      <FormProvider {...form}>
+        <form
+          onSubmit={form.handleSubmit(async (data) => {
+            if (data.triggerType === "endings") {
+              if (!data.endingIds || !data.endingIds?.length) {
+                form.setError("endingIds", {
+                  type: "manual",
+                  message: "Please select at least one ending",
+                });
+                return;
+              }
+            }
 
-          {/* trigger */}
+            if (mode === "edit") {
+              if (!defaultValues?.surveyFollowUpId) {
+                console.error("No survey follow up id provided, can't update the survey follow up");
+                return;
+              }
 
-          <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
-            <h2 className="text-lg font-medium text-slate-900">Trigger</h2>
+              const res = await updateSurveyFollowUpAction({
+                surveyId: localSurvey.id,
+                surveyFollowUpId: defaultValues.surveyFollowUpId,
+                followUpData: {
+                  name: data.name,
+                  trigger: {
+                    type: data.triggerType,
+                    properties:
+                      data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
+                  },
+                  action: {
+                    type: "send-email",
+                    properties: {
+                      to: data.emailTo,
+                      from: mailFrom,
+                      replyTo: data.replyTo,
+                      subject: data.subject,
+                      body: data.body,
+                    },
+                  },
+                },
+              });
 
-            <div className="flex flex-col space-y-2">
-              <h3 className="font-medium text-slate-700">When should this follow-up be triggered?</h3>
-              <div className="max-w-80">
-                <Select defaultValue={triggerType} onValueChange={(value) => setTriggerType(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+              if (res?.data) {
+                toast.success("Survey follow up updated successfully");
+                setOpen(false);
 
-                  <SelectContent>
-                    <SelectItem value="response">Any response is submitted</SelectItem>
-                    <SelectItem value="ending">An ending(s)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                router.refresh();
+              } else {
+                toast.error("Something went wrong");
+              }
 
-            {triggerType === "ending" ? (
-              <div className="flex flex-col space-y-2">
-                <h3 className="font-medium text-slate-700">Select endings: </h3>
-                <div className="flex flex-col space-y-2">
-                  {localSurvey.endings.map((ending) => {
-                    const getEndingLabel = (): string => {
-                      if (ending.type === "endScreen") {
-                        return getLocalizedValue(ending.headline, selectedLanguageCode) || "Ending";
-                      }
+              return;
+            }
 
-                      return ending.label || ending.url || "Ending";
-                    };
+            const res = await createSurveyFollowUpAction({
+              surveyId: localSurvey.id,
+              followUpData: {
+                name: data.name,
+                trigger: {
+                  type: data.triggerType,
+                  properties:
+                    data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
+                },
+                action: {
+                  type: "send-email",
+                  properties: {
+                    to: data.emailTo,
+                    from: mailFrom,
+                    replyTo: data.replyTo,
+                    subject: data.subject,
+                    body: data.body,
+                  },
+                },
+              },
+            });
 
-                    return (
-                      <button
-                        className={cn(
-                          "relative max-w-80 rounded-md border px-3 py-2",
-                          selectedEndings.includes(ending.id) ? "border-slate-900" : "border-slate-300"
-                        )}
-                        onClick={() => {
-                          if (selectedEndings.includes(ending.id)) {
-                            setSelectedEndings(selectedEndings.filter((id) => id !== ending.id));
-                            return;
-                          }
-
-                          setSelectedEndings([...selectedEndings, ending.id]);
-                        }}>
-                        <div className="flex items-center space-x-2">
-                          <HandshakeIcon className="h-4 min-h-4 w-4 min-w-4" />
-                          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-slate-900">
-                            {getEndingLabel()}
-                          </span>
-                        </div>
-
-                        {selectedEndings.includes(ending.id) ? (
-                          <div className="absolute bottom-0 right-1 top-0 z-10 flex items-center space-x-2">
-                            <CheckIcon className="h-4 w-4" />
-                          </div>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          {/* action */}
-
-          <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
-            <h2 className="text-lg font-medium text-slate-900">Action</h2>
-            <div className="flex flex-col space-y-4">
-              {/* email setup */}
-              <div className="flex flex-col space-y-2">
-                <h2 className="text-lg font-medium text-slate-900">Email setup</h2>
-                {/* To */}
-
-                <div className="flex flex-col space-y-2">
-                  <h3 className="font-medium text-slate-900">To</h3>
-                  <p className="text-sm text-slate-500">Email address to send the email to</p>
-
-                  <div className="max-w-80">
-                    <Select
-                      defaultValue={selectedEmailSendToOption.id}
-                      onValueChange={(value) => {
-                        const selectedOption = emailSendToOptions.find((option) => option.id === value);
-                        if (!selectedOption) return;
-
-                        setSelectedEmailSendToOption(selectedOption);
-                      }}>
-                      <SelectTrigger className="overflow-hidden text-ellipsis whitespace-nowrap">
-                        <SelectValue />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {emailSendToOptions.map((option) => {
-                          return (
-                            <SelectItem value={option.id}>
-                              {option.type !== "hiddenField" ? (
-                                <div className="flex items-center space-x-2">
-                                  <div className="h-4 w-4">
-                                    {
-                                      QUESTIONS_ICON_MAP[
-                                        option.type === "openTextQuestion" ? "openText" : "contactInfo"
-                                      ]
-                                    }
-                                  </div>
-                                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                    {option.label}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center space-x-2">
-                                  <EyeOffIcon className="h-4 w-4" />
-                                  <span>{option.label}</span>
-                                </div>
-                              )}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* From */}
-
-                <div className="flex flex-col space-y-2">
-                  <h3 className="font-medium text-slate-900">From</h3>
-                  <p className="text-sm text-slate-500">Email address to send the email from</p>
-
-                  <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
-                    <span className="text-sm text-slate-900">{mailFrom}</span>
-                  </div>
-                </div>
-
-                {/* Reply To */}
-
-                <div className="flex flex-col space-y-2">
-                  <h3 className="font-medium text-slate-900">Reply To</h3>
-                  <p className="text-sm text-slate-500">Email address to send the email from</p>
-
-                  {/* <Input className="max-w-80" /> */}
-                  <FollowUpActionMultiEmailInput emails={replyToEmails} setEmails={setReplyToEmails} />
-                </div>
-              </div>
-
-              {/* email content */}
-
-              <div className="flex flex-col space-y-2">
-                <h2 className="text-lg font-medium text-slate-900">Email content</h2>
-                <div className="flex flex-col space-y-2">
-                  <h3 className="font-medium text-slate-700">Subject</h3>
-                  <Input
-                    className="max-w-80"
-                    value={actionEmailSubject}
-                    placeholder="Subject of the email"
-                    onChange={(e) => setActionEmailSubject(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-2">
-                  <h3 className="font-medium text-slate-700">Body</h3>
-                  <Editor
-                    disableLists
-                    excludedToolbarItems={["blockType"]}
-                    getText={() => actionEmailContent}
-                    setText={(v: string) => {
-                      setActionEmailContent(v);
-                    }}
-                    firstRender={firstRender}
-                    setFirstRender={setFirstRender}
-                    placeholder="Body of the email"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 right-0 z-20 h-12 w-full bg-white p-2">
-        <div className="flex justify-end space-x-2">
-          <Button
-            variant="minimal"
-            size="sm"
-            onClick={() => {
+            if (res?.data) {
+              toast.success("Survey follow up created successfully");
               setOpen(false);
-            }}>
-            Cancel
-          </Button>
 
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              console.log("state: ");
-              console.log(
-                followUpName,
-                triggerType,
-                selectedEndings,
-                selectedEmailSendToOption,
-                replyToEmails,
-                actionEmailSubject,
-                actionEmailContent
-              );
-            }}>
-            Save
-          </Button>
-        </div>
-      </div>
+              router.refresh();
+            } else {
+              toast.error("Something went wrong");
+            }
+          })}>
+          <div className="mb-12 max-h-[600px] overflow-auto px-6 py-4">
+            <div className="flex flex-col space-y-4">
+              {/* workflow name */}
+              <div className="flex flex-col space-y-2">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => {
+                    return (
+                      <FormItem>
+                        <FormLabel htmlFor="name">Follow-up name:</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="max-w-80" isInvalid={!!formErrors.name} />
+                        </FormControl>
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
+
+              {/* trigger */}
+
+              <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
+                <h2 className="text-lg font-medium text-slate-900">Trigger</h2>
+
+                <FormField
+                  control={form.control}
+                  name="triggerType"
+                  render={({ field }) => {
+                    return (
+                      <FormItem>
+                        <div className="flex flex-col space-y-2">
+                          <FormLabel htmlFor="triggerType">
+                            When should this follow-up be triggered?
+                          </FormLabel>
+                          <div className="max-w-80">
+                            <Select
+                              defaultValue={field.value}
+                              onValueChange={(value) => field.onChange(value)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+
+                              <SelectContent>
+                                <SelectItem value="response">Any response is submitted</SelectItem>
+                                <SelectItem value="endings">An ending(s)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                {triggerType === "endings" ? (
+                  <FormField
+                    control={form.control}
+                    name="endingIds"
+                    render={({ field }) => {
+                      return (
+                        <div className="flex flex-col space-y-2">
+                          <h3 className="font-medium text-slate-700">Select endings: </h3>
+                          <div className="flex flex-col space-y-2">
+                            {localSurvey.endings.map((ending) => {
+                              const getEndingLabel = (): string => {
+                                if (ending.type === "endScreen") {
+                                  return getLocalizedValue(ending.headline, selectedLanguageCode) || "Ending";
+                                }
+
+                                return ending.label || ending.url || "Ending";
+                              };
+
+                              return (
+                                <div className="w-80 rounded-md border border-slate-300 px-3 py-2">
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                      className="inline"
+                                      checked={field.value?.includes(ending.id)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          form.setValue("endingIds", [...(field.value ?? []), ending.id]);
+                                        } else {
+                                          form.setValue(
+                                            "endingIds",
+                                            (field.value ?? []).filter((id) => id !== ending.id)
+                                          );
+                                        }
+                                      }}
+                                    />
+                                    <HandshakeIcon className="h-4 min-h-4 w-4 min-w-4" />
+                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap text-slate-900">
+                                      {getEndingLabel()}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {formErrors.endingIds ? (
+                              <div className="mt-2">
+                                <span className="text-red-500">{formErrors.endingIds.message}</span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                ) : null}
+              </div>
+
+              {/* action */}
+
+              <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
+                <h2 className="text-lg font-medium text-slate-900">Action</h2>
+                <div className="flex flex-col space-y-4">
+                  {/* email setup */}
+                  <div className="flex flex-col space-y-2">
+                    <h2 className="text-lg font-medium text-slate-900">Email setup</h2>
+                    {/* To */}
+
+                    <div className="flex flex-col space-y-2">
+                      <FormField
+                        control={form.control}
+                        name="emailTo"
+                        render={({ field }) => {
+                          return (
+                            <div>
+                              <FormLabel htmlFor="emailTo" className="font-medium text-slate-900">
+                                To
+                              </FormLabel>
+                              <FormDescription className="text-sm text-slate-500">
+                                Email address to send the email to
+                              </FormDescription>
+
+                              <div className="max-w-80">
+                                <FormControl>
+                                  <Select
+                                    defaultValue={field.value}
+                                    onValueChange={(value) => {
+                                      const selectedOption = emailSendToOptions.find(
+                                        (option) => option.id === value
+                                      );
+                                      if (!selectedOption) return;
+
+                                      field.onChange(selectedOption.id);
+                                    }}>
+                                    <SelectTrigger className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                      <SelectValue />
+                                    </SelectTrigger>
+
+                                    <SelectContent>
+                                      {emailSendToOptions.map((option) => {
+                                        return (
+                                          <SelectItem value={option.id}>
+                                            {option.type !== "hiddenField" ? (
+                                              <div className="flex items-center space-x-2">
+                                                <div className="h-4 w-4">
+                                                  {
+                                                    QUESTIONS_ICON_MAP[
+                                                      option.type === "openTextQuestion"
+                                                        ? "openText"
+                                                        : "contactInfo"
+                                                    ]
+                                                  }
+                                                </div>
+                                                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                  {option.label}
+                                                </span>
+                                              </div>
+                                            ) : (
+                                              <div className="flex items-center space-x-2">
+                                                <EyeOffIcon className="h-4 w-4" />
+                                                <span>{option.label}</span>
+                                              </div>
+                                            )}
+                                          </SelectItem>
+                                        );
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                              </div>
+                            </div>
+                          );
+                        }}
+                      />
+                    </div>
+
+                    {/* From */}
+
+                    <div className="flex flex-col space-y-2">
+                      <h3 className="font-medium text-slate-900">From</h3>
+                      <p className="text-sm text-slate-500">Email address to send the email from</p>
+
+                      <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
+                        <span className="text-sm text-slate-900">{mailFrom}</span>
+                      </div>
+                    </div>
+
+                    {/* Reply To */}
+
+                    <div className="flex flex-col space-y-2">
+                      <FormField
+                        control={form.control}
+                        name="replyTo"
+                        render={({ field }) => {
+                          return (
+                            <FormItem>
+                              <FormLabel htmlFor="replyTo">Reply To</FormLabel>
+                              <FormDescription className="text-sm text-slate-500">
+                                Email address to send the email from
+                              </FormDescription>
+                              <FormControl>
+                                <FollowUpActionMultiEmailInput
+                                  emails={field.value}
+                                  setEmails={field.onChange}
+                                  isInvalid={!!formErrors.replyTo}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* email content */}
+
+                  <div className="flex flex-col space-y-2">
+                    <h2 className="text-lg font-medium text-slate-900">Email content</h2>
+                    <FormField
+                      control={form.control}
+                      name="subject"
+                      render={({ field }) => {
+                        return (
+                          <FormItem>
+                            <div className="flex flex-col space-y-2">
+                              <FormLabel>Subject</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="max-w-80"
+                                  placeholder="Subject of the email"
+                                  isInvalid={!!formErrors.subject}
+                                />
+                              </FormControl>
+                            </div>
+                          </FormItem>
+                        );
+                      }}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="body"
+                      render={({ field }) => {
+                        return (
+                          <FormItem>
+                            <div className="flex flex-col space-y-2">
+                              <FormLabel className="font-medium text-slate-700">Body</FormLabel>
+                              <FormControl>
+                                <Editor
+                                  disableLists
+                                  excludedToolbarItems={["blockType"]}
+                                  getText={() => field.value}
+                                  setText={(v: string) => {
+                                    field.onChange(v);
+                                  }}
+                                  firstRender={firstRender}
+                                  setFirstRender={setFirstRender}
+                                  placeholder="Body of the email"
+                                />
+                              </FormControl>
+                            </div>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 right-0 z-20 h-12 w-full bg-white p-2">
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="minimal"
+                size="sm"
+                onClick={() => {
+                  setOpen(false);
+                }}>
+                Cancel
+              </Button>
+
+              <Button loading={formSubmitting} variant="primary" size="sm">
+                Save
+              </Button>
+            </div>
+          </div>
+        </form>
+      </FormProvider>
     </Modal>
   );
 };

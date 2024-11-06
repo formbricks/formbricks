@@ -6,9 +6,10 @@ import {
   ZSurveyFollowUpAction,
   ZSurveyFollowUpTrigger,
 } from "@formbricks/database/types/survey-follow-up";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 
 export const createSurveyFollowUp = async (
   surveyId: string,
@@ -47,10 +48,105 @@ export const createSurveyFollowUp = async (
       },
     });
 
+    surveyCache.revalidate({
+      id: surveyId,
+    });
+
     return surveyFollowUp;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error(`Error creating survey follow-up: ${error.message}`);
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const updateSurveyFollowUp = async (
+  surveyFollowUpId: string,
+  followUpData: Partial<{
+    name: string;
+    trigger: TSurveyFollowUpTrigger;
+    action: TSurveyFollowUpAction;
+  }>
+) => {
+  validateInputs(
+    [surveyFollowUpId, ZId],
+    [followUpData.name, ZString.optional()],
+    [followUpData.trigger, ZSurveyFollowUpTrigger.optional()],
+    [followUpData.action, ZSurveyFollowUpAction.optional()]
+  );
+
+  let surveyFollowUpTriggerProperties: TSurveyFollowUpTrigger["properties"] = null;
+
+  if (followUpData?.trigger?.type === "endings") {
+    surveyFollowUpTriggerProperties = followUpData.trigger.properties;
+
+    if (!surveyFollowUpTriggerProperties) {
+      throw new ValidationError("Trigger properties are required for endings trigger type");
+    }
+  }
+
+  try {
+    const surveyFollowUp = await prisma.surveyFollowUp.update({
+      where: { id: surveyFollowUpId },
+      data: {
+        ...(followUpData.name ? { name: followUpData.name } : {}),
+        ...(followUpData.trigger
+          ? {
+              trigger: {
+                type: followUpData.trigger.type,
+                properties: surveyFollowUpTriggerProperties,
+              },
+            }
+          : {}),
+        ...(followUpData.action
+          ? {
+              action: {
+                type: "send-email",
+                properties: followUpData.action.properties,
+              },
+            }
+          : {}),
+      },
+    });
+
+    surveyCache.revalidate({
+      id: surveyFollowUp.surveyId,
+    });
+
+    return surveyFollowUp;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(`Error creating survey follow-up: ${error.message}`);
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+export const deleteSurveyFollowUp = async (surveyFollowUpId: string) => {
+  validateInputs([surveyFollowUpId, ZId]);
+
+  try {
+    const surveyFollowUp = await prisma.surveyFollowUp.findUnique({
+      where: { id: surveyFollowUpId },
+    });
+
+    if (!surveyFollowUp) {
+      throw new ResourceNotFoundError("Survey follow-up", surveyFollowUpId);
+    }
+
+    await prisma.surveyFollowUp.delete({
+      where: { id: surveyFollowUpId },
+    });
+
+    surveyCache.revalidate({
+      id: surveyFollowUp.surveyId,
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(`Error deleting survey follow-up: ${error.message}`);
       throw new DatabaseError(error.message);
     }
     throw error;

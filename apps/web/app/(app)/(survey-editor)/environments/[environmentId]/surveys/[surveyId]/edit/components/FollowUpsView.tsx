@@ -1,4 +1,5 @@
 import { AddFollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddFollowUpModal";
+import { FollowUpItem } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpItem";
 import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
@@ -19,15 +20,32 @@ export const FollowUpsView = ({
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
   return (
-    <div className="mt-12 space-y-3 p-5">
-      <div className="flex justify-between">
-        {!localSurvey.followUps.length && (
-          <div className="text-center text-gray-500">No follow-ups added</div>
-        )}
-
+    <div className="mt-12 space-y-4 p-5">
+      <div className="flex justify-end">
         <Button variant="primary" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
           + New
         </Button>
+      </div>
+
+      <div>
+        {!localSurvey.followUps.length && (
+          <div className="text-center text-gray-500">No follow-ups added</div>
+        )}
+      </div>
+
+      <div className="flex flex-col space-y-2">
+        {localSurvey.followUps.map((followUp) => {
+          return (
+            <FollowUpItem
+              key={followUp.id}
+              followUp={followUp}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              selectedLanguageCode={selectedLanguageCode}
+              mailFrom={mailFrom}
+            />
+          );
+        })}
       </div>
 
       <AddFollowUpModal

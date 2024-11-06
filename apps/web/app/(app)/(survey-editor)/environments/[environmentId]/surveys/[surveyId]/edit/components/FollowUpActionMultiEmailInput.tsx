@@ -1,11 +1,17 @@
 import React, { useState } from "react";
+import { cn } from "@formbricks/ui/lib/utils";
 
 interface FollowUpActionMultiEmailInputProps {
   emails: string[];
   setEmails: React.Dispatch<React.SetStateAction<string[]>>;
+  isInvalid?: boolean;
 }
 
-const FollowUpActionMultiEmailInput = ({ emails, setEmails }: FollowUpActionMultiEmailInputProps) => {
+const FollowUpActionMultiEmailInput = ({
+  emails,
+  setEmails,
+  isInvalid,
+}: FollowUpActionMultiEmailInputProps) => {
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
 
@@ -51,8 +57,12 @@ const FollowUpActionMultiEmailInput = ({ emails, setEmails }: FollowUpActionMult
   };
 
   return (
-    <div className="w-full max-w-2xl">
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-300 px-2 py-1">
+    <div className={cn("w-full max-w-2xl")}>
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-2 rounded-md border px-2 py-1",
+          isInvalid ? "border-red-500" : "border-slate-300"
+        )}>
         {emails.map((email, index) => (
           <div
             key={index}

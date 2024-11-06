@@ -53,6 +53,7 @@ const Page = async ({ params, searchParams }) => {
     getServerSession(authOptions),
     getSegments(params.environmentId),
   ]);
+
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }

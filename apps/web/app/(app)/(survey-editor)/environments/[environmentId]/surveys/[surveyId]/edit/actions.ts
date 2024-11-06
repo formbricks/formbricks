@@ -25,7 +25,7 @@ import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
-import { createSurveyFollowUp } from "./lib/survey-follow-up";
+import { createSurveyFollowUp, deleteSurveyFollowUp, updateSurveyFollowUp } from "./lib/survey-follow-up";
 
 export const updateSurveyAction = authenticatedActionClient
   .schema(ZSurvey)
@@ -301,4 +301,51 @@ export const createSurveyFollowUpAction = authenticatedActionClient
       trigger: parsedInput.followUpData.trigger,
       action: parsedInput.followUpData.action,
     });
+  });
+
+const ZUpdateSurveyFollowUpAction = z.object({
+  surveyId: ZId,
+  surveyFollowUpId: ZId,
+  followUpData: z
+    .object({
+      name: z.string().optional(),
+      trigger: ZSurveyFollowUpTrigger.optional(),
+      action: ZSurveyFollowUpAction.optional(),
+    })
+    .optional(),
+});
+
+export const updateSurveyFollowUpAction = authenticatedActionClient
+  .schema(ZUpdateSurveyFollowUpAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    return await updateSurveyFollowUp(parsedInput.surveyFollowUpId, {
+      name: parsedInput.followUpData?.name,
+      trigger: parsedInput.followUpData?.trigger,
+      action: parsedInput.followUpData?.action,
+    });
+  });
+
+export const deleteSurveyFollowUpAction = authenticatedActionClient
+  .schema(
+    z.object({
+      surveyId: ZId,
+      surveyFollowUpId: ZId,
+    })
+  )
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorization({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      rules: ["survey", "update"],
+    });
+
+    const res = await deleteSurveyFollowUp(parsedInput.surveyFollowUpId);
+
+    return res;
   });

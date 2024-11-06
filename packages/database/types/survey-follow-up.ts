@@ -34,7 +34,7 @@ export type TSurveyFollowUpTrigger = z.infer<typeof ZSurveyFollowUpTrigger>;
 export const ZSurveyFollowUpAction = z.object({
   type: z.literal("send-email"),
   properties: z.object({
-    to: z.array(z.string().email()),
+    to: z.string(),
     from: z.string().email(),
     replyTo: z.array(z.string().email()),
     subject: z.string(),
@@ -53,3 +53,5 @@ export const ZSurveyFollowUp = z.object({
   action: ZSurveyFollowUpAction,
   surveyId: z.string().cuid2(),
 });
+
+export type TSurveyFollowUp = z.infer<typeof ZSurveyFollowUp>;
