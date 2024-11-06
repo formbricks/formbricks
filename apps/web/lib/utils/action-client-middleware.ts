@@ -4,7 +4,11 @@ import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { returnValidationErrors } from "next-safe-action";
 import { z } from "zod";
-import { getOperationPermissions, getRoleBasedSchema } from "@formbricks/lib/actionClient/utils";
+import {
+  formatErrors,
+  getOperationPermissions,
+  getRoleBasedSchema,
+} from "@formbricks/lib/actionClient/utils";
 import { getMembershipRole } from "@formbricks/lib/membership/hooks/actions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOperation, TResource } from "@formbricks/types/action-client";

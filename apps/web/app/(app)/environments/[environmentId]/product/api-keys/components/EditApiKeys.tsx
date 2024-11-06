@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TApiKey } from "@formbricks/types/api-keys";
 import { TUserLocale } from "@formbricks/types/user";
@@ -19,12 +20,14 @@ export const EditAPIKeys = ({
   apiKeys,
   environmentId,
   locale,
+  isReadOnly,
 }: {
   environmentTypeId: string;
   environmentType: string;
   apiKeys: TApiKey[];
   environmentId: string;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }) => {
   const t = useTranslations();
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
@@ -108,7 +111,7 @@ export const EditAPIKeys = ({
             apiKeysLocal &&
             apiKeysLocal.map((apiKey) => (
               <div
-                className="grid h-12 w-full grid-cols-10 content-center rounded-lg px-6 text-left text-sm text-slate-900"
+                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900"
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
@@ -117,28 +120,35 @@ export const EditAPIKeys = ({
                 <div className="col-span-4 sm:col-span-2">
                   {timeSince(apiKey.createdAt.toString(), locale)}
                 </div>
-                <div className="col-span-1 text-center">
-                  <button onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>
-                    <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
-                  </button>
-                </div>
+                {!isReadOnly && (
+                  <div className="col-span-1 text-center">
+                    <Button
+                      size="icon"
+                      variant="minimal"
+                      onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}
+                      StartIcon={TrashIcon}
+                      startIconClassName={cn("h-5 w-5 text-slate-700", isReadOnly && "opacity-50")}
+                    />
+                  </div>
+                )}
               </div>
             ))
           )}
         </div>
       </div>
 
-      <div>
-        <Button
-          size="sm"
-          disabled={environmentId !== environmentTypeId}
-          onClick={() => {
-            setOpenAddAPIKeyModal(true);
-          }}>
-          {t("environments.product.api-keys.add_env_api_key", { environmentType })}
-        </Button>
-      </div>
-
+      {!isReadOnly && (
+        <div>
+          <Button
+            size="sm"
+            disabled={environmentId !== environmentTypeId}
+            onClick={() => {
+              setOpenAddAPIKeyModal(true);
+            }}>
+            {t("environments.product.api-keys.add_env_api_key", { environmentType })}
+          </Button>
+        </div>
+      )}
       <AddApiKeyModal
         open={isAddAPIKeyModalOpen}
         setOpen={setOpenAddAPIKeyModal}

@@ -65,7 +65,7 @@ export const EditTeamNameForm = ({ membershipRole, team }: EditTeamNameProps) =>
 
   return isMember ? (
     <p className="text-sm text-red-700">
-      {t("environments.settings.teams.only_organization_owners_and_managers_can_access_this_setting")}
+      {t("common.only_organization_owners_and_managers_can_access_this_setting")}
     </p>
   ) : (
     <FormProvider {...form}>

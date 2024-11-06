@@ -53,7 +53,7 @@ export const ProductTeams = async ({ params }: { params: { environmentId: string
       <PageHeader pageTitle="Configuration">
         <ProductConfigNavigation
           environmentId={params.environmentId}
-          activeId="access"
+          activeId="teams"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
           canDoRoleManagement={canDoRoleManagement}
         />

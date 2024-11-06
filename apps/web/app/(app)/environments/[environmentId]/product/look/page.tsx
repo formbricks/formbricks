@@ -11,6 +11,7 @@ import {
   getRoleManagementPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { cn } from "@formbricks/lib/cn";
 import { DEFAULT_LOCALE, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -69,7 +70,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       </PageHeader>
       <SettingsCard
         title={t("environments.product.look.theme")}
-        className="max-w-7xl"
+        className={cn(!isReadOnly && "max-w-7xl")}
         description={t("environments.product.look.theme_settings_description")}>
         <ThemeStyling
           environmentId={params.environmentId}
@@ -77,6 +78,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           colors={SURVEY_BG_COLORS}
           isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
           locale={locale ?? DEFAULT_LOCALE}
+          isReadOnly={isReadOnly}
         />
       </SettingsCard>
       <SettingsCard
@@ -87,25 +89,31 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title={t("environments.product.look.app_survey_placement")}
         description={t("environments.product.look.app_survey_placement_settings_description")}>
-        <EditPlacementForm product={product} environmentId={params.environmentId} />
+        <EditPlacementForm product={product} environmentId={params.environmentId} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
         title={t("environments.product.look.formbricks_branding")}
         description={t("environments.product.look.formbricks_branding_settings_description")}>
-        <div className="space-y-4">
-          <EditFormbricksBranding
-            type="linkSurvey"
-            product={product}
-            canRemoveBranding={canRemoveLinkBranding}
-            environmentId={params.environmentId}
-          />
-          <EditFormbricksBranding
-            type="appSurvey"
-            product={product}
-            canRemoveBranding={canRemoveInAppBranding}
-            environmentId={params.environmentId}
-          />
-        </div>
+        {!isReadOnly ? (
+          <div className="space-y-4">
+            <EditFormbricksBranding
+              type="linkSurvey"
+              product={product}
+              canRemoveBranding={canRemoveLinkBranding}
+              environmentId={params.environmentId}
+            />
+            <EditFormbricksBranding
+              type="appSurvey"
+              product={product}
+              canRemoveBranding={canRemoveInAppBranding}
+              environmentId={params.environmentId}
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-red-700">
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </p>
+        )}
       </SettingsCard>
     </PageContentWrapper>
   );

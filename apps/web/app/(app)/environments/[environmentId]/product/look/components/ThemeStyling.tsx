@@ -34,6 +34,7 @@ type ThemeStylingProps = {
   colors: string[];
   isUnsplashConfigured: boolean;
   locale: string;
+  isReadOnly: boolean;
 };
 
 export const ThemeStyling = ({
@@ -42,6 +43,7 @@ export const ThemeStyling = ({
   colors,
   isUnsplashConfigured,
   locale,
+  isReadOnly,
 }: ThemeStylingProps) => {
   const t = useTranslations();
   const router = useRouter();
@@ -151,6 +153,13 @@ export const ThemeStyling = ({
     }
   };
 
+  if (isReadOnly) {
+    return (
+      <p className="text-sm text-red-700">
+        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+      </p>
+    );
+  }
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>

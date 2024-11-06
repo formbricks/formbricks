@@ -105,6 +105,14 @@ export const EditLogo = ({ product, environmentId, isReadOnly }: EditLogoProps) 
     }
   };
 
+  if (isReadOnly) {
+    return (
+      <p className="text-sm text-red-700">
+        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+      </p>
+    );
+  }
+
   return (
     <div className="w-full space-y-8" id="edit-logo">
       {logoUrl ? (
@@ -172,7 +180,7 @@ export const EditLogo = ({ product, environmentId, isReadOnly }: EditLogoProps) 
         </>
       )}
       {logoUrl && (
-        <Button onClick={saveChanges} disabled={isLoading || isReadOnly} size="sm">
+        <Button onClick={saveChanges} disabled={isLoading} size="sm">
           {isEditing ? t("common.save") : t("common.edit")}
         </Button>
       )}

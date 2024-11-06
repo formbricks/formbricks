@@ -267,6 +267,15 @@ export const getProductIdFromResponseNoteId = async (responseNoteId: string) => 
   return await getProductIdFromResponseId(responseNote.responseId);
 };
 
+export const getProductIdFromPersonId = async (personId: string) => {
+  const person = await getPerson(personId);
+  if (!person) {
+    throw new ResourceNotFoundError("person", personId);
+  }
+
+  return await getProductIdFromEnvironmentId(person.environmentId);
+};
+
 // environment id helpers
 export const getEnvironmentIdFromSurveyId = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);

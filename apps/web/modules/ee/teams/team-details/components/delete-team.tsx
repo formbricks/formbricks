@@ -46,7 +46,7 @@ export const DeleteTeam = ({ teamId, membershipRole }: DeleteTeamProps) => {
     <div>
       {isDeleteDisabled ? (
         <p className="text-sm text-red-700">
-          {t("environments.settings.teams.only_organization_owners_and_managers_can_access_this_setting")}
+          {t("common.only_organization_owners_and_managers_can_access_this_setting")}
         </p>
       ) : (
         <div>

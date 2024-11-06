@@ -93,8 +93,12 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
             {teams.map((team) => (
               <TableRow key={team.id}>
                 <TableCell>
-                  <Link href={`/environments/${environmentId}/settings/teams/${team.id}`}>{team.name}</Link> (
-                  {team.memberCount} members)
+                  {isOwnerOrManager ? (
+                    <Link href={`/environments/${environmentId}/settings/teams/${team.id}`}>{team.name}</Link>
+                  ) : (
+                    team.name
+                  )}
+                  ({team.memberCount} members)
                 </TableCell>
                 <TableCell>
                   {isOwnerOrManager ? (

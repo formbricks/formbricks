@@ -111,7 +111,7 @@ const Page = async ({ params }) => {
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
         locale={locale}
-        isReadOnly={!isReadOnly}
+        isReadOnly={isReadOnly}
       />
     </PageContentWrapper>
   );

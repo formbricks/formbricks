@@ -11,7 +11,6 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsId } from "@formbricks/ui/components/SettingsId";
@@ -41,15 +40,15 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
-  const { hasManageAccess, hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { isMember, isOwner, isManager } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
 
-  const isProductNameEditDisabled = isMember && !hasManageAccess ? true : false;
-
-  const isReadOnly = isMember && hasReadAccess;
+  const isReadOnly = isMember && !hasManageAccess;
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
+
+  const isOwnerOrManager = isOwner || isManager;
 
   return (
     <PageContentWrapper>
@@ -61,21 +60,24 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
-
       <SettingsCard
         title={t("common.product_name")}
         description={t("environments.product.general.product_name_settings_description")}>
-        <EditProductNameForm product={product} isProductNameEditDisabled={isProductNameEditDisabled} />
+        <EditProductNameForm product={product} isProductNameEditDisabled={isReadOnly} />
       </SettingsCard>
       <SettingsCard
         title={t("environments.product.general.recontact_waiting_time")}
         description={t("environments.product.general.recontact_waiting_time_settings_description")}>
-        <EditWaitingTimeForm product={product} />
+        <EditWaitingTimeForm product={product} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
         title={t("environments.product.general.delete_product")}
         description={t("environments.product.general.delete_product_settings_description")}>
-        <DeleteProduct environmentId={params.environmentId} product={product} />
+        <DeleteProduct
+          environmentId={params.environmentId}
+          product={product}
+          isOwnerOrManager={isOwnerOrManager}
+        />
       </SettingsCard>
       <div>
         <SettingsId title={t("common.product_id")} id={product.id}></SettingsId>

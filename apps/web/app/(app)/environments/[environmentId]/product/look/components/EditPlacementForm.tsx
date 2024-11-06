@@ -25,6 +25,7 @@ const placements = [
 interface EditPlacementProps {
   product: TProduct;
   environmentId: string;
+  isReadOnly: boolean;
 }
 
 const ZProductPlacementInput = z.object({
@@ -35,7 +36,7 @@ const ZProductPlacementInput = z.object({
 
 type EditPlacementFormValues = z.infer<typeof ZProductPlacementInput>;
 
-export const EditPlacementForm = ({ product }: EditPlacementProps) => {
+export const EditPlacementForm = ({ product, isReadOnly }: EditPlacementProps) => {
   const t = useTranslations();
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
@@ -69,6 +70,14 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
       toast.error(`Error: ${error.message}`);
     }
   };
+
+  if (isReadOnly) {
+    return (
+      <p className="text-sm text-red-700">
+        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+      </p>
+    );
+  }
 
   return (
     <FormProvider {...form}>

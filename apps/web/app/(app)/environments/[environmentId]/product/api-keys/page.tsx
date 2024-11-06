@@ -12,7 +12,6 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { EnvironmentNotice } from "@formbricks/ui/components/EnvironmentNotice";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../settings/components/SettingsCard";
@@ -46,9 +45,10 @@ const Page = async ({ params }) => {
   const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
 
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
 
-  const isReadOnly = isMember && hasReadAccess;
+  const isReadOnly = isMember && !hasManageAccess;
+
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
@@ -67,13 +67,23 @@ const Page = async ({ params }) => {
         <SettingsCard
           title={t("environments.product.api-keys.dev_api_keys")}
           description={t("environments.product.api-keys.dev_api_keys_description")}>
-          <ApiKeyList environmentId={params.environmentId} environmentType="development" locale={locale} />
+          <ApiKeyList
+            environmentId={params.environmentId}
+            environmentType="development"
+            locale={locale}
+            isReadOnly={isReadOnly}
+          />
         </SettingsCard>
       ) : (
         <SettingsCard
           title={t("environments.product.api-keys.prod_api_keys")}
           description={t("environments.product.api-keys.prod_api_keys_description")}>
-          <ApiKeyList environmentId={params.environmentId} environmentType="production" locale={locale} />
+          <ApiKeyList
+            environmentId={params.environmentId}
+            environmentType="production"
+            locale={locale}
+            isReadOnly={isReadOnly}
+          />
         </SettingsCard>
       )}
     </PageContentWrapper>

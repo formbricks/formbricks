@@ -22,6 +22,7 @@ export const ProductConfigNavigation = ({
 }: ProductConfigNavigationProps) => {
   const t = useTranslations();
   const pathname = usePathname();
+
   let navigation = [
     {
       id: "general",

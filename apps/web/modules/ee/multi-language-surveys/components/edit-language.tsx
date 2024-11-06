@@ -22,6 +22,7 @@ import { LanguageRow } from "./language-row";
 interface EditLanguageProps {
   product: TProduct;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
 const checkIfDuplicateExists = (arr: string[]) => {
@@ -66,7 +67,7 @@ const validateLanguages = (languages: TLanguage[], t: (key: string) => string) =
   return true;
 };
 
-export function EditLanguage({ product, locale }: EditLanguageProps) {
+export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps) {
   const t = useTranslations();
   const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
@@ -195,15 +196,17 @@ export function EditLanguage({ product, locale }: EditLanguageProps) {
         )}
         <AddLanguageButton onClick={handleAddLanguage} />
       </div>
-      <EditSaveButtons
-        isEditing={isEditing}
-        onCancel={handleCancelChanges}
-        onEdit={() => {
-          setIsEditing(true);
-        }}
-        onSave={handleSaveChanges}
-        t={t}
-      />
+      {!isReadOnly && (
+        <EditSaveButtons
+          isEditing={isEditing}
+          onCancel={handleCancelChanges}
+          onEdit={() => {
+            setIsEditing(true);
+          }}
+          onSave={handleSaveChanges}
+          t={t}
+        />
+      )}
       <ConfirmationModal
         buttonText={t("environments.product.languages.remove_language")}
         isButtonDisabled={confirmationModal.isButtonDisabled}

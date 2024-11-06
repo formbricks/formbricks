@@ -2,8 +2,6 @@ import { DeleteProductRender } from "@/app/(app)/environments/[environmentId]/pr
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUserProducts } from "@formbricks/lib/product/service";
 import { TProduct } from "@formbricks/types/product";
@@ -11,9 +9,10 @@ import { TProduct } from "@formbricks/types/product";
 type DeleteProductProps = {
   environmentId: string;
   product: TProduct;
+  isOwnerOrManager: boolean;
 };
 
-export const DeleteProduct = async ({ environmentId, product }: DeleteProductProps) => {
+export const DeleteProduct = async ({ environmentId, product, isOwnerOrManager }: DeleteProductProps) => {
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -25,20 +24,13 @@ export const DeleteProduct = async ({ environmentId, product }: DeleteProductPro
   }
   const availableProducts = organization ? await getUserProducts(session.user.id, organization.id) : null;
 
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  if (!membership) {
-    throw new Error(t("common.membership_not_found"));
-  }
-  const organizationRole = membership.organizationRole;
-  const { isOwner, isManager } = getAccessFlags(organizationRole);
   const availableProductsLength = availableProducts ? availableProducts.length : 0;
-  const isUserManagerOrOwner = isOwner || isManager;
-  const isDeleteDisabled = availableProductsLength <= 1 || !isUserManagerOrOwner;
+  const isDeleteDisabled = availableProductsLength <= 1 || !isOwnerOrManager;
 
   return (
     <DeleteProductRender
       isDeleteDisabled={isDeleteDisabled}
-      isUserManagerOrOwner={isUserManagerOrOwner}
+      isOwnerOrManager={isOwnerOrManager}
       product={product}
     />
   );

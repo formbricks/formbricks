@@ -5,6 +5,7 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromPersonId,
   getProductIdFromEnvironmentId,
+  getProductIdFromPersonId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
@@ -82,7 +83,7 @@ export const deletePersonAction = authenticatedActionClient
         },
         {
           type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(parsedInput.personId),
+          productId: await getProductIdFromPersonId(parsedInput.personId),
         },
       ],
     });

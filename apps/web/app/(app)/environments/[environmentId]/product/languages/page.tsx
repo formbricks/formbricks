@@ -70,7 +70,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title={t("environments.product.languages.multi_language_surveys")}
         description={t("environments.product.languages.multi_language_surveys_description")}>
-        <EditLanguage product={product} locale={user.locale} />
+        <EditLanguage product={product} locale={user.locale} isReadOnly={isReadOnly} />
       </SettingsCard>
     </PageContentWrapper>
   );

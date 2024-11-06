@@ -21,13 +21,14 @@ import { updateProductAction } from "../../actions";
 
 type EditWaitingTimeProps = {
   product: TProduct;
+  isReadOnly: boolean;
 };
 
 const ZProductRecontactDaysInput = ZProduct.pick({ recontactDays: true });
 
 type EditWaitingTimeFormValues = z.infer<typeof ZProductRecontactDaysInput>;
 
-export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product }) => {
+export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, isReadOnly }) => {
   const t = useTranslations();
   const form = useForm<EditWaitingTimeFormValues>({
     defaultValues: {
@@ -54,7 +55,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
     }
   };
 
-  return (
+  return !isReadOnly ? (
     <FormProvider {...form}>
       <form
         className="flex w-full max-w-sm flex-col space-y-4"
@@ -97,5 +98,9 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
         </Button>
       </form>
     </FormProvider>
+  ) : (
+    <p className="text-sm text-red-700">
+      {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+    </p>
   );
 };
