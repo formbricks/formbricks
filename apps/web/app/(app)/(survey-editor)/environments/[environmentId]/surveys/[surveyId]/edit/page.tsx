@@ -7,6 +7,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
+  MAIL_FROM,
   SURVEY_BG_COLORS,
   UNSPLASH_ACCESS_KEY,
 } from "@formbricks/lib/constants";
@@ -98,6 +99,7 @@ const Page = async ({ params, searchParams }) => {
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
       isCxMode={isCxMode}
       locale={locale ?? DEFAULT_LOCALE}
+      mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
     />
   );
 };

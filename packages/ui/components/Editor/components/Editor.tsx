@@ -84,7 +84,7 @@ export const Editor = (props: TextEditorProps) => {
             <RichTextPlugin
               contentEditable={<ContentEditable style={{ height: props.height }} className="editor-input" />}
               placeholder={
-                <div className="text-muted -mt-11 cursor-text p-3 text-sm">{props.placeholder || ""}</div>
+                <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">{props.placeholder || ""}</div>
               }
               ErrorBoundary={LexicalErrorBoundary}
             />

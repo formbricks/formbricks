@@ -40,6 +40,7 @@ interface SurveyEditorProps {
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
+  mailFrom: string;
 }
 
 export const SurveyEditor = ({
@@ -59,6 +60,7 @@ export const SurveyEditor = ({
   plan,
   isCxMode = false,
   locale,
+  mailFrom,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -214,7 +216,12 @@ export const SurveyEditor = ({
           )}
 
           {activeView === "followUps" && (
-            <FollowUpsView localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+            <FollowUpsView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              selectedLanguageCode={selectedLanguageCode}
+              mailFrom={mailFrom}
+            />
           )}
         </main>
 

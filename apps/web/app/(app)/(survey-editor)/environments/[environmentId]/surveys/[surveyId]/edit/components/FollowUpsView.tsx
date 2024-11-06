@@ -6,9 +6,16 @@ import { Button } from "@formbricks/ui/components/Button";
 interface FollowUpsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  selectedLanguageCode: string;
+  mailFrom: string;
 }
 
-export const FollowUpsView = ({ localSurvey, setLocalSurvey }: FollowUpsViewProps) => {
+export const FollowUpsView = ({
+  localSurvey,
+  setLocalSurvey,
+  selectedLanguageCode,
+  mailFrom,
+}: FollowUpsViewProps) => {
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
   return (
@@ -28,6 +35,8 @@ export const FollowUpsView = ({ localSurvey, setLocalSurvey }: FollowUpsViewProp
         setLocalSurvey={setLocalSurvey}
         open={addFollowUpModalOpen}
         setOpen={setAddFollowUpModalOpen}
+        selectedLanguageCode={selectedLanguageCode}
+        mailFrom={mailFrom}
       />
     </div>
   );

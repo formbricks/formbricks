@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { _SurveyFollowUpModel } from "@formbricks/database/zod/surveyfollowup";
+import { ZSurveyFollowUpAction, ZSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
@@ -282,8 +282,8 @@ const ZCreateSurveyFollowUpAction = z.object({
   surveyId: ZId,
   followUpData: z.object({
     name: z.string().min(1, "Name must be at least 1 character long"),
-    trigger: _SurveyFollowUpModel.pick({ trigger: true }),
-    action: _SurveyFollowUpModel.pick({ action: true }),
+    trigger: ZSurveyFollowUpTrigger,
+    action: ZSurveyFollowUpAction,
   }),
 });
 
@@ -298,7 +298,7 @@ export const createSurveyFollowUpAction = authenticatedActionClient
 
     return await createSurveyFollowUp(parsedInput.surveyId, {
       name: parsedInput.followUpData.name,
-      trigger: parsedInput.followUpData.trigger.trigger,
-      action: parsedInput.followUpData.action.action,
+      trigger: parsedInput.followUpData.trigger,
+      action: parsedInput.followUpData.action,
     });
   });

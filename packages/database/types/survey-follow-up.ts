@@ -43,3 +43,13 @@ export const ZSurveyFollowUpAction = z.object({
 });
 
 export type TSurveyFollowUpAction = z.infer<typeof ZSurveyFollowUpAction>;
+
+export const ZSurveyFollowUp = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  name: z.string(),
+  trigger: ZSurveyFollowUpTrigger,
+  action: ZSurveyFollowUpAction,
+  surveyId: z.string().cuid2(),
+});
