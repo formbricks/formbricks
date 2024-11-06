@@ -188,7 +188,7 @@ export const addTeamAccess = async (productId: string, teamIds: string[]): Promi
   }
 };
 
-export const getTeamsByOranizationId = reactCache(
+export const getTeamsByOrganizationId = reactCache(
   (organizationId: string): Promise<TOrganizationTeam[] | null> =>
     cache(
       async () => {
@@ -218,7 +218,7 @@ export const getTeamsByOranizationId = reactCache(
           throw error;
         }
       },
-      [`getTeamsByOranizationId-${organizationId}`],
+      [`getTeamsByOrganizationId-${organizationId}`],
       {
         tags: [teamCache.tag.byOrganizationId(organizationId)],
       }

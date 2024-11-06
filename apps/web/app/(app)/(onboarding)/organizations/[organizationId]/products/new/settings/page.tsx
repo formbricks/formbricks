@@ -1,4 +1,4 @@
-import { getTeamsByOranizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
+import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
 import { XIcon } from "lucide-react";
@@ -41,7 +41,7 @@ const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
   const customHeadline = getCustomHeadline(channel);
   const products = await getUserProducts(session.user.id, params.organizationId);
 
-  const organizationTeams = await getTeamsByOranizationId(params.organizationId);
+  const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
 
   const organization = await getOrganization(params.organizationId);
 

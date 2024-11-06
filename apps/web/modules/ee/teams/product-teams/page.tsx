@@ -9,7 +9,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { getTeamsByOranizationId, getTeamsByProductId } from "./lib/teams";
+import { getTeamsByOrganizationId, getTeamsByProductId } from "./lib/teams";
 
 export const ProductTeams = async ({ params }: { params: { environmentId: string } }) => {
   const [product, session, organization] = await Promise.all([
@@ -40,7 +40,7 @@ export const ProductTeams = async ({ params }: { params: { environmentId: string
     throw new Error("Teams not found");
   }
 
-  const organizationTeams = await getTeamsByOranizationId(organization.id);
+  const organizationTeams = await getTeamsByOrganizationId(organization.id);
 
   if (!organizationTeams) {
     throw new Error("Organization Teams not found");

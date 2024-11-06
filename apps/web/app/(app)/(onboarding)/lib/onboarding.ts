@@ -10,7 +10,7 @@ import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
-export const getTeamsByOranizationId = reactCache(
+export const getTeamsByOrganizationId = reactCache(
   (organizationId: string): Promise<TOrganizationTeam[] | null> =>
     cache(
       async () => {
@@ -40,7 +40,7 @@ export const getTeamsByOranizationId = reactCache(
           throw error;
         }
       },
-      [`getTeamsByOranizationId-${organizationId}`],
+      [`getTeamsByOrganizationId-${organizationId}`],
       {
         tags: [teamCache.tag.byOrganizationId(organizationId)],
       }
