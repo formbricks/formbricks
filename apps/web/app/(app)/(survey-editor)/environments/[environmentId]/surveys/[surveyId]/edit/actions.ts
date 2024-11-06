@@ -1,5 +1,6 @@
 "use server";
 
+import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,
@@ -13,7 +14,6 @@ import {
 import { getSegment, getSurvey } from "@/lib/utils/services";
 import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
-import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import { getProduct } from "@formbricks/lib/product/service";
 import {

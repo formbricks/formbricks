@@ -1,5 +1,6 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getEnvironmentIdFromResponseId,
@@ -12,7 +13,6 @@ import {
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import {
   createResponseNote,

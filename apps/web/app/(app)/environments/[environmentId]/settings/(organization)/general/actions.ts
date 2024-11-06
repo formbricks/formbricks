@@ -4,12 +4,12 @@ import {
   deleteMembership,
   getMembershipsByUserId,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";

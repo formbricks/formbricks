@@ -1,5 +1,6 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
@@ -15,7 +16,6 @@ import {
 } from "@/modules/ee/teams/team-details/lib/teams";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { ZId } from "@formbricks/types/common";
 import { ZTeam } from "./types/teams";
 

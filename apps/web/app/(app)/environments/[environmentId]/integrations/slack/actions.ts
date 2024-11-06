@@ -1,9 +1,9 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { ZId } from "@formbricks/types/common";
 

@@ -1,10 +1,10 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromTagId, getProductIdFromTagId } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";

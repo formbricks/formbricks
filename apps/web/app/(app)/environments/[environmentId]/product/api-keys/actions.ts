@@ -1,5 +1,6 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromApiKeyId,
@@ -8,7 +9,6 @@ import {
   getProductIdFromEnvironmentId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { createApiKey, deleteApiKey } from "@formbricks/lib/apiKey/service";
 import { ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { ZId } from "@formbricks/types/common";

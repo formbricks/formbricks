@@ -1,5 +1,6 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,
@@ -11,7 +12,6 @@ import {
 } from "@/lib/utils/helper";
 import { getSegment, getSurvey } from "@/lib/utils/services";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import {
   cloneSegment,
   createSegment,

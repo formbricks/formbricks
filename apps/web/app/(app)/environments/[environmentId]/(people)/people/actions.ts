@@ -1,5 +1,6 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,
@@ -8,7 +9,6 @@ import {
   getProductIdFromPersonId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { deletePerson, getPeople } from "@formbricks/lib/person/service";
 import { ZId } from "@formbricks/types/common";

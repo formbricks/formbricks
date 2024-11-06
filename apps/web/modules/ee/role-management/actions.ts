@@ -1,9 +1,9 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { transferOwnership, updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { isOwner } from "@formbricks/lib/auth";
 import { updateInvite } from "@formbricks/lib/invite/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";

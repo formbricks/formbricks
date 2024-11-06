@@ -1,3 +1,4 @@
+import { createOrganizationAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -5,11 +6,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createOrganizationAction } from "../../../../apps/web/app/(app)/environments/[environmentId]/actions";
-import { Button } from "../Button";
-import { Input } from "../Input";
-import { Label } from "../Label";
-import { Modal } from "../Modal";
+import { Button } from "@formbricks/ui/components/Button";
+import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
+import { Modal } from "@formbricks/ui/components/Modal";
 
 interface CreateOrganizationModalProps {
   open: boolean;

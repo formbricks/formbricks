@@ -1,10 +1,10 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import { createTeam, getTeams, joinTeam, leaveTeam } from "@/modules/ee/teams/team-list/lib/teams";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 
 const ZGetTeamsAction = z.object({
   organizationId: z.string(),

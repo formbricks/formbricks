@@ -4,6 +4,7 @@ import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[enviro
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import {
   ArrowUpRightIcon,
   BlendIcon,
@@ -44,7 +45,6 @@ import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
 import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,

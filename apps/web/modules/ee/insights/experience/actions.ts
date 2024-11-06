@@ -1,11 +1,11 @@
 "use server";
 
 import { insightCache } from "@/lib/cache/insight";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { cache } from "@formbricks/lib/cache";
 import { ZId } from "@formbricks/types/common";
 import { ZInsight, ZInsightFilterCriteria } from "@formbricks/types/insights";

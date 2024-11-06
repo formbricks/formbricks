@@ -1,6 +1,6 @@
 "use server";
 
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { deleteUser } from "@formbricks/lib/user/service";
 
 export const deleteUserAction = authenticatedActionClient.action(async ({ ctx }) => {
