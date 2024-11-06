@@ -158,7 +158,6 @@ const Page = async ({ params, searchParams }) => {
   if (user?.notificationSettings) {
     user.notificationSettings = setCompleteNotificationSettings(user.notificationSettings, memberships);
   }
-  console.log("user.notificationSettings", memberships);
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
