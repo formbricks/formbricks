@@ -22,7 +22,7 @@ export const deleteProductAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["product", "delete"],
+          roles: ["owner", "manager"],
         },
       ],
     });

@@ -2,6 +2,7 @@ import {
   getActionClass,
   getApiKey,
   getAttributeClass,
+  getDocument,
   getEnvironment,
   getInsight,
   getIntegration,
@@ -194,6 +195,15 @@ export const getOrganizationIdFromInsightId = async (insightId: string) => {
   return await getOrganizationIdFromEnvironmentId(insight.environmentId);
 };
 
+export const getOrganizationIdFromDocumentId = async (documentId: string) => {
+  const document = await getDocument(documentId);
+  if (!document) {
+    throw new ResourceNotFoundError("document", documentId);
+  }
+
+  return await getOrganizationIdFromEnvironmentId(document.environmentId);
+};
+
 // product id helpers
 export const getProductIdFromEnvironmentId = async (environmentId: string) => {
   const environment = await getEnvironment(environmentId);
@@ -294,6 +304,15 @@ export const getProductIdFromPersonId = async (personId: string) => {
   return await getProductIdFromEnvironmentId(person.environmentId);
 };
 
+export const getProductIdFromDocumentId = async (documentId: string) => {
+  const document = await getDocument(documentId);
+  if (!document) {
+    throw new ResourceNotFoundError("document", documentId);
+  }
+
+  return await getProductIdFromEnvironmentId(document.environmentId);
+};
+
 // environment id helpers
 export const getEnvironmentIdFromSurveyId = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);
@@ -311,4 +330,31 @@ export const getEnvironmentIdFromResponseId = async (responseId: string) => {
   }
 
   return await getEnvironmentIdFromSurveyId(response.surveyId);
+};
+
+export const getEnvironmentIdFromInsightId = async (insightId: string) => {
+  const insight = await getInsight(insightId);
+  if (!insight) {
+    throw new ResourceNotFoundError("insight", insightId);
+  }
+
+  return insight.environmentId;
+};
+
+export const getEnvironmentIdFromSegmentId = async (segmentId: string) => {
+  const segment = await getSegment(segmentId);
+  if (!segment) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
+
+  return segment.environmentId;
+};
+
+export const getEnvironmentIdFromTagId = async (tagId: string) => {
+  const tag = await getTag(tagId);
+  if (!tag) {
+    throw new ResourceNotFoundError("tag", tagId);
+  }
+
+  return tag.environmentId;
 };

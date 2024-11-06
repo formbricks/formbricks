@@ -3,11 +3,14 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
+  getEnvironmentIdFromInsightId,
+  getEnvironmentIdFromSurveyId,
+  getOrganizationIdFromDocumentId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromInsightId,
+  getProductIdFromDocumentId,
   getProductIdFromEnvironmentId,
   getProductIdFromInsightId,
-  getProductIdFromSurveyId,
 } from "@/lib/utils/helper";
 import {
   getDocumentsByInsightId,
@@ -17,7 +20,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { getDocument, updateDocument } from "./lib/documents";
+import { updateDocument } from "./lib/documents";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
@@ -30,17 +33,25 @@ const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
 export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActionClient
   .schema(ZGetDocumentsByInsightIdSurveyIdQuestionIdAction)
   .action(async ({ ctx, parsedInput }) => {
+    const insightEnvironmentId = await getEnvironmentIdFromInsightId(parsedInput.insightId);
+    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+
+    if (insightEnvironmentId !== surveyEnvironmentId) {
+      throw new Error("Insight and survey are not in the same environment");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromInsightId(parsedInput.insightId),
+      organizationId: await getOrganizationIdFromEnvironmentId(surveyEnvironmentId),
       access: [
         {
           type: "organization",
-          rules: ["response", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -70,10 +81,11 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromInsightId(parsedInput.insightId),
         },
       ],
@@ -99,23 +111,18 @@ const ZUpdateDocumentAction = z.object({
 export const updateDocumentAction = authenticatedActionClient
   .schema(ZUpdateDocumentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const document = await getDocument(parsedInput.documentId);
-
-    if (!document) {
-      throw new Error("Document not found");
-    }
-
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(document.environmentId),
+      organizationId: await getOrganizationIdFromDocumentId(parsedInput.documentId),
       access: [
         {
           type: "organization",
-          rules: ["response", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(document.environmentId),
+          minPermission: "readWrite",
+          productId: await getProductIdFromDocumentId(parsedInput.documentId),
         },
       ],
     });

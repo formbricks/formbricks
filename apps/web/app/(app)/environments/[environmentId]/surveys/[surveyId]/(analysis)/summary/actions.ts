@@ -24,10 +24,11 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -66,12 +67,12 @@ export const generateResultShareUrlAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -104,7 +105,7 @@ export const getResultShareUrlAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -135,16 +136,12 @@ export const deleteResultShareUrlAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "update"],
-        },
-        {
-          type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -170,10 +167,11 @@ export const getEmailHtmlAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "readWrite",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],

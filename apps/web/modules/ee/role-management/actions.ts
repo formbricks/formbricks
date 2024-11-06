@@ -57,7 +57,7 @@ export const updateInviteAction = authenticatedActionClient
           data: parsedInput.data,
           schema: ZInviteUpdateInput,
           type: "organization",
-          rules: ["invite", "update"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -82,7 +82,7 @@ export const updateMembershipAction = authenticatedActionClient
           data: parsedInput.data,
           schema: ZMembershipUpdateInput,
           type: "organization",
-          rules: ["membership", "update"],
+          roles: ["owner", "manager"],
         },
       ],
     });

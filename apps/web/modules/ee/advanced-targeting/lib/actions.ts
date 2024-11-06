@@ -3,6 +3,8 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
+  getEnvironmentIdFromSegmentId,
+  getEnvironmentIdFromSurveyId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
@@ -26,13 +28,19 @@ import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@form
 export const createSegmentAction = authenticatedActionClient
   .schema(ZSegmentCreateInput)
   .action(async ({ ctx, parsedInput }) => {
+    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+
+    if (surveyEnvironmentId !== parsedInput.environmentId) {
+      throw new Error("Survey and segment are not in the same environment");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       access: [
         {
           type: "organization",
-          rules: ["segment", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -69,7 +77,7 @@ export const updateSegmentAction = authenticatedActionClient
           schema: ZSegmentUpdateInput,
           data: parsedInput.data,
           type: "organization",
-          rules: ["segment", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -101,34 +109,25 @@ const ZLoadNewSegmentAction = z.object({
 export const loadNewSegmentAction = authenticatedActionClient
   .schema(ZLoadNewSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const surveyEnvironment = await getSurvey(parsedInput.surveyId);
-    const segmentEnvironment = await getSegment(parsedInput.segmentId);
+    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
 
-    if (!surveyEnvironment || !segmentEnvironment) {
-      if (!surveyEnvironment) {
-        throw new Error("Survey not found");
-      }
-      if (!segmentEnvironment) {
-        throw new Error("Segment not found");
-      }
-    }
-
-    if (surveyEnvironment.environmentId !== segmentEnvironment.environmentId) {
+    if (surveyEnvironmentId !== segmentEnvironmentId) {
       throw new Error("Segment and survey are not in the same environment");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId: await getOrganizationIdFromEnvironmentId(surveyEnvironmentId),
       access: [
         {
           type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -144,34 +143,25 @@ const ZCloneSegmentAction = z.object({
 export const cloneSegmentAction = authenticatedActionClient
   .schema(ZCloneSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const surveyEnvironment = await getSurvey(parsedInput.surveyId);
-    const segmentEnvironment = await getSegment(parsedInput.segmentId);
+    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
 
-    if (!surveyEnvironment || !segmentEnvironment) {
-      if (!surveyEnvironment) {
-        throw new Error("Survey not found");
-      }
-      if (!segmentEnvironment) {
-        throw new Error("Segment not found");
-      }
-    }
-
-    if (surveyEnvironment.environmentId !== segmentEnvironment.environmentId) {
+    if (surveyEnvironmentId !== segmentEnvironmentId) {
       throw new Error("Segment and survey are not in the same environment");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId: await getOrganizationIdFromEnvironmentId(surveyEnvironmentId),
       access: [
         {
           type: "organization",
-          rules: ["segment", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -192,7 +182,7 @@ export const deleteSegmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["segment", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -218,7 +208,7 @@ export const resetSegmentFiltersAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",

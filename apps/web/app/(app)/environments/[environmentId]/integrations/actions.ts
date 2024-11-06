@@ -22,12 +22,12 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["integration", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "readWrite",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
-          minPermission: "manage",
         },
       ],
     });
@@ -48,12 +48,12 @@ export const deleteIntegrationAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["integration", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.integrationId),
-          minPermission: "manage",
+          minPermission: "readWrite",
         },
       ],
     });

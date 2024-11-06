@@ -30,7 +30,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["membership", "create"],
+          roles: ["owner", "manager"],
         },
       ],
     });

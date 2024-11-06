@@ -27,10 +27,11 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -58,10 +59,11 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -88,7 +90,7 @@ export const updateSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",

@@ -5,6 +5,7 @@ import { createSubscription } from "@/app/(ee)/(billing)/api/billing/stripe-webh
 import { isSubscriptionCancelled } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
@@ -13,7 +14,6 @@ import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZUpgradePlanAction = z.object({
-  organizationId: ZId,
   environmentId: ZId,
   priceLookupKey: z.nativeEnum(STRIPE_PRICE_LOOKUP_KEYS),
 });
@@ -21,51 +21,44 @@ const ZUpgradePlanAction = z.object({
 export const upgradePlanAction = authenticatedActionClient
   .schema(ZUpgradePlanAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
+      organizationId,
       access: [
         {
           type: "organization",
-          rules: ["subscription", "create"],
+          roles: ["owner", "manager", "billing"],
         },
       ],
     });
 
-    const organization = await getOrganization(parsedInput.organizationId);
-    if (!organization) {
-      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
-    }
-
-    return await createSubscription(
-      parsedInput.organizationId,
-      parsedInput.environmentId,
-      parsedInput.priceLookupKey
-    );
+    return await createSubscription(organizationId, parsedInput.environmentId, parsedInput.priceLookupKey);
   });
 
 const ZManageSubscriptionAction = z.object({
-  organizationId: ZId,
   environmentId: ZId,
 });
 
 export const manageSubscriptionAction = authenticatedActionClient
   .schema(ZManageSubscriptionAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
+      organizationId,
       access: [
         {
           type: "organization",
-          rules: ["subscription", "read"],
+          roles: ["owner", "manager", "billing"],
         },
       ],
     });
 
-    const organization = await getOrganization(parsedInput.organizationId);
+    const organization = await getOrganization(organizationId);
     if (!organization) {
-      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
+      throw new ResourceNotFoundError("organization", organizationId);
     }
 
     if (!organization.billing.stripeCustomerId) {
@@ -91,7 +84,7 @@ export const isSubscriptionCancelledAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["subscription", "read"],
+          roles: ["owner", "manager", "billing"],
         },
       ],
     });

@@ -20,12 +20,12 @@ export const refreshChannelsAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["integration", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
-          minPermission: "manage",
+          minPermission: "readWrite",
         },
       ],
     });

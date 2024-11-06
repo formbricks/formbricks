@@ -36,7 +36,7 @@ export const updateOrganizationNameAction = authenticatedActionClient
           type: "organization",
           schema: ZOrganizationUpdateInput.pick({ name: true }),
           data: parsedInput.data,
-          rules: ["organization", "update"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -60,7 +60,7 @@ export const updateOrganizationAIEnabledAction = authenticatedActionClient
           type: "organization",
           schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
           data: parsedInput.data,
-          rules: ["organization", "update"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -82,7 +82,7 @@ export const deleteInviteAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["invite", "delete"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -103,7 +103,7 @@ export const deleteMembershipAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["membership", "delete"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -127,7 +127,7 @@ export const leaveOrganizationAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["membership", "delete"],
+          roles: ["owner", "manager", "billing", "member"],
         },
       ],
     });
@@ -163,7 +163,7 @@ export const createInviteTokenAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["invite", "create"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -191,24 +191,19 @@ export const resendInviteAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
+    const inviteOrganizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
+
+    if (inviteOrganizationId !== parsedInput.organizationId) {
+      throw new ValidationError("Invite does not belong to the organization");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
       access: [
         {
           type: "organization",
-          rules: ["invite", "update"],
-        },
-      ],
-    });
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
-      access: [
-        {
-          type: "organization",
-          rules: ["invite", "update"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -246,7 +241,7 @@ export const inviteUserAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["invite", "create"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -291,7 +286,7 @@ export const deleteOrganizationAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["organization", "delete"],
+          roles: ["owner"],
         },
       ],
     });

@@ -37,7 +37,7 @@ export const createTagAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["tag", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -75,11 +75,7 @@ export const createTagToResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "update"],
-        },
-        {
-          type: "organization",
-          rules: ["tag", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -117,11 +113,7 @@ export const deleteTagOnResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "update"],
-        },
-        {
-          type: "organization",
-          rules: ["tag", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -147,7 +139,7 @@ export const deleteResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -174,7 +166,7 @@ export const updateResponseNoteAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["responseNote", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -200,7 +192,7 @@ export const resolveResponseNoteAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["responseNote", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -227,7 +219,7 @@ export const createResponseNoteAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["responseNote", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -253,10 +245,11 @@ export const getResponseAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromResponseId(parsedInput.responseId),
         },
       ],

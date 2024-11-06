@@ -24,11 +24,11 @@ export const deleteActionClassAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["actionClass", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          minPermission: "manage",
+          minPermission: "readWrite",
           productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
         },
       ],
@@ -56,11 +56,11 @@ export const updateActionClassAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["actionClass", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          minPermission: "manage",
+          minPermission: "readWrite",
           productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
         },
       ],
@@ -86,7 +86,7 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",

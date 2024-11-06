@@ -2,12 +2,16 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromTagId, getProductIdFromTagId } from "@/lib/utils/helper";
-import { getTag } from "@/lib/utils/services";
+import {
+  getEnvironmentIdFromTagId,
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromTagId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromTagId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
 import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
 import { ZId } from "@formbricks/types/common";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZDeleteTagAction = z.object({
   tagId: ZId,
@@ -22,7 +26,7 @@ export const deleteTagAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["tag", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -49,7 +53,7 @@ export const updateTagNameAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["tag", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -70,29 +74,25 @@ const ZMergeTagsAction = z.object({
 export const mergeTagsAction = authenticatedActionClient
   .schema(ZMergeTagsAction)
   .action(async ({ ctx, parsedInput }) => {
-    const originalTag = await getTag(parsedInput.originalTagId);
-    const newTag = await getTag(parsedInput.newTagId);
+    const originalTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.originalTagId);
+    const newTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.newTagId);
 
-    if (!originalTag || !newTag) {
-      throw new ResourceNotFoundError("tag", originalTag ? parsedInput.newTagId : parsedInput.originalTagId);
-    }
-
-    if (originalTag.environmentId !== newTag.environmentId) {
+    if (originalTagEnvironmentId !== newTagEnvironmentId) {
       throw new Error("Tags must be in the same environment");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTagId(parsedInput.originalTagId),
+      organizationId: await getOrganizationIdFromEnvironmentId(newTagEnvironmentId),
       access: [
         {
           type: "organization",
-          rules: ["tag", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromTagId(parsedInput.originalTagId),
+          productId: await getProductIdFromEnvironmentId(newTagEnvironmentId),
         },
       ],
     });

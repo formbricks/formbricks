@@ -31,10 +31,11 @@ export const getSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
@@ -72,12 +73,12 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          productId: sourceEnvironment.productId,
           minPermission: "readWrite",
+          productId: sourceEnvironment.productId,
         },
       ],
     });
@@ -104,7 +105,12 @@ export const getProductsByEnvironmentIdAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["product", "read"],
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -125,7 +131,7 @@ export const deleteSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -152,7 +158,7 @@ export const generateSingleUseIdAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -183,10 +189,11 @@ export const getSurveysAction = authenticatedActionClient
           data: parsedInput.filterCriteria,
           schema: ZSurveyFilterCriteria,
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],

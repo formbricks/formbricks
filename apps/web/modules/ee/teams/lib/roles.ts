@@ -20,7 +20,7 @@ export const getProductPermissionByUserId = reactCache(
         try {
           const productMemberships = await prisma.productTeam.findMany({
             where: {
-              productId: productId,
+              productId,
               team: {
                 teamUsers: {
                   some: {
@@ -32,13 +32,19 @@ export const getProductPermissionByUserId = reactCache(
           });
 
           if (!productMemberships) return null;
-          let highestPermission: TTeamPermission = "read";
+          let highestPermission: TTeamPermission | null = null;
 
           for (const membership of productMemberships) {
             if (membership.permission === "manage") {
               highestPermission = "manage";
             } else if (membership.permission === "readWrite" && highestPermission !== "manage") {
               highestPermission = "readWrite";
+            } else if (
+              membership.permission === "read" &&
+              highestPermission !== "manage" &&
+              highestPermission !== "readWrite"
+            ) {
+              highestPermission = "read";
             }
           }
 

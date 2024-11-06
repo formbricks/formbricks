@@ -38,7 +38,7 @@ export const updateSurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -64,10 +64,11 @@ export const refetchProductAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["product", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "readWrite",
           productId: parsedInput.productId,
         },
       ],
@@ -88,13 +89,23 @@ const ZCreateBasicSegmentAction = z.object({
 export const createBasicSegmentAction = authenticatedActionClient
   .schema(ZCreateBasicSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
+    const surveyEnvironment = await getSurvey(parsedInput.surveyId);
+
+    if (!surveyEnvironment) {
+      throw new Error("Survey not found");
+    }
+
+    if (surveyEnvironment.environmentId !== parsedInput.environmentId) {
+      throw new Error("Survey and segment are not in the same environment");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId: await getOrganizationIdFromEnvironmentId(surveyEnvironment.environmentId),
       access: [
         {
           type: "organization",
-          rules: ["segment", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -141,7 +152,7 @@ export const updateBasicSegmentAction = authenticatedActionClient
           schema: ZSegmentUpdateInput,
           data: parsedInput.data,
           type: "organization",
-          rules: ["segment", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -195,7 +206,7 @@ export const loadNewBasicSegmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -238,7 +249,7 @@ export const cloneBasicSegmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["segment", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -264,7 +275,7 @@ export const resetBasicSegmentFiltersAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -369,7 +380,7 @@ export const createActionClassAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["actionClass", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",

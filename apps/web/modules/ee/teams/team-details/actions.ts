@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
+import { getOrganizationIdFromProductId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import {
   addTeamMembers,
@@ -33,7 +33,7 @@ export const updateTeamNameAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["team", "update"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -54,7 +54,7 @@ export const deleteTeamAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["team", "delete"],
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -77,7 +77,7 @@ export const updateUserTeamRoleAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["teamMembership", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "team",
@@ -104,7 +104,7 @@ export const removeTeamMemberAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["teamMembership", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "team",
@@ -131,7 +131,7 @@ export const addTeamMembersAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["teamMembership", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "team",
@@ -153,17 +153,20 @@ const ZUpdateTeamProductPermissionAction = z.object({
 export const updateTeamProductPermissionAction = authenticatedActionClient
   .schema(ZUpdateTeamProductPermissionAction)
   .action(async ({ ctx, parsedInput }) => {
+    const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+    const productOrganizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+
+    if (teamOrganizationId !== productOrganizationId) {
+      throw new Error("Team and Product must belong to the same organization");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      organizationId: productOrganizationId,
       access: [
         {
           type: "organization",
-          rules: ["productTeam", "update"],
-        },
-        {
-          type: "productTeam",
-          productId: parsedInput.productId,
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -183,17 +186,20 @@ const ZRemoveTeamProductAction = z.object({
 export const removeTeamProductAction = authenticatedActionClient
   .schema(ZRemoveTeamProductAction)
   .action(async ({ ctx, parsedInput }) => {
+    const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+    const productOrganizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+
+    if (teamOrganizationId !== productOrganizationId) {
+      throw new Error("Team and Product must belong to the same organization");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      organizationId: productOrganizationId,
       access: [
         {
           type: "organization",
-          rules: ["productTeam", "delete"],
-        },
-        {
-          type: "productTeam",
-          productId: parsedInput.productId,
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -215,7 +221,7 @@ export const addTeamProductsAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["productTeam", "create"],
+          roles: ["owner", "manager"],
         },
       ],
     });

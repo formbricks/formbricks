@@ -24,7 +24,7 @@ export const updateProductAction = authenticatedActionClient
           schema: ZProductUpdateInput,
           data: parsedInput.data,
           type: "organization",
-          rules: ["product", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",

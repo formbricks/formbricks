@@ -21,12 +21,12 @@ export const deleteBasicSegmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["segment", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "readWrite",
           productId: await getProductIdFromSegmentId(parsedInput.segmentId),
-          minPermission: "manage",
         },
       ],
     });
@@ -48,12 +48,12 @@ export const updateBasicSegmentAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["segment", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
+          minPermission: "readWrite",
           productId: await getProductIdFromSegmentId(parsedInput.segmentId),
-          minPermission: "manage",
         },
       ],
     });

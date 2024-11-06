@@ -19,7 +19,7 @@ export const getTeamsAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["team", "read"],
+          roles: ["owner", "manager", "billing", "member"],
         },
       ],
     });
@@ -39,8 +39,9 @@ export const leaveTeamAction = authenticatedActionClient
       organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
       access: [
         {
-          type: "organization",
-          rules: ["teamMembership", "delete"],
+          type: "team",
+          teamId: parsedInput.teamId,
+          minPermission: "contributor",
         },
       ],
     });
@@ -61,12 +62,7 @@ export const joinTeamAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["teamMembership", "create"],
-        },
-        {
-          type: "team",
-          teamId: parsedInput.teamId,
-          minPermission: "admin",
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -88,7 +84,7 @@ export const createTeamAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["team", "create"],
+          roles: ["owner", "manager"],
         },
       ],
     });

@@ -1,3 +1,5 @@
+"use server";
+
 import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -523,6 +525,38 @@ export const getInsight = reactCache(
       [`utils-getInsight-${insightId}`],
       {
         tags: [tagCache.tag.byId(insightId)],
+      }
+    )()
+);
+
+export const getDocument = reactCache(
+  (documentId: string): Promise<{ environmentId: string } | null> =>
+    cache(
+      async () => {
+        validateInputs([documentId, ZId]);
+
+        try {
+          const document = await prisma.document.findUnique({
+            where: {
+              id: documentId,
+            },
+            select: {
+              environmentId: true,
+            },
+          });
+
+          return document;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`utils-getDocument-${documentId}`],
+      {
+        tags: [tagCache.tag.byId(documentId)],
       }
     )()
 );

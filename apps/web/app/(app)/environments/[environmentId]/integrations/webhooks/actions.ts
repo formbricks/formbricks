@@ -27,11 +27,11 @@ export const createWebhookAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["webhook", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          minPermission: "manage",
+          minPermission: "read",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
@@ -53,11 +53,11 @@ export const deleteWebhookAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["webhook", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          minPermission: "manage",
+          minPermission: "readWrite",
           productId: await getProductIdFromEnvironmentId(parsedInput.id),
         },
       ],
@@ -80,11 +80,11 @@ export const updateWebhookAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["webhook", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
-          minPermission: "manage",
+          minPermission: "readWrite",
           productId: await getProductIdFromEnvironmentId(parsedInput.webhookId),
         },
       ],

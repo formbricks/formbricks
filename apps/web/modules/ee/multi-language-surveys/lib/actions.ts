@@ -33,7 +33,7 @@ export const createLanguageAction = authenticatedActionClient
           type: "organization",
           schema: ZLanguageInput,
           data: parsedInput.languageInput,
-          rules: ["language", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
@@ -54,18 +54,24 @@ const ZDeleteLanguageAction = z.object({
 export const deleteLanguageAction = authenticatedActionClient
   .schema(ZDeleteLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
+    const languageProductId = await getProductIdFromLanguageId(parsedInput.languageId);
+
+    if (languageProductId !== parsedInput.productId) {
+      throw new Error("Invalid language id");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromLanguageId(parsedInput.languageId),
+      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
       access: [
         {
           type: "organization",
-          rules: ["language", "delete"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           productId: parsedInput.productId,
-          minPermission: "readWrite",
+          minPermission: "manage",
         },
       ],
     });
@@ -86,12 +92,12 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "read"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           productId: await getProductIdFromLanguageId(parsedInput.languageId),
-          minPermission: "read",
+          minPermission: "manage",
         },
       ],
     });
@@ -116,12 +122,12 @@ export const updateLanguageAction = authenticatedActionClient
           type: "organization",
           schema: ZLanguageInput,
           data: parsedInput.languageInput,
-          rules: ["language", "update"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",
           productId: parsedInput.productId,
-          minPermission: "readWrite",
+          minPermission: "manage",
         },
       ],
     });

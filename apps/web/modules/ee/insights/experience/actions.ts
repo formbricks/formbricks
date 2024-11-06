@@ -28,7 +28,12 @@ export const getEnvironmentInsightsAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "read"],
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -55,7 +60,12 @@ export const getStatsAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["response", "read"],
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -98,7 +108,7 @@ export const updateInsightAction = authenticatedActionClient
         access: [
           {
             type: "organization",
-            rules: ["response", "update"],
+            roles: ["owner", "manager"],
           },
           {
             type: "productTeam",

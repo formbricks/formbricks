@@ -1,5 +1,3 @@
-"use server";
-
 import "server-only";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
@@ -20,7 +18,7 @@ export const getOrganizationBillingInfoAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["subscription", "read"],
+          roles: ["owner", "manager", "billing"],
         },
       ],
     });

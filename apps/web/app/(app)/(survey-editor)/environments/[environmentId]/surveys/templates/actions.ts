@@ -29,7 +29,7 @@ export const createAISurveyAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["survey", "create"],
+          roles: ["owner", "manager"],
         },
         {
           type: "productTeam",

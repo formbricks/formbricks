@@ -78,7 +78,7 @@ export const createProductAction = authenticatedActionClient
           data: parsedInput.data,
           schema: ZProductUpdateInput,
           type: "organization",
-          rules: ["product", "create"],
+          roles: ["owner", "manager"],
         },
       ],
     });

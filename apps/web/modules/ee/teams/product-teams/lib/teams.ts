@@ -124,27 +124,46 @@ export const removeTeamAccess = async (productId: string, teamId: string): Promi
 export const addTeamAccess = async (productId: string, teamIds: string[]): Promise<boolean> => {
   validateInputs([productId, ZId], [teamIds, z.array(ZId)]);
   try {
-    const productTeams = await prisma.productTeam.findMany({
+    const product = await prisma.product.findUnique({
       where: {
-        productId,
-        teamId: {
-          in: teamIds,
-        },
+        id: productId,
       },
     });
 
-    if (productTeams.length !== 0) {
-      throw new AuthorizationError("Teams already have access to this product");
+    if (!product) {
+      throw new ResourceNotFoundError("Product", productId);
     }
 
-    const data = teamIds.map((teamId) => ({
-      productId,
-      teamId,
-    }));
+    for (let teamId of teamIds) {
+      const team = await prisma.team.findUnique({
+        where: {
+          id: teamId,
+          organizationId: product.organizationId,
+        },
+      });
 
-    await prisma.productTeam.createMany({
-      data: data,
-    });
+      if (!team) {
+        throw new ResourceNotFoundError("Team", teamId);
+      }
+
+      const productTeam = await prisma.productTeam.findFirst({
+        where: {
+          productId,
+          teamId,
+        },
+      });
+
+      if (productTeam) {
+        throw new AuthorizationError("Teams already have access to this product");
+      }
+
+      await prisma.productTeam.create({
+        data: {
+          productId,
+          teamId,
+        },
+      });
+    }
 
     teamCache.revalidate({
       productId,

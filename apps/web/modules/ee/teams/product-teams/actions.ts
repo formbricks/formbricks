@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromProductId } from "@/lib/utils/helper";
+import { getOrganizationIdFromProductId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import {
   addTeamAccess,
   removeTeamAccess,
@@ -20,17 +20,20 @@ const ZRemoveAccessAction = z.object({
 export const removeAccessAction = authenticatedActionClient
   .schema(ZRemoveAccessAction)
   .action(async ({ ctx, parsedInput }) => {
+    const productOrganizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+    const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
+    if (productOrganizationId !== teamOrganizationId) {
+      throw new Error("Team and product are not in the same organization");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: productOrganizationId,
       access: [
         {
           type: "organization",
-          rules: ["productTeam", "delete"],
-        },
-        {
-          type: "team",
-          teamId: parsedInput.teamId,
+          roles: ["owner", "manager"],
         },
       ],
     });
@@ -52,12 +55,8 @@ export const addAccessAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          rules: ["productTeam", "create"],
+          roles: ["owner", "manager"],
         },
-        ...parsedInput.teamIds.map((teamId) => ({
-          type: "team" as const,
-          teamId,
-        })),
       ],
     });
 
@@ -73,17 +72,20 @@ const ZUpdateAccessPermissionAction = z.object({
 export const updateAccessPermissionAction = authenticatedActionClient
   .schema(ZUpdateAccessPermissionAction)
   .action(async ({ ctx, parsedInput }) => {
+    const productOrganizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+    const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
+    if (productOrganizationId !== teamOrganizationId) {
+      throw new Error("Team and product are not in the same organization");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: productOrganizationId,
       access: [
         {
           type: "organization",
-          rules: ["productTeam", "update"],
-        },
-        {
-          type: "team",
-          teamId: parsedInput.teamId,
+          roles: ["owner", "manager"],
         },
       ],
     });
