@@ -72,7 +72,6 @@ interface NavigationProps {
   isFormbricksCloud?: boolean;
   membershipRole?: TOrganizationRole;
   isAIEnabled?: boolean;
-  productPermission: TTeamPermission | null;
 }
 
 export const MainNavigation = ({
@@ -85,7 +84,6 @@ export const MainNavigation = ({
   isFormbricksCloud = true,
   membershipRole,
   isAIEnabled = false,
-  productPermission,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -99,7 +97,7 @@ export const MainNavigation = ({
 
   const product = products.find((product) => product.id === environment.productId);
   const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
-  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+
   const isOwnerOrManager = isManager || isOwner;
   const isPricingDisabled = isMember;
 
