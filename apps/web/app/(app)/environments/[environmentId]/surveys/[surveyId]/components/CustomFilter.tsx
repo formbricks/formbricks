@@ -8,6 +8,7 @@ import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environ
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,20 +25,20 @@ import {
 import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
-  FROM = "from",
-  TO = "to",
+  FROM = "common.from",
+  TO = "common.to",
 }
 
 enum FilterDownload {
-  ALL = "all",
-  FILTER = "filter",
+  ALL = "common.all",
+  FILTER = "common.filter",
 }
 
 enum FilterDropDownLabels {
-  ALL_TIME = "All time",
-  LAST_7_DAYS = "Last 7 days",
-  LAST_30_DAYS = "Last 30 days",
-  CUSTOM_RANGE = "Custom range...",
+  ALL_TIME = "environments.surveys.summary.all_time",
+  LAST_7_DAYS = "environments.surveys.summary.last_7_days",
+  LAST_30_DAYS = "environments.surveys.summary.last_30_days",
+  CUSTOM_RANGE = "environments.surveys.summary.custom_range",
 }
 
 interface CustomFilterProps {
@@ -194,7 +195,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
-
+  const t = useTranslations();
   return (
     <>
       <div className="relative flex justify-between">
@@ -212,7 +213,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
                         dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
                       }`
-                    : filterRange}
+                    : t(filterRange)}
                 </span>
                 {isFilterDropDownOpen ? (
                   <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
@@ -227,21 +228,21 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setFilterRange(FilterDropDownLabels.ALL_TIME);
                   setDateRange({ from: undefined, to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">All time</p>
+                <p className="text-slate-700">{t(FilterDropDownLabels.ALL_TIME)}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_7_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">Last 7 days</p>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_7_DAYS)}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_30_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">Last 30 days</p>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_30_DAYS)}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -249,7 +250,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setFilterRange(FilterDropDownLabels.CUSTOM_RANGE);
                   setSelectingDate(DateSelected.FROM);
                 }}>
-                <p className="text-sm text-slate-700 hover:ring-0">Custom range...</p>
+                <p className="text-sm text-slate-700 hover:ring-0">{t(FilterDropDownLabels.CUSTOM_RANGE)}</p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -261,7 +262,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
                 <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
                   <div className="hidden w-full items-center justify-between sm:flex">
-                    <span className="text-sm text-slate-700">Download</span>
+                    <span className="text-sm text-slate-700">{t("common.download")}</span>
                     <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
                   </div>
                   <DownloadIcon className="block h-4 sm:hidden" />
@@ -273,25 +274,27 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.ALL, "csv");
                   }}>
-                  <p className="text-slate-700">All responses (CSV)</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.ALL, "xlsx");
                   }}>
-                  <p className="text-slate-700">All responses (Excel)</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "csv");
                   }}>
-                  <p className="text-slate-700">Current selection (CSV)</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.current_selection_csv")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                   }}>
-                  <p className="text-slate-700">Current selection (Excel)</p>
+                  <p className="text-slate-700">
+                    {t("environments.surveys.summary.current_selection_excel")}
+                  </p>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

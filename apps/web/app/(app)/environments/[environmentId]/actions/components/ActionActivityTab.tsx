@@ -1,6 +1,7 @@
 "use client";
 
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
@@ -17,6 +18,7 @@ interface ActivityTabProps {
 }
 
 export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabProps) => {
+  const t = useTranslations();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
         <div>
-          <Label className="text-slate-500">Active surveys</Label>
+          <Label className="text-slate-500">{t("common.active_surveys")}</Label>
           {activeSurveys?.length === 0 && <p className="text-sm text-slate-900">-</p>}
           {activeSurveys?.map((surveyName) => (
             <p key={surveyName} className="text-sm text-slate-900">
@@ -59,7 +61,7 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
           ))}
         </div>
         <div>
-          <Label className="text-slate-500">Inactive surveys</Label>
+          <Label className="text-slate-500">{t("common.inactive_surveys")}</Label>
           {inactiveSurveys?.length === 0 && <p className="text-sm text-slate-900">-</p>}
           {inactiveSurveys?.map((surveyName) => (
             <p key={surveyName} className="text-sm text-slate-900">

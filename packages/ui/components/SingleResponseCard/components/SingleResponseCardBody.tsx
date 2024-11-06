@@ -1,4 +1,5 @@
 import { CheckCircle2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TResponse } from "@formbricks/types/responses";
@@ -22,7 +23,7 @@ export const SingleResponseCardBody = ({
   skippedQuestions,
 }: SingleResponseCardBodyProps) => {
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
-
+  const t = useTranslations();
   const formatTextWithSlashes = (text: string) => {
     // Updated regex to match content between #/ and \#
     const regex = /#\/(.*?)\\#/g;
@@ -120,7 +121,9 @@ export const SingleResponseCardBody = ({
       {response.finished && (
         <div className="mt-4 flex items-center">
           <CheckCircle2Icon className="h-6 w-6 text-slate-400" />
-          <p className="mx-2 rounded-lg bg-slate-100 px-2 text-sm font-medium text-slate-700">Completed</p>
+          <p className="mx-2 rounded-lg bg-slate-100 px-2 text-sm font-medium text-slate-700">
+            {t("common.completed")}
+          </p>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { SegmentSettings } from "@formbricks/ee/advanced-targeting/components/segment-settings";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
@@ -29,6 +30,7 @@ export const EditSegmentModal = ({
   isAdvancedTargetingAllowed,
   isFormbricksCloud,
 }: EditSegmentModalProps) => {
+  const t = useTranslations();
   const SettingsTab = () => {
     if (isAdvancedTargetingAllowed) {
       return (
@@ -55,11 +57,11 @@ export const EditSegmentModal = ({
 
   const tabs = [
     {
-      title: "Activity",
+      title: t("common.activity"),
       children: <SegmentActivityTab environmentId={environmentId} currentSegment={currentSegment} />,
     },
     {
-      title: "Settings",
+      title: t("common.settings"),
       children: <SettingsTab />,
     },
   ];

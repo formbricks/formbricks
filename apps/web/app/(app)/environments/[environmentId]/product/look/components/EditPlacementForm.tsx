@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -14,11 +15,11 @@ import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup
 import { updateProductAction } from "../../actions";
 
 const placements = [
-  { name: "Bottom Right", value: "bottomRight", disabled: false },
-  { name: "Top Right", value: "topRight", disabled: false },
-  { name: "Top Left", value: "topLeft", disabled: false },
-  { name: "Bottom Left", value: "bottomLeft", disabled: false },
-  { name: "Centered Modal", value: "center", disabled: false },
+  { name: "common.bottom_right", value: "bottomRight", disabled: false },
+  { name: "common.top_right", value: "topRight", disabled: false },
+  { name: "common.top_left", value: "topLeft", disabled: false },
+  { name: "common.bottom_left", value: "bottomLeft", disabled: false },
+  { name: "common.centered_modal", value: "center", disabled: false },
 ];
 
 interface EditPlacementProps {
@@ -35,6 +36,7 @@ const ZProductPlacementInput = z.object({
 type EditPlacementFormValues = z.infer<typeof ZProductPlacementInput>;
 
 export const EditPlacementForm = ({ product }: EditPlacementProps) => {
+  const t = useTranslations();
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
       placement: product.placement,
@@ -49,7 +51,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
   const clickOutsideClose = form.watch("clickOutsideClose");
   const isSubmitting = form.formState.isSubmitting;
 
-  const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-gray-700/80" : "bg-slate-200";
+  const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-slate-700/80" : "bg-slate-200";
 
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
     try {
@@ -62,7 +64,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
         },
       });
 
-      toast.success("Placement updated successfully.");
+      toast.success(t("environments.product.look.placement_updated_successfully"));
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     }
@@ -93,7 +95,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
                           checked={field.value === placement.value}
                         />
                         <Label htmlFor={placement.value} className="text-slate-900">
-                          {placement.name}
+                          {t(placement.name)}
                         </Label>
                       </div>
                     ))}
@@ -124,7 +126,9 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
                 name="darkOverlay"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-semibold">Centered modal overlay color</FormLabel>
+                    <FormLabel className="font-semibold">
+                      {t("environments.product.look.centered_modal_overlay_color")}
+                    </FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={(value) => {
@@ -134,13 +138,13 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
                         <div className="flex items-center space-x-2 whitespace-nowrap">
                           <RadioGroupItem id="lightOverlay" value="lightOverlay" checked={!field.value} />
                           <Label htmlFor="lightOverlay" className="text-slate-900">
-                            Light Overlay
+                            {t("common.light_overlay")}
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2 whitespace-nowrap">
                           <RadioGroupItem id="darkOverlay" value="darkOverlay" checked={field.value} />
                           <Label htmlFor="darkOverlay" className="text-slate-900">
-                            Dark Overlay
+                            {t("common.dark_overlay")}
                           </Label>
                         </div>
                       </RadioGroup>
@@ -156,7 +160,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold">
-                      Allow users to exit by clicking outside the study
+                      {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
                     </FormLabel>
                     <FormControl>
                       <RadioGroup
@@ -167,13 +171,13 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
                         <div className="flex items-center space-x-2 whitespace-nowrap">
                           <RadioGroupItem id="disallow" value="disallow" checked={!field.value} />
                           <Label htmlFor="disallow" className="text-slate-900">
-                            Don&apos;t Allow
+                            {t("common.disallow")}
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2 whitespace-nowrap">
                           <RadioGroupItem id="allow" value="allow" checked={field.value} />
                           <Label htmlFor="allow" className="text-slate-900">
-                            Allow
+                            {t("common.allow")}
                           </Label>
                         </div>
                       </RadioGroup>
@@ -186,7 +190,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
         )}
 
         <Button className="mt-4 w-fit" size="sm" loading={isSubmitting}>
-          Save
+          {t("common.save")}
         </Button>
       </form>
     </FormProvider>

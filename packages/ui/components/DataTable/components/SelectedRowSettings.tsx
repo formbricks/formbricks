@@ -1,5 +1,6 @@
 import { Table } from "@tanstack/react-table";
 import { Trash2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -16,7 +17,7 @@ interface SelectedRowSettingsProps<T> {
 export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const t = useTranslations();
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
 
   // Toggle all rows selection
@@ -40,12 +41,16 @@ export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRow
       }
 
       deleteRows(rowsToBeDeleted);
-      toast.success(`${capitalizeFirstLetter(type)}s deleted successfully`);
+      toast.success(t("common.table_items_deleted_successfully", { type: capitalizeFirstLetter(type) }));
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
-        toast.error(`An unknown error occurred while deleting ${type}s`);
+        toast.error(
+          t("common.an_unknown_error_occurred_while_deleting_table_items", {
+            type: capitalizeFirstLetter(type),
+          })
+        );
       }
     } finally {
       setIsDeleting(false);
@@ -69,9 +74,12 @@ export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRow
         {selectedRowCount} {type}s selected
       </div>
       <Separator />
-      <SelectableOption label="Select all" onClick={() => handleToggleAllRowsSelection(true)} />
+      <SelectableOption label={t("common.select_all")} onClick={() => handleToggleAllRowsSelection(true)} />
       <Separator />
-      <SelectableOption label="Clear selection" onClick={() => handleToggleAllRowsSelection(false)} />
+      <SelectableOption
+        label={t("common.clear_selection")}
+        onClick={() => handleToggleAllRowsSelection(false)}
+      />
       <Separator />
       <div
         className="cursor-pointer rounded-md bg-slate-500 p-1 hover:bg-slate-600"

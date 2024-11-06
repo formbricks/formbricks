@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { Button } from "../Button";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "../Command";
@@ -31,6 +32,7 @@ export const TagsCombobox = ({
   open,
   setOpen,
 }: ITagsComboboxProps) => {
+  const t = useTranslations();
   const tagsToSearch = useMemo(
     () =>
       tags.filter((tag) => {
@@ -54,7 +56,7 @@ export const TagsCombobox = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button size="sm" aria-expanded={open}>
-          Add Tag
+          {t("environments.product.tags.add_tag")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
@@ -73,7 +75,11 @@ export const TagsCombobox = ({
           }}>
           <div className="p-1">
             <CommandInput
-              placeholder={tagsToSearch?.length === 0 ? "Add tag..." : "Search or add tags..."}
+              placeholder={
+                tagsToSearch?.length === 0
+                  ? t("environments.product.tags.add_tag")
+                  : t("environments.product.tags.search_tags")
+              }
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
@@ -114,7 +120,7 @@ export const TagsCombobox = ({
                       onClick={() => createTag?.(searchValue)}
                       className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!!currentTags.find((tag) => tag.label === searchValue)}>
-                      + Add {searchValue}
+                      + {t("environments.product.tags.add")} {searchValue}
                     </button>
                   </CommandItem>
                 )}

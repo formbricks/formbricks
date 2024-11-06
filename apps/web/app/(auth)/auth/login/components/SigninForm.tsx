@@ -4,6 +4,7 @@ import { TwoFactor } from "@/app/(auth)/auth/login/components/TwoFactor";
 import { TwoFactorBackup } from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 import { XCircleIcon } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -52,6 +53,7 @@ export const SigninForm = ({
   const emailRef = useRef<HTMLInputElement>(null);
   const formMethods = useForm<TSigninFormState>();
   const callbackUrl = searchParams?.get("callbackUrl");
+  const t = useTranslations();
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
     if (typeof window !== "undefined") {
@@ -90,7 +92,7 @@ export const SigninForm = ({
     } catch (error) {
       const errorMessage = error.toString();
       const errorFeedback = errorMessage.includes("Invalid URL")
-        ? "Too many requests, please try again after some time!"
+        ? t("auth.login.too_many_requests_please_try_again_after_some_time")
         : error.message;
       setSignInError(errorFeedback);
     } finally {
@@ -123,14 +125,14 @@ export const SigninForm = ({
 
   const formLabel = useMemo(() => {
     if (totpBackup) {
-      return "Enter your backup code";
+      return t("auth.login.enter_your_backup_code");
     }
 
     if (totpLogin) {
-      return "Enter your two-factor authentication code";
+      return t("auth.login.enter_your_two_factor_authentication_code");
     }
 
-    return "Login to your account";
+    return t("auth.login.login_to_your_account");
   }, [totpBackup, totpLogin]);
 
   const TwoFactorComponent = useMemo(() => {
@@ -158,7 +160,7 @@ export const SigninForm = ({
               <div className={cn(totpLogin && "hidden")}>
                 <div className="mb-2 transition-all duration-500 ease-in-out">
                   <label htmlFor="email" className="sr-only">
-                    Email address
+                    {t("common.email")}
                   </label>
                   <input
                     id="email"
@@ -176,7 +178,7 @@ export const SigninForm = ({
                 </div>
                 <div className="transition-all duration-500 ease-in-out">
                   <label htmlFor="password" className="sr-only">
-                    Password
+                    {t("common.password")}
                   </label>
                   <Controller
                     name="password"
@@ -203,7 +205,7 @@ export const SigninForm = ({
                     <Link
                       href="/auth/forgot-password"
                       className="hover:text-brand-dark text-xs text-slate-500">
-                      Forgot your password?
+                      {t("auth.login.forgot_your_password")}
                     </Link>
                   </div>
                 )}
@@ -211,6 +213,7 @@ export const SigninForm = ({
             )}
             {emailAuthEnabled && (
               <Button
+                size="base"
                 onClick={() => {
                   if (!showLogin) {
                     setShowLogin(true);
@@ -222,9 +225,9 @@ export const SigninForm = ({
                 }}
                 className="relative w-full justify-center"
                 loading={loggingIn}>
-                {totpLogin ? "Submit" : "Login with Email"}
+                {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}
                 {lastLoggedInWith && lastLoggedInWith === "Email" ? (
-                  <span className="absolute right-3 text-xs">Last Used</span>
+                  <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>
                 ) : null}
               </Button>
             )}
@@ -232,19 +235,31 @@ export const SigninForm = ({
 
           {googleOAuthEnabled && !totpLogin && (
             <>
-              <GoogleButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Google"} />
+              <GoogleButton
+                inviteUrl={callbackUrl}
+                lastUsed={lastLoggedInWith === "Google"}
+                text={t("auth.continue_with_google")}
+              />
             </>
           )}
 
           {githubOAuthEnabled && !totpLogin && (
             <>
-              <GithubButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Github"} />
+              <GithubButton
+                inviteUrl={callbackUrl}
+                lastUsed={lastLoggedInWith === "Github"}
+                text={t("auth.continue_with_github")}
+              />
             </>
           )}
 
           {azureOAuthEnabled && !totpLogin && (
             <>
-              <AzureButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Azure"} />
+              <AzureButton
+                inviteUrl={callbackUrl}
+                lastUsed={lastLoggedInWith === "Azure"}
+                text={t("auth.continue_with_azure")}
+              />
             </>
           )}
 
@@ -252,7 +267,7 @@ export const SigninForm = ({
             <>
               <OpenIdButton
                 inviteUrl={callbackUrl}
-                text={`Continue with ${oidcDisplayName}`}
+                text={t("auth.continue_with_oidc", { oidcDisplayName })}
                 lastUsed={lastLoggedInWith === "OpenID"}
               />
             </>
@@ -261,12 +276,12 @@ export const SigninForm = ({
 
         {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (
           <div className="mt-9 text-center text-xs">
-            <span className="leading-5 text-slate-500">New to Formbricks?</span>
+            <span className="leading-5 text-slate-500">{t("auth.login.new_to_formbricks")}</span>
             <br />
             <Link
               href={inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
               className="font-semibold text-slate-600 underline hover:text-slate-700">
-              Create an account
+              {t("auth.login.create_an_account")}
             </Link>
           </div>
         )}
@@ -274,7 +289,7 @@ export const SigninForm = ({
 
       {totpLogin && !totpBackup && (
         <div className="mt-9 text-center text-xs">
-          <span className="leading-5 text-slate-500">Lost Access?</span>
+          <span className="leading-5 text-slate-500">{t("auth.login.lost_access")}</span>
           <br />
           <div className="flex flex-col">
             <button
@@ -283,7 +298,7 @@ export const SigninForm = ({
               onClick={() => {
                 setTotpBackup(true);
               }}>
-              Use a backup code
+              {t("auth.login.use_a_backup_code")}
             </button>
 
             <button
@@ -292,7 +307,7 @@ export const SigninForm = ({
               onClick={() => {
                 setTotpLogin(false);
               }}>
-              Go Back
+              {t("common.go_back")}
             </button>
           </div>
         </div>
@@ -306,7 +321,7 @@ export const SigninForm = ({
             onClick={() => {
               setTotpBackup(false);
             }}>
-            Go Back
+            {t("common.go_back")}
           </button>
         </div>
       )}
@@ -318,7 +333,9 @@ export const SigninForm = ({
               <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">An error occurred when logging you in</h3>
+              <h3 className="text-sm font-medium text-red-800">
+                {t("auth.login.an_error_occurred_when_logging_you_in")}
+              </h3>
               <div className="mt-2 text-sm text-red-700">
                 <p className="space-y-1 whitespace-pre-wrap">{signInError}</p>
               </div>

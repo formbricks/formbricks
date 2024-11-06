@@ -1,4 +1,5 @@
 import { FingerprintIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
@@ -45,6 +46,7 @@ export const PersonSegmentFilter = ({
   setSegment,
   viewOnly,
 }: PersonSegmentFilterProps) => {
+  const t = useTranslations();
   const { personIdentifier } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
@@ -60,7 +62,7 @@ export const PersonSegmentFilter = ({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError("Value must be a number");
+        setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value]);
@@ -95,7 +97,7 @@ export const PersonSegmentFilter = ({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError("Value cannot be empty");
+      setValueError(t("environments.segments.value_cannot_be_empty"));
       return;
     }
 
@@ -108,7 +110,7 @@ export const PersonSegmentFilter = ({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError("Value must be a number");
+        setValueError(t("environments.segments.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 

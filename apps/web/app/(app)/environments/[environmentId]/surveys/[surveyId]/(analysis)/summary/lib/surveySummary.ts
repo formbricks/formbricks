@@ -235,6 +235,7 @@ export const getSurveySummaryDropOff = (
   const dropOff = survey.questions.map((question, index) => {
     return {
       questionId: question.id,
+      questionType: question.type,
       headline: getLocalizedValue(question.headline, "default"),
       ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
       impressions: impressionsArr[index] || 0,
@@ -318,7 +319,7 @@ export const getQuestionSummary = async (
           insightsEnabled: question.insightsEnabled,
         });
 
-        values;
+        values = [];
         break;
       }
       case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
@@ -339,6 +340,8 @@ export const getQuestionSummary = async (
         }, {});
 
         const otherValues: TSurveyQuestionSummaryMultipleChoice["choices"][number]["others"] = [];
+        let totalSelectionCount = 0;
+        let totalResponseCount = 0;
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
@@ -347,28 +350,42 @@ export const getQuestionSummary = async (
               ? response.data[question.id]
               : checkForI18n(response, question.id, survey, responseLanguageCode);
 
+          let hasValidAnswer = false;
+
           if (Array.isArray(answer)) {
             answer.forEach((value) => {
-              if (questionChoices.includes(value)) {
-                choiceCountMap[value]++;
-              } else {
+              if (value) {
+                totalSelectionCount++;
+                if (questionChoices.includes(value)) {
+                  choiceCountMap[value]++;
+                } else if (isOthersEnabled) {
+                  otherValues.push({
+                    value,
+                    person: response.person,
+                    personAttributes: response.personAttributes,
+                  });
+                }
+                hasValidAnswer = true;
+              }
+            });
+          } else if (typeof answer === "string") {
+            if (answer) {
+              totalSelectionCount++;
+              if (questionChoices.includes(answer)) {
+                choiceCountMap[answer]++;
+              } else if (isOthersEnabled) {
                 otherValues.push({
-                  value,
+                  value: answer,
                   person: response.person,
                   personAttributes: response.personAttributes,
                 });
               }
-            });
-          } else if (typeof answer === "string") {
-            if (questionChoices.includes(answer)) {
-              choiceCountMap[answer]++;
-            } else {
-              otherValues.push({
-                value: answer,
-                person: response.person,
-                personAttributes: response.personAttributes,
-              });
+              hasValidAnswer = true;
             }
+          }
+
+          if (hasValidAnswer) {
+            totalResponseCount++;
           }
         });
 
@@ -376,7 +393,8 @@ export const getQuestionSummary = async (
           values.push({
             value: label,
             count,
-            percentage: responses.length > 0 ? convertFloatTo2Decimal((count / responses.length) * 100) : 0,
+            percentage:
+              totalSelectionCount > 0 ? convertFloatTo2Decimal((count / totalSelectionCount) * 100) : 0,
           });
         });
 
@@ -384,14 +402,18 @@ export const getQuestionSummary = async (
           values.push({
             value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
-            percentage: convertFloatTo2Decimal((otherValues.length / responses.length) * 100),
+            percentage:
+              totalSelectionCount > 0
+                ? convertFloatTo2Decimal((otherValues.length / totalSelectionCount) * 100)
+                : 0,
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
         summary.push({
           type: question.type,
           question,
-          responseCount: responses.length,
+          responseCount: totalResponseCount,
+          selectionCount: totalSelectionCount,
           choices: values,
         });
 
@@ -406,12 +428,14 @@ export const getQuestionSummary = async (
           choiceCountMap[choice.id] = 0;
         });
         let totalResponseCount = 0;
+        let totalSelectionCount = 0;
 
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (Array.isArray(answer)) {
+            totalResponseCount++;
             answer.forEach((value) => {
-              totalResponseCount++;
+              totalSelectionCount++;
               choiceCountMap[value]++;
             });
           }
@@ -423,8 +447,8 @@ export const getQuestionSummary = async (
             imageUrl: choice.imageUrl,
             count: choiceCountMap[choice.id],
             percentage:
-              totalResponseCount > 0
-                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalResponseCount) * 100)
+              totalSelectionCount > 0
+                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalSelectionCount) * 100)
                 : 0,
           });
         });
@@ -433,6 +457,7 @@ export const getQuestionSummary = async (
           type: question.type,
           question,
           responseCount: totalResponseCount,
+          selectionCount: totalSelectionCount,
           choices: values,
         });
 

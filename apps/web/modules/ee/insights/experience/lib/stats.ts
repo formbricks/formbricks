@@ -75,7 +75,8 @@ export const getStats = reactCache(
           if (sentimentCounts.positive || sentimentCounts.negative) {
             sentimentScore = sentimentCounts.positive / (sentimentCounts.positive + sentimentCounts.negative);
 
-            overallSentiment = sentimentScore > 0.5 ? "positive" : "negative";
+            overallSentiment =
+              sentimentScore > 0.5 ? "positive" : sentimentScore < 0.5 ? "negative" : "neutral";
           }
 
           return {

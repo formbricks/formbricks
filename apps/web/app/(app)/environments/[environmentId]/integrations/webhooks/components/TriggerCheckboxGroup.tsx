@@ -1,20 +1,35 @@
+import { useTranslations } from "next-intl";
 import React from "react";
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
 
 interface TriggerCheckboxGroupProps {
-  triggers: { title: string; value: TPipelineTrigger }[];
   selectedTriggers: TPipelineTrigger[];
   onCheckboxChange: (selectedValue: TPipelineTrigger) => void;
   allowChanges: boolean;
 }
 
+const triggers = [
+  {
+    title: "environments.integrations.webhooks.response_created",
+    value: "responseCreated" as TPipelineTrigger,
+  },
+  {
+    title: "environments.integrations.webhooks.response_updated",
+    value: "responseUpdated" as TPipelineTrigger,
+  },
+  {
+    title: "environments.integrations.webhooks.response_finished",
+    value: "responseFinished" as TPipelineTrigger,
+  },
+];
+
 export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
-  triggers,
   selectedTriggers,
   onCheckboxChange,
   allowChanges,
 }) => {
+  const t = useTranslations();
   return (
     <div className="mt-1 rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
@@ -38,7 +53,7 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
                 }}
                 disabled={!allowChanges}
               />
-              <span className="ml-2">{trigger.title}</span>
+              <span className="ml-2">{t(trigger.title)}</span>
             </label>
           </div>
         ))}

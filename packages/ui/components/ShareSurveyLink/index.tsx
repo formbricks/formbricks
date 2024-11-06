@@ -1,8 +1,10 @@
 import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "../Button";
 import { generateSingleUseIdAction } from "./actions";
 import { LanguageDropdown } from "./components/LanguageDropdown";
@@ -13,9 +15,17 @@ interface ShareSurveyLinkProps {
   webAppUrl: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
+  locale: TUserLocale;
 }
 
-export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: ShareSurveyLinkProps) => {
+export const ShareSurveyLink = ({
+  survey,
+  webAppUrl,
+  surveyUrl,
+  setSurveyUrl,
+  locale,
+}: ShareSurveyLinkProps) => {
+  const t = useTranslations();
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
@@ -49,7 +59,7 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
 
   const generateNewSingleUseLink = () => {
     getUrl();
-    toast.success("New single use link generated");
+    toast.success(t("environments.surveys.new_single_use_link_generated"));
   };
 
   useEffect(() => {
@@ -61,10 +71,11 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
       className={`flex max-w-full flex-col items-center justify-center space-x-2 ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
       <SurveyLinkDisplay surveyUrl={surveyUrl} />
       <div className="mt-2 flex items-center justify-center space-x-2">
-        <LanguageDropdown survey={survey} setLanguage={setLanguage} />
+        <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
-          title="Preview survey in a new tab"
-          aria-label="Preview survey in a new tab"
+          size="base"
+          title={t("environments.surveys.preview_survey_in_a_new_tab")}
+          aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
           onClick={() => {
             let previewUrl = surveyUrl;
             if (previewUrl.includes("?")) {
@@ -75,18 +86,19 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
             window.open(previewUrl, "_blank");
           }}
           EndIcon={SquareArrowOutUpRight}>
-          Preview
+          {t("common.preview")}
         </Button>
         <Button
+          size="base"
           variant="secondary"
-          title="Copy survey link to clipboard"
-          aria-label="Copy survey link to clipboard"
+          title={t("environments.surveys.copy_survey_link_to_clipboard")}
+          aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
           onClick={() => {
             navigator.clipboard.writeText(surveyUrl);
-            toast.success("URL copied to clipboard!");
+            toast.success(t("common.copied_to_clipboard"));
           }}
           EndIcon={Copy}>
-          Copy
+          {t("common.copy")}
         </Button>
         {survey.singleUse?.enabled && (
           <Button

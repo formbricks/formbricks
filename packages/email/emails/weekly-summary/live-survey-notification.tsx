@@ -7,22 +7,25 @@ import type {
   TWeeklySummarySurveyResponseData,
 } from "@formbricks/types/weekly-summary";
 import { EmailButton } from "../../components/email-button";
+import { translateEmailText } from "../../lib/utils";
 import { renderEmailResponseValue } from "../survey/response-finished-email";
 
-const getButtonLabel = (count: number): string => {
+const getButtonLabel = (count: number, locale: string): string => {
   if (count === 1) {
-    return "View Response";
+    return translateEmailText("live_survey_notification_view_response", locale);
   }
-  return `View ${count > 2 ? (count - 1).toString() : "1"} more Response${count > 2 ? "s" : ""}`;
+  return translateEmailText("live_survey_notification_view_more_responses", locale, {
+    responseCount: count > 2 ? (count - 1).toString() : "1",
+  });
 };
 
-const convertSurveyStatus = (status: TSurveyStatus): string => {
+const convertSurveyStatus = (status: TSurveyStatus, locale: string): string => {
   const statusMap = {
-    inProgress: "In Progress",
-    paused: "Paused",
-    completed: "Completed",
-    draft: "Draft",
-    scheduled: "Scheduled",
+    inProgress: translateEmailText("live_survey_notification_in_progress", locale),
+    paused: translateEmailText("live_survey_notification_paused", locale),
+    completed: translateEmailText("live_survey_notification_completed", locale),
+    draft: translateEmailText("live_survey_notification_draft", locale),
+    scheduled: translateEmailText("live_survey_notification_scheduled", locale),
   };
 
   return statusMap[status] || status;
@@ -31,11 +34,13 @@ const convertSurveyStatus = (status: TSurveyStatus): string => {
 interface LiveSurveyNotificationProps {
   environmentId: string;
   surveys: TWeeklySummaryNotificationDataSurvey[];
+  locale: string;
 }
 
 export const LiveSurveyNotification = ({
   environmentId,
   surveys,
+  locale,
 }: LiveSurveyNotificationProps): React.JSX.Element[] => {
   const createSurveyFields = (
     surveyResponses: TWeeklySummarySurveyResponseData[]
@@ -43,7 +48,9 @@ export const LiveSurveyNotification = ({
     if (surveyResponses.length === 0) {
       return (
         <Container className="mt-4">
-          <Text className="m-0 font-bold">No Responses yet!</Text>
+          <Text className="m-0 font-bold">
+            {translateEmailText("live_survey_notification_no_responses_yet", locale)}
+          </Text>
         </Container>
       );
     }
@@ -74,7 +81,7 @@ export const LiveSurveyNotification = ({
   if (!surveys.length) return [];
 
   return surveys.map((survey) => {
-    const displayStatus = convertSurveyStatus(survey.status);
+    const displayStatus = convertSurveyStatus(survey.status, locale);
     const isInProgress = displayStatus === "In Progress";
     const noResponseLastWeek = isInProgress && survey.responses.length === 0;
     return (
@@ -89,11 +96,11 @@ export const LiveSurveyNotification = ({
           </Text>
 
           <Text
-            className={`ml-2 inline ${isInProgress ? "bg-green-400 text-gray-100" : "bg-gray-300 text-blue-800"} rounded-full px-2 py-1 text-sm`}>
+            className={`ml-2 inline ${isInProgress ? "bg-green-400 text-slate-100" : "bg-slate-300 text-blue-800"} rounded-full px-2 py-1 text-sm`}>
             {displayStatus}
           </Text>
           {noResponseLastWeek ? (
-            <Text>No new response received this week 🕵️</Text>
+            <Text>{translateEmailText("live_survey_notification_no_new_response", locale)}</Text>
           ) : (
             createSurveyFields(survey.responses)
           )}
@@ -101,7 +108,11 @@ export const LiveSurveyNotification = ({
             <Container className="mt-4 block">
               <EmailButton
                 href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
-                label={noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
+                label={
+                  noResponseLastWeek
+                    ? translateEmailText("live_survey_notification_view_previous_responses", locale)
+                    : getButtonLabel(survey.responseCount, locale)
+                }
               />
             </Container>
           )}

@@ -160,6 +160,33 @@ const NavigationGroup = ({
   const pathname = usePathname();
   const [isActiveGroup, setIsActiveGroup] = useState<boolean>(false);
 
+  // We need to expand the group with the current link so we loop over all links
+  // Until we find the one and then expand the groups
+  useEffect(() => {
+    const findMatchingGroup = () => {
+      for (const group of navigation) {
+        for (const link of group.links) {
+          if (!link.children) continue;
+
+          const matchingChild = link.children.find((child) => pathname && child.href.startsWith(pathname));
+
+          if (matchingChild) {
+            setOpenGroups([`${group.title}-${link.title}`]);
+            setActiveGroup(group);
+            return;
+          }
+        }
+      }
+    };
+
+    findMatchingGroup();
+
+    return () => {
+      setOpenGroups([]);
+      setActiveGroup(null);
+    };
+  }, [pathname, setActiveGroup, setOpenGroups]);
+
   useEffect(() => {
     setIsActiveGroup(activeGroup?.title === group.title);
   }, [activeGroup?.title, group.title]);
@@ -262,6 +289,25 @@ interface NavigationProps extends React.ComponentPropsWithoutRef<"nav"> {
 export const Navigation = ({ isMobile, ...props }: NavigationProps) => {
   const [activeGroup, setActiveGroup] = useState<NavGroup | null>(navigation[0]);
   const [openGroups, setOpenGroups] = useState<string[]>([]);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Check the current pathname and set the active group
+    navigation.forEach((group) => {
+      group.links.forEach((link) => {
+        if (link.href && pathname.startsWith(link.href)) {
+          setActiveGroup(group);
+        } else if (link.children) {
+          link.children.forEach((child) => {
+            if (pathname.startsWith(child.href)) {
+              setActiveGroup(group);
+              setOpenGroups([`${group.title}-${link.title}`]); // Ensure parent is open
+            }
+          });
+        }
+      });
+    });
+  }, [pathname]);
 
   return (
     <nav {...props}>
