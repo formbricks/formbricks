@@ -7,6 +7,8 @@ import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { TEnvironment } from "@formbricks/types/environment";
+import { Button } from "@formbricks/ui/components/Button";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { Label } from "@formbricks/ui/components/Label";
 import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
@@ -15,9 +17,11 @@ import { getActiveInactiveSurveysAction } from "../actions";
 interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
+  environment: TEnvironment;
+  environments: TEnvironment[];
 }
 
-export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabProps) => {
+export const ActionActivityTab = ({ actionClass, environmentId, environment }: ActivityTabProps) => {
   const t = useTranslations();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
@@ -98,9 +102,18 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
             <p className="text-sm text-slate-700">{capitalizeFirstLetter(actionClass.type)}</p>
           </div>
         </div>
-        <div>
+        <div className="">
           <Label className="text-xs font-normal text-slate-500">Environment</Label>
-          <p className="text-xs text-slate-700">{actionClass.environmentId}</p>
+          <div className="items-center-center flex gap-2">
+            <p className="text-xs text-slate-700">
+              {environment.type === "development" ? "Development" : "Production"}
+            </p>
+            <Button
+              className="m-0 p-0 text-xs font-medium text-black underline underline-offset-4"
+              variant="minimal">
+              {environment.type === "development" ? "Copy to Production" : "Copy to Development"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

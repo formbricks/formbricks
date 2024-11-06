@@ -42,7 +42,11 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.actions")} cta={renderAddActionButton()} />
-      <ActionClassesTable environmentId={params.environmentId} actionClasses={actionClasses}>
+      <ActionClassesTable
+        environment={environment}
+        environmentId={params.environmentId}
+        environments={environments}
+        actionClasses={actionClasses}>
         <ActionTableHeading />
         {actionClasses.map((actionClass) => (
           <ActionClassDataRow key={actionClass.id} actionClass={actionClass} locale={locale} />

@@ -3,18 +3,23 @@
 import { useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { TEnvironment } from "@formbricks/types/environment";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {
   environmentId: string;
   actionClasses: TActionClass[];
+  environment: TEnvironment;
+  environments: TEnvironment[];
   children: [JSX.Element, JSX.Element[]];
 }
 
 export const ActionClassesTable = ({
   environmentId,
   actionClasses,
+  environment,
+  environments,
   children: [TableHeading, actionRows],
 }: ActionClassesTableProps) => {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
@@ -52,6 +57,8 @@ export const ActionClassesTable = ({
       {activeActionClass && (
         <ActionDetailModal
           environmentId={environmentId}
+          environment={environment}
+          environments={environments}
           open={isActionDetailModalOpen}
           setOpen={setActionDetailModalOpen}
           actionClasses={actionClasses}
