@@ -144,6 +144,7 @@ export const OpenQuestionForm = ({
           locale={locale}
         />
       </div>
+
       {/* Add a dropdown to select the question type */}
       <div className="mt-3">
         <Label htmlFor="questionType">{t("common.input_type")}</Label>
