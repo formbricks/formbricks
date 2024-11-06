@@ -12,7 +12,6 @@ import {
   getProductIdFromSegmentId,
   getProductIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { getSegment, getSurvey } from "@/lib/utils/services";
 import { z } from "zod";
 import {
   cloneSegment,

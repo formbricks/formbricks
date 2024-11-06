@@ -67,7 +67,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
 
-  console.log("productPermission", productPermission);
   if (!isOwnerOrManager && !productPermission) {
     throw new Error(t("common.product_permission_not_found"));
   }
