@@ -98,6 +98,10 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
             <p className="text-sm text-slate-700">{capitalizeFirstLetter(actionClass.type)}</p>
           </div>
         </div>
+        <div>
+          <Label className="text-xs font-normal text-slate-500">Environment</Label>
+          <p className="text-xs text-slate-700">{actionClass.environmentId}</p>
+        </div>
       </div>
     </div>
   );

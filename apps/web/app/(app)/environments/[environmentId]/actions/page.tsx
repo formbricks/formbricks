@@ -5,6 +5,7 @@ import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -25,6 +26,14 @@ const Page = async ({ params }) => {
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
+
+  const environment = await getEnvironment(params.environmentId);
+
+  if (!environment?.productId) {
+    throw new Error(t("common.environment_not_found"));
+  }
+
+  const environments = await getEnvironments(environment.productId);
 
   const renderAddActionButton = () => (
     <AddActionModal environmentId={params.environmentId} actionClasses={actionClasses} />
