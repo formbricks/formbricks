@@ -6,8 +6,9 @@ import { prisma } from "@formbricks/database";
 import { embeddingsModel, llmModel } from "@formbricks/lib/aiModels";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import {
-  TCreatedDocument,
+  TDocument,
   TDocumentCreateInput,
+  TGenerateDocumentObjectSchema,
   ZDocumentCreateInput,
   ZGenerateDocumentObjectSchema,
 } from "@formbricks/types/documents";
