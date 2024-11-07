@@ -107,8 +107,8 @@ export const removeTeamMemberAction = authenticatedActionClient
 
     const isOwnerOrManager = isOwner || isManager;
 
-    if (!isOwnerOrManager && ctx.user.id !== parsedInput.userId) {
-      throw new Error("You can only remove yourself from the team");
+    if (!isOwnerOrManager && ctx.user.id === parsedInput.userId) {
+      throw new Error("You can not remove yourself from the team");
     }
 
     await checkAuthorizationUpdated({

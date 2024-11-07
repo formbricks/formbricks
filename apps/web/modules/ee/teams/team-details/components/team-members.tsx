@@ -191,7 +191,7 @@ export const TeamMembers = ({
                     {canPerformRoleManagement && (
                       <TableCell>
                         {(teamMember.id !== currentUserId ||
-                          (teamMember.id === currentUserId && !isTeamAdmin)) && (
+                          (teamMember.id === currentUserId && isOwnerOrManager)) && (
                           <Button
                             variant="warn"
                             size="sm"
