@@ -331,11 +331,9 @@ model SurveyFollowUp {
   /// [SurveyFollowUpTrigger]
   /// @zod.custom(imports.ZSurveyFollowUpTrigger)
   trigger   Json
-  // trigger   Json /// @zod.import(["import { ZSurveyFollowUpTrigger } from '../../zod-utils'"]).custom.use(ZSurveyFollowUpTrigger)
   /// [SurveyFollowUpAction]
   /// @zod.custom(imports.ZSurveyFollowUpAction)
   action    Json
-  // action    Json /// @zod.import(["import { ZSurveyFollowUpAction } from '../../zod-utils'"]).custom.use(ZSurveyFollowUpAction)
 }
 
 enum ActionType {
