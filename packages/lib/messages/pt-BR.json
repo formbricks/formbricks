@@ -1191,6 +1191,7 @@
         "remove_product_confirmation": "Tem certeza de que deseja remover este produto?",
         "role_updated_successfully": "Função atualizada com sucesso",
         "select_type": "Selecionar tipo",
+        "team_access": "Acesso da equipe",
         "team_admin": "Administrador da equipe",
         "team_created_successfully": "Equipe criada com sucesso.",
         "team_deleted_successfully": "Equipe excluída com sucesso.",

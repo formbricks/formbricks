@@ -69,7 +69,7 @@ export const ProductConfigNavigation = ({
     },
     {
       id: "teams",
-      label: t("common.teams"),
+      label: t("common.team_access"),
       href: `/environments/${environmentId}/product/teams`,
       hidden: !canDoRoleManagement,
       current: pathname?.includes("/teams"),

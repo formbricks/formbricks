@@ -214,7 +214,7 @@ async function runMigration(): Promise<void> {
                   teamUsers: {
                     create: [...developerMembership, ...editorMembership].map((membership) => ({
                       userId: membership.userId,
-                      role: "admin",
+                      role: "contributor",
                     })),
                   },
                   productTeams: {
