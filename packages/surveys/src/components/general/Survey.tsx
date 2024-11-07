@@ -280,6 +280,10 @@ export const Survey = ({
       nextQuestionId === undefined ||
       !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
 
+    const endingId = nextQuestionId
+      ? localSurvey.endings.find((ending) => ending.id === nextQuestionId)?.id
+      : undefined;
+
     onChange(responseData);
     onChangeVariables(calculatedVariables);
     onResponse({
@@ -288,6 +292,7 @@ export const Survey = ({
       finished,
       variables: calculatedVariables,
       language: selectedLanguage,
+      endingId,
     });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.

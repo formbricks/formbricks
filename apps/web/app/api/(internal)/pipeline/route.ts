@@ -3,8 +3,10 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsAIEnabled } from "@/app/lib/utils";
 import { headers } from "next/headers";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { sendResponseFinishedEmail } from "@formbricks/email";
+import { TSurveyFollowUpAction } from "@formbricks/database/types/survey-follow-up";
+import { sendFollowUpEmail, sendResponseFinishedEmail } from "@formbricks/email";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -123,6 +125,84 @@ export const POST = async (request: Request) => {
       },
       select: { email: true, locale: true },
     });
+
+    // send follow up emails
+
+    const evaluateFollowUp = async (
+      followUpId: string,
+      followUpAction: TSurveyFollowUpAction
+    ): Promise<string | null> => {
+      try {
+        const { properties } = followUpAction;
+        const { to, subject, body, replyTo } = properties;
+
+        const toValueFromResponse = response.data[to];
+
+        if (!toValueFromResponse) {
+          return `toValueFromResponse not found in response data for followup: ${followUpId}`;
+        }
+
+        if (typeof toValueFromResponse === "string") {
+          // parse this string to check for an email:
+
+          const parsedResult = z.string().email().safeParse(toValueFromResponse);
+          if (parsedResult.data) {
+            // send email to this email address
+            await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
+            return null;
+          }
+        } else if (Array.isArray(toValueFromResponse)) {
+          const emailAddress = toValueFromResponse[2];
+          if (!emailAddress) {
+            return `emailAddress not found in response data for followup: ${followUpId}`;
+          }
+
+          const parsedResult = z.string().email().safeParse(emailAddress);
+          if (parsedResult.data) {
+            await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
+            return null;
+          }
+
+          return null;
+        }
+
+        return null;
+      } catch (error) {
+        return `Error occurred in evaluateFollowUp for followup: ${followUpId}`;
+      }
+    };
+
+    for (const followUp of survey.followUps) {
+      if (followUp.trigger.type === "endings") {
+        const { properties } = followUp.trigger;
+
+        if (!properties) {
+          console.error(`properties not found in followup trigger: ${followUp.id}`);
+          continue;
+        }
+
+        const { endingIds } = properties;
+
+        if (!endingIds.length) {
+          console.error(`endingIds not found in followup trigger properties for followUp: ${followUp.id}`);
+          continue;
+        }
+
+        if (response.endingId && endingIds.includes(response.endingId)) {
+          const error = await evaluateFollowUp(followUp.id, followUp.action);
+          if (error) {
+            console.error(error);
+            continue;
+          }
+        }
+      } else if (followUp.trigger.type === "response") {
+        const error = await evaluateFollowUp(followUp.id, followUp.action);
+        if (error) {
+          console.error(error);
+          continue;
+        }
+      }
+    }
 
     const emailPromises = usersWithNotifications.map((user) =>
       sendResponseFinishedEmail(

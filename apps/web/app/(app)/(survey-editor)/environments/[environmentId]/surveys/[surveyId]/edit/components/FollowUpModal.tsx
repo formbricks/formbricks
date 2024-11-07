@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -126,6 +127,18 @@ export const FollowUpModal = ({
       }
     }
 
+    const getProperties = (): TSurveyFollowUpTrigger["properties"] => {
+      if (data.triggerType === "response") {
+        return null;
+      }
+
+      if (data.endingIds && data.endingIds.length > 0) {
+        return { endingIds: data.endingIds };
+      }
+
+      return null;
+    };
+
     if (mode === "edit") {
       if (!defaultValues?.surveyFollowUpId) {
         console.error("No survey follow up id provided, can't update the survey follow up");
@@ -139,7 +152,7 @@ export const FollowUpModal = ({
           name: data.name,
           trigger: {
             type: data.triggerType,
-            properties: data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
+            properties: getProperties(),
           },
           action: {
             type: "send-email",
@@ -172,7 +185,7 @@ export const FollowUpModal = ({
         name: data.name,
         trigger: {
           type: data.triggerType,
-          properties: data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
+          properties: getProperties(),
         },
         action: {
           type: "send-email",

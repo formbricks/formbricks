@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 
@@ -38,15 +39,13 @@ export const FollowUpItem = ({
           }}>
           <h3 className="text-slate-900">{followUp.name}</h3>
           <div className="flex space-x-2">
-            <div className="flex w-fit items-center justify-center rounded-md border border-slate-300 bg-slate-300 px-3 py-1">
-              <span className="text-xs text-slate-900">
-                {followUp.trigger.type === "response" ? "Any response" : "Ending(s)"}
-              </span>
-            </div>
+            <Badge
+              size="normal"
+              text={followUp.trigger.type === "response" ? "Any response" : "Ending(s)"}
+              type="gray"
+            />
 
-            <div className="w-fit items-center justify-center rounded-md border border-slate-300 bg-slate-300 px-3 py-1">
-              <span className="text-xs text-slate-900">Send Email</span>
-            </div>
+            <Badge size="normal" text="Send-Email" type="gray" />
           </div>
         </div>
 
