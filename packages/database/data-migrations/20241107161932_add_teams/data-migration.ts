@@ -276,7 +276,7 @@ async function runMigration(): Promise<void> {
 
       await transactionPrisma.membership.updateMany({
         where: {
-          role: "owner",
+          deprecatedRole: "owner",
         },
         data: {
           role: "owner",
