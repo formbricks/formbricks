@@ -206,7 +206,7 @@ export const ProductSettings = ({
               />
             )}
             <div className="flex w-full justify-end">
-              <Button loading={isSubmitting} type="submit">
+              <Button loading={isSubmitting} type="submit" id="form-next-button">
                 {t("common.next")}
               </Button>
             </div>
