@@ -59,6 +59,8 @@ export const SigninForm = ({
   const ZSignInInput = z.object({
     email: z.string().email(),
     password: z.string().min(8),
+    totpCode: z.string().optional(),
+    backupCode: z.string().optional(),
   });
 
   type TSignInInput = z.infer<typeof ZSignInInput>;
@@ -66,6 +68,8 @@ export const SigninForm = ({
     defaultValues: {
       email: "",
       password: "",
+      totpCode: "",
+      backupCode: "",
     },
     resolver: zodResolver(ZSignInInput),
   });
@@ -153,11 +157,11 @@ export const SigninForm = ({
 
   const TwoFactorComponent = useMemo(() => {
     if (totpBackup) {
-      return <TwoFactorBackup />;
+      return <TwoFactorBackup form={form} />;
     }
 
     if (totpLogin) {
-      return <TwoFactor />;
+      return <TwoFactor form={form} />;
     }
 
     return null;
