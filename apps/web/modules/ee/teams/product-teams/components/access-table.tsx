@@ -86,7 +86,7 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
             {teams.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center">
-                  {t("environments.product.teams.no_items_added")}
+                  {t("environments.product.teams.no_teams_found")}
                 </TableCell>
               </TableRow>
             )}

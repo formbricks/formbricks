@@ -888,7 +888,7 @@
         "add_existing_team": "Add existing team",
         "create_new_team": "Create new team",
         "manage": "Manage",
-        "no_items_added": "No items added",
+        "no_teams_found": "No teams found",
         "permission": "Permission",
         "read": "Read",
         "read_write": "Read & write",

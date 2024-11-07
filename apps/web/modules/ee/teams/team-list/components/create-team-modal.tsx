@@ -64,6 +64,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
           </Label>
           <Input
             id="team-name"
+            name="team-name"
             value={teamName}
             onChange={(e) => {
               setTeamName(e.target.value);

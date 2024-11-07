@@ -52,7 +52,7 @@ export const TeamsTable = ({ teams, organizationId, isOwnerOrManager }: YourTeam
                   </TableRow>
                 )}
                 {userTeams.map((team) => (
-                  <TableRow key={team.id}>
+                  <TableRow key={team.id} id={team.name}>
                     <TableCell>
                       <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
                         {team.name}
@@ -63,7 +63,7 @@ export const TeamsTable = ({ teams, organizationId, isOwnerOrManager }: YourTeam
                   </TableRow>
                 ))}
                 {otherTeams.map((team) => (
-                  <TableRow key={team.id}>
+                  <TableRow key={team.id} id={team.name}>
                     <TableCell>
                       {isOwnerOrManager ? (
                         <Link href={`teams/${team.id}`} className="font-semibold hover:underline">

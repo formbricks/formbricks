@@ -116,3 +116,120 @@ test.describe("Invite, accept and remove organization member", async () => {
   //   await page.getByRole("button", { name: "Delete", exact: true }).click();
   // });
 });
+
+test.describe("Create, update and delete team", async () => {
+  test.beforeEach(async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
+
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  });
+
+  test("Create and update team", async ({ page }) => {
+    const dropdownTrigger = page.locator("#userDropdownTrigger");
+    await expect(dropdownTrigger).toBeVisible();
+    await dropdownTrigger.click();
+
+    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
+    await expect(dropdownInnerContentWrapper).toBeVisible();
+
+    await page.getByRole("link", { name: "Organization" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
+
+    await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+
+    await expect(page.getByText("Teams")).toBeVisible();
+    await page.getByText("Teams").click();
+    await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
+    await page.getByRole("button", { name: "Create new team" }).click();
+    await page.locator("#team-name").fill("E2E");
+    await page.getByRole("button", { name: "Create" }).click();
+    await expect(page.locator("#E2E")).toBeVisible();
+    await page.getByRole("link", { name: "E2E" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/teams\/[^/]+/);
+    await expect(page.getByRole("heading", { name: "E2E" })).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
+    await page.getByRole("button", { name: "Add Member" }).click();
+
+    await page.locator("#multi-select-dropdown").click();
+    await page.locator(".option-1").click();
+
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await expect(page.getByRole("cell", { name: "No members found" })).toBeHidden();
+
+    await expect(page.getByRole("button", { name: "Products" })).toBeVisible();
+    await page.getByRole("button", { name: "Products" }).click();
+
+    await expect(page.getByRole("cell", { name: "No products found" })).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Add Product" })).toBeVisible();
+    await page.getByRole("button", { name: "Add Product" }).click();
+
+    await page.locator("#multi-select-dropdown").click();
+    await page.locator(".option-1").click();
+
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await expect(page.getByRole("cell", { name: "No products found" })).toBeHidden();
+
+    await page.getByRole("combobox").click();
+
+    await page.getByText("Manage").click();
+
+    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
+    await page.getByRole("button", { name: "Settings" }).click();
+
+    await page.locator("#team-name").fill("E2E Updated");
+    await page.getByRole("button", { name: "Update" }).click();
+
+    await expect(page.getByRole("heading", { name: "E2E Updated" })).toBeVisible();
+
+    await page.getByRole("link", { name: "Configuration" }).click();
+
+    await expect(page.getByRole("heading", { name: "Configuration" })).toBeVisible();
+
+    await expect(page.getByRole("link", { name: "Teams" })).toBeVisible();
+
+    await page.getByRole("link", { name: "Teams" }).click();
+    await page.getByRole("combobox").click();
+
+    await page.getByText("Read & write").click();
+
+    await page.getByRole("button", { name: "Remove" }).click();
+
+    await expect(page.getByRole("button", { name: "Confirm", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Confirm", exact: true }).click();
+
+    await expect(page.getByRole("cell", { name: "No teams found" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Add existing team" }).click();
+
+    await page.locator("#multi-select-dropdown").click();
+    await page.locator(".option-1").click();
+
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await expect(page.getByRole("link", { name: "E2E Updated" })).toBeVisible();
+
+    await page.getByRole("link", { name: "E2E Updated" }).click();
+
+    await page.getByRole("button", { name: "Leave" }).click();
+    await expect(page.getByRole("button", { name: "Confirm", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Confirm", exact: true }).click();
+
+    await expect(page.getByRole("cell", { name: "No members found" })).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
+    await page.getByRole("button", { name: "Settings" }).click();
+
+    await page.getByRole("button", { name: "Delete" }).click();
+
+    await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
+
+    await expect(page.getByRole("cell", { name: "You are not part of any team." })).toBeVisible();
+  });
+});

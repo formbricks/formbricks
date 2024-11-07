@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
+import { cn } from "@formbricks/lib/cn";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "../Command";
 
@@ -64,7 +65,7 @@ export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TO
   useClickOutside(commandRef, () => setOpen(false));
 
   return (
-    <Command ref={commandRef} className="overflow-visible bg-transparent">
+    <Command ref={commandRef} className="overflow-visible bg-transparent" id="multi-select-dropdown">
       <div
         onClick={() => !disabled && !isDisabledComboBox && setOpen((open) => !open)}
         className={clsx(
@@ -105,11 +106,11 @@ export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TO
             <CommandList>
               <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               <CommandGroup>
-                {filteredOptions.map((o) => (
+                {filteredOptions.map((o, idx) => (
                   <CommandItem
                     key={o.value}
                     onSelect={() => handleSelect(o.value)}
-                    className="cursor-pointer">
+                    className={cn("cursor-pointer", `option-${idx + 1}`)}>
                     {o.label}
                   </CommandItem>
                 ))}
