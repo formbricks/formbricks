@@ -121,13 +121,6 @@ async function runMigration(): Promise<void> {
         },
       });
 
-      // Clear out the old "role" field in invites after migration
-      await transactionPrisma.invite.updateMany({
-        data: {
-          role: null,
-        },
-      });
-
       // Fetch non-owner memberships and group them by organizationId
       const nonOwnerMemberships = await transactionPrisma.membership.findMany({
         where: {
@@ -139,14 +132,33 @@ async function runMigration(): Promise<void> {
           userId: true,
           organizationId: true,
           role: true,
+          organization: {
+            select: {
+              invites: {
+                where: {
+                  role: {
+                    not: "admin",
+                  },
+                },
+                select: {
+                  role: true,
+                },
+              },
+            },
+          },
         },
       });
 
       const groupedMemberships = new Map<string, typeof nonOwnerMemberships>();
+      const otherInvitesCount = new Map<string, number>();
 
       nonOwnerMemberships.forEach((membership) => {
         if (!groupedMemberships.has(membership.organizationId)) {
           groupedMemberships.set(membership.organizationId, []);
+        }
+
+        if (!otherInvitesCount.has(membership.organizationId)) {
+          otherInvitesCount.set(membership.organizationId, membership.organization.invites.length);
         }
 
         groupedMemberships.get(membership.organizationId)?.push(membership);
@@ -166,14 +178,16 @@ async function runMigration(): Promise<void> {
             developerMembership.length + editorMembership.length + viewerMembership.length;
 
           // If admin members exist alongside others, set their role to "manager"
-          if (adminMembership.length && otherMemberships > 0) {
+          if (adminMembership.length) {
+            const otherInvites = otherInvitesCount.get(organizationId) ?? 0;
+
             await transactionPrisma.membership.updateMany({
               where: {
                 organizationId,
                 role: "admin",
               },
               data: {
-                organizationRole: "manager",
+                organizationRole: otherMemberships || otherInvites > 0 ? "manager" : "owner",
               },
             });
           }
@@ -264,6 +278,13 @@ async function runMigration(): Promise<void> {
         },
         data: {
           organizationRole: "owner",
+        },
+      });
+
+      // Clear out the old "role" field in invites after migration
+      await transactionPrisma.invite.updateMany({
+        data: {
+          role: null,
         },
       });
 
