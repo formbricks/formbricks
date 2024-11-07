@@ -2,6 +2,7 @@ import { MembersInfo } from "@/app/(app)/environments/[environmentId]/settings/(
 import { getMembersByOrganizationId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { getTranslations } from "next-intl/server";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
 import { TMembership } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -24,6 +25,7 @@ export const EditMemberships = async ({
   const currentUserRole = membership?.organizationRole;
   const isUserManagerOrOwner =
     membership?.organizationRole === "manager" || membership?.organizationRole === "owner";
+
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   return (
@@ -43,8 +45,8 @@ export const EditMemberships = async ({
             invites={invites ?? []}
             members={members ?? []}
             isUserManagerOrOwner={isUserManagerOrOwner}
-            currentUserRole={currentUserRole}
             canDoRoleManagement={canDoRoleManagement}
+            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           />
         )}
       </div>

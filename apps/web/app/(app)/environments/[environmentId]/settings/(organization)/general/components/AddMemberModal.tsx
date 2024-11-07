@@ -40,7 +40,12 @@ export const AddMemberModal = ({
     {
       title: t("environments.settings.general.bulk_invite"),
       children: (
-        <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} canDoRoleManagement={canDoRoleManagement} />
+        <BulkInviteTab
+          setOpen={setOpen}
+          onSubmit={onSubmit}
+          canDoRoleManagement={canDoRoleManagement}
+          isFormbricksCloud={isFormbricksCloud}
+        />
       ),
     },
   ];

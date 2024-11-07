@@ -1,6 +1,5 @@
 "use client";
 
-import { OrganizationRole } from "@prisma/client";
 import { UploadIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -16,9 +15,15 @@ interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; organizationRole: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
 }
 
-export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkInviteTabProps) => {
+export const BulkInviteTab = ({
+  setOpen,
+  onSubmit,
+  canDoRoleManagement,
+  isFormbricksCloud,
+}: BulkInviteTabProps) => {
   const t = useTranslations();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [csvFile, setCSVFile] = useState<File>();
@@ -42,12 +47,15 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
         const members = results.data.map((csv) => {
           const [name, email, role] = csv;
 
+          let orgRole = canDoRoleManagement ? role.trim().toLowerCase() : "owner";
+          if (!isFormbricksCloud) {
+            orgRole = orgRole === "billing" ? "owner" : orgRole;
+          }
+
           return {
             name: name.trim(),
             email: email.trim(),
-            organizationRole: canDoRoleManagement
-              ? (role.trim().toLowerCase() as TOrganizationRole)
-              : OrganizationRole.owner,
+            organizationRole: orgRole as TOrganizationRole,
           };
         });
         try {

@@ -67,7 +67,11 @@ export const IndividualInviteTab = ({
             />
           </div>
           <div>
-            <AddMemberRole control={control} canDoRoleManagement={canDoRoleManagement} />
+            <AddMemberRole
+              control={control}
+              canDoRoleManagement={canDoRoleManagement}
+              isFormbricksCloud={isFormbricksCloud}
+            />
             {!canDoRoleManagement &&
               (isFormbricksCloud ? (
                 <UpgradePlanNotice

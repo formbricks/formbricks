@@ -7,7 +7,7 @@ import { organizationCache } from "@formbricks/lib/organization/cache";
 import { productCache } from "@formbricks/lib/product/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZString } from "@formbricks/types/common";
-import { DatabaseError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership, TMembershipUpdateInput, ZMembershipUpdateInput } from "@formbricks/types/memberships";
 
 export const updateMembership = async (
@@ -85,60 +85,5 @@ export const updateMembership = async (
     }
 
     throw error;
-  }
-};
-
-export const transferOwnership = async (
-  currentOwnerId: string,
-  newOwnerId: string,
-  organizationId: string
-): Promise<TMembership[]> => {
-  validateInputs([currentOwnerId, ZString], [newOwnerId, ZString], [organizationId, ZString]);
-
-  try {
-    const memberships = await prisma.$transaction([
-      prisma.membership.update({
-        where: {
-          userId_organizationId: {
-            organizationId,
-            userId: currentOwnerId,
-          },
-        },
-        data: {
-          organizationRole: "manager",
-        },
-      }),
-      prisma.membership.update({
-        where: {
-          userId_organizationId: {
-            organizationId,
-            userId: newOwnerId,
-          },
-        },
-        data: {
-          organizationRole: "owner",
-        },
-      }),
-    ]);
-
-    memberships.forEach((membership) => {
-      organizationCache.revalidate({
-        userId: membership.userId,
-      });
-
-      membershipCache.revalidate({
-        userId: membership.userId,
-        organizationId: membership.organizationId,
-      });
-    });
-
-    return memberships;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    const message = error instanceof Error ? error.message : "";
-    throw new UnknownError(`Error while transfering ownership: ${message}`);
   }
 };

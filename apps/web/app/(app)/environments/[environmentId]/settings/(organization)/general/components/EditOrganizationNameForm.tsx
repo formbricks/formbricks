@@ -41,7 +41,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
     resolver: zodResolver(ZEditOrganizationNameFormSchema),
   });
 
-  const { isMember, isBilling } = getAccessFlags(membershipRole);
+  const { isOwner } = getAccessFlags(membershipRole);
 
   const { isSubmitting, isDirty } = form.formState;
 
@@ -65,8 +65,6 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
     }
   };
 
-  const isMemberOrBilling = isMember || isBilling;
-
   return (
     <>
       <FormProvider {...form}>
@@ -83,7 +81,7 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
                   <Input
                     {...field}
                     type="text"
-                    disabled={isMemberOrBilling}
+                    disabled={!isOwner}
                     isInvalid={!!fieldState.error?.message}
                     placeholder={t("environments.settings.general.organization_name_placeholder")}
                     required
@@ -100,12 +98,12 @@ export const EditOrganizationNameForm = ({ organization, membershipRole }: EditO
             className="mt-4"
             size="sm"
             loading={isSubmitting}
-            disabled={isSubmitting || !isDirty || isMemberOrBilling}>
+            disabled={isSubmitting || !isDirty || !isOwner}>
             {t("common.update")}
           </Button>
         </form>
       </FormProvider>
-      {isMemberOrBilling && (
+      {!isOwner && (
         <Alert variant="warning" className="mt-4">
           <AlertDescription>
             {t("environments.settings.general.only_org_owner_can_perform_action")}

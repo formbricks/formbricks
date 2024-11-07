@@ -1,5 +1,6 @@
 "use client";
 
+import { OrganizationRole } from "@prisma/client";
 import { ChevronDownIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -16,25 +17,18 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/components/DropdownMenu";
-import {
-  //  transferOwnershipAction,
-  updateInviteAction,
-  updateMembershipAction,
-} from "../actions";
-
-// import { TransferOwnershipModal } from "./transfer-ownership-modal";
+import { updateInviteAction, updateMembershipAction } from "../actions";
 
 interface Role {
   isUserManagerOrOwner: boolean;
   memberRole: TOrganizationRole;
   organizationId: string;
   memberId?: string;
-  // memberName: string;
   userId: string;
   memberAccepted?: boolean;
   inviteId?: string;
-  currentUserRole: string;
   doesOrgHaveMoreThanOneOwner?: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export function EditMembershipRole({
@@ -42,17 +36,15 @@ export function EditMembershipRole({
   memberRole,
   organizationId,
   memberId,
-  // memberName,
   userId,
   memberAccepted,
   inviteId,
-  currentUserRole,
   doesOrgHaveMoreThanOneOwner,
+  isFormbricksCloud,
 }: Role) {
   const t = useTranslations();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  // const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
 
   const disableRole = memberId === userId || (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner);
 
@@ -80,53 +72,43 @@ export function EditMembershipRole({
   };
 
   const getMembershipRoles = () => {
-    const roles = ["owner", "manager", "member", "billing"];
-    if (currentUserRole === "owner" && memberAccepted) {
-      return roles;
-    }
+    const roles = isFormbricksCloud
+      ? Object.values(OrganizationRole)
+      : Object.keys(OrganizationRole).filter((role) => role !== "billing");
 
-    return roles.filter((role) => role !== "owner");
+    return roles;
   };
 
   if (isUserManagerOrOwner) {
     return (
-      <>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="flex items-center gap-1 p-2 text-xs"
-              disabled={disableRole}
-              loading={loading}
-              size="sm"
-              variant="secondary">
-              <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
-              <ChevronDownIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          {!disableRole && (
-            <DropdownMenuContent>
-              <DropdownMenuRadioGroup
-                onValueChange={(value) => {
-                  handleRoleChange(value.toLowerCase() as TOrganizationRole);
-                }}
-                value={capitalizeFirstLetter(memberRole)}>
-                {getMembershipRoles().map((role) => (
-                  <DropdownMenuRadioItem className="capitalize" key={role} value={role}>
-                    {role.toLowerCase()}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          )}
-        </DropdownMenu>
-        {/* <TransferOwnershipModal
-          isLoading={loading}
-          memberName={memberName}
-          onSubmit={handleOwnershipTransfer}
-          open={isTransferOwnershipModalOpen}
-          setOpen={setTransferOwnershipModalOpen}
-        /> */}
-      </>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            className="flex items-center gap-1 p-2 text-xs"
+            disabled={disableRole}
+            loading={loading}
+            size="sm"
+            variant="secondary">
+            <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
+            <ChevronDownIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        {!disableRole && (
+          <DropdownMenuContent>
+            <DropdownMenuRadioGroup
+              onValueChange={(value) => {
+                handleRoleChange(value.toLowerCase() as TOrganizationRole);
+              }}
+              value={capitalizeFirstLetter(memberRole)}>
+              {getMembershipRoles().map((role) => (
+                <DropdownMenuRadioItem className="capitalize" key={role} value={role}>
+                  {role.toLowerCase()}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        )}
+      </DropdownMenu>
     );
   }
 

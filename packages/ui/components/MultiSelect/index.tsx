@@ -49,8 +49,8 @@ export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TO
       }
     } else {
       onChange(optionValue as K);
-      setOpen(false);
     }
+    setOpen(false);
   };
 
   const filteredOptions = options.filter((option) => {

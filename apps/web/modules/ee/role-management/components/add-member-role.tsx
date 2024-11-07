@@ -16,9 +16,14 @@ import {
 interface AddMemberRoleProps {
   control: Control<{ name: string; email: string; organizationRole: TOrganizationRole }>;
   canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
 }
 
-export function AddMemberRole({ control, canDoRoleManagement }: AddMemberRoleProps) {
+export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud }: AddMemberRoleProps) {
+  const roles = isFormbricksCloud
+    ? Object.values(OrganizationRole)
+    : Object.keys(OrganizationRole).filter((role) => role !== "billing");
+
   const t = useTranslations();
   return (
     <Controller
@@ -39,7 +44,7 @@ export function AddMemberRole({ control, canDoRoleManagement }: AddMemberRolePro
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {Object.values(OrganizationRole).map((role) => (
+                {roles.map((role) => (
                   <SelectItem className="capitalize" key={role} value={role}>
                     {role}
                   </SelectItem>

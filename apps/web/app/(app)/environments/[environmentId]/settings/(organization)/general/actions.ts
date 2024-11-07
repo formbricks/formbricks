@@ -8,9 +8,10 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { sendInviteMemberEmail } from "@/modules/email";
+import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -36,7 +37,7 @@ export const updateOrganizationNameAction = authenticatedActionClient
           type: "organization",
           schema: ZOrganizationUpdateInput.pick({ name: true }),
           data: parsedInput.data,
-          roles: ["owner", "manager"],
+          roles: ["owner"],
         },
       ],
     });
@@ -111,6 +112,19 @@ export const deleteMembershipAction = authenticatedActionClient
     if (parsedInput.userId === ctx.user.id) {
       throw new AuthenticationError("You cannot delete yourself from the organization");
     }
+
+    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+
+    if (!membership) {
+      throw new AuthenticationError("Not a member of this organization");
+    }
+
+    const memberships = await getMembershipsByUserId(ctx.user.id);
+    const isLastOwner = memberships?.filter((m) => m.organizationRole === "owner").length === 1;
+    if (membership.organizationRole === "owner" && isLastOwner) {
+      throw new ValidationError("You cannot delete the last owner of the organization");
+    }
+
     return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
   });
 
@@ -139,7 +153,7 @@ export const leaveOrganizationAction = authenticatedActionClient
     }
 
     if (membership.organizationRole === "owner") {
-      throw new ValidationError("You cannot leave a organization you own");
+      throw new ValidationError("You cannot leave an organization you own");
     }
 
     const memberships = await getMembershipsByUserId(ctx.user.id);
@@ -233,6 +247,10 @@ export const inviteUserAction = authenticatedActionClient
   .action(async ({ parsedInput, ctx }) => {
     if (INVITE_DISABLED) {
       throw new AuthenticationError("Invite disabled");
+    }
+
+    if (!IS_FORMBRICKS_CLOUD && parsedInput.organizationRole === OrganizationRole.billing) {
+      throw new ValidationError("Billing role is not allowed");
     }
 
     await checkAuthorizationUpdated({

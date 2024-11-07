@@ -12,8 +12,8 @@ type MembersInfoProps = {
   invites: TInvite[];
   isUserManagerOrOwner: boolean;
   currentUserId: string;
-  currentUserRole: TOrganizationRole;
   canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
 };
 
 // Type guard to check if member is an invitee
@@ -27,8 +27,8 @@ export const MembersInfo = async ({
   isUserManagerOrOwner,
   members,
   currentUserId,
-  currentUserRole,
   canDoRoleManagement,
+  isFormbricksCloud,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
 
@@ -54,13 +54,12 @@ export const MembersInfo = async ({
                 isUserManagerOrOwner={isUserManagerOrOwner}
                 memberRole={member.organizationRole}
                 memberId={!isInvitee(member) ? member.userId : ""}
-                // memberName={member.name ?? ""}
                 organizationId={organization.id}
                 userId={currentUserId}
                 memberAccepted={!isInvitee(member) ? member.accepted : undefined}
                 inviteId={isInvitee(member) ? member.id : ""}
-                currentUserRole={currentUserRole}
                 doesOrgHaveMoreThanOneOwner={doesOrgHaveMoreThanOneOwner}
+                isFormbricksCloud={isFormbricksCloud}
               />
             )}
           </div>
