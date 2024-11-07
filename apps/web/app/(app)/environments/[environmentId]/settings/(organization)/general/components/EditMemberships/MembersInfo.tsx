@@ -2,7 +2,7 @@ import { MemberActions } from "@/app/(app)/environments/[environmentId]/settings
 import { isInviteExpired } from "@/app/lib/utils";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { TInvite } from "@formbricks/types/invites";
-import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
+import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/components/Badge";
 
