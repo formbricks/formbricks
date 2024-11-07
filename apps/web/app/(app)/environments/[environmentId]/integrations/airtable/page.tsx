@@ -1,10 +1,17 @@
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -17,12 +24,18 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Page = async ({ params }) => {
   const t = await getTranslations();
   const isEnabled = !!AIRTABLE_CLIENT_ID;
-  const [surveys, integrations, environment, attributeClasses] = await Promise.all([
+  const [session, surveys, integrations, environment, attributeClasses] = await Promise.all([
+    getServerSession(authOptions),
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
     getAttributeClasses(params.environmentId),
   ]);
+
+  if (!session) {
+    throw new Error(t("common.session_not_found"));
+  }
+
   if (!environment) {
     throw new Error(t("common.environment_not_found"));
   }
@@ -41,6 +54,22 @@ const Page = async ({ params }) => {
   }
 
   const locale = findMatchingLocale();
+
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(
+    session?.user.id,
+    product.organizationId
+  );
+  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+
+  const productPermission = await getProductPermissionByUserId(session?.user.id, environment?.productId);
+
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
+  if (isReadOnly) {
+    redirect("./");
+  }
 
   return (
     <PageContentWrapper>
