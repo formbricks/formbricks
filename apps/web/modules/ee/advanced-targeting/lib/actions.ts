@@ -27,10 +27,12 @@ import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@form
 export const createSegmentAction = authenticatedActionClient
   .schema(ZSegmentCreateInput)
   .action(async ({ ctx, parsedInput }) => {
-    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+    if (parsedInput.surveyId) {
+      const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
 
-    if (surveyEnvironmentId !== parsedInput.environmentId) {
-      throw new Error("Survey and segment are not in the same environment");
+      if (surveyEnvironmentId !== parsedInput.environmentId) {
+        throw new Error("Survey and segment are not in the same environment");
+      }
     }
 
     await checkAuthorizationUpdated({
