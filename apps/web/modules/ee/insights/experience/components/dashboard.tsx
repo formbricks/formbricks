@@ -3,7 +3,6 @@
 import { Greeting } from "@/modules/ee/insights/experience/components/greeting";
 import { InsightsCard } from "@/modules/ee/insights/experience/components/insights-card";
 import { ExperiencePageStats } from "@/modules/ee/insights/experience/components/stats";
-import { TemplatesCard } from "@/modules/ee/insights/experience/components/templates-card";
 import { getDateFromTimeRange } from "@/modules/ee/insights/experience/lib/utils";
 import { TStatsPeriod } from "@/modules/ee/insights/experience/types/stats";
 import { useTranslations } from "next-intl";
@@ -39,7 +38,12 @@ export const Dashboard = ({
       <hr className="border-slate-200" />
       <Tabs
         value={statsPeriod}
-        onValueChange={(value) => value && setStatsPeriod(value as TStatsPeriod)}
+        onValueChange={(value) => {
+          if (value) {
+            console.log("Stats period changed to:", value);
+            setStatsPeriod(value as TStatsPeriod);
+          }
+        }}
         className="flex justify-center">
         <TabsList>
           <TabsTrigger value="day" aria-label="Toggle day">
@@ -67,12 +71,6 @@ export const Dashboard = ({
         insightsPerPage={insightsPerPage}
         documentsPerPage={documentsPerPage}
         locale={locale}
-      />
-      <TemplatesCard
-        environment={environment}
-        product={product}
-        user={user}
-        prefilledFilters={["link", null, "customerSuccess"]}
       />
     </div>
   );
