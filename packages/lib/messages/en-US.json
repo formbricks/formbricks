@@ -1164,7 +1164,7 @@
         "create_new_team": "Create new team",
         "delete_team": "Delete Team",
         "empty_product_message": "You haven't added any products yet. Assign a product to the team to grant access to its members.",
-        "empty_teams_state": "Du hast noch keine Teams. Erstelle dein erstes Team, um den Zugriff auf Produkte für die Mitglieder deiner Organisation zu verwalten.",
+        "empty_teams_state": "You don’t have any teams yet. Create your first team to manage product access for members of your organization.",
         "enter_team_name": "Enter team name",
         "invite_member": "Invite Member",
         "join_team": "Join Team",
