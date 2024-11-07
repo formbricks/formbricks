@@ -1040,7 +1040,7 @@
       "general": {
         "add_member": "Add member",
         "bulk_invite": "Bulk Invite",
-        "bulk_invite_warning_description": "Please note that on the Free Plan, all organization members are automatically assigned the \"Admin\" role regardless of the role specified in the CSV file.",
+        "bulk_invite_warning_description": "On the free plan, all organization members are always assigned the \"Admin\" role.",
         "cannot_delete_only_organization": "This is your only organization, it cannot be deleted. Create a new organization first.",
         "cannot_leave_only_organization": "You cannot leave this organization as it is your only organization. Create a new organization first.",
         "copy_invite_link_to_clipboard": "Copy invite link to clipboard",
