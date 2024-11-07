@@ -447,7 +447,7 @@ model Product {
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                 Json?
-  productTeams         ProductTeam[]
+  ProductTeam          ProductTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -484,13 +484,13 @@ enum MembershipRole {
 }
 
 model Membership {
-  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId   String
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId           String
-  accepted         Boolean          @default(false)
-  role             MembershipRole? // deprecated
-  organizationRole OrganizationRole @default(member)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  accepted       Boolean          @default(false)
+  deprecatedRole MembershipRole? //deprecated
+  role           OrganizationRole @default(member)
 
   @@id([userId, organizationId])
   @@index([userId])
@@ -498,19 +498,19 @@ model Membership {
 }
 
 model Invite {
-  id               String           @id @default(uuid())
-  email            String
-  name             String?
-  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId   String
-  creator          User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
-  creatorId        String
-  acceptor         User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
-  acceptorId       String?
-  createdAt        DateTime         @default(now())
-  expiresAt        DateTime
-  role             MembershipRole?
-  organizationRole OrganizationRole @default(member)
+  id             String           @id @default(uuid())
+  email          String
+  name           String?
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  creator        User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creatorId      String
+  acceptor       User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptorId     String?
+  createdAt      DateTime         @default(now())
+  expiresAt      DateTime
+  deprecatedRole MembershipRole? //deprecated
+  role           OrganizationRole @default(member)
 
   @@index([email, organizationId])
   @@index([organizationId])
