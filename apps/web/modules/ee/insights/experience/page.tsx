@@ -42,7 +42,7 @@ export const ExperiencePage = async ({ params }) => {
     throw new Error("Organization not found");
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   if (isBilling) {
     notFound();

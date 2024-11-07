@@ -205,7 +205,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
 
     for (const currentUserMembership of currentUserMemberships) {
       const organizationMemberships = currentUserMembership.organization.memberships;
-      const role = currentUserMembership.organizationRole;
+      const role = currentUserMembership.role;
       const organizationId = currentUserMembership.organizationId;
 
       const organizationHasOnlyOneMember = organizationMemberships.length === 1;

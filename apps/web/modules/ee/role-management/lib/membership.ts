@@ -40,7 +40,7 @@ export const updateMembership = async (
       },
     });
 
-    if (data.organizationRole === "owner" || data.organizationRole === "manager") {
+    if (data.role === "owner" || data.role === "manager") {
       await prisma.teamUser.updateMany({
         where: {
           userId,

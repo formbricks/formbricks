@@ -41,7 +41,7 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
 
   const productPermission = await getProductPermissionByUserId(session?.user.id, environment?.productId);
 

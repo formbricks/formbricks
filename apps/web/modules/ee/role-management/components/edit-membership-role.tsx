@@ -48,16 +48,16 @@ export function EditMembershipRole({
 
   const disableRole = memberId === userId || (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner);
 
-  const handleMemberRoleUpdate = async (organizationRole: TOrganizationRole) => {
+  const handleMemberRoleUpdate = async (role: TOrganizationRole) => {
     setLoading(true);
 
     try {
       if (memberAccepted && memberId) {
-        await updateMembershipAction({ userId: memberId, organizationId, data: { organizationRole } });
+        await updateMembershipAction({ userId: memberId, organizationId, data: { role } });
       }
 
       if (inviteId) {
-        await updateInviteAction({ inviteId: inviteId, organizationId, data: { organizationRole } });
+        await updateInviteAction({ inviteId: inviteId, organizationId, data: { role } });
       }
     } catch (error) {
       toast.error(t("common.something_went_wrong_please_try_again"));

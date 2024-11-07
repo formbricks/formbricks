@@ -32,7 +32,7 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
   const isPricingDisabled = isMember;
 
   if (isPricingDisabled) {
@@ -92,7 +92,7 @@ const Page = async ({ params }) => {
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.organizationRole}
+          membershipRole={currentUserMembership?.role}
           activeId="enterprise"
           canDoRoleManagement={canDoRoleManagement}
         />

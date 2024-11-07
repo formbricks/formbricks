@@ -20,7 +20,7 @@ const ZUpdateInviteAction = z.object({
 export const updateInviteAction = authenticatedActionClient
   .schema(ZUpdateInviteAction)
   .action(async ({ ctx, parsedInput }) => {
-    if (!IS_FORMBRICKS_CLOUD && parsedInput.data.organizationRole === "billing") {
+    if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {
       throw new ValidationError("Billing role is not allowed");
     }
 
@@ -49,7 +49,7 @@ const ZUpdateMembershipAction = z.object({
 export const updateMembershipAction = authenticatedActionClient
   .schema(ZUpdateMembershipAction)
   .action(async ({ ctx, parsedInput }) => {
-    if (!IS_FORMBRICKS_CLOUD && parsedInput.data.organizationRole === "billing") {
+    if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {
       throw new ValidationError("Billing role is not allowed");
     }
 

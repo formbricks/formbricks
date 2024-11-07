@@ -11,7 +11,7 @@ const OnboardingLayout = async ({ children, params }) => {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
-  const { isMember, isBilling } = getAccessFlags(membership?.organizationRole);
+  const { isMember, isBilling } = getAccessFlags(membership?.role);
   if (isMember || isBilling) return notFound();
 
   return <>{children}</>;

@@ -45,7 +45,7 @@ const Page = async () => {
     session?.user.id,
     userOrganizations[0].id
   );
-  const { isManager, isOwner } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
 
   if (!environmentId) {
     console.error(t("common.failed_to_get_first_environment_of_user"));

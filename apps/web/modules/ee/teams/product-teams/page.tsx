@@ -29,7 +29,7 @@ export const ProductTeams = async ({ params }: { params: { environmentId: string
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);

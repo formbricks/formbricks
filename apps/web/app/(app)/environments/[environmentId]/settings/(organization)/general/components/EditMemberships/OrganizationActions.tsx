@@ -63,8 +63,8 @@ export const OrganizationActions = ({
   const handleAddMembers = async (data: TInvitee[]) => {
     try {
       await Promise.all(
-        data.map(async ({ name, email, organizationRole }) => {
-          await inviteUserAction({ organizationId: organization.id, email, name, organizationRole });
+        data.map(async ({ name, email, role }) => {
+          await inviteUserAction({ organizationId: organization.id, email, name, role });
         })
       );
       toast.success(t("environments.settings.general.member_invited_successfully"));

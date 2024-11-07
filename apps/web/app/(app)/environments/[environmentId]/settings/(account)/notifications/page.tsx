@@ -45,13 +45,13 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
-      organizationRole: {
+      role: {
         not: "billing",
       },
       OR: [
         {
           // Fetch all products if user role is owner or manager
-          organizationRole: {
+          role: {
             in: ["owner", "manager"],
           },
         },
@@ -92,7 +92,7 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
                     memberships: {
                       some: {
                         userId,
-                        organizationRole: {
+                        role: {
                           in: ["owner", "manager"],
                         },
                       },

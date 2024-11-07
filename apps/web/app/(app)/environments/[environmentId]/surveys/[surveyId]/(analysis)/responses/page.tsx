@@ -63,7 +63,7 @@ const Page = async ({ params }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
 
   const permission = await getProductPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(permission);

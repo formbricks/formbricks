@@ -10,14 +10,14 @@ export const ZInvite = z.object({
   acceptorId: z.string().nullish(),
   createdAt: z.date(),
   expiresAt: z.date(),
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
 });
 export type TInvite = z.infer<typeof ZInvite>;
 
 export const ZInvitee = z.object({
   email: z.string().email(),
   name: z.string(),
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
 
@@ -30,7 +30,7 @@ export const ZCurrentUser = z.object({
 export type TCurrentUser = z.infer<typeof ZCurrentUser>;
 
 export const ZInviteUpdateInput = z.object({
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
 });
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
 

@@ -27,7 +27,7 @@ const Page = async ({ params }: InvitePageProps) => {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  if (!membership || (membership.organizationRole !== "owner" && membership.organizationRole !== "manager")) {
+  if (!membership || (membership.role !== "owner" && membership.role !== "manager")) {
     return notFound();
   }
 

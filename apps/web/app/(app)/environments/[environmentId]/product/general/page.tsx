@@ -40,7 +40,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
-  const { isMember, isOwner, isManager } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember, isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
   const { hasManageAccess } = getTeamPermissionFlags(productPermission);
 
   const isReadOnly = isMember && !hasManageAccess;

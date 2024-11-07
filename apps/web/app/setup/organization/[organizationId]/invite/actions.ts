@@ -40,7 +40,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       invitee: {
         email: parsedInput.email,
         name: "",
-        organizationRole: "manager",
+        role: "manager",
       },
     });
 

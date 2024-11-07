@@ -63,7 +63,7 @@ export const POST = async (request: Request) => {
       // assign user to existing organization
       await createMembership(invite.organizationId, user.id, {
         accepted: true,
-        organizationRole: invite.organizationRole,
+        role: invite.role,
       });
 
       await updateUser(user.id, {
@@ -99,7 +99,7 @@ export const POST = async (request: Request) => {
         isNewOrganization = true;
       }
       const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "owner";
-      await createMembership(organization.id, user.id, { organizationRole: role, accepted: true });
+      await createMembership(organization.id, user.id, { role: role, accepted: true });
       const updatedNotificationSettings = {
         ...user.notificationSettings,
         unsubscribedOrganizationIds: Array.from(
@@ -116,7 +116,7 @@ export const POST = async (request: Request) => {
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
       if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
-        await createMembership(organization.id, user.id, { organizationRole: "owner", accepted: true });
+        await createMembership(organization.id, user.id, { role: "owner", accepted: true });
 
         const updatedNotificationSettings = {
           ...user.notificationSettings,

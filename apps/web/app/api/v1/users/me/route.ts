@@ -5,7 +5,7 @@ import { prisma } from "@formbricks/database";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface Membership {
-  organizationRole: TOrganizationRole;
+  role: TOrganizationRole;
   userId: string;
 }
 
@@ -53,11 +53,7 @@ const deleteUser = async (userId: string) => {
   });
 };
 
-const updateUserMembership = async (
-  organizationId: string,
-  userId: string,
-  organizationRole: OrganizationRole
-) => {
+const updateUserMembership = async (organizationId: string, userId: string, role: OrganizationRole) => {
   await prisma.membership.update({
     where: {
       userId_organizationId: {
@@ -66,16 +62,16 @@ const updateUserMembership = async (
       },
     },
     data: {
-      organizationRole,
+      role,
     },
   });
 };
 
 const getManagerMemberships = (memberships: Membership[]) =>
-  memberships.filter((membership) => membership.organizationRole === OrganizationRole.manager);
+  memberships.filter((membership) => membership.role === OrganizationRole.manager);
 
 const getOwnerMemberships = (memberships: Membership[]) =>
-  memberships.filter((membership) => membership.organizationRole === OrganizationRole.owner);
+  memberships.filter((membership) => membership.role === OrganizationRole.owner);
 
 const deleteOrganization = async (organizationId: string) => {
   await prisma.organization.delete({
@@ -107,7 +103,7 @@ export const DELETE = async () => {
             memberships: {
               select: {
                 userId: true,
-                organizationRole: true,
+                role: true,
               },
             },
           },
@@ -117,7 +113,7 @@ export const DELETE = async () => {
 
     for (const currentUserMembership of currentUserMemberships) {
       const organizationMemberships = currentUserMembership.organization.memberships;
-      const role = currentUserMembership.organizationRole;
+      const role = currentUserMembership.role;
       const organizationId = currentUserMembership.organizationId;
 
       const organizationManagerMemberships = getManagerMemberships(organizationMemberships);

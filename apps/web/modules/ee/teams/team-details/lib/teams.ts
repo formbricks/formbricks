@@ -64,7 +64,7 @@ export const getTeam = reactCache(
                       organizationId: team.organizationId,
                     },
                     select: {
-                      organizationRole: true,
+                      role: true,
                     },
                   },
                 },
@@ -82,8 +82,8 @@ export const getTeam = reactCache(
             name: teamMember.user.name,
             email: teamMember.user.email,
             isRoleEditable:
-              teamMember.user.memberships[0].organizationRole !== "owner" &&
-              teamMember.user.memberships[0].organizationRole !== "manager",
+              teamMember.user.memberships[0].role !== "owner" &&
+              teamMember.user.memberships[0].role !== "manager",
           }));
 
           return {
@@ -209,7 +209,7 @@ export const updateUserTeamRole = async (
         },
       },
       select: {
-        organizationRole: true,
+        role: true,
       },
     });
 
@@ -217,8 +217,8 @@ export const updateUserTeamRole = async (
       throw new ResourceNotFoundError("membership", null);
     }
 
-    if (["owner", "manager"].includes(orgMembership.organizationRole) && role === "contributor") {
-      throw new AuthorizationError(`Organization ${orgMembership.organizationRole} cannot be a contributor`);
+    if (["owner", "manager"].includes(orgMembership.role) && role === "contributor") {
+      throw new AuthorizationError(`Organization ${orgMembership.role} cannot be a contributor`);
     }
 
     await prisma.teamUser.update({
@@ -323,7 +323,7 @@ export const getMembersByOrganizationId = reactCache(
           const membersData = await prisma.membership.findMany({
             where: {
               organizationId,
-              organizationRole: {
+              role: {
                 not: "billing",
               },
             },
@@ -395,7 +395,7 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
           },
         },
         select: {
-          organizationRole: true,
+          role: true,
         },
       });
 
@@ -405,7 +405,7 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
 
       let role: TeamUserRole = "contributor";
 
-      const { isOwner, isManager } = getAccessFlags(membership.organizationRole);
+      const { isOwner, isManager } = getAccessFlags(membership.role);
 
       if (isOwner || isManager) {
         role = "admin";

@@ -19,7 +19,7 @@ export const GET = async (_: Request, context: { params: { organizationId: strin
   if (!hasAccess) throw new AuthorizationError("Unauthorized");
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
-  const { isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   // redirect to first product's production environment
   const products = await getUserProducts(session.user.id, organizationId);

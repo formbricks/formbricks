@@ -9,7 +9,7 @@ import { IndividualInviteTab } from "./IndividualInviteTab";
 interface AddMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; organizationRole: TOrganizationRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;

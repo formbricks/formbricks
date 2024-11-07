@@ -32,5 +32,5 @@ export const getMembershipRole = async (userId: string, organizationId: string) 
     throw new AuthorizationError("Not authorized");
   }
 
-  return membership.organizationRole;
+  return membership.role;
 };

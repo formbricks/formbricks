@@ -133,7 +133,7 @@ export const getTeams = reactCache(
             },
           },
           select: {
-            organizationRole: true,
+            role: true,
           },
         });
 

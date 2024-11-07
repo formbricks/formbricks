@@ -14,7 +14,7 @@ import {
 } from "@formbricks/ui/components/Select";
 
 interface AddMemberRoleProps {
-  control: Control<{ name: string; email: string; organizationRole: TOrganizationRole }>;
+  control: Control<{ name: string; email: string; role: TOrganizationRole }>;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
 }
@@ -28,7 +28,7 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
   return (
     <Controller
       control={control}
-      name="organizationRole"
+      name="role"
       render={({ field: { onChange, value } }) => (
         <div>
           <Label>{t("common.role")}</Label>

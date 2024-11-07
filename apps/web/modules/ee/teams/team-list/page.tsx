@@ -25,7 +25,7 @@ export const TeamsPage = async ({ params }) => {
 
   const canDoRoleManagement = await getRoleManagementPermission(organization);
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   if (!canDoRoleManagement || isBilling) {
     notFound();
@@ -43,7 +43,7 @@ export const TeamsPage = async ({ params }) => {
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.organizationRole}
+          membershipRole={currentUserMembership?.role}
           activeId="teams"
           canDoRoleManagement={canDoRoleManagement}
         />
@@ -51,7 +51,7 @@ export const TeamsPage = async ({ params }) => {
       <TeamsView
         teams={teams}
         organizationId={organization.id}
-        membershipRole={currentUserMembership?.organizationRole}
+        membershipRole={currentUserMembership?.role}
         currentUserId={session.user.id}
       />
     </PageContentWrapper>

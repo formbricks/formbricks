@@ -39,7 +39,7 @@ export const isManagerOrOwner = async (userId: string, organizationId: string) =
     },
   });
 
-  if (membership && (membership.organizationRole === "owner" || membership.organizationRole === "manager")) {
+  if (membership && (membership.role === "owner" || membership.role === "manager")) {
     return true;
   }
 

@@ -120,7 +120,7 @@ export const POST = async (request: Request) => {
           {
             memberships: {
               every: {
-                organizationRole: {
+                role: {
                   in: ["owner", "manager"],
                 },
               },

@@ -30,7 +30,7 @@ export const getMembersByOrganizationId = reactCache(
               },
               userId: true,
               accepted: true,
-              organizationRole: true,
+              role: true,
             },
             take: page ? ITEMS_PER_PAGE : undefined,
             skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -42,7 +42,7 @@ export const getMembersByOrganizationId = reactCache(
               email: member.user?.email || "",
               userId: member.userId,
               accepted: member.accepted,
-              organizationRole: member.organizationRole,
+              role: member.role,
             };
           });
 

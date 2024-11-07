@@ -103,7 +103,7 @@ export const removeTeamMemberAction = authenticatedActionClient
     const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, teamOrganizationId);
 
-    const { isOwner, isManager } = getAccessFlags(membership?.organizationRole);
+    const { isOwner, isManager } = getAccessFlags(membership?.role);
 
     const isOwnerOrManager = isOwner || isManager;
 

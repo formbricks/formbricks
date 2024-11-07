@@ -32,8 +32,7 @@ export const MembersInfo = async ({
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
 
-  const doesOrgHaveMoreThanOneOwner =
-    allMembers.filter((member) => member.organizationRole === "owner").length > 1;
+  const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
 
   return (
     <div className="grid-cols-20" id="membersInfoWrapper">
@@ -52,7 +51,7 @@ export const MembersInfo = async ({
             {canDoRoleManagement && allMembers?.length > 0 && (
               <EditMembershipRole
                 isUserManagerOrOwner={isUserManagerOrOwner}
-                memberRole={member.organizationRole}
+                memberRole={member.role}
                 memberId={!isInvitee(member) ? member.userId : ""}
                 organizationId={organization.id}
                 userId={currentUserId}
@@ -79,8 +78,8 @@ export const MembersInfo = async ({
               showDeleteButton={
                 isUserManagerOrOwner &&
                 (member as TMember).userId !== currentUserId &&
-                ((member as TMember).organizationRole !== "owner" ||
-                  ((member as TMember).organizationRole === "owner" && doesOrgHaveMoreThanOneOwner))
+                ((member as TMember).role !== "owner" ||
+                  ((member as TMember).role === "owner" && doesOrgHaveMoreThanOneOwner))
               }
             />
           </div>

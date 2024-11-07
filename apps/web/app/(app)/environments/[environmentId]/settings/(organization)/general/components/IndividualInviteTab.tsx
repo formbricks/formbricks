@@ -13,7 +13,7 @@ import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; organizationRole: TOrganizationRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
@@ -37,12 +37,12 @@ export const IndividualInviteTab = ({
   } = useForm<{
     name: string;
     email: string;
-    organizationRole: TOrganizationRole;
+    role: TOrganizationRole;
   }>();
 
   const submitEventClass = async () => {
     const data = getValues();
-    data.organizationRole = data.organizationRole || OrganizationRole.owner;
+    data.role = data.role || OrganizationRole.owner;
     await onSubmit([data]);
     setOpen(false);
     reset();
@@ -74,7 +74,7 @@ export const IndividualInviteTab = ({
               canDoRoleManagement={canDoRoleManagement}
               isFormbricksCloud={isFormbricksCloud}
             />
-            {watch("organizationRole") === "member" && (
+            {watch("role") === "member" && (
               <Alert className="mt-2" variant="info">
                 <AlertDescription>
                   {t("environments.settings.general.member_role_info_message")}

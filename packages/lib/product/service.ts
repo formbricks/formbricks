@@ -54,7 +54,7 @@ export const getUserProducts = reactCache(
 
         let productWhereClause: Prisma.ProductWhereInput = {};
 
-        if (orgMembership.organizationRole === "member") {
+        if (orgMembership.role === "member") {
           productWhereClause = {
             productTeams: {
               some: {

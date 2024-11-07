@@ -13,7 +13,7 @@ import { ZOrganizationRole } from "@formbricks/types/memberships";
 const ZInviteOrganizationMemberAction = z.object({
   organizationId: ZId,
   email: z.string(),
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
   inviteMessage: z.string(),
 });
 
@@ -40,7 +40,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       invitee: {
         email: parsedInput.email,
         name: "",
-        organizationRole: parsedInput.organizationRole,
+        role: parsedInput.role,
       },
     });
 

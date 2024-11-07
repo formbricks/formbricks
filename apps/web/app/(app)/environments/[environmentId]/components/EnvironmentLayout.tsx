@@ -58,7 +58,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const membershipRole = currentUserMembership?.organizationRole;
+  const membershipRole = currentUserMembership?.role;
   const { isOwner, isManager } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isOwner || isManager;

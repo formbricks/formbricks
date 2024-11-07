@@ -31,7 +31,7 @@ export const createOrganizationAction = authenticatedActionClient
     });
 
     await createMembership(newOrganization.id, ctx.user.id, {
-      organizationRole: "owner",
+      role: "owner",
       accepted: true,
     });
 

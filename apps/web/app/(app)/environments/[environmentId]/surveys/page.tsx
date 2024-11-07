@@ -60,7 +60,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const prefilledFilters = [product?.config.channel, product.config.industry, searchParams.role ?? null];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
 
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);

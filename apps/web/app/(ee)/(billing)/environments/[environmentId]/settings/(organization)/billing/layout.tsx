@@ -30,7 +30,7 @@ const BillingLayout = async ({ children, params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
 
   return <>{!isMember ? <>{children}</> : <ErrorComponent />}</>;
 };

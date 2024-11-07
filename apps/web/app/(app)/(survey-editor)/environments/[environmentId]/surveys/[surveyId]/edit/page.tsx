@@ -67,7 +67,7 @@ const Page = async ({ params, searchParams }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
 
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
@@ -100,7 +100,7 @@ const Page = async ({ params, searchParams }) => {
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
       responseCount={responseCount}
-      membershipRole={currentUserMembership?.organizationRole}
+      membershipRole={currentUserMembership?.role}
       productPermission={productPermission}
       colors={SURVEY_BG_COLORS}
       segments={segments}

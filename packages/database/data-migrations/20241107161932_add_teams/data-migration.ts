@@ -66,7 +66,7 @@ async function runMigration(): Promise<void> {
                 },
               },
               data: {
-                organizationRole: "manager",
+                role: "manager",
               },
             });
           }
@@ -75,7 +75,7 @@ async function runMigration(): Promise<void> {
           const otherMembershipsCount = await transactionPrisma.membership.count({
             where: {
               organizationId,
-              role: {
+              deprecatedRole: {
                 in: ["editor", "developer", "viewer"],
               },
             },
@@ -90,7 +90,7 @@ async function runMigration(): Promise<void> {
                 },
               },
               data: {
-                organizationRole: "manager",
+                role: "manager",
               },
             });
           }
@@ -103,7 +103,7 @@ async function runMigration(): Promise<void> {
               },
             },
             data: {
-              organizationRole: "owner",
+              role: "owner",
             },
           });
         })
@@ -112,12 +112,12 @@ async function runMigration(): Promise<void> {
       // Set all invites with roles of editor, developer, or viewer to "member"
       await transactionPrisma.invite.updateMany({
         where: {
-          role: {
+          deprecatedRole: {
             in: ["editor", "developer", "viewer"],
           },
         },
         data: {
-          organizationRole: "member",
+          role: "member",
         },
       });
 
@@ -131,17 +131,17 @@ async function runMigration(): Promise<void> {
         select: {
           userId: true,
           organizationId: true,
-          role: true,
+          deprecatedRole: true,
           organization: {
             select: {
               invites: {
                 where: {
-                  role: {
+                  deprecatedRole: {
                     not: "admin",
                   },
                 },
                 select: {
-                  role: true,
+                  deprecatedRole: true,
                 },
               },
             },
@@ -169,10 +169,12 @@ async function runMigration(): Promise<void> {
       // Process each organization's memberships to update or create teams
       await Promise.all(
         Array.from(groupedMembershipsEntries).map(async ([organizationId, memberships]) => {
-          const adminMembership = memberships.filter((membership) => membership.role === "admin");
-          const developerMembership = memberships.filter((membership) => membership.role === "developer");
-          const editorMembership = memberships.filter((membership) => membership.role === "editor");
-          const viewerMembership = memberships.filter((membership) => membership.role === "viewer");
+          const adminMembership = memberships.filter((membership) => membership.deprecatedRole === "admin");
+          const developerMembership = memberships.filter(
+            (membership) => membership.deprecatedRole === "developer"
+          );
+          const editorMembership = memberships.filter((membership) => membership.deprecatedRole === "editor");
+          const viewerMembership = memberships.filter((membership) => membership.deprecatedRole === "viewer");
 
           const otherMemberships =
             developerMembership.length + editorMembership.length + viewerMembership.length;
@@ -184,10 +186,10 @@ async function runMigration(): Promise<void> {
             await transactionPrisma.membership.updateMany({
               where: {
                 organizationId,
-                role: "admin",
+                deprecatedRole: "admin",
               },
               data: {
-                organizationRole: otherMemberships || otherInvites > 0 ? "manager" : "owner",
+                role: otherMemberships || otherInvites > 0 ? "manager" : "owner",
               },
             });
           }
@@ -227,12 +229,12 @@ async function runMigration(): Promise<void> {
               await transactionPrisma.membership.updateMany({
                 where: {
                   organizationId,
-                  role: {
+                  deprecatedRole: {
                     in: ["developer", "editor"],
                   },
                 },
                 data: {
-                  organizationRole: "member",
+                  role: "member",
                 },
               });
             }
@@ -261,10 +263,10 @@ async function runMigration(): Promise<void> {
               await transactionPrisma.membership.updateMany({
                 where: {
                   organizationId,
-                  role: "viewer",
+                  deprecatedRole: "viewer",
                 },
                 data: {
-                  organizationRole: "member",
+                  role: "member",
                 },
               });
             }
@@ -277,20 +279,20 @@ async function runMigration(): Promise<void> {
           role: "owner",
         },
         data: {
-          organizationRole: "owner",
+          role: "owner",
         },
       });
 
       // Clear out the old "role" field in invites after migration
       await transactionPrisma.invite.updateMany({
         data: {
-          role: null,
+          deprecatedRole: null,
         },
       });
 
       await transactionPrisma.membership.updateMany({
         data: {
-          role: null,
+          deprecatedRole: null,
         },
       });
     },

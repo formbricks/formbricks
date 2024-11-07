@@ -69,7 +69,7 @@ const Page = async ({ searchParams }) => {
     } else {
       await createMembership(invite.organizationId, session.user.id, {
         accepted: true,
-        organizationRole: invite.organizationRole,
+        role: invite.role,
       });
       await deleteInvite(inviteId);
 

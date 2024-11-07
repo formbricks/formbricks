@@ -22,9 +22,8 @@ export const EditMemberships = async ({
   const members = await getMembersByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
   const t = await getTranslations();
-  const currentUserRole = membership?.organizationRole;
-  const isUserManagerOrOwner =
-    membership?.organizationRole === "manager" || membership?.organizationRole === "owner";
+  const currentUserRole = membership?.role;
+  const isUserManagerOrOwner = membership?.role === "manager" || membership?.role === "owner";
 
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 

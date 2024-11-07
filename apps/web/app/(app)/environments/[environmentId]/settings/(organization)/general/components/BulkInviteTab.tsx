@@ -13,7 +13,7 @@ import { Button } from "@formbricks/ui/components/Button";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; organizationRole: TOrganizationRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
 }
@@ -55,7 +55,7 @@ export const BulkInviteTab = ({
           return {
             name: name.trim(),
             email: email.trim(),
-            organizationRole: orgRole as TOrganizationRole,
+            role: orgRole as TOrganizationRole,
           };
         });
         try {

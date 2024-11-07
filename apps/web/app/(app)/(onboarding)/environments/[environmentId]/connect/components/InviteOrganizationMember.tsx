@@ -40,7 +40,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
       await inviteOrganizationMemberAction({
         organizationId: organization.id,
         email: data.email,
-        organizationRole: "member",
+        role: "member",
         inviteMessage: data.inviteMessage,
       });
       toast.success("Invite sent successful");

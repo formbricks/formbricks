@@ -35,7 +35,7 @@ export const TeamDetails = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling, isMember } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isBilling, isMember } = getAccessFlags(currentUserMembership?.role);
 
   const teamRole = await getTeamRoleByTeamIdUserId(params.teamId, session.user.id);
 
@@ -60,7 +60,7 @@ export const TeamDetails = async ({ params }) => {
         team={team}
         organizationMembers={organizationMembers}
         userId={userId}
-        membershipRole={currentUserMembership?.organizationRole}
+        membershipRole={currentUserMembership?.role}
         teamRole={teamRole}
         products={teamProducts}
         organizationProducts={organizationProducts}

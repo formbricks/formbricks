@@ -21,7 +21,7 @@ const Page = async ({ params }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling } = getAccessFlags(currentUserMembership?.organizationRole);
+  const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);

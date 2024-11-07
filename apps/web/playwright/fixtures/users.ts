@@ -111,7 +111,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                   }),
                 },
               },
-              organizationRole: "owner",
+              role: "owner",
             },
           },
         },

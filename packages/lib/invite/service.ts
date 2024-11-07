@@ -33,7 +33,7 @@ const inviteSelect: Prisma.InviteSelect = {
   acceptorId: true,
   createdAt: true,
   expiresAt: true,
-  organizationRole: true,
+  role: true,
 };
 interface InviteWithCreator extends TInvite {
   creator: {
@@ -223,7 +223,7 @@ export const inviteUser = async ({
   const currentUser = session.user;
 
   try {
-    const { name, email, organizationRole } = invitee;
+    const { name, email, role } = invitee;
     const { id: currentUserId } = currentUser;
     const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
@@ -251,7 +251,7 @@ export const inviteUser = async ({
         organization: { connect: { id: organizationId } },
         creator: { connect: { id: currentUserId } },
         acceptor: user ? { connect: { id: user.id } } : undefined,
-        organizationRole,
+        role,
         expiresAt,
       },
     });

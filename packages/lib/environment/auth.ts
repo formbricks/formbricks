@@ -32,9 +32,9 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
         if (!orgMembership) return false;
 
         if (
-          orgMembership.organizationRole === "owner" ||
-          orgMembership.organizationRole === "manager" ||
-          orgMembership.organizationRole === "billing"
+          orgMembership.role === "owner" ||
+          orgMembership.role === "manager" ||
+          orgMembership.role === "billing"
         )
           return true;
 

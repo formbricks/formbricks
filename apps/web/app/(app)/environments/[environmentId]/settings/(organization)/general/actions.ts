@@ -120,8 +120,8 @@ export const deleteMembershipAction = authenticatedActionClient
     }
 
     const memberships = await getMembershipsByUserId(ctx.user.id);
-    const isLastOwner = memberships?.filter((m) => m.organizationRole === "owner").length === 1;
-    if (membership.organizationRole === "owner" && isLastOwner) {
+    const isLastOwner = memberships?.filter((m) => m.role === "owner").length === 1;
+    if (membership.role === "owner" && isLastOwner) {
       throw new ValidationError("You cannot delete the last owner of the organization");
     }
 
@@ -152,7 +152,7 @@ export const leaveOrganizationAction = authenticatedActionClient
       throw new AuthenticationError("Not a member of this organization");
     }
 
-    if (membership.organizationRole === "owner") {
+    if (membership.role === "owner") {
       throw new ValidationError("You cannot leave an organization you own");
     }
 
@@ -239,7 +239,7 @@ const ZInviteUserAction = z.object({
   organizationId: ZId,
   email: z.string(),
   name: z.string(),
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
 });
 
 export const inviteUserAction = authenticatedActionClient
@@ -249,7 +249,7 @@ export const inviteUserAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    if (!IS_FORMBRICKS_CLOUD && parsedInput.organizationRole === OrganizationRole.billing) {
+    if (!IS_FORMBRICKS_CLOUD && parsedInput.role === OrganizationRole.billing) {
       throw new ValidationError("Billing role is not allowed");
     }
 
@@ -269,7 +269,7 @@ export const inviteUserAction = authenticatedActionClient
       invitee: {
         email: parsedInput.email,
         name: parsedInput.name,
-        organizationRole: parsedInput.organizationRole,
+        role: parsedInput.role,
       },
     });
 

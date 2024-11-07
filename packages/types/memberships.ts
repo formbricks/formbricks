@@ -10,7 +10,7 @@ export const ZMembership = z.object({
   organizationId: z.string(),
   userId: z.string(),
   accepted: z.boolean(),
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
 });
 
 export type TMembership = z.infer<typeof ZMembership>;
@@ -20,12 +20,12 @@ export const ZMember = z.object({
   email: z.string().email(),
   userId: z.string(),
   accepted: z.boolean(),
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
 });
 
 export type TMember = z.infer<typeof ZMember>;
 
 export const ZMembershipUpdateInput = z.object({
-  organizationRole: ZOrganizationRole,
+  role: ZOrganizationRole,
 });
 export type TMembershipUpdateInput = z.infer<typeof ZMembershipUpdateInput>;

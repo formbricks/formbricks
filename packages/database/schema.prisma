@@ -447,7 +447,7 @@ model Product {
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                 Json?
-  ProductTeam          ProductTeam[]
+  productTeams         ProductTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])

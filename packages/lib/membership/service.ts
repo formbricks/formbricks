@@ -58,7 +58,7 @@ export const createMembership = async (
         userId,
         organizationId,
         accepted: data.accepted,
-        organizationRole: data.organizationRole as TMembership["organizationRole"],
+        role: data.role as TMembership["role"],
       },
     });
     organizationCache.revalidate({

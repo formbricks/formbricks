@@ -42,7 +42,7 @@ const Page = async ({ params }) => {
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.organizationRole}
+          membershipRole={currentUserMembership?.role}
           activeId="billing"
           canDoRoleManagement={canDoRoleManagement}
         />
