@@ -99,7 +99,7 @@ export const BulkInviteTab = ({
       </div>
       <div>
         {!canDoRoleManagement && (
-          <Alert variant="error" className="mt-1.5 flex items-start bg-slate-50">
+          <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
               <p className="text-sm">
                 <strong>{t("common.warning")}: </strong>
