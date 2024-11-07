@@ -1177,7 +1177,6 @@
         "org_owner_and_managers_can_only_be_team_admin": "Organisationsbesitzer und Manager können nur Team-Administratoren sein.",
         "organization_members": "Organisationsmitglieder",
         "organization_products": "Organisationsprodukte",
-        "other_teams": "Andere Teams",
         "permission": "Berechtigung",
         "permission_updated_successfully": "Berechtigung erfolgreich aktualisiert.",
         "product_name": "Produktname",
@@ -1198,8 +1197,7 @@
         "team_name_description": "Geben Sie Ihrem Team einen beschreibenden Namen.",
         "team_products": "Teamprodukte",
         "this_action_cannot_be_undone_if_it_s_gone_it_s_gone": "Diese Aktion kann nicht rückgängig gemacht werden. Wenn es weg ist, ist es weg.",
-        "you_are_not_part_of_any_team": "Sie sind kein Mitglied eines Teams.",
-        "your_teams": "Ihre Teams"
+        "you_are_not_part_of_any_team": "Sie sind kein Mitglied eines Teams."
       }
     },
     "surveys": {

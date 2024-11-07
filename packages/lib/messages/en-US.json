@@ -1177,7 +1177,6 @@
         "org_owner_and_managers_can_only_be_team_admin": "Org owner and managers can only be team admin.",
         "organization_members": "Organization Members",
         "organization_products": "Organization Products",
-        "other_teams": "Other Teams",
         "permission": "Permission",
         "permission_updated_successfully": "Permission updated successfully.",
         "product_name": "Product Name",
@@ -1198,8 +1197,7 @@
         "team_name_description": "Give your team a descriptive name.",
         "team_products": "Team Products",
         "this_action_cannot_be_undone_if_it_s_gone_it_s_gone": "This action cannot be undone. If it's gone, it's gone.",
-        "you_are_not_part_of_any_team": "You are not part of any team.",
-        "your_teams": "Your Teams"
+        "you_are_not_part_of_any_team": "You are not part of any team."
       }
     },
     "surveys": {

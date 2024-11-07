@@ -2,8 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromTeamId } from "@/lib/utils/helper";
-import { createTeam, getTeams, joinTeam } from "@/modules/ee/teams/team-list/lib/teams";
+import { createTeam, getTeams } from "@/modules/ee/teams/team-list/lib/teams";
 import { z } from "zod";
 
 const ZGetTeamsAction = z.object({
@@ -25,27 +24,6 @@ export const getTeamsAction = authenticatedActionClient
     });
 
     return await getTeams(ctx.user.id, parsedInput.organizationId);
-  });
-
-const ZJoinTeamAction = z.object({
-  teamId: z.string(),
-});
-
-export const joinTeamAction = authenticatedActionClient
-  .schema(ZJoinTeamAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
-
-    return await joinTeam(ctx.user.id, parsedInput.teamId);
   });
 
 const ZCreateTeamAction = z.object({
