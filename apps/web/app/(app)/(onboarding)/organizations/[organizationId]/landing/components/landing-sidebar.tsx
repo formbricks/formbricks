@@ -37,7 +37,7 @@ interface LandingSidebarProps {
   organizations: TOrganization[];
 }
 
-export const LandingSidebar = async ({
+export const LandingSidebar = ({
   isMultiOrgEnabled,
   user,
   organization,

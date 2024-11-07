@@ -22,17 +22,14 @@ import { updateProductAction } from "../../actions";
 
 type EditProductNameProps = {
   product: TProduct;
-  isProductNameEditDisabled: boolean;
+  isReadOnly: boolean;
 };
 
 const ZProductNameInput = ZProduct.pick({ name: true });
 
 type TEditProductName = z.infer<typeof ZProductNameInput>;
 
-export const EditProductNameForm: React.FC<EditProductNameProps> = ({
-  product,
-  isProductNameEditDisabled,
-}) => {
+export const EditProductNameForm: React.FC<EditProductNameProps> = ({ product, isReadOnly }) => {
   const t = useTranslations();
   const form = useForm<TEditProductName>({
     defaultValues: {
@@ -75,43 +72,51 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({
     }
   };
 
-  return !isProductNameEditDisabled ? (
-    <FormProvider {...form}>
-      <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProduct)}>
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="name">
-                {t("environments.product.general.whats_your_product_called")}
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  id="name"
-                  {...field}
-                  placeholder={t("common.product_name")}
-                  autoComplete="off"
-                  required
-                  isInvalid={!!nameError}
-                />
-              </FormControl>
-              <FormError />
-            </FormItem>
-          )}
-        />
+  return (
+    <>
+      <FormProvider {...form}>
+        <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProduct)}>
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="name">
+                  {t("environments.product.general.whats_your_product_called")}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    id="name"
+                    {...field}
+                    placeholder={t("common.product_name")}
+                    autoComplete="off"
+                    required
+                    isInvalid={!!nameError}
+                    disabled={isReadOnly}
+                  />
+                </FormControl>
+                <FormError />
+              </FormItem>
+            )}
+          />
 
-        <Button type="submit" size="sm" loading={isSubmitting} disabled={isSubmitting || !isDirty}>
-          {t("common.update")}
-        </Button>
-      </form>
-    </FormProvider>
-  ) : (
-    <Alert variant="warning">
-      <AlertDescription>
-        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-      </AlertDescription>
-    </Alert>
+          <Button
+            type="submit"
+            size="sm"
+            loading={isSubmitting}
+            disabled={isSubmitting || !isDirty || isReadOnly}>
+            {t("common.update")}
+          </Button>
+        </form>
+      </FormProvider>
+      {isReadOnly && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
   );
 };

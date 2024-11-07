@@ -885,8 +885,8 @@
         "unique_constraint_failed_on_the_fields": "Unique constraint failed on the fields"
       },
       "teams": {
-        "add_team": "Add Team",
-        "create_team": "Create Team",
+        "add_existing_team": "Add existing team",
+        "create_new_team": "Create new team",
         "manage": "Manage",
         "no_items_added": "No items added",
         "permission": "Permission",
@@ -1160,14 +1160,14 @@
         "are_you_sure_you_want_to_delete_this_team": "Are you sure you want to delete this team? This also removes the access to all the products and surveys associated with this team.",
         "contributor": "Contributor",
         "create": "Create",
-        "create_team": "Create Team",
+        "create_new_team": "Create new team",
         "delete_team": "Delete Team",
         "enter_team_name": "Enter team name",
         "invite_member": "Invite Member",
         "join_team": "Join Team",
         "leave": "Leave",
         "leave_team": "Leave Team",
-        "leave_team_confirmation": "Are you sure you want to remove this member?",
+        "leave_team_confirmation": "Are you sure you want to leave this team?",
         "manage": "Manage",
         "member_removed_successfully": "Member removed successfully",
         "members_added_successfully": "Members added successfully",
@@ -1185,6 +1185,7 @@
         "read": "Read",
         "read_write": "Read & Write",
         "remove": "Remove",
+        "remove_member_confirmation": "Are you sure you want to remove this member?",
         "remove_product": "Remove Product",
         "remove_product_confirmation": "Are you sure you want to remove this product?",
         "role_updated_successfully": "Role updated successfully",
@@ -1583,6 +1584,7 @@
       "no_surveys_created_yet": "No surveys created yet",
       "open_options": "Open options",
       "preview_survey_in_a_new_tab": "Preview survey in a new tab",
+      "read_only_user_not_allowed_to_create_survey_warning": "As a Read-Only user you are not allowed to create surveys. Please ask a user with write access to create a survey or a manager to upgrade your role.",
       "relevance": "Relevance",
       "responses": {
         "address_line_1": "Address Line 1",
@@ -1759,8 +1761,7 @@
         "multiple_industries": "Multiple industries",
         "use_this_template": "Use this template",
         "uses_branching_logic": "This survey uses branching logic."
-      },
-      "viewer_not_allowed_to_create_survey_warning": "As a Viewer you are not allowed to create surveys. Please ask an Editor to create a survey or an Admin to upgrade your role"
+      }
     },
     "xm-templates": {
       "ces": "CES",
@@ -1817,6 +1818,7 @@
           "channel_settings_description": "Get 2x more responses matching surveys with your brand and UI",
           "channel_settings_subtitle": "When people recognize your brand, they are much more likely to start and complete responses.",
           "channel_settings_title": "Match your brand, get 2x more responses.",
+          "create_new_team": "Create new team",
           "link_channel_headline": "You maintain a product, how exciting!",
           "product_name": "Product name",
           "product_name_description": "What is your product called?",

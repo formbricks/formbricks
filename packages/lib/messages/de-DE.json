@@ -885,8 +885,8 @@
         "unique_constraint_failed_on_the_fields": "Eindeutige Einschränkung für die Felder fehlgeschlagen"
       },
       "teams": {
-        "add_team": "Team hinzufügen",
-        "create_team": "Team erstellen",
+        "add_existing_team": "Vorhandenes Team hinzufügen",
+        "create_new_team": "Neues Team erstellen",
         "manage": "Verwalten",
         "no_items_added": "Keine Elemente hinzugefügt",
         "permission": "Berechtigung",
@@ -1160,14 +1160,14 @@
         "are_you_sure_you_want_to_delete_this_team": "Sind Sie sicher, dass Sie dieses Team löschen möchten? Dadurch wird auch der Zugriff auf alle Produkte und Umfragen entfernt, die mit diesem Team verbunden sind.",
         "contributor": "Mitwirkender",
         "create": "Erstellen",
-        "create_team": "Team erstellen",
+        "create_new_team": "Neues Team erstellen",
         "delete_team": "Team löschen",
         "enter_team_name": "Teamname eingeben",
         "invite_member": "Mitglied einladen",
         "join_team": "Team beitreten",
         "leave": "Verlassen",
         "leave_team": "Team verlassen",
-        "leave_team_confirmation": "Sind Sie sicher, dass Sie dieses Mitglied entfernen möchten?",
+        "leave_team_confirmation": "Bist Du sicher, dass Du dieses Team verlassen möchtest?",
         "manage": "Verwalten",
         "member_removed_successfully": "Mitglied erfolgreich entfernt",
         "members_added_successfully": "Mitglieder erfolgreich hinzugefügt",
@@ -1185,6 +1185,7 @@
         "read": "Lesen",
         "read_write": "Lesen & Schreiben",
         "remove": "Entfernen",
+        "remove_member_confirmation": "Sind Sie sicher, dass Sie dieses Mitglied entfernen möchten?",
         "remove_product": "Produkt entfernen",
         "remove_product_confirmation": "Sind Sie sicher, dass Sie dieses Produkt entfernen möchten?",
         "role_updated_successfully": "Rolle erfolgreich aktualisiert",
@@ -1583,6 +1584,7 @@
       "no_surveys_created_yet": "Noch keine Umfragen erstellt",
       "open_options": "Optionen öffnen",
       "preview_survey_in_a_new_tab": "Vorschau der Umfrage in einem neuen Tab",
+      "read_only_user_not_allowed_to_create_survey_warning": "Als Benutzer mit Nur-Lese-Rechten dürfen Sie keine Umfragen erstellen. Bitten Sie einen Benutzer mit Schreibrechten, eine Umfrage zu erstellen, oder einen Manager, Ihre Rolle zu aktualisieren.",
       "relevance": "Relevanz",
       "responses": {
         "address_line_1": "Adresszeile 1",
@@ -1759,8 +1761,7 @@
         "multiple_industries": "Mehrere Branchen",
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
-      },
-      "viewer_not_allowed_to_create_survey_warning": "Als Betrachter darfst Du keine Umfragen erstellen. Bitte frage einen Editor, eine Umfrage zu erstellen, oder einen Admin, deine Rolle zu aktualisieren."
+      }
     },
     "xm-templates": {
       "ces": "CES",
@@ -1817,6 +1818,7 @@
           "channel_settings_description": "Erhalte doppelt so viele Antworten mit Umfragen, die zu deiner Marke und UI passen.",
           "channel_settings_subtitle": "Wenn Leute deine Marke erkennen, ist es viel wahrscheinlicher, dass sie Umfragen beantworten und abschließen.",
           "channel_settings_title": "Passe deine Marke an, erhalte doppelt so viele Antworten.",
+          "create_new_team": "Neues Team erstellen",
           "link_channel_headline": "Du pflegst ein Produkt, wie aufregend!",
           "product_name": "Produktname",
           "product_name_description": "Wie heißt dein Produkt?",

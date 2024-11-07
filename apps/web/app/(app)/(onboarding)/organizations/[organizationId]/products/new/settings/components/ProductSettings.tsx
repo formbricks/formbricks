@@ -188,7 +188,7 @@ export const ProductSettings = ({
                         size="sm"
                         type="button"
                         onClick={() => setCreateTeamModalOpen(true)}>
-                        Create team
+                        {t("organizations.products.new.settings.create_new_team")}
                       </Button>
                     </div>
                     <FormControl>

@@ -94,23 +94,25 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title={t("environments.product.look.formbricks_branding")}
         description={t("environments.product.look.formbricks_branding_settings_description")}>
-        {!isReadOnly ? (
-          <div className="space-y-4">
-            <EditFormbricksBranding
-              type="linkSurvey"
-              product={product}
-              canRemoveBranding={canRemoveLinkBranding}
-              environmentId={params.environmentId}
-            />
-            <EditFormbricksBranding
-              type="appSurvey"
-              product={product}
-              canRemoveBranding={canRemoveInAppBranding}
-              environmentId={params.environmentId}
-            />
-          </div>
-        ) : (
-          <Alert variant="warning">
+        <div className="space-y-4">
+          <EditFormbricksBranding
+            type="linkSurvey"
+            product={product}
+            canRemoveBranding={canRemoveLinkBranding}
+            environmentId={params.environmentId}
+            isReadOnly={isReadOnly}
+          />
+          <EditFormbricksBranding
+            type="appSurvey"
+            product={product}
+            canRemoveBranding={canRemoveInAppBranding}
+            environmentId={params.environmentId}
+            isReadOnly={isReadOnly}
+          />
+        </div>
+
+        {isReadOnly && (
+          <Alert variant="warning" className="mt-4">
             <AlertDescription>
               {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
             </AlertDescription>

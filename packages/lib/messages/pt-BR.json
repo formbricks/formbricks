@@ -885,8 +885,8 @@
         "unique_constraint_failed_on_the_fields": "Falha na restrição única nos campos"
       },
       "teams": {
-        "add_team": "Adicionar equipe",
-        "create_team": "Criar equipe",
+        "add_existing_team": "Adicionar equipe existente",
+        "create_new_team": "Criar nova equipe",
         "manage": "Gerenciar",
         "no_items_added": "Nenhum item adicionado",
         "permission": "Permissão",
@@ -1160,14 +1160,14 @@
         "are_you_sure_you_want_to_delete_this_team": "Tem certeza de que deseja excluir esta equipe? Isso também remove o acesso a todos os produtos e pesquisas associados a esta equipe.",
         "contributor": "Contribuinte",
         "create": "Criar",
-        "create_team": "Criar equipe",
+        "create_new_team": "Criar nova equipe",
         "delete_team": "Excluir equipe",
         "enter_team_name": "Insira o nome da equipe",
         "invite_member": "Convidar membro",
         "join_team": "Entrar na equipe",
         "leave": "Sair",
         "leave_team": "Sair da equipe",
-        "leave_team_confirmation": "Tem certeza de que deseja remover este membro?",
+        "leave_team_confirmation": "Tem certeza de que deseja sair desta equipe?",
         "manage": "Gerenciar",
         "member_removed_successfully": "Membro removido com sucesso",
         "members_added_successfully": "Membros adicionados com sucesso",
@@ -1185,6 +1185,7 @@
         "read": "Leitura",
         "read_write": "Leitura & Escrita",
         "remove": "Remover",
+        "remove_member_confirmation": "Tem certeza de que deseja remover este membro?",
         "remove_product": "Remover produto",
         "remove_product_confirmation": "Tem certeza de que deseja remover este produto?",
         "role_updated_successfully": "Função atualizada com sucesso",
@@ -1583,6 +1584,7 @@
       "no_surveys_created_yet": "Ainda não foram criadas pesquisas",
       "open_options": "Abre opções",
       "preview_survey_in_a_new_tab": "Visualizar pesquisa em uma nova aba",
+      "read_only_user_not_allowed_to_create_survey_warning": "Como um usuário somente leitura, você não tem permissão para criar pesquisas. Peça a um usuário com acesso de gravação para criar uma pesquisa ou a um gerente para atualizar sua função.",
       "relevance": "Relevância",
       "responses": {
         "address_line_1": "Endereço Linha 1",
@@ -1759,8 +1761,7 @@
         "multiple_industries": "várias indústrias",
         "use_this_template": "Use esse modelo",
         "uses_branching_logic": "Essa pesquisa usa lógica de ramificação."
-      },
-      "viewer_not_allowed_to_create_survey_warning": "Como Visualizador, você não pode criar pesquisas. Por favor, peça a um Editor para criar uma pesquisa ou a um Admin para atualizar seu papel."
+      }
     },
     "xm-templates": {
       "ces": "CES",
@@ -1817,6 +1818,7 @@
           "channel_settings_description": "Obtenha 2x mais respostas combinando pesquisas com sua marca e interface",
           "channel_settings_subtitle": "Quando as pessoas reconhecem sua marca, é muito mais provável que comecem e concluam respostas.",
           "channel_settings_title": "Combine sua marca, receba 2x mais respostas.",
+          "create_new_team": "Criar nova equipe",
           "link_channel_headline": "Você mantém um produto, que empolgante!",
           "product_name": "Nome do produto",
           "product_name_description": "Como se chama o seu produto?",

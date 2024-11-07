@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrganizationAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { PlusCircleIcon } from "lucide-react";

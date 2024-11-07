@@ -226,7 +226,11 @@ export const TeamMembers = ({
           open={removeMemberModalOpen}
           setOpen={setRemoveMemberModalOpen}
           headerText={t("environments.settings.teams.leave_team")}
-          mainText={t("environments.settings.teams.leave_team_confirmation")}
+          mainText={
+            currentUserId === selectedTeamMemberId
+              ? t("environments.settings.teams.leave_team_confirmation")
+              : t("environments.settings.teams.remove_member_confirmation")
+          }
           confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
             setSelectedTeamMemberId(null);

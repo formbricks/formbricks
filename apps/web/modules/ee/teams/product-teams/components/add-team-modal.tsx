@@ -56,7 +56,7 @@ export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamM
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UsersIcon className="h-5 w-5" />
-            <H4>{t("environments.product.teams.add_team")}</H4>
+            <H4>{t("environments.product.teams.add_existing_team")}</H4>
           </div>
         </div>
       </div>

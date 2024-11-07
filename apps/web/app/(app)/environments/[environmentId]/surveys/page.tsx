@@ -114,7 +114,7 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
           </h1>
 
           <h2 className="px-6 text-lg font-medium text-slate-500">
-            {t("environments.surveys.viewer_not_allowed_to_create_survey_warning")}
+            {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
           </h2>
         </>
       ) : (

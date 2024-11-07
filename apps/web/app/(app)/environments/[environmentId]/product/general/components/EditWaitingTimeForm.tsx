@@ -56,54 +56,58 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, i
     }
   };
 
-  return !isReadOnly ? (
-    <FormProvider {...form}>
-      <form
-        className="flex w-full max-w-sm flex-col space-y-4"
-        onSubmit={form.handleSubmit(updateWaitingTime)}>
-        <FormField
-          control={form.control}
-          name="recontactDays"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="recontactDays">
-                {t("environments.product.general.wait_x_days_before_showing_next_survey")}
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  id="recontactDays"
-                  {...field}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "") {
-                      field.onChange("");
-                    }
+  return (
+    <>
+      <FormProvider {...form}>
+        <form
+          className="flex w-full max-w-sm flex-col space-y-4"
+          onSubmit={form.handleSubmit(updateWaitingTime)}>
+          <FormField
+            control={form.control}
+            name="recontactDays"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="recontactDays">
+                  {t("environments.product.general.wait_x_days_before_showing_next_survey")}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    id="recontactDays"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") {
+                        field.onChange("");
+                      }
 
-                    field.onChange(parseInt(value, 10));
-                  }}
-                />
-              </FormControl>
-              <FormError />
-            </FormItem>
-          )}
-        />
+                      field.onChange(parseInt(value, 10));
+                    }}
+                    disabled={isReadOnly}
+                  />
+                </FormControl>
+                <FormError />
+              </FormItem>
+            )}
+          />
 
-        <Button
-          type="submit"
-          size="sm"
-          className="w-fit"
-          loading={isSubmitting}
-          disabled={isSubmitting || !isDirty}>
-          {t("common.update")}
-        </Button>
-      </form>
-    </FormProvider>
-  ) : (
-    <Alert variant="warning">
-      <AlertDescription>
-        {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
-      </AlertDescription>
-    </Alert>
+          <Button
+            type="submit"
+            size="sm"
+            className="w-fit"
+            loading={isSubmitting}
+            disabled={isSubmitting || !isDirty || isReadOnly}>
+            {t("common.update")}
+          </Button>
+        </form>
+      </FormProvider>
+      {isReadOnly && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
   );
 };

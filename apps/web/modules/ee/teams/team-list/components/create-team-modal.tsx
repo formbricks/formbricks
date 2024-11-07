@@ -53,7 +53,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UsersIcon className="h-5 w-5" />
-            <H4>{t("environments.settings.teams.create_team")}</H4>
+            <H4>{t("environments.settings.teams.create_new_team")}</H4>
           </div>
         </div>
       </div>

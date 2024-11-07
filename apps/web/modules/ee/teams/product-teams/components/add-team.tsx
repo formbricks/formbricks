@@ -31,10 +31,10 @@ export const AddTeam = ({ organizationTeams, productTeams, productId, organizati
   return (
     <>
       <Button variant="primary" size="sm" onClick={() => setCreateTeamModalOpen(true)}>
-        {t("environments.product.teams.create_team")}
+        {t("environments.product.teams.create_new_team")}
       </Button>
       <Button variant="secondary" size="sm" onClick={() => setAddTeamModalOpen(true)}>
-        {t("environments.product.teams.add_team")}
+        {t("environments.product.teams.add_existing_team")}
       </Button>
       {addTeamModalOpen && (
         <AddTeamModal

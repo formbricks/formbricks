@@ -120,6 +120,7 @@ const Page = async ({ params }) => {
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
+        isReadOnly={isReadOnly}
         locale={user.locale ?? DEFAULT_LOCALE}
       />
     </PageContentWrapper>

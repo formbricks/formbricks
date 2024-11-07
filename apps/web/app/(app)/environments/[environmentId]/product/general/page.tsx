@@ -63,7 +63,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       <SettingsCard
         title={t("common.product_name")}
         description={t("environments.product.general.product_name_settings_description")}>
-        <EditProductNameForm product={product} isProductNameEditDisabled={isReadOnly} />
+        <EditProductNameForm product={product} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
         title={t("environments.product.general.recontact_waiting_time")}

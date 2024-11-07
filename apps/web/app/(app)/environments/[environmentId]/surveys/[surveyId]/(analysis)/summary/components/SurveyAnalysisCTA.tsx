@@ -120,7 +120,7 @@ export const SurveyAnalysisCTA = ({
         />
       )}
 
-      {(widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
+      {!isReadOnly && (widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 

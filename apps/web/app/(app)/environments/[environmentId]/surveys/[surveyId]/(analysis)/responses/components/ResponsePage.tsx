@@ -183,7 +183,7 @@ export const ResponsePage = ({
     <>
       <div className="flex gap-1.5">
         <CustomFilter survey={survey} />
-        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
+        {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
       </div>
       <ResponseDataView
         survey={survey}
