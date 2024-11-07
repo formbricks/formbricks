@@ -1071,6 +1071,7 @@
         "manage_members_description": "Mitglieder in deiner Organisation hinzufügen oder entfernen.",
         "member_deleted_successfully": "Mitglied erfolgreich gelöscht",
         "member_invited_successfully": "Mitglied erfolgreich eingeladen",
+        "member_role_info_message": "Mitglieder haben standardmäßig keinen Zugriff auf Produkte. Fügen Sie sie nach dem Beitritt zu Teams hinzu, um deren Zugriff zu verwalten.",
         "once_its_gone_its_gone": "Watt fott is, is fott.",
         "only_org_owner_can_perform_action": "Nur der Besitzer kann die Organisation löschen.",
         "organization_created_successfully": "Organisation erfolgreich erstellt!",
@@ -1162,6 +1163,8 @@
         "create": "Erstellen",
         "create_new_team": "Neues Team erstellen",
         "delete_team": "Team löschen",
+        "empty_product_message": "Du hast noch keine Produkte hinzugefügt. Weise dem Team ein Produkt zu, um den Mitgliedern Zugriff zu gewähren.",
+        "empty_teams_state": "Sie haben noch keine Teams. Erstellen Sie Ihr erstes Team, um den Zugriff auf Produkte für Mitglieder Ihrer Organisation zu verwalten.",
         "enter_team_name": "Teamname eingeben",
         "invite_member": "Mitglied einladen",
         "join_team": "Team beitreten",
@@ -1173,7 +1176,6 @@
         "members_added_successfully": "Mitglieder erfolgreich hinzugefügt",
         "no_members_found": "Keine Mitglieder gefunden",
         "no_other_teams_found": "Keine anderen Teams gefunden",
-        "no_products_found": "Keine Produkte gefunden",
         "org_owner_and_managers_can_only_be_team_admin": "Organisationsbesitzer und Manager können nur Team-Administratoren sein.",
         "organization_members": "Organisationsmitglieder",
         "organization_products": "Organisationsprodukte",
@@ -1197,7 +1199,7 @@
         "team_name_description": "Geben Sie Ihrem Team einen beschreibenden Namen.",
         "team_products": "Teamprodukte",
         "this_action_cannot_be_undone_if_it_s_gone_it_s_gone": "Diese Aktion kann nicht rückgängig gemacht werden. Wenn es weg ist, ist es weg.",
-        "you_are_not_part_of_any_team": "Sie sind kein Mitglied eines Teams."
+        "your_team": "Dein Team"
       }
     },
     "surveys": {

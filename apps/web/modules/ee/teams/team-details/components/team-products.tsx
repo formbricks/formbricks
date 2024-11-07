@@ -125,7 +125,7 @@ export const TeamProducts = ({
                 {products.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      {t("environments.settings.teams.no_products_found")}
+                      {t("environments.settings.teams.empty_product_message")}
                     </TableCell>
                   </TableRow>
                 )}

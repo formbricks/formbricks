@@ -1071,6 +1071,7 @@
         "manage_members_description": "Adicionar ou remover membros na sua organização.",
         "member_deleted_successfully": "Membro deletado com sucesso",
         "member_invited_successfully": "Membro convidado com sucesso",
+        "member_role_info_message": "Os membros não têm acesso aos produtos por padrão. Adicione-os às equipes depois que entrarem para gerenciar o acesso.",
         "once_its_gone_its_gone": "Uma vez que se foi, se foi.",
         "only_org_owner_can_perform_action": "Somente o Dono pode deletar a organização.",
         "organization_created_successfully": "Organização criada com sucesso!",
@@ -1162,6 +1163,8 @@
         "create": "Criar",
         "create_new_team": "Criar nova equipe",
         "delete_team": "Excluir equipe",
+        "empty_product_message": "Você ainda não adicionou nenhum produto. Atribua um produto à equipe para conceder acesso aos membros.",
+        "empty_teams_state": "Você ainda não tem equipes. Crie sua primeira equipe para gerenciar o acesso aos produtos para os membros da sua organização.",
         "enter_team_name": "Insira o nome da equipe",
         "invite_member": "Convidar membro",
         "join_team": "Entrar na equipe",
@@ -1173,7 +1176,6 @@
         "members_added_successfully": "Membros adicionados com sucesso",
         "no_members_found": "Nenhum membro encontrado",
         "no_other_teams_found": "Nenhuma outra equipe encontrada",
-        "no_products_found": "Nenhum produto encontrado",
         "org_owner_and_managers_can_only_be_team_admin": "Proprietários e gerentes da organização só podem ser administradores da equipe.",
         "organization_members": "Membros da organização",
         "organization_products": "Produtos da organização",
@@ -1197,7 +1199,7 @@
         "team_name_description": "Dê um nome descritivo à sua equipe.",
         "team_products": "Produtos da equipe",
         "this_action_cannot_be_undone_if_it_s_gone_it_s_gone": "Esta ação não pode ser desfeita. Se foi, foi.",
-        "you_are_not_part_of_any_team": "Você não faz parte de nenhuma equipe."
+        "your_team": "Sua equipe"
       }
     },
     "surveys": {

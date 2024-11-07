@@ -162,7 +162,11 @@ test.describe("Create, update and delete team", async () => {
     await expect(page.getByRole("button", { name: "Products" })).toBeVisible();
     await page.getByRole("button", { name: "Products" }).click();
 
-    await expect(page.getByRole("cell", { name: "No products found" })).toBeVisible();
+    await expect(
+      page.getByRole("cell", {
+        name: "You haven't added any products yet. Assign a product to the team to grant access to its members.",
+      })
+    ).toBeVisible();
 
     await expect(page.getByRole("button", { name: "Add Product" })).toBeVisible();
     await page.getByRole("button", { name: "Add Product" }).click();
@@ -172,7 +176,11 @@ test.describe("Create, update and delete team", async () => {
 
     await page.getByRole("button", { name: "Add" }).click();
 
-    await expect(page.getByRole("cell", { name: "No products found" })).toBeHidden();
+    await expect(
+      page.getByRole("cell", {
+        name: "You haven't added any products yet. Assign a product to the team to grant access to its members.",
+      })
+    ).toBeHidden();
 
     await page.getByRole("combobox").click();
 
@@ -230,6 +238,10 @@ test.describe("Create, update and delete team", async () => {
 
     await page.getByRole("button", { name: "Delete", exact: true }).click();
 
-    await expect(page.getByRole("cell", { name: "You are not part of any team." })).toBeVisible();
+    await expect(
+      page.getByRole("cell", {
+        name: "You don’t have any teams yet. Create your first team to manage product access for members of your organization.",
+      })
+    ).toBeVisible();
   });
 });
