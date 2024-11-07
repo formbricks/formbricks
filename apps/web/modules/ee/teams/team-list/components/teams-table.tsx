@@ -4,6 +4,7 @@ import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create
 import { TOtherTeam, TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { Badge } from "@formbricks/ui/components/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import {
   Table,
@@ -40,14 +41,14 @@ export const TeamsTable = ({ teams, organizationId, isOwnerOrManager }: YourTeam
               <TableHeader>
                 <TableRow className="bg-slate-100">
                   <TableHead>{t("common.name")}</TableHead>
-                  <TableHead>{t("common.role")}</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {allTeams.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      {t("environments.settings.teams.you_are_not_part_of_any_team")}
+                      {t("environments.settings.teams.empty_teams_state")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -59,7 +60,9 @@ export const TeamsTable = ({ teams, organizationId, isOwnerOrManager }: YourTeam
                       </Link>{" "}
                       ({team.memberCount} {t("common.members")})
                     </TableCell>
-                    <TableCell className="capitalize">{team.userRole}</TableCell>
+                    <TableCell className="flex justify-end">
+                      <Badge text={t("environments.settings.teams.your_team")} type="success" size={"tiny"} />
+                    </TableCell>
                   </TableRow>
                 ))}
                 {otherTeams.map((team) => (
@@ -67,7 +70,7 @@ export const TeamsTable = ({ teams, organizationId, isOwnerOrManager }: YourTeam
                     <TableCell>
                       {isOwnerOrManager ? (
                         <Link href={`teams/${team.id}`} className="font-semibold hover:underline">
-                          {team.name}
+                          {team.name}{" "}
                         </Link>
                       ) : (
                         team.name
