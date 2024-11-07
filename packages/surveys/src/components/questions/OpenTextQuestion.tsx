@@ -138,7 +138,7 @@ export const OpenTextQuestion = ({
                 maxlength={question.inputType === "text" ? question.maxLength || undefined : undefined}
               />
             )}
-            {question.inputType === "text" && question.maxLength && (
+            {question.inputType === "text" && question.maxLength !== undefined && (
               <span
                 className={`fb-text-xs ${currentLength >= question.maxLength ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
                 {currentLength}/{question.maxLength}

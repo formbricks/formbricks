@@ -3,7 +3,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
@@ -72,6 +72,14 @@ export const OpenQuestionForm = ({
 
   const [parent] = useAutoAnimate();
   const [isCharLimitEnabled, setIsCharLimitEnabled] = useState(false);
+
+  useEffect(() => {
+    if (question.minLength !== undefined || question.maxLength !== undefined) {
+      setIsCharLimitEnabled(true);
+    } else {
+      setIsCharLimitEnabled(false);
+    }
+  }, []);
 
   return (
     <form>
@@ -162,6 +170,9 @@ export const OpenQuestionForm = ({
             isChecked={isCharLimitEnabled}
             onToggle={(checked: boolean) => {
               setIsCharLimitEnabled(checked);
+              updateQuestion(questionIdx, {
+                isCharLimitEnabled: checked,
+              });
               if (!checked) {
                 updateQuestion(questionIdx, {
                   minLength: undefined,
@@ -181,7 +192,9 @@ export const OpenQuestionForm = ({
                   id="minLength"
                   name="minLength"
                   type="number"
+                  min={0}
                   value={question.minLength || ""}
+                  aria-label={t("common.minimum")}
                   className="bg-white"
                   onChange={(e) =>
                     updateQuestion(questionIdx, {
@@ -196,6 +209,8 @@ export const OpenQuestionForm = ({
                   id="maxLength"
                   name="maxLength"
                   type="number"
+                  min={0}
+                  aria-label={t("common.maximum")}
                   value={question.maxLength || ""}
                   className="bg-white"
                   onChange={(e) =>
