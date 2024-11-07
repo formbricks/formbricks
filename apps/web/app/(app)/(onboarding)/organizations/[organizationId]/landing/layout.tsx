@@ -1,8 +1,9 @@
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getUserProducts } from "@formbricks/lib/product/service";
 
 const LandingLayout = async ({ children, params }) => {
   const session = await getServerSession(authOptions);
@@ -11,8 +12,22 @@ const LandingLayout = async ({ children, params }) => {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
-  const { isMember } = getAccessFlags(membership?.organizationRole);
-  if (!isMember) return notFound();
+
+  if (!membership) {
+    return notFound();
+  }
+
+  const products = await getUserProducts(session.user.id, params.organizationId);
+
+  if (products.length !== 0) {
+    const firstProduct = products[0];
+    const environments = await getEnvironments(firstProduct.id);
+    const prodEnvironment = environments.find((e) => e.type === "production");
+
+    if (prodEnvironment) {
+      return redirect(`/environments/${prodEnvironment.id}/`);
+    }
+  }
 
   return <>{children}</>;
 };
