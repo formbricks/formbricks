@@ -2278,6 +2278,7 @@ const employeeSatisfaction = (locale: string): TTemplate => {
 };
 
 const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("uncover_strengths_and_weaknesses_name", locale),
     role: "productManager",
@@ -2285,7 +2286,7 @@ const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
     channels: ["app", "link"],
     description: translate("uncover_strengths_and_weaknesses_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("uncover_strengths_and_weaknesses_name", locale),
       questions: [
         {
@@ -2684,7 +2685,7 @@ const feedbackBox = (locale: string): TTemplate => {
     channels: ["app"],
     description: translate("feedback_box_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("feedback_box_name", locale),
       questions: [
         {
@@ -3099,6 +3100,7 @@ const NPS = (locale: string): TTemplate => {
 };
 
 const customerSatisfactionScore = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -3118,8 +3120,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
     channels: ["app", "link", "website"],
     description: translate("csat_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
-      name: translate("profuct_csat", locale),
+      ...localSurvey,
+      name: translate("csat_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -3869,8 +3871,14 @@ const professionalDevelopmentSurvey = (locale: string): TTemplate => {
           required: true,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: translate("yes", locale) } },
-            { id: createId(), label: { default: translate("no", locale) } },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_1_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_1_choice_2", locale) },
+            },
           ],
           buttonLabel: { default: translate("next", locale) },
           backButtonLabel: { default: translate("back", locale) },
@@ -4476,7 +4484,7 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
           range: 5,
           scale: "number",
           headline: { default: translate("measure_task_accomplishment_question_2_headline", locale) },
-          required: true,
+          required: false,
           lowerLabel: { default: translate("measure_task_accomplishment_question_2_lower_label", locale) },
           upperLabel: { default: translate("measure_task_accomplishment_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
@@ -5095,7 +5103,7 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
     channels: ["website", "link", "app"],
     description: translate("understand_purchase_intention_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("understand_purchase_intention_name", locale),
       questions: [
         {

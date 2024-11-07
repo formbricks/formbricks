@@ -1,8 +1,8 @@
 import { XCircleIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 
-export const ErrorComponent: React.FC = async ({}) => {
-  const t = await getTranslations();
+export const ErrorComponent: React.FC = () => {
+  const t = useTranslations();
   return (
     <div className="rounded-lg bg-red-50 p-4">
       <div className="flex">

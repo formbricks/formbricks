@@ -237,7 +237,6 @@ export const ThemeStyling = ({
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
             <div className="sticky top-4 mb-4 h-[600px]">
               <ThemeStylingPreviewSurvey
-                setQuestionId={(_id: string) => {}}
                 survey={getPreviewSurvey(locale) as TSurvey}
                 product={{
                   ...product,
