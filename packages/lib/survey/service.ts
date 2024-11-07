@@ -402,7 +402,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
+    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
+      updatedSurvey;
 
     if (languages) {
       // Process languages update logic here
@@ -543,6 +544,23 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           environmentId,
         });
       }
+    }
+
+    if (followUps) {
+      data.followUps = {
+        updateMany: followUps.map((followUp) => {
+          return {
+            where: {
+              id: followUp.id,
+            },
+            data: {
+              name: followUp.name,
+              trigger: followUp.trigger,
+              action: followUp.action,
+            },
+          };
+        }),
+      };
     }
 
     data.questions = questions.map((question) => {

@@ -6,7 +6,7 @@ import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environme
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeOffIcon, HandshakeIcon, WorkflowIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -51,7 +51,7 @@ type EmailSendToOption = {
   id: string;
 };
 
-export const AddFollowUpModal = ({
+export const FollowUpModal = ({
   localSurvey,
   open,
   setOpen,
@@ -61,6 +61,7 @@ export const AddFollowUpModal = ({
   mode = "create",
 }: AddFollowUpModalProps) => {
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
@@ -114,6 +115,88 @@ export const AddFollowUpModal = ({
   const formSubmitting = form.formState.isSubmitting;
   const triggerType = form.watch("triggerType");
 
+  const handleSubmit = async (data: TCreateSurveyFollowUpForm) => {
+    if (data.triggerType === "endings") {
+      if (!data.endingIds || !data.endingIds?.length) {
+        form.setError("endingIds", {
+          type: "manual",
+          message: "Please select at least one ending",
+        });
+        return;
+      }
+    }
+
+    if (mode === "edit") {
+      if (!defaultValues?.surveyFollowUpId) {
+        console.error("No survey follow up id provided, can't update the survey follow up");
+        return;
+      }
+
+      const res = await updateSurveyFollowUpAction({
+        surveyId: localSurvey.id,
+        surveyFollowUpId: defaultValues.surveyFollowUpId,
+        followUpData: {
+          name: data.name,
+          trigger: {
+            type: data.triggerType,
+            properties: data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
+          },
+          action: {
+            type: "send-email",
+            properties: {
+              to: data.emailTo,
+              from: mailFrom,
+              replyTo: data.replyTo,
+              subject: data.subject,
+              body: data.body,
+            },
+          },
+        },
+      });
+
+      if (res?.data) {
+        toast.success("Survey follow up updated successfully");
+        setOpen(false);
+
+        router.refresh();
+      } else {
+        toast.error("Something went wrong");
+      }
+
+      return;
+    }
+
+    const res = await createSurveyFollowUpAction({
+      surveyId: localSurvey.id,
+      followUpData: {
+        name: data.name,
+        trigger: {
+          type: data.triggerType,
+          properties: data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
+        },
+        action: {
+          type: "send-email",
+          properties: {
+            to: data.emailTo,
+            from: mailFrom,
+            replyTo: data.replyTo,
+            subject: data.subject,
+            body: data.body,
+          },
+        },
+      },
+    });
+
+    if (res?.data) {
+      toast.success("Survey follow up created successfully");
+      setOpen(false);
+
+      router.refresh();
+    } else {
+      toast.error("Something went wrong");
+    }
+  };
+
   return (
     <Modal open={open} setOpen={setOpen} noPadding size="xl">
       <div className="flex h-full flex-col rounded-lg">
@@ -137,91 +220,8 @@ export const AddFollowUpModal = ({
       </div>
 
       <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit(async (data) => {
-            if (data.triggerType === "endings") {
-              if (!data.endingIds || !data.endingIds?.length) {
-                form.setError("endingIds", {
-                  type: "manual",
-                  message: "Please select at least one ending",
-                });
-                return;
-              }
-            }
-
-            if (mode === "edit") {
-              if (!defaultValues?.surveyFollowUpId) {
-                console.error("No survey follow up id provided, can't update the survey follow up");
-                return;
-              }
-
-              const res = await updateSurveyFollowUpAction({
-                surveyId: localSurvey.id,
-                surveyFollowUpId: defaultValues.surveyFollowUpId,
-                followUpData: {
-                  name: data.name,
-                  trigger: {
-                    type: data.triggerType,
-                    properties:
-                      data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
-                  },
-                  action: {
-                    type: "send-email",
-                    properties: {
-                      to: data.emailTo,
-                      from: mailFrom,
-                      replyTo: data.replyTo,
-                      subject: data.subject,
-                      body: data.body,
-                    },
-                  },
-                },
-              });
-
-              if (res?.data) {
-                toast.success("Survey follow up updated successfully");
-                setOpen(false);
-
-                router.refresh();
-              } else {
-                toast.error("Something went wrong");
-              }
-
-              return;
-            }
-
-            const res = await createSurveyFollowUpAction({
-              surveyId: localSurvey.id,
-              followUpData: {
-                name: data.name,
-                trigger: {
-                  type: data.triggerType,
-                  properties:
-                    data.endingIds && data.endingIds.length > 0 ? { endingIds: data.endingIds } : null,
-                },
-                action: {
-                  type: "send-email",
-                  properties: {
-                    to: data.emailTo,
-                    from: mailFrom,
-                    replyTo: data.replyTo,
-                    subject: data.subject,
-                    body: data.body,
-                  },
-                },
-              },
-            });
-
-            if (res?.data) {
-              toast.success("Survey follow up created successfully");
-              setOpen(false);
-
-              router.refresh();
-            } else {
-              toast.error("Something went wrong");
-            }
-          })}>
-          <div className="mb-12 max-h-[600px] overflow-auto px-6 py-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <div className="mb-12 h-full max-h-[600px] overflow-auto px-6 py-4" ref={containerRef}>
             <div className="flex flex-col space-y-4">
               {/* workflow name */}
               <div className="flex flex-col space-y-2">
@@ -231,9 +231,16 @@ export const AddFollowUpModal = ({
                   render={({ field }) => {
                     return (
                       <FormItem>
-                        <FormLabel htmlFor="name">Follow-up name:</FormLabel>
+                        <FormLabel className="text-base" htmlFor="name">
+                          Follow-up name:
+                        </FormLabel>
                         <FormControl>
-                          <Input {...field} className="max-w-80" isInvalid={!!formErrors.name} />
+                          <Input
+                            {...field}
+                            className="max-w-80"
+                            isInvalid={!!formErrors.name}
+                            placeholder="Name of your follow-up"
+                          />
                         </FormControl>
                       </FormItem>
                     );
@@ -283,7 +290,7 @@ export const AddFollowUpModal = ({
                     render={({ field }) => {
                       return (
                         <div className="flex flex-col space-y-2">
-                          <h3 className="font-medium text-slate-700">Select endings: </h3>
+                          <h3 className="text-sm font-medium text-slate-700">Select endings: </h3>
                           <div className="flex flex-col space-y-2">
                             {localSurvey.endings.map((ending) => {
                               const getEndingLabel = (): string => {
@@ -339,7 +346,7 @@ export const AddFollowUpModal = ({
                 <h2 className="text-lg font-medium text-slate-900">Action</h2>
                 <div className="flex flex-col space-y-4">
                   {/* email setup */}
-                  <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col space-y-4">
                     <h2 className="text-lg font-medium text-slate-900">Email setup</h2>
                     {/* To */}
 
@@ -349,7 +356,7 @@ export const AddFollowUpModal = ({
                         name="emailTo"
                         render={({ field }) => {
                           return (
-                            <div>
+                            <div className="flex flex-col space-y-2">
                               <FormLabel htmlFor="emailTo" className="font-medium text-slate-900">
                                 To
                               </FormLabel>
@@ -414,7 +421,7 @@ export const AddFollowUpModal = ({
                     {/* From */}
 
                     <div className="flex flex-col space-y-2">
-                      <h3 className="font-medium text-slate-900">From</h3>
+                      <h3 className="text-sm font-medium text-slate-900">From</h3>
                       <p className="text-sm text-slate-500">Email address to send the email from</p>
 
                       <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
@@ -451,7 +458,7 @@ export const AddFollowUpModal = ({
 
                   {/* email content */}
 
-                  <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col space-y-4">
                     <h2 className="text-lg font-medium text-slate-900">Email content</h2>
                     <FormField
                       control={form.control}

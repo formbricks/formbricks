@@ -1,5 +1,5 @@
-import { AddFollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddFollowUpModal";
 import { FollowUpItem } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpItem";
+import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
@@ -48,7 +48,7 @@ export const FollowUpsView = ({
         })}
       </div>
 
-      <AddFollowUpModal
+      <FollowUpModal
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         open={addFollowUpModalOpen}

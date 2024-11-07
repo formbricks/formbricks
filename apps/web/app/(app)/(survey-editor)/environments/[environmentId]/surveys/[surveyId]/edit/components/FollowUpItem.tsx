@@ -1,5 +1,5 @@
 import { deleteSurveyFollowUpAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { AddFollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddFollowUpModal";
+import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -38,14 +38,14 @@ export const FollowUpItem = ({
           }}>
           <h3 className="text-slate-900">{followUp.name}</h3>
           <div className="flex space-x-2">
-            <div className="w-fit rounded-md border border-slate-300 bg-slate-300 px-2 py-1">
-              <span className="text-sm text-slate-900">
+            <div className="flex w-fit items-center justify-center rounded-md border border-slate-300 bg-slate-300 px-3 py-1">
+              <span className="text-xs text-slate-900">
                 {followUp.trigger.type === "response" ? "Any response" : "Ending(s)"}
               </span>
             </div>
 
-            <div className="w-fit rounded-md border border-slate-300 bg-slate-300 px-2 py-1">
-              <span className="text-sm text-slate-900">Send Email</span>
+            <div className="w-fit items-center justify-center rounded-md border border-slate-300 bg-slate-300 px-3 py-1">
+              <span className="text-xs text-slate-900">Send Email</span>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ export const FollowUpItem = ({
         </div>
       </div>
 
-      <AddFollowUpModal
+      <FollowUpModal
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         open={editFollowUpModalOpen}
