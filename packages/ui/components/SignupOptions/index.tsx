@@ -50,7 +50,6 @@ export const SignupOptions = ({
   const [showLogin, setShowLogin] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
-  const [isButtonEnabled, setButtonEnabled] = useState(true);
   const t = useTranslations();
 
   const ZSignupInput = z.object({
@@ -74,15 +73,7 @@ export const SignupOptions = ({
 
   const router = useRouter();
 
-  const formRef = useRef<HTMLFormElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
-
-  const checkFormValidity = () => {
-    // If all fields are filled, enable the button
-    if (formRef.current) {
-      setButtonEnabled(formRef.current.checkValidity());
-    }
-  };
 
   const handleSubmit = async (data: TSignupInput) => {
     if (!isValid) {
@@ -110,7 +101,7 @@ export const SignupOptions = ({
     <div className="space-y-2">
       {emailAuthEnabled && (
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} ref={formRef} onChange={checkFormValidity}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
             {showLogin && (
               <div>
                 <div className="space-y-2">
@@ -123,6 +114,7 @@ export const SignupOptions = ({
                           <div>
                             <Input
                               value={field.value}
+                              name="name"
                               autoFocus
                               onChange={(name) => field.onChange(name)}
                               placeholder="Full name"
@@ -143,9 +135,10 @@ export const SignupOptions = ({
                           <div>
                             <Input
                               value={field.value}
+                              name="email"
                               onChange={(email) => field.onChange(email)}
                               defaultValue={emailFromSearchParams}
-                              placeholder="engineering@acme.com"
+                              placeholder="work@email.com"
                               className="bg-white"
                             />
                             {error?.message && <FormError className="text-left">{error.message}</FormError>}
@@ -187,7 +180,7 @@ export const SignupOptions = ({
                 type="submit"
                 className="h-10 w-full justify-center"
                 loading={signingUp}
-                disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
+                disabled={!form.formState.isValid}>
                 {t("auth.continue_with_email")}
               </Button>
             )}
@@ -197,7 +190,6 @@ export const SignupOptions = ({
                 type="button"
                 onClick={() => {
                   setShowLogin(true);
-                  setButtonEnabled(false);
                   // Add a slight delay before focusing the input field to ensure it's visible
                   setTimeout(() => nameRef.current?.focus(), 100);
                 }}

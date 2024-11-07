@@ -26,7 +26,7 @@ export const ZUserName = z
   .string()
   .trim()
   .min(1, { message: "Name should be at least 1 character long" })
-  .regex(/^[a-zA-Z\s]+$/, { message: "Name should only contain letters and spaces" });
+  .regex(/^[a-zA-Z0-9\s]+$/, { message: "Name should only contain letters, numbers, and spaces" });
 
 export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;
 
