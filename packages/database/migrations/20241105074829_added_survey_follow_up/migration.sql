@@ -13,3 +13,5 @@ CREATE TABLE "SurveyFollowUp" (
 
 -- AddForeignKey
 ALTER TABLE "SurveyFollowUp" ADD CONSTRAINT "SurveyFollowUp_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "Response" ADD COLUMN     "endingId" TEXT;
