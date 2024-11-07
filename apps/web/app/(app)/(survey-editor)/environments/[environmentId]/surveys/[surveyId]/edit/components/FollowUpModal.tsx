@@ -6,7 +6,7 @@ import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environme
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeOffIcon, HandshakeIcon, WorkflowIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
@@ -209,6 +209,35 @@ export const FollowUpModal = ({
       toast.error("Something went wrong");
     }
   };
+
+  useEffect(() => {
+    if (!open) {
+      setFirstRender(true); // Reset when the modal is closed
+    }
+  }, [open]);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (open && containerRef.current) {
+      timeoutId = setTimeout(() => {
+        if (!containerRef.current) return;
+
+        const scrollTop = containerRef.current.scrollTop;
+
+        if (scrollTop > 0) {
+          containerRef.current.scrollTo(0, 0);
+        }
+      }, 0);
+    }
+
+    // Clear the timeout when the effect is cleaned up or when open changes
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [open, firstRender]);
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding size="xl">

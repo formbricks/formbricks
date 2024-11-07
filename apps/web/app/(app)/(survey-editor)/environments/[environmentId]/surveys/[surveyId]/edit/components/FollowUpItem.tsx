@@ -55,10 +55,9 @@ export const FollowUpItem = ({
             size="sm"
             onClick={async (e) => {
               e.stopPropagation();
-
               setDeleteFollowUpModalOpen(true);
             }}>
-            <TrashIcon className="h-4 w-4 text-red-500" />
+            <TrashIcon className="h-4 w-4 text-slate-500" />
           </Button>
         </div>
       </div>

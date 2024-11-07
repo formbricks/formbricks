@@ -22,14 +22,31 @@ export const FollowUpsView = ({
   return (
     <div className="mt-12 space-y-4 p-5">
       <div className="flex justify-end">
-        <Button variant="primary" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
-          + New
-        </Button>
+        {localSurvey.followUps.length ? (
+          <Button variant="primary" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
+            + New
+          </Button>
+        ) : null}
       </div>
 
       <div>
         {!localSurvey.followUps.length && (
-          <div className="text-center text-gray-500">No follow-ups added</div>
+          <div className="flex flex-col items-center space-y-2 text-center">
+            <p className="text-lg font-medium text-slate-900">Keep the Conversation Flowing</p>
+            <p className="text-sm font-medium text-slate-500">
+              Send personalized emails when a survey is completed or when responses meet specific conditions.
+              Choose whether to notify your team, yourself, or even the participant directly, keeping everyone
+              in the loop on the insights that matter most.
+            </p>
+
+            <Button
+              className="w-fit"
+              variant="primary"
+              size="sm"
+              onClick={() => setAddFollowUpModalOpen(true)}>
+              + New Follow-up
+            </Button>
+          </div>
         )}
       </div>
 
