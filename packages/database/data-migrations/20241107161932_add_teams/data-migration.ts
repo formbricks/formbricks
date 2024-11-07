@@ -6,7 +6,7 @@ const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 interface TInvite {
   organizationId: string;
-  role: "owner" | "admin" | "editor" | "developer" | "viewer";
+  deprecatedRole: "owner" | "admin" | "editor" | "developer" | "viewer";
   email: string;
   id: string;
   creatorId: string;
@@ -27,14 +27,14 @@ async function runMigration(): Promise<void> {
         select: {
           id: true,
           organizationId: true,
-          role: true,
+          deprecatedRole: true,
         },
-      })) as Pick<TInvite, "id" | "role" | "organizationId">[];
+      })) as Pick<TInvite, "id" | "deprecatedRole" | "organizationId">[];
 
       // Group invites by organizationId
       const groupInvitesMap = new Map<
         string,
-        { id: string; organizationId: string; role: TInvite["role"] }[]
+        { id: string; organizationId: string; deprecatedRole: TInvite["deprecatedRole"] }[]
       >();
       invites.forEach((invite) => {
         if (!groupInvitesMap.has(invite.organizationId)) {
@@ -49,8 +49,8 @@ async function runMigration(): Promise<void> {
       // Process each organization's invites to update roles accordingly
       await Promise.all(
         Array.from(groupInvites).map(async ([organizationId, organizationInvites]) => {
-          const adminInvites = organizationInvites.filter((invite) => invite.role === "admin");
-          const otherRoles = organizationInvites.filter((invite) => invite.role !== "admin");
+          const adminInvites = organizationInvites.filter((invite) => invite.deprecatedRole === "admin");
+          const otherRoles = organizationInvites.filter((invite) => invite.deprecatedRole !== "admin");
 
           // If no admin invites exist, skip this organization
           if (adminInvites.length === 0) {
