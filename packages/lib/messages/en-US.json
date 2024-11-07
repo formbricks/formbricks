@@ -1071,7 +1071,7 @@
         "manage_members_description": "Add or remove members in your organization.",
         "member_deleted_successfully": "Member deleted successfully",
         "member_invited_successfully": "Member invited successfully",
-        "member_role_info_message": "Mitglieder haben standardmäßig keinen Zugriff auf Produkte. Füge sie nach ihrem Beitritt zu Teams hinzu, um ihren Zugriff zu verwalten.",
+        "member_role_info_message": "Members don't have access to products by default. Add them to Teams after joining to manage their access.",
         "once_its_gone_its_gone": "Once it's gone, it's gone.",
         "only_org_owner_can_perform_action": "Only organization owners can access this setting.",
         "organization_created_successfully": "Organization created successfully!",
