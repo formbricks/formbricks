@@ -198,9 +198,9 @@ test.describe("Create, update and delete team", async () => {
 
     await expect(page.getByRole("heading", { name: "Configuration" })).toBeVisible();
 
-    await expect(page.getByRole("link", { name: "Teams" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Team Access" })).toBeVisible();
 
-    await page.getByRole("link", { name: "Teams" }).click();
+    await page.getByRole("link", { name: "Team Access" }).click();
     await page.getByRole("combobox").click();
 
     await page.getByText("Read & write").click();
