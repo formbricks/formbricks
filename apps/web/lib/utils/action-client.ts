@@ -22,7 +22,6 @@ export const actionClient = createSafeActionClient({
     }
 
     console.error("SERVER ERROR: ", e);
-    if (e.message) return e.message;
     return DEFAULT_SERVER_ERROR_MESSAGE;
   },
 });
