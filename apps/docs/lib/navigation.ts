@@ -127,7 +127,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Zapier", href: "/developer-docs/integrations/zapier" },
         ],
       },
-      { title: "Access Roles", href: "/global/access-roles" },
+      { title: "Organization and User Management", href: "/global/access-roles" },
       { title: "Styling Theme", href: "/global/styling-theme" },
     ],
   },

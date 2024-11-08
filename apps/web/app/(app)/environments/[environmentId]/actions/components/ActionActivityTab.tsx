@@ -1,9 +1,9 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -32,6 +32,7 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
       const getActiveInactiveSurveysResponse = await getActiveInactiveSurveysAction({
         actionClassId: actionClass.id,
       });
+      console.log(getActiveInactiveSurveysResponse, "randike");
       if (getActiveInactiveSurveysResponse?.data) {
         setActiveSurveys(getActiveInactiveSurveysResponse.data.activeSurveys);
         setInactiveSurveys(getActiveInactiveSurveysResponse.data.inactiveSurveys);

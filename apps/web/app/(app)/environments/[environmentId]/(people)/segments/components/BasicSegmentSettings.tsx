@@ -23,6 +23,7 @@ type TBasicSegmentSettingsTabProps = {
   initialSegment: TSegmentWithSurveyNames;
   attributeClasses: TAttributeClass[];
   isFormbricksCloud: boolean;
+  isReadOnly: boolean;
 };
 
 export const BasicSegmentSettings = ({
@@ -31,6 +32,7 @@ export const BasicSegmentSettings = ({
   setOpen,
   attributeClasses,
   isFormbricksCloud,
+  isReadOnly,
 }: TBasicSegmentSettingsTabProps) => {
   const router = useRouter();
   const t = useTranslations();
@@ -150,6 +152,7 @@ export const BasicSegmentSettings = ({
                 <div className="relative flex flex-col gap-1">
                   <Input
                     value={segment.title}
+                    disabled={isReadOnly}
                     placeholder={t("environments.segments.ex_power_users")}
                     onChange={(e) => {
                       setSegment((prev) => ({
@@ -167,6 +170,7 @@ export const BasicSegmentSettings = ({
                 <div className="relative flex flex-col gap-1">
                   <Input
                     value={segment.description ?? ""}
+                    disabled={isReadOnly}
                     placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                     onChange={(e) => {
                       setSegment((prev) => ({
@@ -197,10 +201,15 @@ export const BasicSegmentSettings = ({
                 setSegment={setSegment}
                 group={segment.filters}
                 attributeClasses={attributeClasses}
+                viewOnly={isReadOnly}
               />
 
               <div>
-                <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setAddFilterModalOpen(true)}
+                  disabled={isReadOnly}>
                   {t("common.add_filter")}
                 </Button>
               </div>
@@ -229,28 +238,30 @@ export const BasicSegmentSettings = ({
               />
             )}
 
-            <div className="flex w-full items-center justify-between pt-4">
-              <Button
-                type="button"
-                variant="warn"
-                loading={isDeletingSegment}
-                onClick={() => {
-                  setIsDeleteSegmentModalOpen(true);
-                }}
-                EndIcon={Trash2}
-                endIconClassName="p-0.5">
-                {t("common.delete")}
-              </Button>
-              <Button
-                type="submit"
-                loading={isUpdatingSegment}
-                onClick={() => {
-                  handleUpdateSegment();
-                }}
-                disabled={isSaveDisabled}>
-                {t("common.save_changes")}
-              </Button>
-            </div>
+            {!isReadOnly && (
+              <div className="flex w-full items-center justify-between pt-4">
+                <Button
+                  type="button"
+                  variant="warn"
+                  loading={isDeletingSegment}
+                  onClick={() => {
+                    setIsDeleteSegmentModalOpen(true);
+                  }}
+                  EndIcon={Trash2}
+                  endIconClassName="p-0.5">
+                  {t("common.delete")}
+                </Button>
+                <Button
+                  type="submit"
+                  loading={isUpdatingSegment}
+                  onClick={() => {
+                    handleUpdateSegment();
+                  }}
+                  disabled={isSaveDisabled}>
+                  {t("common.save_changes")}
+                </Button>
+              </div>
+            )}
 
             {isDeleteSegmentModalOpen && (
               <ConfirmDeleteSegmentModal

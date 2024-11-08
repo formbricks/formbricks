@@ -71,7 +71,6 @@ export const PricingTable = ({
 
   const openCustomerPortal = async () => {
     const manageSubscriptionResponse = await manageSubscriptionAction({
-      organizationId: organization.id,
       environmentId,
     });
     if (manageSubscriptionResponse?.data) {
@@ -82,7 +81,6 @@ export const PricingTable = ({
   const upgradePlan = async (priceLookupKey) => {
     try {
       const upgradePlanResponse = await upgradePlanAction({
-        organizationId: organization.id,
         environmentId,
         priceLookupKey,
       });

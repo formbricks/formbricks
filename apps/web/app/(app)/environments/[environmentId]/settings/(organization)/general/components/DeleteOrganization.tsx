@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { Input } from "@formbricks/ui/components/Input";
@@ -45,7 +46,7 @@ export const DeleteOrganization = ({
   const deleteDisabledWarning = useMemo(() => {
     if (isUserOwner) return t("environments.settings.general.cannot_delete_only_organization");
 
-    return t("environments.settings.general.only_owner_can_delete_organization");
+    return t("environments.settings.general.only_org_owner_can_perform_action");
   }, [isUserOwner]);
 
   return (
@@ -65,7 +66,11 @@ export const DeleteOrganization = ({
           </Button>
         </div>
       )}
-      {isDeleteDisabled && <p className="text-sm text-red-700">{deleteDisabledWarning}</p>}
+      {isDeleteDisabled && (
+        <Alert variant="warning">
+          <AlertDescription>{deleteDisabledWarning}</AlertDescription>
+        </Alert>
+      )}
       <DeleteOrganizationModal
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
