@@ -1,6 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { PRODUCT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
@@ -33,6 +34,8 @@ const Page = async ({ params }) => {
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
 
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
@@ -41,6 +44,7 @@ const Page = async ({ params }) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="billing"
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -9,7 +10,6 @@ import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;

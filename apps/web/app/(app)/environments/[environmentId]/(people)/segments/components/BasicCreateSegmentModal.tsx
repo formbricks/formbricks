@@ -1,11 +1,11 @@
 "use client";
 
+import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";

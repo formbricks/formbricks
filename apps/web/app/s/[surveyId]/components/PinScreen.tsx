@@ -3,9 +3,9 @@
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";

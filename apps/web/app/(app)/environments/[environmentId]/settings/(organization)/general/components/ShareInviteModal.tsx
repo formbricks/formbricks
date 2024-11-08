@@ -65,7 +65,7 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
               title={t("environments.settings.general.copy_invite_link_to_clipboard")}
               aria-label="Copy invite link to clipboard"
               EndIcon={CopyIcon}>
-              {t("common.copy_url")}
+              {t("common.copy_link")}
             </Button>
           </div>
         </div>

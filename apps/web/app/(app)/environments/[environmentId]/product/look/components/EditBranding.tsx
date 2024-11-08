@@ -14,6 +14,7 @@ interface EditFormbricksBrandingProps {
   product: TProduct;
   canRemoveBranding: boolean;
   environmentId: string;
+  isReadOnly?: boolean;
 }
 
 export const EditFormbricksBranding = ({
@@ -21,6 +22,7 @@ export const EditFormbricksBranding = ({
   product,
   canRemoveBranding,
   environmentId,
+  isReadOnly,
 }: EditFormbricksBrandingProps) => {
   const t = useTranslations();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
@@ -56,7 +58,7 @@ export const EditFormbricksBranding = ({
           id={`branding-${type}`}
           checked={isBrandingEnabled}
           onCheckedChange={toggleBranding}
-          disabled={!canRemoveBranding || updatingBranding}
+          disabled={!canRemoveBranding || updatingBranding || isReadOnly}
         />
         <Label htmlFor={`branding-${type}`}>
           {t("environments.product.look.show_formbricks_branding_in", {

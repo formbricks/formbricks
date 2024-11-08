@@ -1,5 +1,5 @@
+import { sendPasswordResetNotifyEmail } from "@/modules/email";
 import { prisma } from "@formbricks/database";
-import { sendPasswordResetNotifyEmail } from "@formbricks/email";
 import { verifyToken } from "@formbricks/lib/jwt";
 
 export const POST = async (request: Request) => {
