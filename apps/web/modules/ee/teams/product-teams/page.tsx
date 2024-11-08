@@ -1,6 +1,7 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { AccessView } from "@/modules/ee/teams/product-teams/components/access-view";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -12,6 +13,7 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { getTeamsByOrganizationId, getTeamsByProductId } from "./lib/teams";
 
 export const ProductTeams = async ({ params }: { params: { environmentId: string } }) => {
+  const t = await getTranslations();
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -19,13 +21,13 @@ export const ProductTeams = async ({ params }: { params: { environmentId: string
   ]);
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error(t("common.session_not_found"));
   }
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -37,20 +39,20 @@ export const ProductTeams = async ({ params }: { params: { environmentId: string
   const teams = await getTeamsByProductId(product.id);
 
   if (!teams) {
-    throw new Error("Teams not found");
+    throw new Error(t("common.teams_not_found"));
   }
 
   const organizationTeams = await getTeamsByOrganizationId(organization.id);
 
   if (!organizationTeams) {
-    throw new Error("Organization Teams not found");
+    throw new Error(t("common.organization_teams_not_found"));
   }
 
   const isOwnerOrManager = isOwner || isManager;
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation
           environmentId={params.environmentId}
           activeId="teams"
