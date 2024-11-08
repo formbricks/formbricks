@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/product/general/actions";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -21,6 +22,7 @@ export const DeleteProductRender = ({
   isUserAdminOrOwner,
   product,
 }: DeleteProductRenderProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -28,7 +30,7 @@ export const DeleteProductRender = ({
     setIsDeleting(true);
     const deleteProductResponse = await deleteProductAction({ productId: product.id });
     if (deleteProductResponse?.data) {
-      toast.success("Product deleted successfully.");
+      toast.success(t("environments.product.general.product_deleted_successfully"));
       router.push("/");
     } else {
       const errorMessage = getFormattedErrorMessage(deleteProductResponse);
@@ -43,16 +45,20 @@ export const DeleteProductRender = ({
       {!isDeleteDisabled && (
         <div>
           <p className="text-sm text-slate-900">
-            Delete {truncate(product.name, 30)}
-            &nbsp;incl. all surveys, responses, people, actions and attributes.{" "}
-            <strong>This action cannot be undone.</strong>
+            {t(
+              "environments.product.general.delete_product_name_includes_surveys_responses_people_and_more",
+              {
+                productName: truncate(product.name, 30),
+              }
+            )}{" "}
+            <strong>{t("environments.product.general.this_action_cannot_be_undone")}</strong>
           </p>
           <Button
             disabled={isDeleteDisabled}
             variant="warn"
             className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
             onClick={() => setIsDeleteDialogOpen(true)}>
-            Delete
+            {t("common.delete")}
           </Button>
         </div>
       )}
@@ -60,8 +66,8 @@ export const DeleteProductRender = ({
       {isDeleteDisabled && (
         <p className="text-sm text-red-700">
           {!isUserAdminOrOwner
-            ? "Only Admin or Owners can delete products."
-            : "This is your only product, it cannot be deleted. Create a new product first."}
+            ? t("environments.product.general.only_admin_or_owners_can_delete_products")
+            : t("environments.product.general.cannot_delete_only_product")}
         </p>
       )}
 
@@ -70,10 +76,9 @@ export const DeleteProductRender = ({
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteProduct}
-        text={`Are you sure you want to delete "${truncate(
-          product.name,
-          30
-        )}"? This action cannot be undone.`}
+        text={t("environments.product.general.delete_product_confirmation", {
+          productName: truncate(product.name, 30),
+        })}
         isDeleting={isDeleting}
       />
     </div>

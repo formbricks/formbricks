@@ -2,6 +2,7 @@
 
 import { CreateNewActionTab } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CreateNewActionTab";
 import { MousePointerClickIcon, PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -16,6 +17,7 @@ interface AddActionModalProps {
 }
 
 export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
   const { isViewer } = getAccessFlags(membershipRole);
@@ -28,7 +30,7 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
   return (
     <>
       <Button size="sm" loading={isLoading} onClick={() => setOpen(true)} EndIcon={PlusIcon}>
-        Add Action
+        {t("common.add_action")}
       </Button>
       <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>
         <div className="flex h-full flex-col rounded-lg">
@@ -39,9 +41,11 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
                   <MousePointerClickIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xl font-medium text-slate-700">Track New User Action</div>
+                  <div className="text-xl font-medium text-slate-700">
+                    {t("environments.actions.track_new_user_action")}
+                  </div>
                   <div className="text-sm text-slate-500">
-                    Track a user action to display surveys or create user segment.
+                    {t("environments.actions.track_user_action_to_display_surveys_or_create_user_segment")}
                   </div>
                 </div>
               </div>

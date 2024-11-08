@@ -1,6 +1,7 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -18,6 +19,7 @@ import { EditProductNameForm } from "./components/EditProductNameForm";
 import { EditWaitingTimeForm } from "./components/EditWaitingTimeForm";
 
 const Page = async ({ params }: { params: { environmentId: string } }) => {
+  const t = await getTranslations();
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -25,13 +27,13 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   ]);
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("environments.product.general.product_not_found"));
   }
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error(t("common.session_not_found"));
   }
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -46,7 +48,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation
           environmentId={params.environmentId}
           activeId="general"
@@ -54,23 +56,25 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
         />
       </PageHeader>
 
-      <SettingsCard title="Product Name" description="Change your products name.">
+      <SettingsCard
+        title={t("common.product_name")}
+        description={t("environments.product.general.product_name_settings_description")}>
         <EditProductNameForm product={product} isProductNameEditDisabled={isProductNameEditDisabled} />
       </SettingsCard>
       <SettingsCard
-        title="Recontact Waiting Time"
-        description="Control how frequently users can be surveyed across all app surveys.">
+        title={t("environments.product.general.recontact_waiting_time")}
+        description={t("environments.product.general.recontact_waiting_time_settings_description")}>
         <EditWaitingTimeForm product={product} />
       </SettingsCard>
       <SettingsCard
-        title="Delete Product"
-        description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
+        title={t("environments.product.general.delete_product")}
+        description={t("environments.product.general.delete_product_settings_description")}>
         <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
       <div>
-        <SettingsId title="Product ID" id={product.id}></SettingsId>
+        <SettingsId title={t("common.product_id")} id={product.id}></SettingsId>
         {!IS_FORMBRICKS_CLOUD && (
-          <SettingsId title="Formbricks version" id={packageJson.version}></SettingsId>
+          <SettingsId title={t("common.formbricks_version")} id={packageJson.version}></SettingsId>
         )}
       </div>
     </PageContentWrapper>

@@ -242,6 +242,8 @@ export const surveys = {
     },
   },
   germanCreate: {
+    next: "Weiter",
+    back: "Zurück",
     welcomeCard: {
       headline: "Willkommen zu meiner Testumfrage Willkommenskarte!", // German translation
       description: "Dies ist die Beschreibung meiner Willkommenskarte!", // German translation

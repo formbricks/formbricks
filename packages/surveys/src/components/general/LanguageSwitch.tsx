@@ -60,7 +60,7 @@ export const LanguageSwitch = ({
                 type="button"
                 className="fb-block fb-w-full fb-p-1.5 fb-text-left hover:fb-opacity-80"
                 onClick={() => changeLanguage(surveyLanguage.language.code)}>
-                {getLanguageLabel(surveyLanguage.language.code)}
+                {getLanguageLabel(surveyLanguage.language.code, "en-US")}
               </button>
             );
           })}

@@ -6,12 +6,13 @@ import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[e
 import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/product/look/components/ThemeStylingPreviewSurvey";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcwIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFAULTS, getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
@@ -32,9 +33,17 @@ type ThemeStylingProps = {
   environmentId: string;
   colors: string[];
   isUnsplashConfigured: boolean;
+  locale: string;
 };
 
-export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigured }: ThemeStylingProps) => {
+export const ThemeStyling = ({
+  product,
+  environmentId,
+  colors,
+  isUnsplashConfigured,
+  locale,
+}: ThemeStylingProps) => {
+  const t = useTranslations();
   const router = useRouter();
 
   const form = useForm<TProductStyling>({
@@ -121,7 +130,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
 
     form.reset({ ...defaultStyling });
 
-    toast.success("Styling updated successfully.");
+    toast.success(t("environments.product.look.styling_updated_successfully"));
     router.refresh();
   }, [form, product.id, router]);
 
@@ -135,7 +144,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
 
     if (updatedProductResponse?.data) {
       form.reset({ ...updatedProductResponse.data.styling });
-      toast.success("Styling updated successfully.");
+      toast.success(t("environments.product.look.styling_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updatedProductResponse);
       toast.error(errorMessage);
@@ -166,9 +175,9 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
                         </FormControl>
 
                         <div>
-                          <FormLabel>Enable custom styling</FormLabel>
+                          <FormLabel>{t("environments.product.look.enable_custom_styling")}</FormLabel>
                           <FormDescription>
-                            Allow users to override this theme in the survey editor.
+                            {t("environments.product.look.enable_custom_styling_description")}
                           </FormDescription>
                         </div>
                       </FormItem>
@@ -209,7 +218,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
 
             <div className="mt-4 flex items-center gap-2">
               <Button size="sm" type="submit">
-                Save
+                {t("common.save")}
               </Button>
               <Button
                 type="button"
@@ -217,7 +226,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
                 variant="minimal"
                 className="flex items-center gap-2"
                 onClick={() => setConfirmResetStylingModalOpen(true)}>
-                Reset to default
+                {t("common.reset_to_default")}
                 <RotateCcwIcon className="h-4 w-4" />
               </Button>
             </div>
@@ -228,8 +237,7 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
             <div className="sticky top-4 mb-4 h-[600px]">
               <ThemeStylingPreviewSurvey
-                setQuestionId={(_id: string) => {}}
-                survey={PREVIEW_SURVEY as TSurvey}
+                survey={getPreviewSurvey(locale) as TSurvey}
                 product={{
                   ...product,
                   styling: form.getValues(),
@@ -244,9 +252,9 @@ export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigu
           <AlertDialog
             open={confirmResetStylingModalOpen}
             setOpen={setConfirmResetStylingModalOpen}
-            headerText="Reset styling"
-            mainText="Are you sure you want to reset the styling to default?"
-            confirmBtnLabel="Confirm"
+            headerText={t("environments.product.look.reset_styling")}
+            mainText={t("environments.product.look.reset_styling_confirmation")}
+            confirmBtnLabel={t("common.confirm")}
             onConfirm={() => {
               onReset();
               setConfirmResetStylingModalOpen(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { XCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { forgotPassword } from "@formbricks/lib/utils/users";
@@ -10,7 +11,7 @@ export const PasswordResetForm = ({}) => {
   const router = useRouter();
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-
+  const t = useTranslations();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -33,7 +34,9 @@ export const PasswordResetForm = ({}) => {
               <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">An error occurred when logging you in</h3>
+              <h3 className="text-sm font-medium text-red-800">
+                {t("auth.forgot-password.an_error_occurred_when_logging")}
+              </h3>
               <div className="mt-2 text-sm text-red-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>
@@ -44,7 +47,7 @@ export const PasswordResetForm = ({}) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-            Email address
+            {t("common.email")}
           </label>
           <div className="mt-1">
             <input
@@ -60,11 +63,11 @@ export const PasswordResetForm = ({}) => {
 
         <div>
           <Button type="submit" className="w-full justify-center" loading={loading}>
-            Reset password
+            {t("auth.forgot-password.reset_password")}
           </Button>
           <div className="mt-3 text-center">
             <Button variant="minimal" href="/auth/login" className="w-full justify-center">
-              Back to login
+              {t("auth.forgot-password.back_to_login")}
             </Button>
           </div>
         </div>

@@ -1,10 +1,12 @@
 import DOMPurify from "dompurify";
+import { useTranslations } from "next-intl";
 import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Editor } from "@formbricks/ui/components/Editor";
 import { LanguageIndicator } from "./language-indicator";
 
@@ -19,6 +21,7 @@ interface LocalizedEditorProps {
   questionIdx: number;
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
+  locale: TUserLocale;
 }
 
 const checkIfValueIsIncomplete = (
@@ -44,7 +47,9 @@ export function LocalizedEditor({
   questionIdx,
   firstRender,
   setFirstRender,
+  locale,
 }: LocalizedEditorProps) {
+  const t = useTranslations();
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
     [localSurvey.languages]
@@ -84,11 +89,12 @@ export function LocalizedEditor({
             setFirstRender={setFirstRender}
             setSelectedLanguageCode={setSelectedLanguageCode}
             surveyLanguages={localSurvey.languages}
+            locale={locale}
           />
 
           {value && selectedLanguageCode !== "default" && value.default ? (
             <div className="mt-1 flex text-xs text-gray-500">
-              <strong>Translate:</strong>
+              <strong>{t("environments.product.languages.translate")}:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
@@ -102,7 +108,11 @@ export function LocalizedEditor({
         </div>
       )}
 
-      {isInComplete ? <div className="mt-1 text-xs text-red-400">Incomplete translations</div> : null}
+      {isInComplete ? (
+        <div className="mt-1 text-xs text-red-400">
+          {t("environments.product.languages.incomplete_translations")}
+        </div>
+      ) : null}
     </div>
   );
 }

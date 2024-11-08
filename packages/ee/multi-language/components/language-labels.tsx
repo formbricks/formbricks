@@ -1,20 +1,22 @@
 import { InfoIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Label } from "@formbricks/ui/components/Label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 export function LanguageLabels() {
+  const t = useTranslations();
   return (
     <div className="mb-2 grid w-full grid-cols-4 gap-4">
-      <Label htmlFor="languagesId">Language</Label>
-      <Label htmlFor="languagesId">Identifier (ISO)</Label>
+      <Label htmlFor="languagesId">{t("environments.product.languages.language")}</Label>
+      <Label htmlFor="languagesId">{t("environments.product.languages.identifier")}</Label>
       <Label className="flex items-center space-x-2" htmlFor="Alias">
-        <span>Alias</span> <AliasTooltip />
+        <span>{t("environments.product.languages.alias")}</span> <AliasTooltip t={t} />
       </Label>
     </div>
   );
 }
 
-function AliasTooltip() {
+function AliasTooltip({ t }: { t: (key: string) => string }) {
   return (
     <TooltipProvider delayDuration={80}>
       <Tooltip>
@@ -23,9 +25,7 @@ function AliasTooltip() {
             <InfoIcon className="h-4 w-4 text-slate-400" />
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          The alias is an alternate name to identify the language in link surveys and the SDK (optional)
-        </TooltipContent>
+        <TooltipContent>{t("environments.product.languages.alias_tooltip")}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -41,6 +42,7 @@ export function EditMembershipRole({
   inviteId,
   currentUserRole,
 }: Role) {
+  const t = useTranslations();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isTransferOwnershipModalOpen, setTransferOwnershipModalOpen] = useState(false);
@@ -60,7 +62,7 @@ export function EditMembershipRole({
         await updateInviteAction({ inviteId: inviteId, organizationId, data: { role } });
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
 
     setLoading(false);
@@ -76,10 +78,10 @@ export function EditMembershipRole({
 
       setLoading(false);
       setTransferOwnershipModalOpen(false);
-      toast.success("Ownership transferred successfully");
+      toast.success(t("environments.settings.general.ownership_transferred_successfully"));
       router.refresh();
     } catch (err: any) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`${t("common.error")}: ${err.message}`);
       setLoading(false);
       setTransferOwnershipModalOpen(false);
     }

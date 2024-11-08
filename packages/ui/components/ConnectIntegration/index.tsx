@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -21,10 +22,10 @@ export const ConnectIntegration = ({
   handleAuthorization,
   integrationLogoSrc,
 }: ConnectIntegrationProps) => {
+  const t = useTranslations();
   const [isConnecting, setIsConnecting] = useState(false);
   const searchParams = useSearchParams();
-  const integrationDetails = getIntegrationDetails(integrationType);
-
+  const integrationDetails = getIntegrationDetails(integrationType, t);
   const handleConnect = () => {
     try {
       setIsConnecting(true);
@@ -38,7 +39,7 @@ export const ConnectIntegration = ({
   useEffect(() => {
     const error = searchParams?.get("error");
     if (error) {
-      toast.error("Connecting integration failed. Please try again!");
+      toast.error(t("environments.surveys.integrations.connecting_integration_failed_please_try_again"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -59,11 +60,11 @@ export const ConnectIntegration = ({
           <p className="mb-8 rounded border-slate-200 bg-slate-100 p-3 text-sm">
             {integrationDetails?.notConfiguredText}
             <br />
-            Please follow the{" "}
+            {t("common.follow_these")}{" "}
             <Link href={integrationDetails?.docsLink ?? ""} className="underline">
-              docs
+              {t("common.docs")}
             </Link>{" "}
-            to configure it.
+            {t("environments.integrations.to_configure_it")}.
           </p>
         )}
         <Button loading={isConnecting} onClick={handleConnect} disabled={!isEnabled}>
