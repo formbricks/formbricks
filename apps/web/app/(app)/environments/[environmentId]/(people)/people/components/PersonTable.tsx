@@ -192,9 +192,9 @@ export const PersonTable = ({
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
-            <TableHeader>
+            <TableHeader className="pointer-events-auto">
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
+                <TableRow key={headerGroup.id}>
                   <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
                     {headerGroup.headers.map((header) => (
                       <DataTableHeader
@@ -204,7 +204,7 @@ export const PersonTable = ({
                       />
                     ))}
                   </SortableContext>
-                </tr>
+                </TableRow>
               ))}
             </TableHeader>
 
