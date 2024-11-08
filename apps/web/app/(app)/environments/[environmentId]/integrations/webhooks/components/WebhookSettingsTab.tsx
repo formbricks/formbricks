@@ -3,6 +3,7 @@
 import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { validWebHookURL } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/lib/utils";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import clsx from "clsx";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -56,8 +57,9 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
       }
       setHittingEndpoint(true);
       const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
-      if (testEndpointActionResult?.serverError) {
-        throw new Error(testEndpointActionResult.serverError);
+      if (!testEndpointActionResult?.data) {
+        const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
+        throw new Error(errorMessage);
       }
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));

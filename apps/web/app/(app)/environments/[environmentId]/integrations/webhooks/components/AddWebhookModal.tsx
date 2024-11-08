@@ -1,6 +1,7 @@
 import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { validWebHookURL } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/lib/utils";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -50,8 +51,9 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       }
       setHittingEndpoint(true);
       const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
-      if (testEndpointActionResult?.serverError) {
-        throw new Error(testEndpointActionResult.serverError);
+      if (!testEndpointActionResult?.data) {
+        const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
+        throw new Error(errorMessage);
       }
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));
@@ -63,7 +65,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${
           err.message.length < 250
             ? `${t("common.error")}:  ${err.message}`
-            : t("common.please_check_console")
+            : t("environments.integrations.webhooks.please_check_console")
         }`,
         { className: err.message.length < 250 ? "break-all" : "" }
       );
