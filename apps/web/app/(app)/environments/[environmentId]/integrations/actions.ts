@@ -4,7 +4,10 @@ import { z } from "zod";
 import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromIntegrationId,
+} from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
 
@@ -26,7 +29,6 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
   });
 
 const ZDeleteIntegrationAction = z.object({
-  environmentId: ZId,
   integrationId: ZId,
 });
 
@@ -35,7 +37,7 @@ export const deleteIntegrationAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorization({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: await getOrganizationIdFromIntegrationId(parsedInput.integrationId),
       rules: ["integration", "delete"],
     });
 
