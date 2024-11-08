@@ -9,10 +9,12 @@ export const ApiKeyList = async ({
   environmentId,
   environmentType,
   locale,
+  isReadOnly,
 }: {
   environmentId: string;
   environmentType: string;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }) => {
   const t = await getTranslations();
   const findEnvironmentByType = (environments, targetType) => {
@@ -40,6 +42,7 @@ export const ApiKeyList = async ({
       apiKeys={apiKeys}
       environmentId={environmentId}
       locale={locale}
+      isReadOnly={isReadOnly}
     />
   );
 };

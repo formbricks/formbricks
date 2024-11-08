@@ -1,3 +1,4 @@
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -31,6 +32,27 @@ export const SurveyStatusDropdown = ({
     (survey.status === "scheduled" || (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date())) ??
     false;
 
+  const handleStatusChange = async (status: TSurvey["status"]) => {
+    const updateSurveyActionResponse = await updateSurveyAction({ survey: { ...survey, status } });
+
+    if (updateSurveyActionResponse?.data) {
+      toast.success(
+        status === "inProgress"
+          ? t("common.survey_live")
+          : status === "paused"
+            ? t("common.survey_paused")
+            : status === "completed"
+              ? t("common.survey_completed")
+              : ""
+      );
+    } else {
+      const errorMessage = getFormattedErrorMessage(updateSurveyActionResponse);
+      toast.error(errorMessage);
+    }
+
+    if (updateLocalSurveyStatus) updateLocalSurveyStatus(status);
+  };
+
   return (
     <>
       {survey.status === "draft" ? (
@@ -41,25 +63,8 @@ export const SurveyStatusDropdown = ({
         <Select
           value={survey.status}
           disabled={isStatusChangeDisabled}
-          onValueChange={(value) => {
-            const castedValue = value as TSurvey["status"];
-            updateSurveyAction({ survey: { ...survey, status: castedValue } })
-              .then(() => {
-                toast.success(
-                  value === "inProgress"
-                    ? t("common.survey_live")
-                    : value === "paused"
-                      ? t("common.survey_paused")
-                      : value === "completed"
-                        ? t("common.survey_completed")
-                        : ""
-                );
-              })
-              .catch((error) => {
-                toast.error(`Error: ${error.message}`);
-              });
-
-            if (updateLocalSurveyStatus) updateLocalSurveyStatus(value as TSurvey["status"]);
+          onValueChange={(value: TSurvey["status"]) => {
+            handleStatusChange(value);
           }}>
           <TooltipProvider delayDuration={50}>
             <Tooltip open={isStatusChangeDisabled ? undefined : false}>

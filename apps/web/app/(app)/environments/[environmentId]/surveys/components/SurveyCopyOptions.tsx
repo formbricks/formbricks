@@ -2,10 +2,10 @@
 
 import { getProductsByEnvironmentIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct } from "@formbricks/types/product";
 import { CopySurveyForm } from "./CopySurveyForm";
 

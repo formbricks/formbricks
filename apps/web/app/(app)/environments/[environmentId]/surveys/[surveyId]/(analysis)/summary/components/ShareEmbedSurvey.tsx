@@ -1,5 +1,6 @@
 "use client";
 
+import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import {
   BellRing,
   BlocksIcon,
@@ -17,7 +18,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@formbricks/ui/components/Dialog";
-import { ShareSurveyLink } from "@formbricks/ui/components/ShareSurveyLink";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
 import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 

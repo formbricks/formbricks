@@ -1,12 +1,13 @@
 "use server";
 
-import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromWebhookId,
-} from "@formbricks/lib/organization/utils";
+  getProductIdFromEnvironmentId,
+} from "@/lib/utils/helper";
+import { z } from "zod";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
 import { testEndpoint } from "@formbricks/lib/webhook/utils";
 import { ZId } from "@formbricks/types/common";
@@ -20,10 +21,20 @@ const ZCreateWebhookAction = z.object({
 export const createWebhookAction = authenticatedActionClient
   .schema(ZCreateWebhookAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["webhook", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
     return await createWebhook(parsedInput.environmentId, parsedInput.webhookInput);
@@ -36,10 +47,20 @@ const ZDeleteWebhookAction = z.object({
 export const deleteWebhookAction = authenticatedActionClient
   .schema(ZDeleteWebhookAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromWebhookId(parsedInput.id),
-      rules: ["webhook", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(parsedInput.id),
+        },
+      ],
     });
 
     return await deleteWebhook(parsedInput.id);
@@ -53,10 +74,20 @@ const ZUpdateWebhookAction = z.object({
 export const updateWebhookAction = authenticatedActionClient
   .schema(ZUpdateWebhookAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromWebhookId(parsedInput.webhookId),
-      rules: ["webhook", "update"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(parsedInput.webhookId),
+        },
+      ],
     });
 
     return await updateWebhook(parsedInput.webhookId, parsedInput.webhookInput);

@@ -1,10 +1,10 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromProductId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromProductId } from "@formbricks/lib/organization/utils";
-import { deleteProduct, getProducts } from "@formbricks/lib/product/service";
+import { deleteProduct, getUserProducts } from "@formbricks/lib/product/service";
 import { ZId } from "@formbricks/types/common";
 
 const ZProductDeleteAction = z.object({
@@ -14,16 +14,20 @@ const ZProductDeleteAction = z.object({
 export const deleteProductAction = authenticatedActionClient
   .schema(ZProductDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
-    // get organizationId from productId
     const organizationId = await getOrganizationIdFromProductId(parsedInput.productId);
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: organizationId,
-      rules: ["product", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
-    const availableProducts = (await getProducts(organizationId)) ?? null;
+    const availableProducts = (await getUserProducts(ctx.user.id, organizationId)) ?? null;
 
     if (!!availableProducts && availableProducts?.length <= 1) {
       throw new Error("You can't delete the last product in the environment.");

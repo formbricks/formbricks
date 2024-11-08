@@ -12,9 +12,10 @@ import { TPersonWithAttributes } from "@formbricks/types/people";
 interface PersonDataViewProps {
   environment: TEnvironment;
   itemsPerPage: number;
+  isReadOnly: boolean;
 }
 
-export const PersonDataView = ({ environment, itemsPerPage }: PersonDataViewProps) => {
+export const PersonDataView = ({ environment, itemsPerPage, isReadOnly }: PersonDataViewProps) => {
   const t = useTranslations();
   const [persons, setPersons] = useState<TPersonWithAttributes[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
@@ -101,6 +102,7 @@ export const PersonDataView = ({ environment, itemsPerPage }: PersonDataViewProp
       environmentId={environment.id}
       searchValue={searchValue}
       setSearchValue={setSearchValue}
+      isReadOnly={isReadOnly}
     />
   );
 };

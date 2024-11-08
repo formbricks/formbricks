@@ -23,9 +23,10 @@ interface ActionSettingsTabProps {
   webhook: TWebhook;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
+  isReadOnly: boolean;
 }
 
-export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettingsTabProps) => {
+export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: ActionSettingsTabProps) => {
   const t = useTranslations();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -139,6 +140,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
               type="text"
               id="name"
               {...register("name")}
+              disabled={isReadOnly}
               defaultValue={webhook.name ?? ""}
               placeholder={t("environments.integrations.webhooks.webhook_name_placeholder")}
             />
@@ -188,7 +190,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
           <TriggerCheckboxGroup
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
-            allowChanges={webhook.source === "user"}
+            allowChanges={webhook.source === "user" && !isReadOnly}
           />
         </div>
 
@@ -200,13 +202,13 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
             selectedAllSurveys={selectedAllSurveys}
             onSelectAllSurveys={handleSelectAllSurveys}
             onSelectedSurveyChange={handleSelectedSurveyChange}
-            allowChanges={webhook.source === "user"}
+            allowChanges={webhook.source === "user" && !isReadOnly}
           />
         </div>
 
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
-            {webhook.source === "user" && (
+            {webhook.source === "user" && !isReadOnly && (
               <Button
                 type="button"
                 variant="warn"
@@ -225,11 +227,13 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettings
             </Button>
           </div>
 
-          <div className="flex space-x-2">
-            <Button type="submit" loading={isUpdatingWebhook}>
-              {t("common.save_changes")}
-            </Button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex space-x-2">
+              <Button type="submit" loading={isUpdatingWebhook}>
+                {t("common.save_changes")}
+              </Button>
+            </div>
+          )}
         </div>
       </form>
       <DeleteDialog
