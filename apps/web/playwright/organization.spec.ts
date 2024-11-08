@@ -1,20 +1,16 @@
 import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
-import { finishOnboarding, signUpAndLogin } from "./utils/helper";
-import { invites, mockUsers } from "./utils/mock";
+import { invites } from "./utils/mock";
 
 test.describe("Invite, accept and remove organization member", async () => {
-  test.describe.configure({ mode: "serial" });
-
-  const { email, name } = mockUsers.organization[0];
-  // let inviteLink: string;
-
-  test("Invite organization member", async ({ page }) => {
-    await signUpAndLogin(page, name, email, name);
-    await finishOnboarding(page, "link");
+  test.beforeEach(async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  });
 
+  test("Invite organization member", async ({ page }) => {
     await test.step("Invite User", async () => {
       const dropdownTrigger = page.locator("#userDropdownTrigger");
       await expect(dropdownTrigger).toBeVisible();
@@ -24,7 +20,7 @@ test.describe("Invite, accept and remove organization member", async () => {
       await expect(dropdownInnerContentWrapper).toBeVisible();
 
       await page.getByRole("link", { name: "Organization" }).click();
-      await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
+      await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
@@ -36,8 +32,8 @@ test.describe("Invite, accept and remove organization member", async () => {
       await expect(page.getByLabel("Email")).toBeVisible();
       await page.getByLabel("Full Name").fill(invites.addMember.name);
 
-      await expect(page.getByLabel("Email Address")).toBeVisible();
-      await page.getByLabel("Email Address").fill(invites.addMember.email);
+      await expect(page.getByLabel("Email")).toBeVisible();
+      await page.getByLabel("Email").fill(invites.addMember.email);
 
       await page.getByRole("button", { name: "Send Invitation", exact: true }).click();
 
@@ -119,4 +115,133 @@ test.describe("Invite, accept and remove organization member", async () => {
   //   await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
   //   await page.getByRole("button", { name: "Delete", exact: true }).click();
   // });
+});
+
+test.describe("Create, update and delete team", async () => {
+  test.beforeEach(async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
+
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  });
+
+  test("Create and update team", async ({ page }) => {
+    const dropdownTrigger = page.locator("#userDropdownTrigger");
+    await expect(dropdownTrigger).toBeVisible();
+    await dropdownTrigger.click();
+
+    const dropdownInnerContentWrapper = page.locator("#userDropdownInnerContentWrapper");
+    await expect(dropdownInnerContentWrapper).toBeVisible();
+
+    await page.getByRole("link", { name: "Organization" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
+
+    await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+
+    await expect(page.getByText("Teams")).toBeVisible();
+    await page.getByText("Teams").click();
+    await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
+    await page.getByRole("button", { name: "Create new team" }).click();
+    await page.locator("#team-name").fill("E2E");
+    await page.getByRole("button", { name: "Create" }).click();
+    await expect(page.locator("#E2E")).toBeVisible();
+    await page.getByRole("link", { name: "E2E" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/teams\/[^/]+/);
+    await expect(page.getByRole("heading", { name: "E2E" })).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
+    await page.getByRole("button", { name: "Add Member" }).click();
+
+    await page.locator("#multi-select-dropdown").click();
+    await page.locator(".option-1").click();
+
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await expect(page.getByRole("cell", { name: "No members found" })).toBeHidden();
+
+    await expect(page.getByRole("button", { name: "Products" })).toBeVisible();
+    await page.getByRole("button", { name: "Products" }).click();
+
+    await expect(
+      page.getByRole("cell", {
+        name: "You haven't added any products yet. Assign a product to the team to grant access to its members.",
+      })
+    ).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Add Product" })).toBeVisible();
+    await page.getByRole("button", { name: "Add Product" }).click();
+
+    await page.locator("#multi-select-dropdown").click();
+    await page.locator(".option-1").click();
+
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await expect(
+      page.getByRole("cell", {
+        name: "You haven't added any products yet. Assign a product to the team to grant access to its members.",
+      })
+    ).toBeHidden();
+
+    await page.getByRole("combobox").click();
+
+    await page.getByText("Manage").click();
+
+    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
+    await page.getByRole("button", { name: "Settings" }).click();
+
+    await page.locator("#team-name").fill("E2E Updated");
+    await page.getByRole("button", { name: "Update" }).click();
+
+    await expect(page.getByRole("heading", { name: "E2E Updated" })).toBeVisible();
+
+    await page.getByRole("link", { name: "Configuration" }).click();
+
+    await expect(page.getByRole("heading", { name: "Configuration" })).toBeVisible();
+
+    await expect(page.getByRole("link", { name: "Team Access" })).toBeVisible();
+
+    await page.getByRole("link", { name: "Team Access" }).click();
+    await page.getByRole("combobox").click();
+
+    await page.getByText("Read & write").click();
+
+    await page.getByRole("button", { name: "Remove" }).click();
+
+    await expect(page.getByRole("button", { name: "Confirm", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Confirm", exact: true }).click();
+
+    await expect(page.getByRole("cell", { name: "No teams found" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Add existing team" }).click();
+
+    await page.locator("#multi-select-dropdown").click();
+    await page.locator(".option-1").click();
+
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await expect(page.getByRole("link", { name: "E2E Updated" })).toBeVisible();
+
+    await page.getByRole("link", { name: "E2E Updated" }).click();
+
+    await page.getByRole("button", { name: "Leave" }).click();
+    await expect(page.getByRole("button", { name: "Confirm", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Confirm", exact: true }).click();
+
+    await expect(page.getByRole("cell", { name: "No members found" })).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
+    await page.getByRole("button", { name: "Settings" }).click();
+
+    await page.getByRole("button", { name: "Delete" }).click();
+
+    await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
+
+    await expect(
+      page.getByRole("cell", {
+        name: "You don’t have any teams yet. Create your first team to manage product access for members of your organization.",
+      })
+    ).toBeVisible();
+  });
 });

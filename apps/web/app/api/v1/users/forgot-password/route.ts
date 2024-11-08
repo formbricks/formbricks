@@ -1,5 +1,5 @@
+import { sendForgotPasswordEmail } from "@/modules/email";
 import { prisma } from "@formbricks/database";
-import { sendForgotPasswordEmail } from "@formbricks/email";
 
 export const POST = async (request: Request) => {
   const { email } = await request.json();
@@ -15,7 +15,7 @@ export const POST = async (request: Request) => {
       return Response.json({ error: "No user with this email found" }, { status: 409 });
     }
 
-    await sendForgotPasswordEmail(foundUser);
+    await sendForgotPasswordEmail(foundUser, foundUser.locale);
     return Response.json({});
   } catch (e) {
     return Response.json(

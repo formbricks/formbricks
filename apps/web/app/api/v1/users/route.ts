@@ -1,6 +1,6 @@
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { prisma } from "@formbricks/database";
 import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/email";
 import {
   DEFAULT_ORGANIZATION_ID,
   DEFAULT_ORGANIZATION_ROLE,
@@ -78,7 +78,7 @@ export const POST = async (request: Request) => {
         await sendVerificationEmail(user);
       }
 
-      await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
+      await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email, user.locale);
       await deleteInvite(inviteId);
 
       return Response.json(user);
@@ -98,8 +98,8 @@ export const POST = async (request: Request) => {
         });
         isNewOrganization = true;
       }
-      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "admin";
-      await createMembership(organization.id, user.id, { role, accepted: true });
+      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "owner";
+      await createMembership(organization.id, user.id, { role: role, accepted: true });
       const updatedNotificationSettings = {
         ...user.notificationSettings,
         unsubscribedOrganizationIds: Array.from(

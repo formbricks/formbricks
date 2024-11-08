@@ -1,4 +1,5 @@
 import { UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TUser } from "@formbricks/types/user";
 import { Membership } from "../types";
@@ -11,6 +12,7 @@ interface EditAlertsProps {
 }
 
 export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAlertsProps) => {
+  const t = useTranslations();
   return (
     <>
       {memberships.map((membership) => (
@@ -22,8 +24,8 @@ export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAler
           </div>
           <div className="mb-6 rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-3 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2">Product</div>
-              <div className="col-span-1 text-center">Weekly Summary</div>
+              <div className="col-span-2">{t("common.product")}</div>
+              <div className="col-span-1 text-center">{t("common.weekly_summary")}</div>
             </div>
             <div className="space-y-1 p-2">
               {membership.organization.products.map((product) => (
@@ -42,9 +44,9 @@ export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAler
               ))}
             </div>
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              Want to loop in organization mates?{" "}
-              <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
-                Invite them.
+              {t("environments.settings.notifications.want_to_loop_in_organization_mates")}?{" "}
+              <Link className="font-semibold" href={`/environments/${environmentId}/settings/general`}>
+                {t("common.invite_them")}
               </Link>
             </p>
           </div>

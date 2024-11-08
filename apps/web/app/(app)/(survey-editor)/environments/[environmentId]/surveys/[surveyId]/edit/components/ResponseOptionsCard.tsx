@@ -1,7 +1,9 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,6 +26,7 @@ export const ResponseOptionsCard = ({
   setLocalSurvey,
   responseCount,
 }: ResponseOptionsCardProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);
@@ -36,13 +39,13 @@ export const ResponseOptionsCard = ({
   );
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
-    heading: "Survey Completed",
-    subheading: "This free & open-source survey has been closed",
+    heading: t("environments.surveys.edit.survey_completed_heading"),
+    subheading: t("environments.surveys.edit.survey_completed_subheading"),
   });
 
   const [singleUseMessage, setSingleUseMessage] = useState({
-    heading: "The survey has already been answered.",
-    subheading: "You can only use this link once.",
+    heading: t("environments.surveys.edit.survey_already_answered_heading"),
+    subheading: t("environments.surveys.edit.survey_already_answered_subheading"),
   });
 
   const [singleUseEncryption, setSingleUseEncryption] = useState(true);
@@ -85,7 +88,7 @@ export const ResponseOptionsCard = ({
     //check if pin only contains numbers
     const validation = /^\d+$/;
     const isValidPin = validation.test(pin);
-    if (!isValidPin) return toast.error("PIN can only contain numbers");
+    if (!isValidPin) return toast.error(t("environments.surveys.edit.pin_can_only_contain_numbers"));
     setLocalSurvey({ ...localSurvey, pin });
   };
 
@@ -95,7 +98,8 @@ export const ResponseOptionsCard = ({
     const regexPattern = /^\d{4}$/;
     const isValidPin = regexPattern.test(`${localSurvey.pin}`);
 
-    if (!isValidPin) return setVerifyProtectWithPinError("PIN must be a four digit number.");
+    if (!isValidPin)
+      return setVerifyProtectWithPinError(t("environments.surveys.edit.pin_must_be_a_four_digit_number"));
     setVerifyProtectWithPinError(null);
   };
 
@@ -263,15 +267,20 @@ export const ResponseOptionsCard = ({
 
   const handleInputResponseBlur = (e) => {
     if (parseInt(e.target.value) === 0) {
-      toast.error("Response limit can't be set to 0");
+      toast.error(t("environments.surveys.edit.response_limit_can_t_be_set_to_0"));
       return;
     }
 
     if (parseInt(e.target.value) <= responseCount) {
-      toast.error(`Response limit needs to exceed number of received responses (${responseCount}).`);
+      toast.error(
+        t("environments.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
+          responseCount,
+        })
+      );
       return;
     }
   };
+  const [parent] = useAutoAnimate();
 
   return (
     <Collapsible.Root
@@ -290,12 +299,14 @@ export const ResponseOptionsCard = ({
             />{" "}
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Response Options</p>
-            <p className="mt-1 text-sm text-slate-500">Response limits, redirections and more.</p>
+            <p className="font-semibold text-slate-800">{t("environments.surveys.edit.response_options")}</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("environments.surveys.edit.response_limits_redirections_and_more")}
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent>
+      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           {/* Close Survey on Limit */}
@@ -303,12 +314,14 @@ export const ResponseOptionsCard = ({
             htmlId="closeOnNumberOfResponse"
             isChecked={autoComplete}
             onToggle={toggleAutocomplete}
-            title="Close survey on response limit"
-            description="Automatically close the survey after a certain number of responses."
+            title={t("environments.surveys.edit.close_survey_on_response_limit")}
+            description={t(
+              "environments.surveys.edit.automatically_close_the_survey_after_a_certain_number_of_responses"
+            )}
             childBorder={true}>
             <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-700">
-                Automatically mark the survey as complete after
+                {t("environments.surveys.edit.automatically_mark_the_survey_as_complete_after")}
                 <Input
                   autoFocus
                   type="number"
@@ -319,7 +332,7 @@ export const ResponseOptionsCard = ({
                   onBlur={handleInputResponseBlur}
                   className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                 />
-                completed responses.
+                {t("environments.surveys.edit.completed_responses")}
               </p>
             </label>
           </AdvancedOptionToggle>
@@ -328,11 +341,13 @@ export const ResponseOptionsCard = ({
             htmlId="runOnDate"
             isChecked={runOnDateToggle}
             onToggle={handleRunOnDateToggle}
-            title="Release survey on date"
-            description="Automatically release the survey at the beginning of the day (UTC)."
+            title={t("environments.surveys.edit.release_survey_on_date")}
+            description={t(
+              "environments.surveys.edit.automatically_release_the_survey_at_the_beginning_of_the_day_utc"
+            )}
             childBorder={true}>
             <div className="p-4">
-              <DatePicker date={runOnDate} handleDateChange={handleRunOnDateChange} />
+              <DatePicker date={runOnDate} updateSurveyDate={handleRunOnDateChange} />
             </div>
           </AdvancedOptionToggle>
           {/* Close Survey on Date */}
@@ -340,11 +355,13 @@ export const ResponseOptionsCard = ({
             htmlId="closeOnDate"
             isChecked={closeOnDateToggle}
             onToggle={handleCloseOnDateToggle}
-            title="Close survey on date"
-            description="Automatically closes the survey at the beginning of the day (UTC)."
+            title={t("environments.surveys.edit.close_survey_on_date")}
+            description={t(
+              "environments.surveys.edit.automatically_closes_the_survey_at_the_beginning_of_the_day_utc"
+            )}
             childBorder={true}>
             <div className="p-4">
-              <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
+              <DatePicker date={closeOnDate} updateSurveyDate={handleCloseOnDateChange} />
             </div>
           </AdvancedOptionToggle>
 
@@ -355,12 +372,12 @@ export const ResponseOptionsCard = ({
                 htmlId="adjustSurveyClosedMessage"
                 isChecked={surveyClosedMessageToggle}
                 onToggle={handleCloseSurveyMessageToggle}
-                title="Adjust 'Survey Closed' message"
-                description="Change the message visitors see when the survey is closed."
+                title={t("environments.surveys.edit.adjust_survey_closed_message")}
+                description={t("environments.surveys.edit.adjust_survey_closed_message_description")}
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <Label htmlFor="headline">Heading</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.heading")}</Label>
                     <Input
                       autoFocus
                       id="heading"
@@ -370,7 +387,7 @@ export const ResponseOptionsCard = ({
                       onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
                     />
 
-                    <Label htmlFor="headline">Subheading</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
                     <Input
                       className="mt-2 bg-white"
                       id="subheading"
@@ -387,31 +404,35 @@ export const ResponseOptionsCard = ({
                 htmlId="singleUserSurveyOptions"
                 isChecked={!!localSurvey.singleUse?.enabled}
                 onToggle={handleSingleUseSurveyToggle}
-                title="Single-use survey links"
-                description="Allow only 1 response per survey link."
+                title={t("environments.surveys.edit.single_use_survey_links")}
+                description={t("environments.surveys.edit.single_use_survey_links_description")}
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center bg-slate-50">
                     <div className="row mb-2 flex cursor-default items-center space-x-2">
-                      <Label htmlFor="howItWorks">How it works</Label>
+                      <Label htmlFor="howItWorks">{t("environments.surveys.edit.how_it_works")}</Label>
                     </div>
                     <ul className="mb-3 ml-4 cursor-default list-inside list-disc space-y-1">
                       <li className="text-sm text-slate-600">
-                        Blocks survey if the survey URL has no Single Use Id (suId).
+                        {t(
+                          "environments.surveys.edit.blocks_survey_if_the_survey_url_has_no_single_use_id_suid"
+                        )}
                       </li>
                       <li className="text-sm text-slate-600">
-                        Blocks survey if a submission with the Single Use Id (suId) exists already.
+                        {t(
+                          "environments.surveys.edit.blocks_survey_if_a_submission_with_the_single_use_id_suid_exists_already"
+                        )}
                       </li>
                       <li className="text-sm text-slate-600">
                         <Link
                           href="https://formbricks.com/docs/link-surveys/single-use-links"
                           target="_blank"
                           className="underline">
-                          Docs <ArrowUpRight className="inline" size={16} />
+                          {t("common.read_docs")} <ArrowUpRight className="inline" size={16} />
                         </Link>
                       </li>
                     </ul>
-                    <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.link_used_message")}</Label>
                     <Input
                       autoFocus
                       id="heading"
@@ -421,7 +442,7 @@ export const ResponseOptionsCard = ({
                       onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
                     />
 
-                    <Label htmlFor="headline">Subheading</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.subheading")}</Label>
                     <Input
                       className="mb-4 mt-2 bg-white"
                       id="subheading"
@@ -429,7 +450,7 @@ export const ResponseOptionsCard = ({
                       defaultValue={singleUseMessage.subheading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
-                    <Label htmlFor="headline">URL Encryption</Label>
+                    <Label htmlFor="headline">{t("environments.surveys.edit.url_encryption")}</Label>
                     <div>
                       <div className="mt-2 flex items-center space-x-1">
                         <Switch
@@ -440,7 +461,9 @@ export const ResponseOptionsCard = ({
                         <Label htmlFor="encryption-label">
                           <div className="ml-2">
                             <p className="text-sm font-normal text-slate-600">
-                              Enable encryption of Single Use Id (suId) in survey URL.
+                              {t(
+                                "environments.surveys.edit.enable_encryption_of_single_use_id_suid_in_survey_url"
+                              )}
                             </p>
                           </div>
                         </Label>
@@ -455,16 +478,16 @@ export const ResponseOptionsCard = ({
                 htmlId="verifyEmailBeforeSubmission"
                 isChecked={verifyEmailToggle}
                 onToggle={handleVerifyEmailToogle}
-                title="Verify email before submission"
-                description="Only let people with a real email respond."
+                title={t("environments.surveys.edit.verify_email_before_submission")}
+                description={t("environments.surveys.edit.verify_email_before_submission_description")}
                 childBorder={true}>
                 <div className="m-1">
                   <AdvancedOptionToggle
                     htmlId="preventDoubleSubmission"
                     isChecked={isSingleResponsePerEmailEnabledToggle}
                     onToggle={handleSingleResponsePerEmailToggle}
-                    title="Prevent double submission"
-                    description={"Only allow 1 response per email address"}
+                    title={t("environments.surveys.edit.prevent_double_submission")}
+                    description={t("environments.surveys.edit.prevent_double_submission_description")}
                   />
                 </div>
               </AdvancedOptionToggle>
@@ -472,12 +495,12 @@ export const ResponseOptionsCard = ({
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
-                title="Protect survey with a PIN"
-                description="Only users who have the PIN can access the survey."
+                title={t("environments.surveys.edit.protect_survey_with_pin")}
+                description={t("environments.surveys.edit.protect_survey_with_pin_description")}
                 childBorder={true}>
                 <div className="p-4">
                   <Label htmlFor="headline" className="sr-only">
-                    Add PIN:
+                    {t("environments.surveys.edit.add_pin")}
                   </Label>
                   <Input
                     autoFocus
@@ -485,7 +508,7 @@ export const ResponseOptionsCard = ({
                     isInvalid={Boolean(verifyProtectWithPinError)}
                     className="bg-white"
                     name="pin"
-                    placeholder="Add a four digit PIN"
+                    placeholder={t("environments.surveys.edit.add_a_four_digit_pin")}
                     onBlur={handleProtectSurveyPinBlurEvent}
                     defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
                     onKeyDown={handleSurveyPinInputKeyDown}

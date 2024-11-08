@@ -1,9 +1,17 @@
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_FORMBRICKS_CLOUD, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
+import {
+  DEFAULT_LOCALE,
+  IS_FORMBRICKS_CLOUD,
+  SURVEY_BG_COLORS,
+  UNSPLASH_ACCESS_KEY,
+} from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -12,6 +20,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { getUserLocale } from "@formbricks/lib/user/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
@@ -23,6 +32,7 @@ export const generateMetadata = async ({ params }) => {
 };
 
 const Page = async ({ params, searchParams }) => {
+  const t = await getTranslations();
   const [
     survey,
     product,
@@ -45,16 +55,26 @@ const Page = async ({ params, searchParams }) => {
     getSegments(params.environmentId),
   ]);
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  if (!product) {
+    throw new Error(t("common.product_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isSurveyCreationDeletionDisabled = isViewer;
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
+  const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
 
   const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
@@ -81,6 +101,7 @@ const Page = async ({ params, searchParams }) => {
       attributeClasses={attributeClasses}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
+      productPermission={productPermission}
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
@@ -89,6 +110,7 @@ const Page = async ({ params, searchParams }) => {
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
       isCxMode={isCxMode}
+      locale={locale ?? DEFAULT_LOCALE}
     />
   );
 };

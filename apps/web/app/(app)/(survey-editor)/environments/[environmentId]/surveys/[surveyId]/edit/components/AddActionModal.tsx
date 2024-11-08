@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
@@ -12,7 +13,7 @@ interface AddActionModalProps {
   environmentId: string;
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
-  isViewer: boolean;
+  isReadOnly: boolean;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }
@@ -24,12 +25,13 @@ export const AddActionModal = ({
   setActionClasses,
   localSurvey,
   setLocalSurvey,
-  isViewer,
+  isReadOnly,
   environmentId,
 }: AddActionModalProps) => {
+  const t = useTranslations();
   const tabs = [
     {
-      title: "Select saved action",
+      title: t("environments.surveys.edit.select_saved_action"),
       children: (
         <SavedActionsTab
           actionClasses={actionClasses}
@@ -40,13 +42,13 @@ export const AddActionModal = ({
       ),
     },
     {
-      title: "Capture new action",
+      title: t("environments.surveys.edit.capture_new_action"),
       children: (
         <CreateNewActionTab
           actionClasses={actionClasses}
           setActionClasses={setActionClasses}
           setOpen={setOpen}
-          isViewer={isViewer}
+          isReadOnly={isReadOnly}
           setLocalSurvey={setLocalSurvey}
           environmentId={environmentId}
         />
@@ -55,8 +57,8 @@ export const AddActionModal = ({
   ];
   return (
     <ModalWithTabs
-      label="Add action"
-      description="Capture a new action to trigger a survey on."
+      label={t("common.add_action")}
+      description={t("environments.surveys.edit.capture_a_new_action_to_trigger_a_survey_on")}
       open={open}
       setOpen={setOpen}
       tabs={tabs}

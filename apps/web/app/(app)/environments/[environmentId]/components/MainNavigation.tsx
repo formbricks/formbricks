@@ -4,6 +4,7 @@ import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[enviro
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import {
   ArrowUpRightIcon,
   BlendIcon,
@@ -11,6 +12,7 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
+  GaugeIcon,
   GlobeIcon,
   GlobeLockIcon,
   KeyIcon,
@@ -27,6 +29,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -36,13 +39,12 @@ import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
 import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,7 +68,8 @@ interface NavigationProps {
   products: TProduct[];
   isMultiOrgEnabled: boolean;
   isFormbricksCloud?: boolean;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
+  isAIEnabled?: boolean;
 }
 
 export const MainNavigation = ({
@@ -78,10 +81,11 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   isFormbricksCloud = true,
   membershipRole,
+  isAIEnabled = false,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
-
+  const t = useTranslations();
   const [currentOrganizationName, setCurrentOrganizationName] = useState("");
   const [currentOrganizationId, setCurrentOrganizationId] = useState("");
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
@@ -90,9 +94,10 @@ export const MainNavigation = ({
   const [latestVersion, setLatestVersion] = useState("");
 
   const product = products.find((product) => product.id === environment.productId);
-  const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
-  const isOwnerOrAdmin = isAdmin || isOwner;
-  const isPricingDisabled = !isOwner && !isAdmin;
+  const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
+
+  const isOwnerOrManager = isManager || isOwner;
+  const isPricingDisabled = isMember;
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -159,14 +164,21 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: "Surveys",
+        name: t("common.experience"),
+        href: `/environments/${environment.id}/experience`,
+        icon: GaugeIcon,
+        isActive: pathname?.includes("/experience"),
+        isHidden: !isAIEnabled,
+      },
+      {
+        name: t("common.surveys"),
         href: `/environments/${environment.id}/surveys`,
         icon: MessageCircle,
         isActive: pathname?.includes("/surveys"),
         isHidden: false,
       },
       {
-        name: "People",
+        name: t("common.people"),
         href: `/environments/${environment.id}/people`,
         icon: UserIcon,
         isActive:
@@ -175,60 +187,58 @@ export const MainNavigation = ({
           pathname?.includes("/attributes"),
       },
       {
-        name: "Actions",
+        name: t("common.actions"),
         href: `/environments/${environment.id}/actions`,
         icon: MousePointerClick,
         isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
       },
       {
-        name: "Integrations",
+        name: t("common.integrations"),
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),
-        isHidden: isViewer,
       },
       {
-        name: "Configuration",
+        name: t("common.configuration"),
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
-        isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, isMember]
   );
 
   const dropdownNavigation = [
     {
-      label: "Account",
+      label: t("common.account"),
       href: `/environments/${environment.id}/settings/profile`,
       icon: UserCircleIcon,
     },
     {
-      label: "Organization",
-      href: `/environments/${environment.id}/settings/members`,
+      label: t("common.organization"),
+      href: `/environments/${environment.id}/settings/general`,
       icon: UsersIcon,
     },
     {
-      label: "Billing",
+      label: t("common.billing"),
       href: `/environments/${environment.id}/settings/billing`,
       hidden: !isFormbricksCloud || isPricingDisabled,
       icon: CreditCardIcon,
     },
     {
-      label: "License",
+      label: t("common.license"),
       href: `/environments/${environment.id}/settings/enterprise`,
       hidden: isFormbricksCloud || isPricingDisabled,
       icon: KeyIcon,
     },
     {
-      label: "Documentation",
+      label: t("common.documentation"),
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
     {
-      label: "Join Discord",
+      label: t("common.join_discord"),
       href: "https://formbricks.com/discord",
       target: "_blank",
       icon: AiOutlineDiscord,
@@ -247,8 +257,10 @@ export const MainNavigation = ({
         }
       }
     }
-    if (isOwnerOrAdmin) loadReleases();
-  }, [isOwnerOrAdmin]);
+    if (isOwnerOrManager) loadReleases();
+  }, [isOwnerOrManager]);
+
+  const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
   return (
     <>
@@ -265,12 +277,12 @@ export const MainNavigation = ({
             <div className="flex items-center justify-between px-3 pb-4">
               {!isCollapsed && (
                 <Link
-                  href={`/environments/${environment.id}/surveys/`}
+                  href={mainNavigationLink}
                   className={cn(
                     "flex items-center justify-center transition-opacity duration-100",
                     isTextVisible ? "opacity-0" : "opacity-100"
                   )}>
-                  <Image src={FBLogo} width={160} height={30} alt="Formbricks Logo" />
+                  <Image src={FBLogo} width={160} height={30} alt={t("environments.formbricks_logo")} />
                 </Link>
               )}
               <Button
@@ -290,131 +302,137 @@ export const MainNavigation = ({
             </div>
 
             {/* Main Nav Switch */}
-            <ul>
-              {mainNavigation.map(
-                (item) =>
-                  !item.isHidden && (
-                    <NavigationLink
-                      key={item.name}
-                      href={item.href}
-                      isActive={item.isActive}
-                      isCollapsed={isCollapsed}
-                      isTextVisible={isTextVisible}
-                      linkText={item.name}>
-                      <item.icon strokeWidth={1.5} />
-                    </NavigationLink>
-                  )
-              )}
-            </ul>
+            {!isBilling && (
+              <ul>
+                {mainNavigation.map(
+                  (item) =>
+                    !item.isHidden && (
+                      <NavigationLink
+                        key={item.name}
+                        href={item.href}
+                        isActive={item.isActive}
+                        isCollapsed={isCollapsed}
+                        isTextVisible={isTextVisible}
+                        linkText={item.name}>
+                        <item.icon strokeWidth={1.5} />
+                      </NavigationLink>
+                    )
+                )}
+              </ul>
+            )}
           </div>
 
-          {/* Product Switch */}
           <div>
             {/* New Version Available */}
-            {!isCollapsed && isOwnerOrAdmin && latestVersion && !isFormbricksCloud && (
+            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (
               <Link
                 href="https://github.com/formbricks/formbricks/releases"
                 target="_blank"
                 className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
                 <p className="flex items-center justify-center gap-x-2 text-xs">
                   <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
-                  Formbricks {latestVersion} is here. Upgrade now!
+                  {t("common.new_version_available", { version: latestVersion })}
                 </p>
               </Link>
             )}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                asChild
-                id="productDropdownTrigger"
-                className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
-                <div
-                  tabIndex={0}
-                  className={cn(
-                    "flex cursor-pointer flex-row items-center space-x-3",
-                    isCollapsed ? "pl-2" : "pl-4"
-                  )}>
-                  <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
-                    {product.config.channel === "website" ? (
-                      <GlobeIcon strokeWidth={1.5} />
-                    ) : product.config.channel === "app" ? (
-                      <GlobeLockIcon strokeWidth={1.5} />
-                    ) : product.config.channel === "link" ? (
-                      <LinkIcon strokeWidth={1.5} />
-                    ) : (
-                      <BlendIcon strokeWidth={1.5} />
+            {/* Product Switch */}
+            {!isBilling && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  asChild
+                  id="productDropdownTrigger"
+                  className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
+                  <div
+                    tabIndex={0}
+                    className={cn(
+                      "flex cursor-pointer flex-row items-center space-x-3",
+                      isCollapsed ? "pl-2" : "pl-4"
+                    )}>
+                    <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
+                      {product.config.channel === "website" ? (
+                        <GlobeIcon strokeWidth={1.5} />
+                      ) : product.config.channel === "app" ? (
+                        <GlobeLockIcon strokeWidth={1.5} />
+                      ) : product.config.channel === "link" ? (
+                        <LinkIcon strokeWidth={1.5} />
+                      ) : (
+                        <BlendIcon strokeWidth={1.5} />
+                      )}
+                    </div>
+                    {!isCollapsed && !isTextVisible && (
+                      <>
+                        <div>
+                          <p
+                            title={product.name}
+                            className={cn(
+                              "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
+                              isTextVisible ? "opacity-0" : "opacity-100"
+                            )}>
+                            {product.name}
+                          </p>
+                          <p
+                            className={cn(
+                              "text-sm text-slate-500 transition-opacity duration-200",
+                              isTextVisible ? "opacity-0" : "opacity-100"
+                            )}>
+                            {product.config.channel === "link"
+                              ? "Link & Email"
+                              : capitalizeFirstLetter(product.config.channel)}
+                          </p>
+                        </div>
+                        <ChevronRightIcon
+                          className={cn(
+                            "h-5 w-5 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
+                            isTextVisible ? "opacity-0" : "opacity-100"
+                          )}
+                        />
+                      </>
                     )}
                   </div>
-                  {!isCollapsed && !isTextVisible && (
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  id="userDropdownInnerContentWrapper"
+                  side="right"
+                  sideOffset={10}
+                  alignOffset={-1}
+                  align="end">
+                  <DropdownMenuRadioGroup
+                    value={product!.id}
+                    onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
+                    {sortedProducts.map((product) => (
+                      <DropdownMenuRadioItem
+                        value={product.id}
+                        className="cursor-pointer break-all"
+                        key={product.id}>
+                        <div>
+                          {product.config.channel === "website" ? (
+                            <GlobeIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          ) : product.config.channel === "app" ? (
+                            <GlobeLockIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          ) : product.config.channel === "link" ? (
+                            <LinkIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          ) : (
+                            <BlendIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          )}
+                        </div>
+                        <div className="">{product?.name}</div>
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                  {isOwnerOrManager && (
                     <>
-                      <div>
-                        <p
-                          title={product.name}
-                          className={cn(
-                            "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
-                            isTextVisible ? "opacity-0" : "opacity-100"
-                          )}>
-                          {product.name}
-                        </p>
-                        <p
-                          className={cn(
-                            "text-sm text-slate-500 transition-opacity duration-200",
-                            isTextVisible ? "opacity-0" : "opacity-100"
-                          )}>
-                          {product.config.channel === "link"
-                            ? "Link & Email"
-                            : capitalizeFirstLetter(product.config.channel)}
-                        </p>
-                      </div>
-                      <ChevronRightIcon
-                        className={cn(
-                          "h-5 w-5 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
-                          isTextVisible ? "opacity-0" : "opacity-100"
-                        )}
-                      />
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleAddProduct(organization.id)}
+                        icon={<PlusIcon className="mr-2 h-4 w-4" />}>
+                        <span>{t("common.add_product")}</span>
+                      </DropdownMenuItem>
                     </>
                   )}
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                id="userDropdownInnerContentWrapper"
-                side="right"
-                sideOffset={10}
-                alignOffset={-1}
-                align="end">
-                <DropdownMenuRadioGroup
-                  value={product!.id}
-                  onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
-                  {sortedProducts.map((product) => (
-                    <DropdownMenuRadioItem
-                      value={product.id}
-                      className="cursor-pointer break-all"
-                      key={product.id}>
-                      <div>
-                        {product.config.channel === "website" ? (
-                          <GlobeIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        ) : product.config.channel === "app" ? (
-                          <GlobeLockIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        ) : product.config.channel === "link" ? (
-                          <LinkIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        ) : (
-                          <BlendIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        )}
-                      </div>
-                      <div className="">{product?.name}</div>
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                {isOwnerOrAdmin && (
-                  <DropdownMenuItem
-                    onClick={() => handleAddProduct(organization.id)}
-                    icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                    <span>Add product</span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* User Switch */}
             <div className="flex items-center">
@@ -480,7 +498,7 @@ export const MainNavigation = ({
                       await formbricksLogout();
                     }}
                     icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
-                    Logout
+                    {t("common.logout")}
                   </DropdownMenuItem>
 
                   {/* Organization Switch */}
@@ -490,7 +508,7 @@ export const MainNavigation = ({
                       <DropdownMenuSubTrigger className="rounded-lg">
                         <div>
                           <p>{currentOrganizationName}</p>
-                          <p className="block text-xs text-slate-500">Switch organization</p>
+                          <p className="block text-xs text-slate-500">{t("common.switch_organization")}</p>
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
@@ -514,7 +532,7 @@ export const MainNavigation = ({
                             <DropdownMenuItem
                               onClick={() => setShowCreateOrganizationModal(true)}
                               icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                              <span>Create new organization</span>
+                              <span>{t("common.create_new_organization")}</span>
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuSubContent>

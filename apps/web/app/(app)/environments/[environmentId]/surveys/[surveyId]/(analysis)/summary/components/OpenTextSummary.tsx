@@ -1,11 +1,23 @@
+import { InsightView } from "@/modules/ee/insights/components/insights-view";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
+import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@formbricks/ui/components/Table";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {
@@ -13,6 +25,9 @@ interface OpenTextSummaryProps {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  isAIEnabled: boolean;
+  documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const OpenTextSummary = ({
@@ -20,8 +35,16 @@ export const OpenTextSummary = ({
   environmentId,
   survey,
   attributeClasses,
+  isAIEnabled,
+  documentsPerPage,
+  locale,
 }: OpenTextSummaryProps) => {
+  const t = useTranslations();
+  const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
+  const [activeTab, setActiveTab] = useState<"insights" | "responses">(
+    isInsightsEnabled && questionSummary.insights.length ? "insights" : "responses"
+  );
 
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
@@ -30,61 +53,102 @@ export const OpenTextSummary = ({
     );
   };
 
+  const tabNavigation = [
+    {
+      id: "insights",
+      label: t("common.insights"),
+      onClick: () => setActiveTab("insights"),
+    },
+    {
+      id: "responses",
+      label: t("common.responses"),
+      onClick: () => setActiveTab("responses"),
+    },
+  ];
+
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
-      />
-      <div className="">
-        <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
-          <div className="pl-4 md:pl-6">User</div>
-          <div className="col-span-2 pl-4 md:pl-6">Response</div>
-          <div className="px-4 md:px-6">Time</div>
-        </div>
-        <div className="max-h-[62vh] w-full overflow-y-auto">
-          {questionSummary.samples.slice(0, visibleResponses).map((response) => (
-            <div
-              key={response.id}
-              className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 last:border-transparent md:text-base">
-              <div className="pl-4 md:pl-6">
-                {response.person ? (
-                  <Link
-                    className="ph-no-capture group flex items-center"
-                    href={`/environments/${environmentId}/people/${response.person.id}`}>
-                    <div className="hidden md:flex">
-                      <PersonAvatar personId={response.person.id} />
-                    </div>
-                    <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                      {getPersonIdentifier(response.person, response.personAttributes)}
-                    </p>
-                  </Link>
-                ) : (
-                  <div className="group flex items-center">
-                    <div className="hidden md:flex">
-                      <PersonAvatar personId="anonymous" />
-                    </div>
-                    <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
-                  </div>
-                )}
-              </div>
-              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold" dir="auto">
-                {response.value}
-              </div>
-              <div className="px-4 text-slate-500 md:px-6">
-                {timeSince(new Date(response.updatedAt).toISOString())}
+        locale={locale}
+        additionalInfo={
+          isAIEnabled && questionSummary.insightsEnabled === false ? (
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center rounded-lg bg-slate-100 p-2">
+                {t("environments.surveys.summary.insights_disabled")}
               </div>
             </div>
-          ))}
+          ) : undefined
+        }
+      />
+      {isInsightsEnabled && (
+        <div className="ml-4">
+          <SecondaryNavigation activeId={activeTab} navigation={tabNavigation} />
         </div>
-        {visibleResponses < questionSummary.samples.length && (
-          <div className="flex justify-center py-4">
-            <Button onClick={handleLoadMore} variant="secondary" size="sm">
-              Load more
-            </Button>
-          </div>
-        )}
+      )}
+      <div className="border-t border-slate-200"></div>
+      <div className="max-h-[40vh] overflow-y-auto">
+        {activeTab === "insights" ? (
+          <InsightView
+            insights={questionSummary.insights}
+            questionId={questionSummary.question.id}
+            surveyId={survey.id}
+            documentsPerPage={documentsPerPage}
+            locale={locale}
+          />
+        ) : activeTab === "responses" ? (
+          <>
+            <Table>
+              <TableHeader className="bg-slate-100">
+                <TableRow>
+                  <TableHead>{t("common.user")}</TableHead>
+                  <TableHead>{t("common.response")}</TableHead>
+                  <TableHead>{t("common.time")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {questionSummary.samples.slice(0, visibleResponses).map((response) => (
+                  <TableRow key={response.id}>
+                    <TableCell width={180}>
+                      {response.person ? (
+                        <Link
+                          className="ph-no-capture group flex items-center"
+                          href={`/environments/${environmentId}/people/${response.person.id}`}>
+                          <div className="hidden md:flex">
+                            <PersonAvatar personId={response.person.id} />
+                          </div>
+                          <p className="ph-no-capture break-normal text-slate-600 group-hover:underline md:ml-2">
+                            {getPersonIdentifier(response.person, response.personAttributes)}
+                          </p>
+                        </Link>
+                      ) : (
+                        <div className="group flex items-center">
+                          <div className="hidden md:flex">
+                            <PersonAvatar personId="anonymous" />
+                          </div>
+                          <p className="break-normal text-slate-600 md:ml-2">{t("common.anonymous")}</p>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{response.value}</TableCell>
+                    <TableCell width={120}>
+                      {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {visibleResponses < questionSummary.samples.length && (
+              <div className="flex justify-center py-4">
+                <Button onClick={handleLoadMore} variant="secondary" size="sm">
+                  {t("common.load_more")}
+                </Button>
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );

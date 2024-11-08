@@ -1,16 +1,19 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TI18nString, TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
@@ -24,6 +27,7 @@ interface RankingQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const RankingQuestionForm = ({
@@ -35,7 +39,9 @@ export const RankingQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: RankingQuestionFormProps): JSX.Element => {
+  const t = useTranslations();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
 
@@ -91,12 +97,12 @@ export const RankingQuestionForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: "Keep current order",
+      label: t("environments.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: "Randomize all",
+      label: t("environments.surveys.edit.randomize_all"),
       show: question.choices.length > 0,
     },
   };
@@ -107,12 +113,14 @@ export const RankingQuestionForm = ({
     }
   }, [question.choices?.length]);
 
+  const [parent] = useAutoAnimate();
+
   return (
     <form>
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -120,16 +128,17 @@ export const RankingQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
-      <div>
+      <div ref={parent}>
         {question.subheader !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -137,6 +146,7 @@ export const RankingQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>
@@ -153,13 +163,13 @@ export const RankingQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Options*</Label>
+        <Label htmlFor="choices">{t("environments.surveys.edit.options")}*</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="ranking-choices"
@@ -181,7 +191,7 @@ export const RankingQuestionForm = ({
               updateQuestion(questionIdx, { choices: newChoices });
             }}>
             <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col">
+              <div className="flex flex-col" ref={parent}>
                 {question.choices &&
                   question.choices.map((choice, choiceIdx) => (
                     <QuestionOptionChoice
@@ -201,6 +211,7 @@ export const RankingQuestionForm = ({
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
                       attributeClasses={attributeClasses}
+                      locale={locale}
                     />
                   ))}
               </div>
@@ -214,7 +225,7 @@ export const RankingQuestionForm = ({
               EndIcon={PlusIcon}
               type="button"
               onClick={() => addOption()}>
-              Add option
+              {t("environments.surveys.edit.add_option")}
             </Button>
             <ShuffleOptionSelect
               shuffleOptionsTypes={shuffleOptionsTypes}

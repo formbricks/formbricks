@@ -1,10 +1,13 @@
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -13,12 +16,13 @@ interface MatrixQuestionSummaryProps {
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
+  locale: TUserLocale;
 }
 
 export const MatrixQuestionSummary = ({
@@ -26,7 +30,9 @@ export const MatrixQuestionSummary = ({
   survey,
   attributeClasses,
   setFilter,
+  locale,
 }: MatrixQuestionSummaryProps) => {
+  const t = useTranslations();
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -37,7 +43,7 @@ export const MatrixQuestionSummary = ({
     if (label) {
       return label;
     } else if (percentage !== undefined && totalResponsesForRow !== undefined) {
-      return `${Math.round((percentage / 100) * totalResponsesForRow)} responses`;
+      return `${Math.round((percentage / 100) * totalResponsesForRow)} ${t("common.responses")}`;
     }
     return "";
   };
@@ -50,6 +56,7 @@ export const MatrixQuestionSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}

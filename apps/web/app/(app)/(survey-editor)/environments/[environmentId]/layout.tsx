@@ -2,6 +2,7 @@ import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -12,7 +13,8 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
 import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
-const EnvLayout = async ({ children, params }) => {
+const SurveyEditorEnvironmentLayout = async ({ children, params }) => {
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -20,23 +22,23 @@ const EnvLayout = async ({ children, params }) => {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
   if (!hasAccess) {
-    throw new AuthorizationError("Not authorized");
+    throw new AuthorizationError(t("common.not_authorized"));
   }
 
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const environment = await getEnvironment(params.environmentId);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   return (
@@ -61,4 +63,4 @@ const EnvLayout = async ({ children, params }) => {
   );
 };
 
-export default EnvLayout;
+export default SurveyEditorEnvironmentLayout;

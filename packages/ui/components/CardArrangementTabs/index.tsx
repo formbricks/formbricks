@@ -1,6 +1,7 @@
+import { useTranslations } from "next-intl";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyType } from "@formbricks/types/surveys/types";
-import { Tabs } from "../Tabs";
+import { StylingTabs } from "../StylingTabs";
 import { CasualCardArrangementIcon } from "../icons/CasualCardArrangementIcon";
 import { SimpleCardsArrangementIcon } from "../icons/SimpleCardArrangementIcon";
 import { StraightCardArrangementIcon } from "../icons/StraightCardArrangementIcon";
@@ -18,6 +19,7 @@ export const CardArrangementTabs = ({
   setActiveCardArrangement,
   disabled = false,
 }: CardArrangementTabsProps) => {
+  const t = useTranslations();
   const handleCardArrangementChange = (arrangement: TCardArrangementOptions) => {
     if (disabled) return;
     setActiveCardArrangement(arrangement, surveyType);
@@ -36,15 +38,27 @@ export const CardArrangementTabs = ({
 
   return (
     <div className="w-full gap-2 rounded-md bg-white">
-      <Tabs
+      <StylingTabs
         id="card-arrangement"
         onChange={(value) => {
           handleCardArrangementChange(value);
         }}
         options={[
-          { value: "casual", label: "Casual", icon: getCardArrangementIcon("casual") },
-          { value: "straight", label: "Straight", icon: getCardArrangementIcon("straight") },
-          { value: "simple", label: "Simple", icon: getCardArrangementIcon("simple") },
+          {
+            value: "casual",
+            label: t("environments.surveys.edit.casual"),
+            icon: getCardArrangementIcon("casual"),
+          },
+          {
+            value: "straight",
+            label: t("environments.surveys.edit.straight"),
+            icon: getCardArrangementIcon("straight"),
+          },
+          {
+            value: "simple",
+            label: t("environments.surveys.edit.simple"),
+            icon: getCardArrangementIcon("simple"),
+          },
         ]}
         defaultSelected={activeCardArrangement}
         className="w-full"

@@ -1,11 +1,12 @@
 "use client";
 
 import { formbricksLogout } from "@/app/lib/formbricks";
+import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import type { Session } from "next-auth";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
-import { DeleteAccountModal } from "@formbricks/ui/components/DeleteAccountModal";
 
 export const DeleteAccount = ({
   session,
@@ -17,7 +18,7 @@ export const DeleteAccount = ({
   user: TUser;
 }) => {
   const [isModalOpen, setModalOpen] = useState(false);
-
+  const t = useTranslations("environments.settings.profile");
   if (!session) {
     return null;
   }
@@ -32,10 +33,10 @@ export const DeleteAccount = ({
         formbricksLogout={formbricksLogout}
       />
       <p className="text-sm text-slate-700">
-        Delete your account with all personal data. <strong>This cannot be undone!</strong>
+        <strong>{t("warning_cannot_undo")}</strong>
       </p>
       <Button className="mt-4" variant="warn" size="sm" onClick={() => setModalOpen(!isModalOpen)}>
-        Delete my account
+        {t("confirm_delete_my_account")}
       </Button>
     </div>
   );

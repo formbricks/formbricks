@@ -1,6 +1,7 @@
 "use client";
 
 import { FilterIcon, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -22,6 +23,7 @@ type TBasicSegmentSettingsTabProps = {
   initialSegment: TSegmentWithSurveyNames;
   attributeClasses: TAttributeClass[];
   isFormbricksCloud: boolean;
+  isReadOnly: boolean;
 };
 
 export const BasicSegmentSettings = ({
@@ -30,9 +32,10 @@ export const BasicSegmentSettings = ({
   setOpen,
   attributeClasses,
   isFormbricksCloud,
+  isReadOnly,
 }: TBasicSegmentSettingsTabProps) => {
   const router = useRouter();
-
+  const t = useTranslations();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegment);
 
@@ -64,7 +67,7 @@ export const BasicSegmentSettings = ({
 
   const handleUpdateSegment = async () => {
     if (!segment.title) {
-      toast.error("Title is required.");
+      toast.error(t("environments.segments.title_is_required"));
       return;
     }
 
@@ -81,14 +84,14 @@ export const BasicSegmentSettings = ({
       });
 
       setIsUpdatingSegment(false);
-      toast.success("Segment updated successfully!");
+      toast.success(t("environments.segments.segment_updated_successfully"));
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (!parsedFilters.success) {
-        toast.error("Invalid filters. Please check the filters and try again.");
+        toast.error(t("environments.segments.invalid_filters_please_check_the_filters_and_try_again"));
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
       setIsUpdatingSegment(false);
       return;
@@ -105,10 +108,10 @@ export const BasicSegmentSettings = ({
       await deleteBasicSegmentAction({ segmentId: segment.id });
 
       setIsDeletingSegment(false);
-      toast.success("Segment deleted successfully!");
+      toast.success(t("environments.segments.segment_deleted_successfully"));
       handleResetState();
     } catch (err: any) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
 
     setIsDeletingSegment(false);
@@ -133,7 +136,7 @@ export const BasicSegmentSettings = ({
   if (isAdvancedSegment(segment.filters)) {
     return (
       <p className="italic text-slate-600">
-        This is an advanced segment, you cannot edit it. Please upgrade your plan to edit this segment.
+        {t("environments.segments.advance_segment_cannot_be_edited_upgrade_your_plan")}
       </p>
     );
   }
@@ -145,11 +148,12 @@ export const BasicSegmentSettings = ({
           <div className="flex flex-col overflow-auto rounded-lg bg-white">
             <div className="flex w-full items-center gap-4">
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Title</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.title")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
                     value={segment.title}
-                    placeholder="Ex. Power Users"
+                    disabled={isReadOnly}
+                    placeholder={t("environments.segments.ex_power_users")}
                     onChange={(e) => {
                       setSegment((prev) => ({
                         ...prev,
@@ -162,11 +166,12 @@ export const BasicSegmentSettings = ({
               </div>
 
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Description</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.description")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
                     value={segment.description ?? ""}
-                    placeholder="Ex. Power Users"
+                    disabled={isReadOnly}
+                    placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                     onChange={(e) => {
                       setSegment((prev) => ({
                         ...prev,
@@ -179,12 +184,14 @@ export const BasicSegmentSettings = ({
               </div>
             </div>
 
-            <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
+            <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
             <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment?.filters?.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
                   <FilterIcon className="h-5 w-5 text-slate-700" />
-                  <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
+                  <h3 className="text-sm font-medium text-slate-700">
+                    {t("environments.segments.add_your_first_filter_to_get_started")}
+                  </h3>
                 </div>
               )}
 
@@ -194,11 +201,16 @@ export const BasicSegmentSettings = ({
                 setSegment={setSegment}
                 group={segment.filters}
                 attributeClasses={attributeClasses}
+                viewOnly={isReadOnly}
               />
 
               <div>
-                <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
-                  Add Filter
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setAddFilterModalOpen(true)}
+                  disabled={isReadOnly}>
+                  {t("common.add_filter")}
                 </Button>
               </div>
 
@@ -214,40 +226,42 @@ export const BasicSegmentSettings = ({
 
             {isFormbricksCloud ? (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="upgrade your plan."
+                message={t("environments.segments.for_advanced_targeting_please")}
+                textForUrl={t("environments.segments.upgrade_your_plan")}
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="request an Enterprise License."
+                message={t("environments.segments.for_advanced_targeting_please")}
+                textForUrl={t("common.request_an_enterprise_license")}
                 url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
 
-            <div className="flex w-full items-center justify-between pt-4">
-              <Button
-                type="button"
-                variant="warn"
-                loading={isDeletingSegment}
-                onClick={() => {
-                  setIsDeleteSegmentModalOpen(true);
-                }}
-                EndIcon={Trash2}
-                endIconClassName="p-0.5">
-                Delete
-              </Button>
-              <Button
-                type="submit"
-                loading={isUpdatingSegment}
-                onClick={() => {
-                  handleUpdateSegment();
-                }}
-                disabled={isSaveDisabled}>
-                Save changes
-              </Button>
-            </div>
+            {!isReadOnly && (
+              <div className="flex w-full items-center justify-between pt-4">
+                <Button
+                  type="button"
+                  variant="warn"
+                  loading={isDeletingSegment}
+                  onClick={() => {
+                    setIsDeleteSegmentModalOpen(true);
+                  }}
+                  EndIcon={Trash2}
+                  endIconClassName="p-0.5">
+                  {t("common.delete")}
+                </Button>
+                <Button
+                  type="submit"
+                  loading={isUpdatingSegment}
+                  onClick={() => {
+                    handleUpdateSegment();
+                  }}
+                  disabled={isSaveDisabled}>
+                  {t("common.save_changes")}
+                </Button>
+              </div>
+            )}
 
             {isDeleteSegmentModalOpen && (
               <ConfirmDeleteSegmentModal

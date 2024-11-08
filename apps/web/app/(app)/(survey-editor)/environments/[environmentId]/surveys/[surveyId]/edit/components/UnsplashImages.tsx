@@ -2,6 +2,7 @@
 
 import { debounce } from "lodash";
 import { SearchIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import UnsplashImage from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -110,9 +111,17 @@ const defaultImages = [
       regularWithAttribution: "/image-backgrounds/kittens.webp",
     },
   },
+  {
+    id: "windows",
+    alt_description: "Windows",
+    urls: {
+      regularWithAttribution: "/image-backgrounds/windows.webp",
+    },
+  },
 ];
 
 export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashSurveyBgProps) => {
+  const t = useTranslations();
   const inputFocus = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -187,10 +196,10 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
         <Input
           value={query}
           onChange={handleChange}
-          placeholder="Try 'lollipop' or 'mountain'..."
+          placeholder={t("environments.surveys.edit.try_lollipop_or_mountain")}
           className="pl-8"
           ref={inputFocus}
-          aria-label="Search for images"
+          aria-label={t("environments.surveys.edit.search_for_images")}
         />
       </div>
       <div className="relative mt-4 grid grid-cols-3 gap-1">
@@ -224,12 +233,12 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
             className="col-span-3 mt-3 flex items-center justify-center"
             type="button"
             onClick={handleLoadMore}>
-            Load More
+            {t("common.load_more")}
           </Button>
         )}
         {!isLoading && images.length === 0 && query.trim() !== "" && (
           <div className="col-span-3 flex items-center justify-center text-sm text-slate-500">
-            No images found for &apos;{query}&apos;
+            {t("environments.surveys.edit.no_images_found_for", { query: query })}
           </div>
         )}
       </div>

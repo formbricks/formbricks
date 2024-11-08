@@ -1,7 +1,10 @@
 import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/AttributesSection";
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
 import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -17,6 +20,7 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const [environment, environmentTags, product, session, organization, person, attributes, attributeClasses] =
     await Promise.all([
       getEnvironment(params.environmentId),
@@ -30,31 +34,36 @@ const Page = async ({ params }) => {
     ]);
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new Error(t("common.person_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
 
   const getDeletePersonButton = () => {
     return (
-      <DeletePersonButton environmentId={environment.id} personId={params.personId} isViewer={isViewer} />
+      <DeletePersonButton environmentId={environment.id} personId={params.personId} isReadOnly={isReadOnly} />
     );
   };
 

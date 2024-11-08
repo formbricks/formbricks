@@ -1,29 +1,38 @@
 import { createId } from "@paralleldrive/cuid2";
-import { TActionClass } from "@formbricks/types/action-classes";
 import {
-  TSurveyCTAQuestion,
-  TSurveyCreateInput,
-  TSurveyDisplayOption,
   TSurveyEndScreenCard,
   TSurveyHiddenFields,
   TSurveyLanguage,
   TSurveyOpenTextQuestion,
   TSurveyQuestionTypeEnum,
-  TSurveyStatus,
-  TSurveyType,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 import { createI18nString, extractLanguageCodes } from "./i18n/utils";
 
-export const getDefaultEndingCard = (languages: TSurveyLanguage[]): TSurveyEndScreenCard => {
+const messageCache: Record<string, any> = {};
+const defaultLocale = "en-US";
+
+const getMessages = (locale: string) => {
+  if (!messageCache[locale]) {
+    messageCache[locale] = require(`./messages/${locale}.json`);
+  }
+  return messageCache[locale];
+};
+
+export const translate = (text: string, locale: string) => {
+  const messages = getMessages(locale ?? defaultLocale);
+  return messages.templates[text];
+};
+
+export const getDefaultEndingCard = (languages: TSurveyLanguage[], locale: string): TSurveyEndScreenCard => {
   const languageCodes = extractLanguageCodes(languages);
   return {
     id: createId(),
     type: "endScreen",
-    headline: createI18nString("Thank you!", languageCodes),
-    subheader: createI18nString("We appreciate your feedback.", languageCodes),
-    buttonLabel: createI18nString("Create your own Survey", languageCodes),
+    headline: createI18nString(translate("default_ending_card_headline", locale), languageCodes),
+    subheader: createI18nString(translate("default_ending_card_subheader", locale), languageCodes),
+    buttonLabel: createI18nString(translate("default_ending_card_button_label", locale), languageCodes),
     buttonLink: "https://formbricks.com",
   };
 };
@@ -33,40 +42,43 @@ const hiddenFieldsDefault: TSurveyHiddenFields = {
   fieldIds: [],
 };
 
-export const welcomeCardDefault: TSurveyWelcomeCard = {
-  enabled: false,
-  headline: { default: "Welcome!" },
-  html: { default: "Thanks for providing your feedback - let's go!" },
-  timeToFinish: false,
-  showResponseCount: false,
-};
-
-export const surveyDefault: TTemplate["preset"] = {
-  name: "New Survey",
-  welcomeCard: welcomeCardDefault,
-  endings: [getDefaultEndingCard([])],
-  hiddenFields: hiddenFieldsDefault,
-  questions: [],
-};
-
-const cartAbandonmentSurvey = (): TTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
-
+export const getDefaultWelcomeCard = (locale: string): TSurveyWelcomeCard => {
   return {
-    name: "Cart Abandonment Survey",
+    enabled: false,
+    headline: { default: translate("default_welcome_card_headline", locale) },
+    html: { default: translate("default_welcome_card_html", locale) },
+    timeToFinish: false,
+    showResponseCount: false,
+  };
+};
+
+export const getDefaultSurveyPreset = (locale: string): TTemplate["preset"] => {
+  return {
+    name: "New Survey",
+    welcomeCard: getDefaultWelcomeCard(locale),
+    endings: [getDefaultEndingCard([], locale)],
+    hiddenFields: hiddenFieldsDefault,
+    questions: [],
+  };
+};
+
+const cartAbandonmentSurvey = (locale: string): TTemplate => {
+  const reusableQuestionIds = [createId(), createId(), createId()];
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("card_abandonment_survey", locale),
     role: "productManager",
     industries: ["eCommerce"],
     channels: ["app", "website", "link"],
-    description: "Understand the reasons behind cart abandonment in your web shop.",
+    description: translate("card_abandonment_survey_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Cart Abandonment Survey",
+      ...localSurvey,
+      name: translate("card_abandonment_survey", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We noticed you left some items in your cart. We would love to understand why.</span></p>',
+            default: translate("card_abandonment_survey_question_1_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -90,98 +102,114 @@ const cartAbandonmentSurvey = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Do you have 2 minutes to help us improve?" },
+          headline: { default: translate("card_abandonment_survey_question_2_headline", locale) },
           required: false,
-          buttonLabel: { default: "Sure!" },
+          buttonLabel: { default: translate("card_abandonment_survey_question_2_button_label", locale) },
           buttonExternal: false,
-          dismissButtonLabel: { default: "No, thanks." },
+          dismissButtonLabel: {
+            default: translate("card_abandonment_survey_question_2_dismiss_button_label", locale),
+          },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "What was the primary reason you didn't complete your purchase?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("card_abandonment_survey_question_3_headline", locale) },
+          subheader: { default: translate("card_abandonment_survey_question_3_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "High shipping costs" },
+              label: { default: translate("card_abandonment_survey_question_3_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Found a better price elsewhere" },
+              label: { default: translate("card_abandonment_survey_question_3_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Just browsing" },
+              label: { default: translate("card_abandonment_survey_question_3_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Decided not to buy" },
+              label: { default: translate("card_abandonment_survey_question_3_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "Payment issues" },
+              label: { default: translate("card_abandonment_survey_question_3_choice_5", locale) },
             },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: "other",
+              label: { default: translate("card_abandonment_survey_question_3_choice_6", locale) },
+            },
           ],
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: {
-            default: "Please elaborate on your reason for not completing the purchase:",
+            default: translate("card_abandonment_survey_question_4_headline", locale),
           },
           required: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
-          headline: { default: "How would you rate your overall shopping experience?" },
+          headline: { default: translate("card_abandonment_survey_question_5_headline", locale) },
           required: true,
           scale: "number",
           range: 5,
-          lowerLabel: { default: "Very dissatisfied" },
-          upperLabel: { default: "Very satisfied" },
+          lowerLabel: { default: translate("card_abandonment_survey_question_5_lower_label", locale) },
+          upperLabel: { default: translate("card_abandonment_survey_question_5_upper_label", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           isColorCodingEnabled: false,
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
           headline: {
-            default: "What factors would encourage you to complete your purchase in the future?",
+            default: translate("card_abandonment_survey_question_6_headline", locale),
           },
-          subheader: { default: "Please select all that apply:" },
+          subheader: { default: translate("card_abandonment_survey_question_6_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
           choices: [
             {
               id: createId(),
-              label: { default: "Lower shipping costs" },
+              label: { default: translate("card_abandonment_survey_question_6_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Discounts or promotions" },
+              label: { default: translate("card_abandonment_survey_question_6_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "More payment options" },
+              label: { default: translate("card_abandonment_survey_question_6_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Better product descriptions" },
+              label: { default: translate("card_abandonment_survey_question_6_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "Improved website navigation" },
+              label: { default: translate("card_abandonment_survey_question_6_choice_5", locale) },
             },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: "other",
+              label: { default: translate("card_abandonment_survey_question_6_choice_6", locale) },
+            },
           ],
         },
         {
@@ -213,49 +241,54 @@ const cartAbandonmentSurvey = (): TTemplate => {
             },
           ],
           type: TSurveyQuestionTypeEnum.Consent,
-          headline: { default: "Would you like to receive a discount code via email?" },
+          headline: { default: translate("card_abandonment_survey_question_7_headline", locale) },
           required: false,
-          label: { default: "Yes, please reach out." },
+          label: { default: translate("card_abandonment_survey_question_7_label", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Please share your email address:" },
+          headline: { default: translate("card_abandonment_survey_question_8_headline", locale) },
           required: true,
           inputType: "email",
           longAnswer: false,
           placeholder: { default: "example@email.com" },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Any additional comments or suggestions?" },
+          headline: { default: translate("card_abandonment_survey_question_9_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("finish", locale) },
         },
       ],
     },
   };
 };
 
-const siteAbandonmentSurvey = (): TTemplate => {
+const siteAbandonmentSurvey = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Site Abandonment Survey",
+    name: translate("site_abandonment_survey", locale),
     role: "productManager",
     industries: ["eCommerce"],
     channels: ["app", "website"],
-    description: "Understand the reasons behind site abandonment in your web shop.",
+    description: translate("site_abandonment_survey_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Site Abandonment Survey",
+      ...localSurvey,
+      name: translate("site_abandonment_survey", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
           html: {
-            default:
-              "<p class='fb-editor-paragraph' dir='ltr'><span>We noticed you're  leaving our site without making a purchase. We would love to understand why.</span></p>",
+            default: translate("site_abandonment_survey_question_1_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -279,98 +312,115 @@ const siteAbandonmentSurvey = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Do you have a minute?" },
+          headline: { default: translate("site_abandonment_survey_question_2_headline", locale) },
           required: false,
-          buttonLabel: { default: "Sure!" },
+          buttonLabel: { default: translate("site_abandonment_survey_question_2_button_label", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           buttonExternal: false,
-          dismissButtonLabel: { default: "No, thanks." },
+          dismissButtonLabel: {
+            default: translate("site_abandonment_survey_question_2_dismiss_button_label", locale),
+          },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "What's the primary reason you're leaving our site?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("site_abandonment_survey_question_3_headline", locale) },
+          subheader: { default: translate("site_abandonment_survey_question_3_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Can't find what I am looking for" },
+              label: { default: translate("site_abandonment_survey_question_3_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Site is too slow" },
+              label: { default: translate("site_abandonment_survey_question_3_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Technical issues" },
+              label: { default: translate("site_abandonment_survey_question_3_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Just browsing" },
+              label: { default: translate("site_abandonment_survey_question_3_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "Found a better site" },
+              label: { default: translate("site_abandonment_survey_question_3_choice_5", locale) },
             },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: "other",
+              label: { default: translate("site_abandonment_survey_question_3_choice_6", locale) },
+            },
           ],
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: {
-            default: "Please elaborate on your reason for leaving the site:",
+            default: translate("site_abandonment_survey_question_4_headline", locale),
           },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
-          headline: { default: "How would you rate your overall experience on our site?" },
+          headline: { default: translate("site_abandonment_survey_question_5_headline", locale) },
           required: true,
           scale: "number",
           range: 5,
-          lowerLabel: { default: "Very dissatisfied" },
-          upperLabel: { default: "Very satisfied" },
+          lowerLabel: { default: translate("site_abandonment_survey_question_5_lower_label", locale) },
+          upperLabel: { default: translate("site_abandonment_survey_question_5_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
           headline: {
-            default: "What improvements would encourage you to stay longer on our site?",
+            default: translate("site_abandonment_survey_question_6_headline", locale),
           },
-          subheader: { default: "Please select all that apply:" },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+          subheader: { default: translate("site_abandonment_survey_question_6_subheader", locale) },
           required: true,
           choices: [
             {
               id: createId(),
-              label: { default: "Faster loading times" },
+              label: { default: translate("site_abandonment_survey_question_6_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Better product search functionality" },
+              label: { default: translate("site_abandonment_survey_question_6_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "More product variety" },
+              label: { default: translate("site_abandonment_survey_question_6_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Improved site design" },
+              label: { default: translate("site_abandonment_survey_question_6_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "More customer reviews" },
+              label: { default: translate("site_abandonment_survey_question_6_choice_5", locale) },
             },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: "other",
+              label: { default: translate("site_abandonment_survey_question_6_choice_6", locale) },
+            },
           ],
         },
         {
@@ -402,14 +452,18 @@ const siteAbandonmentSurvey = (): TTemplate => {
             },
           ],
           type: TSurveyQuestionTypeEnum.Consent,
-          headline: { default: "Would you like to receive updates about new products and promotions?" },
+          headline: { default: translate("site_abandonment_survey_question_7_headline", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: false,
-          label: { default: "Yes, please reach out." },
+          label: { default: translate("site_abandonment_survey_question_7_label", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Please share your email address:" },
+          headline: { default: translate("site_abandonment_survey_question_8_headline", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
           inputType: "email",
           longAnswer: false,
@@ -418,7 +472,9 @@ const siteAbandonmentSurvey = (): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Any additional comments or suggestions?" },
+          headline: { default: translate("site_abandonment_survey_question_9_headline", locale) },
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: false,
           inputType: "text",
         },
@@ -427,24 +483,23 @@ const siteAbandonmentSurvey = (): TTemplate => {
   };
 };
 
-const productMarketFitSuperhuman = (): TTemplate => {
+const productMarketFitSuperhuman = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Product Market Fit (Superhuman)",
+    name: translate("product_market_fit_superhuman", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app", "link"],
-    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
+    description: translate("product_market_fit_superhuman_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Product Market Fit (Superhuman)",
+      ...localSurvey,
+      name: translate("product_market_fit_superhuman", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
+            default: translate("product_market_fit_superhuman_question_1_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -468,89 +523,104 @@ const productMarketFitSuperhuman = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "You are one of our power users! Do you have 5 minutes?" },
+          headline: { default: translate("product_market_fit_superhuman_question_1_headline", locale) },
           required: false,
-          buttonLabel: { default: "Happy to help!" },
+          buttonLabel: {
+            default: translate("product_market_fit_superhuman_question_1_button_label", locale),
+          },
+          backButtonLabel: { default: translate("back", locale) },
           buttonExternal: false,
-          dismissButtonLabel: { default: "No, thanks." },
+          dismissButtonLabel: {
+            default: translate("product_market_fit_superhuman_question_1_dismiss_button_label", locale),
+          },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How disappointed would you be if you could no longer use {{productName}}?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("product_market_fit_superhuman_question_2_headline", locale) },
+          subheader: { default: translate("product_market_fit_superhuman_question_2_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Not at all disappointed" },
+              label: { default: translate("product_market_fit_superhuman_question_2_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Somewhat disappointed" },
+              label: { default: translate("product_market_fit_superhuman_question_2_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Very disappointed" },
+              label: { default: translate("product_market_fit_superhuman_question_2_choice_3", locale) },
             },
           ],
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "What is your role?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("product_market_fit_superhuman_question_3_headline", locale) },
+          subheader: { default: translate("product_market_fit_superhuman_question_3_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Founder" },
+              label: { default: translate("product_market_fit_superhuman_question_3_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Executive" },
+              label: { default: translate("product_market_fit_superhuman_question_3_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Product Manager" },
+              label: { default: translate("product_market_fit_superhuman_question_3_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Product Owner" },
+              label: { default: translate("product_market_fit_superhuman_question_3_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "Software Engineer" },
+              label: { default: translate("product_market_fit_superhuman_question_3_choice_5", locale) },
             },
           ],
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What type of people do you think would most benefit from {{productName}}?" },
+          headline: { default: translate("product_market_fit_superhuman_question_4_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What is the main benefit you receive from {{productName}}?" },
+          headline: { default: translate("product_market_fit_superhuman_question_5_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "How can we improve {{productName}} for you?" },
-          subheader: { default: "Please be as specific as possible." },
+          headline: { default: translate("product_market_fit_superhuman_question_6_headline", locale) },
+          subheader: { default: translate("product_market_fit_superhuman_question_6_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           inputType: "text",
         },
       ],
@@ -558,104 +628,110 @@ const productMarketFitSuperhuman = (): TTemplate => {
   };
 };
 
-const onboardingSegmentation = (): TTemplate => {
+const onboardingSegmentation = (locale: string): TTemplate => {
   return {
-    name: "Onboarding Segmentation",
+    name: translate("onboarding_segmentation", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app", "link"],
-    description: "Learn more about who signed up to your product and why.",
+    description: translate("onboarding_segmentation_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Onboarding Segmentation",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("onboarding_segmentation", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "What is your role?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("onboarding_segmentation_question_1_headline", locale) },
+          subheader: { default: translate("onboarding_segmentation_question_1_subheader", locale) },
           required: true,
           shuffleOption: "none",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           choices: [
             {
               id: createId(),
-              label: { default: "Founder" },
+              label: { default: translate("onboarding_segmentation_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Executive" },
+              label: { default: translate("onboarding_segmentation_question_1_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Product Manager" },
+              label: { default: translate("onboarding_segmentation_question_1_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Product Owner" },
+              label: { default: translate("onboarding_segmentation_question_1_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "Software Engineer" },
+              label: { default: translate("onboarding_segmentation_question_1_choice_5", locale) },
             },
           ],
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "What's your company size?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("onboarding_segmentation_question_2_headline", locale) },
+          subheader: { default: translate("onboarding_segmentation_question_2_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "only me" },
+              label: { default: translate("onboarding_segmentation_question_2_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "1-5 employees" },
+              label: { default: translate("onboarding_segmentation_question_2_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "6-10 employees" },
+              label: { default: translate("onboarding_segmentation_question_2_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "11-100 employees" },
+              label: { default: translate("onboarding_segmentation_question_2_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "over 100 employees" },
+              label: { default: translate("onboarding_segmentation_question_2_choice_5", locale) },
             },
           ],
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How did you hear about us first?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("onboarding_segmentation_question_3_headline", locale) },
+          subheader: { default: translate("onboarding_segmentation_question_3_subheader", locale) },
           required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Recommendation" },
+              label: { default: translate("onboarding_segmentation_question_3_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Social Media" },
+              label: { default: translate("onboarding_segmentation_question_3_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Ads" },
+              label: { default: translate("onboarding_segmentation_question_3_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Google Search" },
+              label: { default: translate("onboarding_segmentation_question_3_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "In a Podcast" },
+              label: { default: translate("onboarding_segmentation_question_3_choice_5", locale) },
             },
           ],
         },
@@ -664,24 +740,26 @@ const onboardingSegmentation = (): TTemplate => {
   };
 };
 
-const churnSurvey = (): TTemplate => {
+const churnSurvey = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Churn Survey",
+    name: translate("churn_survey", locale),
     role: "sales",
     industries: ["saas", "eCommerce", "other"],
     channels: ["app", "link"],
-    description: "Find out why people cancel their subscriptions. These insights are pure gold!",
+    description: translate("churn_survey_description", locale),
     preset: {
-      ...surveyDefault,
+      ...localSurvey,
       name: "Churn Survey",
       questions: [
         {
           id: reusableQuestionIds[0],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           logic: [
             {
               id: createId(),
@@ -819,21 +897,36 @@ const churnSurvey = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Difficult to use" } },
-            { id: reusableOptionIds[1], label: { default: "It's too expensive" } },
-            { id: reusableOptionIds[2], label: { default: "I am missing features" } },
-            { id: reusableOptionIds[3], label: { default: "Poor customer service" } },
-            { id: reusableOptionIds[4], label: { default: "I just didn't need it anymore" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("churn_survey_question_1_choice_1", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("churn_survey_question_1_choice_2", locale) },
+            },
+            {
+              id: reusableOptionIds[2],
+              label: { default: translate("churn_survey_question_1_choice_3", locale) },
+            },
+            {
+              id: reusableOptionIds[3],
+              label: { default: translate("churn_survey_question_1_choice_4", locale) },
+            },
+            {
+              id: reusableOptionIds[4],
+              label: { default: translate("churn_survey_question_1_choice_5", locale) },
+            },
           ],
-          headline: { default: "Why did you cancel your subscription?" },
+          headline: { default: translate("churn_survey_question_1_headline", locale) },
           required: true,
-          subheader: { default: "We're sorry to see you leave. Help us do better:" },
+          subheader: { default: translate("churn_survey_question_1_subheader", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -859,21 +952,21 @@ const churnSurvey = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What would have made {{productName}} easier to use?" },
+          headline: { default: translate("churn_survey_question_2_headline", locale) },
+          backButtonLabel: { default: translate("back", locale) },
           required: true,
-          buttonLabel: { default: "Send" },
+          buttonLabel: { default: translate("churn_survey_question_2_button_label", locale) },
           inputType: "text",
         },
         {
           id: reusableQuestionIds[2],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We\'d love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>',
+            default: translate("churn_survey_question_3_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -897,17 +990,18 @@ const churnSurvey = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Get 30% off for the next year!" },
+          headline: { default: translate("churn_survey_question_3_headline", locale) },
           required: true,
           buttonUrl: "https://formbricks.com",
-          buttonLabel: { default: "Get 30% off" },
+          buttonLabel: { default: translate("churn_survey_question_3_button_label", locale) },
           buttonExternal: true,
-          dismissButtonLabel: { default: "Skip" },
+          backButtonLabel: { default: translate("back", locale) },
+          dismissButtonLabel: { default: translate("churn_survey_question_3_dismiss_button_label", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -933,20 +1027,19 @@ const churnSurvey = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What features are you missing?" },
+          headline: { default: translate("churn_survey_question_4_headline", locale) },
           required: true,
           inputType: "text",
         },
         {
           id: reusableQuestionIds[4],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>',
+            default: translate("churn_survey_question_5_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -970,37 +1063,37 @@ const churnSurvey = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "So sorry to hear 😔 Talk to our CEO directly!" },
+          headline: { default: translate("churn_survey_question_5_headline", locale) },
           required: true,
           buttonUrl: "mailto:ceo@company.com",
-          buttonLabel: { default: "Send email to CEO" },
+          buttonLabel: { default: translate("churn_survey_question_5_button_label", locale) },
           buttonExternal: true,
-          dismissButtonLabel: { default: "Skip" },
+          dismissButtonLabel: { default: translate("churn_survey_question_5_dismiss_button_label", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const earnedAdvocacyScore = (): TTemplate => {
+const earnedAdvocacyScore = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Earned Advocacy Score (EAS)",
+    name: translate("earned_advocacy_score_name", locale),
     role: "customerSuccess",
     industries: ["saas", "eCommerce", "other"],
     channels: ["app", "link"],
-    description:
-      "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
+    description: translate("earned_advocacy_score_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Earned Advocacy Score (EAS)",
+      ...localSurvey,
+      name: translate("earned_advocacy_score_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -1037,11 +1130,19 @@ const earnedAdvocacyScore = (): TTemplate => {
           ],
           shuffleOption: "none",
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Yes" } },
-            { id: reusableOptionIds[1], label: { default: "No" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("earned_advocacy_score_question_1_choice_1", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("earned_advocacy_score_question_1_choice_2", locale) },
+            },
           ],
-          headline: { default: "Have you actively recommended {{productName}} to others?" },
+          headline: { default: translate("earned_advocacy_score_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -1072,18 +1173,22 @@ const earnedAdvocacyScore = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "Great to hear! Why did you recommend us?" },
+          headline: { default: translate("earned_advocacy_score_question_2_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("earned_advocacy_score_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "So sad. Why not?" },
+          headline: { default: translate("earned_advocacy_score_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("earned_advocacy_score_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -1113,33 +1218,43 @@ const earnedAdvocacyScore = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
           shuffleOption: "none",
           choices: [
-            { id: reusableOptionIds[2], label: { default: "Yes" } },
-            { id: reusableOptionIds[3], label: { default: "No" } },
+            {
+              id: reusableOptionIds[2],
+              label: { default: translate("earned_advocacy_score_question_4_choice_1", locale) },
+            },
+            {
+              id: reusableOptionIds[3],
+              label: { default: translate("earned_advocacy_score_question_4_choice_2", locale) },
+            },
           ],
-          headline: { default: "Have you actively discouraged others from choosing {{productName}}?" },
+          headline: { default: translate("earned_advocacy_score_question_4_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What made you discourage them?" },
+          headline: { default: translate("earned_advocacy_score_question_5_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("earned_advocacy_score_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const improveTrialConversion = (): TTemplate => {
+const improveTrialConversion = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [
     createId(),
@@ -1150,16 +1265,16 @@ const improveTrialConversion = (): TTemplate => {
     createId(),
     createId(),
   ];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Improve Trial Conversion",
+    name: translate("improve_trial_conversion_name", locale),
     role: "sales",
     industries: ["saas"],
     channels: ["link", "app"],
-    description: "Find out why people stopped their trial. These insights help you improve your funnel.",
+    description: translate("improve_trial_conversion_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Improve Trial Conversion",
+      ...localSurvey,
+      name: translate("improve_trial_conversion_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -1302,21 +1417,38 @@ const improveTrialConversion = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "I didn't get much value out of it" } },
-            { id: reusableOptionIds[1], label: { default: "I expected something else" } },
-            { id: reusableOptionIds[2], label: { default: "It's too expensive for what it does" } },
-            { id: reusableOptionIds[3], label: { default: "I am missing a feature" } },
-            { id: reusableOptionIds[4], label: { default: "I was just looking around" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("improve_trial_conversion_question_1_choice_1", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("improve_trial_conversion_question_1_choice_2", locale) },
+            },
+            {
+              id: reusableOptionIds[2],
+              label: { default: translate("improve_trial_conversion_question_1_choice_3", locale) },
+            },
+            {
+              id: reusableOptionIds[3],
+              label: { default: translate("improve_trial_conversion_question_1_choice_4", locale) },
+            },
+            {
+              id: reusableOptionIds[4],
+              label: { default: translate("improve_trial_conversion_question_1_choice_5", locale) },
+            },
           ],
-          headline: { default: "Why did you stop your trial?" },
+          headline: { default: translate("improve_trial_conversion_question_1_headline", locale) },
           required: true,
-          subheader: { default: "Help us understand you better:" },
+          subheader: { default: translate("improve_trial_conversion_question_1_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -1347,10 +1479,11 @@ const improveTrialConversion = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "Sorry to hear. What was the biggest problem using {{productName}}?" },
+          headline: { default: translate("improve_trial_conversion_question_2_headline", locale) },
           required: true,
-          buttonLabel: { default: "Next" },
+          buttonLabel: { default: translate("improve_trial_conversion_question_2_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -1381,16 +1514,16 @@ const improveTrialConversion = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "What did you expect {{productName}} would do for you?" },
+          headline: { default: translate("improve_trial_conversion_question_2_headline", locale) },
           required: true,
-          buttonLabel: { default: "Next" },
+          buttonLabel: { default: translate("improve_trial_conversion_question_2_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We\'re happy to offer you a 20% discount on a yearly plan.</span></p>',
+            default: translate("improve_trial_conversion_question_4_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -1414,17 +1547,20 @@ const improveTrialConversion = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Sorry to hear! Get 20% off the first year." },
+          headline: { default: translate("improve_trial_conversion_question_4_headline", locale) },
           required: true,
           buttonUrl: "https://formbricks.com/github",
-          buttonLabel: { default: "Get 20% off" },
+          buttonLabel: { default: translate("improve_trial_conversion_question_4_button_label", locale) },
           buttonExternal: true,
-          dismissButtonLabel: { default: "Skip" },
+          dismissButtonLabel: {
+            default: translate("improve_trial_conversion_question_4_dismiss_button_label", locale),
+          },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -1455,11 +1591,12 @@ const improveTrialConversion = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "Which features are you missing?" },
+          headline: { default: translate("improve_trial_conversion_question_5_headline", locale) },
           required: true,
-          subheader: { default: "What would you like to achieve?" },
-          buttonLabel: { default: "Next" },
+          subheader: { default: translate("improve_trial_conversion_question_5_subheader", locale) },
+          buttonLabel: { default: translate("improve_trial_conversion_question_5_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -1485,7 +1622,7 @@ const improveTrialConversion = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -1509,33 +1646,36 @@ const improveTrialConversion = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "How are you solving your problem now?" },
+          headline: { default: translate("improve_trial_conversion_question_6_headline", locale) },
           required: false,
-          subheader: { default: "Please name alternative solutions:" },
+          subheader: { default: translate("improve_trial_conversion_question_6_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const reviewPrompt = (): TTemplate => {
+const reviewPrompt = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
-    name: "Review Prompt",
+    name: translate("review_prompt_name", locale),
     role: "marketing",
     industries: ["saas", "eCommerce", "other"],
     channels: ["link", "app"],
-    description: "Invite users who love your product to review it publicly.",
+    description: translate("review_prompt_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Review Prompt",
+      ...localSurvey,
+      name: translate("review_prompt_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -1572,15 +1712,17 @@ const reviewPrompt = (): TTemplate => {
           ],
           range: 5,
           scale: "star",
-          headline: { default: "How do you like {{productName}}?" },
+          headline: { default: translate("review_prompt_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not good" },
-          upperLabel: { default: "Very satisfied" },
+          lowerLabel: { default: translate("review_prompt_question_1_lower_label", locale) },
+          upperLabel: { default: translate("review_prompt_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
-          html: { default: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>' },
+          html: { default: translate("review_prompt_question_2_html", locale) },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
             {
@@ -1603,71 +1745,74 @@ const reviewPrompt = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Happy to hear 🙏 Please write a review for us!" },
+          headline: { default: translate("review_prompt_question_2_headline", locale) },
           required: true,
           buttonUrl: "https://formbricks.com/github",
-          buttonLabel: { default: "Write review" },
+          buttonLabel: { default: translate("review_prompt_question_2_button_label", locale) },
           buttonExternal: true,
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Sorry to hear! What is ONE thing we can do better?" },
+          headline: { default: translate("review_prompt_question_3_headline", locale) },
           required: true,
-          subheader: { default: "Help us improve your experience." },
-          buttonLabel: { default: "Send" },
-          placeholder: { default: "Type your answer here..." },
+          subheader: { default: translate("review_prompt_question_3_subheader", locale) },
+          buttonLabel: { default: translate("review_prompt_question_3_button_label", locale) },
+          placeholder: { default: translate("review_prompt_question_3_placeholder", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const interviewPrompt = (): TTemplate => {
+const interviewPrompt = (locale: string): TTemplate => {
   return {
-    name: "Interview Prompt",
+    name: translate("interview_prompt_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Invite a specific subset of your users to schedule an interview with your product team.",
+    description: translate("interview_prompt_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Interview Prompt",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("interview_prompt_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.CTA,
-          headline: { default: "Do you have 15 min to talk to us? 🙏" },
-          html: { default: "You're one of our power users. We would love to interview you briefly!" },
-          buttonLabel: { default: "Book slot" },
+          headline: { default: translate("interview_prompt_question_1_headline", locale) },
+          html: { default: translate("interview_prompt_question_1_html", locale) },
+          buttonLabel: { default: translate("interview_prompt_question_1_button_label", locale) },
           buttonUrl: "https://cal.com/johannes",
           buttonExternal: true,
           required: false,
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const improveActivationRate = (): TTemplate => {
+const improveActivationRate = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Improve Activation Rate",
+    name: translate("improve_activation_rate_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["link"],
-    description: "Identify weaknesses in your onboarding flow to increase user activation.",
+    description: translate("improve_activation_rate_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Onboarding Drop-Off Reasons",
+      ...localSurvey,
+      name: translate("improve_activation_rate_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -1788,16 +1933,33 @@ const improveActivationRate = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Didn't seem useful to me" } },
-            { id: reusableOptionIds[1], label: { default: "Difficult to set up or use" } },
-            { id: reusableOptionIds[2], label: { default: "Lacked features/functionality" } },
-            { id: reusableOptionIds[3], label: { default: "Just haven't had the time" } },
-            { id: reusableOptionIds[4], label: { default: "Something else" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("improve_activation_rate_question_1_choice_1", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("improve_activation_rate_question_1_choice_2", locale) },
+            },
+            {
+              id: reusableOptionIds[2],
+              label: { default: translate("improve_activation_rate_question_1_choice_3", locale) },
+            },
+            {
+              id: reusableOptionIds[3],
+              label: { default: translate("improve_activation_rate_question_1_choice_4", locale) },
+            },
+            {
+              id: reusableOptionIds[4],
+              label: { default: translate("improve_activation_rate_question_1_choice_5", locale) },
+            },
           ],
           headline: {
-            default: "What's the main reason why you haven't finished setting up {{productName}}?",
+            default: translate("improve_activation_rate_question_1_headline", locale),
           },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -1823,15 +1985,17 @@ const improveActivationRate = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What made you think {{productName}} wouldn't be useful?" },
+          headline: { default: translate("improve_activation_rate_question_2_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("improve_activation_rate_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -1857,15 +2021,17 @@ const improveActivationRate = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What was difficult about setting up or using {{productName}}?" },
+          headline: { default: translate("improve_activation_rate_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("improve_activation_rate_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -1891,15 +2057,17 @@ const improveActivationRate = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What features or functionality were missing?" },
+          headline: { default: translate("improve_activation_rate_question_4_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("improve_activation_rate_question_4_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -1925,252 +2093,454 @@ const improveActivationRate = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "How could we make it easier for you to get started?" },
+          headline: { default: translate("improve_activation_rate_question_5_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("improve_activation_rate_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.OpenText,
           logic: [],
-          headline: { default: "What was it? Please explain:" },
+          headline: { default: translate("improve_activation_rate_question_6_headline", locale) },
           required: false,
-          subheader: { default: "We're eager to fix it asap." },
-          placeholder: { default: "Type your answer here..." },
+          subheader: { default: translate("improve_activation_rate_question_6_subheader", locale) },
+          placeholder: { default: translate("improve_activation_rate_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const uncoverStrengthsAndWeaknesses = (): TTemplate => {
+const employeeSatisfaction = (locale: string): TTemplate => {
   return {
-    name: "Uncover Strengths & Weaknesses",
+    name: translate("employee_satisfaction_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["app", "link"],
+    description: translate("employee_satisfaction_description", locale),
+    preset: {
+      ...getDefaultSurveyPreset(locale),
+      name: translate("employee_satisfaction_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "star",
+          headline: { default: translate("employee_satisfaction_question_1_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("employee_satisfaction_question_1_lower_label", locale) },
+          upperLabel: { default: translate("employee_satisfaction_question_1_upper_label", locale) },
+          isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_2_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_2_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_2_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_2_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_2_choice_5", locale) },
+            },
+          ],
+          headline: { default: translate("employee_satisfaction_question_2_headline", locale) },
+          required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("employee_satisfaction_question_3_headline", locale) },
+          required: false,
+          placeholder: { default: translate("employee_satisfaction_question_3_placeholder", locale) },
+          inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_4_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_4_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_4_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_4_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_4_choice_5", locale) },
+            },
+          ],
+          headline: { default: translate("employee_satisfaction_question_4_headline", locale) },
+          required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: translate("employee_satisfaction_question_5_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("employee_satisfaction_question_5_lower_label", locale) },
+          upperLabel: { default: translate("employee_satisfaction_question_5_upper_label", locale) },
+          isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("employee_satisfaction_question_6_headline", locale) },
+          required: false,
+          placeholder: { default: translate("employee_satisfaction_question_6_placeholder", locale) },
+          inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_7_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_7_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_7_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_7_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("employee_satisfaction_question_7_choice_5", locale) },
+            },
+          ],
+          headline: { default: translate("employee_satisfaction_question_7_headline", locale) },
+          required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("uncover_strengths_and_weaknesses_name", locale),
     role: "productManager",
     industries: ["saas", "other"],
     channels: ["app", "link"],
-    description: "Find out what users like and don't like about your product or offering.",
+    description: translate("uncover_strengths_and_weaknesses_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Uncover Strengths & Weaknesses",
+      ...localSurvey,
+      name: translate("uncover_strengths_and_weaknesses_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Ease of use" } },
-            { id: createId(), label: { default: "Good value for money" } },
-            { id: createId(), label: { default: "It's open-source" } },
-            { id: createId(), label: { default: "The founders are cute" } },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: createId(),
+              label: { default: translate("uncover_strengths_and_weaknesses_question_1_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("uncover_strengths_and_weaknesses_question_1_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("uncover_strengths_and_weaknesses_question_1_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("uncover_strengths_and_weaknesses_question_1_choice_4", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("uncover_strengths_and_weaknesses_question_1_choice_5", locale) },
+            },
           ],
-          headline: { default: "What do you value most about {{productName}}?" },
+          headline: { default: translate("uncover_strengths_and_weaknesses_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Documentation" } },
-            { id: createId(), label: { default: "Customizability" } },
-            { id: createId(), label: { default: "Pricing" } },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: createId(),
+              label: { default: translate("uncover_strengths_and_weaknesses_question_2_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("uncover_strengths_and_weaknesses_question_2_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("uncover_strengths_and_weaknesses_question_2_choice_3", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("uncover_strengths_and_weaknesses_question_2_choice_4", locale) },
+            },
           ],
-          headline: { default: "What should we improve on?" },
+          headline: { default: translate("uncover_strengths_and_weaknesses_question_2_headline", locale) },
           required: true,
-          subheader: { default: "Please select one of the following options:" },
+          subheader: { default: translate("uncover_strengths_and_weaknesses_question_2_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Would you like to add something?" },
+          headline: { default: translate("uncover_strengths_and_weaknesses_question_3_headline", locale) },
           required: false,
-          subheader: { default: "Feel free to speak your mind, we do too." },
+          subheader: { default: translate("uncover_strengths_and_weaknesses_question_3_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const productMarketFitShort = (): TTemplate => {
+const productMarketFitShort = (locale: string): TTemplate => {
   return {
-    name: "Product Market Fit Survey (Short)",
+    name: translate("product_market_fit_short_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app", "link"],
-    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
+    description: translate("product_market_fit_short_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Product Market Fit Survey (Short)",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("product_market_fit_short_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How disappointed would you be if you could no longer use {{productName}}?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("product_market_fit_short_question_1_headline", locale) },
+          subheader: { default: translate("product_market_fit_short_question_1_subheader", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Not at all disappointed" },
+              label: { default: translate("product_market_fit_short_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Somewhat disappointed" },
+              label: { default: translate("product_market_fit_short_question_1_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Very disappointed" },
+              label: { default: translate("product_market_fit_short_question_1_choice_3", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "How can we improve {{productName}} for you?" },
-          subheader: { default: "Please be as specific as possible." },
+          headline: { default: translate("product_market_fit_short_question_2_headline", locale) },
+          subheader: { default: translate("product_market_fit_short_question_2_subheader", locale) },
           required: true,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const marketAttribution = (): TTemplate => {
+const marketAttribution = (locale: string): TTemplate => {
   return {
-    name: "Marketing Attribution",
+    name: translate("market_attribution_name", locale),
     role: "marketing",
     industries: ["saas", "eCommerce"],
     channels: ["website", "app", "link"],
-    description: "How did you first hear about us?",
+    description: translate("market_attribution_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Marketing Attribution",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("market_attribution_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How did you hear about us first?" },
-          subheader: { default: "Please select one of the following options:" },
+          headline: { default: translate("market_attribution_question_1_headline", locale) },
+          subheader: { default: translate("market_attribution_question_1_subheader", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Recommendation" },
+              label: { default: translate("market_attribution_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Social Media" },
+              label: { default: translate("market_attribution_question_1_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Ads" },
+              label: { default: translate("market_attribution_question_1_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Google Search" },
+              label: { default: translate("market_attribution_question_1_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "In a Podcast" },
+              label: { default: translate("market_attribution_question_1_choice_5", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const changingSubscriptionExperience = (): TTemplate => {
+const changingSubscriptionExperience = (locale: string): TTemplate => {
   return {
-    name: "Changing Subscription Experience",
+    name: translate("changing_subscription_experience_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Find out what goes through peoples minds when changing their subscriptions.",
+    description: translate("changing_subscription_experience_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Changing subscription experience",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("changing_subscription_experience_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How easy was it to change your plan?" },
+          headline: { default: translate("changing_subscription_experience_question_1_headline", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Extremely difficult" },
+              label: { default: translate("changing_subscription_experience_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "It took a while, but I got it" },
+              label: { default: translate("changing_subscription_experience_question_1_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "It was alright" },
+              label: { default: translate("changing_subscription_experience_question_1_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Quite easy" },
+              label: { default: translate("changing_subscription_experience_question_1_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: "Very easy, love it!" },
+              label: { default: translate("changing_subscription_experience_question_1_choice_5", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Is the pricing information easy to understand?" },
+          headline: { default: translate("changing_subscription_experience_question_2_headline", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Yes, very clear." },
+              label: { default: translate("changing_subscription_experience_question_2_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "I was confused at first, but found what I needed." },
+              label: { default: translate("changing_subscription_experience_question_2_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Quite complicated." },
+              label: { default: translate("changing_subscription_experience_question_2_choice_3", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const identifyCustomerGoals = (): TTemplate => {
+const identifyCustomerGoals = (locale: string): TTemplate => {
   return {
-    name: "Identify Customer Goals",
+    name: translate("identify_customer_goals_name", locale),
     role: "productManager",
     industries: ["saas", "other"],
     channels: ["app", "website"],
-    description:
-      "Better understand if your messaging creates the right expectations of the value your product provides.",
+    description: translate("identify_customer_goals_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Identify Customer Goals",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("identify_customer_goals_name", locale),
       questions: [
         {
           id: createId(),
@@ -2196,117 +2566,127 @@ const identifyCustomerGoals = (): TTemplate => {
               label: { default: "Rule the world to make everyone breakfast brussels sprouts." },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const featureChaser = (): TTemplate => {
+const featureChaser = (locale: string): TTemplate => {
   return {
-    name: "Feature Chaser",
+    name: translate("feature_chaser_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Follow up with users who just used a specific feature.",
+    description: translate("feature_chaser_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Feature Chaser",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("feature_chaser_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
           range: 5,
           scale: "number",
-          headline: { default: "How important is [ADD FEATURE] for you?" },
+          headline: { default: translate("feature_chaser_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not important" },
-          upperLabel: { default: "Very important" },
+          lowerLabel: { default: translate("feature_chaser_question_1_lower_label", locale) },
+          upperLabel: { default: translate("feature_chaser_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Aspect 1" } },
-            { id: createId(), label: { default: "Aspect 2" } },
-            { id: createId(), label: { default: "Aspect 3" } },
-            { id: createId(), label: { default: "Aspect 4" } },
+            { id: createId(), label: { default: translate("feature_chaser_question_2_choice_1", locale) } },
+            { id: createId(), label: { default: translate("feature_chaser_question_2_choice_2", locale) } },
+            { id: createId(), label: { default: translate("feature_chaser_question_2_choice_3", locale) } },
+            { id: createId(), label: { default: translate("feature_chaser_question_2_choice_4", locale) } },
           ],
-          headline: { default: "Which aspect is most important?" },
+          headline: { default: translate("feature_chaser_question_2_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const fakeDoorFollowUp = (): TTemplate => {
+const fakeDoorFollowUp = (locale: string): TTemplate => {
   return {
-    name: "Fake Door Follow-Up",
+    name: translate("fake_door_follow_up_name", locale),
     role: "productManager",
     industries: ["saas", "eCommerce"],
     channels: ["app", "website"],
-    description: "Follow up with users who ran into one of your Fake Door experiments.",
+    description: translate("fake_door_follow_up_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Fake Door Follow-Up",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("fake_door_follow_up_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
-          headline: { default: "How important is this feature for you?" },
+          headline: { default: translate("fake_door_follow_up_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not important" },
-          upperLabel: { default: "Very important" },
+          lowerLabel: { default: translate("fake_door_follow_up_question_1_lower_label", locale) },
+          upperLabel: { default: translate("fake_door_follow_up_question_1_upper_label", locale) },
           range: 5,
           scale: "number",
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-          headline: { default: "What should be definitely include building this?" },
+          headline: { default: translate("fake_door_follow_up_question_2_headline", locale) },
           required: false,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Aspect 1" },
+              label: { default: translate("fake_door_follow_up_question_2_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Aspect 2" },
+              label: { default: translate("fake_door_follow_up_question_2_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Aspect 3" },
+              label: { default: translate("fake_door_follow_up_question_2_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Aspect 4" },
+              label: { default: translate("fake_door_follow_up_question_2_choice_4", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const feedbackBox = (): TTemplate => {
+const feedbackBox = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Feedback Box",
+    name: translate("feedback_box_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Give your users the chance to seamlessly share what's on their minds.",
+    description: translate("feedback_box_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Feedback Box",
+      ...localSurvey,
+      name: translate("feedback_box_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -2372,12 +2752,20 @@ const feedbackBox = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Bug report 🐞" } },
-            { id: reusableOptionIds[1], label: { default: "Feature Request 💡" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("feedback_box_question_1_choice_1", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("feedback_box_question_1_choice_2", locale) },
+            },
           ],
-          headline: { default: "What's on your mind, boss?" },
+          headline: { default: translate("feedback_box_question_1_headline", locale) },
           required: true,
-          subheader: { default: "Thanks for sharing. We'll get back to you asap." },
+          subheader: { default: translate("feedback_box_question_1_subheader", locale) },
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -2408,16 +2796,17 @@ const feedbackBox = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "What's broken?" },
+          headline: { default: translate("feedback_box_question_2_headline", locale) },
           required: true,
-          subheader: { default: "The more detail, the better :)" },
+          subheader: { default: translate("feedback_box_question_2_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We will fix this as soon as possible. Do you want to be notified when we did?</span></p>',
+            default: translate("feedback_box_question_3_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -2441,7 +2830,7 @@ const feedbackBox = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
@@ -2465,44 +2854,46 @@ const feedbackBox = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Want to stay in the loop?" },
+          headline: { default: translate("feedback_box_question_3_headline", locale) },
           required: false,
-          buttonLabel: { default: "Yes, notify me" },
+          buttonLabel: { default: translate("feedback_box_question_3_button_label", locale) },
           buttonExternal: false,
-          dismissButtonLabel: { default: "No, thanks" },
+          dismissButtonLabel: { default: translate("feedback_box_question_3_dismiss_button_label", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Lovely, tell us more!" },
+          headline: { default: translate("feedback_box_question_4_headline", locale) },
           required: true,
-          subheader: { default: "What problem do you want us to solve?" },
-          buttonLabel: { default: "Request feature" },
-          placeholder: { default: "Type your answer here..." },
+          subheader: { default: translate("feedback_box_question_4_subheader", locale) },
+          buttonLabel: { default: translate("feedback_box_question_4_button_label", locale) },
+          placeholder: { default: translate("feedback_box_question_4_placeholder", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const integrationSetupSurvey = (): TTemplate => {
+const integrationSetupSurvey = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
-    name: "Integration Setup Survey",
+    name: translate("integration_setup_survey_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
+    description: translate("integration_setup_survey_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Integration Usage Survey",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("integration_setup_survey_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -2539,158 +2930,177 @@ const integrationSetupSurvey = (): TTemplate => {
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How easy was it to set this integration up?" },
+          headline: { default: translate("integration_setup_survey_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not easy" },
-          upperLabel: { default: "Very easy" },
+          lowerLabel: { default: translate("integration_setup_survey_question_1_lower_label", locale) },
+          upperLabel: { default: translate("integration_setup_survey_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Why was it hard?" },
+          headline: { default: translate("integration_setup_survey_question_2_headline", locale) },
           required: false,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("integration_setup_survey_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What other tools would you like to use with {{productName}}?" },
+          headline: { default: translate("integration_setup_survey_question_3_headline", locale) },
           required: false,
-          subheader: { default: "We keep building integrations, yours can be next:" },
+          subheader: { default: translate("integration_setup_survey_question_3_subheader", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const newIntegrationSurvey = (): TTemplate => {
+const newIntegrationSurvey = (locale: string): TTemplate => {
   return {
-    name: "New Integration Survey",
+    name: translate("new_integration_survey_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Find out which integrations your users would like to see next.",
+    description: translate("new_integration_survey_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "New Integration Survey",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("new_integration_survey_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Which other tools are you using?" },
+          headline: { default: translate("new_integration_survey_question_1_headline", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "PostHog" },
+              label: { default: translate("new_integration_survey_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Segment" },
+              label: { default: translate("new_integration_survey_question_1_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "Hubspot" },
+              label: { default: translate("new_integration_survey_question_1_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "Twilio" },
+              label: { default: translate("new_integration_survey_question_1_choice_4", locale) },
             },
             {
               id: "other",
-              label: { default: "Other" },
+              label: { default: translate("new_integration_survey_question_1_choice_5", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const docsFeedback = (): TTemplate => {
+const docsFeedback = (locale: string): TTemplate => {
   return {
-    name: "Docs Feedback",
+    name: translate("docs_feedback_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app", "website", "link"],
-    description: "Measure how clear each page of your developer documentation is.",
+    description: translate("docs_feedback_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "{{productName}} Docs Feedback",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("docs_feedback_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Was this page helpful?" },
+          headline: { default: translate("docs_feedback_question_1_headline", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Yes 👍" },
+              label: { default: translate("docs_feedback_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "No 👎" },
+              label: { default: translate("docs_feedback_question_1_choice_2", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Please elaborate:" },
+          headline: { default: translate("docs_feedback_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Page URL" },
+          headline: { default: translate("docs_feedback_question_3_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const NPS = (): TTemplate => {
+const NPS = (locale: string): TTemplate => {
   return {
-    name: "Net Promoter Score (NPS)",
+    name: translate("nps_name", locale),
     role: "customerSuccess",
     industries: ["saas", "eCommerce", "other"],
     channels: ["app", "link", "website"],
-    description: "Measure the Net Promoter Score of your product or service.",
+    description: translate("nps_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "NPS Survey",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("nps_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.NPS,
-          headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+          headline: { default: translate("nps_question_1_headline", locale) },
           required: false,
-          lowerLabel: { default: "Not likely" },
-          upperLabel: { default: "Very likely" },
+          lowerLabel: { default: translate("nps_question_1_lower_label", locale) },
+          upperLabel: { default: translate("nps_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What made you give that rating?" },
+          headline: { default: translate("nps_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const customerSatisfactionScore = (): TTemplate => {
+const customerSatisfactionScore = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -2704,14 +3114,14 @@ const customerSatisfactionScore = (): TTemplate => {
     createId(),
   ];
   return {
-    name: "Customer Satisfaction Score (CSAT)",
+    name: translate("csat_name", locale),
     role: "customerSuccess",
     industries: ["saas", "eCommerce", "other"],
     channels: ["app", "link", "website"],
-    description: "Measure the Customer Satisfaction Score of your product or service.",
+    description: translate("csat_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "{{productName}} CSAT",
+      ...localSurvey,
+      name: translate("csat_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -2719,149 +3129,168 @@ const customerSatisfactionScore = (): TTemplate => {
           range: 10,
           scale: "number",
           headline: {
-            default:
-              "How likely is it that you would recommend this {{productName}} to a friend or colleague?",
+            default: translate("csat_question_1_headline", locale),
           },
           required: true,
-          lowerLabel: { default: "Not satisfied" },
-          upperLabel: { default: "Very satisfied" },
+          lowerLabel: { default: translate("csat_question_1_lower_label", locale) },
+          upperLabel: { default: translate("csat_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Overall, how satisfied or dissatisfied are you with our {{productName}}" },
-          subheader: { default: "Please select one:" },
+          headline: { default: translate("csat_question_2_headline", locale) },
+          subheader: { default: translate("csat_question_2_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Very satisfied" } },
-            { id: createId(), label: { default: "Somewhat satisfied" } },
-            { id: createId(), label: { default: "Neither satisfied nor dissatisfied" } },
-            { id: createId(), label: { default: "Somewhat dissatisfied" } },
-            { id: createId(), label: { default: "Very dissatisfied" } },
+            { id: createId(), label: { default: translate("csat_question_2_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_2_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_2_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_2_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_2_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
           headline: {
-            default: "Which of the following words would you use to describe our {{productName}}?",
+            default: translate("csat_question_3_headline", locale),
           },
-          subheader: { default: "Select all that apply:" },
+          subheader: { default: translate("csat_question_3_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Reliable" } },
-            { id: createId(), label: { default: "High quality" } },
-            { id: createId(), label: { default: "Overpriced" } },
-            { id: createId(), label: { default: "Impractical" } },
-            { id: createId(), label: { default: "Useful" } },
-            { id: createId(), label: { default: "Ineffective" } },
-            { id: createId(), label: { default: "Unique" } },
-            { id: createId(), label: { default: "Poor quality" } },
-            { id: createId(), label: { default: "Good value for money" } },
-            { id: createId(), label: { default: "Unreliable" } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_5", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_6", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_7", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_8", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_9", locale) } },
+            { id: createId(), label: { default: translate("csat_question_3_choice_10", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How well do our {{productName}} meet your needs?" },
-          subheader: { default: "Select one option:" },
+          headline: { default: translate("csat_question_4_headline", locale) },
+          subheader: { default: translate("csat_question_4_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Extremely well" } },
-            { id: createId(), label: { default: "Very well" } },
-            { id: createId(), label: { default: "Somewhat well" } },
-            { id: createId(), label: { default: "Not so well" } },
-            { id: createId(), label: { default: "Not at all well" } },
+            { id: createId(), label: { default: translate("csat_question_4_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_4_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_4_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_4_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_4_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How would you rate the quality of the {{productName}}?" },
-          subheader: { default: "Select one option:" },
+          headline: { default: translate("csat_question_5_headline", locale) },
+          subheader: { default: translate("csat_question_5_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Very high quality" } },
-            { id: createId(), label: { default: "High quality" } },
-            { id: createId(), label: { default: "Low quality" } },
-            { id: createId(), label: { default: "Very low quality" } },
-            { id: createId(), label: { default: "Neither high nor low" } },
+            { id: createId(), label: { default: translate("csat_question_5_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_5_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_5_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_5_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_5_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How would you rate the value for money of the {{productName}}?" },
-          subheader: { default: "Please select one:" },
+          headline: { default: translate("csat_question_6_headline", locale) },
+          subheader: { default: translate("csat_question_6_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Excellent" } },
-            { id: createId(), label: { default: "Above average" } },
-            { id: createId(), label: { default: "Average" } },
-            { id: createId(), label: { default: "Below average" } },
-            { id: createId(), label: { default: "Poor" } },
+            { id: createId(), label: { default: translate("csat_question_6_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_6_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_6_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_6_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_6_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How responsive have we been to your questions about our services?" },
-          subheader: { default: "Select one option:" },
+          headline: { default: translate("csat_question_7_headline", locale) },
+          subheader: { default: translate("csat_question_7_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Extremely responsive" } },
-            { id: createId(), label: { default: "Very responsive" } },
-            { id: createId(), label: { default: "Somewhat responsive" } },
-            { id: createId(), label: { default: "Not so responsive" } },
-            { id: createId(), label: { default: "Not at all responsive" } },
-            { id: createId(), label: { default: "Not applicable" } },
+            { id: createId(), label: { default: translate("csat_question_7_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_7_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_7_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_7_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_7_choice_5", locale) } },
+            { id: createId(), label: { default: translate("csat_question_7_choice_6", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[7],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How long have you been a customer of {{productName}}?" },
-          subheader: { default: "Select one option:" },
+          headline: { default: translate("csat_question_8_headline", locale) },
+          subheader: { default: translate("csat_question_8_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "This is my first purchase" } },
-            { id: createId(), label: { default: "Less than six months" } },
-            { id: createId(), label: { default: "Six months to a year" } },
-            { id: createId(), label: { default: "1 - 2 years" } },
-            { id: createId(), label: { default: "3 or more years" } },
-            { id: createId(), label: { default: "I haven't made a purchase yet" } },
+            { id: createId(), label: { default: translate("csat_question_8_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_8_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_8_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_8_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_8_choice_5", locale) } },
+            { id: createId(), label: { default: translate("csat_question_8_choice_6", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[8],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How likely are you to purchase any of our {{productName}} again ?" },
-          subheader: { default: "Select one option:" },
+          headline: { default: translate("csat_question_9_headline", locale) },
+          subheader: { default: translate("csat_question_9_subheader", locale) },
           required: true,
           choices: [
-            { id: createId(), label: { default: "Extremely likely" } },
-            { id: createId(), label: { default: "Very likely" } },
-            { id: createId(), label: { default: "Somewhat likely" } },
-            { id: createId(), label: { default: "Not so likely" } },
-            { id: createId(), label: { default: "Not at all likely" } },
+            { id: createId(), label: { default: translate("csat_question_9_choice_1", locale) } },
+            { id: createId(), label: { default: translate("csat_question_9_choice_2", locale) } },
+            { id: createId(), label: { default: translate("csat_question_9_choice_3", locale) } },
+            { id: createId(), label: { default: translate("csat_question_9_choice_4", locale) } },
+            { id: createId(), label: { default: translate("csat_question_9_choice_5", locale) } },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[9],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Do you have any other comments, questions or concerns?" },
+          headline: { default: translate("csat_question_10_headline", locale) },
           required: false,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("csat_question_10_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const collectFeedback = (): TTemplate => {
+const collectFeedback = (locale: string): TTemplate => {
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -2872,14 +3301,14 @@ const collectFeedback = (): TTemplate => {
     createId(),
   ];
   return {
-    name: "Collect Feedback",
+    name: translate("collect_feedback_name", locale),
     role: "productManager",
     industries: ["other", "eCommerce"],
     channels: ["website", "link"],
-    description: "Gather comprehensive feedback on your product or service.",
+    description: translate("collect_feedback_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Feedback Survey",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("collect_feedback_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -2916,12 +3345,14 @@ const collectFeedback = (): TTemplate => {
           ],
           range: 5,
           scale: "star",
-          headline: { default: "How do you rate your overall experience?" },
+          headline: { default: translate("csat_question_1_headline", locale) },
           required: true,
-          subheader: { default: "Don't worry, be honest." },
-          lowerLabel: { default: "Not good" },
-          upperLabel: { default: "Very good" },
+          subheader: { default: translate("csat_question_1_subheader", locale) },
+          lowerLabel: { default: translate("csat_question_1_lower_label", locale) },
+          upperLabel: { default: translate("csat_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -2952,120 +3383,134 @@ const collectFeedback = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "Lovely! What did you like about it?" },
+          headline: { default: translate("collect_feedback_question_2_headline", locale) },
           required: true,
           longAnswer: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("collect_feedback_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Thanks for sharing! What did you not like?" },
+          headline: { default: translate("collect_feedback_question_3_headline", locale) },
           required: true,
           longAnswer: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("collect_feedback_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.Rating,
           range: 5,
           scale: "smiley",
-          headline: { default: "How do you rate our communication?" },
+          headline: { default: translate("collect_feedback_question_4_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not good" },
-          upperLabel: { default: "Very good" },
+          lowerLabel: { default: translate("collect_feedback_question_4_lower_label", locale) },
+          upperLabel: { default: translate("collect_feedback_question_4_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Anything else you'd like to share with our team?" },
+          headline: { default: translate("collect_feedback_question_5_headline", locale) },
           required: false,
           longAnswer: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("collect_feedback_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
           choices: [
-            { id: createId(), label: { default: "Google" } },
-            { id: createId(), label: { default: "Social Media" } },
-            { id: createId(), label: { default: "Friends" } },
-            { id: createId(), label: { default: "Podcast" } },
-            { id: "other", label: { default: "Other" } },
+            { id: createId(), label: { default: translate("collect_feedback_question_6_choice_1", locale) } },
+            { id: createId(), label: { default: translate("collect_feedback_question_6_choice_2", locale) } },
+            { id: createId(), label: { default: translate("collect_feedback_question_6_choice_3", locale) } },
+            { id: createId(), label: { default: translate("collect_feedback_question_6_choice_4", locale) } },
+            { id: "other", label: { default: translate("collect_feedback_question_6_choice_5", locale) } },
           ],
-          headline: { default: "How did you hear about us?" },
+          headline: { default: translate("collect_feedback_question_6_headline", locale) },
           required: true,
           shuffleOption: "none",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Lastly, we'd love to respond to your feedback. Please share your email:" },
+          headline: { default: translate("collect_feedback_question_7_headline", locale) },
           required: false,
           inputType: "email",
           longAnswer: false,
-          placeholder: { default: "example@email.com" },
+          placeholder: { default: translate("collect_feedback_question_7_placeholder", locale) },
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const identifyUpsellOpportunities = (): TTemplate => {
+const identifyUpsellOpportunities = (locale: string): TTemplate => {
   return {
-    name: "Identify Upsell Opportunities",
+    name: translate("identify_upsell_opportunities_name", locale),
     role: "sales",
     industries: ["saas"],
     channels: ["app", "link"],
-    description: "Find out how much time your product saves your user. Use it to upsell.",
+    description: translate("identify_upsell_opportunities_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Identify upsell opportunities",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("identify_upsell_opportunities_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "How many hours does your team save per week by using {{productName}}?" },
+          headline: { default: translate("identify_upsell_opportunities_question_1_headline", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Less than 1 hour" },
+              label: { default: translate("identify_upsell_opportunities_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "1 to 2 hours" },
+              label: { default: translate("identify_upsell_opportunities_question_1_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "3 to 5 hours" },
+              label: { default: translate("identify_upsell_opportunities_question_1_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: "5+ hours" },
+              label: { default: translate("identify_upsell_opportunities_question_1_choice_4", locale) },
             },
           ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const prioritizeFeatures = (): TTemplate => {
+const prioritizeFeatures = (locale: string): TTemplate => {
   return {
-    name: "Prioritize Features",
+    name: translate("prioritize_features_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Identify features your users need most and least.",
+    description: translate("prioritize_features_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Feature Prioritization",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("prioritize_features_name", locale),
       questions: [
         {
           id: createId(),
@@ -3073,13 +3518,24 @@ const prioritizeFeatures = (): TTemplate => {
           logic: [],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Feature 1" } },
-            { id: createId(), label: { default: "Feature 2" } },
-            { id: createId(), label: { default: "Feature 3" } },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: createId(),
+              label: { default: translate("prioritize_features_question_1_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("prioritize_features_question_1_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("prioritize_features_question_1_choice_3", locale) },
+            },
+            { id: "other", label: { default: translate("prioritize_features_question_1_choice_4", locale) } },
           ],
-          headline: { default: "Which of these features would be MOST valuable to you?" },
+          headline: { default: translate("prioritize_features_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
@@ -3087,162 +3543,479 @@ const prioritizeFeatures = (): TTemplate => {
           logic: [],
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: "Feature 1" } },
-            { id: createId(), label: { default: "Feature 2" } },
-            { id: createId(), label: { default: "Feature 3" } },
+            {
+              id: createId(),
+              label: { default: translate("prioritize_features_question_2_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("prioritize_features_question_2_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("prioritize_features_question_2_choice_3", locale) },
+            },
           ],
-          headline: { default: "Which of these features would be LEAST valuable to you?" },
+          headline: { default: translate("prioritize_features_question_2_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "How else could we improve you experience with {{productName}}?" },
+          headline: { default: translate("prioritize_features_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("prioritize_features_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const gaugeFeatureSatisfaction = (): TTemplate => {
+const gaugeFeatureSatisfaction = (locale: string): TTemplate => {
   return {
-    name: "Gauge Feature Satisfaction",
+    name: translate("gauge_feature_satisfaction_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Evaluate the satisfaction of specific features of your product.",
+    description: translate("gauge_feature_satisfaction_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Gauge Feature Satisfaction",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("gauge_feature_satisfaction_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
-          headline: { default: "How easy was it to achieve ... ?" },
+          headline: { default: translate("gauge_feature_satisfaction_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not easy" },
-          upperLabel: { default: "Very easy" },
+          lowerLabel: { default: translate("gauge_feature_satisfaction_question_1_lower_label", locale) },
+          upperLabel: { default: translate("gauge_feature_satisfaction_question_1_upper_label", locale) },
           scale: "number",
           range: 5,
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What is one thing we could do better?" },
+          headline: { default: translate("gauge_feature_satisfaction_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
-      endings: [getDefaultEndingCard([])],
+      endings: [getDefaultEndingCard([], locale)],
       hiddenFields: hiddenFieldsDefault,
     },
   };
 };
 
-const marketSiteClarity = (): TTemplate => {
+const marketSiteClarity = (locale: string): TTemplate => {
   return {
-    name: "Marketing Site Clarity",
+    name: translate("market_site_clarity_name", locale),
     role: "marketing",
     industries: ["saas", "eCommerce", "other"],
     channels: ["website"],
-    description: "Identify users dropping off your marketing site. Improve your messaging.",
+    description: translate("market_site_clarity_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Marketing Site Clarity",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("market_site_clarity_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "Do you have all the info you need to give {{productName}} a try?" },
+          headline: { default: translate("market_site_clarity_question_1_headline", locale) },
           required: true,
           shuffleOption: "none",
           choices: [
             {
               id: createId(),
-              label: { default: "Yes, totally" },
+              label: { default: translate("market_site_clarity_question_1_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: "Kind of..." },
+              label: { default: translate("market_site_clarity_question_1_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: "No, not at all" },
+              label: { default: translate("market_site_clarity_question_1_choice_3", locale) },
             },
           ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What’s missing or unclear to you about {{productName}}?" },
+          headline: { default: translate("market_site_clarity_question_2_headline", locale) },
           required: false,
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.CTA,
-          headline: { default: "Thanks for your answer! Get 25% off your first 6 months:" },
+          headline: { default: translate("market_site_clarity_question_3_headline", locale) },
           required: false,
-          buttonLabel: { default: "Get discount" },
+          buttonLabel: { default: translate("market_site_clarity_question_3_button_label", locale) },
           buttonUrl: "https://app.formbricks.com/auth/signup",
           buttonExternal: true,
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const customerEffortScore = (): TTemplate => {
+const customerEffortScore = (locale: string): TTemplate => {
   return {
-    name: "Customer Effort Score (CES)",
+    name: translate("customer_effort_score_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app"],
-    description: "Determine how easy it is to use a feature.",
+    description: translate("customer_effort_score_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Customer Effort Score (CES)",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("customer_effort_score_name", locale),
       questions: [
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
           range: 5,
           scale: "number",
-          headline: { default: "{{productName}} makes it easy for me to [ADD GOAL]" },
+          headline: { default: translate("customer_effort_score_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Disagree strongly" },
-          upperLabel: { default: "Agree strongly" },
+          lowerLabel: { default: translate("customer_effort_score_question_1_lower_label", locale) },
+          upperLabel: { default: translate("customer_effort_score_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Thanks! How could we make it easier for you to [ADD GOAL]?" },
+          headline: { default: translate("customer_effort_score_question_2_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("customer_effort_score_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const rateCheckoutExperience = (): TTemplate => {
-  const reusableQuestionIds = [createId(), createId(), createId()];
-
+const careerDevelopmentSurvey = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Rate Checkout Experience",
+    name: translate("career_development_survey_name", locale),
+    role: "productManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("career_development_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("career_development_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_1_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_1_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_1_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_2_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_2_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_2_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_3_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_3_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_3_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("career_development_survey_question_4_headline", locale),
+          },
+          lowerLabel: { default: translate("career_development_survey_question_4_lower_label", locale) },
+          upperLabel: { default: translate("career_development_survey_question_4_upper_label", locale) },
+          required: true,
+          isColorCodingEnabled: false,
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: translate("career_development_survey_question_5_headline", locale) },
+          subheader: { default: translate("career_development_survey_question_5_subheader", locale) },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_5_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("career_development_survey_question_5_choice_6", locale) },
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: { default: translate("career_development_survey_question_6_headline", locale) },
+          subheader: { default: translate("career_development_survey_question_6_subheader", locale) },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("career_development_survey_question_6_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("career_development_survey_question_6_choice_6", locale) },
+            },
+          ],
+        },
+      ],
+    },
+  };
+};
+
+const professionalDevelopmentSurvey = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("professional_development_survey_name", locale),
+    role: "productManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("professional_development_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("professional_development_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: {
+            default: translate("professional_development_survey_question_1_headline", locale),
+          },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_1_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_1_choice_2", locale) },
+            },
+          ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: translate("professional_development_survey_question_2_headline", locale),
+          },
+          subheader: { default: translate("professional_development_survey_question_2_subheader", locale) },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_2_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("professional_development_survey_question_2_choice_6", locale) },
+            },
+          ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          headline: {
+            default: translate("professional_development_survey_question_3_headline", locale),
+          },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_3_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_3_choice_2", locale) },
+            },
+          ],
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: {
+            default: translate("professional_development_survey_question_4_headline", locale),
+          },
+          lowerLabel: {
+            default: translate("professional_development_survey_question_4_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_survey_question_4_upper_label", locale),
+          },
+          required: true,
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          headline: {
+            default: translate("professional_development_survey_question_5_headline", locale),
+          },
+          required: true,
+          shuffleOption: "exceptLast",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_5_choice_5", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("professional_development_survey_question_5_choice_6", locale) },
+            },
+          ],
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const rateCheckoutExperience = (locale: string): TTemplate => {
+  const reusableQuestionIds = [createId(), createId(), createId()];
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("rate_checkout_experience_name", locale),
     role: "productManager",
     industries: ["eCommerce"],
     channels: ["website", "app"],
-    description: "Let customers rate the checkout experience to tweak conversion.",
+    description: translate("rate_checkout_experience_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Rate Checkout Experience",
+      ...localSurvey,
+      name: translate("rate_checkout_experience_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -3279,11 +4052,13 @@ const rateCheckoutExperience = (): TTemplate => {
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How easy or difficult was it to complete the checkout?" },
+          headline: { default: translate("rate_checkout_experience_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Very difficult" },
-          upperLabel: { default: "Very easy" },
+          lowerLabel: { default: translate("rate_checkout_experience_question_1_lower_label", locale) },
+          upperLabel: { default: translate("rate_checkout_experience_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3309,41 +4084,45 @@ const rateCheckoutExperience = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Sorry about that! What would have made it easier for you?" },
+          headline: { default: translate("rate_checkout_experience_question_2_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("rate_checkout_experience_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
+          headline: { default: translate("rate_checkout_experience_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("rate_checkout_experience_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const measureSearchExperience = (): TTemplate => {
+const measureSearchExperience = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Measure Search Experience",
+    name: translate("measure_search_experience_name", locale),
     role: "productManager",
     industries: ["saas", "eCommerce"],
     channels: ["app", "website"],
-    description: "Measure how relevant your search results are.",
+    description: translate("measure_search_experience_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Measure Search Experience",
+      ...localSurvey,
+      name: translate("measure_search_experience_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -3380,11 +4159,13 @@ const measureSearchExperience = (): TTemplate => {
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How relevant are these search results?" },
+          headline: { default: translate("measure_search_experience_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not at all relevant" },
-          upperLabel: { default: "Very relevant" },
+          lowerLabel: { default: translate("measure_search_experience_question_1_lower_label", locale) },
+          upperLabel: { default: translate("measure_search_experience_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3410,41 +4191,45 @@ const measureSearchExperience = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Ugh! What makes the results irrelevant for you?" },
+          headline: { default: translate("measure_search_experience_question_2_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("measure_search_experience_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
+          headline: { default: translate("measure_search_experience_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("measure_search_experience_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const evaluateContentQuality = (): TTemplate => {
+const evaluateContentQuality = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Evaluate Content Quality",
+    name: translate("evaluate_content_quality_name", locale),
     role: "marketing",
     industries: ["other"],
     channels: ["website"],
-    description: "Measure if your content marketing pieces hit right.",
+    description: translate("evaluate_content_quality_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Evaluate Content Quality",
+      ...localSurvey,
+      name: translate("evaluate_content_quality_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -3481,11 +4266,13 @@ const evaluateContentQuality = (): TTemplate => {
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How well did this article address what you were hoping to learn?" },
+          headline: { default: translate("evaluate_content_quality_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not at all well" },
-          upperLabel: { default: "Extremely well" },
+          lowerLabel: { default: translate("evaluate_content_quality_question_1_lower_label", locale) },
+          upperLabel: { default: translate("evaluate_content_quality_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3511,42 +4298,46 @@ const evaluateContentQuality = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Hmpft! What were you hoping for?" },
+          headline: { default: translate("evaluate_content_quality_question_2_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("evaluate_content_quality_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Lovely! Is there anything else you would like us to cover?" },
+          headline: { default: translate("evaluate_content_quality_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Topics, trends, tutorials..." },
+          placeholder: { default: translate("evaluate_content_quality_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const measureTaskAccomplishment = (): TTemplate => {
+const measureTaskAccomplishment = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Measure Task Accomplishment",
+    name: translate("measure_task_accomplishment_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app", "website"],
-    description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
+    description: translate("measure_task_accomplishment_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Measure Task Accomplishment",
+      ...localSurvey,
+      name: translate("measure_task_accomplishment_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -3639,12 +4430,23 @@ const measureTaskAccomplishment = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Yes" } },
-            { id: reusableOptionIds[1], label: { default: "Working on it, boss" } },
-            { id: reusableOptionIds[2], label: { default: "No" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("measure_task_accomplishment_question_1_option_1_label", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("measure_task_accomplishment_question_1_option_2_label", locale) },
+            },
+            {
+              id: reusableOptionIds[2],
+              label: { default: translate("measure_task_accomplishment_question_1_option_3_label", locale) },
+            },
           ],
-          headline: { default: "Were you able to accomplish what you came here to do today?" },
+          headline: { default: translate("measure_task_accomplishment_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3681,11 +4483,13 @@ const measureTaskAccomplishment = (): TTemplate => {
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How easy was it to achieve your goal?" },
-          required: true,
-          lowerLabel: { default: "Very difficult" },
-          upperLabel: { default: "Very easy" },
+          headline: { default: translate("measure_task_accomplishment_question_2_headline", locale) },
+          required: false,
+          lowerLabel: { default: translate("measure_task_accomplishment_question_2_lower_label", locale) },
+          upperLabel: { default: translate("measure_task_accomplishment_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -3719,15 +4523,17 @@ const measureTaskAccomplishment = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What made it hard?" },
+          headline: { default: translate("measure_task_accomplishment_question_3_headline", locale) },
           required: false,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("measure_task_accomplishment_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -3761,31 +4567,33 @@ const measureTaskAccomplishment = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Great! What did you come here to do today?" },
+          headline: { default: translate("measure_task_accomplishment_question_4_headline", locale) },
           required: false,
-          buttonLabel: { default: "Send" },
+          buttonLabel: { default: translate("measure_task_accomplishment_question_4_button_label", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What stopped you?" },
+          headline: { default: translate("measure_task_accomplishment_question_5_headline", locale) },
           required: true,
-          buttonLabel: { default: "Send" },
-          placeholder: { default: "Type your answer here..." },
+          buttonLabel: { default: translate("measure_task_accomplishment_question_5_button_label", locale) },
+          placeholder: { default: translate("measure_task_accomplishment_question_5_placeholder", locale) },
           inputType: "text",
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const identifySignUpBarriers = (): TTemplate => {
+const identifySignUpBarriers = (locale: string): TTemplate => {
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -3797,24 +4605,23 @@ const identifySignUpBarriers = (): TTemplate => {
     createId(),
     createId(),
   ];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
 
   return {
-    name: "Identify Sign Up Barriers",
+    name: translate("identify_sign_up_barriers_name", locale),
     role: "marketing",
     industries: ["saas", "eCommerce", "other"],
     channels: ["website"],
-    description: "Offer a discount to gather insights about sign up barriers.",
+    description: translate("identify_sign_up_barriers_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "{{productName}} Sign Up Barriers",
+      ...localSurvey,
+      name: translate("identify_sign_up_barriers_with_product_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>You seem to be considering signing up. Answer four questions and get 10% on any plan.</span></p>',
+            default: translate("identify_sign_up_barriers_question_1_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           logic: [
@@ -3838,16 +4645,19 @@ const identifySignUpBarriers = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Answer this short survey, get 10% off!" },
+          headline: { default: translate("identify_sign_up_barriers_question_1_headline", locale) },
           required: false,
-          buttonLabel: { default: "Get 10% discount" },
+          buttonLabel: { default: translate("identify_sign_up_barriers_question_1_button_label", locale) },
           buttonExternal: false,
-          dismissButtonLabel: { default: "No, thanks" },
+          dismissButtonLabel: {
+            default: translate("identify_sign_up_barriers_question_1_dismiss_button_label", locale),
+          },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -3877,18 +4687,20 @@ const identifySignUpBarriers = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How likely are you to sign up for {{productName}}?" },
+          headline: { default: translate("identify_sign_up_barriers_question_2_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not at all likely" },
-          upperLabel: { default: "Very likely" },
+          lowerLabel: { default: translate("identify_sign_up_barriers_question_2_lower_label", locale) },
+          upperLabel: { default: translate("identify_sign_up_barriers_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -4037,14 +4849,31 @@ const identifySignUpBarriers = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "May not have what I'm looking for" } },
-            { id: reusableOptionIds[1], label: { default: "Still comparing options" } },
-            { id: reusableOptionIds[2], label: { default: "Seems complicated" } },
-            { id: reusableOptionIds[3], label: { default: "Pricing is a concern" } },
-            { id: reusableOptionIds[4], label: { default: "Something else" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("identify_sign_up_barriers_question_3_choice_1_label", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("identify_sign_up_barriers_question_3_choice_2_label", locale) },
+            },
+            {
+              id: reusableOptionIds[2],
+              label: { default: translate("identify_sign_up_barriers_question_3_choice_3_label", locale) },
+            },
+            {
+              id: reusableOptionIds[3],
+              label: { default: translate("identify_sign_up_barriers_question_3_choice_4_label", locale) },
+            },
+            {
+              id: reusableOptionIds[4],
+              label: { default: translate("identify_sign_up_barriers_question_3_choice_5_label", locale) },
+            },
           ],
-          headline: { default: "What is holding you back from trying {{productName}}?" },
+          headline: { default: translate("identify_sign_up_barriers_question_3_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -4075,10 +4904,12 @@ const identifySignUpBarriers = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "What do you need but {{productName}} does not offer?" },
+          headline: { default: translate("identify_sign_up_barriers_question_4_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("identify_sign_up_barriers_question_4_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -4109,10 +4940,12 @@ const identifySignUpBarriers = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "What options are you looking at?" },
+          headline: { default: translate("identify_sign_up_barriers_question_5_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("identify_sign_up_barriers_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -4143,10 +4976,12 @@ const identifySignUpBarriers = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "What seems complicated to you?" },
+          headline: { default: translate("identify_sign_up_barriers_question_6_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("identify_sign_up_barriers_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
@@ -4177,48 +5012,54 @@ const identifySignUpBarriers = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "What are you concerned about regarding pricing?" },
+          headline: { default: translate("identify_sign_up_barriers_question_7_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("identify_sign_up_barriers_question_7_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[7],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Please explain:" },
+          headline: { default: translate("identify_sign_up_barriers_question_8_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("identify_sign_up_barriers_question_8_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[8],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>Thanks a lot for taking the time to share feedback 🙏</span></p>',
+            default: translate("identify_sign_up_barriers_question_9_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          headline: { default: "Thanks! Here is your code: SIGNUPNOW10" },
+          headline: { default: translate("identify_sign_up_barriers_question_9_headline", locale) },
           required: false,
           buttonUrl: "https://app.formbricks.com/auth/signup",
-          buttonLabel: { default: "Sign Up" },
+          buttonLabel: { default: translate("identify_sign_up_barriers_question_9_button_label", locale) },
           buttonExternal: true,
-          dismissButtonLabel: { default: "Skip for now" },
+          dismissButtonLabel: {
+            default: translate("identify_sign_up_barriers_question_9_dismiss_button_label", locale),
+          },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const buildProductRoadmap = (): TTemplate => {
+const buildProductRoadmap = (locale: string): TTemplate => {
   return {
-    name: "Build Product Roadmap",
+    name: translate("build_product_roadmap_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["app", "link"],
-    description: "Identify the ONE thing your users want the most and build it.",
+    description: translate("build_product_roadmap_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "{{productName}} Roadmap Input",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("build_product_roadmap_name_with_product_name", locale),
       questions: [
         {
           id: createId(),
@@ -4226,39 +5067,44 @@ const buildProductRoadmap = (): TTemplate => {
           range: 5,
           scale: "number",
           headline: {
-            default: "How satisfied are you with the features and functionality of {{productName}}?",
+            default: translate("build_product_roadmap_question_1_headline", locale),
           },
           required: true,
-          lowerLabel: { default: "Not at all satisfied" },
-          upperLabel: { default: "Extremely satisfied" },
+          lowerLabel: { default: translate("build_product_roadmap_question_1_lower_label", locale) },
+          upperLabel: { default: translate("build_product_roadmap_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: {
-            default: "What's ONE change we could make to improve your {{productName}} experience most?",
+            default: translate("build_product_roadmap_question_2_headline", locale),
           },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("build_product_roadmap_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const understandPurchaseIntention = (): TTemplate => {
+const understandPurchaseIntention = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Understand Purchase Intention",
+    name: translate("understand_purchase_intention_name", locale),
     role: "sales",
     industries: ["eCommerce"],
     channels: ["website", "link", "app"],
-    description: "Find out how close your visitors are to buy or subscribe.",
+    description: translate("understand_purchase_intention_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Purchase Intention Survey",
+      ...localSurvey,
+      name: translate("understand_purchase_intention_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -4372,18 +5218,20 @@ const understandPurchaseIntention = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How likely are you to shop from us today?" },
+          headline: { default: translate("understand_purchase_intention_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not at all likely" },
-          upperLabel: { default: "Extremely likely" },
+          lowerLabel: { default: translate("understand_purchase_intention_question_1_lower_label", locale) },
+          upperLabel: { default: translate("understand_purchase_intention_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -4417,41 +5265,45 @@ const understandPurchaseIntention = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Got it. What's your primary reason for visiting today?" },
+          headline: { default: translate("understand_purchase_intention_question_2_headline", locale) },
           required: false,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("understand_purchase_intention_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What, if anything, is holding you back from making a purchase today?" },
+          headline: { default: translate("understand_purchase_intention_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("understand_purchase_intention_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const improveNewsletterContent = (): TTemplate => {
+const improveNewsletterContent = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Improve Newsletter Content",
+    name: translate("improve_newsletter_content_name", locale),
     role: "marketing",
     industries: ["eCommerce", "saas", "other"],
     channels: ["link"],
-    description: "Find out how your subscribers like your newsletter content.",
+    description: translate("improve_newsletter_content_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Improve Newsletter Content",
+      ...localSurvey,
+      name: translate("improve_newsletter_content_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -4516,11 +5368,13 @@ const improveNewsletterContent = (): TTemplate => {
           ],
           range: 5,
           scale: "smiley",
-          headline: { default: "How would you rate this weeks newsletter?" },
+          headline: { default: translate("improve_newsletter_content_question_1_headline", locale) },
           required: true,
-          lowerLabel: { default: "Meh" },
-          upperLabel: { default: "Great" },
+          lowerLabel: { default: translate("improve_newsletter_content_question_1_lower_label", locale) },
+          upperLabel: { default: translate("improve_newsletter_content_question_1_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -4554,36 +5408,40 @@ const improveNewsletterContent = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What would have made this weeks newsletter more helpful?" },
+          headline: { default: translate("improve_newsletter_content_question_2_headline", locale) },
           required: false,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("improve_newsletter_content_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>Who thinks like you? You\'d do us a huge favor if you\'d share this weeks episode with your brain friend!</span></p>',
+            default: translate("improve_newsletter_content_question_3_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          headline: { default: "Thanks! ❤️ Spread the love with ONE friend." },
+          headline: { default: translate("improve_newsletter_content_question_3_headline", locale) },
           required: false,
           buttonUrl: "https://formbricks.com",
-          buttonLabel: { default: "Happy to help!" },
+          buttonLabel: { default: translate("improve_newsletter_content_question_3_button_label", locale) },
           buttonExternal: true,
-          dismissButtonLabel: { default: "Find your own friends" },
+          dismissButtonLabel: {
+            default: translate("improve_newsletter_content_question_3_dismiss_button_label", locale),
+          },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const evaluateAProductIdea = (): TTemplate => {
+const evaluateAProductIdea = (locale: string): TTemplate => {
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -4595,30 +5453,31 @@ const evaluateAProductIdea = (): TTemplate => {
     createId(),
   ];
   return {
-    name: "Evaluate a Product Idea",
+    name: translate("evaluate_a_product_idea_name", locale),
     role: "productManager",
     industries: ["saas", "other"],
     channels: ["link", "app"],
-    description: "Survey users about product or feature ideas. Get feedback rapidly.",
+    description: translate("evaluate_a_product_idea_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Evaluate a Product Idea",
+      ...getDefaultSurveyPreset(locale),
+      name: translate("evaluate_a_product_idea_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
           html: {
-            default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We respect your time and kept it short 🤸</span></p>',
+            default: translate("evaluate_a_product_idea_question_1_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
           headline: {
-            default:
-              "We love how you use {{productName}}! We'd love to pick your brain on a feature idea. Got a minute?",
+            default: translate("evaluate_a_product_idea_question_1_headline", locale),
           },
           required: true,
-          buttonLabel: { default: "Let's do it!" },
+          buttonLabel: { default: translate("evaluate_a_product_idea_question_1_button_label", locale) },
           buttonExternal: false,
-          dismissButtonLabel: { default: "Skip" },
+          dismissButtonLabel: {
+            default: translate("evaluate_a_product_idea_question_1_dismiss_button_label", locale),
+          },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -4683,33 +5542,39 @@ const evaluateAProductIdea = (): TTemplate => {
           ],
           range: 5,
           scale: "number",
-          headline: { default: "Thanks! How difficult or easy is it for you to [PROBLEM AREA] today?" },
+          headline: { default: translate("evaluate_a_product_idea_question_2_headline", locale) },
           required: true,
-          lowerLabel: { default: "Very difficult" },
-          upperLabel: { default: "Very easy" },
+          lowerLabel: { default: translate("evaluate_a_product_idea_question_2_lower_label", locale) },
+          upperLabel: { default: translate("evaluate_a_product_idea_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
 
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "What's most difficult for you when it comes to [PROBLEM AREA]?" },
+          headline: { default: translate("evaluate_a_product_idea_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("evaluate_a_product_idea_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
           html: {
-            default:
-              '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add necessary details but keep it concise and easy to understand.</span></p>',
+            default: translate("evaluate_a_product_idea_question_4_html", locale),
           },
           type: TSurveyQuestionTypeEnum.CTA,
-          headline: { default: "We're working on an idea to help with [PROBLEM AREA]." },
+          headline: { default: translate("evaluate_a_product_idea_question_4_headline", locale) },
           required: true,
-          buttonLabel: { default: "Next" },
+          buttonLabel: { default: translate("evaluate_a_product_idea_question_4_button_label", locale) },
           buttonExternal: false,
-          dismissButtonLabel: { default: "Skip" },
+          dismissButtonLabel: {
+            default: translate("evaluate_a_product_idea_question_4_dismiss_button_label", locale),
+          },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -4774,11 +5639,13 @@ const evaluateAProductIdea = (): TTemplate => {
           ],
           range: 5,
           scale: "number",
-          headline: { default: "How valuable would this feature be to you?" },
+          headline: { default: translate("evaluate_a_product_idea_question_5_headline", locale) },
           required: true,
-          lowerLabel: { default: "Not valuable" },
-          upperLabel: { default: "Very valuable" },
+          lowerLabel: { default: translate("evaluate_a_product_idea_question_5_lower_label", locale) },
+          upperLabel: { default: translate("evaluate_a_product_idea_question_5_upper_label", locale) },
           isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
@@ -4809,46 +5676,52 @@ const evaluateAProductIdea = (): TTemplate => {
               ],
             },
           ],
-          headline: { default: "Got it. Why wouldn't this feature be valuable to you?" },
+          headline: { default: translate("evaluate_a_product_idea_question_6_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("evaluate_a_product_idea_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[6],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Got it. What would be most valuable to you in this feature?" },
+          headline: { default: translate("evaluate_a_product_idea_question_7_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("evaluate_a_product_idea_question_7_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[7],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: "Anything else we should keep in mind?" },
+          headline: { default: translate("evaluate_a_product_idea_question_8_headline", locale) },
           required: false,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("evaluate_a_product_idea_question_8_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-const understandLowEngagement = (): TTemplate => {
+const understandLowEngagement = (locale: string): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
 
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
-
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
-    name: "Understand Low Engagement",
+    name: translate("understand_low_engagement_name", locale),
     role: "productManager",
     industries: ["saas"],
     channels: ["link"],
-    description: "Identify reasons for low engagement to improve user adoption.",
+    description: translate("understand_low_engagement_description", locale),
     preset: {
-      ...surveyDefault,
-      name: "Reasons for Low Engagement",
+      ...localSurvey,
+      name: translate("understand_low_engagement_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -4997,14 +5870,31 @@ const understandLowEngagement = (): TTemplate => {
             },
           ],
           choices: [
-            { id: reusableOptionIds[0], label: { default: "Difficult to use" } },
-            { id: reusableOptionIds[1], label: { default: "Found a better alternative" } },
-            { id: reusableOptionIds[2], label: { default: "Just haven't had the time" } },
-            { id: reusableOptionIds[3], label: { default: "Lacked features I need" } },
-            { id: "other", label: { default: "Other" } },
+            {
+              id: reusableOptionIds[0],
+              label: { default: translate("understand_low_engagement_question_1_choice_1", locale) },
+            },
+            {
+              id: reusableOptionIds[1],
+              label: { default: translate("understand_low_engagement_question_1_choice_2", locale) },
+            },
+            {
+              id: reusableOptionIds[2],
+              label: { default: translate("understand_low_engagement_question_1_choice_3", locale) },
+            },
+            {
+              id: reusableOptionIds[3],
+              label: { default: translate("understand_low_engagement_question_1_choice_4", locale) },
+            },
+            {
+              id: "other",
+              label: { default: translate("understand_low_engagement_question_1_choice_5", locale) },
+            },
           ],
-          headline: { default: "What's the main reason you haven't been back to {{productName}} recently?" },
+          headline: { default: translate("understand_low_engagement_question_1_headline", locale) },
           required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[1],
@@ -5030,15 +5920,17 @@ const understandLowEngagement = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "What's difficult about using {{productName}}?" },
+          headline: { default: translate("understand_low_engagement_question_2_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("understand_low_engagement_question_2_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[2],
@@ -5064,15 +5956,17 @@ const understandLowEngagement = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Got it. Which alternative are you using instead?" },
+          headline: { default: translate("understand_low_engagement_question_3_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("understand_low_engagement_question_3_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[3],
@@ -5098,15 +5992,17 @@ const understandLowEngagement = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Got it. How could we make it easier for you to get started?" },
+          headline: { default: translate("understand_low_engagement_question_4_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("understand_low_engagement_question_4_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[4],
@@ -5132,145 +6028,706 @@ const understandLowEngagement = (): TTemplate => {
                 {
                   id: createId(),
                   objective: "jumpToQuestion",
-                  target: surveyDefault.endings[0].id,
+                  target: localSurvey.endings[0].id,
                 },
               ],
             },
           ],
-          headline: { default: "Got it. What features or functionality were missing?" },
+          headline: { default: translate("understand_low_engagement_question_5_headline", locale) },
           required: true,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("understand_low_engagement_question_5_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.OpenText,
           logic: [],
-          headline: { default: "Please add more details:" },
+          headline: { default: translate("understand_low_engagement_question_6_headline", locale) },
           required: false,
-          placeholder: { default: "Type your answer here..." },
+          placeholder: { default: translate("understand_low_engagement_question_6_placeholder", locale) },
           inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
   };
 };
 
-export const templates: TTemplate[] = [
-  cartAbandonmentSurvey(),
-  siteAbandonmentSurvey(),
-  productMarketFitSuperhuman(),
-  onboardingSegmentation(),
-  churnSurvey(),
-  earnedAdvocacyScore(),
-  improveTrialConversion(),
-  reviewPrompt(),
-  interviewPrompt(),
-  improveActivationRate(),
-  uncoverStrengthsAndWeaknesses(),
-  productMarketFitShort(),
-  marketAttribution(),
-  changingSubscriptionExperience(),
-  identifyCustomerGoals(),
-  featureChaser(),
-  fakeDoorFollowUp(),
-  feedbackBox(),
-  integrationSetupSurvey(),
-  newIntegrationSurvey(),
-  docsFeedback(),
-  NPS(),
-  customerSatisfactionScore(),
-  collectFeedback(),
-  identifyUpsellOpportunities(),
-  prioritizeFeatures(),
-  gaugeFeatureSatisfaction(),
-  marketSiteClarity(),
-  customerEffortScore(),
-  rateCheckoutExperience(),
-  measureSearchExperience(),
-  evaluateContentQuality(),
-  measureTaskAccomplishment(),
-  identifySignUpBarriers(),
-  buildProductRoadmap(),
-  understandPurchaseIntention(),
-  improveNewsletterContent(),
-  evaluateAProductIdea(),
-  understandLowEngagement(),
+const employeeWellBeing = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("employee_well_being_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("employee_well_being_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("employee_well_being_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: translate("employee_well_being_question_1_headline", locale) },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("employee_well_being_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("employee_well_being_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("employee_well_being_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("employee_well_being_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("employee_well_being_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: { default: translate("employee_well_being_question_3_headline", locale) },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("employee_well_being_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("employee_well_being_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("employee_well_being_question_4_headline", locale) },
+          required: false,
+          placeholder: { default: translate("employee_well_being_question_4_placeholder", locale) },
+          inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const longTermRetentionCheckIn = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("long_term_retention_check_in_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "other"],
+    channels: ["app", "link"],
+    description: translate("long_term_retention_check_in_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("long_term_retention_check_in_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "star",
+          headline: { default: translate("long_term_retention_check_in_question_1_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_1_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_1_upper_label", locale) },
+          isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("long_term_retention_check_in_question_2_headline", locale) },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_2_placeholder", locale) },
+          inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_3_choice_5", locale) },
+            },
+          ],
+          headline: {
+            default: translate("long_term_retention_check_in_question_3_headline", locale),
+          },
+          required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "number",
+          headline: { default: translate("long_term_retention_check_in_question_4_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_4_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_4_upper_label", locale) },
+          isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("long_term_retention_check_in_question_5_headline", locale),
+          },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_5_placeholder", locale) },
+          inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.NPS,
+          headline: { default: translate("long_term_retention_check_in_question_6_headline", locale) },
+          required: false,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_6_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_6_upper_label", locale) },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+          shuffleOption: "none",
+          choices: [
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_2", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_3", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_4", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("long_term_retention_check_in_question_7_choice_5", locale) },
+            },
+          ],
+          headline: { default: translate("long_term_retention_check_in_question_7_headline", locale) },
+          required: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("long_term_retention_check_in_question_8_headline", locale) },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_8_placeholder", locale) },
+          inputType: "text",
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          range: 5,
+          scale: "smiley",
+          headline: { default: translate("long_term_retention_check_in_question_9_headline", locale) },
+          required: true,
+          lowerLabel: { default: translate("long_term_retention_check_in_question_9_lower_label", locale) },
+          upperLabel: { default: translate("long_term_retention_check_in_question_9_upper_label", locale) },
+          isColorCodingEnabled: true,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: { default: translate("long_term_retention_check_in_question_10_headline", locale) },
+          required: false,
+          placeholder: { default: translate("long_term_retention_check_in_question_10_placeholder", locale) },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const professionalDevelopmentGrowth = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("professional_development_growth_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("professional_development_growth_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("professional_development_growth_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("professional_development_growth_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("professional_development_growth_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_growth_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("professional_development_growth_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("professional_development_growth_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_growth_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("professional_development_growth_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("professional_development_growth_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("professional_development_growth_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("professional_development_growth_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("professional_development_growth_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const recognitionAndReward = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("recognition_and_reward_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("recognition_and_reward_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("recognition_and_reward_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("recognition_and_reward_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("recognition_and_reward_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("recognition_and_reward_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("recognition_and_reward_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("recognition_and_reward_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("recognition_and_reward_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("recognition_and_reward_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("recognition_and_reward_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const alignmentAndEngagement = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("alignment_and_engagement_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("alignment_and_engagement_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: "Alignment and Engagement with Company Vision",
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("alignment_and_engagement_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("alignment_and_engagement_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("alignment_and_engagement_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("alignment_and_engagement_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("alignment_and_engagement_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("alignment_and_engagement_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("alignment_and_engagement_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("alignment_and_engagement_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+const supportiveWorkCulture = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
+  return {
+    name: translate("supportive_work_culture_survey_name", locale),
+    role: "peopleManager",
+    industries: ["saas", "eCommerce", "other"],
+    channels: ["link"],
+    description: translate("supportive_work_culture_survey_description", locale),
+    preset: {
+      ...localSurvey,
+      name: translate("supportive_work_culture_survey_name", locale),
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_1_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("supportive_work_culture_survey_question_1_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("supportive_work_culture_survey_question_1_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_2_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("supportive_work_culture_survey_question_2_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("supportive_work_culture_survey_question_2_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.Rating,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_3_headline", locale),
+          },
+          required: true,
+          scale: "number",
+          range: 10,
+          lowerLabel: {
+            default: translate("supportive_work_culture_survey_question_3_lower_label", locale),
+          },
+          upperLabel: {
+            default: translate("supportive_work_culture_survey_question_3_upper_label", locale),
+          },
+          isColorCodingEnabled: false,
+          buttonLabel: { default: translate("next", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+        {
+          id: createId(),
+          type: TSurveyQuestionTypeEnum.OpenText,
+          headline: {
+            default: translate("supportive_work_culture_survey_question_4_headline", locale),
+          },
+          required: false,
+          placeholder: {
+            default: translate("supportive_work_culture_survey_question_4_placeholder", locale),
+          },
+          inputType: "text",
+          buttonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
+        },
+      ],
+    },
+  };
+};
+
+export const templates = (locale = defaultLocale): TTemplate[] => [
+  cartAbandonmentSurvey(locale),
+  siteAbandonmentSurvey(locale),
+  productMarketFitSuperhuman(locale),
+  onboardingSegmentation(locale),
+  churnSurvey(locale),
+  earnedAdvocacyScore(locale),
+  improveTrialConversion(locale),
+  reviewPrompt(locale),
+  interviewPrompt(locale),
+  improveActivationRate(locale),
+  uncoverStrengthsAndWeaknesses(locale),
+  productMarketFitShort(locale),
+  marketAttribution(locale),
+  changingSubscriptionExperience(locale),
+  identifyCustomerGoals(locale),
+  featureChaser(locale),
+  fakeDoorFollowUp(locale),
+  feedbackBox(locale),
+  integrationSetupSurvey(locale),
+  newIntegrationSurvey(locale),
+  docsFeedback(locale),
+  NPS(locale),
+  customerSatisfactionScore(locale),
+  collectFeedback(locale),
+  identifyUpsellOpportunities(locale),
+  prioritizeFeatures(locale),
+  gaugeFeatureSatisfaction(locale),
+  marketSiteClarity(locale),
+  customerEffortScore(locale),
+  rateCheckoutExperience(locale),
+  measureSearchExperience(locale),
+  evaluateContentQuality(locale),
+  measureTaskAccomplishment(locale),
+  identifySignUpBarriers(locale),
+  buildProductRoadmap(locale),
+  understandPurchaseIntention(locale),
+  improveNewsletterContent(locale),
+  evaluateAProductIdea(locale),
+  understandLowEngagement(locale),
+  employeeSatisfaction(locale),
+  employeeWellBeing(locale),
+  longTermRetentionCheckIn(locale),
+  supportiveWorkCulture(locale),
+  alignmentAndEngagement(locale),
+  recognitionAndReward(locale),
+  professionalDevelopmentGrowth(locale),
+  professionalDevelopmentSurvey(locale),
+  careerDevelopmentSurvey(locale),
 ];
 
-export const customSurvey = {
-  name: "Start from scratch",
-  description: "Create a survey without template.",
+export const getCustomSurveyTemplate = (locale: string): TTemplate => ({
+  name: translate("custom_survey_name", locale),
+  description: translate("custom_survey_description", locale),
   preset: {
-    ...surveyDefault,
-    name: "New Survey",
+    ...getDefaultSurveyPreset(locale),
+    name: translate("custom_survey_name", locale),
     questions: [
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "What would you like to know?" },
-        placeholder: { default: "Type your answer here..." },
+        headline: { default: translate("custom_survey_question_1_headline", locale) },
+        placeholder: { default: translate("custom_survey_question_1_placeholder", locale) },
+        buttonLabel: { default: translate("next", locale) },
         required: true,
         inputType: "text",
       } as TSurveyOpenTextQuestion,
     ],
   },
-};
-
-export const getExampleWebsiteSurveyTemplate = (
-  webAppUrl: string,
-  trigger: TActionClass
-): TSurveyCreateInput => ({
-  ...customSurvey.preset,
-  questions: customSurvey.preset.questions.map(
-    (question) =>
-      ({
-        ...question,
-        type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "Website successfully connected 🎉" },
-        html: {
-          default: "You're all set up. Create your own survey for website visitors 👇",
-        },
-        buttonLabel: { default: "Let's do it!" },
-        buttonExternal: true,
-        imageUrl: `${webAppUrl}/onboarding/meme.png`,
-      }) as TSurveyCTAQuestion
-  ),
-  name: "Example website survey",
-  type: "website" as TSurveyType,
-  autoComplete: 2,
-  triggers: [{ actionClass: trigger }],
-  status: "inProgress" as TSurveyStatus,
-  displayOption: "respondMultiple" as TSurveyDisplayOption,
-  recontactDays: 0,
-  isVerifyEmailEnabled: false,
-});
-
-export const getExampleAppSurveyTemplate = (
-  webAppUrl: string,
-  trigger: TActionClass
-): TSurveyCreateInput => ({
-  ...customSurvey.preset,
-  questions: customSurvey.preset.questions.map(
-    (question) =>
-      ({
-        ...question,
-        type: TSurveyQuestionTypeEnum.CTA,
-        headline: { default: "App successfully connected" },
-        html: {
-          default: "You're all set up. Create your own survey for your app users.",
-        },
-        buttonLabel: { default: "Let's do it!" },
-        buttonExternal: true,
-        imageUrl: `${webAppUrl}/onboarding/meme.png`,
-      }) as TSurveyCTAQuestion
-  ),
-  name: "Example app survey",
-  type: "app" as TSurveyType,
-  autoComplete: 2,
-  triggers: [{ actionClass: trigger }],
-  status: "inProgress" as TSurveyStatus,
-  displayOption: "respondMultiple" as TSurveyDisplayOption,
-  recontactDays: 0,
-  isVerifyEmailEnabled: false,
 });

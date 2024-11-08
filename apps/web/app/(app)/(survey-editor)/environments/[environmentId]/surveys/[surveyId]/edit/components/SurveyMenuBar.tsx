@@ -1,13 +1,14 @@
 "use client";
 
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -40,6 +41,7 @@ interface SurveyMenuBarProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
+  locale: string;
 }
 
 export const SurveyMenuBar = ({
@@ -54,14 +56,16 @@ export const SurveyMenuBar = ({
   responseCount,
   selectedLanguageCode,
   isCxMode,
+  locale,
 }: SurveyMenuBarProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isLinkSurvey, setIsLinkSurvey] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const cautionText = "This survey received responses.";
+  const cautionText = t("environments.surveys.edit.caution_text");
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -74,7 +78,7 @@ export const SurveyMenuBar = ({
   }, [localSurvey.type]);
 
   useEffect(() => {
-    const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
+    const warningText = t("environments.surveys.edit.unsaved_changes_warning");
     const handleWindowClose = (e: BeforeUnloadEvent) => {
       if (!isEqual(localSurvey, survey)) {
         e.preventDefault();
@@ -185,7 +189,7 @@ export const SurveyMenuBar = ({
         const params = currentError.params ?? ({} as { invalidLanguageCodes: string[] });
         if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
           const invalidLanguageLabels = params.invalidLanguageCodes.map(
-            (invalidLanguage: string) => getLanguageLabel(invalidLanguage) ?? invalidLanguage
+            (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
           );
 
           const messageSplit = currentError.message.split("-fLang-")[0];
@@ -218,7 +222,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
@@ -238,7 +242,7 @@ export const SurveyMenuBar = ({
       });
 
       if (localSurvey.type !== "link" && !localSurvey.triggers?.length) {
-        toast.error("Please set a survey trigger");
+        toast.error(t("environments.surveys.edit.please_set_a_survey_trigger"));
         setIsSurveySaving(false);
         return false;
       }
@@ -250,7 +254,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
-        toast.success("Changes saved.");
+        toast.success(t("environments.surveys.edit.changes_saved"));
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
@@ -260,7 +264,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
-      toast.error(`Error saving changes`);
+      toast.error(t("environments.surveys.edit.error_saving_changes"));
       return false;
     }
   };
@@ -283,7 +287,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t);
       if (!isSurveyValidResult) {
         setIsSurveyPublishing(false);
         return;
@@ -300,7 +304,8 @@ export const SurveyMenuBar = ({
       setIsSurveyPublishing(false);
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
-      toast.error("An error occured while publishing the survey.");
+      console.error(error);
+      toast.error(t("environments.surveys.edit.error_publishing_survey"));
       setIsSurveyPublishing(false);
     }
   };
@@ -318,7 +323,7 @@ export const SurveyMenuBar = ({
               onClick={() => {
                 handleBack();
               }}>
-              Back
+              {t("common.back")}
             </Button>
           )}
           <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
@@ -339,7 +344,9 @@ export const SurveyMenuBar = ({
                   <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                    {t(cautionText)}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -365,7 +372,7 @@ export const SurveyMenuBar = ({
               loading={isSurveySaving}
               onClick={() => handleSurveySave()}
               type="submit">
-              Save
+              {t("common.save")}
             </Button>
           )}
 
@@ -376,7 +383,7 @@ export const SurveyMenuBar = ({
               size="sm"
               loading={isSurveySaving}
               onClick={() => handleSaveAndGoBack()}>
-              Save & Close
+              {t("environments.surveys.edit.save_and_close")}
             </Button>
           )}
           {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
@@ -387,7 +394,7 @@ export const SurveyMenuBar = ({
                 setActiveId("settings");
               }}
               EndIcon={SettingsIcon}>
-              Continue to Settings
+              {t("environments.surveys.edit.continue_to_settings")}
             </Button>
           )}
           {/* Always display Publish button for link surveys for better CR */}
@@ -397,17 +404,19 @@ export const SurveyMenuBar = ({
               disabled={isSurveySaving || containsEmptyTriggers}
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>
-              {isCxMode ? "Save & Close" : "Publish"}
+              {isCxMode
+                ? t("environments.surveys.edit.save_and_close")
+                : t("environments.surveys.edit.publish")}
             </Button>
           )}
         </div>
         <AlertDialog
-          headerText="Confirm Survey Changes"
+          headerText={t("environments.surveys.edit.confirm_survey_changes")}
           open={isConfirmDialogOpen}
           setOpen={setConfirmDialogOpen}
-          mainText="You have unsaved changes in your survey. Would you like to save them before leaving?"
-          confirmBtnLabel="Save"
-          declineBtnLabel="Discard"
+          mainText={t("environments.surveys.edit.unsaved_changes_warning")}
+          confirmBtnLabel={t("common.save")}
+          declineBtnLabel={t("common.discard")}
           declineBtnVariant="warn"
           onDecline={() => {
             setConfirmDialogOpen(false);

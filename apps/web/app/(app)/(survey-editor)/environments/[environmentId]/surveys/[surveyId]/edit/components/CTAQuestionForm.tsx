@@ -1,20 +1,23 @@
 "use client";
 
+import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 const options = [
   {
     value: "internal",
-    label: "Button to continue in survey",
+    label: "environments.surveys.edit.button_to_continue_in_survey",
   },
-  { value: "external", label: "Button to link to external URL" },
+  { value: "external", label: "environments.surveys.edit.button_to_link_to_external_url" },
 ];
 
 interface CTAQuestionFormProps {
@@ -27,6 +30,7 @@ interface CTAQuestionFormProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const CTAQuestionForm = ({
@@ -39,15 +43,17 @@ export const CTAQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: CTAQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
-
+  const t = useTranslations();
+  const [parent] = useAutoAnimate();
   return (
-    <form>
+    <form ref={parent}>
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -55,10 +61,11 @@ export const CTAQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <div className="mt-3">
-        <Label htmlFor="subheader">Description</Label>
+        <Label htmlFor="subheader">{t("common.description")}</Label>
         <div className="mt-2">
           <LocalizedEditor
             id="subheader"
@@ -71,6 +78,7 @@ export const CTAQuestionForm = ({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
+            locale={locale}
           />
         </div>
       </div>
@@ -87,23 +95,24 @@ export const CTAQuestionForm = ({
           <QuestionFormInput
             id="buttonLabel"
             value={question.buttonLabel}
-            label={`"Next" Button Label`}
+            label={t("environments.surveys.edit.next_button_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             maxLength={48}
-            placeholder={lastQuestion ? "Finish" : "Next"}
+            placeholder={lastQuestion ? t("common.finish") : t("common.next")}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
 
           {questionIdx !== 0 && (
             <QuestionFormInput
               id="backButtonLabel"
               value={question.backButtonLabel}
-              label={`"Back" Button Label`}
+              label={t("environments.surveys.edit.back_button_label")}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               maxLength={48}
@@ -113,6 +122,7 @@ export const CTAQuestionForm = ({
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
               attributeClasses={attributeClasses}
+              locale={locale}
             />
           )}
         </div>
@@ -120,7 +130,7 @@ export const CTAQuestionForm = ({
 
       {question.buttonExternal && (
         <div className="mt-3 flex-1">
-          <Label htmlFor="buttonLabel">Button URL</Label>
+          <Label htmlFor="buttonLabel">{t("environments.surveys.edit.button_url")}</Label>
           <div className="mt-2">
             <Input
               id="buttonUrl"
@@ -138,7 +148,7 @@ export const CTAQuestionForm = ({
           <QuestionFormInput
             id="dismissButtonLabel"
             value={question.dismissButtonLabel}
-            label={"Skip Button Label"}
+            label={t("environments.surveys.edit.skip_button_label")}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             placeholder={"skip"}
@@ -147,6 +157,7 @@ export const CTAQuestionForm = ({
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
             attributeClasses={attributeClasses}
+            locale={locale}
           />
         </div>
       )}

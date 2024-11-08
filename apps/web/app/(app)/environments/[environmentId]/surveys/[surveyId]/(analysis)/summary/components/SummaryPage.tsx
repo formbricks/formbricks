@@ -21,7 +21,7 @@ import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
 
@@ -48,6 +48,10 @@ interface SummaryPageProps {
   user?: TUser;
   totalResponseCount: number;
   attributeClasses: TAttributeClass[];
+  isAIEnabled: boolean;
+  documentsPerPage?: number;
+  locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
 export const SummaryPage = ({
@@ -57,6 +61,10 @@ export const SummaryPage = ({
   webAppUrl,
   totalResponseCount,
   attributeClasses,
+  isAIEnabled,
+  documentsPerPage,
+  locale,
+  isReadOnly,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -166,7 +174,9 @@ export const SummaryPage = ({
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
-        {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />}
+        {!isReadOnly && !isSharingPage && (
+          <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />
+        )}
       </div>
       <ScrollToTop containerId="mainContent" />
       <SummaryList
@@ -176,6 +186,9 @@ export const SummaryPage = ({
         environment={environment}
         totalResponseCount={totalResponseCount}
         attributeClasses={attributeClasses}
+        isAIEnabled={isAIEnabled}
+        documentsPerPage={documentsPerPage}
+        locale={locale}
       />
     </>
   );

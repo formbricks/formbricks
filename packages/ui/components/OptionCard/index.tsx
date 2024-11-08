@@ -12,9 +12,9 @@ interface PathwayOptionProps {
 }
 
 const sizeClasses = {
-  sm: "rounded-lg max-w-xs border border-slate-200 shadow-card-sm transition-all duration-150",
-  md: "rounded-xl max-w-xs border border-slate-200 shadow-card-md transition-all duration-300",
-  lg: "rounded-2xl max-w-sm border border-slate-200 shadow-card-lg transition-all duration-500",
+  sm: "rounded-lg max-w-xs min-w-40 border border-slate-200 shadow-card-sm transition-all duration-150",
+  md: "rounded-xl max-w-xs min-w-40 border border-slate-200 shadow-card-md transition-all duration-300",
+  lg: "rounded-2xl max-w-sm min-w-40 border border-slate-200 shadow-card-lg transition-all duration-500",
 };
 
 export const OptionCard: React.FC<PathwayOptionProps> = ({

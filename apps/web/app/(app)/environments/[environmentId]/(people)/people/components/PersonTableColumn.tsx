@@ -8,11 +8,13 @@ import { HighlightedText } from "@formbricks/ui/components/HighlightedText";
 
 export const generatePersonTableColumns = (
   isExpanded: boolean,
-  searchValue: string
+  searchValue: string,
+  t: (key: string) => string,
+  isReadOnly: boolean
 ): ColumnDef<TPersonTableData>[] => {
   const dateColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "createdAt",
-    header: () => "Date",
+    header: () => t("common.date"),
     cell: ({ row }) => {
       const isoDateString = row.original.createdAt;
       const date = new Date(isoDateString);
@@ -40,7 +42,7 @@ export const generatePersonTableColumns = (
 
   const userColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "user",
-    header: "User",
+    header: () => t("common.user"),
     cell: ({ row }) => {
       const personId = row.original.personId;
       return <HighlightedText value={personId} searchValue={searchValue} />;
@@ -49,7 +51,7 @@ export const generatePersonTableColumns = (
 
   const userIdColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "userId",
-    header: "User ID",
+    header: () => t("common.user_id"),
     cell: ({ row }) => {
       const userId = row.original.userId;
       return <HighlightedText value={userId} searchValue={searchValue} />;
@@ -58,7 +60,7 @@ export const generatePersonTableColumns = (
 
   const emailColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "email",
-    header: "Email",
+    header: () => t("common.email"),
     cell: ({ row }) => {
       const email = row.original.attributes.email;
       if (email) {
@@ -69,7 +71,7 @@ export const generatePersonTableColumns = (
 
   const attributesColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "attributes",
-    header: "Attributes",
+    header: () => t("common.attributes"),
     cell: ({ row }) => {
       const attributes = row.original.attributes;
 
@@ -89,5 +91,7 @@ export const generatePersonTableColumns = (
     },
   };
 
-  return [getSelectionColumn(), dateColumn, userColumn, userIdColumn, emailColumn, attributesColumn];
+  const columns = [dateColumn, userColumn, userIdColumn, emailColumn, attributesColumn];
+
+  return isReadOnly ? columns : [getSelectionColumn(), ...columns];
 };

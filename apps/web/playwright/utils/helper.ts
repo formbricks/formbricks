@@ -94,7 +94,7 @@ export const finishOnboarding = async (
   // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("e.g. Formbricks").click();
   await page.getByPlaceholder("e.g. Formbricks").fill("My Product");
-  await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
+  await page.locator("#form-next-button").click();
 
   if (ProductChannel !== "link") {
     await page.getByRole("button", { name: "I don't know how to do it" }).click();
@@ -563,7 +563,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Show Advanced Settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
-  await page.getByRole("option", { name: "equals one of" }).click();
+  await page.getByRole("option", { name: "Equals one of" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[1] }).click();
@@ -591,7 +591,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("button", { name: "Show Advanced Settings" }).click();
   await page.getByRole("button", { name: "Add logic" }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
-  await page.getByRole("option", { name: "includes all of" }).click();
+  await page.getByRole("option", { name: "Includes all of" }).click();
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[1] }).click();

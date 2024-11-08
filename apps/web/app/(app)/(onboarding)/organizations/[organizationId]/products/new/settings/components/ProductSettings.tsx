@@ -1,14 +1,18 @@
 "use client";
 
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TOrganizationTeam } from "@/modules/ee/teams/product-teams/types/teams";
+import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
-import { PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
+import { getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import {
   TProductConfigChannel,
   TProductConfigIndustry,
@@ -28,6 +32,7 @@ import {
   FormProvider,
 } from "@formbricks/ui/components/Form";
 import { Input } from "@formbricks/ui/components/Input";
+import { MultiSelect } from "@formbricks/ui/components/MultiSelect";
 import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ProductSettingsProps {
@@ -36,6 +41,9 @@ interface ProductSettingsProps {
   channel: TProductConfigChannel;
   industry: TProductConfigIndustry;
   defaultBrandColor: string;
+  organizationTeams: TOrganizationTeam[];
+  canDoRoleManagement: boolean;
+  locale: string;
 }
 
 export const ProductSettings = ({
@@ -44,9 +52,14 @@ export const ProductSettings = ({
   channel,
   industry,
   defaultBrandColor,
+  organizationTeams,
+  canDoRoleManagement = false,
+  locale,
 }: ProductSettingsProps) => {
-  const router = useRouter();
+  const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
+  const router = useRouter();
+  const t = useTranslations();
   const addProduct = async (data: TProductUpdateInput) => {
     try {
       const createProductResponse = await createProductAction({
@@ -54,6 +67,7 @@ export const ProductSettings = ({
         data: {
           ...data,
           config: { channel, industry },
+          teamIds: data.teamIds,
         },
       });
 
@@ -89,12 +103,18 @@ export const ProductSettings = ({
     defaultValues: {
       name: "",
       styling: { allowStyleOverwrite: true, brandColor: { light: defaultBrandColor } },
+      teamIds: [],
     },
     resolver: zodResolver(ZProductUpdateInput),
   });
   const logoUrl = form.watch("logo.url");
   const brandColor = form.watch("styling.brandColor.light") ?? defaultBrandColor;
   const { isSubmitting } = form.formState;
+
+  const organizationTeamsOptions = organizationTeams.map((team) => ({
+    label: team.name,
+    value: team.id,
+  }));
 
   return (
     <div className="mt-6 flex w-5/6 space-x-10 lg:w-2/3 2xl:w-1/2">
@@ -107,8 +127,10 @@ export const ProductSettings = ({
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
                   <div>
-                    <FormLabel>Brand color</FormLabel>
-                    <FormDescription>Match the main color of surveys with your brand.</FormDescription>
+                    <FormLabel>{t("organizations.products.new.settings.brand_color")}</FormLabel>
+                    <FormDescription>
+                      {t("organizations.products.new.settings.brand_color_description")}
+                    </FormDescription>
                   </div>
                   <FormControl>
                     <div>
@@ -129,8 +151,10 @@ export const ProductSettings = ({
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
                   <div>
-                    <FormLabel>Product name</FormLabel>
-                    <FormDescription>What is your product called?</FormDescription>
+                    <FormLabel>{t("organizations.products.new.settings.product_name")}</FormLabel>
+                    <FormDescription>
+                      {t("organizations.products.new.settings.product_name_description")}
+                    </FormDescription>
                   </div>
                   <FormControl>
                     <div>
@@ -148,9 +172,42 @@ export const ProductSettings = ({
               )}
             />
 
+            {canDoRoleManagement && (
+              <FormField
+                control={form.control}
+                name="teamIds"
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem className="w-full space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <FormLabel>Teams</FormLabel>
+                        <FormDescription>Who all can access this product?</FormDescription>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        type="button"
+                        onClick={() => setCreateTeamModalOpen(true)}>
+                        {t("organizations.products.new.settings.create_new_team")}
+                      </Button>
+                    </div>
+                    <FormControl>
+                      <div>
+                        <MultiSelect
+                          value={field.value}
+                          onChange={(teamIds) => field.onChange(teamIds)}
+                          options={organizationTeamsOptions}
+                        />
+                        {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
             <div className="flex w-full justify-end">
-              <Button loading={isSubmitting} type="submit">
-                Next
+              <Button loading={isSubmitting} type="submit" id="form-next-button">
+                {t("common.next")}
               </Button>
             </div>
           </form>
@@ -167,10 +224,10 @@ export const ProductSettings = ({
             className="absolute left-2 top-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
           />
         )}
-        <p className="text-sm text-slate-400">Preview</p>
-        <div className="h-3/4 w-3/4">
+        <p className="text-sm text-slate-400">{t("common.preview")}</p>
+        <div className="z-0 h-3/4 w-3/4">
           <SurveyInline
-            survey={PREVIEW_SURVEY}
+            survey={getPreviewSurvey(locale)}
             styling={{ brandColor: { light: brandColor } }}
             isBrandingEnabled={false}
             languageCode="default"
@@ -179,6 +236,14 @@ export const ProductSettings = ({
           />
         </div>
       </div>
+      <CreateTeamModal
+        open={createTeamModalOpen}
+        setOpen={setCreateTeamModalOpen}
+        organizationId={organizationId}
+        onCreate={(teamId) => {
+          form.setValue("teamIds", [...(form.getValues("teamIds") || []), teamId]);
+        }}
+      />
     </div>
   );
 };

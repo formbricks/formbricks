@@ -1,10 +1,15 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromIntegrationId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromIntegrationId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
 
@@ -16,10 +21,20 @@ const ZCreateOrUpdateIntegrationAction = z.object({
 export const createOrUpdateIntegrationAction = authenticatedActionClient
   .schema(ZCreateOrUpdateIntegrationAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["integration", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
     return await createOrUpdateIntegration(parsedInput.environmentId, parsedInput.integrationData);
@@ -27,16 +42,25 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
 
 const ZDeleteIntegrationAction = z.object({
   integrationId: ZId,
-  environmentId: ZId,
 });
 
 export const deleteIntegrationAction = authenticatedActionClient
   .schema(ZDeleteIntegrationAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["integration", "delete"],
+      organizationId: await getOrganizationIdFromIntegrationId(parsedInput.integrationId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          productId: await getProductIdFromIntegrationId(parsedInput.integrationId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     return await deleteIntegration(parsedInput.integrationId);

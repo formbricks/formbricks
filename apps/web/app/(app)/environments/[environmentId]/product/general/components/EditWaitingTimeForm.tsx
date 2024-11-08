@@ -1,11 +1,13 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   FormControl,
@@ -20,13 +22,15 @@ import { updateProductAction } from "../../actions";
 
 type EditWaitingTimeProps = {
   product: TProduct;
+  isReadOnly: boolean;
 };
 
 const ZProductRecontactDaysInput = ZProduct.pick({ recontactDays: true });
 
 type EditWaitingTimeFormValues = z.infer<typeof ZProductRecontactDaysInput>;
 
-export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product }) => {
+export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product, isReadOnly }) => {
+  const t = useTranslations();
   const form = useForm<EditWaitingTimeFormValues>({
     defaultValues: {
       recontactDays: product.recontactDays,
@@ -41,7 +45,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
     try {
       const updatedProductResponse = await updateProductAction({ productId: product.id, data });
       if (updatedProductResponse?.data) {
-        toast.success("Waiting period updated successfully.");
+        toast.success(t("environments.product.general.waiting_period_updated_successfully"));
         form.resetField("recontactDays", { defaultValue: updatedProductResponse.data.recontactDays });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedProductResponse);
@@ -53,45 +57,57 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ product })
   };
 
   return (
-    <FormProvider {...form}>
-      <form
-        className="flex w-full max-w-sm flex-col space-y-4"
-        onSubmit={form.handleSubmit(updateWaitingTime)}>
-        <FormField
-          control={form.control}
-          name="recontactDays"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="recontactDays">Wait X days before showing next survey:</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  id="recontactDays"
-                  {...field}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "") {
-                      field.onChange("");
-                    }
+    <>
+      <FormProvider {...form}>
+        <form
+          className="flex w-full max-w-sm flex-col space-y-4"
+          onSubmit={form.handleSubmit(updateWaitingTime)}>
+          <FormField
+            control={form.control}
+            name="recontactDays"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="recontactDays">
+                  {t("environments.product.general.wait_x_days_before_showing_next_survey")}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    id="recontactDays"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") {
+                        field.onChange("");
+                      }
 
-                    field.onChange(parseInt(value, 10));
-                  }}
-                />
-              </FormControl>
-              <FormError />
-            </FormItem>
-          )}
-        />
+                      field.onChange(parseInt(value, 10));
+                    }}
+                    disabled={isReadOnly}
+                  />
+                </FormControl>
+                <FormError />
+              </FormItem>
+            )}
+          />
 
-        <Button
-          type="submit"
-          size="sm"
-          className="w-fit"
-          loading={isSubmitting}
-          disabled={isSubmitting || !isDirty}>
-          Update
-        </Button>
-      </form>
-    </FormProvider>
+          <Button
+            type="submit"
+            size="sm"
+            className="w-fit"
+            loading={isSubmitting}
+            disabled={isSubmitting || !isDirty || isReadOnly}>
+            {t("common.update")}
+          </Button>
+        </form>
+      </FormProvider>
+      {isReadOnly && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
   );
 };

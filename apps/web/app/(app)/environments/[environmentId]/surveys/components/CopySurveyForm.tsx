@@ -7,6 +7,7 @@ import {
   ZSurveyCopyFormValidation,
 } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
@@ -26,6 +27,7 @@ export const CopySurveyForm = ({
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }) => {
+  const t = useTranslations();
   const form = useForm<TSurveyCopyFormData>({
     resolver: zodResolver(ZSurveyCopyFormValidation),
     defaultValues: {
@@ -54,10 +56,9 @@ export const CopySurveyForm = ({
           });
         });
       });
-
-      toast.success("Survey copied successfully!");
+      toast.success(t("environments.surveys.copy_survey_success"));
     } catch (error) {
-      toast.error("Failed to copy survey");
+      toast.error(t("environments.surveys.copy_survey_error"));
     } finally {
       setOpen(false);
     }
@@ -104,7 +105,7 @@ export const CopySurveyForm = ({
                                             field.onChange([...field.value, environment.id]);
                                           }
                                         }}
-                                        className="mr-2 h-4 w-4 appearance-none border-gray-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
+                                        className="mr-2 h-4 w-4 appearance-none border-slate-300 checked:border-transparent checked:bg-slate-500 checked:after:bg-slate-500 checked:hover:bg-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50"
                                         id={environment.id}
                                       />
                                       <Label htmlFor={environment.id}>
@@ -130,11 +131,11 @@ export const CopySurveyForm = ({
         <div className="fixed bottom-0 left-0 right-0 z-10 flex w-full justify-end space-x-2 bg-white">
           <div className="flex w-full justify-end pb-4 pr-4">
             <Button type="button" onClick={onCancel} variant="minimal">
-              Cancel
+              {t("common.cancel")}
             </Button>
 
             <Button variant="primary" type="submit">
-              Copy survey
+              {t("environments.surveys.copy_survey")}
             </Button>
           </div>
         </div>

@@ -1,9 +1,8 @@
-version: "3.3"
 services:
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg17
     volumes:
-      - formbricks-postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -12,14 +11,11 @@ services:
       - 5432:5432
 
   mailhog:
-    image: mailhog/mailhog
-    # network_mode: service:app
-    logging:
-      driver: "none" # disable saving logs
+    image: arjenz/mailhog # Copy of mailhog/MailHog to support linux/arm64
     ports:
       - 8025:8025 # web ui
       - 1025:1025 # smtp server
 
 volumes:
-  formbricks-postgres:
+  postgres:
     driver: local

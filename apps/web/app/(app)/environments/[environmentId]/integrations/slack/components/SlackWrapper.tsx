@@ -11,6 +11,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 
 interface SlackWrapperProps {
@@ -20,6 +21,7 @@ interface SlackWrapperProps {
   slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const SlackWrapper = ({
@@ -29,6 +31,7 @@ export const SlackWrapper = ({
   slackIntegration,
   webAppUrl,
   attributeClasses,
+  locale,
 }: SlackWrapperProps) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
   const [slackChannels, setSlackChannels] = useState<TIntegrationItem[]>([]);
@@ -82,6 +85,7 @@ export const SlackWrapper = ({
         refreshChannels={getSlackChannels}
         showReconnectButton={showReconnectButton}
         handleSlackAuthorization={handleSlackAuthorization}
+        locale={locale}
       />
     </>
   ) : (

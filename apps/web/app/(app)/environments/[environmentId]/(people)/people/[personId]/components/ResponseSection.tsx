@@ -1,9 +1,13 @@
 import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseTimeline";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -27,19 +31,30 @@ export const ResponseSection = async ({
   const surveys: TSurvey[] = surveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
   const session = await getServerSession(authOptions);
 
+  const t = await getTranslations();
   if (!session) {
-    throw new Error("No session found");
+    throw new Error(t("common.no_session_found"));
   }
 
   const user = await getUser(session.user.id);
 
   if (!user) {
-    throw new Error("No user found");
+    throw new Error(t("common.no_user_found"));
   }
 
   if (!responses) {
-    throw new Error("No responses found");
+    throw new Error(t("environments.people.no_responses_found"));
   }
+
+  const product = await getProductByEnvironmentId(environment.id);
+
+  if (!product) {
+    throw new Error(t("common.no_product_found"));
+  }
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+
+  const locale = findMatchingLocale();
 
   return (
     <ResponseTimeline
@@ -49,6 +64,8 @@ export const ResponseSection = async ({
       environment={environment}
       environmentTags={environmentTags}
       attributeClasses={attributeClasses}
+      locale={locale}
+      productPermission={productPermission}
     />
   );
 };

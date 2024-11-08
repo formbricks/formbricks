@@ -2,13 +2,14 @@
 
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { ClientLogo } from "../ClientLogo";
 import { MediaBackground } from "../MediaBackground";
 import { ResetProgressButton } from "../ResetProgressButton";
@@ -70,7 +71,7 @@ export const PreviewSurvey = ({
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-
+  const t = useTranslations();
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
@@ -144,7 +145,7 @@ export const PreviewSurvey = ({
   }, [product.styling, survey.styling]);
 
   const updateQuestionId = useCallback(
-    (newQuestionId: string) => {
+    (newQuestionId: TSurveyQuestionId) => {
       if (
         !newQuestionId ||
         newQuestionId === "hidden" ||
@@ -322,7 +323,11 @@ export const PreviewSurvey = ({
                   aria-label={isFullScreenPreview ? "Shrink Preview" : "Expand Preview"}></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
+                <p>
+                  {previewType === "modal"
+                    ? t("environments.surveys.edit.your_web_app")
+                    : t("common.preview")}
+                </p>
 
                 <div className="flex items-center">
                   {isFullScreenPreview ? (

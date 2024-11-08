@@ -19,7 +19,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -29,6 +29,8 @@ interface ResponsePageProps {
   user?: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
+  locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
 export const ResponsePage = ({
@@ -39,6 +41,8 @@ export const ResponsePage = ({
   user,
   environmentTags,
   responsesPerPage,
+  locale,
+  isReadOnly,
 }: ResponsePageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -179,7 +183,7 @@ export const ResponsePage = ({
     <>
       <div className="flex gap-1.5">
         <CustomFilter survey={survey} />
-        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
+        {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
       </div>
       <ResponseDataView
         survey={survey}
@@ -187,12 +191,13 @@ export const ResponsePage = ({
         user={user}
         environment={environment}
         environmentTags={environmentTags}
-        isViewer={isSharingPage}
+        isReadOnly={isReadOnly}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
         deleteResponses={deleteResponses}
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
+        locale={locale}
       />
     </>
   );

@@ -9,11 +9,18 @@ import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyQuestionId,
+  TSurveyRedirectUrlCard,
+} from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
@@ -22,7 +29,7 @@ interface EditEndingCardProps {
   endingCardIndex: number;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setActiveQuestionId: (id: string | null) => void;
-  activeQuestionId: string | null;
+  activeQuestionId: TSurveyQuestionId | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -30,6 +37,7 @@ interface EditEndingCardProps {
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
+  locale: TUserLocale;
 }
 
 export const EditEndingCard = ({
@@ -45,16 +53,21 @@ export const EditEndingCard = ({
   plan,
   addEndingCard,
   isFormbricksCloud,
+  locale,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
-
+  const t = useTranslations();
   const isRedirectToUrlDisabled = isFormbricksCloud
     ? plan === "free" && endingCard.type !== "redirectToUrl"
     : false;
 
   const endingCardTypes = [
-    { value: "endScreen", label: "Ending card" },
-    { value: "redirectToUrl", label: "Redirect to Url", disabled: isRedirectToUrlDisabled },
+    { value: "endScreen", label: t("environments.surveys.edit.ending_card") },
+    {
+      value: "redirectToUrl",
+      label: t("environments.surveys.edit.redirect_to_url"),
+      disabled: isRedirectToUrlDisabled,
+    },
   ];
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -171,12 +184,15 @@ export const EditEndingCard = ({
                             attributeClasses
                           )[selectedLanguageCode]
                         )
-                      : "Ending card")}
-                  {endingCard.type === "redirectToUrl" && (endingCard.label || "Redirect to Url")}
+                      : t("environments.surveys.edit.ending_card"))}
+                  {endingCard.type === "redirectToUrl" &&
+                    (endingCard.label || t("environments.surveys.edit.redirect_to_url"))}
                 </p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {endingCard.type === "endScreen" ? "Ending card" : "Redirect to Url"}
+                    {endingCard.type === "endScreen"
+                      ? t("environments.surveys.edit.ending_card")
+                      : t("environments.surveys.edit.redirect_to_url")}
                   </p>
                 )}
               </div>
@@ -194,14 +210,15 @@ export const EditEndingCard = ({
                 updateCard={() => {}}
                 addCard={addEndingCard}
                 cardType="ending"
+                locale={locale}
               />
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="mt-3 px-4 pb-6">
+        <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "mt-3 pb-6"}`}>
           <TooltipRenderer
             shouldRender={endingCard.type === "endScreen" && isRedirectToUrlDisabled}
-            tooltipContent={"Redirect To Url is not available on free plan"}
+            tooltipContent={t("environments.surveys.edit.redirect_to_url_not_available_on_free_plan")}
             triggerClass="w-full">
             <OptionsSwitch
               options={endingCardTypes}
@@ -228,6 +245,7 @@ export const EditEndingCard = ({
               attributeClasses={attributeClasses}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
+              locale={locale}
             />
           )}
           {endingCard.type === "redirectToUrl" && (

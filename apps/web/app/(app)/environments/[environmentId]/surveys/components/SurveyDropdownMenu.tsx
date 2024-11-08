@@ -3,16 +3,24 @@
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
+  getSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/actions";
-import { getSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
-import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
-import { MoreVertical } from "lucide-react";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import {
+  ArrowUpFromLineIcon,
+  CopyIcon,
+  EyeIcon,
+  LinkIcon,
+  MoreVertical,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import {
@@ -45,6 +53,7 @@ export const SurveyDropDownMenu = ({
   deleteSurvey,
   duplicateSurvey,
 }: SurveyDropDownMenuProps) => {
+  const t = useTranslations();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
@@ -60,9 +69,9 @@ export const SurveyDropDownMenu = ({
       deleteSurvey(surveyId);
       router.refresh();
       setDeleteDialogOpen(false);
-      toast.success("Survey deleted successfully.");
+      toast.success(t("environments.surveys.survey_deleted_successfully"));
     } catch (error) {
-      toast.error("An error occured while deleting survey");
+      toast.error(t("environments.surveys.error_deleting_survey"));
     }
     setLoading(false);
   };
@@ -82,13 +91,13 @@ export const SurveyDropDownMenu = ({
           surveyId: duplicatedSurveyResponse.data.id,
         });
         if (transformedDuplicatedSurvey?.data) duplicateSurvey(transformedDuplicatedSurvey.data);
-        toast.success("Survey duplicated successfully.");
+        toast.success(t("environments.surveys.survey_duplicated_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error("Failed to duplicate the survey.");
+      toast.error(t("environments.surveys.survey_duplication_error"));
     }
     setLoading(false);
   };
@@ -99,8 +108,8 @@ export const SurveyDropDownMenu = ({
       onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-          <div className="rounded-lg border p-2 hover:bg-slate-50">
-            <span className="sr-only">Open options</span>
+          <div className="rounded-lg border bg-white p-2 hover:bg-slate-50">
+            <span className="sr-only">{t("environments.surveys.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
@@ -113,7 +122,7 @@ export const SurveyDropDownMenu = ({
                     className="flex w-full items-center"
                     href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
                     <SquarePenIcon className="mr-2 h-4 w-4" />
-                    Edit
+                    {t("common.edit")}
                   </Link>
                 </DropdownMenuItem>
 
@@ -127,7 +136,7 @@ export const SurveyDropDownMenu = ({
                       duplicateSurveyAndRefresh(survey.id);
                     }}>
                     <CopyIcon className="mr-2 h-4 w-4" />
-                    Duplicate
+                    {t("common.duplicate")}
                   </button>
                 </DropdownMenuItem>
               </>
@@ -145,7 +154,7 @@ export const SurveyDropDownMenu = ({
                       setIsCopyFormOpen(true);
                     }}>
                     <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
-                    Copy...
+                    {t("common.copy")}...
                   </button>
                 </DropdownMenuItem>
               </>
@@ -164,7 +173,7 @@ export const SurveyDropDownMenu = ({
                       window.open(previewUrl, "_blank");
                     }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
-                    Preview Survey
+                    {t("common.preview_survey")}
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
@@ -181,7 +190,7 @@ export const SurveyDropDownMenu = ({
                       router.refresh();
                     }}>
                     <LinkIcon className="mr-2 h-4 w-4" />
-                    Copy Link
+                    {t("common.copy_link")}
                   </button>
                 </DropdownMenuItem>
               </>
@@ -197,7 +206,7 @@ export const SurveyDropDownMenu = ({
                     setDeleteDialogOpen(true);
                   }}>
                   <TrashIcon className="mr-2 h-4 w-4" />
-                  Delete
+                  {t("common.delete")}
                 </button>
               </DropdownMenuItem>
             )}
@@ -211,7 +220,7 @@ export const SurveyDropDownMenu = ({
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
-          text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
+          text={t("environments.surveys.delete_survey_and_responses_warning")}
         />
       )}
 

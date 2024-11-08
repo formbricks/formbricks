@@ -10,7 +10,7 @@ import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
+import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -23,7 +23,7 @@ interface MatrixQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
-  currentQuestionId: string;
+  currentQuestionId: TSurveyQuestionId;
 }
 
 export const MatrixQuestion = ({
@@ -150,7 +150,7 @@ export const MatrixQuestion = ({
                       <td
                         key={columnIndex}
                         tabIndex={isCurrent ? 0 : -1}
-                        className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-gray-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
+                        className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                         onClick={() =>
                           handleSelect(
                             getLocalizedValue(column, languageCode),

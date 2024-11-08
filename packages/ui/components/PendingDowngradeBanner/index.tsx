@@ -1,6 +1,7 @@
 "use client";
 
 import { TriangleAlertIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -18,7 +19,7 @@ export const PendingDowngradeBanner = ({
   environmentId,
 }: PendingDowngradeBannerProps) => {
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
-
+  const t = useTranslations();
   const isLastCheckedWithin72Hours = lastChecked
     ? new Date().getTime() - lastChecked.getTime() < threeDaysInMillis
     : false;
@@ -42,16 +43,21 @@ export const PendingDowngradeBanner = ({
                     <TriangleAlertIcon className="text-error h-6 w-6" aria-hidden="true" />
                   </div>
                   <div className="ml-3 w-0 flex-1">
-                    <p className="text-base font-medium text-gray-900">Pending Downgrade</p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      We were unable to verify your license because the license server is unreachable.{" "}
+                    <p className="text-base font-medium text-slate-900">{t("common.pending_downgrade")}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {t(
+                        "common.we_were_unable_to_verify_your_license_because_the_license_server_is_unreachable"
+                      )}
+                      .{" "}
                       {isLastCheckedWithin72Hours
-                        ? `You will be downgraded to the Community Edition on ${formattedDate}.`
-                        : "You are downgraded to the Community Edition."}
+                        ? t("common.you_will_be_downgraded_to_the_community_edition_on_date", {
+                            date: formattedDate,
+                          })
+                        : t("common.you_are_downgraded_to_the_community_edition")}
                     </p>
 
                     <Link href={`/environments/${environmentId}/settings/enterprise`}>
-                      <span className="text-sm text-slate-900">Learn more</span>
+                      <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>
                 </div>
@@ -59,9 +65,9 @@ export const PendingDowngradeBanner = ({
                 <div className="absolute right-0 top-0 ml-4 flex flex-shrink-0">
                   <button
                     type="button"
-                    className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="inline-flex rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     onClick={() => setShow(false)}>
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{t("common.close")}</span>
                     <XIcon className="h-5 w-5" aria-hidden="true" />
                   </button>
                 </div>

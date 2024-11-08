@@ -1,7 +1,9 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
@@ -34,6 +36,7 @@ export const CardStylingSettings = ({
   setOpen,
   form,
 }: CardStylingSettingsProps) => {
+  const t = useTranslations();
   const isAppSurvey = surveyType === "app";
   const surveyTypeDerived = isAppSurvey ? "App" : "Link";
   const isLogoVisible = !!product.logo?.url;
@@ -42,6 +45,7 @@ export const CardStylingSettings = ({
   const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "simple";
   const roundness = form.watch("roundness") ?? 8;
 
+  const [parent] = useAutoAnimate();
   return (
     <Collapsible.Root
       open={open}
@@ -69,16 +73,16 @@ export const CardStylingSettings = ({
 
           <div>
             <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
-              Card Styling
+              {t("environments.surveys.edit.card_styling")}
             </p>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
-              Style the survey card.
+              {t("environments.surveys.edit.style_the_survey_card")}
             </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
 
-      <Collapsible.CollapsibleContent>
+      <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
 
         <div className="flex flex-col gap-6 p-6 pt-2">
@@ -89,8 +93,10 @@ export const CardStylingSettings = ({
               render={() => (
                 <FormItem>
                   <div>
-                    <FormLabel>Roundness</FormLabel>
-                    <FormDescription>Change the border radius of the card and the inputs.</FormDescription>
+                    <FormLabel>{t("environments.surveys.edit.roundness")}</FormLabel>
+                    <FormDescription>
+                      {t("environments.surveys.edit.change_the_border_radius_of_the_card_and_the_inputs")}
+                    </FormDescription>
                   </div>
 
                   <FormControl>
@@ -115,8 +121,10 @@ export const CardStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel>Card background color</FormLabel>
-                  <FormDescription>Change the background color of the card.</FormDescription>
+                  <FormLabel>{t("environments.surveys.edit.card_background_color")}</FormLabel>
+                  <FormDescription>
+                    {t("environments.surveys.edit.change_the_background_color_of_the_card")}
+                  </FormDescription>
                 </div>
 
                 <FormControl>
@@ -136,8 +144,10 @@ export const CardStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel>Card border color</FormLabel>
-                  <FormDescription>Change the border color of the card.</FormDescription>
+                  <FormLabel>{t("environments.surveys.edit.card_border_color")}</FormLabel>
+                  <FormDescription>
+                    {t("environments.surveys.edit.change_the_border_color_of_the_card")}
+                  </FormDescription>
                 </div>
 
                 <FormControl>
@@ -157,8 +167,10 @@ export const CardStylingSettings = ({
             render={({ field }) => (
               <FormItem className="space-y-4">
                 <div>
-                  <FormLabel>Card shadow color</FormLabel>
-                  <FormDescription>Change the shadow color of the card.</FormDescription>
+                  <FormLabel>{t("environments.surveys.edit.card_shadow_color")}</FormLabel>
+                  <FormDescription>
+                    {t("environments.surveys.edit.change_the_shadow_color_of_the_card")}
+                  </FormDescription>
                 </div>
 
                 <FormControl>
@@ -178,10 +190,18 @@ export const CardStylingSettings = ({
             render={() => (
               <FormItem>
                 <div>
-                  <FormLabel>Card Arrangement for {surveyTypeDerived} Surveys</FormLabel>
-
+                  <FormLabel>
+                    {t("environments.surveys.edit.card_arrangement_for_survey_type_derived", {
+                      surveyTypeDerived: surveyTypeDerived,
+                    })}
+                  </FormLabel>
                   <FormDescription>
-                    How funky do you want your cards in {surveyTypeDerived} Surveys
+                    {t(
+                      "environments.surveys.edit.how_funky_do_you_want_your_cards_in_survey_type_derived_surveys",
+                      {
+                        surveyTypeDerived: surveyTypeDerived,
+                      }
+                    )}
                   </FormDescription>
                 </div>
                 <FormControl>
@@ -214,8 +234,10 @@ export const CardStylingSettings = ({
                   </FormControl>
 
                   <div>
-                    <FormLabel>Hide progress bar</FormLabel>
-                    <FormDescription>Disable the visibility of survey progress.</FormDescription>
+                    <FormLabel>{t("environments.surveys.edit.hide_progress_bar")}</FormLabel>
+                    <FormDescription>
+                      {t("environments.surveys.edit.disable_the_visibility_of_survey_progress")}
+                    </FormDescription>
                   </div>
                 </FormItem>
               )}
@@ -239,10 +261,12 @@ export const CardStylingSettings = ({
 
                     <div>
                       <FormLabel>
-                        Hide logo
-                        <Badge text="Link Surveys" type="gray" size="normal" />
+                        {t("environments.surveys.edit.hide_logo")}
+                        <Badge text={t("common.link_surveys")} type="gray" size="normal" />
                       </FormLabel>
-                      <FormDescription>Hides the logo in this specific survey</FormDescription>
+                      <FormDescription>
+                        {t("environments.surveys.edit.hide_the_logo_in_this_specific_survey")}
+                      </FormDescription>
                     </div>
                   </FormItem>
                 )}
@@ -277,9 +301,9 @@ export const CardStylingSettings = ({
                         </FormControl>
 
                         <div>
-                          <FormLabel>Add highlight border</FormLabel>
+                          <FormLabel>{t("environments.surveys.edit.add_highlight_border")}</FormLabel>
                           <FormDescription className="text-xs font-normal text-slate-500">
-                            Add an outer border to your survey card.
+                            {t("environments.surveys.edit.add_highlight_border_description")}
                           </FormDescription>
                         </div>
                       </div>

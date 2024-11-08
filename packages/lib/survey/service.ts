@@ -15,6 +15,8 @@ import {
   TSurvey,
   TSurveyCreateInput,
   TSurveyFilterCriteria,
+  TSurveyOpenTextQuestion,
+  TSurveyQuestions,
   ZSurvey,
   ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
@@ -27,7 +29,10 @@ import { ITEMS_PER_PAGE } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { getEnvironment } from "../environment/service";
-import { subscribeOrganizationMembersToSurveyResponses } from "../organization/service";
+import {
+  getOrganizationByEnvironmentId,
+  subscribeOrganizationMembersToSurveyResponses,
+} from "../organization/service";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -38,10 +43,18 @@ import { responseCache } from "../response/cache";
 import { getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
 import { createSegment, deleteSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
+import { getIsAIEnabled } from "../utils/ai";
 import { diffInDays } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./utils";
+import {
+  anySurveyHasFilters,
+  buildOrderByClause,
+  buildWhereClause,
+  doesSurveyHasOpenTextQuestion,
+  getInsightsEnabled,
+  transformPrismaSurvey,
+} from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -537,6 +550,76 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       return rest;
     });
 
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", null);
+    }
+
+    //AI Insights
+    const isAIEnabled = await getIsAIEnabled(organization);
+    if (isAIEnabled) {
+      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
+        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
+        const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
+          (question) => question.type === "openText"
+        );
+
+        // find the questions that have been updated or added
+        const questionsToCheckForInsights: TSurveyQuestions = [];
+
+        for (const question of openTextQuestions) {
+          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id) as
+            | TSurveyOpenTextQuestion
+            | undefined;
+          const isExistingQuestion = !!existingQuestion;
+
+          if (
+            isExistingQuestion &&
+            question.headline.default === existingQuestion.headline.default &&
+            existingQuestion.insightsEnabled !== undefined
+          ) {
+            continue;
+          } else {
+            questionsToCheckForInsights.push(question);
+          }
+        }
+
+        if (questionsToCheckForInsights.length > 0) {
+          const insightsEnabledValues = await Promise.all(
+            questionsToCheckForInsights.map(async (question) => {
+              const insightsEnabled = await getInsightsEnabled(question);
+
+              return { id: question.id, insightsEnabled };
+            })
+          );
+
+          data.questions = data.questions?.map((question) => {
+            const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
+            if (index !== -1) {
+              return {
+                ...question,
+                insightsEnabled: insightsEnabledValues[index].insightsEnabled,
+              };
+            }
+
+            return question;
+          });
+        }
+      }
+    } else {
+      // check if an existing question got changed that had insights enabled
+      const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
+        (question) => question.type === "openText" && question.insightsEnabled !== undefined
+      );
+      // if question headline changed, remove insightsEnabled
+      for (const question of insightsEnabledOpenTextQuestions) {
+        const updatedQuestion = data.questions?.find((q) => q.id === question.id);
+        if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
+          updatedQuestion.insightsEnabled = undefined;
+        }
+      }
+    }
+
     surveyData.updatedAt = new Date();
 
     data = {
@@ -680,7 +763,7 @@ export const createSurvey = async (
     const actionClasses = await getActionClasses(parsedEnvironmentId);
 
     // @ts-expect-error
-    const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
+    let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
       ...restSurveyBody,
       // TODO: Create with attributeFilters
       triggers: restSurveyBody.triggers
@@ -695,6 +778,38 @@ export const createSurvey = async (
           id: createdBy,
         },
       };
+    }
+
+    const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", null);
+    }
+
+    //AI Insights
+    const isAIEnabled = await getIsAIEnabled(organization);
+    if (isAIEnabled) {
+      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
+        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
+        const insightsEnabledValues = await Promise.all(
+          openTextQuestions.map(async (question) => {
+            const insightsEnabled = await getInsightsEnabled(question);
+
+            return { id: question.id, insightsEnabled };
+          })
+        );
+
+        data.questions = data.questions?.map((question) => {
+          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
+          if (index !== -1) {
+            return {
+              ...question,
+              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
+            };
+          }
+
+          return question;
+        });
+      }
     }
 
     const survey = await prisma.survey.create({

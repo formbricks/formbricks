@@ -1,3 +1,6 @@
+"use client";
+
+import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { generatePersonTableColumns } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTableColumn";
 import {
   DndContext,
@@ -11,7 +14,9 @@ import {
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -36,6 +41,7 @@ interface PersonTableProps {
   environmentId: string;
   searchValue: string;
   setSearchValue: (value: string) => void;
+  isReadOnly: boolean;
 }
 
 export const PersonTable = ({
@@ -47,6 +53,7 @@ export const PersonTable = ({
   environmentId,
   searchValue,
   setSearchValue,
+  isReadOnly,
 }: PersonTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -54,9 +61,12 @@ export const PersonTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
+  const t = useTranslations();
+
+  const [parent] = useAutoAnimate();
   // Generate columns
   const columns = useMemo(
-    () => generatePersonTableColumns(isExpanded ?? false, searchValue),
+    () => generatePersonTableColumns(isExpanded ?? false, searchValue, t, isReadOnly),
     [isExpanded, searchValue]
   );
 
@@ -155,9 +165,17 @@ export const PersonTable = ({
     }
   };
 
+  const deletePerson = async (personId: string) => {
+    await deletePersonAction({ personId });
+  };
+
   return (
     <div className="w-full">
-      <SearchBar value={searchValue} onChange={setSearchValue} placeholder="Search person" />
+      <SearchBar
+        value={searchValue}
+        onChange={setSearchValue}
+        placeholder={t("environments.people.search_person")}
+      />
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
@@ -170,6 +188,7 @@ export const PersonTable = ({
           table={table}
           deleteRows={deletePersons}
           type="person"
+          deleteAction={deletePerson}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
@@ -189,7 +208,7 @@ export const PersonTable = ({
               ))}
             </TableHeader>
 
-            <TableBody>
+            <TableBody ref={parent}>
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -222,7 +241,7 @@ export const PersonTable = ({
               {table.getRowModel().rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
+                    {t("common.no_results")}
                   </TableCell>
                 </TableRow>
               )}
@@ -233,7 +252,7 @@ export const PersonTable = ({
         {data && hasMore && data.length > 0 && (
           <div className="mt-4 flex justify-center">
             <Button onClick={fetchNextPage} className="bg-blue-500 text-white">
-              Load More
+              {t("common.load_more")}
             </Button>
           </div>
         )}
