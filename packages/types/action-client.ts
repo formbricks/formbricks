@@ -8,6 +8,7 @@ export const ZResource = z.enum([
   "invite",
   "response",
   "survey",
+  "surveyFollowUp",
   "person",
   "tag",
   "responseNote",

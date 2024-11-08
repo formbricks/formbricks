@@ -1,6 +1,10 @@
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import {
+  getAdvancedTargetingPermission,
+  getMultiLanguagePermission,
+  getSurveyFollowUpsPermission,
+} from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -68,6 +72,7 @@ const Page = async ({ params, searchParams }) => {
   const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
   const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const isSurveyFollowUpsAllowed = getSurveyFollowUpsPermission(organization);
 
   if (
     !survey ||
@@ -101,6 +106,7 @@ const Page = async ({ params, searchParams }) => {
       isCxMode={isCxMode}
       locale={locale ?? DEFAULT_LOCALE}
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
+      isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
     />
   );
 };

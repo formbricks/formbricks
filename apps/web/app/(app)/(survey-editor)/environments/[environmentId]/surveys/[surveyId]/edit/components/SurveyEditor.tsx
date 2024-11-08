@@ -42,6 +42,7 @@ interface SurveyEditorProps {
   isCxMode: boolean;
   locale: TUserLocale;
   mailFrom: string;
+  isSurveyFollowUpsAllowed: boolean;
 }
 
 export const SurveyEditor = ({
@@ -62,6 +63,7 @@ export const SurveyEditor = ({
   isCxMode = false,
   locale,
   mailFrom,
+  isSurveyFollowUpsAllowed = false,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -162,6 +164,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+            isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
           {activeView === "questions" && (
@@ -222,6 +225,7 @@ export const SurveyEditor = ({
               setLocalSurvey={setLocalSurvey}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
+              isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
             />
           )}
         </main>

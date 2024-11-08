@@ -247,6 +247,13 @@ export const getRemoveLinkBrandingPermission = (organization: TOrganization): bo
   return false;
 };
 
+export const getSurveyFollowUpsPermission = (organization: TOrganization): boolean => {
+  // return false;
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
+  else if (!IS_FORMBRICKS_CLOUD) return true;
+  return false;
+};
+
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD)
     return (

@@ -293,7 +293,7 @@ export const createSurveyFollowUpAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "update"],
+      rules: ["surveyFollowUp", "update"],
     });
 
     return await createSurveyFollowUp(parsedInput.surveyId, {
@@ -321,7 +321,7 @@ export const updateSurveyFollowUpAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "update"],
+      rules: ["surveyFollowUp", "update"],
     });
 
     return await updateSurveyFollowUp(parsedInput.surveyFollowUpId, {
@@ -342,7 +342,7 @@ export const deleteSurveyFollowUpAction = authenticatedActionClient
     await checkAuthorization({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "update"],
+      rules: ["surveyFollowUp", "update"],
     });
 
     const res = await deleteSurveyFollowUp(parsedInput.surveyFollowUpId);

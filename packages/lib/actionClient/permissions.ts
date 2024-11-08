@@ -35,6 +35,12 @@ export const Permissions = {
       read: true,
       delete: true,
     },
+    surveyFollowUp: {
+      create: true,
+      update: true,
+      read: true,
+      delete: true,
+    },
     tag: {
       create: true,
       update: true,
@@ -123,6 +129,12 @@ export const Permissions = {
       update: true,
       delete: true,
     },
+    surveyFollowUp: {
+      create: true,
+      read: true,
+      update: true,
+      delete: true,
+    },
     tag: {
       create: true,
       update: true,
@@ -206,6 +218,12 @@ export const Permissions = {
       delete: true,
     },
     survey: {
+      create: true,
+      read: true,
+      update: true,
+      delete: true,
+    },
+    surveyFollowUp: {
       create: true,
       read: true,
       update: true,
@@ -301,6 +319,12 @@ export const Permissions = {
       update: true,
       delete: true,
     },
+    surveyFollowUp: {
+      create: true,
+      read: true,
+      update: true,
+      delete: true,
+    },
     tag: {
       create: true,
       update: true,
@@ -384,6 +408,12 @@ export const Permissions = {
       delete: false,
     },
     survey: {
+      create: false,
+      read: true,
+      update: false,
+      delete: false,
+    },
+    surveyFollowUp: {
       create: false,
       read: true,
       update: false,
