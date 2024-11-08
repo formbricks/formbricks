@@ -2,11 +2,14 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/OrganizationActions";
 import { getMembershipsByUserId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
-import { getIsOrganizationAIReady } from "@/app/lib/utils";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
+import {
+  getIsMultiOrgEnabled,
+  getIsOrganizationAIReady,
+  getRoleManagementPermission,
+} from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -123,7 +126,6 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
             organization={organization}
             isDeleteDisabled={isDeleteDisabled}
             isUserOwner={currentUserRole === "owner"}
-            isMultiOrgEnabled={isMultiOrgEnabled}
           />
         </SettingsCard>
       )}

@@ -15,7 +15,6 @@ type DeleteOrganizationProps = {
   organization: TOrganization;
   isDeleteDisabled?: boolean;
   isUserOwner?: boolean;
-  isMultiOrgEnabled: boolean;
 };
 
 export const DeleteOrganization = ({

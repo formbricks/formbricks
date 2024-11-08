@@ -1,6 +1,6 @@
 "use client";
 
-import { generateInsightsForSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { generateInsightsForSurveyAction } from "@/modules/ee/insights/actions";
 import { SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

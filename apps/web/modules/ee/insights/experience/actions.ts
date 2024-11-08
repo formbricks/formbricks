@@ -1,16 +1,37 @@
 "use server";
 
-import { insightCache } from "@/lib/cache/insight";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromInsightId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromInsightId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
+import { getOrganization } from "@formbricks/lib/organization/service";
+import { getIsAIEnabled } from "@formbricks/lib/utils/ai";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZInsight, ZInsightFilterCriteria } from "@formbricks/types/insights";
 import { getInsights, updateInsight } from "./lib/insights";
 import { getStats } from "./lib/stats";
+
+export const checkAIPermission = async (organizationId: string) => {
+  const organization = await getOrganization(organizationId);
+
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
+  const isAIEnabled = await getIsAIEnabled(organization);
+
+  if (!isAIEnabled) {
+    throw new OperationNotAllowedError("AI is not enabled for this organization");
+  }
+
+  return true;
+};
 
 const ZGetEnvironmentInsightsAction = z.object({
   environmentId: ZId,
@@ -22,9 +43,10 @@ const ZGetEnvironmentInsightsAction = z.object({
 export const getEnvironmentInsightsAction = authenticatedActionClient
   .schema(ZGetEnvironmentInsightsAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -37,6 +59,8 @@ export const getEnvironmentInsightsAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkAIPermission(organizationId);
 
     return await getInsights(
       parsedInput.environmentId,
@@ -54,9 +78,10 @@ const ZGetStatsAction = z.object({
 export const getStatsAction = authenticatedActionClient
   .schema(ZGetStatsAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -70,6 +95,7 @@ export const getStatsAction = authenticatedActionClient
       ],
     });
 
+    await checkAIPermission(organizationId);
     return await getStats(parsedInput.environmentId, parsedInput.statsFrom);
   });
 
@@ -82,29 +108,11 @@ export const updateInsightAction = authenticatedActionClient
   .schema(ZUpdateInsightAction)
   .action(async ({ ctx, parsedInput }) => {
     try {
-      const insight = await cache(
-        () =>
-          prisma.insight.findUnique({
-            where: {
-              id: parsedInput.insightId,
-            },
-            select: {
-              environmentId: true,
-            },
-          }),
-        [`getInsight-${parsedInput.insightId}`],
-        {
-          tags: [insightCache.tag.byId(parsedInput.insightId)],
-        }
-      )();
-
-      if (!insight) {
-        throw new Error("Insight not found");
-      }
+      const organizationId = await getOrganizationIdFromInsightId(parsedInput.insightId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
-        organizationId: await getOrganizationIdFromEnvironmentId(insight.environmentId),
+        organizationId,
         access: [
           {
             type: "organization",
@@ -112,11 +120,13 @@ export const updateInsightAction = authenticatedActionClient
           },
           {
             type: "productTeam",
-            productId: await getProductIdFromEnvironmentId(insight.environmentId),
+            productId: await getProductIdFromInsightId(parsedInput.insightId),
             minPermission: "readWrite",
           },
         ],
       });
+
+      await checkAIPermission(organizationId);
 
       return await updateInsight(parsedInput.insightId, parsedInput.data);
     } catch (error) {

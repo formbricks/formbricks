@@ -34,7 +34,7 @@ export const EditSegmentModal = ({
 }: EditSegmentModalProps) => {
   const t = useTranslations();
   const SettingsTab = () => {
-    if (isAdvancedTargetingAllowed || false) {
+    if (isAdvancedTargetingAllowed) {
       return (
         <SegmentSettings
           attributeClasses={attributeClasses}

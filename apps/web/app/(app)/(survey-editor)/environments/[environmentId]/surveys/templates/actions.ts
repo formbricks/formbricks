@@ -6,10 +6,10 @@ import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } fro
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { getIsAIEnabled } from "@formbricks/ee/lib/service";
 import { llmModel } from "@formbricks/lib/aiModels";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { createSurvey } from "@formbricks/lib/survey/service";
-import { getIsAIEnabled } from "@formbricks/lib/utils/ai";
 import { ZId, ZString } from "@formbricks/types/common";
 import { ZSurveyQuestion } from "@formbricks/types/surveys/types";
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { updateOrganizationAIEnabledAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateOrganizationAIEnabledAction } from "@/modules/ee/insights/actions";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";

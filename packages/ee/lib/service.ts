@@ -7,12 +7,13 @@ import { cache, revalidateTag } from "@formbricks/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
+  IS_AI_CONFIGURED,
   IS_FORMBRICKS_CLOUD,
   PRODUCT_FEATURE_KEYS,
 } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
-import { TOrganization } from "@formbricks/types/organizations";
+import { TOrganization, TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TEnterpriseLicenseDetails, TEnterpriseLicenseFeatures } from "./types";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
@@ -295,4 +296,21 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.isMultiOrgEnabled;
+};
+
+export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
+  const { active: isEnterpriseEdition } = await getEnterpriseLicense();
+
+  // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
+  return Boolean(
+    IS_FORMBRICKS_CLOUD &&
+      IS_AI_CONFIGURED &&
+      isEnterpriseEdition &&
+      (billingPlan === "startup" || billingPlan === "scale" || billingPlan === "enterprise")
+  );
+};
+
+export const getIsAIEnabled = async (organization: TOrganization) => {
+  const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
+  return Boolean(isOrganizationAIReady && organization.isAIEnabled);
 };

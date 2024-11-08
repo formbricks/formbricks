@@ -113,7 +113,6 @@ export const POST = async (request: Request) => {
     }
     // Without default organization assignment
     else {
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
       if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });
