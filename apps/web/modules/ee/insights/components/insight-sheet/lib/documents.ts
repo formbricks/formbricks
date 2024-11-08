@@ -8,7 +8,12 @@ import { cache } from "@formbricks/lib/cache";
 import { DOCUMENTS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
-import { TDocument, TDocumentFilterCriteria, ZDocumentFilterCriteria } from "@formbricks/types/documents";
+import {
+  TDocument,
+  TDocumentFilterCriteria,
+  ZDocument,
+  ZDocumentFilterCriteria,
+} from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -124,3 +129,52 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
       }
     )()
 );
+
+export const getDocument = reactCache(
+  (documentId: string): Promise<TDocument | null> =>
+    cache(
+      async () => {
+        validateInputs([documentId, ZId]);
+
+        try {
+          const document = await prisma.document.findUnique({
+            where: {
+              id: documentId,
+            },
+          });
+
+          return document;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getDocumentById-${documentId}`],
+      {
+        tags: [documentCache.tag.byId(documentId)],
+      }
+    )()
+);
+
+export const updateDocument = async (documentId: string, data: Partial<TDocument>): Promise<TDocument> => {
+  validateInputs([documentId, ZId], [data, ZDocument.partial()]);
+  try {
+    const updatedDocument = await prisma.document.update({
+      where: { id: documentId },
+      data,
+    });
+
+    documentCache.revalidate({ environmentId: updatedDocument.environmentId });
+
+    return updatedDocument;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

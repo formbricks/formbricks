@@ -1,5 +1,7 @@
+"use client";
+
 import { CheckCircle2Icon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { TSurveySingleUse } from "@formbricks/types/surveys/types";
@@ -10,7 +12,7 @@ type SurveyLinkUsedProps = {
 };
 
 export const SurveyLinkUsed = async ({ singleUseMessage }: SurveyLinkUsedProps) => {
-  const t = await getTranslations();
+  const t = useTranslations();
   const defaultHeading = t("s.survey_already_answered_heading");
   const defaultSubheading = t("s.survey_already_answered_subheading");
   return (

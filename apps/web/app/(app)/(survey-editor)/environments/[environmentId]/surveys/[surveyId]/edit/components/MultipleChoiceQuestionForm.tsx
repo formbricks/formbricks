@@ -60,7 +60,7 @@ export const MultipleChoiceQuestionForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: t("common.none"),
+      label: t("environments.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
