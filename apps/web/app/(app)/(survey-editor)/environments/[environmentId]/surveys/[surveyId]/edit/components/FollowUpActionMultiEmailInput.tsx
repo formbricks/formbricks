@@ -18,31 +18,34 @@ const FollowUpActionMultiEmailInput = ({
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+  const handleAddEmail = () => {
+    const email = inputValue.trim();
+
+    if (!email) return;
+
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    if (emails.includes(email)) {
+      setError("This email has already been added");
+      return;
+    }
+
+    setEmails([...emails, email]);
+    setInputValue("");
+    setError("");
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Clear error when user starts typing
     if (error) setError("");
 
-    // Handle email addition on Space
-    if (e.key === " ") {
+    // Handle email addition on Space or Comma
+    if (e.key === " " || e.key === ",") {
       e.preventDefault();
-      const email = inputValue.trim();
-
-      if (!email) return;
-
-      // Validate email
-      if (!emailRegex.test(email)) {
-        setError("Please enter a valid email address");
-        return;
-      }
-
-      // Check for duplicates
-      if (emails.includes(email)) {
-        setError("This email has already been added");
-        return;
-      }
-
-      setEmails([...emails, email]);
-      setInputValue("");
+      handleAddEmail();
     }
 
     // Handle backspace to remove last email
@@ -54,6 +57,10 @@ const FollowUpActionMultiEmailInput = ({
 
   const removeEmail = (indexToRemove: number) => {
     setEmails(emails.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleInputBlur = () => {
+    handleAddEmail();
   };
 
   return (
@@ -80,6 +87,7 @@ const FollowUpActionMultiEmailInput = ({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={handleInputBlur}
           placeholder={emails.length === 0 ? "Write an email & press space bar" : ""}
           className="min-w-[180px] flex-1 border-none p-0 py-1 text-sm placeholder:text-slate-400 focus:ring-0"
         />
