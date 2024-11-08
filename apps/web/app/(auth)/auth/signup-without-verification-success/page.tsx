@@ -1,13 +1,16 @@
 import { BackToLoginButton } from "@/app/(auth)/auth/components/BackToLoginButton";
 import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
+import { getTranslations } from "next-intl/server";
 
-const Page = () => {
+const Page = async () => {
+  const t = await getTranslations();
   return (
     <FormWrapper>
-      <h1 className="leading-2 mb-4 text-center font-bold">User successfully created</h1>
+      <h1 className="leading-2 mb-4 text-center font-bold">
+        {t("auth.signup_without_verification_success.user_successfully_created")}
+      </h1>
       <p className="text-center text-sm">
-        Your new user has been created successfully. Please click the button below and sign in to your
-        account.
+        {t("auth.signup_without_verification_success.user_successfully_created_description")}
       </p>
       <hr className="my-4" />
       <BackToLoginButton />

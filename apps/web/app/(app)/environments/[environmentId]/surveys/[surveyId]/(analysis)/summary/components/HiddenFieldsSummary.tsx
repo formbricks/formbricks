@@ -1,20 +1,23 @@
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
 
 interface HiddenFieldsSummaryProps {
   environment: TEnvironment;
   questionSummary: TSurveyQuestionSummaryHiddenFields;
+  locale: TUserLocale;
 }
 
-export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFieldsSummaryProps) => {
+export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: HiddenFieldsSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
-
+  const t = useTranslations();
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
@@ -35,15 +38,16 @@ export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFiel
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responseCount} {questionSummary.responseCount === 1 ? "Response" : "Responses"}
+            {questionSummary.responseCount}{" "}
+            {questionSummary.responseCount === 1 ? t("common.response") : t("common.responses")}
           </div>
         </div>
       </div>
       <div className="rounded-b-lg bg-white">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
-          <div className="pl-4 md:pl-6">User</div>
-          <div className="col-span-2 pl-4 md:pl-6">Response</div>
-          <div className="px-4 md:px-6">Time</div>
+          <div className="pl-4 md:pl-6">{t("common.user")}</div>
+          <div className="col-span-2 pl-4 md:pl-6">{t("common.response")}</div>
+          <div className="px-4 md:px-6">{t("common.time")}</div>
         </div>
         {questionSummary.samples.slice(0, visibleResponses).map((response) => (
           <div
@@ -66,7 +70,7 @@ export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFiel
                   <div className="hidden md:flex">
                     <PersonAvatar personId="anonymous" />
                   </div>
-                  <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                  <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
                 </div>
               )}
             </div>
@@ -74,14 +78,14 @@ export const HiddenFieldsSummary = ({ environment, questionSummary }: HiddenFiel
               {response.value}
             </div>
             <div className="px-4 text-slate-500 md:px-6">
-              {timeSince(new Date(response.updatedAt).toISOString())}
+              {timeSince(new Date(response.updatedAt).toISOString(), locale)}
             </div>
           </div>
         ))}
         {visibleResponses < questionSummary.samples.length && (
           <div className="flex justify-center py-4">
             <Button onClick={handleLoadMore} variant="secondary" size="sm">
-              Load more
+              {t("common.load_more")}
             </Button>
           </div>
         )}

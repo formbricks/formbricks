@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React, { useMemo } from "react";
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { Button } from "../Button";
@@ -16,6 +17,7 @@ export const ConfirmDeleteSegmentModal = ({
   segment,
   setOpen,
 }: ConfirmDeleteSegmentModalProps) => {
+  const t = useTranslations();
   const handleDelete = async () => {
     await onDelete();
   };
@@ -25,11 +27,11 @@ export const ConfirmDeleteSegmentModal = ({
   }, [segment.activeSurveys.length, segment.inactiveSurveys.length]);
 
   return (
-    <Modal open={open} setOpen={setOpen} title="Delete Segment">
+    <Modal open={open} setOpen={setOpen} title={t("environments.segments.delete_segment")}>
       <div className="text-slate-900">
         {segmentHasSurveys && (
           <div className="space-y-2">
-            <p>You cannot delete this segment since it’s still used in these surveys:</p>
+            <p>{t("environments.segments.cannot_delete_segment_used_in_surveys")}</p>
             <ol className="my-2 ml-4 list-decimal">
               {segment.activeSurveys.map((survey) => (
                 <li key={survey}>{survey}</li>
@@ -42,17 +44,17 @@ export const ConfirmDeleteSegmentModal = ({
         )}
         <p className="mt-2">
           {segmentHasSurveys
-            ? "Please remove the segment from these surveys in order to delete it."
-            : "Are you sure you want to delete this segment? This action cannot be undone."}
+            ? t("environments.segments.please_remove_the_segment_from_these_surveys_in_order_to_delete_it")
+            : t("common.are_you_sure_this_action_cannot_be_undone")}
         </p>
       </div>
 
       <div className="mt-4 space-x-2 text-right">
         <Button variant="minimal" onClick={() => setOpen(false)}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button variant="warn" onClick={handleDelete} disabled={segmentHasSurveys}>
-          Delete
+          {t("common.delete")}
         </Button>
       </div>
     </Modal>

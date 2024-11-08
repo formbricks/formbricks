@@ -1,6 +1,8 @@
 import { XCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-export const ErrorComponent: React.FC = ({}) => {
+export const ErrorComponent: React.FC = () => {
+  const t = useTranslations();
   return (
     <div className="rounded-lg bg-red-50 p-4">
       <div className="flex">
@@ -8,9 +10,9 @@ export const ErrorComponent: React.FC = ({}) => {
           <XCircleIcon className="h-12 w-12 text-red-400" aria-hidden="true" />
         </div>
         <div className="ml-3">
-          <h3 className="text-sm font-medium text-red-800">Error loading resources</h3>
+          <h3 className="text-sm font-medium text-red-800">{t("common.error_component_title")}</h3>
           <div className="mt-2 text-sm text-red-700">
-            <p>This resource doesn&apos;t exist or you don&apos;t have the necessary rights to access it.</p>
+            <p>{t("common.error_component_description")}</p>
           </div>
         </div>
       </div>

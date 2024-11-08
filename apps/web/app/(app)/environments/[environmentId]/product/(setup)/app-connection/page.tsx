@@ -2,6 +2,7 @@ import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/
 import { EnvironmentIdField } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/EnvironmentIdField";
 import { SetupInstructions } from "@/app/(app)/environments/[environmentId]/product/(setup)/components/SetupInstructions";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { getTranslations } from "next-intl/server";
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -12,24 +13,25 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../../settings/components/SettingsCard";
 
 const Page = async ({ params }) => {
+  const t = await getTranslations();
   const [environment, organization] = await Promise.all([
     getEnvironment(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation
           environmentId={params.environmentId}
           activeId="app-connection"
@@ -39,19 +41,19 @@ const Page = async ({ params }) => {
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/app-connection" />
         <SettingsCard
-          title="Website & App Connection Status"
-          description="Check if your app is successfully connected with Formbricks. Reload page to recheck.">
+          title={t("environments.product.app-connection.app_connection")}
+          description={t("environments.product.app-connection.app_connection_description")}>
           {environment && <WidgetStatusIndicator environment={environment} />}
         </SettingsCard>
         <SettingsCard
-          title="How to setup"
-          description="Follow these steps to setup the Formbricks widget within your app."
+          title={t("environments.product.app-connection.how_to_setup")}
+          description={t("environments.product.app-connection.how_to_setup_description")}
           noPadding>
           <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
         <SettingsCard
-          title="Your EnvironmentId"
-          description="This id uniquely identifies this Formbricks environment.">
+          title={t("environments.product.app-connection.environment_id")}
+          description={t("environments.product.app-connection.environment_id_description")}>
           <EnvironmentIdField environmentId={params.environmentId} />
         </SettingsCard>
       </div>

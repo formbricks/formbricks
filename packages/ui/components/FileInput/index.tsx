@@ -1,6 +1,7 @@
 "use client";
 
 import { FileIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -17,8 +18,8 @@ const isImage = (name: string) => {
   return allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtension);
 };
 const options = [
-  { value: "image", label: "Image" },
-  { value: "video", label: "Video" },
+  { value: "image", label: "common.image" },
+  { value: "video", label: "common.video" },
 ];
 
 interface FileInputProps {
@@ -52,6 +53,7 @@ export const FileInput = ({
   maxSizeInMB,
   isVideoAllowed = false,
 }: FileInputProps) => {
+  const t = useTranslations();
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(videoUrl ?? "");
   const [activeTab, setActiveTab] = useState(videoUrl ? "video" : "image");
@@ -61,7 +63,7 @@ export const FileInput = ({
   const handleUpload = async (files: File[]) => {
     if (!multiple && files.length > 1) {
       files = [files[0]];
-      toast.error("Only one file is allowed");
+      toast.error(t("common.only_one_file_allowed"));
     }
 
     const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
@@ -83,9 +85,9 @@ export const FileInput = ({
       uploadedFiles.some((file) => file.status === "rejected")
     ) {
       if (uploadedFiles.length === 0) {
-        toast.error("No files were uploaded");
+        toast.error(t("common.no_files_uploaded"));
       } else {
-        toast.error("Some files failed to upload");
+        toast.error(t("common.some_files_failed_to_upload"));
       }
     }
 
@@ -152,9 +154,9 @@ export const FileInput = ({
       uploadedFiles.some((file) => file.status === "rejected")
     ) {
       if (uploadedFiles.length === 0) {
-        toast.error("No files were uploaded");
+        toast.error(t("common.no_files_uploaded"));
       } else {
-        toast.error("Some files failed to upload");
+        toast.error(t("common.some_files_failed_to_upload"));
       }
     }
 

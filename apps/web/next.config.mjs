@@ -1,11 +1,12 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
+import createNextIntlPlugin from "next-intl/plugin";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
@@ -165,7 +166,7 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; frame-src 'self'; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; frame-src 'self' https://app.cal.com; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';",
           },
         ],
       },
@@ -297,4 +298,4 @@ const exportConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
   ? withSentryConfig(nextConfig, sentryOptions, sentryConfig)
   : nextConfig;
 
-export default exportConfig;
+export default withNextIntl(nextConfig);

@@ -11,6 +11,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { EmailButton } from "../../components/email-button";
 import { EmailTemplate } from "../../components/email-template";
+import { translateEmailText } from "../../lib/utils";
 
 export const renderEmailResponseValue = (
   response: string | string[],
@@ -23,7 +24,7 @@ export const renderEmailResponseValue = (
           {Array.isArray(response) &&
             response.map((responseItem) => (
               <Link
-                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm"
+                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-black shadow-sm"
                 href={responseItem}
                 key={responseItem}>
                 <FileIcon />
@@ -56,8 +57,8 @@ export const renderEmailResponseValue = (
                 (item, index) =>
                   item && (
                     <Row key={item} className="mb-1 flex items-center">
-                      <Column className="w-6 text-gray-400">#{index + 1}</Column>
-                      <Column className="rounded bg-gray-100 px-2 py-1">{item}</Column>
+                      <Column className="w-6 text-slate-400">#{index + 1}</Column>
+                      <Column className="rounded bg-slate-100 px-2 py-1">{item}</Column>
                     </Row>
                   )
               )}
@@ -77,6 +78,7 @@ interface ResponseFinishedEmailProps {
   WEBAPP_URL: string;
   environmentId: string;
   organization: TOrganization;
+  locale: string;
 }
 
 export function ResponseFinishedEmail({
@@ -86,6 +88,7 @@ export function ResponseFinishedEmail({
   WEBAPP_URL,
   environmentId,
   organization,
+  locale,
 }: ResponseFinishedEmailProps): React.JSX.Element {
   const questions = getQuestionResponseMapping(survey, response);
 
@@ -94,10 +97,13 @@ export function ResponseFinishedEmail({
       <Container>
         <Row>
           <Column>
-            <Text className="mb-4 text-3xl font-bold">Hey 👋</Text>
+            <Text className="mb-4 text-3xl font-bold">
+              {translateEmailText("survey_response_finished_email_hey", locale)}
+            </Text>
             <Text className="mb-4">
-              Congrats, you received a new response to your survey! Someone just completed your survey{" "}
-              <strong>{survey.name}</strong>:
+              {translateEmailText("survey_response_finished_email_congrats", locale, {
+                surveyName: survey.name,
+              })}
             </Text>
             <Hr />
             {questions.map((question) => {
@@ -156,27 +162,33 @@ export function ResponseFinishedEmail({
               href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
               label={
                 responseCount > 1
-                  ? `View ${String(responseCount - 1).toString()} more ${responseCount === 2 ? "response" : "responses"}`
-                  : `View survey summary`
+                  ? translateEmailText("survey_response_finished_email_view_more_responses", locale, {
+                      responseCount: String(responseCount - 1),
+                    })
+                  : translateEmailText("survey_response_finished_email_view_survey_summary", locale)
               }
             />
             <Hr />
             <Section className="mt-4 text-center text-sm">
-              <Text className="font-bold">Don&apos;t want to get these notifications?</Text>
+              <Text className="font-bold">
+                {translateEmailText("survey_response_finished_email_dont_want_notifications", locale)}
+              </Text>
               <Text className="mb-0">
-                Turn off notifications for{" "}
+                {translateEmailText("survey_response_finished_email_turn_off_notifications", locale)}
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
-                  this form
+                  {translateEmailText("survey_response_finished_email_this_form", locale)}
                 </Link>
               </Text>
               <Text className="mt-0">
-                Turn off notifications for{" "}
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
-                  all newly created forms{" "}
+                  {translateEmailText(
+                    "survey_response_finished_email_turn_off_notifications_for_all_new_forms",
+                    locale
+                  )}
                 </Link>
               </Text>
             </Section>
