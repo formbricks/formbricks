@@ -156,8 +156,6 @@ export const navigation: Array<NavGroup> = [
         title: "Contributing",
         children: [
           { title: "Get started", href: "/developer-docs/contributing/get-started" },
-          { title: "Codespaces", href: "/developer-docs/contributing/codespaces" },
-          { title: "Gitpod", href: "/developer-docs/contributing/gitpod" },
           { title: "Troubleshooting", href: "/developer-docs/contributing/troubleshooting" },
         ],
       },
