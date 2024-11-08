@@ -479,10 +479,10 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   minLength: z.number().optional(),
   maxLength: z.number().optional(),
 }).superRefine((data, ctx) => {
-  if (data.isCharLimitEnabled && (data.minLength === undefined || data.maxLength === undefined)) {
+  if (data.isCharLimitEnabled && data.minLength === undefined && data.maxLength === undefined) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Enter the values for both minimum and maximum fields",
+      message: "Enter the values for either minimum or maximum field",
     });
   }
 
