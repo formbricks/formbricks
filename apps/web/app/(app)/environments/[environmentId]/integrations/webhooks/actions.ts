@@ -100,9 +100,5 @@ const ZTestEndpointAction = z.object({
 export const testEndpointAction = authenticatedActionClient
   .schema(ZTestEndpointAction)
   .action(async ({ parsedInput }) => {
-    const res = await testEndpoint(parsedInput.url);
-
-    if (!res.ok) {
-      throw res.error;
-    }
+    return testEndpoint(parsedInput.url);
   });

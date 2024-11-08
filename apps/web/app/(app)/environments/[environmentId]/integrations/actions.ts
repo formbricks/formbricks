@@ -2,7 +2,12 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromIntegrationId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromIntegrationId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { ZId } from "@formbricks/types/common";
@@ -44,7 +49,7 @@ export const deleteIntegrationAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.integrationId),
+      organizationId: await getOrganizationIdFromIntegrationId(parsedInput.integrationId),
       access: [
         {
           type: "organization",
@@ -52,7 +57,7 @@ export const deleteIntegrationAction = authenticatedActionClient
         },
         {
           type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(parsedInput.integrationId),
+          productId: await getProductIdFromIntegrationId(parsedInput.integrationId),
           minPermission: "readWrite",
         },
       ],

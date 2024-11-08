@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Trash2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -43,17 +44,22 @@ export const ManageIntegration = ({
   const [isDeleting, setisDeleting] = useState(false);
 
   const handleDeleteIntegration = async () => {
-    try {
-      setisDeleting(true);
-      await deleteIntegrationAction({ integrationId: googleSheetIntegration.id });
-      setIsConnected(false);
+    setisDeleting(true);
+
+    const deleteIntegrationActionResult = await deleteIntegrationAction({
+      integrationId: googleSheetIntegration.id,
+    });
+
+    if (deleteIntegrationActionResult?.data) {
       toast.success(t("environments.integrations.integration_removed_successfully"));
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setisDeleting(false);
-      setIsDeleteIntegrationModalOpen(false);
+      setIsConnected(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
+      toast.error(errorMessage);
     }
+
+    setisDeleting(false);
+    setIsDeleteIntegrationModalOpen(false);
   };
 
   const editIntegration = (index: number) => {
