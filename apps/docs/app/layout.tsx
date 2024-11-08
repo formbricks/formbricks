@@ -27,6 +27,16 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
+      <head>
+        <script
+          type="module"
+          src="https://storage.googleapis.com/generic-assets/buildwithlayer-widget-4.js"
+          primary-color="#2DD4BF"
+          api-key="INSERT YOUR API KEY"
+          walkthrough-enabled="false"
+          design-style="copilot"
+        />
+      </head>
       <body className={`flex min-h-full bg-white antialiased dark:bg-zinc-900 ${jost.className}`}>
         <Providers>
           <div className="w-full">
