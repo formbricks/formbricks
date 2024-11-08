@@ -6,6 +6,7 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromIntegrationId,
   getProductIdFromEnvironmentId,
+  getProductIdFromIntegrationId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
@@ -56,7 +57,7 @@ export const deleteIntegrationAction = authenticatedActionClient
         },
         {
           type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(parsedInput.integrationId),
+          productId: await getProductIdFromIntegrationId(parsedInput.integrationId),
           minPermission: "readWrite",
         },
       ],

@@ -313,6 +313,15 @@ export const getProductIdFromDocumentId = async (documentId: string) => {
   return await getProductIdFromEnvironmentId(document.environmentId);
 };
 
+export const getProductIdFromIntegrationId = async (integrationId: string) => {
+  const integration = await getIntegration(integrationId);
+  if (!integration) {
+    throw new ResourceNotFoundError("integration", integrationId);
+  }
+
+  return await getProductIdFromEnvironmentId(integration.environmentId);
+};
+
 // environment id helpers
 export const getEnvironmentIdFromSurveyId = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);

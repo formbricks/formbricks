@@ -42,9 +42,12 @@ export const ManageIntegration = ({
   const handleDeleteIntegration = async () => {
     try {
       setisDeleting(true);
-      await deleteIntegrationAction({
+      const deleteIntegrationActionResult = await deleteIntegrationAction({
         integrationId: notionIntegration.id,
       });
+      if (deleteIntegrationActionResult && deleteIntegrationActionResult.serverError) {
+        toast.error(deleteIntegrationActionResult.serverError);
+      }
       setIsConnected(false);
       toast.success(t("environments.integrations.integration_removed_successfully"));
     } catch (error) {
