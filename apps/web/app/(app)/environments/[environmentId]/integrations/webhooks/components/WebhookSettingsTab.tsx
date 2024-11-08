@@ -51,7 +51,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
     try {
       const { valid, error } = validWebHookURL(testEndpointInput);
       if (!valid) {
-        toast.error(error ?? "Something went wrong please try again!");
+        toast.error(error ?? t("common.something_went_wrong_please_try_again"));
         return;
       }
       setHittingEndpoint(true);

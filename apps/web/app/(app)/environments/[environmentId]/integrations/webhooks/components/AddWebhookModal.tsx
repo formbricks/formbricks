@@ -45,7 +45,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     try {
       const { valid, error } = validWebHookURL(testEndpointInput);
       if (!valid) {
-        toast.error(error ?? "Something went wrong please try again!");
+        toast.error(error ?? t("common.something_went_wrong_please_try_again"));
         return;
       }
       setHittingEndpoint(true);
@@ -54,7 +54,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         throw new Error(testEndpointActionResult.serverError);
       }
       setHittingEndpoint(false);
-      if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
+      if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
       return true;
     } catch (err) {
