@@ -682,7 +682,9 @@
         "select_channel": "Kanal auswählen",
         "slack_integration": "Slack Integration",
         "slack_integration_description": "Sende Antworten direkt an Slack.",
-        "slack_integration_is_not_configured": "Slack Integration ist in deiner Instanz von Formbricks nicht konfiguriert."
+        "slack_integration_is_not_configured": "Slack Integration ist in deiner Instanz von Formbricks nicht konfiguriert.",
+        "slack_reconnect_button": "Erneut verbinden",
+        "slack_reconnect_button_description": "<b>Hinweis:</b> Wir haben kürzlich unsere Slack-Integration geändert, um auch private Kanäle zu unterstützen. Bitte verbinden Sie Ihren Slack-Workspace erneut."
       },
       "slack_integration_description": "Verbinde deinen Slack Arbeitsbereich sofort mit Formbricks",
       "to_configure_it": "es zu konfigurieren.",

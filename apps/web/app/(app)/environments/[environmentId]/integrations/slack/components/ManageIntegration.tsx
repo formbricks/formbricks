@@ -77,11 +77,12 @@ export const ManageIntegration = ({
       {showReconnectButton && (
         <div className="mb-4 flex w-full items-center justify-between space-x-4">
           <p className="text-amber-700">
-            <strong>Note:</strong> We recently changed our Slack integration to also support private channels.
-            Please reconnect your Slack workspace.
+            {t.rich("environments.integrations.slack.slack_reconnect_button_description", {
+              b: (chunks) => <b>{chunks}</b>,
+            })}
           </p>
           <Button onClick={handleSlackAuthorization} variant="secondary">
-            Reconnect
+            {t("environments.integrations.slack.slack_reconnect_button")}
           </Button>
         </div>
       )}
