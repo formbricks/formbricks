@@ -2,8 +2,8 @@
 
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { LanguageLabels } from "@/modules/ee/multi-language-surveys/components/language-labels";
 import { useTranslations } from "next-intl";
-import { LanguageLabels } from "@formbricks/ee/multi-language/components/language-labels";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 

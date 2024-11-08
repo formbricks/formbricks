@@ -7,9 +7,12 @@ import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -18,7 +21,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { Card } from "@formbricks/ui/components/IntegrationCard";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
@@ -56,8 +58,22 @@ const Page = async ({ params }) => {
     throw new Error(t("common.organization_not_found"));
   }
 
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
+  }
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session?.user.id, environment?.productId);
+
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
+  if (isBilling) {
+    return redirect(`/environments/${params.environmentId}/settings/billing`);
+  }
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
@@ -84,6 +100,7 @@ const Page = async ({ params }) => {
           : zapierWebhookCount === 0
             ? t("common.not_connected")
             : `${zapierWebhookCount} zaps`,
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
@@ -102,6 +119,7 @@ const Page = async ({ params }) => {
           : userWebhookCount === 0
             ? t("common.not_connected")
             : `${userWebhookCount} webhooks`,
+      disabled: false,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
@@ -115,6 +133,7 @@ const Page = async ({ params }) => {
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
       connected: isGoogleSheetsIntegrationConnected,
       statusText: isGoogleSheetsIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/airtable`,
@@ -128,6 +147,7 @@ const Page = async ({ params }) => {
       icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
       connected: isAirtableIntegrationConnected,
       statusText: isAirtableIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/slack`,
@@ -141,6 +161,7 @@ const Page = async ({ params }) => {
       icon: <Image src={SlackLogo} alt="Slack Logo" />,
       connected: isSlackIntegrationConnected,
       statusText: isSlackIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
@@ -159,6 +180,7 @@ const Page = async ({ params }) => {
           : n8nwebhookCount === 0
             ? t("common.not_connected")
             : `${n8nwebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -177,6 +199,7 @@ const Page = async ({ params }) => {
           : makeWebhookCount === 0
             ? t("common.not_connected")
             : `${makeWebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/notion`,
@@ -190,6 +213,7 @@ const Page = async ({ params }) => {
       icon: <Image src={notionLogo} alt="Notion Logo" />,
       connected: isNotionIntegrationConnected,
       statusText: isNotionIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
   ];
 
@@ -205,9 +229,8 @@ const Page = async ({ params }) => {
     icon: <Image src={JsLogo} alt="Javascript Logo" />,
     connected: widgetSetupCompleted,
     statusText: widgetSetupCompleted ? t("common.connected") : t("common.not_connected"),
+    disabled: false,
   });
-
-  if (isViewer) return <ErrorComponent />;
 
   return (
     <PageContentWrapper>
@@ -227,6 +250,7 @@ const Page = async ({ params }) => {
             icon={card.icon}
             connected={card.connected}
             statusText={card.statusText}
+            disabled={card.disabled}
           />
         ))}
       </div>

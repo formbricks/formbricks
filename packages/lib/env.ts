@@ -23,7 +23,7 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
     DEBUG: z.enum(["1", "0"]).optional(),
     DEFAULT_ORGANIZATION_ID: z.string().optional(),
-    DEFAULT_ORGANIZATION_ROLE: z.enum(["owner", "admin", "editor", "developer", "viewer"]).optional(),
+    DEFAULT_ORGANIZATION_ROLE: z.enum(["owner", "manager", "member", "billing"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
     EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),

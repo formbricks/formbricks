@@ -2,9 +2,9 @@ import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/li
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsAIEnabled } from "@/app/lib/utils";
+import { sendResponseFinishedEmail } from "@/modules/email";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { sendResponseFinishedEmail } from "@formbricks/email";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
@@ -118,6 +118,36 @@ export const POST = async (request: Request) => {
             },
           },
         },
+        OR: [
+          {
+            memberships: {
+              every: {
+                role: {
+                  in: ["owner", "manager"],
+                },
+              },
+            },
+          },
+          {
+            teamUsers: {
+              some: {
+                team: {
+                  productTeams: {
+                    some: {
+                      product: {
+                        environments: {
+                          some: {
+                            id: environmentId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
         notificationSettings: {
           path: ["alert", surveyId],
           equals: true,

@@ -95,6 +95,7 @@ export const getProductsByOrganizationId = async (
             select: {
               user: {
                 select: {
+                  id: true,
                   email: true,
                   notificationSettings: true,
                   locale: true,

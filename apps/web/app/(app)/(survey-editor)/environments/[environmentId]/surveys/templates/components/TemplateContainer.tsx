@@ -2,6 +2,7 @@
 
 import { FormbricksAICard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/FormbricksAICard";
 import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
+import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
@@ -12,7 +13,6 @@ import { TUser } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
 import { SearchBar } from "@formbricks/ui/components/SearchBar";
 import { Separator } from "@formbricks/ui/components/Separator";
-import { TemplateList } from "@formbricks/ui/components/TemplateList";
 import { getMinimalSurvey } from "../../lib/minimalSurvey";
 
 type TemplateContainerWithPreviewProps = {

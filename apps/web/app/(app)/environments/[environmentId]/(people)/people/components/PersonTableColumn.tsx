@@ -9,7 +9,8 @@ import { HighlightedText } from "@formbricks/ui/components/HighlightedText";
 export const generatePersonTableColumns = (
   isExpanded: boolean,
   searchValue: string,
-  t: (key: string) => string
+  t: (key: string) => string,
+  isReadOnly: boolean
 ): ColumnDef<TPersonTableData>[] => {
   const dateColumn: ColumnDef<TPersonTableData> = {
     accessorKey: "createdAt",
@@ -90,5 +91,7 @@ export const generatePersonTableColumns = (
     },
   };
 
-  return [getSelectionColumn(), dateColumn, userColumn, userIdColumn, emailColumn, attributesColumn];
+  const columns = [dateColumn, userColumn, userIdColumn, emailColumn, attributesColumn];
+
+  return isReadOnly ? columns : [getSelectionColumn(), ...columns];
 };

@@ -35,6 +35,67 @@ const selectProduct = {
   logo: true,
 };
 
+export const getUserProducts = reactCache(
+  (userId: string, organizationId: string, page?: number): Promise<TProduct[]> =>
+    cache(
+      async () => {
+        validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
+
+        const orgMembership = await prisma.membership.findFirst({
+          where: {
+            userId,
+            organizationId,
+          },
+        });
+
+        if (!orgMembership) {
+          throw new ValidationError("User is not a member of this organization");
+        }
+
+        let productWhereClause: Prisma.ProductWhereInput = {};
+
+        if (orgMembership.role === "member") {
+          productWhereClause = {
+            productTeams: {
+              some: {
+                team: {
+                  teamUsers: {
+                    some: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          };
+        }
+
+        try {
+          const products = await prisma.product.findMany({
+            where: {
+              organizationId,
+              ...productWhereClause,
+            },
+            select: selectProduct,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+          return products;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getUserProducts-${userId}-${organizationId}-${page}`],
+      {
+        tags: [productCache.tag.byUserId(userId), productCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
 export const getProducts = reactCache(
   (organizationId: string, page?: number): Promise<TProduct[]> =>
     cache(
@@ -256,7 +317,7 @@ export const createProduct = async (
     throw new ValidationError("Product Name is required");
   }
 
-  const { environments, ...data } = productInput;
+  const { environments, teamIds, ...data } = productInput;
 
   try {
     let product = await prisma.product.create({
@@ -271,6 +332,15 @@ export const createProduct = async (
       },
       select: selectProduct,
     });
+
+    if (teamIds) {
+      await prisma.productTeam.createMany({
+        data: teamIds.map((teamId) => ({
+          productId: product.id,
+          teamId,
+        })),
+      });
+    }
 
     productCache.revalidate({
       id: product.id,
