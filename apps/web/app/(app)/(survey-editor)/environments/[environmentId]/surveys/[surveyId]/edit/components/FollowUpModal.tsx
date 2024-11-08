@@ -4,7 +4,8 @@ import {
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpActionMultiEmailInput";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EyeOffIcon, HandshakeIcon, WorkflowIcon } from "lucide-react";
+import { EyeOffIcon, HandshakeIcon, SendIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -61,6 +62,7 @@ export const FollowUpModal = ({
   defaultValues,
   mode = "create",
 }: AddFollowUpModalProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
@@ -246,14 +248,16 @@ export const FollowUpModal = ({
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <WorkflowIcon className="h-5 w-5" />
+                <SendIcon className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">
-                  Create a new follow-up for this survey
+                  {mode === "edit"
+                    ? t("environments.surveys.edit.follow_ups_modal_edit_heading")
+                    : t("environments.surveys.edit.follow_ups_modal_create_heading")}
                 </div>
                 <div className="text-sm text-slate-500">
-                  Follow-ups are used to trigger actions based on survey responses
+                  {t("environments.surveys.edit.follow_ups_modal_subheading")}
                 </div>
               </div>
             </div>
@@ -265,7 +269,7 @@ export const FollowUpModal = ({
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <div className="mb-12 h-full max-h-[600px] overflow-auto px-6 py-4" ref={containerRef}>
             <div className="flex flex-col space-y-4">
-              {/* workflow name */}
+              {/* Follow up name */}
               <div className="flex flex-col space-y-2">
                 <FormField
                   control={form.control}
@@ -274,14 +278,14 @@ export const FollowUpModal = ({
                     return (
                       <FormItem>
                         <FormLabel className="text-base" htmlFor="name">
-                          Follow-up name:
+                          {t("environments.surveys.edit.follow_ups_modal_name_label")}:
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             className="max-w-80"
                             isInvalid={!!formErrors.name}
-                            placeholder="Name of your follow-up"
+                            placeholder={t("environments.surveys.edit.follow_ups_modal_name_placeholder")}
                           />
                         </FormControl>
                       </FormItem>
@@ -293,7 +297,9 @@ export const FollowUpModal = ({
               {/* trigger */}
 
               <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
-                <h2 className="text-lg font-medium text-slate-900">Trigger</h2>
+                <h2 className="text-lg font-medium text-slate-900">
+                  {t("environments.surveys.edit.follow_ups_modal_trigger_label")}
+                </h2>
 
                 <FormField
                   control={form.control}
@@ -303,7 +309,7 @@ export const FollowUpModal = ({
                       <FormItem>
                         <div className="flex flex-col space-y-2">
                           <FormLabel htmlFor="triggerType">
-                            When should this follow-up be triggered?
+                            {t("environments.surveys.edit.follow_ups_modal_trigger_description")}
                           </FormLabel>
                           <div className="max-w-80">
                             <Select
@@ -314,8 +320,12 @@ export const FollowUpModal = ({
                               </SelectTrigger>
 
                               <SelectContent>
-                                <SelectItem value="response">Any response is submitted</SelectItem>
-                                <SelectItem value="endings">An ending(s)</SelectItem>
+                                <SelectItem value="response">
+                                  {t("environments.surveys.edit.follow_ups_modal_trigger_type_response")}
+                                </SelectItem>
+                                <SelectItem value="endings">
+                                  {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending")}
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -332,7 +342,9 @@ export const FollowUpModal = ({
                     render={({ field }) => {
                       return (
                         <div className="flex flex-col space-y-2">
-                          <h3 className="text-sm font-medium text-slate-700">Select endings: </h3>
+                          <h3 className="text-sm font-medium text-slate-700">
+                            {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending_select")}
+                          </h3>
                           <div className="flex flex-col space-y-2">
                             {localSurvey.endings.map((ending) => {
                               const getEndingLabel = (): string => {
@@ -385,11 +397,15 @@ export const FollowUpModal = ({
               {/* action */}
 
               <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
-                <h2 className="text-lg font-medium text-slate-900">Action</h2>
+                <h2 className="text-lg font-medium text-slate-900">
+                  {t("environments.surveys.edit.follow_ups_modal_action_label")}
+                </h2>
                 <div className="flex flex-col space-y-4">
                   {/* email setup */}
                   <div className="flex flex-col space-y-4">
-                    <h2 className="text-lg font-medium text-slate-900">Email setup</h2>
+                    <h2 className="text-lg font-medium text-slate-900">
+                      {t("environments.surveys.edit.follow_ups_modal_action_email_setup")}
+                    </h2>
                     {/* To */}
 
                     <div className="flex flex-col space-y-2">
@@ -400,10 +416,10 @@ export const FollowUpModal = ({
                           return (
                             <div className="flex flex-col space-y-2">
                               <FormLabel htmlFor="emailTo" className="font-medium text-slate-900">
-                                To
+                                {t("environments.surveys.edit.follow_ups_modal_action_to_label")}
                               </FormLabel>
                               <FormDescription className="text-sm text-slate-500">
-                                Email address to send the email to
+                                {t("environments.surveys.edit.follow_ups_modal_action_to_description")}
                               </FormDescription>
 
                               <div className="max-w-80">
@@ -463,8 +479,12 @@ export const FollowUpModal = ({
                     {/* From */}
 
                     <div className="flex flex-col space-y-2">
-                      <h3 className="text-sm font-medium text-slate-900">From</h3>
-                      <p className="text-sm text-slate-500">Email address to send the email from</p>
+                      <h3 className="text-sm font-medium text-slate-900">
+                        {t("environments.surveys.edit.follow_ups_modal_action_from_label")}
+                      </h3>
+                      <p className="text-sm text-slate-500">
+                        {t("environments.surveys.edit.follow_ups_modal_action_from_description")}
+                      </p>
 
                       <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
                         <span className="text-sm text-slate-900">{mailFrom}</span>
@@ -480,9 +500,11 @@ export const FollowUpModal = ({
                         render={({ field }) => {
                           return (
                             <FormItem>
-                              <FormLabel htmlFor="replyTo">Reply To</FormLabel>
+                              <FormLabel htmlFor="replyTo">
+                                {t("environments.surveys.edit.follow_ups_modal_action_replyTo_label")}
+                              </FormLabel>
                               <FormDescription className="text-sm text-slate-500">
-                                Email address to send the email from
+                                {t("environments.surveys.edit.follow_ups_modal_action_replyTo_description")}
                               </FormDescription>
                               <FormControl>
                                 <FollowUpActionMultiEmailInput
@@ -501,7 +523,9 @@ export const FollowUpModal = ({
                   {/* email content */}
 
                   <div className="flex flex-col space-y-4">
-                    <h2 className="text-lg font-medium text-slate-900">Email content</h2>
+                    <h2 className="text-lg font-medium text-slate-900">
+                      {t("environments.surveys.edit.follow_ups_modal_action_email_content")}
+                    </h2>
                     <FormField
                       control={form.control}
                       name="subject"
@@ -509,12 +533,16 @@ export const FollowUpModal = ({
                         return (
                           <FormItem>
                             <div className="flex flex-col space-y-2">
-                              <FormLabel>Subject</FormLabel>
+                              <FormLabel>
+                                {t("environments.surveys.edit.follow_ups_modal_action_subject_label")}
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   {...field}
                                   className="max-w-80"
-                                  placeholder="Subject of the email"
+                                  placeholder={t(
+                                    "environments.surveys.edit.follow_ups_modal_action_subject_placeholder"
+                                  )}
                                   isInvalid={!!formErrors.subject}
                                 />
                               </FormControl>
@@ -531,7 +559,9 @@ export const FollowUpModal = ({
                         return (
                           <FormItem>
                             <div className="flex flex-col space-y-2">
-                              <FormLabel className="font-medium text-slate-700">Body</FormLabel>
+                              <FormLabel className="font-medium text-slate-700">
+                                {t("environments.surveys.edit.follow_ups_modal_action_body_label")}
+                              </FormLabel>
                               <FormControl>
                                 <Editor
                                   disableLists
@@ -542,7 +572,9 @@ export const FollowUpModal = ({
                                   }}
                                   firstRender={firstRender}
                                   setFirstRender={setFirstRender}
-                                  placeholder="Body of the email"
+                                  placeholder={t(
+                                    "environments.surveys.edit.follow_ups_modal_action_body_placeholder"
+                                  )}
                                 />
                               </FormControl>
                             </div>
@@ -565,11 +597,11 @@ export const FollowUpModal = ({
                 onClick={() => {
                   setOpen(false);
                 }}>
-                Cancel
+                {t("common.cancel")}
               </Button>
 
               <Button loading={formSubmitting} variant="primary" size="sm">
-                Save
+                {t("common.save")}
               </Button>
             </div>
           </div>

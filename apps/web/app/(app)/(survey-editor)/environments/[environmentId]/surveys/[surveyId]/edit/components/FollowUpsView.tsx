@@ -1,6 +1,7 @@
 import { FollowUpItem } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpItem";
 import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { LockIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -21,6 +22,7 @@ export const FollowUpsView = ({
   mailFrom,
   isSurveyFollowUpsAllowed,
 }: FollowUpsViewProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
@@ -32,11 +34,11 @@ export const FollowUpsView = ({
             <div className="mb-4 rounded-full bg-slate-100 p-3">
               <LockIcon className="h-6 w-6 text-slate-500" />
             </div>
-            <p className="mb-2 text-lg font-semibold text-slate-900">Keep the Conversation Flowing</p>
+            <p className="mb-2 text-lg font-semibold text-slate-900">
+              {t("environments.surveys.edit.follow_ups_empty_heading")}
+            </p>
             <p className="mb-2 max-w-sm text-sm text-slate-500">
-              Send personalized emails when a survey is completed or when responses meet specific conditions.
-              Choose whether to notify your team, yourself, or even the participant directly, keeping everyone
-              in the loop on the insights that matter most.
+              {t("environments.surveys.edit.follow_ups_empty_description")}
             </p>
             <p className="mb-6 text-xs text-slate-400">Available on Startup, Scale & Enterprise plans</p>
             <Button
@@ -57,7 +59,7 @@ export const FollowUpsView = ({
       <div className="flex justify-end">
         {localSurvey.followUps.length ? (
           <Button variant="primary" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
-            + New
+            +{t("environments.surveys.edit.follow_ups_new")}
           </Button>
         ) : null}
       </div>
@@ -65,11 +67,11 @@ export const FollowUpsView = ({
       <div>
         {!localSurvey.followUps.length && (
           <div className="flex flex-col items-center space-y-2 text-center">
-            <p className="text-lg font-medium text-slate-900">Keep the Conversation Flowing</p>
+            <p className="text-lg font-medium text-slate-900">
+              {t("environments.surveys.edit.follow_ups_empty_heading")}
+            </p>
             <p className="text-sm font-medium text-slate-500">
-              Send personalized emails when a survey is completed or when responses meet specific conditions.
-              Choose whether to notify your team, yourself, or even the participant directly, keeping everyone
-              in the loop on the insights that matter most.
+              {t("environments.surveys.edit.follow_ups_empty_description")}
             </p>
 
             <Button
@@ -77,7 +79,7 @@ export const FollowUpsView = ({
               variant="primary"
               size="sm"
               onClick={() => setAddFollowUpModalOpen(true)}>
-              + New Follow-up
+              {t("environments.surveys.edit.follow_ups_new")}
             </Button>
           </div>
         )}
