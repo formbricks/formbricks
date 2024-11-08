@@ -10,6 +10,12 @@ export const metadata = {
 
 ## v2.7
 
+<Note>
+  This release sets the foundation for our upcoming AI features, currently in private beta. Formbricks now
+  requires the `pgvector` extension to be installed in the PostgreSQL database. For users of our one-click
+  setup, simply use the `pgvector/pgvector:pg15` image instead of `postgres:15-alpine`.
+</Note>
+
 Formbricks v2.7 includes all the features and improvements developed by the community during hacktoberfest 2024. Additionally we introduce an advanced team-based access control system (requires Formbricks Enterprise Edition).
 
 ### Additional Updates
@@ -44,7 +50,23 @@ docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbr
   restore scenario you will need to use `psql` then with an empty `formbricks` database.
 </Note>
 
-2. Pull the latest version of Formbricks:
+2. If you use an older `docker-compose.yml` file from the one-click setup, modify it to use the `pgvector/pgvector:pg15` image instead of `postgres:15-alpine`:
+
+```yaml
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+```
+
+3. Pull the latest version of Formbricks:
 
 <Col>
 <CodeGroup title="Stop the containers">
@@ -56,7 +78,7 @@ docker compose pull
 </CodeGroup>
 </Col>
 
-3. Stop the running Formbricks instance & remove the related containers:
+4. Stop the running Formbricks instance & remove the related containers:
 
 <Col>
 <CodeGroup title="Stop the containers">
@@ -68,7 +90,7 @@ docker compose down
 </CodeGroup>
 </Col>
 
-4. Restarting the containers with the latest version of Formbricks:
+5. Restarting the containers with the latest version of Formbricks:
 
 <Col>
 <CodeGroup title="Restart the containers">
@@ -80,7 +102,7 @@ docker compose up -d
 </CodeGroup>
 </Col>
 
-5. Now let's migrate the data to the latest schema:
+6. Now let's migrate the data to the latest schema:
 
 <Note>To find your Docker Network name for your Postgres Database, find it using `docker network ls`</Note>
 
@@ -101,7 +123,7 @@ docker run --rm \
 
 The above command will migrate your data to the latest schema. This is a crucial step to migrate your existing data to the new structure. Only if the script runs successful, changes are made to the database. The script can safely run multiple times.
 
-6. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
+7. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
 
 ## v2.6
 
