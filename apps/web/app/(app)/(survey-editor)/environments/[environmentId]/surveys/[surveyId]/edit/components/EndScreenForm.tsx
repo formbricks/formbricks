@@ -1,5 +1,6 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -8,7 +9,6 @@ import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { Switch } from "@formbricks/ui/components/Switch";
 
 interface EndScreenFormProps {

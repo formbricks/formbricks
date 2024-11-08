@@ -19,7 +19,6 @@
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
-    "@formbricks/email": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/lib": "workspace:*",

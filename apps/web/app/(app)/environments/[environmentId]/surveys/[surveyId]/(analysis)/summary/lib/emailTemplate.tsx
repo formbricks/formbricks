@@ -1,4 +1,4 @@
-import { getPreviewEmailTemplateHtml } from "@formbricks/email/components/preview-email-template";
+import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";

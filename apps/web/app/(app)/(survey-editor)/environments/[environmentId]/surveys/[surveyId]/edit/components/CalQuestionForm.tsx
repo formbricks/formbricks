@@ -1,3 +1,4 @@
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -9,7 +10,6 @@ import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionTo
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;

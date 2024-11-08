@@ -12,6 +12,7 @@ interface UploaderProps {
   multiple: boolean;
   handleUpload: (files: File[]) => void;
   uploadMore?: boolean;
+  disabled?: boolean;
 }
 
 export const Uploader = ({
@@ -24,16 +25,20 @@ export const Uploader = ({
   multiple,
   handleUpload,
   uploadMore = false,
+  disabled = false,
 }: UploaderProps) => {
   return (
     <label
       htmlFor={`${id}-${name}`}
       className={cn(
-        "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800",
-        uploaderClassName
+        "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-700",
+        uploaderClassName,
+        disabled
+          ? "cursor-not-allowed opacity-50"
+          : "hover:bg-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800"
       )}
-      onDragOver={(e) => handleDragOver(e)}
-      onDrop={(e) => handleDrop(e)}>
+      onDragOver={(e) => !disabled && handleDragOver(e)}
+      onDrop={(e) => !disabled && handleDrop(e)}>
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
         <ArrowUpFromLineIcon className="h-6 text-slate-500" />
         <p className={cn("mt-2 text-center text-sm text-slate-500", uploadMore && "text-xs")}>
@@ -46,6 +51,7 @@ export const Uploader = ({
           accept={allowedFileExtensions.map((ext) => `.${ext}`).join(",")}
           className="hidden"
           multiple={multiple}
+          disabled={disabled}
           onChange={async (e) => {
             let selectedFiles = Array.from(e.target?.files || []);
             handleUpload(selectedFiles);

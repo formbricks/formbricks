@@ -5,6 +5,7 @@ import {
   leaveOrganizationAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AddMemberModal";
+import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -13,12 +14,11 @@ import toast from "react-hot-toast";
 import { TInvitee } from "@formbricks/types/invites";
 import { TOrganization } from "@formbricks/types/organizations";
 import { Button } from "@formbricks/ui/components/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
 import { CustomDialog } from "@formbricks/ui/components/CustomDialog";
 
 type OrganizationActionsProps = {
   role: string;
-  isAdminOrOwner: boolean;
+  isUserManagerOrOwner: boolean;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
   isInviteDisabled: boolean;
@@ -29,7 +29,7 @@ type OrganizationActionsProps = {
 };
 
 export const OrganizationActions = ({
-  isAdminOrOwner,
+  isUserManagerOrOwner,
   role,
   organization,
   isLeaveOrganizationDisabled,
@@ -95,7 +95,7 @@ export const OrganizationActions = ({
             {t("environments.settings.general.create_new_organization")}
           </Button>
         )}
-        {!isInviteDisabled && isAdminOrOwner && (
+        {!isInviteDisabled && isUserManagerOrOwner && (
           <Button
             size="sm"
             onClick={() => {

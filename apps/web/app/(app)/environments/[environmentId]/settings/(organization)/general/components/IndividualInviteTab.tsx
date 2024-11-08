@@ -1,17 +1,19 @@
 "use client";
 
+import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
+import { OrganizationRole } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
-import { AddMemberRole } from "@formbricks/ee/role-management/components/add-member-role";
+import { TOrganizationRole } from "@formbricks/types/memberships";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
 import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
-import { MembershipRole } from "./AddMemberModal";
 
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
@@ -30,16 +32,17 @@ export const IndividualInviteTab = ({
     handleSubmit,
     reset,
     control,
+    watch,
     formState: { isSubmitting },
   } = useForm<{
     name: string;
     email: string;
-    role: MembershipRole;
+    role: TOrganizationRole;
   }>();
 
   const submitEventClass = async () => {
     const data = getValues();
-    data.role = data.role || MembershipRole.Admin;
+    data.role = data.role || OrganizationRole.owner;
     await onSubmit([data]);
     setOpen(false);
     reset();
@@ -66,7 +69,18 @@ export const IndividualInviteTab = ({
             />
           </div>
           <div>
-            <AddMemberRole control={control} canDoRoleManagement={canDoRoleManagement} />
+            <AddMemberRole
+              control={control}
+              canDoRoleManagement={canDoRoleManagement}
+              isFormbricksCloud={isFormbricksCloud}
+            />
+            {watch("role") === "member" && (
+              <Alert className="mt-2" variant="info">
+                <AlertDescription>
+                  {t("environments.settings.general.member_role_info_message")}
+                </AlertDescription>
+              </Alert>
+            )}
             {!canDoRoleManagement &&
               (isFormbricksCloud ? (
                 <UpgradePlanNotice

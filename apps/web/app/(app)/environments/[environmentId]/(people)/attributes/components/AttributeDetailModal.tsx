@@ -11,9 +11,15 @@ interface AttributeDetailModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   attributeClass: TAttributeClass;
+  isReadOnly: boolean;
 }
 
-export const AttributeDetailModal = ({ open, setOpen, attributeClass }: AttributeDetailModalProps) => {
+export const AttributeDetailModal = ({
+  open,
+  setOpen,
+  attributeClass,
+  isReadOnly,
+}: AttributeDetailModalProps) => {
   const t = useTranslations();
   const tabs = [
     {
@@ -22,7 +28,9 @@ export const AttributeDetailModal = ({ open, setOpen, attributeClass }: Attribut
     },
     {
       title: t("common.settings"),
-      children: <AttributeSettingsTab attributeClass={attributeClass} setOpen={setOpen} />,
+      children: (
+        <AttributeSettingsTab attributeClass={attributeClass} setOpen={setOpen} isReadOnly={isReadOnly} />
+      ),
     },
   ];
 

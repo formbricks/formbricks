@@ -7,12 +7,12 @@ import {
   resendInviteAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { ShareInviteModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/ShareInviteModal";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -23,7 +23,6 @@ type MemberActionsProps = {
   organization: TOrganization;
   member?: TMember;
   invite?: TInvite;
-  isAdminOrOwner: boolean;
   showDeleteButton?: boolean;
 };
 
