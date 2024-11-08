@@ -91,6 +91,7 @@ export const ZProductUpdateInput = z.object({
   environments: z.array(ZEnvironment).optional(),
   styling: ZProductStyling.optional(),
   logo: ZLogo.optional(),
+  teamIds: z.array(z.string()).optional(),
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

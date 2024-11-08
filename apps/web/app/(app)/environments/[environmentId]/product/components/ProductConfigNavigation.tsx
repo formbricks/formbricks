@@ -10,6 +10,7 @@ interface ProductConfigNavigationProps {
   environmentId?: string;
   isMultiLanguageAllowed?: boolean;
   loading?: boolean;
+  canDoRoleManagement?: boolean;
 }
 
 export const ProductConfigNavigation = ({
@@ -17,9 +18,11 @@ export const ProductConfigNavigation = ({
   environmentId,
   isMultiLanguageAllowed,
   loading,
+  canDoRoleManagement,
 }: ProductConfigNavigationProps) => {
   const t = useTranslations();
   const pathname = usePathname();
+
   let navigation = [
     {
       id: "general",
@@ -63,6 +66,13 @@ export const ProductConfigNavigation = ({
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/product/app-connection`,
       current: pathname?.includes("/app-connection"),
+    },
+    {
+      id: "teams",
+      label: t("common.team_access"),
+      href: `/environments/${environmentId}/product/teams`,
+      hidden: !canDoRoleManagement,
+      current: pathname?.includes("/teams"),
     },
   ];
 

@@ -9,6 +9,7 @@ type TSegmentTableDataRowProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   isAdvancedTargetingAllowed: boolean;
+  isReadOnly: boolean;
 };
 
 export const SegmentTableDataRowContainer = async ({
@@ -16,6 +17,7 @@ export const SegmentTableDataRowContainer = async ({
   segments,
   attributeClasses,
   isAdvancedTargetingAllowed,
+  isReadOnly,
 }: TSegmentTableDataRowProps) => {
   const surveys = await getSurveysBySegmentId(currentSegment.id);
 
@@ -38,6 +40,7 @@ export const SegmentTableDataRowContainer = async ({
       attributeClasses={attributeClasses}
       isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+      isReadOnly={isReadOnly}
     />
   );
 };

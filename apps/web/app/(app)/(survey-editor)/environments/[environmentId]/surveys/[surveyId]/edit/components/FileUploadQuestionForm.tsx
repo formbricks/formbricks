@@ -1,5 +1,7 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon, XCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,7 +10,6 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { useGetBillingInfo } from "@formbricks/lib/organization/hooks/useGetBillingInfo";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
@@ -17,7 +18,6 @@ import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;

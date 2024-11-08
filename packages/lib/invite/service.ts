@@ -24,14 +24,13 @@ import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { validateInputs } from "../utils/validate";
 import { inviteCache } from "./cache";
 
-const inviteSelect = {
+const inviteSelect: Prisma.InviteSelect = {
   id: true,
   email: true,
   name: true,
   organizationId: true,
   creatorId: true,
   acceptorId: true,
-  accepted: true,
   createdAt: true,
   expiresAt: true,
   role: true,
