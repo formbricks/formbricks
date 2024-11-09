@@ -8,30 +8,12 @@ import {
   getProductIdFromEnvironmentId,
   getProductIdFromInsightId,
 } from "@/lib/utils/helper";
+import { checkAIPermission } from "@/modules/ee/insights/actions";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getIsAIEnabled } from "@formbricks/lib/utils/ai";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZInsight, ZInsightFilterCriteria } from "@formbricks/types/insights";
 import { getInsights, updateInsight } from "./lib/insights";
 import { getStats } from "./lib/stats";
-
-export const checkAIPermission = async (organizationId: string) => {
-  const organization = await getOrganization(organizationId);
-
-  if (!organization) {
-    throw new Error("Organization not found");
-  }
-
-  const isAIEnabled = await getIsAIEnabled(organization);
-
-  if (!isAIEnabled) {
-    throw new OperationNotAllowedError("AI is not enabled for this organization");
-  }
-
-  return true;
-};
 
 const ZGetEnvironmentInsightsAction = z.object({
   environmentId: ZId,
