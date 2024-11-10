@@ -145,6 +145,7 @@ export const actionObjectiveOptions: TComboboxOption[] = [
   { label: "environments.surveys.edit.calculate", value: "calculate" },
   { label: "environments.surveys.edit.require_answer", value: "requireAnswer" },
   { label: "environments.surveys.edit.jump_to_question", value: "jumpToQuestion" },
+  { label: "environments.surveys.edit.set_variable", value: "setVariable" }, // New "setVariable" option
 ];
 
 const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {

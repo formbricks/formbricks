@@ -51,7 +51,7 @@ Create complex survey logic with the Logic Editor. Use conditions, actions, and 
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Conditons can be based on:
+Conditions can be based on:
 
 - **Question**: The answer to a question.
 - **Variable**: A variable value.
@@ -159,13 +159,20 @@ Conditons can be based on:
 
 4. **Save Logic**: Click the `Save` button to save the logic block.
 
-# Question Logic
+## **Setting Variables Based on Previous Answers**
 
-This logic is executed when the user answers the question. Logic can be as simple as showing a follow-up question based on the answer or as complex as calculating a score based on multiple answers.
+In addition to standard conditions and actions, you can set variables dynamically based on previous answers. This can be useful for personalizing the survey experience and calculating results in real-time.
 
-<MdxImage
-  src={QuestionLogic}
-  alt="Question Logic"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
+To set a variable:
+
+1. **Select Action Type**: Choose the **Set Variable** action type.
+
+2. **Choose Variable**: Select the variable you want to set from the list of available variables.
+
+3. **Define the Value**: Assign a value to the variable. This value can be based on previous answers, a fixed value, or a calculation.
+
+4. **Use Dynamic Values**: For dynamic assignments, you can refer to answers from previous questions, variables, or hidden fields to populate the value.
+
+Example:
+```mdx
+- **Set Variable**: `userAge` based on the answer to the `Age` question.
