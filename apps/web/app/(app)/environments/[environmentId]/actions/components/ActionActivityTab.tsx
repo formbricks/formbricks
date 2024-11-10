@@ -1,12 +1,15 @@
 "use client";
 
+import { createActionClassAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
-import { TActionClass } from "@formbricks/types/action-classes";
+import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/components/Button";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
@@ -19,9 +22,18 @@ interface ActivityTabProps {
   environmentId: string;
   environment: TEnvironment;
   environments: TEnvironment[];
+  actionClasses: TActionClass[];
+  isViewer: boolean;
 }
 
-export const ActionActivityTab = ({ actionClass, environmentId, environment }: ActivityTabProps) => {
+export const ActionActivityTab = ({
+  actionClass,
+  actionClasses,
+  environmentId,
+  environment,
+  isViewer,
+  environments,
+}: ActivityTabProps) => {
   const t = useTranslations();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
@@ -48,6 +60,93 @@ export const ActionActivityTab = ({ actionClass, environmentId, environment }: A
 
     updateState();
   }, [actionClass.id, environmentId]);
+
+  const actionClassNames = useMemo(
+    () => actionClasses.map((actionClass) => actionClass.name),
+    [actionClasses]
+  );
+
+  const actionCopyEnvironment = useMemo(
+    () => environments.filter((e) => e.type !== environment.type),
+    [environments, environment]
+  )[0];
+
+  const actionClassKeys = useMemo(() => {
+    const codeActionClasses: TActionClassInputCode[] = actionClasses.filter(
+      (actionClass) => actionClass.type === "code"
+    ) as TActionClassInputCode[];
+
+    return codeActionClasses.map((actionClass) => actionClass.key);
+  }, [actionClasses]);
+
+  const copyAction = async (data: TActionClassInput) => {
+    const { type } = data;
+    const copyName = data.name + " (copy)";
+    try {
+      if (isViewer) {
+        throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
+      }
+
+      if (copyName && actionClassNames.includes(copyName)) {
+        throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
+      }
+
+      if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
+        throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
+      }
+
+      if (
+        data.type === "noCode" &&
+        data.noCodeConfig?.type === "click" &&
+        data.noCodeConfig.elementSelector.cssSelector &&
+        !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
+      ) {
+        throw new Error("Invalid CSS Selector");
+      }
+
+      let updatedAction = {};
+
+      if (type === "noCode") {
+        updatedAction = {
+          name: copyName.trim(),
+          description: data.description,
+          environmentId: actionCopyEnvironment.id,
+          type: "noCode",
+          noCodeConfig: {
+            ...data.noCodeConfig,
+            ...(data.type === "noCode" &&
+              data.noCodeConfig?.type === "click" && {
+                elementSelector: {
+                  cssSelector: data.noCodeConfig.elementSelector.cssSelector,
+                  innerHtml: data.noCodeConfig.elementSelector.innerHtml,
+                },
+              }),
+          },
+        };
+      } else if (type === "code") {
+        updatedAction = {
+          name: copyName.trim(),
+          description: data.description,
+          environmentId: actionCopyEnvironment.id,
+          type: "code",
+          key: data.key,
+        };
+      }
+
+      // const newActionClass: TActionClass =
+      const createActionClassResposne = await createActionClassAction({
+        action: updatedAction as TActionClassInput,
+      });
+
+      if (!createActionClassResposne?.data) {
+        throw new Error(t("environments.actions.action_copy_failed", {}));
+      }
+
+      toast.success(t("environments.actions.action_copied_successfully"));
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;
@@ -109,7 +208,10 @@ export const ActionActivityTab = ({ actionClass, environmentId, environment }: A
               {environment.type === "development" ? "Development" : "Production"}
             </p>
             <Button
-              className="m-0 p-0 text-xs font-medium text-black underline underline-offset-4"
+              onClick={() => {
+                copyAction(actionClass);
+              }}
+              className="m-0 p-0 text-xs font-medium text-black underline underline-offset-4 focus:ring-0 focus:ring-offset-0"
               variant="minimal">
               {environment.type === "development" ? "Copy to Production" : "Copy to Development"}
             </Button>

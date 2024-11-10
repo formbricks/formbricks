@@ -474,6 +474,8 @@
   },
   "environments": {
     "actions": {
+      "action_copied_successfully": "Action copied successfully",
+      "action_copy_failed": "Action copy failed",
       "action_created_successfully": "Action created successfully",
       "action_deleted_successfully": "Action deleted successfully",
       "action_type": "Action Type",

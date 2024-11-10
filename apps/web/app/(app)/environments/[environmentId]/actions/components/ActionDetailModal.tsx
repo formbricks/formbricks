@@ -34,6 +34,8 @@ export const ActionDetailModal = ({
       title: t("common.activity"),
       children: (
         <ActionActivityTab
+          actionClasses={actionClasses}
+          isViewer={membershipRole === "viewer"}
           environments={environments}
           environment={environment}
           actionClass={actionClass}
