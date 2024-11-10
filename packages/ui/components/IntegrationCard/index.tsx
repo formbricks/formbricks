@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "../Button";
 
 interface CardProps {
@@ -12,6 +14,7 @@ interface CardProps {
   icon?: React.ReactNode;
   connected?: boolean;
   statusText?: string;
+  disabled?: boolean;
 }
 
 export type { CardProps };
@@ -28,6 +31,7 @@ export const Card: React.FC<CardProps> = ({
   icon,
   connected,
   statusText,
+  disabled,
 }) => (
   <div className="relative rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm">
     {connected != undefined && statusText != undefined && (
@@ -39,7 +43,7 @@ export const Card: React.FC<CardProps> = ({
           </span>
         ) : (
           <span className="relative mr-1 flex h-2 w-2">
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-gray-400"></span>
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-slate-400"></span>
           </span>
         )}
         {statusText}
@@ -51,12 +55,17 @@ export const Card: React.FC<CardProps> = ({
     <p className="text-xs text-slate-500">{description}</p>
     <div className="mt-4 flex space-x-2">
       {connectHref && (
-        <Button href={connectHref} target={connectNewTab ? "_blank" : "_self"} size="sm">
+        <Button disabled={disabled} href={connectHref} target={connectNewTab ? "_blank" : "_self"} size="sm">
           {connectText}
         </Button>
       )}
       {docsHref && (
-        <Button href={docsHref} target={docsNewTab ? "_blank" : "_self"} size="sm" variant="secondary">
+        <Button
+          disabled={disabled}
+          href={docsHref}
+          target={docsNewTab ? "_blank" : "_self"}
+          size="sm"
+          variant="secondary">
           {docsText}
         </Button>
       )}

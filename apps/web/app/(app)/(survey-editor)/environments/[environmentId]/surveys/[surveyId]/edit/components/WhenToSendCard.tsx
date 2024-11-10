@@ -1,5 +1,7 @@
 "use client";
 
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
@@ -14,7 +16,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
@@ -26,7 +28,8 @@ interface WhenToSendCardProps {
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   propActionClasses: TActionClass[];
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
+  productPermission: TTeamPermission | null;
 }
 
 export const WhenToSendCard = ({
@@ -35,6 +38,7 @@ export const WhenToSendCard = ({
   setLocalSurvey,
   propActionClasses,
   membershipRole,
+  productPermission,
 }: WhenToSendCardProps) => {
   const t = useTranslations();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
@@ -42,7 +46,10 @@ export const WhenToSendCard = ({
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
-  const { isViewer } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
 
   const autoClose = localSurvey.autoClose !== null;
   const delay = localSurvey.delay !== 0;
@@ -205,7 +212,7 @@ export const WhenToSendCard = ({
 
                           <h4 className="text-sm font-semibold text-slate-600">{trigger.actionClass.name}</h4>
                         </div>
-                        <div className="mt-1 text-xs text-gray-500">
+                        <div className="mt-1 text-xs text-slate-500">
                           {trigger.actionClass.description && (
                             <span className="mr-1">{trigger.actionClass.description}</span>
                           )}
@@ -367,7 +374,7 @@ export const WhenToSendCard = ({
         setOpen={setAddActionModalOpen}
         actionClasses={actionClasses}
         setActionClasses={setActionClasses}
-        isViewer={isViewer}
+        isReadOnly={isReadOnly}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
       />

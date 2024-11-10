@@ -3,17 +3,17 @@
 import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/utils";
 import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { ActivityIcon, ShoppingCartIcon, SmileIcon, StarIcon, ThumbsUpIcon, UsersIcon } from "lucide-react";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSurveyAction } from "@/modules/surveys/components/TemplateList/actions";
+import { ActivityIcon, ShoppingCartIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { TProduct } from "@formbricks/types/product";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-import { createSurveyAction } from "@formbricks/ui/components/TemplateList/actions";
 
 interface XMTemplateListProps {
   product: TProduct;
@@ -60,7 +60,7 @@ export const XMTemplateList = ({ product, user, environmentId }: XMTemplateListP
       onClick: () => handleTemplateClick(0),
       isLoading: activeTemplateId === 0,
     },
-    {
+    /*     {
       title: t("environments.xm-templates.five_star_rating"),
       description: t("environments.xm-templates.five_star_rating_description"),
       icon: StarIcon,
@@ -73,7 +73,7 @@ export const XMTemplateList = ({ product, user, environmentId }: XMTemplateListP
       icon: ThumbsUpIcon,
       onClick: () => handleTemplateClick(2),
       isLoading: activeTemplateId === 2,
-    },
+    }, */
     {
       title: t("environments.xm-templates.ces"),
       description: t("environments.xm-templates.ces_description"),
@@ -81,13 +81,13 @@ export const XMTemplateList = ({ product, user, environmentId }: XMTemplateListP
       onClick: () => handleTemplateClick(3),
       isLoading: activeTemplateId === 3,
     },
-    {
+    /*     {
       title: t("environments.xm-templates.smileys"),
       description: t("environments.xm-templates.smileys_description"),
       icon: SmileIcon,
       onClick: () => handleTemplateClick(4),
       isLoading: activeTemplateId === 4,
-    },
+    }, */
     {
       title: t("environments.xm-templates.enps"),
       description: t("environments.xm-templates.enps_description"),

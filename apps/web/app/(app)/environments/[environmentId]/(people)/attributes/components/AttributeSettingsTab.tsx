@@ -14,9 +14,14 @@ import { Label } from "@formbricks/ui/components/Label";
 interface AttributeSettingsTabProps {
   attributeClass: AttributeClass;
   setOpen: (v: boolean) => void;
+  isReadOnly: boolean;
 }
 
-export const AttributeSettingsTab = async ({ attributeClass, setOpen }: AttributeSettingsTabProps) => {
+export const AttributeSettingsTab = async ({
+  attributeClass,
+  setOpen,
+  isReadOnly,
+}: AttributeSettingsTabProps) => {
   const router = useRouter();
   const t = useTranslations();
   const { register, handleSubmit } = useForm({
@@ -58,7 +63,7 @@ export const AttributeSettingsTab = async ({ attributeClass, setOpen }: Attribut
             type="text"
             placeholder={t("environments.attributes.ex_user_property")}
             {...register("description", {
-              disabled: attributeClass.type === "automatic" ? true : false,
+              disabled: attributeClass.type === "automatic" || isReadOnly ? true : false,
             })}
           />
         </div>
@@ -85,24 +90,22 @@ export const AttributeSettingsTab = async ({ attributeClass, setOpen }: Attribut
               {t("common.read_docs")}
             </Button>
             {attributeClass.type !== "automatic" && (
-              <Button className="ml-3" variant="secondary" onClick={handleArchiveToggle}>
+              <Button
+                className="ml-3"
+                variant="secondary"
+                onClick={handleArchiveToggle}
+                StartIcon={attributeClass.archived ? ArchiveIcon : ArchiveXIcon}
+                startIconClassName="h-4 w-4"
+                disabled={isReadOnly}>
                 {attributeClass.archived ? (
-                  <>
-                    {" "}
-                    <ArchiveXIcon className="mr-2 h-4 text-slate-600" />
-                    <span>{t("common.unarchive")}</span>
-                  </>
+                  <span>{t("common.unarchive")}</span>
                 ) : (
-                  <>
-                    {" "}
-                    <ArchiveIcon className="mr-2 h-4 text-slate-600" />
-                    <span>{t("common.archive")}</span>
-                  </>
+                  <span>{t("common.archive")}</span>
                 )}
               </Button>
             )}
           </div>
-          {attributeClass.type !== "automatic" && (
+          {!isReadOnly && attributeClass.type !== "automatic" && (
             <div className="flex space-x-2">
               <Button type="submit" loading={isAttributeBeingSubmitted}>
                 {t("common.save_changes")}

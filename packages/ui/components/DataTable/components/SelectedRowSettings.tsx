@@ -5,16 +5,20 @@ import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { DeleteDialog } from "../../DeleteDialog";
-import { deleteResponseAction } from "../../SingleResponseCard/actions";
-import { deletePersonAction } from "../actions";
 
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   deleteRows: (rowId: string[]) => void;
   type: "response" | "person";
+  deleteAction: (id: string) => Promise<void>;
 }
 
-export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRowSettingsProps<T>) => {
+export const SelectedRowSettings = <T,>({
+  table,
+  deleteRows,
+  type,
+  deleteAction,
+}: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const t = useTranslations();
@@ -35,9 +39,9 @@ export const SelectedRowSettings = <T,>({ table, deleteRows, type }: SelectedRow
       const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
       if (type === "response") {
-        await Promise.all(rowsToBeDeleted.map((responseId) => deleteResponseAction({ responseId })));
+        await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
       } else if (type === "person") {
-        await Promise.all(rowsToBeDeleted.map((personId) => deletePersonAction({ personId })));
+        await Promise.all(rowsToBeDeleted.map((personId) => deleteAction(personId)));
       }
 
       deleteRows(rowsToBeDeleted);

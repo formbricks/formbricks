@@ -59,6 +59,7 @@ const Page = async ({ params }) => {
           totalResponseCount={totalResponseCount}
           attributeClasses={attributeClasses}
           isAIEnabled={false} // Disable AI for sharing page for now
+          isReadOnly={true}
           locale={DEFAULT_LOCALE}
         />
       </PageContentWrapper>

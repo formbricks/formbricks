@@ -13,9 +13,7 @@ import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
-import { TMembershipRole } from "@formbricks/types/memberships";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
@@ -27,14 +25,14 @@ interface ActionSettingsTabProps {
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   setOpen: (v: boolean) => void;
-  membershipRole?: TMembershipRole;
+  isReadOnly: boolean;
 }
 
 export const ActionSettingsTab = ({
   actionClass,
   actionClasses,
   setOpen,
-  membershipRole,
+  isReadOnly,
 }: ActionSettingsTabProps) => {
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
@@ -42,7 +40,7 @@ export const ActionSettingsTab = ({
   const t = useTranslations();
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
-  const { isViewer } = getAccessFlags(membershipRole);
+
   const actionClassNames = useMemo(
     () =>
       actionClasses.filter((action) => action.id !== actionClass.id).map((actionClass) => actionClass.name),
@@ -72,7 +70,7 @@ export const ActionSettingsTab = ({
 
   const onSubmit = async (data: TActionClassInput) => {
     try {
-      if (isViewer) {
+      if (isReadOnly) {
         throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
       setIsUpdatingAction(true);
@@ -141,6 +139,7 @@ export const ActionSettingsTab = ({
                 <FormField
                   control={control}
                   name="name"
+                  disabled={isReadOnly}
                   render={({ field, fieldState: { error } }) => (
                     <FormItem>
                       <FormLabel htmlFor="actionNameSettingsInput">
@@ -156,7 +155,7 @@ export const ActionSettingsTab = ({
                           {...field}
                           placeholder={t("environments.actions.eg_clicked_download")}
                           isInvalid={!!error?.message}
-                          disabled={actionClass.type === "automatic" ? true : false}
+                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
                         />
                       </FormControl>
 
@@ -165,43 +164,42 @@ export const ActionSettingsTab = ({
                   )}
                 />
               </div>
-              {!isViewer && (
-                <div className="col-span-1">
-                  <FormField
-                    control={control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="actionDescriptionSettingsInput">
-                          {t("common.description")}
-                        </FormLabel>
 
-                        <FormControl>
-                          <Input
-                            type="text"
-                            id="actionDescriptionSettingsInput"
-                            {...field}
-                            placeholder={t("environments.actions.user_clicked_download_button")}
-                            value={field.value ?? ""}
-                            disabled={actionClass.type === "automatic" ? true : false}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
+              <div className="col-span-1">
+                <FormField
+                  control={control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="actionDescriptionSettingsInput">
+                        {t("common.description")}
+                      </FormLabel>
+
+                      <FormControl>
+                        <Input
+                          type="text"
+                          id="actionDescriptionSettingsInput"
+                          {...field}
+                          placeholder={t("environments.actions.user_clicked_download_button")}
+                          value={field.value ?? ""}
+                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {actionClass.type === "code" ? (
               <>
-                <CodeActionForm form={form} isEdit={true} />
+                <CodeActionForm form={form} isReadOnly={true} />
                 <p className="text-sm text-slate-600">
                   {t("environments.actions.this_is_a_code_action_please_make_changes_in_your_code_base")}
                 </p>
               </>
             ) : actionClass.type === "noCode" ? (
-              <NoCodeActionForm form={form} />
+              <NoCodeActionForm form={form} isReadOnly={isReadOnly} />
             ) : (
               <p className="text-sm text-slate-600">
                 {t(
@@ -213,7 +211,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between border-t border-slate-200 py-6">
             <div>
-              {!isViewer && actionClass.type !== "automatic" && (
+              {!isReadOnly && actionClass.type !== "automatic" && (
                 <Button
                   type="button"
                   variant="warn"
@@ -230,7 +228,7 @@ export const ActionSettingsTab = ({
               </Button>
             </div>
 
-            {actionClass.type !== "automatic" && (
+            {!isReadOnly && actionClass.type !== "automatic" && (
               <div className="flex space-x-2">
                 <Button type="submit" loading={isUpdatingAction}>
                   {t("common.save_changes")}

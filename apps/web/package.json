@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -19,7 +19,6 @@
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
-    "@formbricks/email": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/lib": "workspace:*",
@@ -52,7 +51,7 @@
     "lru-cache": "11.0.1",
     "lucide-react": "0.452.0",
     "mime": "4.0.4",
-    "next": "14.2.15",
+    "next": "14.2.16",
     "next-intl": "3.20.0",
     "next-safe-action": "7.9.3",
     "optional": "0.1.4",

@@ -51,6 +51,7 @@ interface SummaryPageProps {
   isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
 export const SummaryPage = ({
@@ -63,6 +64,7 @@ export const SummaryPage = ({
   isAIEnabled,
   documentsPerPage,
   locale,
+  isReadOnly,
 }: SummaryPageProps) => {
   const params = useParams();
   const sharingKey = params.sharingKey as string;
@@ -172,7 +174,9 @@ export const SummaryPage = ({
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
-        {!isSharingPage && <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />}
+        {!isReadOnly && !isSharingPage && (
+          <ResultsShareButton survey={surveyMemoized} webAppUrl={webAppUrl} />
+        )}
       </div>
       <ScrollToTop containerId="mainContent" />
       <SummaryList
