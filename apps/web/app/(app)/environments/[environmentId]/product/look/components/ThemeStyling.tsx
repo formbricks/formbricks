@@ -72,8 +72,8 @@ export const ThemeStyling = ({
       isDarkModeEnabled: product.styling.isDarkModeEnabled ?? false,
       roundness: product.styling.roundness ?? 8,
       cardArrangement: product.styling.cardArrangement ?? {
-        linkSurveys: "simple",
-        appSurveys: "simple",
+        linkSurveys: "straight",
+        appSurveys: "straight",
       },
       background: product.styling.background,
       hideProgressBar: product.styling.hideProgressBar ?? false,
@@ -119,8 +119,8 @@ export const ThemeStyling = ({
       },
       roundness: 8,
       cardArrangement: {
-        linkSurveys: "simple",
-        appSurveys: "simple",
+        linkSurveys: "straight",
+        appSurveys: "straight",
       },
     };
 

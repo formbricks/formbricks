@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ZColor } from "./common";
 
 export const ZStylingColor = z.object({
-  light: ZColor,
+  light: ZColor.nullish(),
   dark: ZColor.nullish(),
 });
 export type TStylingColor = z.infer<typeof ZStylingColor>;
@@ -11,8 +11,8 @@ export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
 export type TCardArrangementOptions = z.infer<typeof ZCardArrangementOptions>;
 
 export const ZCardArrangement = z.object({
-  linkSurveys: ZCardArrangementOptions,
-  appSurveys: ZCardArrangementOptions,
+  linkSurveys: ZCardArrangementOptions.nullish(),
+  appSurveys: ZCardArrangementOptions.nullish(),
 });
 
 export const ZSurveyStylingBackground = z

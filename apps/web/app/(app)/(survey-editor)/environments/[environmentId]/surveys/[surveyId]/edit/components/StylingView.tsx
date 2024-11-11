@@ -4,10 +4,8 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
-import { TBaseStyling } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
@@ -53,50 +51,8 @@ export const StylingView = ({
 }: StylingViewProps) => {
   const t = useTranslations();
 
-  const stylingDefaults: TBaseStyling = useMemo(() => {
-    let stylingDefaults: TBaseStyling;
-    const isOverwriteEnabled = localSurvey.styling?.overwriteThemeStyling ?? false;
-
-    if (isOverwriteEnabled) {
-      const { overwriteThemeStyling, ...baseSurveyStyles } = localSurvey.styling ?? {};
-      stylingDefaults = baseSurveyStyles;
-    } else {
-      const { allowStyleOverwrite, ...baseProductStyles } = product.styling ?? {};
-      stylingDefaults = baseProductStyles;
-    }
-
-    return {
-      brandColor: { light: stylingDefaults.brandColor?.light ?? COLOR_DEFAULTS.brandColor },
-      questionColor: { light: stylingDefaults.questionColor?.light ?? COLOR_DEFAULTS.questionColor },
-      inputColor: { light: stylingDefaults.inputColor?.light ?? COLOR_DEFAULTS.inputColor },
-      inputBorderColor: { light: stylingDefaults.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor },
-      cardBackgroundColor: {
-        light: stylingDefaults.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor,
-      },
-      cardBorderColor: { light: stylingDefaults.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor },
-      cardShadowColor: { light: stylingDefaults.cardShadowColor?.light ?? COLOR_DEFAULTS.cardShadowColor },
-      highlightBorderColor: stylingDefaults.highlightBorderColor?.light
-        ? {
-            light: stylingDefaults.highlightBorderColor.light,
-          }
-        : undefined,
-      isDarkModeEnabled: stylingDefaults.isDarkModeEnabled ?? false,
-      roundness: stylingDefaults.roundness ?? 8,
-      cardArrangement: stylingDefaults.cardArrangement ?? {
-        linkSurveys: "simple",
-        appSurveys: "simple",
-      },
-      background: stylingDefaults.background,
-      hideProgressBar: stylingDefaults.hideProgressBar ?? false,
-      isLogoHidden: stylingDefaults.isLogoHidden ?? false,
-    };
-  }, [localSurvey.styling, product.styling]);
-
   const form = useForm<TSurveyStyling>({
-    defaultValues: {
-      ...localSurvey.styling,
-      ...stylingDefaults,
-    },
+    defaultValues: localSurvey.styling ?? product.styling,
   });
 
   const overwriteThemeStyling = form.watch("overwriteThemeStyling");
@@ -138,7 +94,6 @@ export const StylingView = ({
   });
 
   useEffect(() => {
-    // @ts-expect-error
     setLocalSurvey((prev) => ({
       ...prev,
       styling: {
