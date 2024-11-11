@@ -107,6 +107,7 @@
     "add_filter": "Filter hinzufügen",
     "add_logo": "Logo hinzufügen",
     "add_product": "Produkt hinzufügen",
+    "all": "Alle",
     "all_questions": "Alle Fragen",
     "allow": "erlauben",
     "allow_users_to_exit_by_clicking_outside_the_survey": "Erlaube Nutzern, die Umfrage zu verlassen, indem sie außerhalb klicken",
@@ -960,7 +961,7 @@
       "value_must_be_a_number": "Wert muss eine Zahl sein.",
       "view_filters": "Filter anzeigen",
       "where": "Wo",
-      "with_the_formbricks_sdk": "mit dem Formbricks SDK."
+      "with_the_formbricks_sdk": "mit dem Formbricks SDK"
     },
     "settings": {
       "billing": {
@@ -1573,7 +1574,7 @@
         "welcome_message": "Willkommensnachricht",
         "when": "Wann",
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "Wenn die Bedingungen übereinstimmen, wird die Wartezeit ignoriert und die Umfrage angezeigt.",
-        "with_the_formbricks_sdk": "mit dem Formbricks SDK.",
+        "with_the_formbricks_sdk": "mit dem Formbricks SDK",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Ohne Filter können alle deine Nutzer befragt werden.",
         "you_need_to_have_two_or_more_languages_set_up_in_your_product_to_work_with_translations": "Du musst zwei oder mehr Sprachen in deinem Produkt einrichten, um mit Übersetzungen zu arbeiten.",
         "your_description_here_recall_information_with": "Deine Beschreibung hier. Informationen abrufen mit @",
