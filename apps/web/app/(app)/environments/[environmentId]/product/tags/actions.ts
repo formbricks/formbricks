@@ -1,9 +1,15 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import {
+  getEnvironmentIdFromTagId,
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromTagId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromTagId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromTagId } from "@formbricks/lib/organization/utils";
 import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
 import { ZId } from "@formbricks/types/common";
 
@@ -14,10 +20,20 @@ const ZDeleteTagAction = z.object({
 export const deleteTagAction = authenticatedActionClient
   .schema(ZDeleteTagAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
-      rules: ["tag", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromTagId(parsedInput.tagId),
+        },
+      ],
     });
 
     return await deleteTag(parsedInput.tagId);
@@ -31,10 +47,20 @@ const ZUpdateTagNameAction = z.object({
 export const updateTagNameAction = authenticatedActionClient
   .schema(ZUpdateTagNameAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromTagId(parsedInput.tagId),
-      rules: ["tag", "update"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromTagId(parsedInput.tagId),
+        },
+      ],
     });
 
     return await updateTagName(parsedInput.tagId, parsedInput.name);
@@ -48,16 +74,27 @@ const ZMergeTagsAction = z.object({
 export const mergeTagsAction = authenticatedActionClient
   .schema(ZMergeTagsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTagId(parsedInput.originalTagId),
-      rules: ["tag", "update"],
-    });
+    const originalTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.originalTagId);
+    const newTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.newTagId);
 
-    await checkAuthorization({
+    if (originalTagEnvironmentId !== newTagEnvironmentId) {
+      throw new Error("Tags must be in the same environment");
+    }
+
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTagId(parsedInput.newTagId),
-      rules: ["tag", "update"],
+      organizationId: await getOrganizationIdFromEnvironmentId(newTagEnvironmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(newTagEnvironmentId),
+        },
+      ],
     });
 
     return await mergeTags(parsedInput.originalTagId, parsedInput.newTagId);

@@ -1,9 +1,9 @@
 "use server";
 
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { actionClient } from "@/lib/utils/action-client";
+import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { z } from "zod";
-import { sendLinkSurveyToVerifiedEmail } from "@formbricks/email";
-import { actionClient } from "@formbricks/lib/actionClient";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getIfResponseWithSurveyIdAndEmailExist } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";

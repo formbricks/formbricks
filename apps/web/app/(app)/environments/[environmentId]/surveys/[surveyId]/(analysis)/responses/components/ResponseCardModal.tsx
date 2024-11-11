@@ -1,3 +1,4 @@
+import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -7,7 +8,6 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Modal } from "@formbricks/ui/components/Modal";
-import { SingleResponseCard } from "@formbricks/ui/components/SingleResponseCard";
 
 interface ResponseCardModalProps {
   responses: TResponse[];
@@ -19,7 +19,7 @@ interface ResponseCardModalProps {
   environmentTags: TTag[];
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   deleteResponses: (responseIds: string[]) => void;
-  isViewer: boolean;
+  isReadOnly: boolean;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   locale: TUserLocale;
@@ -35,7 +35,7 @@ export const ResponseCardModal = ({
   environmentTags,
   updateResponse,
   deleteResponses,
-  isViewer,
+  isReadOnly,
   open,
   setOpen,
   locale,
@@ -107,7 +107,7 @@ export const ResponseCardModal = ({
             pageType="response"
             environment={environment}
             environmentTags={environmentTags}
-            isViewer={isViewer}
+            isReadOnly={isReadOnly}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
             setSelectedResponseId={setSelectedResponseId}

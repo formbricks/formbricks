@@ -74,6 +74,7 @@ export const ZWeeklySummaryEnvironmentData = z.object({
 export type TWeeklySummaryEnvironmentData = z.infer<typeof ZWeeklySummaryEnvironmentData>;
 
 export const ZWeeklySummaryUserData = z.object({
+  id: z.string(),
   email: z.string(),
   notificationSettings: ZUserNotificationSettings,
   locale: z.string(),

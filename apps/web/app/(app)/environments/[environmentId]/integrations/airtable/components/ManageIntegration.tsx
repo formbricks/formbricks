@@ -5,6 +5,7 @@ import {
   AddIntegrationModal,
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Trash2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -59,17 +60,22 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
   const integrationData = airtableIntegration?.config?.data ?? [];
 
   const handleDeleteIntegration = async () => {
-    try {
-      setisDeleting(true);
-      await deleteIntegrationAction({ integrationId: airtableIntegration.id });
-      setIsConnected(false);
+    setisDeleting(true);
+
+    const deleteIntegrationActionResult = await deleteIntegrationAction({
+      integrationId: airtableIntegration.id,
+    });
+
+    if (deleteIntegrationActionResult?.data) {
       toast.success(t("environments.integrations.integration_removed_successfully"));
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setisDeleting(false);
-      setIsDeleteIntegrationModalOpen(false);
+      setIsConnected(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
+      toast.error(errorMessage);
     }
+
+    setisDeleting(false);
+    setIsDeleteIntegrationModalOpen(false);
   };
 
   const handleModal = (val: boolean) => {
