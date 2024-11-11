@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
@@ -66,7 +66,7 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw error;
+    throw new UnknownError(error);
   }
 };
 

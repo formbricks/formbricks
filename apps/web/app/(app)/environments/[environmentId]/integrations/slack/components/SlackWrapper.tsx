@@ -43,7 +43,11 @@ export const SlackWrapper = ({
 
   const getSlackChannels = async () => {
     const getSlackChannelsResponse = await getSlackChannelsAction({ environmentId: environment.id });
-    if (getSlackChannelsResponse?.serverError && getSlackChannelsResponse?.serverError === "missing_scope") {
+
+    if (
+      getSlackChannelsResponse?.serverError &&
+      getSlackChannelsResponse.serverError.includes("missing_scope")
+    ) {
       setShowReconnectButton(true);
     }
 
