@@ -38,7 +38,7 @@ const Page = async ({ params, searchParams }) => {
     product,
     environment,
     actionClasses,
-    attributeClasses,
+    attributeClassesFromServer,
     responseCount,
     organization,
     session,
@@ -83,7 +83,7 @@ const Page = async ({ params, searchParams }) => {
     !survey ||
     !environment ||
     !actionClasses ||
-    !attributeClasses ||
+    !attributeClassesFromServer ||
     !product ||
     isSurveyCreationDeletionDisabled
   ) {
@@ -91,6 +91,7 @@ const Page = async ({ params, searchParams }) => {
   }
 
   const isCxMode = searchParams.mode === "cx";
+  const attributeClasses = attributeClassesFromServer.filter((attributeClass) => !attributeClass.archived);
 
   return (
     <SurveyEditor
