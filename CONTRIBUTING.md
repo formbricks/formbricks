@@ -18,7 +18,7 @@ Ready to dive into the code and make a real impact? Here's your path:
 
 1. **Read our Best Practices**: [It takes 5 minutes](https://formbricks.com/docs/developer-docs/contributing/get-started) but will help you save hours 🤓
 
-1. **Fork the Repository:** Fork our repository or use [Gitpod](https://formbricks.com/docs/developer-docs/contributing/gitpod) or use [Codespaces](https://formbricks.com/docs/developer-docs/contributing/codespaces)
+1. **Fork the Repository:** Fork our repository or use [Gitpod](https://gitpod.io) or use [Github Codespaces](https://github.com/features/codespaces) to get started instantly.
 
 1. **Tweak and Transform:** Work your coding magic and apply your changes.
 

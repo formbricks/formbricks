@@ -4,13 +4,13 @@ import {
   enableTwoFactorAuthAction,
   setupTwoFactorAuthAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Button } from "@formbricks/ui/components/Button";
 import { Modal } from "@formbricks/ui/components/Modal";
 import { OTPInput } from "@formbricks/ui/components/OTPInput";

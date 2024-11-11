@@ -1,7 +1,7 @@
 import "server-only";
-import { Result } from "@formbricks/types/error-handlers";
+import { UnknownError } from "@formbricks/types/errors";
 
-export const testEndpoint = async (url: string): Promise<Result<boolean>> => {
+export const testEndpoint = async (url: string): Promise<boolean> => {
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -15,18 +15,12 @@ export const testEndpoint = async (url: string): Promise<Result<boolean>> => {
     const statusCode = response.status;
 
     if (statusCode >= 200 && statusCode < 300) {
-      return { ok: true, data: true };
+      return true;
     } else {
       const errorMessage = await response.text();
-      return {
-        ok: false,
-        error: new Error(`Request failed with status code ${statusCode}: ${errorMessage}`),
-      };
+      throw new UnknownError(`Request failed with status code ${statusCode}: ${errorMessage}`);
     }
   } catch (error) {
-    return {
-      ok: false,
-      error: new Error(`Error while fetching the URL: ${error.message}`),
-    };
+    throw new UnknownError(`Error while fetching the URL: ${error.message}`);
   }
 };

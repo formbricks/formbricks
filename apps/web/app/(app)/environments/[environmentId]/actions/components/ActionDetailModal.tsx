@@ -2,7 +2,6 @@ import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { ActionActivityTab } from "./ActionActivityTab";
 import { ActionSettingsTab } from "./ActionSettingsTab";
@@ -15,7 +14,7 @@ interface ActionDetailModalProps {
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
   actionClasses: TActionClass[];
-  membershipRole?: TMembershipRole;
+  isReadOnly: boolean;
 }
 
 export const ActionDetailModal = ({
@@ -24,9 +23,9 @@ export const ActionDetailModal = ({
   setOpen,
   actionClass,
   actionClasses,
-  membershipRole,
   environment,
   environments,
+  isReadOnly,
 }: ActionDetailModalProps) => {
   const t = useTranslations();
   const tabs = [
@@ -35,7 +34,7 @@ export const ActionDetailModal = ({
       children: (
         <ActionActivityTab
           actionClasses={actionClasses}
-          isViewer={membershipRole === "viewer"}
+          isViewer={isReadOnly}
           environments={environments}
           environment={environment}
           actionClass={actionClass}
@@ -50,7 +49,7 @@ export const ActionDetailModal = ({
           actionClass={actionClass}
           actionClasses={actionClasses}
           setOpen={setOpen}
-          membershipRole={membershipRole}
+          isReadOnly={isReadOnly}
         />
       ),
     },

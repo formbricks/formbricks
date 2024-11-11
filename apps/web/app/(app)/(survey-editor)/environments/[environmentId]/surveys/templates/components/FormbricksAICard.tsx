@@ -1,12 +1,12 @@
 "use client";
 
 import { createAISurveyAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Button } from "@formbricks/ui/components/Button";
 import {
   Card,

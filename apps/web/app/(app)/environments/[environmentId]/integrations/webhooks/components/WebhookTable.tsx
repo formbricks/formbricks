@@ -13,6 +13,7 @@ interface WebhookTableProps {
   webhooks: TWebhook[];
   surveys: TSurvey[];
   children: [JSX.Element, JSX.Element[]];
+  isReadOnly: boolean;
 }
 
 export const WebhookTable = ({
@@ -20,6 +21,7 @@ export const WebhookTable = ({
   webhooks,
   surveys,
   children: [TableHeading, webhookRows],
+  isReadOnly,
 }: WebhookTableProps) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
   const t = useTranslations();
@@ -72,6 +74,7 @@ export const WebhookTable = ({
         setOpen={setWebhookDetailModalOpen}
         webhook={activeWebhook}
         surveys={surveys}
+        isReadOnly={isReadOnly}
       />
     </>
   );

@@ -142,6 +142,30 @@ export const EditorCardMenu = ({
 
   return (
     <div className="flex space-x-2">
+      <ArrowUpIcon
+        className={cn(
+          "h-4 cursor-pointer text-slate-500",
+          cardIdx === 0 ? "cursor-not-allowed opacity-50" : "hover:text-slate-600"
+        )}
+        onClick={(e) => {
+          if (cardIdx !== 0) {
+            e.stopPropagation();
+            moveCard(cardIdx, true);
+          }
+        }}
+      />
+      <ArrowDownIcon
+        className={cn(
+          "h-4 cursor-pointer text-slate-500",
+          lastCard ? "cursor-not-allowed opacity-50" : "hover:text-slate-600"
+        )}
+        onClick={(e) => {
+          if (!lastCard) {
+            e.stopPropagation();
+            moveCard(cardIdx, false);
+          }
+        }}
+      />
       <CopyIcon
         className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
         onClick={(e) => {

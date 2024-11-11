@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {
@@ -13,6 +11,7 @@ interface ActionClassesTableProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   children: [JSX.Element, JSX.Element[]];
+  isReadOnly: boolean;
 }
 
 export const ActionClassesTable = ({
@@ -21,9 +20,9 @@ export const ActionClassesTable = ({
   environment,
   environments,
   children: [TableHeading, actionRows],
+  isReadOnly,
 }: ActionClassesTableProps) => {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
-  const { membershipRole, error } = useMembershipRole(environmentId);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>();
 
@@ -33,9 +32,6 @@ export const ActionClassesTable = ({
     setActionDetailModalOpen(true);
   };
 
-  if (error) {
-    return <ErrorComponent />;
-  }
   return (
     <>
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -63,7 +59,7 @@ export const ActionClassesTable = ({
           setOpen={setActionDetailModalOpen}
           actionClasses={actionClasses}
           actionClass={activeActionClass}
-          membershipRole={membershipRole}
+          isReadOnly={isReadOnly}
         />
       )}
     </>
