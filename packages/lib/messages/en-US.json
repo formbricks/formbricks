@@ -789,7 +789,7 @@
         "tag_of_your_app": "tag of your app",
         "to_the": "to the",
         "to_the_url_where_you_load_the": "to the URL where you load the",
-        "to_the_url_where_you_load_the_formbricks_sdk": "to the URL where you load the Formbricks SDK.",
+        "to_the_url_where_you_load_the_formbricks_sdk": "to the URL where you load the Formbricks SDK",
         "want_to_learn_how_to_add_user_attributes": "Want to learn how to add user attributes, custom events and more?",
         "you_also_need_to_pass_a": "you also need to pass a",
         "you_are_done": "You're done 🎉",
@@ -959,7 +959,7 @@
       "value_must_be_a_number": "Value must be a number.",
       "view_filters": "View filters",
       "where": "Where",
-      "with_the_formbricks_sdk": "with the Formbricks SDK."
+      "with_the_formbricks_sdk": "with the Formbricks SDK"
     },
     "settings": {
       "billing": {
@@ -1572,7 +1572,7 @@
         "welcome_message": "Welcome message",
         "when": "When",
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "When conditions match, waiting time will be ignored and survey shown.",
-        "with_the_formbricks_sdk": "with the Formbricks SDK.",
+        "with_the_formbricks_sdk": "with the Formbricks SDK",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Without a filter, all of your users can be surveyed.",
         "you_need_to_have_two_or_more_languages_set_up_in_your_product_to_work_with_translations": "You need to have two or more languages set up in your product to work with translations.",
         "your_description_here_recall_information_with": "Your description here. Recall information with @",
