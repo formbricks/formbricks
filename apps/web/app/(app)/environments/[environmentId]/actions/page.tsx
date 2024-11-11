@@ -52,9 +52,9 @@ const Page = async ({ params }) => {
     throw new Error(t("common.product_not_found"));
   }
 
-  const toCopyEnvirontment = environments.filter((env) => env.id !== params.environmentId)[0];
+  const toCopyEnvironment = environments.filter((env) => env.id !== params.environmentId)[0];
 
-  const toCopyActionClasses = await getActionClasses(toCopyEnvirontment.id);
+  const toCopyActionClasses = await getActionClasses(toCopyEnvironment.id);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
@@ -82,7 +82,7 @@ const Page = async ({ params }) => {
       <PageHeader pageTitle={t("common.actions")} cta={!isReadOnly ? renderAddActionButton() : undefined} />
       <ActionClassesTable
         environment={environment}
-        toCopyEnvironment={toCopyEnvirontment}
+        toCopyEnvironment={toCopyEnvironment}
         toCopyActionClasses={toCopyActionClasses}
         environmentId={params.environmentId}
         actionClasses={actionClasses}
