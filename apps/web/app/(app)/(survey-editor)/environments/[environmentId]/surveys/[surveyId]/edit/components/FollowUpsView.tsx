@@ -59,7 +59,7 @@ export const FollowUpsView = ({
       <div className="flex justify-end">
         {localSurvey.followUps.length ? (
           <Button variant="primary" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
-            +{t("environments.surveys.edit.follow_ups_new")}
+            + {t("environments.surveys.edit.follow_ups_new")}
           </Button>
         ) : null}
       </div>

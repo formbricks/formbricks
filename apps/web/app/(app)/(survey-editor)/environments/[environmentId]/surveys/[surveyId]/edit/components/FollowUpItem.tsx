@@ -1,6 +1,7 @@
 import { deleteSurveyFollowUpAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
@@ -24,6 +25,7 @@ export const FollowUpItem = ({
   selectedLanguageCode,
   setLocalSurvey,
 }: FollowUpItemProps) => {
+  const t = useTranslations();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,11 +43,19 @@ export const FollowUpItem = ({
           <div className="flex space-x-2">
             <Badge
               size="normal"
-              text={followUp.trigger.type === "response" ? "Any response" : "Ending(s)"}
+              text={
+                followUp.trigger.type === "response"
+                  ? t("environments.surveys.edit.follow_ups_item_response_tag")
+                  : t("environments.surveys.edit.follow_ups_item_ending_tag")
+              }
               type="gray"
             />
 
-            <Badge size="normal" text="Send-Email" type="gray" />
+            <Badge
+              size="normal"
+              text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
+              type="gray"
+            />
           </div>
         </div>
 
@@ -85,7 +95,7 @@ export const FollowUpItem = ({
       <ConfirmationModal
         open={deleteFollowUpModalOpen}
         setOpen={setDeleteFollowUpModalOpen}
-        buttonText="Delete"
+        buttonText={t("common.delete")}
         onConfirm={async () => {
           setLoading(true);
           await deleteSurveyFollowUpAction({
@@ -100,8 +110,8 @@ export const FollowUpItem = ({
           setLoading(false);
           setDeleteFollowUpModalOpen(false);
         }}
-        text="Are you sure you want to delete this follow-up?"
-        title="Delete Follow-Up"
+        text={t("environments.surveys.edit.follow_ups_delete_modal_text")}
+        title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
         buttonLoading={loading}
         buttonVariant="warn"
       />

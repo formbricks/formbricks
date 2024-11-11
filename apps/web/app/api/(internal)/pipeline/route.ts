@@ -176,7 +176,7 @@ export const POST = async (request: Request) => {
         const toValueFromResponse = response.data[to];
 
         if (!toValueFromResponse) {
-          throw new Error(`toValueFromResponse not found in response data for followup: ${followUpId}`);
+          throw new Error(`"To" value not found in response data for followup: ${followUpId}`);
         }
 
         if (typeof toValueFromResponse === "string") {
@@ -186,20 +186,24 @@ export const POST = async (request: Request) => {
           if (parsedResult.data) {
             // send email to this email address
             await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
+          } else {
+            throw new Error(`Email address is not valid for followup: ${followUpId}`);
           }
         } else if (Array.isArray(toValueFromResponse)) {
           const emailAddress = toValueFromResponse[2];
           if (!emailAddress) {
-            throw new Error(`emailAddress not found in response data for followup: ${followUpId}`);
+            throw new Error(`Email address not found in response data for followup: ${followUpId}`);
           }
 
           const parsedResult = z.string().email().safeParse(emailAddress);
           if (parsedResult.data) {
             await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
+          } else {
+            throw new Error(`Email address is not valid for followup: ${followUpId}`);
           }
         }
       } catch (error) {
-        throw new Error(`Error occurred in evaluateFollowUp for followup: ${followUpId}`);
+        throw new Error(`Error occurred in evaluating the followup: ${followUpId}`);
       }
     };
 
