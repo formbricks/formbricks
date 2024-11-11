@@ -1,4 +1,6 @@
+import { surveyFollowUpCache } from "@/lib/cache/survey-follow-up";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import {
   TSurveyFollowUpAction,
@@ -6,6 +8,8 @@ import {
   ZSurveyFollowUpAction,
   ZSurveyFollowUpTrigger,
 } from "@formbricks/database/types/survey-follow-up";
+import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
+import { cache } from "@formbricks/lib/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
@@ -52,6 +56,10 @@ export const createSurveyFollowUp = async (
       id: surveyId,
     });
 
+    surveyFollowUpCache.revalidate({
+      surveyId: surveyFollowUp.surveyId,
+    });
+
     return surveyFollowUp;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -61,6 +69,33 @@ export const createSurveyFollowUp = async (
     throw error;
   }
 };
+
+export const getSurveyFollowUps = reactCache(
+  (surveyId: string): Promise<TSurveyFollowUp[]> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId]);
+
+        try {
+          const surveyFollowUps = await prisma.surveyFollowUp.findMany({
+            where: { surveyId },
+          });
+
+          return surveyFollowUps;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(`Error getting survey follow-ups: ${error.message}`);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getSurveyFollowUps-${surveyId}`],
+      {
+        tags: [surveyFollowUpCache.tag.bySurveyId(surveyId)],
+      }
+    )()
+);
 
 export const updateSurveyFollowUp = async (
   surveyFollowUpId: string,
@@ -115,6 +150,10 @@ export const updateSurveyFollowUp = async (
       id: surveyFollowUp.surveyId,
     });
 
+    surveyFollowUpCache.revalidate({
+      surveyId: surveyFollowUp.surveyId,
+    });
+
     return surveyFollowUp;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -143,6 +182,10 @@ export const deleteSurveyFollowUp = async (surveyFollowUpId: string) => {
 
     surveyCache.revalidate({
       id: surveyFollowUp.surveyId,
+    });
+
+    surveyFollowUpCache.revalidate({
+      surveyId: surveyFollowUp.surveyId,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

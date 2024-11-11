@@ -2,7 +2,6 @@
 
 import { FollowUpsView } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpsView";
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
-import { isEqual } from "lodash";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -90,7 +89,7 @@ export const SurveyEditor = ({
 
   useEffect(() => {
     if (survey) {
-      if (localSurvey && isEqual(survey, localSurvey)) return;
+      if (localSurvey) return;
 
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
@@ -226,7 +225,6 @@ export const SurveyEditor = ({
           {activeView === "followUps" && (
             <FollowUpsView
               localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}

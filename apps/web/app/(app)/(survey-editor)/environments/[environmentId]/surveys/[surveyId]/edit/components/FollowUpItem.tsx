@@ -2,7 +2,6 @@ import { deleteSurveyFollowUpAction } from "@/app/(app)/(survey-editor)/environm
 import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -13,9 +12,9 @@ import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 interface FollowUpItemProps {
   followUp: TSurveyFollowUp;
   localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   selectedLanguageCode: string;
   mailFrom: string;
+  setRefetch: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const FollowUpItem = ({
@@ -23,13 +22,12 @@ export const FollowUpItem = ({
   localSurvey,
   mailFrom,
   selectedLanguageCode,
-  setLocalSurvey,
+  setRefetch,
 }: FollowUpItemProps) => {
   const t = useTranslations();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   return (
     <>
@@ -74,7 +72,6 @@ export const FollowUpItem = ({
 
       <FollowUpModal
         localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
         open={editFollowUpModalOpen}
         setOpen={setEditFollowUpModalOpen}
         mailFrom={mailFrom}
@@ -90,6 +87,7 @@ export const FollowUpItem = ({
           replyTo: followUp.action.properties.replyTo,
         }}
         mode="edit"
+        setRefetch={setRefetch}
       />
 
       <ConfirmationModal
@@ -103,9 +101,7 @@ export const FollowUpItem = ({
             surveyFollowUpId: followUp.id,
           });
 
-          setTimeout(() => {
-            router.refresh();
-          }, 100);
+          setRefetch((prev) => !prev);
 
           setLoading(false);
           setDeleteFollowUpModalOpen(false);

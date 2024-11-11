@@ -6,7 +6,6 @@ import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environme
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EyeOffIcon, HandshakeIcon, SendIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -38,13 +37,13 @@ import { TCreateSurveyFollowUpForm, ZCreateSurveyFollowUpFormSchema } from "../t
 
 interface AddFollowUpModalProps {
   localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectedLanguageCode: string;
   mailFrom: string;
   defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
   mode?: "create" | "edit";
+  setRefetch: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type EmailSendToOption = {
@@ -61,9 +60,9 @@ export const FollowUpModal = ({
   mailFrom,
   defaultValues,
   mode = "create",
+  setRefetch,
 }: AddFollowUpModalProps) => {
   const t = useTranslations();
-  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 
@@ -105,7 +104,7 @@ export const FollowUpModal = ({
       name: defaultValues?.name ?? "",
       triggerType: defaultValues?.triggerType ?? "response",
       endingIds: defaultValues?.endingIds || null,
-      emailTo: defaultValues?.emailTo ?? emailSendToOptions[0].id,
+      emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
       replyTo: defaultValues?.replyTo ?? [],
       subject: defaultValues?.subject ?? "",
       body: defaultValues?.body ?? "",
@@ -119,6 +118,14 @@ export const FollowUpModal = ({
   const triggerType = form.watch("triggerType");
 
   const handleSubmit = async (data: TCreateSurveyFollowUpForm) => {
+    if (!emailSendToOptions.length) {
+      toast.error(
+        "No valid options found for sending emails, please add some open-text / contact-info questions or hidden fields"
+      );
+
+      return;
+    }
+
     if (data.triggerType === "endings") {
       if (!data.endingIds || !data.endingIds?.length) {
         form.setError("endingIds", {
@@ -173,9 +180,10 @@ export const FollowUpModal = ({
         toast.success("Survey follow up updated successfully");
         setOpen(false);
 
-        router.refresh();
+        setRefetch((prev) => !prev);
       } else {
         toast.error("Something went wrong");
+        setRefetch((prev) => !prev);
       }
 
       return;
@@ -206,9 +214,10 @@ export const FollowUpModal = ({
       toast.success("Survey follow up created successfully");
       setOpen(false);
 
-      router.refresh();
+      setRefetch((prev) => !prev);
     } else {
       toast.error("Something went wrong");
+      setRefetch((prev) => !prev);
     }
   };
 

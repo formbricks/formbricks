@@ -32,7 +32,12 @@ import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
-import { createSurveyFollowUp, deleteSurveyFollowUp, updateSurveyFollowUp } from "./lib/survey-follow-up";
+import {
+  createSurveyFollowUp,
+  deleteSurveyFollowUp,
+  getSurveyFollowUps,
+  updateSurveyFollowUp,
+} from "./lib/survey-follow-up";
 
 /**
  * Checks if survey follow-ups are enabled for the given organization.
@@ -456,6 +461,36 @@ export const createSurveyFollowUpAction = authenticatedActionClient
       trigger: parsedInput.followUpData.trigger,
       action: parsedInput.followUpData.action,
     });
+  });
+
+export const getSurveyFollowUpsAction = authenticatedActionClient
+  .schema(
+    z.object({
+      surveyId: ZId,
+    })
+  )
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
+    });
+
+    await checkSurveyFollowUpsPermission(organizationId);
+
+    return await getSurveyFollowUps(parsedInput.surveyId);
   });
 
 const ZUpdateSurveyFollowUpAction = z.object({
