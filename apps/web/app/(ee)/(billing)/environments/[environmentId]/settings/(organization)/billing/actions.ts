@@ -3,9 +3,10 @@
 import { createCustomerPortalSession } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createCustomerPortalSession";
 import { createSubscription } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createSubscription";
 import { isSubscriptionCancelled } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
@@ -13,7 +14,6 @@ import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZUpgradePlanAction = z.object({
-  organizationId: ZId,
   environmentId: ZId,
   priceLookupKey: z.nativeEnum(STRIPE_PRICE_LOOKUP_KEYS),
 });
@@ -21,39 +21,44 @@ const ZUpgradePlanAction = z.object({
 export const upgradePlanAction = authenticatedActionClient
   .schema(ZUpgradePlanAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      rules: ["subscription", "create"],
-    });
-    const organization = await getOrganization(parsedInput.organizationId);
-    if (!organization) {
-      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
-    }
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
 
-    return await createSubscription(
-      parsedInput.organizationId,
-      parsedInput.environmentId,
-      parsedInput.priceLookupKey
-    );
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
+    });
+
+    return await createSubscription(organizationId, parsedInput.environmentId, parsedInput.priceLookupKey);
   });
 
 const ZManageSubscriptionAction = z.object({
-  organizationId: ZId,
   environmentId: ZId,
 });
 
 export const manageSubscriptionAction = authenticatedActionClient
   .schema(ZManageSubscriptionAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      rules: ["subscription", "read"],
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
     });
-    const organization = await getOrganization(parsedInput.organizationId);
+
+    const organization = await getOrganization(organizationId);
     if (!organization) {
-      throw new ResourceNotFoundError("organization", parsedInput.organizationId);
+      throw new ResourceNotFoundError("organization", organizationId);
     }
 
     if (!organization.billing.stripeCustomerId) {
@@ -73,10 +78,15 @@ const ZIsSubscriptionCancelledAction = z.object({
 export const isSubscriptionCancelledAction = authenticatedActionClient
   .schema(ZIsSubscriptionCancelledAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["subscription", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing"],
+        },
+      ],
     });
 
     return await isSubscriptionCancelled(parsedInput.organizationId);

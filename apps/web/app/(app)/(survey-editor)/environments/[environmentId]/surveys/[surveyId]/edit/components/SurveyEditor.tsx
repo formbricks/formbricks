@@ -1,6 +1,7 @@
 "use client";
 
 import { FollowUpsView } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpsView";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { isEqual } from "lodash";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
@@ -9,7 +10,7 @@ import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
@@ -32,7 +33,7 @@ interface SurveyEditorProps {
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
   responseCount: number;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;
@@ -43,6 +44,7 @@ interface SurveyEditorProps {
   locale: TUserLocale;
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
+  productPermission: TTeamPermission | null;
 }
 
 export const SurveyEditor = ({
@@ -64,6 +66,7 @@ export const SurveyEditor = ({
   locale,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
+  productPermission,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -216,6 +219,7 @@ export const SurveyEditor = ({
               isUserTargetingAllowed={isUserTargetingAllowed}
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
+              productPermission={productPermission}
             />
           )}
 

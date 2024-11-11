@@ -94,7 +94,7 @@ export const finishOnboarding = async (
   // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("e.g. Formbricks").click();
   await page.getByPlaceholder("e.g. Formbricks").fill("My Product");
-  await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
+  await page.locator("#form-next-button").click();
 
   if (ProductChannel !== "link") {
     await page.getByRole("button", { name: "I don't know how to do it" }).click();

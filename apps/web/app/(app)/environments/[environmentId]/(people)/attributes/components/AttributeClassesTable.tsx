@@ -11,9 +11,14 @@ import { AttributeClassDataRow } from "./AttributeRowData";
 interface AttributeClassesTableProps {
   attributeClasses: TAttributeClass[];
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
-export const AttributeClassesTable = ({ attributeClasses, locale }: AttributeClassesTableProps) => {
+export const AttributeClassesTable = ({
+  attributeClasses,
+  locale,
+  isReadOnly,
+}: AttributeClassesTableProps) => {
   const [isAttributeDetailModalOpen, setAttributeDetailModalOpen] = useState(false);
   const [activeAttributeClass, setActiveAttributeClass] = useState<TAttributeClass | null>(null);
   const [showArchived, setShowArchived] = useState(false);
@@ -70,6 +75,7 @@ export const AttributeClassesTable = ({ attributeClasses, locale }: AttributeCla
             open={isAttributeDetailModalOpen}
             setOpen={setAttributeDetailModalOpen}
             attributeClass={activeAttributeClass}
+            isReadOnly={isReadOnly}
           />
         )}
       </div>

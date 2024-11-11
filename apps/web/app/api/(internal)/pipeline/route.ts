@@ -2,11 +2,12 @@ import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/li
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsAIEnabled } from "@/app/lib/utils";
+import { sendFollowUpEmail, sendResponseFinishedEmail } from "@/modules/email";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { TSurveyFollowUpAction } from "@formbricks/database/types/survey-follow-up";
-import { sendFollowUpEmail, sendResponseFinishedEmail } from "@formbricks/email";
+import { getAttributes } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -15,6 +16,7 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { getPromptText } from "@formbricks/lib/utils/ai";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
 import { TWebhook } from "@formbricks/types/webhooks";
@@ -41,6 +43,11 @@ export const POST = async (request: Request) => {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
+
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
 
   // Fetch webhooks
   const getWebhooksForPipeline = cache(
@@ -118,6 +125,36 @@ export const POST = async (request: Request) => {
             },
           },
         },
+        OR: [
+          {
+            memberships: {
+              every: {
+                role: {
+                  in: ["owner", "manager"],
+                },
+              },
+            },
+          },
+          {
+            teamUsers: {
+              some: {
+                team: {
+                  productTeams: {
+                    some: {
+                      product: {
+                        environments: {
+                          some: {
+                            id: environmentId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
         notificationSettings: {
           path: ["alert", surveyId],
           equals: true,
@@ -131,7 +168,7 @@ export const POST = async (request: Request) => {
     const evaluateFollowUp = async (
       followUpId: string,
       followUpAction: TSurveyFollowUpAction
-    ): Promise<string | null> => {
+    ): Promise<void> => {
       try {
         const { properties } = followUpAction;
         const { to, subject, body, replyTo } = properties;
@@ -139,7 +176,7 @@ export const POST = async (request: Request) => {
         const toValueFromResponse = response.data[to];
 
         if (!toValueFromResponse) {
-          return `toValueFromResponse not found in response data for followup: ${followUpId}`;
+          throw new Error(`toValueFromResponse not found in response data for followup: ${followUpId}`);
         }
 
         if (typeof toValueFromResponse === "string") {
@@ -149,59 +186,56 @@ export const POST = async (request: Request) => {
           if (parsedResult.data) {
             // send email to this email address
             await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
-            return null;
           }
         } else if (Array.isArray(toValueFromResponse)) {
           const emailAddress = toValueFromResponse[2];
           if (!emailAddress) {
-            return `emailAddress not found in response data for followup: ${followUpId}`;
+            throw new Error(`emailAddress not found in response data for followup: ${followUpId}`);
           }
 
           const parsedResult = z.string().email().safeParse(emailAddress);
           if (parsedResult.data) {
             await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
-            return null;
           }
-
-          return null;
         }
-
-        return null;
       } catch (error) {
-        return `Error occurred in evaluateFollowUp for followup: ${followUpId}`;
+        throw new Error(`Error occurred in evaluateFollowUp for followup: ${followUpId}`);
       }
     };
 
-    for (const followUp of survey.followUps) {
-      if (followUp.trigger.type === "endings") {
-        const { properties } = followUp.trigger;
-
-        if (!properties) {
-          console.error(`properties not found in followup trigger: ${followUp.id}`);
-          continue;
-        }
-
-        const { endingIds } = properties;
-
-        if (!endingIds.length) {
-          console.error(`endingIds not found in followup trigger properties for followUp: ${followUp.id}`);
-          continue;
-        }
-
-        if (response.endingId && endingIds.includes(response.endingId)) {
-          const error = await evaluateFollowUp(followUp.id, followUp.action);
-          if (error) {
-            console.error(error);
-            continue;
-          }
-        }
-      } else if (followUp.trigger.type === "response") {
-        const error = await evaluateFollowUp(followUp.id, followUp.action);
-        if (error) {
-          console.error(error);
-          continue;
-        }
+    const followUpPromises = survey.followUps.map(async (followUp) => {
+      try {
+        await evaluateFollowUp(followUp.id, followUp.action);
+        return {
+          followUpId: followUp.id,
+          status: "success" as const,
+        };
+      } catch (error) {
+        return {
+          followUpId: followUp.id,
+          status: "error" as const,
+          error: error.message ?? "Something went wrong",
+        };
       }
+    });
+
+    const followUpResults = await Promise.allSettled(followUpPromises);
+
+    // Log all errors together after processing
+    const errors = followUpResults
+      .map((result, index) => {
+        if (result.status === "rejected") {
+          return `FollowUp ${survey.followUps[index].id} failed: ${result.reason}`;
+        }
+        if (result.status === "fulfilled" && result.value.status === "error") {
+          return `FollowUp ${result.value.followUpId} failed: ${result.value.error}`;
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (errors.length > 0) {
+      console.error("Follow-up processing errors:", errors);
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
@@ -236,14 +270,11 @@ export const POST = async (request: Request) => {
     if (hasSurveyOpenTextQuestions) {
       const isAICofigured = IS_AI_CONFIGURED;
       if (hasSurveyOpenTextQuestions && isAICofigured) {
-        const organization = await getOrganizationByEnvironmentId(environmentId);
-        if (!organization) {
-          throw new Error("Organization not found");
-        }
-
         const isAIEnabled = await getIsAIEnabled(organization);
 
         if (isAIEnabled) {
+          const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
+
           for (const question of survey.questions) {
             if (question.type === "openText" && question.insightsEnabled) {
               const isQuestionAnswered =
@@ -251,7 +282,15 @@ export const POST = async (request: Request) => {
               if (!isQuestionAnswered) {
                 continue;
               }
-              const text = getPromptText(question.headline.default, response.data[question.id] as string);
+
+              const headline = parseRecallInfo(
+                question.headline[response.language ?? "default"],
+                attributes,
+                response.data,
+                response.variables
+              );
+
+              const text = getPromptText(headline, response.data[question.id] as string);
               // TODO: check if subheadline gives more context and better embeddings
               try {
                 await createDocumentAndAssignInsight(survey.name, {

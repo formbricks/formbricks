@@ -1,25 +1,26 @@
 "use client";
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/product/general/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
 type DeleteProductRenderProps = {
   isDeleteDisabled: boolean;
-  isUserAdminOrOwner: boolean;
+  isOwnerOrManager: boolean;
   product: TProduct;
 };
 
 export const DeleteProductRender = ({
   isDeleteDisabled,
-  isUserAdminOrOwner,
+  isOwnerOrManager,
   product,
 }: DeleteProductRenderProps) => {
   const t = useTranslations();
@@ -64,11 +65,13 @@ export const DeleteProductRender = ({
       )}
 
       {isDeleteDisabled && (
-        <p className="text-sm text-red-700">
-          {!isUserAdminOrOwner
-            ? t("environments.product.general.only_admin_or_owners_can_delete_products")
-            : t("environments.product.general.cannot_delete_only_product")}
-        </p>
+        <Alert variant="warning">
+          <AlertDescription>
+            {!isOwnerOrManager
+              ? t("environments.product.general.only_owners_or_managers_can_delete_products")
+              : t("environments.product.general.cannot_delete_only_product")}
+          </AlertDescription>
+        </Alert>
       )}
 
       <DeleteDialog

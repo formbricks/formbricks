@@ -1,6 +1,7 @@
 "use client";
 
 import { ResponseFeed } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponsesFeed";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -19,6 +20,7 @@ interface ResponseTimelineProps {
   environmentTags: TTag[];
   attributeClasses: TAttributeClass[];
   locale: TUserLocale;
+  productPermission: TTeamPermission | null;
 }
 
 export const ResponseTimeline = ({
@@ -29,6 +31,7 @@ export const ResponseTimeline = ({
   environmentTags,
   attributeClasses,
   locale,
+  productPermission,
 }: ResponseTimelineProps) => {
   const t = useTranslations();
   const [sortedResponses, setSortedResponses] = useState(responses);
@@ -61,6 +64,7 @@ export const ResponseTimeline = ({
         environmentTags={environmentTags}
         attributeClasses={attributeClasses}
         locale={locale}
+        productPermission={productPermission}
       />
     </div>
   );

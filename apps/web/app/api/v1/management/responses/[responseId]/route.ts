@@ -34,7 +34,6 @@ export const GET = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    await fetchAndValidateResponse(authentication, params.responseId);
     const response = await fetchAndValidateResponse(authentication, params.responseId);
     if (response) {
       return responses.successResponse(response);

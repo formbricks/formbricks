@@ -28,6 +28,7 @@ interface LinkSurveyPageProps {
     verify?: string;
     lang?: string;
     embed?: string;
+    preview?: string;
   };
 }
 
@@ -45,6 +46,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   if (!validId.success) {
     notFound();
   }
+  const isPreview = searchParams.preview === "true";
   const survey = await getSurvey(params.surveyId);
   const locale = findMatchingLocale();
   const suId = searchParams.suId;
@@ -62,7 +64,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
-  if (survey && survey.status !== "inProgress") {
+  if (survey && survey.status !== "inProgress" && !isPreview) {
     return (
       <SurveyInactive
         status={survey.status}
@@ -174,6 +176,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         attributeClasses={attributeClasses}
         isEmbed={isEmbed}
         locale={locale}
+        isPreview={isPreview}
       />
     );
   }
@@ -196,6 +199,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       locale={locale}
+      isPreview={isPreview}
     />
   ) : null;
 };
