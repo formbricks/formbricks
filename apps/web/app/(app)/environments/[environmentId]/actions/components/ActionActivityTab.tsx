@@ -21,25 +21,24 @@ interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
   environment: TEnvironment;
-  environments: TEnvironment[];
-  actionClasses: TActionClass[];
+  toCopyActionClasses: TActionClass[];
+  toCopyEnvironment: TEnvironment;
   isViewer: boolean;
 }
 
 export const ActionActivityTab = ({
   actionClass,
-  actionClasses,
+  toCopyActionClasses,
+  toCopyEnvironment,
   environmentId,
   environment,
   isViewer,
-  environments,
 }: ActivityTabProps) => {
   const t = useTranslations();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
   useEffect(() => {
     setLoading(true);
 
@@ -62,33 +61,30 @@ export const ActionActivityTab = ({
   }, [actionClass.id, environmentId]);
 
   const actionClassNames = useMemo(
-    () => actionClasses.map((actionClass) => actionClass.name),
-    [actionClasses]
+    () => toCopyActionClasses.map((actionClass) => actionClass.name),
+    [toCopyActionClasses]
   );
 
-  const actionCopyEnvironment = useMemo(
-    () => environments.filter((e) => e.type !== environment.type),
-    [environments, environment]
-  )[0];
-
   const actionClassKeys = useMemo(() => {
-    const codeActionClasses: TActionClassInputCode[] = actionClasses.filter(
+    const codeActionClasses: TActionClassInputCode[] = toCopyActionClasses.filter(
       (actionClass) => actionClass.type === "code"
     ) as TActionClassInputCode[];
 
     return codeActionClasses.map((actionClass) => actionClass.key);
-  }, [actionClasses]);
+  }, [toCopyActionClasses]);
 
   const copyAction = async (data: TActionClassInput) => {
     const { type } = data;
-    const copyName = data.name + " (copy)";
+    let copyName = data.name + " (copy)";
     try {
       if (isViewer) {
         throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
 
       if (copyName && actionClassNames.includes(copyName)) {
-        throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
+        while (actionClassNames.includes(copyName)) {
+          copyName += " (copy)";
+        }
       }
 
       if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
@@ -110,7 +106,7 @@ export const ActionActivityTab = ({
         updatedAction = {
           name: copyName.trim(),
           description: data.description,
-          environmentId: actionCopyEnvironment.id,
+          environmentId: toCopyEnvironment.id,
           type: "noCode",
           noCodeConfig: {
             ...data.noCodeConfig,
@@ -127,7 +123,7 @@ export const ActionActivityTab = ({
         updatedAction = {
           name: copyName.trim(),
           description: data.description,
-          environmentId: actionCopyEnvironment.id,
+          environmentId: toCopyEnvironment.id,
           type: "code",
           key: data.key,
         };

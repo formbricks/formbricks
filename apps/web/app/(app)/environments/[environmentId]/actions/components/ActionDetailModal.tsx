@@ -8,13 +8,14 @@ import { ActionSettingsTab } from "./ActionSettingsTab";
 
 interface ActionDetailModalProps {
   environmentId: string;
-  environments: TEnvironment[];
   environment: TEnvironment;
   open: boolean;
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
+  toCopyEnvironment: TEnvironment;
+  toCopyActionClasses: TActionClass[];
 }
 
 export const ActionDetailModal = ({
@@ -24,8 +25,9 @@ export const ActionDetailModal = ({
   actionClass,
   actionClasses,
   environment,
-  environments,
   isReadOnly,
+  toCopyActionClasses,
+  toCopyEnvironment,
 }: ActionDetailModalProps) => {
   const t = useTranslations();
   const tabs = [
@@ -33,9 +35,9 @@ export const ActionDetailModal = ({
       title: t("common.activity"),
       children: (
         <ActionActivityTab
-          actionClasses={actionClasses}
+          toCopyActionClasses={toCopyActionClasses}
+          toCopyEnvironment={toCopyEnvironment}
           isViewer={isReadOnly}
-          environments={environments}
           environment={environment}
           actionClass={actionClass}
           environmentId={environmentId}
