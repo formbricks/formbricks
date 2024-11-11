@@ -46,7 +46,7 @@ const setPreviousResult = async (previousResult: {
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
 }) => {
-  revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
+  // revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
   const { lastChecked, active, features } = previousResult;
 
   await cache(
@@ -299,18 +299,20 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
-  const { active: isEnterpriseEdition } = await getEnterpriseLicense();
-
   // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
-  return Boolean(
-    IS_FORMBRICKS_CLOUD &&
+  if (IS_FORMBRICKS_CLOUD) {
+    return (
       IS_AI_CONFIGURED &&
-      isEnterpriseEdition &&
-      (billingPlan === "startup" || billingPlan === "scale" || billingPlan === "enterprise")
-  );
+      (await getEnterpriseLicense()).active &&
+      (billingPlan === PRODUCT_FEATURE_KEYS.STARTUP ||
+        billingPlan === PRODUCT_FEATURE_KEYS.SCALE ||
+        billingPlan === PRODUCT_FEATURE_KEYS.ENTERPRISE)
+    );
+  }
+
+  return false;
 };
 
 export const getIsAIEnabled = async (organization: TOrganization) => {
-  const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
-  return Boolean(isOrganizationAIReady && organization.isAIEnabled);
+  return organization.isAIEnabled && (await getIsOrganizationAIReady(organization.billing.plan));
 };
