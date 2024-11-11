@@ -231,7 +231,7 @@ export const PricingTable = ({
                 {t("environments.settings.billing.monthly")}
               </div>
               <div
-                className={`items-centerrounded-md flex-1 whitespace-nowrap py-0.5 pl-4 pr-2 text-center ${
+                className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
                   planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                 }`}
                 onClick={() => handleMonthlyToggle("yearly")}>

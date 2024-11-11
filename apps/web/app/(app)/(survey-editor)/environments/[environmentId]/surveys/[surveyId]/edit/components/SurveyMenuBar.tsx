@@ -337,7 +337,7 @@ export const SurveyMenuBar = ({
           />
         </div>
         {responseCount > 0 && (
-          <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
+          <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>

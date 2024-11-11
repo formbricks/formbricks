@@ -1,8 +1,12 @@
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
-import { TIntegrationSlackConfig, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
+import { createOrUpdateIntegration, getIntegrationByType } from "@formbricks/lib/integration/service";
+import {
+  TIntegrationSlackConfig,
+  TIntegrationSlackConfigData,
+  TIntegrationSlackCredential,
+} from "@formbricks/types/integration/slack";
 
 export const GET = async (req: NextRequest) => {
   const url = req.url;
@@ -58,18 +62,20 @@ export const GET = async (req: NextRequest) => {
       team: data.team,
     };
 
+    const slackIntegration = await getIntegrationByType(environmentId, "slack");
+
     const slackConfiguration: TIntegrationSlackConfig = {
-      data: [],
+      data: (slackIntegration?.config.data as TIntegrationSlackConfigData[]) ?? [],
       key: slackCredentials,
     };
 
-    const slackIntegration = {
+    const integration = {
       type: "slack" as "slack",
       environment: environmentId,
       config: slackConfiguration,
     };
 
-    const result = await createOrUpdateIntegration(environmentId, slackIntegration);
+    const result = await createOrUpdateIntegration(environmentId, integration);
 
     if (result) {
       return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`);
