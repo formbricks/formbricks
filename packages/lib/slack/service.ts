@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
@@ -11,8 +11,9 @@ export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIn
   let nextCursor: string | undefined = undefined;
 
   do {
-    const url = new URL("https://slack.com/api/conversations.list");
+    const url = new URL("https://slack.com/api/users.conversations");
     url.searchParams.append("limit", "200");
+    url.searchParams.append("types", "private_channel,public_channel");
     if (nextCursor) {
       url.searchParams.append("cursor", nextCursor);
     }
@@ -65,7 +66,7 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw error;
+    throw new UnknownError(error);
   }
 };
 
