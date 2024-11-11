@@ -38,7 +38,7 @@ const Page = async ({ params, searchParams }) => {
     product,
     environment,
     actionClasses,
-    attributeClassesFromServer,
+    attributeClasses,
     responseCount,
     organization,
     session,
@@ -48,7 +48,7 @@ const Page = async ({ params, searchParams }) => {
     getProductByEnvironmentId(params.environmentId),
     getEnvironment(params.environmentId),
     getActionClasses(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getAttributeClasses(params.environmentId, undefined, { skipArchived: true }),
     getResponseCountBySurveyId(params.surveyId),
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -83,7 +83,7 @@ const Page = async ({ params, searchParams }) => {
     !survey ||
     !environment ||
     !actionClasses ||
-    !attributeClassesFromServer ||
+    !attributeClasses ||
     !product ||
     isSurveyCreationDeletionDisabled
   ) {
@@ -91,7 +91,6 @@ const Page = async ({ params, searchParams }) => {
   }
 
   const isCxMode = searchParams.mode === "cx";
-  const attributeClasses = attributeClassesFromServer.filter((attributeClass) => !attributeClass.archived);
 
   return (
     <SurveyEditor

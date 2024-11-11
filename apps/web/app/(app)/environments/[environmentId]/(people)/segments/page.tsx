@@ -21,10 +21,10 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async ({ params }) => {
   const t = await getTranslations();
-  const [environment, segments, attributeClassesFromServer, organization, product] = await Promise.all([
+  const [environment, segments, attributeClasses, organization, product] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getAttributeClasses(params.environmentId, undefined, { skipArchived: true }),
     getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);
@@ -62,8 +62,6 @@ const Page = async ({ params }) => {
   const isReadOnly = isMember && hasReadAccess;
 
   const filteredSegments = segments.filter((segment) => !segment.isPrivate);
-
-  const attributeClasses = attributeClassesFromServer.filter((attributeClass) => !attributeClass.archived);
 
   const renderCreateSegmentButton = () =>
     isAdvancedTargetingAllowed ? (
