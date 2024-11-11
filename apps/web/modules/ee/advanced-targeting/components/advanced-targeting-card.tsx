@@ -342,7 +342,7 @@ export function AdvancedTargetingCard({
                       }}
                       size="sm"
                       variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}>
-                      {t("common.edit_segment")}
+                      {t("environments.segments.edit_segment")}
                       <PencilIcon className="ml-2 h-3 w-3" />
                     </Button>
                   )}
