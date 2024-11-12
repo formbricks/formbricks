@@ -12,6 +12,7 @@ interface DataTableToolbarProps<T> {
   table: Table<T>;
   deleteRows: (rowIds: string[]) => void;
   type: "person" | "response";
+  deleteAction: (id: string) => Promise<void>;
 }
 
 export const DataTableToolbar = <T,>({
@@ -21,12 +22,13 @@ export const DataTableToolbar = <T,>({
   table,
   deleteRows,
   type,
+  deleteAction,
 }: DataTableToolbarProps<T>) => {
   const t = useTranslations();
   return (
     <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
-        <SelectedRowSettings table={table} deleteRows={deleteRows} type={type} />
+        <SelectedRowSettings table={table} deleteRows={deleteRows} type={type} deleteAction={deleteAction} />
       ) : (
         <div></div>
       )}

@@ -1,6 +1,7 @@
 import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import {
   DndContext,
   type DragEndEvent,
@@ -39,7 +40,7 @@ interface ResponseTableProps {
   environment: TEnvironment;
   user?: TUser;
   environmentTags: TTag[];
-  isViewer: boolean;
+  isReadOnly: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
@@ -55,7 +56,7 @@ export const ResponseTable = ({
   user,
   environment,
   environmentTags,
-  isViewer,
+  isReadOnly,
   fetchNextPage,
   hasMore,
   deleteResponses,
@@ -74,7 +75,7 @@ export const ResponseTable = ({
   const [parent] = useAutoAnimate();
 
   // Generate columns
-  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isViewer, t);
+  const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t);
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -171,6 +172,10 @@ export const ResponseTable = ({
     }
   };
 
+  const deleteResponse = async (responseId: string) => {
+    await deleteResponseAction({ responseId });
+  };
+
   return (
     <div>
       <DndContext
@@ -186,13 +191,14 @@ export const ResponseTable = ({
           table={table}
           deleteRows={deleteResponses}
           type="response"
+          deleteAction={deleteResponse}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">
             <Table className="w-full" style={{ tableLayout: "fixed" }} id="response-table">
-              <TableHeader>
+              <TableHeader className="pointer-events-auto">
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
+                  <TableRow key={headerGroup.id}>
                     <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
                       {headerGroup.headers.map((header) => (
                         <DataTableHeader
@@ -202,7 +208,7 @@ export const ResponseTable = ({
                         />
                       ))}
                     </SortableContext>
-                  </tr>
+                  </TableRow>
                 ))}
               </TableHeader>
 
@@ -260,7 +266,7 @@ export const ResponseTable = ({
             user={user}
             environment={environment}
             environmentTags={environmentTags}
-            isViewer={isViewer}
+            isReadOnly={isReadOnly}
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
             setSelectedResponseId={setSelectedResponseId}

@@ -6,12 +6,18 @@ import { prisma } from "@formbricks/database";
 import { embeddingsModel, llmModel } from "@formbricks/lib/aiModels";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import {
-  TCreatedDocument,
+  TDocument,
   TDocumentCreateInput,
+  TGenerateDocumentObjectSchema,
   ZDocumentCreateInput,
   ZGenerateDocumentObjectSchema,
 } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
+
+export type TCreatedDocument = TDocument & {
+  isSpam: boolean;
+  insights: TGenerateDocumentObjectSchema["insights"];
+};
 
 export const createDocument = async (
   surveyName: string,

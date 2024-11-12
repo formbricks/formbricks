@@ -7,17 +7,23 @@ import Papa, { type ParseResult } from "papaparse";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { ZInvitees } from "@formbricks/types/invites";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
-import { MembershipRole } from "./AddMemberModal";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
 }
 
-export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkInviteTabProps) => {
+export const BulkInviteTab = ({
+  setOpen,
+  onSubmit,
+  canDoRoleManagement,
+  isFormbricksCloud,
+}: BulkInviteTabProps) => {
   const t = useTranslations();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [csvFile, setCSVFile] = useState<File>();
@@ -41,10 +47,15 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
         const members = results.data.map((csv) => {
           const [name, email, role] = csv;
 
+          let orgRole = canDoRoleManagement ? role.trim().toLowerCase() : "owner";
+          if (!isFormbricksCloud) {
+            orgRole = orgRole === "billing" ? "owner" : orgRole;
+          }
+
           return {
             name: name.trim(),
             email: email.trim(),
-            role: canDoRoleManagement ? (role.trim().toLowerCase() as MembershipRole) : MembershipRole.Admin,
+            role: orgRole as TOrganizationRole,
           };
         });
         try {
@@ -88,7 +99,7 @@ export const BulkInviteTab = ({ setOpen, onSubmit, canDoRoleManagement }: BulkIn
       </div>
       <div>
         {!canDoRoleManagement && (
-          <Alert variant="error" className="mt-1.5 flex items-start bg-slate-50">
+          <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
               <p className="text-sm">
                 <strong>{t("common.warning")}: </strong>

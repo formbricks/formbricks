@@ -59,6 +59,7 @@ const Page = async ({ params }) => {
           environmentTags={tags}
           responsesPerPage={RESPONSES_PER_PAGE}
           locale={locale}
+          isReadOnly={true}
         />
       </PageContentWrapper>
     </div>

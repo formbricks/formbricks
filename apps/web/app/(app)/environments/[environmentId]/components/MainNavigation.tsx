@@ -4,6 +4,7 @@ import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[enviro
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import {
   ArrowUpRightIcon,
   BlendIcon,
@@ -38,13 +39,12 @@ import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
 import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
 import { Button } from "@formbricks/ui/components/Button";
-import { CreateOrganizationModal } from "@formbricks/ui/components/CreateOrganizationModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,7 +68,7 @@ interface NavigationProps {
   products: TProduct[];
   isMultiOrgEnabled: boolean;
   isFormbricksCloud?: boolean;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   isAIEnabled?: boolean;
 }
 
@@ -94,9 +94,10 @@ export const MainNavigation = ({
   const [latestVersion, setLatestVersion] = useState("");
 
   const product = products.find((product) => product.id === environment.productId);
-  const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
-  const isOwnerOrAdmin = isAdmin || isOwner;
-  const isPricingDisabled = !isOwner && !isAdmin;
+  const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
+
+  const isOwnerOrManager = isManager || isOwner;
+  const isPricingDisabled = isMember;
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -196,17 +197,15 @@ export const MainNavigation = ({
         href: `/environments/${environment.id}/integrations`,
         icon: BlocksIcon,
         isActive: pathname?.includes("/integrations"),
-        isHidden: isViewer,
       },
       {
         name: t("common.configuration"),
         href: `/environments/${environment.id}/product/general`,
         icon: Cog,
         isActive: pathname?.includes("/product"),
-        isHidden: isViewer,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, isMember]
   );
 
   const dropdownNavigation = [
@@ -258,8 +257,10 @@ export const MainNavigation = ({
         }
       }
     }
-    if (isOwnerOrAdmin) loadReleases();
-  }, [isOwnerOrAdmin]);
+    if (isOwnerOrManager) loadReleases();
+  }, [isOwnerOrManager]);
+
+  const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
   return (
     <>
@@ -276,7 +277,7 @@ export const MainNavigation = ({
             <div className="flex items-center justify-between px-3 pb-4">
               {!isCollapsed && (
                 <Link
-                  href={`/environments/${environment.id}/surveys/`}
+                  href={mainNavigationLink}
                   className={cn(
                     "flex items-center justify-center transition-opacity duration-100",
                     isTextVisible ? "opacity-0" : "opacity-100"
@@ -301,28 +302,29 @@ export const MainNavigation = ({
             </div>
 
             {/* Main Nav Switch */}
-            <ul>
-              {mainNavigation.map(
-                (item) =>
-                  !item.isHidden && (
-                    <NavigationLink
-                      key={item.name}
-                      href={item.href}
-                      isActive={item.isActive}
-                      isCollapsed={isCollapsed}
-                      isTextVisible={isTextVisible}
-                      linkText={item.name}>
-                      <item.icon strokeWidth={1.5} />
-                    </NavigationLink>
-                  )
-              )}
-            </ul>
+            {!isBilling && (
+              <ul>
+                {mainNavigation.map(
+                  (item) =>
+                    !item.isHidden && (
+                      <NavigationLink
+                        key={item.name}
+                        href={item.href}
+                        isActive={item.isActive}
+                        isCollapsed={isCollapsed}
+                        isTextVisible={isTextVisible}
+                        linkText={item.name}>
+                        <item.icon strokeWidth={1.5} />
+                      </NavigationLink>
+                    )
+                )}
+              </ul>
+            )}
           </div>
 
-          {/* Product Switch */}
           <div>
             {/* New Version Available */}
-            {!isCollapsed && isOwnerOrAdmin && latestVersion && !isFormbricksCloud && (
+            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (
               <Link
                 href="https://github.com/formbricks/formbricks/releases"
                 target="_blank"
@@ -333,100 +335,104 @@ export const MainNavigation = ({
                 </p>
               </Link>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                asChild
-                id="productDropdownTrigger"
-                className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
-                <div
-                  tabIndex={0}
-                  className={cn(
-                    "flex cursor-pointer flex-row items-center space-x-3",
-                    isCollapsed ? "pl-2" : "pl-4"
-                  )}>
-                  <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
-                    {product.config.channel === "website" ? (
-                      <GlobeIcon strokeWidth={1.5} />
-                    ) : product.config.channel === "app" ? (
-                      <GlobeLockIcon strokeWidth={1.5} />
-                    ) : product.config.channel === "link" ? (
-                      <LinkIcon strokeWidth={1.5} />
-                    ) : (
-                      <BlendIcon strokeWidth={1.5} />
+
+            {/* Product Switch */}
+            {!isBilling && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  asChild
+                  id="productDropdownTrigger"
+                  className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
+                  <div
+                    tabIndex={0}
+                    className={cn(
+                      "flex cursor-pointer flex-row items-center space-x-3",
+                      isCollapsed ? "pl-2" : "pl-4"
+                    )}>
+                    <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
+                      {product.config.channel === "website" ? (
+                        <GlobeIcon strokeWidth={1.5} />
+                      ) : product.config.channel === "app" ? (
+                        <GlobeLockIcon strokeWidth={1.5} />
+                      ) : product.config.channel === "link" ? (
+                        <LinkIcon strokeWidth={1.5} />
+                      ) : (
+                        <BlendIcon strokeWidth={1.5} />
+                      )}
+                    </div>
+                    {!isCollapsed && !isTextVisible && (
+                      <>
+                        <div>
+                          <p
+                            title={product.name}
+                            className={cn(
+                              "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
+                              isTextVisible ? "opacity-0" : "opacity-100"
+                            )}>
+                            {product.name}
+                          </p>
+                          <p
+                            className={cn(
+                              "text-sm text-slate-500 transition-opacity duration-200",
+                              isTextVisible ? "opacity-0" : "opacity-100"
+                            )}>
+                            {product.config.channel === "link"
+                              ? "Link & Email"
+                              : capitalizeFirstLetter(product.config.channel)}
+                          </p>
+                        </div>
+                        <ChevronRightIcon
+                          className={cn(
+                            "h-5 w-5 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
+                            isTextVisible ? "opacity-0" : "opacity-100"
+                          )}
+                        />
+                      </>
                     )}
                   </div>
-                  {!isCollapsed && !isTextVisible && (
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  id="userDropdownInnerContentWrapper"
+                  side="right"
+                  sideOffset={10}
+                  alignOffset={-1}
+                  align="end">
+                  <DropdownMenuRadioGroup
+                    value={product!.id}
+                    onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
+                    {sortedProducts.map((product) => (
+                      <DropdownMenuRadioItem
+                        value={product.id}
+                        className="cursor-pointer break-all"
+                        key={product.id}>
+                        <div>
+                          {product.config.channel === "website" ? (
+                            <GlobeIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          ) : product.config.channel === "app" ? (
+                            <GlobeLockIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          ) : product.config.channel === "link" ? (
+                            <LinkIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          ) : (
+                            <BlendIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          )}
+                        </div>
+                        <div className="">{product?.name}</div>
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                  {isOwnerOrManager && (
                     <>
-                      <div>
-                        <p
-                          title={product.name}
-                          className={cn(
-                            "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
-                            isTextVisible ? "opacity-0" : "opacity-100"
-                          )}>
-                          {product.name}
-                        </p>
-                        <p
-                          className={cn(
-                            "text-sm text-slate-500 transition-opacity duration-200",
-                            isTextVisible ? "opacity-0" : "opacity-100"
-                          )}>
-                          {product.config.channel && product.config.channel === "link"
-                            ? t("common.link_and_email")
-                            : product.config.channel
-                              ? t(`common.${product.config.channel}`)
-                              : null}
-                        </p>
-                      </div>
-                      <ChevronRightIcon
-                        className={cn(
-                          "h-5 w-5 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
-                          isTextVisible ? "opacity-0" : "opacity-100"
-                        )}
-                      />
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleAddProduct(organization.id)}
+                        icon={<PlusIcon className="mr-2 h-4 w-4" />}>
+                        <span>{t("common.add_product")}</span>
+                      </DropdownMenuItem>
                     </>
                   )}
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                id="userDropdownInnerContentWrapper"
-                side="right"
-                sideOffset={10}
-                alignOffset={-1}
-                align="end">
-                <DropdownMenuRadioGroup
-                  value={product!.id}
-                  onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
-                  {sortedProducts.map((product) => (
-                    <DropdownMenuRadioItem
-                      value={product.id}
-                      className="cursor-pointer break-all"
-                      key={product.id}>
-                      <div>
-                        {product.config.channel === "website" ? (
-                          <GlobeIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        ) : product.config.channel === "app" ? (
-                          <GlobeLockIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        ) : product.config.channel === "link" ? (
-                          <LinkIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        ) : (
-                          <BlendIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        )}
-                      </div>
-                      <div className="">{product?.name}</div>
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                {isOwnerOrAdmin && (
-                  <DropdownMenuItem
-                    onClick={() => handleAddProduct(organization.id)}
-                    icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                    <span>{t("common.add_product")}</span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* User Switch */}
             <div className="flex items-center">

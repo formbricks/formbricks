@@ -1,10 +1,10 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
