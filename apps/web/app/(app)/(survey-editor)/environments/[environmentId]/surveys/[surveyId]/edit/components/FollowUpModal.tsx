@@ -4,7 +4,7 @@ import {
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpActionMultiEmailInput";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EyeOffIcon, HandshakeIcon, SendIcon } from "lucide-react";
+import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, SendIcon, ZapIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,6 +25,7 @@ import {
   FormProvider,
 } from "@formbricks/ui/components/Form";
 import { Input } from "@formbricks/ui/components/Input";
+import { Label } from "@formbricks/ui/components/Label";
 import { Modal } from "@formbricks/ui/components/Modal";
 import {
   Select,
@@ -251,7 +252,7 @@ export const FollowUpModal = ({
   }, [open, firstRender]);
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding size="xl">
+    <Modal open={open} setOpen={setOpen} noPadding size="md">
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -286,12 +287,13 @@ export const FollowUpModal = ({
                   render={({ field }) => {
                     return (
                       <FormItem>
-                        <FormLabel className="text-base" htmlFor="name">
+                        <FormLabel htmlFor="follow-up-name">
                           {t("environments.surveys.edit.follow_ups_modal_name_label")}:
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
+                            type="text"
                             className="max-w-80"
                             isInvalid={!!formErrors.name}
                             placeholder={t("environments.surveys.edit.follow_ups_modal_name_placeholder")}
@@ -303,295 +305,314 @@ export const FollowUpModal = ({
                 />
               </div>
 
-              {/* trigger */}
+              {/* Trigger */}
 
-              <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
-                <h2 className="text-lg font-medium text-slate-900">
-                  {t("environments.surveys.edit.follow_ups_modal_trigger_label")}
-                </h2>
+              <div className="flex flex-col rounded-lg border border-slate-300">
+                <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
+                  <div className="rounded-full border border-slate-300 bg-white p-0.5">
+                    <ZapIcon className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <h2 className="text-md font-semibold text-slate-900">
+                    {t("environments.surveys.edit.follow_ups_modal_trigger_label")}
+                  </h2>
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="triggerType"
-                  render={({ field }) => {
-                    return (
-                      <FormItem>
-                        <div className="flex flex-col space-y-2">
-                          <FormLabel htmlFor="triggerType">
-                            {t("environments.surveys.edit.follow_ups_modal_trigger_description")}
-                          </FormLabel>
-                          <div className="max-w-80">
-                            <Select
-                              defaultValue={field.value}
-                              onValueChange={(value) => field.onChange(value)}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-
-                              <SelectContent>
-                                <SelectItem value="response">
-                                  {t("environments.surveys.edit.follow_ups_modal_trigger_type_response")}
-                                </SelectItem>
-                                <SelectItem value="endings">
-                                  {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending")}
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </FormItem>
-                    );
-                  }}
-                />
-
-                {triggerType === "endings" ? (
+                <div className="flex flex-col gap-4 p-4">
                   <FormField
                     control={form.control}
-                    name="endingIds"
+                    name="triggerType"
                     render={({ field }) => {
                       return (
-                        <div className="flex flex-col space-y-2">
-                          <h3 className="text-sm font-medium text-slate-700">
-                            {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending_select")}
-                          </h3>
+                        <FormItem>
                           <div className="flex flex-col space-y-2">
-                            {localSurvey.endings.map((ending) => {
-                              const getEndingLabel = (): string => {
-                                if (ending.type === "endScreen") {
-                                  return getLocalizedValue(ending.headline, selectedLanguageCode) || "Ending";
-                                }
+                            <FormLabel htmlFor="triggerType">
+                              {t("environments.surveys.edit.follow_ups_modal_trigger_description")}
+                            </FormLabel>
+                            <div className="max-w-80">
+                              <Select
+                                defaultValue={field.value}
+                                onValueChange={(value) => field.onChange(value)}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
 
-                                return ending.label || ending.url || "Ending";
-                              };
-
-                              return (
-                                <div className="w-80 rounded-md border border-slate-300 px-3 py-2">
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                      className="inline"
-                                      checked={field.value?.includes(ending.id)}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          form.setValue("endingIds", [...(field.value ?? []), ending.id]);
-                                        } else {
-                                          form.setValue(
-                                            "endingIds",
-                                            (field.value ?? []).filter((id) => id !== ending.id)
-                                          );
-                                        }
-                                      }}
-                                    />
-                                    <HandshakeIcon className="h-4 min-h-4 w-4 min-w-4" />
-                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap text-slate-900">
-                                      {getEndingLabel()}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-
-                            {formErrors.endingIds ? (
-                              <div className="mt-2">
-                                <span className="text-red-500">{formErrors.endingIds.message}</span>
-                              </div>
-                            ) : null}
+                                <SelectContent>
+                                  <SelectItem value="response">
+                                    {t("environments.surveys.edit.follow_ups_modal_trigger_type_response")}
+                                  </SelectItem>
+                                  <SelectItem value="endings">
+                                    {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending")}
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
-                        </div>
+                        </FormItem>
                       );
                     }}
                   />
-                ) : null}
+
+                  {triggerType === "endings" ? (
+                    <FormField
+                      control={form.control}
+                      name="endingIds"
+                      render={({ field }) => {
+                        return (
+                          <div className="flex flex-col space-y-2">
+                            <h3 className="text-sm font-medium text-slate-700">
+                              {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending_select")}
+                            </h3>
+                            <div className="flex flex-col space-y-2">
+                              {localSurvey.endings.map((ending) => {
+                                const getEndingLabel = (): string => {
+                                  if (ending.type === "endScreen") {
+                                    return (
+                                      getLocalizedValue(ending.headline, selectedLanguageCode) || "Ending"
+                                    );
+                                  }
+
+                                  return ending.label || ending.url || "Ending";
+                                };
+
+                                return (
+                                  <Label
+                                    className="w-80 cursor-pointer rounded-md border border-slate-300 bg-slate-50 px-3 py-2 hover:bg-slate-100"
+                                    htmlFor={`ending-${ending.id}`}>
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        className="inline"
+                                        checked={field.value?.includes(ending.id)}
+                                        id={`ending-${ending.id}`}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            form.setValue("endingIds", [...(field.value ?? []), ending.id]);
+                                          } else {
+                                            form.setValue(
+                                              "endingIds",
+                                              (field.value ?? []).filter((id) => id !== ending.id)
+                                            );
+                                          }
+                                        }}
+                                      />
+                                      <HandshakeIcon className="h-4 min-h-4 w-4 min-w-4" />
+                                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-slate-900">
+                                        {getEndingLabel()}
+                                      </span>
+                                    </div>
+                                  </Label>
+                                );
+                              })}
+
+                              {formErrors.endingIds ? (
+                                <div className="mt-2">
+                                  <span className="text-red-500">{formErrors.endingIds.message}</span>
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                  ) : null}
+                </div>
+              </div>
+              {/* Arrow */}
+              <div className="flex items-center justify-center">
+                <ArrowDownIcon className="h-4 w-4 text-slate-500" />
               </div>
 
-              {/* action */}
+              {/* Action */}
 
-              <div className="flex flex-col space-y-2 rounded-md border border-slate-300 p-4">
-                <h2 className="text-lg font-medium text-slate-900">
-                  {t("environments.surveys.edit.follow_ups_modal_action_label")}
-                </h2>
-                <div className="flex flex-col space-y-4">
-                  {/* email setup */}
-                  <div className="flex flex-col space-y-4">
-                    <h2 className="text-lg font-medium text-slate-900">
-                      {t("environments.surveys.edit.follow_ups_modal_action_email_setup")}
-                    </h2>
-                    {/* To */}
+              <div className="flex flex-col rounded-lg border border-slate-300">
+                <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
+                  <div className="rounded-full border border-slate-300 bg-white p-0.5">
+                    <SendIcon className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <h2 className="text-md font-semibold text-slate-900">
+                    {t("environments.surveys.edit.follow_ups_modal_action_label")}
+                  </h2>
+                </div>
+                {/* email setup */}
+                <div className="flex flex-col gap-y-4 p-4">
+                  <h2 className="text-md font-semibold text-slate-900">
+                    {t("environments.surveys.edit.follow_ups_modal_action_email_settings")}
+                  </h2>
+                  {/* To */}
 
-                    <div className="flex flex-col space-y-2">
-                      <FormField
-                        control={form.control}
-                        name="emailTo"
-                        render={({ field }) => {
-                          return (
-                            <div className="flex flex-col space-y-2">
-                              <FormLabel htmlFor="emailTo" className="font-medium text-slate-900">
-                                {t("environments.surveys.edit.follow_ups_modal_action_to_label")}
-                              </FormLabel>
-                              <FormDescription className="text-sm text-slate-500">
-                                {t("environments.surveys.edit.follow_ups_modal_action_to_description")}
-                              </FormDescription>
+                  <div className="flex flex-col space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="emailTo"
+                      render={({ field }) => {
+                        return (
+                          <div className="flex flex-col space-y-2">
+                            <FormLabel htmlFor="emailTo" className="font-medium text-slate-900">
+                              {t("environments.surveys.edit.follow_ups_modal_action_to_label")}
+                            </FormLabel>
+                            <FormDescription className="text-sm text-slate-500">
+                              {t("environments.surveys.edit.follow_ups_modal_action_to_description")}
+                            </FormDescription>
 
-                              <div className="max-w-80">
-                                <FormControl>
-                                  <Select
-                                    defaultValue={field.value}
-                                    onValueChange={(value) => {
-                                      const selectedOption = emailSendToOptions.find(
-                                        (option) => option.id === value
+                            <div className="max-w-80">
+                              <FormControl>
+                                <Select
+                                  defaultValue={field.value}
+                                  onValueChange={(value) => {
+                                    const selectedOption = emailSendToOptions.find(
+                                      (option) => option.id === value
+                                    );
+                                    if (!selectedOption) return;
+
+                                    field.onChange(selectedOption.id);
+                                  }}>
+                                  <SelectTrigger className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                    <SelectValue />
+                                  </SelectTrigger>
+
+                                  <SelectContent>
+                                    {emailSendToOptions.map((option) => {
+                                      return (
+                                        <SelectItem value={option.id}>
+                                          {option.type !== "hiddenField" ? (
+                                            <div className="flex items-center space-x-2">
+                                              <div className="h-4 w-4">
+                                                {
+                                                  QUESTIONS_ICON_MAP[
+                                                    option.type === "openTextQuestion"
+                                                      ? "openText"
+                                                      : "contactInfo"
+                                                  ]
+                                                }
+                                              </div>
+                                              <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                                {option.label}
+                                              </span>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center space-x-2">
+                                              <EyeOffIcon className="h-4 w-4" />
+                                              <span>{option.label}</span>
+                                            </div>
+                                          )}
+                                        </SelectItem>
                                       );
-                                      if (!selectedOption) return;
-
-                                      field.onChange(selectedOption.id);
-                                    }}>
-                                    <SelectTrigger className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                      <SelectValue />
-                                    </SelectTrigger>
-
-                                    <SelectContent>
-                                      {emailSendToOptions.map((option) => {
-                                        return (
-                                          <SelectItem value={option.id}>
-                                            {option.type !== "hiddenField" ? (
-                                              <div className="flex items-center space-x-2">
-                                                <div className="h-4 w-4">
-                                                  {
-                                                    QUESTIONS_ICON_MAP[
-                                                      option.type === "openTextQuestion"
-                                                        ? "openText"
-                                                        : "contactInfo"
-                                                    ]
-                                                  }
-                                                </div>
-                                                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                                  {option.label}
-                                                </span>
-                                              </div>
-                                            ) : (
-                                              <div className="flex items-center space-x-2">
-                                                <EyeOffIcon className="h-4 w-4" />
-                                                <span>{option.label}</span>
-                                              </div>
-                                            )}
-                                          </SelectItem>
-                                        );
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                </FormControl>
-                              </div>
-                            </div>
-                          );
-                        }}
-                      />
-                    </div>
-
-                    {/* From */}
-
-                    <div className="flex flex-col space-y-2">
-                      <h3 className="text-sm font-medium text-slate-900">
-                        {t("environments.surveys.edit.follow_ups_modal_action_from_label")}
-                      </h3>
-                      <p className="text-sm text-slate-500">
-                        {t("environments.surveys.edit.follow_ups_modal_action_from_description")}
-                      </p>
-
-                      <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
-                        <span className="text-sm text-slate-900">{mailFrom}</span>
-                      </div>
-                    </div>
-
-                    {/* Reply To */}
-
-                    <div className="flex flex-col space-y-2">
-                      <FormField
-                        control={form.control}
-                        name="replyTo"
-                        render={({ field }) => {
-                          return (
-                            <FormItem>
-                              <FormLabel htmlFor="replyTo">
-                                {t("environments.surveys.edit.follow_ups_modal_action_replyTo_label")}
-                              </FormLabel>
-                              <FormDescription className="text-sm text-slate-500">
-                                {t("environments.surveys.edit.follow_ups_modal_action_replyTo_description")}
-                              </FormDescription>
-                              <FormControl>
-                                <FollowUpActionMultiEmailInput
-                                  emails={field.value}
-                                  setEmails={field.onChange}
-                                  isInvalid={!!formErrors.replyTo}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* email content */}
-
-                  <div className="flex flex-col space-y-4">
-                    <h2 className="text-lg font-medium text-slate-900">
-                      {t("environments.surveys.edit.follow_ups_modal_action_email_content")}
-                    </h2>
-                    <FormField
-                      control={form.control}
-                      name="subject"
-                      render={({ field }) => {
-                        return (
-                          <FormItem>
-                            <div className="flex flex-col space-y-2">
-                              <FormLabel>
-                                {t("environments.surveys.edit.follow_ups_modal_action_subject_label")}
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  className="max-w-80"
-                                  placeholder={t(
-                                    "environments.surveys.edit.follow_ups_modal_action_subject_placeholder"
-                                  )}
-                                  isInvalid={!!formErrors.subject}
-                                />
+                                    })}
+                                  </SelectContent>
+                                </Select>
                               </FormControl>
                             </div>
-                          </FormItem>
+                          </div>
                         );
                       }}
                     />
+                  </div>
 
+                  {/* From */}
+
+                  <div className="flex flex-col space-y-2">
+                    <h3 className="text-sm font-medium text-slate-900">
+                      {t("environments.surveys.edit.follow_ups_modal_action_from_label")}
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {t("environments.surveys.edit.follow_ups_modal_action_from_description")}
+                    </p>
+
+                    <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
+                      <span className="text-sm text-slate-900">{mailFrom}</span>
+                    </div>
+                  </div>
+
+                  {/* Reply To */}
+
+                  <div className="flex flex-col space-y-2">
                     <FormField
                       control={form.control}
-                      name="body"
+                      name="replyTo"
                       render={({ field }) => {
                         return (
                           <FormItem>
-                            <div className="flex flex-col space-y-2">
-                              <FormLabel className="font-medium text-slate-700">
-                                {t("environments.surveys.edit.follow_ups_modal_action_body_label")}
-                              </FormLabel>
-                              <FormControl>
-                                <Editor
-                                  disableLists
-                                  excludedToolbarItems={["blockType"]}
-                                  getText={() => field.value}
-                                  setText={(v: string) => {
-                                    field.onChange(v);
-                                  }}
-                                  firstRender={firstRender}
-                                  setFirstRender={setFirstRender}
-                                  placeholder={t(
-                                    "environments.surveys.edit.follow_ups_modal_action_body_placeholder"
-                                  )}
-                                />
-                              </FormControl>
-                            </div>
+                            <FormLabel htmlFor="replyTo">
+                              {t("environments.surveys.edit.follow_ups_modal_action_replyTo_label")}
+                            </FormLabel>
+                            <FormDescription className="text-sm text-slate-500">
+                              {t("environments.surveys.edit.follow_ups_modal_action_replyTo_description")}
+                            </FormDescription>
+                            <FormControl>
+                              <FollowUpActionMultiEmailInput
+                                emails={field.value}
+                                setEmails={field.onChange}
+                                isInvalid={!!formErrors.replyTo}
+                              />
+                            </FormControl>
                           </FormItem>
                         );
                       }}
                     />
                   </div>
+                </div>
+
+                {/* email content */}
+
+                <div className="flex flex-col space-y-4 p-4">
+                  <h2 className="text-md font-semibold text-slate-900">
+                    {t("environments.surveys.edit.follow_ups_modal_action_email_content")}
+                  </h2>
+                  <FormField
+                    control={form.control}
+                    name="subject"
+                    render={({ field }) => {
+                      return (
+                        <FormItem>
+                          <div className="flex flex-col space-y-2">
+                            <FormLabel>
+                              {t("environments.surveys.edit.follow_ups_modal_action_subject_label")}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="max-w-80"
+                                placeholder={t(
+                                  "environments.surveys.edit.follow_ups_modal_action_subject_placeholder"
+                                )}
+                                isInvalid={!!formErrors.subject}
+                              />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      );
+                    }}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="body"
+                    render={({ field }) => {
+                      return (
+                        <FormItem>
+                          <div className="flex flex-col space-y-2">
+                            <FormLabel className="font-medium text-slate-700">
+                              {t("environments.surveys.edit.follow_ups_modal_action_body_label")}
+                            </FormLabel>
+                            <FormControl>
+                              <Editor
+                                disableLists
+                                excludedToolbarItems={["blockType"]}
+                                getText={() => field.value}
+                                setText={(v: string) => {
+                                  field.onChange(v);
+                                }}
+                                firstRender={firstRender}
+                                setFirstRender={setFirstRender}
+                                placeholder={t(
+                                  "environments.surveys.edit.follow_ups_modal_action_body_placeholder"
+                                )}
+                              />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      );
+                    }}
+                  />
                 </div>
               </div>
             </div>

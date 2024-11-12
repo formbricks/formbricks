@@ -31,7 +31,7 @@ export const FollowUpItem = ({
 
   return (
     <>
-      <div className="relative cursor-pointer rounded-md border border-slate-300 p-4 hover:bg-slate-100">
+      <div className="relative cursor-pointer rounded-lg border border-slate-300 bg-white p-4 hover:bg-slate-50">
         <div
           className="flex flex-col space-y-2"
           onClick={() => {
@@ -60,7 +60,8 @@ export const FollowUpItem = ({
         <div className="absolute right-4 top-4">
           <Button
             variant="minimal"
-            size="sm"
+            size="icon"
+            tooltip={t("common.delete")}
             onClick={async (e) => {
               e.stopPropagation();
               setDeleteFollowUpModalOpen(true);
