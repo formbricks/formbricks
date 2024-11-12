@@ -1,13 +1,11 @@
-import { getSurveyFollowUpsAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { FollowUpItem } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpItem";
 import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { LockIcon, SendIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 
 interface FollowUpsViewProps {
   localSurvey: TSurvey;
@@ -28,31 +26,8 @@ export const FollowUpsView = ({
 }: FollowUpsViewProps) => {
   const t = useTranslations();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [surveyFollowUps, setSurveyFollowUps] = useState<TSurveyFollowUp[]>([]);
-  const [refetch, setRefetch] = useState(false);
 
-  useEffect(() => {
-    const fetchSurveyFollowUps = async () => {
-      if (!isSurveyFollowUpsAllowed) {
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const fetchedSurveyFollowUps = await getSurveyFollowUpsAction({ surveyId: localSurvey.id });
-        if (fetchedSurveyFollowUps?.data) {
-          setSurveyFollowUps(fetchedSurveyFollowUps.data);
-        }
-      } catch (error) {
-        console.error(`Error fetching survey follow-ups: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSurveyFollowUps();
-  }, [isSurveyFollowUpsAllowed, localSurvey.id, refetch]);
+  const surveyFollowUps: TSurveyFollowUp[] = localSurvey.followUps.filter((f) => !f.deleted);
 
   if (!isSurveyFollowUpsAllowed) {
     return (
@@ -81,10 +56,6 @@ export const FollowUpsView = ({
         </div>
       </div>
     );
-  }
-
-  if (loading) {
-    return <LoadingSpinner />;
   }
 
   return (
@@ -133,7 +104,6 @@ export const FollowUpsView = ({
               setLocalSurvey={setLocalSurvey}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
-              setRefetch={setRefetch}
               userEmail={userEmail}
             />
           );
@@ -147,7 +117,6 @@ export const FollowUpsView = ({
         setOpen={setAddFollowUpModalOpen}
         selectedLanguageCode={selectedLanguageCode}
         mailFrom={mailFrom}
-        setRefetch={setRefetch}
         userEmail={userEmail}
       />
     </div>

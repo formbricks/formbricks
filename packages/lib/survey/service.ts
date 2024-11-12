@@ -550,19 +550,49 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     if (followUps) {
+      // Separate follow-ups into categories based on deletion flag
+      const deletedFollowUps = followUps.filter((followUp) => followUp.deleted);
+      const nonDeletedFollowUps = followUps.filter((followUp) => !followUp.deleted);
+
+      // Get set of existing follow-up IDs from currentSurvey
+      const existingFollowUpIds = new Set(currentSurvey.followUps.map((f) => f.id));
+
+      // Separate non-deleted follow-ups into new and existing
+      const existingFollowUps = nonDeletedFollowUps.filter((followUp) =>
+        existingFollowUpIds.has(followUp.id)
+      );
+      const newFollowUps = nonDeletedFollowUps.filter((followUp) => !existingFollowUpIds.has(followUp.id));
+
       data.followUps = {
-        updateMany: followUps.map((followUp) => {
-          return {
-            where: {
-              id: followUp.id,
-            },
-            data: {
-              name: followUp.name,
-              trigger: followUp.trigger,
-              action: followUp.action,
-            },
-          };
-        }),
+        // Update existing follow-ups
+        updateMany: existingFollowUps.map((followUp) => ({
+          where: {
+            id: followUp.id,
+          },
+          data: {
+            name: followUp.name,
+            trigger: followUp.trigger,
+            action: followUp.action,
+          },
+        })),
+        // Create new follow-ups
+        createMany:
+          newFollowUps.length > 0
+            ? {
+                data: newFollowUps.map((followUp) => ({
+                  name: followUp.name,
+                  trigger: followUp.trigger,
+                  action: followUp.action,
+                })),
+              }
+            : undefined,
+        // Delete follow-ups marked as deleted, regardless of whether they exist in DB
+        deleteMany:
+          deletedFollowUps.length > 0
+            ? deletedFollowUps.map((followUp) => ({
+                id: followUp.id,
+              }))
+            : undefined,
       };
     }
 

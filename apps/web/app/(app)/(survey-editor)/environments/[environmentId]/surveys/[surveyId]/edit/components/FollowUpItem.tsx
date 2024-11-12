@@ -1,4 +1,3 @@
-import { deleteSurveyFollowUpAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -14,7 +13,6 @@ interface FollowUpItemProps {
   localSurvey: TSurvey;
   selectedLanguageCode: string;
   mailFrom: string;
-  setRefetch: React.Dispatch<React.SetStateAction<boolean>>;
   userEmail: string;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }
@@ -24,7 +22,6 @@ export const FollowUpItem = ({
   localSurvey,
   mailFrom,
   selectedLanguageCode,
-  setRefetch,
   userEmail,
   setLocalSurvey,
 }: FollowUpItemProps) => {
@@ -64,20 +61,8 @@ export const FollowUpItem = ({
   }, [followUp.action.properties, localSurvey.hiddenFields?.fieldIds, localSurvey.questions]);
 
   const isEndingInvalid = useMemo(() => {
-    const { endingIds } = followUp.trigger.properties ?? {};
-
-    if (endingIds) {
-      return endingIds.some((endingId) => !localSurvey.endings.find((ending) => ending.id === endingId));
-    }
-
-    return false;
-  }, [followUp.trigger.properties, localSurvey.endings]);
-
-  // console.log({
-  //   followUp,
-  //   isEmailToInvalid,
-  //   isEndingInvalid,
-  // });
+    return followUp.trigger.type === "endings" && !followUp.trigger.properties?.endingIds?.length;
+  }, [followUp.trigger.properties?.endingIds?.length, followUp.trigger.type]);
 
   return (
     <>
@@ -143,7 +128,6 @@ export const FollowUpItem = ({
           replyTo: followUp.action.properties.replyTo,
         }}
         mode="edit"
-        setRefetch={setRefetch}
         userEmail={userEmail}
       />
 
@@ -153,15 +137,21 @@ export const FollowUpItem = ({
         buttonText={t("common.delete")}
         onConfirm={async () => {
           setLoading(true);
-          await deleteSurveyFollowUpAction({
-            surveyId: localSurvey.id,
-            surveyFollowUpId: followUp.id,
+          setLocalSurvey((prev) => {
+            return {
+              ...prev,
+              followUps: prev.followUps.map((f) => {
+                if (f.id === followUp.id) {
+                  return {
+                    ...f,
+                    deleted: true,
+                  };
+                }
+
+                return f;
+              }),
+            };
           });
-
-          setRefetch((prev) => !prev);
-
-          setLoading(false);
-          setDeleteFollowUpModalOpen(false);
         }}
         text={t("environments.surveys.edit.follow_ups_delete_modal_text")}
         title={t("environments.surveys.edit.follow_ups_delete_modal_title")}

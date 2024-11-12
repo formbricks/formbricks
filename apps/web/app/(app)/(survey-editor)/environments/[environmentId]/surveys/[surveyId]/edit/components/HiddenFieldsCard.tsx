@@ -84,6 +84,17 @@ export const HiddenFieldsCard = ({
       return;
     }
 
+    const isHiddenFieldUsedInFollowUp = localSurvey.followUps
+      .filter((f) => !f.deleted)
+      .some((followUp) => {
+        return followUp.action.properties.to === fieldId;
+      });
+
+    if (isHiddenFieldUsedInFollowUp) {
+      toast.error("Hidden field is used in a follow-up. Please remove it from follow-up first.");
+      return;
+    }
+
     updateSurvey(
       {
         enabled: true,

@@ -1,16 +1,13 @@
-import {
-  createSurveyFollowUpAction,
-  updateSurveyFollowUpAction,
-} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpActionMultiEmailInput";
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, SendIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
+import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -46,7 +43,6 @@ interface AddFollowUpModalProps {
   mailFrom: string;
   defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
   mode?: "create" | "edit";
-  setRefetch: React.Dispatch<React.SetStateAction<boolean>>;
   userEmail: string;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }
@@ -65,7 +61,6 @@ export const FollowUpModal = ({
   mailFrom,
   defaultValues,
   mode = "create",
-  setRefetch,
   userEmail,
   setLocalSurvey,
 }: AddFollowUpModalProps) => {
@@ -133,13 +128,12 @@ export const FollowUpModal = ({
   const formSubmitting = form.formState.isSubmitting;
   const triggerType = form.watch("triggerType");
 
-  // useEffect(() => {
-  //   if (!localSurvey.endings.length && triggerType === "endings") {
-  //     form.setValue("triggerType", "response");
-  //   }
-  // }, [form, localSurvey.endings.length]);
-
   const handleSubmit = async (data: TCreateSurveyFollowUpForm) => {
+    if (data.triggerType === "endings" && data.endingIds?.length === 0) {
+      toast.error("Please select at least one ending or change the trigger type");
+      return;
+    }
+
     if (!emailSendToOptions.length) {
       toast.error(
         "No valid options found for sending emails, please add some open-text / contact-info questions or hidden fields"
@@ -176,66 +170,18 @@ export const FollowUpModal = ({
         return;
       }
 
-      const res = await updateSurveyFollowUpAction({
+      const updatedFollowUp = {
+        id: defaultValues.surveyFollowUpId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         surveyId: localSurvey.id,
-        surveyFollowUpId: defaultValues.surveyFollowUpId,
-        followUpData: {
-          name: data.name,
-          trigger: {
-            type: data.triggerType,
-            properties: getProperties(),
-          },
-          action: {
-            type: "send-email",
-            properties: {
-              to: data.emailTo,
-              from: mailFrom,
-              replyTo: data.replyTo,
-              subject: data.subject,
-              body: data.body,
-            },
-          },
-        },
-      });
-
-      if (res?.data) {
-        toast.success("Survey follow up updated successfully");
-        setOpen(false);
-
-        setRefetch((prev) => !prev);
-
-        if (res.data) {
-          setLocalSurvey((prev) => {
-            return {
-              ...prev,
-              followUps: prev.followUps.map((followUp) => {
-                if (followUp.id === defaultValues.surveyFollowUpId) {
-                  return res.data!;
-                }
-
-                return followUp;
-              }),
-            };
-          });
-        }
-      } else {
-        toast.error("Something went wrong");
-        setRefetch((prev) => !prev);
-      }
-
-      return;
-    }
-
-    const res = await createSurveyFollowUpAction({
-      surveyId: localSurvey.id,
-      followUpData: {
         name: data.name,
         trigger: {
           type: data.triggerType,
           properties: getProperties(),
         },
         action: {
-          type: "send-email",
+          type: "send-email" as TSurveyFollowUpAction["type"],
           properties: {
             to: data.emailTo,
             from: mailFrom,
@@ -244,26 +190,57 @@ export const FollowUpModal = ({
             body: data.body,
           },
         },
-      },
-    });
+      };
 
-    if (res?.data) {
-      toast.success("Survey follow up created successfully");
+      toast.success("Survey follow up updated successfully");
       setOpen(false);
-      setRefetch((prev) => !prev);
 
-      if (res.data) {
-        setLocalSurvey((prev) => {
-          return {
-            ...prev,
-            followUps: [...prev.followUps, res.data!],
-          };
-        });
-      }
-    } else {
-      toast.error("Something went wrong");
-      setRefetch((prev) => !prev);
+      setLocalSurvey((prev) => {
+        return {
+          ...prev,
+          followUps: prev.followUps.map((followUp) => {
+            if (followUp.id === defaultValues.surveyFollowUpId) {
+              return updatedFollowUp;
+            }
+
+            return followUp;
+          }),
+        };
+      });
+      return;
     }
+
+    const newFollowUp = {
+      id: createId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      surveyId: localSurvey.id,
+      name: data.name,
+      trigger: {
+        type: data.triggerType,
+        properties: getProperties(),
+      },
+      action: {
+        type: "send-email" as TSurveyFollowUpAction["type"],
+        properties: {
+          to: data.emailTo,
+          from: mailFrom,
+          replyTo: data.replyTo,
+          subject: data.subject,
+          body: data.body,
+        },
+      },
+    };
+
+    toast.success("Survey follow up created successfully");
+    setOpen(false);
+
+    setLocalSurvey((prev) => {
+      return {
+        ...prev,
+        followUps: [...prev.followUps, newFollowUp],
+      };
+    });
   };
 
   useEffect(() => {
@@ -384,9 +361,11 @@ export const FollowUpModal = ({
                                   <SelectItem value="response">
                                     {t("environments.surveys.edit.follow_ups_modal_trigger_type_response")}
                                   </SelectItem>
-                                  <SelectItem value="endings">
-                                    {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending")}
-                                  </SelectItem>
+                                  {localSurvey.endings.length > 0 ? (
+                                    <SelectItem value="endings">
+                                      {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending")}
+                                    </SelectItem>
+                                  ) : null}
                                 </SelectContent>
                               </Select>
 

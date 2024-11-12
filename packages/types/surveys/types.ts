@@ -765,7 +765,11 @@ export const ZSurvey = z
         });
       }
     }),
-    followUps: z.array(ZSurveyFollowUp),
+    followUps: z.array(
+      ZSurveyFollowUp.extend({
+        deleted: z.boolean().optional(),
+      })
+    ),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
     runOnDate: z.date().nullable(),
@@ -1153,6 +1157,42 @@ export const ZSurvey = z
         }
       }
     });
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- followUps is not always defined
+    if (survey.followUps?.length) {
+      survey.followUps
+        .filter((followUp) => !followUp.deleted)
+        .forEach((followUp, index) => {
+          if (followUp.action.properties.to) {
+            const validOptions = [
+              ...survey.questions
+                .filter((q) => {
+                  if (q.type === TSurveyQuestionTypeEnum.OpenText) {
+                    if (q.inputType === "email") {
+                      return true;
+                    }
+                  }
+
+                  if (q.type === TSurveyQuestionTypeEnum.ContactInfo) {
+                    return true;
+                  }
+
+                  return false;
+                })
+                .map((q) => q.id),
+              ...(survey.hiddenFields.fieldIds ?? []),
+            ];
+
+            if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `The follow up action ${String(index + 1)} has an invalid email field`,
+                path: ["followUps"],
+              });
+            }
+          }
+        });
+    }
   });
 
 const isInvalidOperatorsForQuestionType = (
