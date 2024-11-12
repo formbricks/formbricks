@@ -1,14 +1,14 @@
 "use client";
 
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -337,7 +337,7 @@ export const SurveyMenuBar = ({
           />
         </div>
         {responseCount > 0 && (
-          <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
+          <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>

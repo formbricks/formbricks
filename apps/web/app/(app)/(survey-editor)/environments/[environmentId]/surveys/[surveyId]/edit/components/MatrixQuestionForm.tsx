@@ -1,5 +1,6 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -9,7 +10,6 @@ import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/s
 import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 

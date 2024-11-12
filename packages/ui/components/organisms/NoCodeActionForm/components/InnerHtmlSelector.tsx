@@ -7,9 +7,10 @@ import { Input } from "../../../Input";
 
 interface InnerHtmlSelectorProps {
   form: UseFormReturn<TActionClassInput>;
+  disabled: boolean;
 }
 
-export const InnerHtmlSelector = ({ form }: InnerHtmlSelectorProps) => {
+export const InnerHtmlSelector = ({ form, disabled }: InnerHtmlSelectorProps) => {
   const { watch, control } = form;
   const t = useTranslations();
   return (
@@ -20,6 +21,7 @@ export const InnerHtmlSelector = ({ form }: InnerHtmlSelectorProps) => {
         <FormItem>
           <FormControl>
             <AdvancedOptionToggle
+              disabled={disabled}
               htmlId="InnerText"
               isChecked={watch("noCodeConfig.elementSelector.innerHtml") !== undefined}
               onToggle={(checked) => {
@@ -33,6 +35,7 @@ export const InnerHtmlSelector = ({ form }: InnerHtmlSelectorProps) => {
                   <div className="col-span-3 flex items-end">
                     <Input
                       type="text"
+                      disabled={disabled}
                       className="bg-white"
                       placeholder={t("environments.actions.eg_install_app")}
                       {...field}

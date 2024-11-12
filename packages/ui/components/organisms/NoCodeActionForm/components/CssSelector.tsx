@@ -7,9 +7,10 @@ import { Input } from "../../../Input";
 
 interface CssSelectorProps {
   form: UseFormReturn<TActionClassInput>;
+  disabled: boolean;
 }
 
-export const CssSelector = ({ form }: CssSelectorProps) => {
+export const CssSelector = ({ form, disabled }: CssSelectorProps) => {
   const { watch, control } = form;
   const t = useTranslations();
   return (
@@ -20,6 +21,7 @@ export const CssSelector = ({ form }: CssSelectorProps) => {
         <FormItem>
           <FormControl>
             <AdvancedOptionToggle
+              disabled={disabled}
               htmlId="CssSelector"
               isChecked={watch("noCodeConfig.elementSelector.cssSelector") !== undefined}
               onToggle={(checked) => {
@@ -34,6 +36,7 @@ export const CssSelector = ({ form }: CssSelectorProps) => {
                 <Input
                   type="text"
                   className="bg-white"
+                  disabled={disabled}
                   placeholder={t("environments.actions.add_css_class_or_id")}
                   {...field}
                   isInvalid={!!error}

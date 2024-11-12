@@ -33,6 +33,7 @@ interface FileInputProps {
   imageFit?: "cover" | "contain";
   maxSizeInMB?: number;
   isVideoAllowed?: boolean;
+  disabled?: boolean;
 }
 
 interface SelectedFile {
@@ -52,6 +53,7 @@ export const FileInput = ({
   imageFit = "cover",
   maxSizeInMB,
   isVideoAllowed = false,
+  disabled = false,
 }: FileInputProps) => {
   const t = useTranslations();
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
@@ -280,6 +282,7 @@ export const FileInput = ({
                       multiple={multiple}
                       handleUpload={handleUploadMore}
                       uploadMore={true}
+                      disabled={disabled}
                     />
                   </div>
                 ) : (
@@ -334,6 +337,7 @@ export const FileInput = ({
                   allowedFileExtensions={allowedFileExtensions}
                   multiple={multiple}
                   handleUpload={handleUpload}
+                  disabled={disabled}
                 />
               )}
             </div>

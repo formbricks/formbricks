@@ -73,7 +73,6 @@ export const PricingTable = ({
 
   const openCustomerPortal = async () => {
     const manageSubscriptionResponse = await manageSubscriptionAction({
-      organizationId: organization.id,
       environmentId,
     });
     if (manageSubscriptionResponse?.data) {
@@ -84,7 +83,6 @@ export const PricingTable = ({
   const upgradePlan = async (priceLookupKey) => {
     try {
       const upgradePlanResponse = await upgradePlanAction({
-        organizationId: organization.id,
         environmentId,
         priceLookupKey,
       });
@@ -226,7 +224,7 @@ export const PricingTable = ({
 
         {hasBillingRights && (
           <div className="mx-auto mb-12">
-            <div className="flex gap-x-2">
+            <div className="gap-x-2">
               <div className="mb-4 flex w-fit cursor-pointer overflow-hidden rounded-lg border border-slate-200 p-1 lg:mb-0">
                 <div
                   className={`flex-1 rounded-md px-4 py-0.5 text-center ${
@@ -236,7 +234,7 @@ export const PricingTable = ({
                   {t("environments.settings.billing.monthly")}
                 </div>
                 <div
-                  className={`items-centerrounded-md flex-1 whitespace-nowrap py-0.5 pl-4 pr-2 text-center ${
+                  className={`flex-1 items-center whitespace-nowrap rounded-md py-0.5 pl-4 pr-2 text-center ${
                     planPeriod === "yearly" ? "bg-slate-200 font-semibold" : "bg-transparent"
                   }`}
                   onClick={() => handleMonthlyToggle("yearly")}>
@@ -246,25 +244,25 @@ export const PricingTable = ({
                   </span>
                 </div>
               </div>
-            </div>
-            <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
-              <div
-                className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
-                aria-hidden="true"
-              />
-              {CLOUD_PRICING_DATA.plans.map((plan) => (
-                <PricingCard
-                  planPeriod={planPeriod}
-                  key={plan.id}
-                  plan={plan}
-                  onUpgrade={async () => {
-                    await onUpgrade(plan.id);
-                  }}
-                  organization={organization}
-                  productFeatureKeys={productFeatureKeys}
-                  onManageSubscription={openCustomerPortal}
+              <div className="relative mx-auto grid max-w-md grid-cols-1 gap-y-8 lg:mx-0 lg:-mb-14 lg:max-w-none lg:grid-cols-4">
+                <div
+                  className="hidden lg:absolute lg:inset-x-px lg:bottom-0 lg:top-4 lg:block lg:rounded-xl lg:rounded-t-2xl lg:border lg:border-slate-200 lg:bg-slate-100 lg:pb-8 lg:ring-1 lg:ring-white/10"
+                  aria-hidden="true"
                 />
-              ))}
+                {CLOUD_PRICING_DATA.plans.map((plan) => (
+                  <PricingCard
+                    planPeriod={planPeriod}
+                    key={plan.id}
+                    plan={plan}
+                    onUpgrade={async () => {
+                      await onUpgrade(plan.id);
+                    }}
+                    organization={organization}
+                    productFeatureKeys={productFeatureKeys}
+                    onManageSubscription={openCustomerPortal}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         )}

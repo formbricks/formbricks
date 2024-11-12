@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Badge } from "./index";
+import { BadgeSelect } from "./index";
 
 const meta = {
-  title: "ui/Badge",
-  component: Badge,
+  title: "ui/BadgeSelect",
+  component: BadgeSelect,
   tags: ["autodocs"],
   parameters: {
     layout: "centered",
@@ -16,7 +16,7 @@ const meta = {
     size: { control: "select", options: ["small", "normal", "large"] },
     className: { control: "text" },
   },
-} satisfies Meta<typeof Badge>;
+} satisfies Meta<typeof BadgeSelect>;
 
 export default meta;
 

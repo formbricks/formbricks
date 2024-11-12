@@ -1,10 +1,11 @@
 import { getSessionUser } from "@/app/lib/api/apiHelper";
-import { MembershipRole } from "@prisma/client";
+import { OrganizationRole } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface Membership {
-  role: MembershipRole;
+  role: TOrganizationRole;
   userId: string;
 }
 
@@ -52,7 +53,7 @@ const deleteUser = async (userId: string) => {
   });
 };
 
-const updateUserMembership = async (organizationId: string, userId: string, role: MembershipRole) => {
+const updateUserMembership = async (organizationId: string, userId: string, role: OrganizationRole) => {
   await prisma.membership.update({
     where: {
       userId_organizationId: {
@@ -66,8 +67,11 @@ const updateUserMembership = async (organizationId: string, userId: string, role
   });
 };
 
-const getAdminMemberships = (memberships: Membership[]) =>
-  memberships.filter((membership) => membership.role === MembershipRole.admin);
+const getManagerMemberships = (memberships: Membership[]) =>
+  memberships.filter((membership) => membership.role === OrganizationRole.manager);
+
+const getOwnerMemberships = (memberships: Membership[]) =>
+  memberships.filter((membership) => membership.role === OrganizationRole.owner);
 
 const deleteOrganization = async (organizationId: string) => {
   await prisma.organization.delete({
@@ -112,16 +116,22 @@ export const DELETE = async () => {
       const role = currentUserMembership.role;
       const organizationId = currentUserMembership.organizationId;
 
-      const organizationAdminMemberships = getAdminMemberships(organizationMemberships);
-      const organizationHasAtLeastOneAdmin = organizationAdminMemberships.length > 0;
+      const organizationManagerMemberships = getManagerMemberships(organizationMemberships);
+      const organizationOwnerMemberships = getOwnerMemberships(organizationMemberships);
+      const organizationHasAtLeastOneManager = organizationManagerMemberships.length > 0;
       const organizationHasOnlyOneMember = organizationMemberships.length === 1;
-      const currentUserIsOrganizationOwner = role === MembershipRole.owner;
+      const organizationHasMoreThanOneOwner = organizationOwnerMemberships.length > 1;
+      const currentUserIsOrganizationOwner = role === OrganizationRole.owner;
 
       if (organizationHasOnlyOneMember) {
         await deleteOrganization(organizationId);
-      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneAdmin) {
-        const firstAdmin = organizationAdminMemberships[0];
-        await updateUserMembership(organizationId, firstAdmin.userId, MembershipRole.owner);
+      } else if (
+        currentUserIsOrganizationOwner &&
+        organizationHasAtLeastOneManager &&
+        !organizationHasMoreThanOneOwner
+      ) {
+        const firstManager = organizationManagerMemberships[0];
+        await updateUserMembership(organizationId, firstManager.userId, OrganizationRole.owner);
       } else if (currentUserIsOrganizationOwner) {
         await deleteOrganization(organizationId);
       }
