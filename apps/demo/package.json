@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
-    "dev": "next dev -p 3002 --turbo",
+    "dev": "next dev -p 3002 --turbopack",
     "go": "next dev -p 3002 --turbo",
     "build": "next build",
     "start": "next start",
@@ -14,9 +14,9 @@
     "@formbricks/js": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "lucide-react": "0.452.0",
-    "next": "14.2.16",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "next": "15.0.3",
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106"
   },
   "devDependencies": {
     "@formbricks/eslint-config": "workspace:*",

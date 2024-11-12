@@ -17,7 +17,7 @@
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@types/dompurify": "3.0.5",
-    "@types/react": "18.3.11"
+    "@types/react": "npm:types-react@19.0.0-rc.1"
   },
   "dependencies": {
     "ai": "^3.4.9",
@@ -28,13 +28,20 @@
     "@radix-ui/react-collapsible": "1.1.0",
     "https-proxy-agent": "7.0.5",
     "lucide-react": "0.452.0",
-    "next": "14.2.16",
+    "next": "15.0.3",
     "next-auth": "4.24.7",
     "node-fetch": "3.3.2",
     "react-hook-form": "7.53.0",
     "react-hot-toast": "2.4.1",
     "server-only": "0.0.1",
     "stripe": "16.7.0",
-    "zod": "3.23.8"
+    "zod": "3.23.8",
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "npm:types-react@19.0.0-rc.1"
+    }
   }
 }
