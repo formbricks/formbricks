@@ -1,7 +1,7 @@
 import { getSurveyFollowUpsAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { FollowUpItem } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpItem";
 import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
-import { LockIcon } from "lucide-react";
+import { LockIcon, SendIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -96,13 +96,18 @@ export const FollowUpsView = ({
 
       <div>
         {!surveyFollowUps.length && (
-          <div className="flex flex-col items-center space-y-2 text-center">
-            <p className="text-lg font-medium text-slate-900">
-              {t("environments.surveys.edit.follow_ups_empty_heading")}
-            </p>
-            <p className="text-sm font-medium text-slate-500">
-              {t("environments.surveys.edit.follow_ups_empty_description")}
-            </p>
+          <div className="flex flex-col items-center gap-y-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
+            <div className="flex items-center justify-center rounded-full border border-slate-200 bg-slate-100 p-2">
+              <SendIcon className="h-6 w-6 text-slate-500" />
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-slate-800">
+                {t("environments.surveys.edit.follow_ups_empty_heading")}
+              </p>
+              <p className="text-sm text-slate-500">
+                {t("environments.surveys.edit.follow_ups_empty_description")}
+              </p>
+            </div>
 
             <Button
               className="w-fit"
