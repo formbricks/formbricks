@@ -6,7 +6,7 @@
     "clean": "rimraf .turbo node_modules .next",
     "dev": "next dev -p 3002 --turbopack",
     "go": "next dev -p 3002 --turbo",
-    "build": "npm run build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
