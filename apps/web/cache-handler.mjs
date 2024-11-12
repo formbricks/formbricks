@@ -61,7 +61,7 @@ CacheHandler.onCreation(async () => {
     // Fallback to LRU handler if Redis client is not available.
     // The application will still work, but the cache will be in memory only and not shared.
     handler = createLruHandler();
-    console.warn("Falling back to LRU handler because Redis client is not available.");
+    console.log("Using LRU handler for caching.");
   }
 
   return {
