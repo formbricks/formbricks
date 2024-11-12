@@ -1,6 +1,6 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import { SurveyLoadingAnimation } from "@/app/s/[surveyId]/components/SurveyLoadingAnimation";
-import React, { useState } from "react";
+import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -61,9 +61,9 @@ export const LinkSurveyWrapper = ({
       <div>
         <SurveyLoadingAnimation survey={survey} isBackgroundLoaded={isBackgroundLoaded} />
         <MediaBackground survey={survey} product={product} onBackgroundLoaded={handleBackgroundLoaded}>
-          <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip md:items-center">
+          <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip sm:items-center">
             {!styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
-            <div className="h-full w-full space-y-6 p-0 md:max-w-md">
+            <div className="h-full w-full space-y-6 p-0 sm:max-w-lg">
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />

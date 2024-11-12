@@ -53,7 +53,7 @@ const Page = async ({ params, searchParams }) => {
     getProductByEnvironmentId(params.environmentId),
     getEnvironment(params.environmentId),
     getActionClasses(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getAttributeClasses(params.environmentId, undefined, { skipArchived: true }),
     getResponseCountBySurveyId(params.surveyId),
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),

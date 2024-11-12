@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TUserLocale } from "@formbricks/types/user";
+import { Label } from "@formbricks/ui/components/Label";
 import { Switch } from "@formbricks/ui/components/Switch";
 import { AttributeDetailModal } from "./AttributeDetailModal";
 import { AttributeClassDataRow } from "./AttributeRowData";
@@ -49,8 +50,15 @@ export const AttributeClassesTable = ({
       {hasArchived && (
         <div className="my-4 flex items-center justify-end text-right">
           <div className="flex items-center text-sm font-medium">
-            {t("environments.attributes.show_archived")}
-            <Switch className="mx-3" checked={showArchived} onCheckedChange={toggleShowArchived} />
+            <Label htmlFor="showArchivedToggle" className="cursor-pointer">
+              {t("environments.attributes.show_archived")}
+            </Label>
+            <Switch
+              id="showArchivedToggle"
+              className="mx-3"
+              checked={showArchived}
+              onCheckedChange={toggleShowArchived}
+            />
           </div>
         </div>
       )}

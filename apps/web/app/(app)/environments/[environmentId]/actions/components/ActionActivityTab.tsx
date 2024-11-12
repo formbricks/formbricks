@@ -32,7 +32,6 @@ export const ActionActivityTab = ({ actionClass, environmentId }: ActivityTabPro
       const getActiveInactiveSurveysResponse = await getActiveInactiveSurveysAction({
         actionClassId: actionClass.id,
       });
-      console.log(getActiveInactiveSurveysResponse, "randike");
       if (getActiveInactiveSurveysResponse?.data) {
         setActiveSurveys(getActiveInactiveSurveysResponse.data.activeSurveys);
         setInactiveSurveys(getActiveInactiveSurveysResponse.data.inactiveSurveys);
