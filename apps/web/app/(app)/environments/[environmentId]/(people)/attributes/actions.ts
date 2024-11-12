@@ -21,12 +21,16 @@ export const getSegmentsByAttributeClassAction = authenticatedActionClient
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       access: [
         {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
           type: "productTeam",
+          minPermission: "read",
           productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
-
     const segments = await getSegmentsByAttributeClassName(
       parsedInput.environmentId,
       parsedInput.attributeClass.name
