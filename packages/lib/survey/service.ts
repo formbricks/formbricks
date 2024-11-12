@@ -20,7 +20,6 @@ import {
   ZSurvey,
   ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
-import { surveyFollowUpCache } from "../../../apps/web/lib/cache/survey-follow-up";
 import { actionClassCache } from "../actionClass/cache";
 import { getActionClasses } from "../actionClass/service";
 import { attributeCache } from "../attribute/cache";
@@ -722,10 +721,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       resultShareKey: currentSurvey.resultShareKey ?? undefined,
     });
 
-    surveyFollowUpCache.revalidate({
-      surveyId: modifiedSurvey.id,
-    });
-
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -1093,6 +1088,15 @@ export const copySurveyToOtherEnvironment = async (
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
       segment: undefined,
+      followUps: {
+        createMany: {
+          data: existingSurvey.followUps.map((followUp) => ({
+            name: followUp.name,
+            trigger: followUp.trigger,
+            action: followUp.action,
+          })),
+        },
+      },
     };
 
     // Handle segment

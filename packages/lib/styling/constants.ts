@@ -129,5 +129,6 @@ export const getPreviewSurvey = (locale: string) => {
     languages: [],
     triggers: [],
     showLanguageSwitch: false,
+    followUps: [],
   } as TSurvey;
 };

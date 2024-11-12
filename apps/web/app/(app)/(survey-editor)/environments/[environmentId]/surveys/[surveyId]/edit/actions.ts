@@ -13,11 +13,8 @@ import {
 } from "@/lib/utils/helper";
 import { getSegment, getSurvey } from "@/lib/utils/services";
 import { z } from "zod";
-import { ZSurveyFollowUpAction, ZSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
-import { getSurveyFollowUpsPermission } from "@formbricks/ee/lib/service";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProduct } from "@formbricks/lib/product/service";
 import {
   cloneSegment,
@@ -29,15 +26,8 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { loadNewSegmentInSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
-import {
-  createSurveyFollowUp,
-  deleteSurveyFollowUp,
-  getSurveyFollowUps,
-  updateSurveyFollowUp,
-} from "./lib/survey-follow-up";
 
 /**
  * Checks if survey follow-ups are enabled for the given organization.
@@ -47,19 +37,6 @@ import {
  * @throws {ResourceNotFoundError}  If the organization is not found.
  * @throws {OperationNotAllowedError}  If survey follow-ups are not enabled for the organization.
  */
-const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<void> => {
-  const organization = await getOrganization(organizationId);
-
-  if (!organization) {
-    throw new ResourceNotFoundError("Organization not found", organizationId);
-  }
-
-  const isSurveyFollowUpsEnabled = getSurveyFollowUpsPermission(organization);
-  if (!isSurveyFollowUpsEnabled) {
-    throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
-  }
-};
-
 export const updateSurveyAction = authenticatedActionClient
   .schema(ZSurvey)
   .action(async ({ ctx, parsedInput }) => {
@@ -422,146 +399,4 @@ export const createActionClassAction = authenticatedActionClient
     });
 
     return await createActionClass(parsedInput.action.environmentId, parsedInput.action);
-  });
-
-const ZCreateSurveyFollowUpAction = z.object({
-  surveyId: ZId,
-  followUpData: z.object({
-    name: z.string().min(1, "Name must be at least 1 character long"),
-    trigger: ZSurveyFollowUpTrigger,
-    action: ZSurveyFollowUpAction,
-  }),
-});
-
-export const createSurveyFollowUpAction = authenticatedActionClient
-  .schema(ZCreateSurveyFollowUpAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "productTeam",
-          minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
-    });
-
-    await checkSurveyFollowUpsPermission(organizationId);
-
-    return await createSurveyFollowUp(parsedInput.surveyId, {
-      name: parsedInput.followUpData.name,
-      trigger: parsedInput.followUpData.trigger,
-      action: parsedInput.followUpData.action,
-    });
-  });
-
-export const getSurveyFollowUpsAction = authenticatedActionClient
-  .schema(
-    z.object({
-      surveyId: ZId,
-    })
-  )
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "productTeam",
-          minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
-    });
-
-    await checkSurveyFollowUpsPermission(organizationId);
-
-    return await getSurveyFollowUps(parsedInput.surveyId);
-  });
-
-const ZUpdateSurveyFollowUpAction = z.object({
-  surveyId: ZId,
-  surveyFollowUpId: ZId,
-  followUpData: z
-    .object({
-      name: z.string().optional(),
-      trigger: ZSurveyFollowUpTrigger.optional(),
-      action: ZSurveyFollowUpAction.optional(),
-    })
-    .optional(),
-});
-
-export const updateSurveyFollowUpAction = authenticatedActionClient
-  .schema(ZUpdateSurveyFollowUpAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "productTeam",
-          minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
-    });
-
-    await checkSurveyFollowUpsPermission(organizationId);
-
-    return await updateSurveyFollowUp(parsedInput.surveyFollowUpId, {
-      name: parsedInput.followUpData?.name,
-      trigger: parsedInput.followUpData?.trigger,
-      action: parsedInput.followUpData?.action,
-    });
-  });
-
-export const deleteSurveyFollowUpAction = authenticatedActionClient
-  .schema(
-    z.object({
-      surveyId: ZId,
-      surveyFollowUpId: ZId,
-    })
-  )
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "productTeam",
-          minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
-    });
-
-    await checkSurveyFollowUpsPermission(organizationId);
-
-    return await deleteSurveyFollowUp(parsedInput.surveyFollowUpId);
   });
