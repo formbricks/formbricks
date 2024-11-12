@@ -2,9 +2,9 @@ import { deleteSurveyFollowUpAction } from "@/app/(app)/(survey-editor)/environm
 import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
@@ -15,6 +15,8 @@ interface FollowUpItemProps {
   selectedLanguageCode: string;
   mailFrom: string;
   setRefetch: React.Dispatch<React.SetStateAction<boolean>>;
+  userEmail: string;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }
 
 export const FollowUpItem = ({
@@ -23,11 +25,59 @@ export const FollowUpItem = ({
   mailFrom,
   selectedLanguageCode,
   setRefetch,
+  userEmail,
+  setLocalSurvey,
 }: FollowUpItemProps) => {
   const t = useTranslations();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const isEmailToInvalid = useMemo(() => {
+    const { to } = followUp.action.properties;
+
+    if (!to) return true;
+
+    const matchedQuestion = localSurvey.questions.find((question) => question.id === to);
+    const matchedHiddenField = (localSurvey.hiddenFields?.fieldIds ?? []).find((fieldId) => fieldId === to);
+
+    if (!matchedQuestion && !matchedHiddenField) return true;
+
+    if (matchedQuestion) {
+      if (
+        ![TSurveyQuestionTypeEnum.OpenText, TSurveyQuestionTypeEnum.ContactInfo].includes(
+          matchedQuestion.type
+        )
+      ) {
+        return true;
+      }
+
+      if (
+        matchedQuestion.type === TSurveyQuestionTypeEnum.OpenText &&
+        matchedQuestion.inputType !== "email"
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [followUp.action.properties, localSurvey.hiddenFields?.fieldIds, localSurvey.questions]);
+
+  const isEndingInvalid = useMemo(() => {
+    const { endingIds } = followUp.trigger.properties ?? {};
+
+    if (endingIds) {
+      return endingIds.some((endingId) => !localSurvey.endings.find((ending) => ending.id === endingId));
+    }
+
+    return false;
+  }, [followUp.trigger.properties, localSurvey.endings]);
+
+  // console.log({
+  //   followUp,
+  //   isEmailToInvalid,
+  //   isEndingInvalid,
+  // });
 
   return (
     <>
@@ -54,6 +104,10 @@ export const FollowUpItem = ({
               text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
               type="gray"
             />
+
+            {isEmailToInvalid || isEndingInvalid ? (
+              <Badge size="normal" text="Issue detected" type="warning" />
+            ) : null}
           </div>
         </div>
 
@@ -73,6 +127,7 @@ export const FollowUpItem = ({
 
       <FollowUpModal
         localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
         open={editFollowUpModalOpen}
         setOpen={setEditFollowUpModalOpen}
         mailFrom={mailFrom}
@@ -89,6 +144,7 @@ export const FollowUpItem = ({
         }}
         mode="edit"
         setRefetch={setRefetch}
+        userEmail={userEmail}
       />
 
       <ConfirmationModal

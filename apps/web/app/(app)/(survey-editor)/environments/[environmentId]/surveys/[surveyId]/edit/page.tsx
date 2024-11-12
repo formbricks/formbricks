@@ -1,3 +1,4 @@
+import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/user";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
@@ -86,12 +87,15 @@ const Page = async ({ params, searchParams }) => {
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const isSurveyFollowUpsAllowed = getSurveyFollowUpsPermission(organization);
 
+  const userEmail = await getUserEmail(session.user.id);
+
   if (
     !survey ||
     !environment ||
     !actionClasses ||
     !attributeClasses ||
     !product ||
+    !userEmail ||
     isSurveyCreationDeletionDisabled
   ) {
     return <ErrorComponent />;
@@ -120,6 +124,7 @@ const Page = async ({ params, searchParams }) => {
       locale={locale ?? DEFAULT_LOCALE}
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+      userEmail={userEmail}
     />
   );
 };

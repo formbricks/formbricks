@@ -1145,3 +1145,7 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
 
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
+
+export const getSurveyFollowUpActionDefaultBody = () => {
+  return `<p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">Hey 👋</span><br><br><span style="white-space: pre-wrap;">Thanks for taking the time to respond, we will be in touch shortly.</span><br><br><span style="white-space: pre-wrap;">Have a great day!</span></p>`;
+};

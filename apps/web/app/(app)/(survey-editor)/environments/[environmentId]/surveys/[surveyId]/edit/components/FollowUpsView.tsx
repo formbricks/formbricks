@@ -11,16 +11,20 @@ import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 
 interface FollowUpsViewProps {
   localSurvey: TSurvey;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   selectedLanguageCode: string;
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
+  userEmail: string;
 }
 
 export const FollowUpsView = ({
   localSurvey,
+  setLocalSurvey,
   selectedLanguageCode,
   mailFrom,
   isSurveyFollowUpsAllowed,
+  userEmail,
 }: FollowUpsViewProps) => {
   const t = useTranslations();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
@@ -86,7 +90,7 @@ export const FollowUpsView = ({
   return (
     <div className="mt-12 space-y-4 p-5">
       <div className="flex justify-end">
-        {localSurvey.followUps.length ? (
+        {surveyFollowUps.length ? (
           <Button variant="primary" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
             + {t("environments.surveys.edit.follow_ups_new")}
           </Button>
@@ -126,9 +130,11 @@ export const FollowUpsView = ({
               key={followUp.id}
               followUp={followUp}
               localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               setRefetch={setRefetch}
+              userEmail={userEmail}
             />
           );
         })}
@@ -136,11 +142,13 @@ export const FollowUpsView = ({
 
       <FollowUpModal
         localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
         open={addFollowUpModalOpen}
         setOpen={setAddFollowUpModalOpen}
         selectedLanguageCode={selectedLanguageCode}
         mailFrom={mailFrom}
         setRefetch={setRefetch}
+        userEmail={userEmail}
       />
     </div>
   );
