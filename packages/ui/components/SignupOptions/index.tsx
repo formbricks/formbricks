@@ -1,10 +1,16 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { z } from "zod";
 import { createUser } from "@formbricks/lib/utils/users";
+import { ZUserName } from "@formbricks/types/user";
 import { Button } from "../Button";
+import { FormControl, FormError, FormField, FormItem } from "../Form";
+import { Input } from "../Input";
 import { PasswordInput } from "../PasswordInput";
 import { AzureButton } from "./components/AzureButton";
 import { GithubButton } from "./components/GithubButton";
@@ -41,28 +47,35 @@ export const SignupOptions = ({
   oidcDisplayName,
   userLocale,
 }: SignupOptionsProps) => {
-  const t = useTranslations();
-  const [password, setPassword] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
-  const [isButtonEnabled, setButtonEnabled] = useState(true);
+  const t = useTranslations();
+
+  const ZSignupInput = z.object({
+    name: ZUserName,
+    email: z.string().email(),
+    password: z
+      .string()
+      .min(8)
+      .regex(/^(?=.*[A-Z])(?=.*\d).*$/),
+  });
+
+  type TSignupInput = z.infer<typeof ZSignupInput>;
+  const form = useForm<TSignupInput>({
+    defaultValues: {
+      name: "",
+      email: emailFromSearchParams || "",
+      password: "",
+    },
+    resolver: zodResolver(ZSignupInput),
+  });
 
   const router = useRouter();
 
-  const formRef = useRef<HTMLFormElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
-  const checkFormValidity = () => {
-    // If all fields are filled, enable the button
-    if (formRef.current) {
-      setButtonEnabled(formRef.current.checkValidity());
-    }
-  };
-
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-
+  const handleSubmit = async (data: TSignupInput) => {
     if (!isValid) {
       return;
     }
@@ -70,16 +83,10 @@ export const SignupOptions = ({
     setSigningUp(true);
 
     try {
-      await createUser(
-        e.target.elements.name.value,
-        e.target.elements.email.value,
-        e.target.elements.password.value,
-        userLocale,
-        inviteToken || ""
-      );
+      await createUser(data.name, data.email, data.password, userLocale, inviteToken || "");
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
-        : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
+        : `/auth/verification-requested?email=${encodeURIComponent(data.email)}`;
 
       router.push(url);
     } catch (e: any) {
@@ -93,87 +100,105 @@ export const SignupOptions = ({
   return (
     <div className="space-y-2">
       {emailAuthEnabled && (
-        <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
-          {showLogin && (
-            <div>
-              <div className="mb-2 transition-all duration-500 ease-in-out">
-                <label htmlFor="name" className="sr-only">
-                  {t("common.full_name")}
-                </label>
-                <div className="mt-1">
-                  <input
-                    ref={nameRef}
-                    id="name"
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            {showLogin && (
+              <div>
+                <div className="space-y-2">
+                  <FormField
+                    control={form.control}
                     name="name"
-                    type="text"
-                    autoComplete="given-name"
-                    placeholder={t("common.full_name")}
-                    aria-placeholder={"Full name"}
-                    required
-                    className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    render={({ field, fieldState: { error } }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div>
+                            <Input
+                              value={field.value}
+                              name="name"
+                              autoFocus
+                              onChange={(name) => field.onChange(name)}
+                              placeholder="Full name"
+                              className="bg-white"
+                            />
+                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field, fieldState: { error } }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div>
+                            <Input
+                              value={field.value}
+                              name="email"
+                              onChange={(email) => field.onChange(email)}
+                              defaultValue={emailFromSearchParams}
+                              placeholder="work@email.com"
+                              className="bg-white"
+                            />
+                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field, fieldState: { error } }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div>
+                            <PasswordInput
+                              id="password"
+                              name="password"
+                              value={field.value}
+                              onChange={(password) => field.onChange(password)}
+                              autoComplete="current-password"
+                              placeholder="*******"
+                              aria-placeholder="password"
+                              required
+                              className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
+                            />
+                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
                 </div>
+                <IsPasswordValid password={form.watch("password")} setIsValid={setIsValid} />
               </div>
-              <div className="mb-2 transition-all duration-500 ease-in-out">
-                <label htmlFor="email" className="sr-only">
-                  {t("common.email")}
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="work@email.com"
-                  defaultValue={emailFromSearchParams}
-                  className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-                />
-              </div>
-              <div className="transition-all duration-500 ease-in-out">
-                <label htmlFor="password" className="sr-only">
-                  {t("common.password")}
-                </label>
-                <PasswordInput
-                  id="password"
-                  name="password"
-                  value={password ? password : ""}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  placeholder="*******"
-                  aria-placeholder="password"
-                  required
-                  className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md shadow-sm sm:text-sm"
-                />
-              </div>
-              <IsPasswordValid password={password} setIsValid={setIsValid} />
-            </div>
-          )}
-          {showLogin && (
-            <Button
-              size="base"
-              type="submit"
-              className="w-full justify-center"
-              loading={signingUp}
-              disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
-              {t("auth.continue_with_email")}
-            </Button>
-          )}
+            )}
+            {showLogin && (
+              <Button
+                type="submit"
+                className="h-10 w-full justify-center"
+                loading={signingUp}
+                disabled={!form.formState.isValid}>
+                {t("auth.continue_with_email")}
+              </Button>
+            )}
 
-          {!showLogin && (
-            <Button
-              size="base"
-              type="button"
-              onClick={() => {
-                setShowLogin(true);
-                setButtonEnabled(false);
-                // Add a slight delay before focusing the input field to ensure it's visible
-                setTimeout(() => nameRef.current?.focus(), 100);
-              }}
-              className="w-full justify-center">
-              {t("auth.continue_with_email")}
-            </Button>
-          )}
-        </form>
+            {!showLogin && (
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowLogin(true);
+                  // Add a slight delay before focusing the input field to ensure it's visible
+                  setTimeout(() => nameRef.current?.focus(), 100);
+                }}
+                className="h-10 w-full justify-center">
+                {t("auth.continue_with_email")}
+              </Button>
+            )}
+          </form>
+        </FormProvider>
       )}
       {googleOAuthEnabled && (
         <>

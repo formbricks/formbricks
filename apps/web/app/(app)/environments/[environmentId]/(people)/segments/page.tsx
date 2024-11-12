@@ -24,7 +24,7 @@ const Page = async ({ params }) => {
   const [environment, segments, attributeClasses, organization, product] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getAttributeClasses(params.environmentId, undefined, { skipArchived: true }),
     getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);

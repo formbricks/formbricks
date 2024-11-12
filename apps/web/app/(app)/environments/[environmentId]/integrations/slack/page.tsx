@@ -12,10 +12,8 @@ import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -45,10 +43,6 @@ const Page = async ({ params }) => {
     throw new Error(t("common.product_not_found"));
   }
 
-  let channelsArray: TIntegrationItem[] = [];
-  if (slackIntegration && slackIntegration.config.key) {
-    channelsArray = await getSlackChannels(params.environmentId);
-  }
   const locale = await findMatchingLocale();
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
@@ -75,7 +69,6 @@ const Page = async ({ params }) => {
         <SlackWrapper
           isEnabled={isEnabled}
           environment={environment}
-          channelsArray={channelsArray}
           surveys={surveys}
           slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}
