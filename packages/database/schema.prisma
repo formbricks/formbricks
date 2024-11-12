@@ -341,6 +341,7 @@ model Survey {
   countries                       Country[]        @relation("SurveyCountries")
   tags                            Tag[]
   limitedCountries                Boolean          @default(false)
+  timerDuration                   Int?
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])

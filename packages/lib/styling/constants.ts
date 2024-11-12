@@ -133,4 +133,5 @@ export const PREVIEW_SURVEY = {
   languages: [],
   triggers: [],
   showLanguageSwitch: false,
+  timerDuration: null,
 } as TSurvey;

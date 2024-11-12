@@ -33,6 +33,12 @@ export function SurveyGeneralSettings({
   const [usingCustomReward, setUsingCustomReward] = useState(
     localSurvey.reward !== product.defaultRewardInUSD
   );
+  const [timerEnabled, setTimerEnabled] = useState(
+    localSurvey.timerDuration !== null && localSurvey.timerDuration !== undefined
+  );
+  const [timerDuration, setTimerDuration] = useState<number | undefined>(
+    localSurvey.timerDuration ?? undefined
+  );
 
   const toggleUsingDefaultReward = (isChecked: boolean) => {
     setUsingCustomReward(isChecked);
@@ -50,6 +56,27 @@ export function SurveyGeneralSettings({
     setLocalSurvey({
       ...localSurvey,
       reward: newValue,
+    });
+  };
+
+  const toggleTimerEnabled = (isChecked: boolean) => {
+    setTimerEnabled(isChecked);
+    setLocalSurvey({
+      ...localSurvey,
+      timerDuration: isChecked ? (timerDuration ?? 180) : null,
+    });
+    if (isChecked && (timerDuration === undefined || timerDuration === null)) {
+      setTimerDuration(180); // Set a default value if timerDuration is undefined or null
+    }
+  };
+
+  const updateTimerDuration = (e) => {
+    let newValue = parseInt(e.target.value, 10);
+    if (isNaN(newValue) || newValue <= 0) newValue = 1;
+    setTimerDuration(newValue);
+    setLocalSurvey({
+      ...localSurvey,
+      timerDuration: newValue,
     });
   };
 
@@ -121,7 +148,9 @@ export function SurveyGeneralSettings({
           </div>
           <div>
             <p className="font-semibold text-slate-800">Survey General Settings</p>
-            <p className="mt-1 text-sm text-slate-500">Choose language, countries and reward for survey.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Choose language, countries, reward, and timer settings for survey.
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -194,6 +223,34 @@ export function SurveyGeneralSettings({
                     value: country.isoCode,
                     label: country.name,
                   }))}
+                />
+              </div>
+            )}
+          </div>
+          <div className="p-3">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="timerEnabled" checked={timerEnabled} onCheckedChange={toggleTimerEnabled} />
+              <Label htmlFor="timerEnabled" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Enable Timer</h3>
+                  <p className="text-xs font-normal text-slate-500">Enable or disable the survey timer.</p>
+                </div>
+              </Label>
+            </div>
+            {timerEnabled && (
+              <div className="ml-2 mt-2">
+                <Label htmlFor="timerDurationInput" className="cursor-pointer">
+                  Timer Duration (seconds):
+                </Label>
+                <Input
+                  autoFocus
+                  type="number"
+                  id="timerDurationInput"
+                  step="1"
+                  min="1"
+                  onChange={updateTimerDuration}
+                  value={timerDuration}
+                  className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                 />
               </div>
             )}

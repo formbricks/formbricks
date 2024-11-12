@@ -44,4 +44,5 @@ export const minimalSurvey: TSurvey = {
   tags: [],
   limitedCountries: false,
   reward: 0,
+  timerDuration: null,
 };

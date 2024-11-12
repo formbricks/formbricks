@@ -800,6 +800,7 @@ export const ZSurvey = z
     limitedCountries: z.boolean(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
+    timerDuration: z.number().nullable(),
   })
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, endings } = survey;

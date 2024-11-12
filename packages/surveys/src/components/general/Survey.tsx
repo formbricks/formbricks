@@ -8,8 +8,8 @@ import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
 import { WelcomeCard } from "@/components/general/WelcomeCard";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
-import { adTranslations } from "@/lib/adTranslations.ts";
 import { parseRecallInformation } from "@/lib/recall";
+import { surveyTranslations } from "@/lib/surveyTranslations.ts";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
@@ -27,7 +27,7 @@ interface VariableStackEntry {
   variables: TResponseVariables;
 }
 
-type LanguageCode = keyof typeof adTranslations;
+type LanguageCode = keyof typeof surveyTranslations;
 
 export const Survey = ({
   survey,
@@ -56,6 +56,9 @@ export const Survey = ({
   autoFocus,
 }: SurveyBaseProps) => {
   const [localSurvey, setlocalSurvey] = useState<TSurvey>(survey);
+  const [timeLeft, setTimeLeft] = useState<number | undefined>(survey.timerDuration ?? undefined);
+  const [isEndingPage, setIsEndingPage] = useState(false);
+  const [isPreview] = useState(!getSetIsResponseSendingFinished);
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
@@ -173,6 +176,41 @@ export const Survey = ({
   useEffect(() => {
     setselectedLanguage(languageCode);
   }, [languageCode]);
+
+  useEffect(() => {
+    if (isEndingPage || isPreview || timeLeft === undefined) {
+      return;
+    }
+    if (timeLeft <= 0) {
+      setIsResponseSendingFinished(true);
+      const firstEndingId = localSurvey.endings.length > 0 ? localSurvey.endings[0].id : undefined;
+      if (firstEndingId) {
+        setQuestionId(firstEndingId);
+      }
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => (prevTime !== undefined ? prevTime - 1 : prevTime));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, localSurvey.endings, isEndingPage]);
+
+  useEffect(() => {
+    const endingCard = localSurvey.endings.find((ending) => ending.id === questionId);
+    if (endingCard) {
+      setIsEndingPage(true);
+    } else {
+      setIsEndingPage(false);
+    }
+  }, [questionId]);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+  };
 
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
@@ -338,7 +376,7 @@ export const Survey = ({
     return panelistId;
   };
 
-  const adTranslation = adTranslations[languageKey] || adTranslations.default;
+  const translations = surveyTranslations[languageKey] || surveyTranslations.default;
 
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
@@ -443,6 +481,15 @@ export const Survey = ({
             )}>
             {content()}
           </div>
+          {timeLeft !== undefined && !isEndingPage && (
+            <p className="fb-flex fb-justify-center fb-items-center fb-text-signature fb-text-xs">
+              <b>
+                <span className="fb-text-branding-text hover:fb-text-signature">
+                  {translations.timeLeft}: {formatTime(timeLeft)}
+                </span>
+              </b>
+            </p>
+          )}
           <div className="fb-mx-6 fb-mb-10 fb-mt-2 fb-space-y-3 md:fb-mb-6 md:fb-mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={localSurvey} questionId={questionId} />}
@@ -455,9 +502,9 @@ export const Survey = ({
                   textAlign: "center",
                   lineHeight: "1.5",
                 }}>
-                <div style={{ marginBottom: "25px" }}>{adTranslation.adExplanation}</div>
+                <div style={{ marginBottom: "25px" }}>{translations.adExplanation}</div>
                 <div style={{ fontSize: "large", marginBottom: "25px" }}>⬇️</div>
-                {adTranslation.adDescription}
+                {translations.adDescription}
               </div>
             )}
           </div>
