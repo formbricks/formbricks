@@ -200,7 +200,7 @@ const CodeGroupPanels = ({ children, ...props }: React.ComponentPropsWithoutRef<
 
 const usePreventLayoutShift = () => {
   let positionRef = useRef<HTMLElement>(null);
-  let rafRef = useRef<number>(undefined);
+  let rafRef = useRef<number>();
 
   useEffect(() => {
     return () => {

@@ -17,7 +17,7 @@
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@types/dompurify": "3.0.5",
-    "@types/react": "npm:types-react@19.0.0-rc.1"
+    "@types/react": "18.3.11"
   },
   "dependencies": {
     "ai": "^3.4.9",
