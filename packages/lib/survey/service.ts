@@ -101,6 +101,7 @@ export const selectSurvey = {
   countries: true,
   tags: true,
   limitedCountries: true,
+  timerDuration: true,
   showLanguageSwitch: true,
   languages: {
     select: {

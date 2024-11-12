@@ -320,6 +320,7 @@ export const mockSurvey: TSurvey = {
   languages: mockSurveyLanguages,
   segment: mockSegment,
   showLanguageSwitch: null,
+  timerDuration: null,
 } as unknown as TSurvey;
 
 export const mockTranslatedWelcomeCard = {
