@@ -59,15 +59,13 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const membershipRole = currentUserMembership?.role;
-  const { isOwner, isManager } = getAccessFlags(membershipRole);
-
-  const isOwnerOrManager = isOwner || isManager;
+  const { isMember } = getAccessFlags(membershipRole);
 
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
   const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
 
-  if (!isOwnerOrManager && !productPermission) {
+  if (isMember && !productPermission) {
     throw new Error(t("common.product_permission_not_found"));
   }
 
