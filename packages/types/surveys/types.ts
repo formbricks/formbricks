@@ -1068,7 +1068,7 @@ export const ZSurvey = z
 
       if (question.type === TSurveyQuestionTypeEnum.Cal) {
         if (question.calHost !== undefined) {
-          const hostnameRegex = /^[a-zA-Z0-9]+(?<domain>\.[a-zA-Z0-9]+)+$/;
+          const hostnameRegex = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)){1,}$/i;
           if (!hostnameRegex.test(question.calHost)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,

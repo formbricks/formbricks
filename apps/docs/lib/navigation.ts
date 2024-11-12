@@ -126,7 +126,7 @@ export const navigation: Array<NavGroup> = [
           { title: "Zapier", href: "/developer-docs/integrations/zapier" },
         ],
       },
-      { title: "Access Roles", href: "/global/access-roles" },
+      { title: "User Management", href: "/global/access-roles" },
       { title: "Styling Theme", href: "/global/styling-theme" },
     ],
   },
@@ -156,8 +156,6 @@ export const navigation: Array<NavGroup> = [
         title: "Contributing",
         children: [
           { title: "Get started", href: "/developer-docs/contributing/get-started" },
-          { title: "Codespaces", href: "/developer-docs/contributing/codespaces" },
-          { title: "Gitpod", href: "/developer-docs/contributing/gitpod" },
           { title: "Troubleshooting", href: "/developer-docs/contributing/troubleshooting" },
         ],
       },

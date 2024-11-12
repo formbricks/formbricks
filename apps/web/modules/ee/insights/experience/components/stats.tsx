@@ -1,12 +1,12 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getStatsAction } from "@/modules/ee/insights/experience/actions";
 import { TStats } from "@/modules/ee/insights/experience/types/stats";
 import { ActivityIcon, GaugeIcon, InboxIcon, MessageCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";

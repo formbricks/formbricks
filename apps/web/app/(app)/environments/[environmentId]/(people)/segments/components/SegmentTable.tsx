@@ -7,12 +7,14 @@ type TSegmentTableProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   isAdvancedTargetingAllowed: boolean;
+  isReadOnly: boolean;
 };
 
 export const SegmentTable = ({
   segments,
   attributeClasses,
   isAdvancedTargetingAllowed,
+  isReadOnly,
 }: TSegmentTableProps) => {
   const t = useTranslations();
   return (
@@ -35,6 +37,7 @@ export const SegmentTable = ({
               segments={segments}
               attributeClasses={attributeClasses}
               isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+              isReadOnly={isReadOnly}
             />
           ))}
         </>

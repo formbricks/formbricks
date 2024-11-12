@@ -1,5 +1,6 @@
 "use client";
 
+import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { generatePersonTableColumns } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTableColumn";
 import {
   DndContext,
@@ -40,6 +41,7 @@ interface PersonTableProps {
   environmentId: string;
   searchValue: string;
   setSearchValue: (value: string) => void;
+  isReadOnly: boolean;
 }
 
 export const PersonTable = ({
@@ -51,6 +53,7 @@ export const PersonTable = ({
   environmentId,
   searchValue,
   setSearchValue,
+  isReadOnly,
 }: PersonTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -63,7 +66,7 @@ export const PersonTable = ({
   const [parent] = useAutoAnimate();
   // Generate columns
   const columns = useMemo(
-    () => generatePersonTableColumns(isExpanded ?? false, searchValue, t),
+    () => generatePersonTableColumns(isExpanded ?? false, searchValue, t, isReadOnly),
     [isExpanded, searchValue]
   );
 
@@ -162,6 +165,10 @@ export const PersonTable = ({
     }
   };
 
+  const deletePerson = async (personId: string) => {
+    await deletePersonAction({ personId });
+  };
+
   return (
     <div className="w-full">
       <SearchBar
@@ -181,12 +188,13 @@ export const PersonTable = ({
           table={table}
           deleteRows={deletePersons}
           type="person"
+          deleteAction={deletePerson}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
-            <TableHeader>
+            <TableHeader className="pointer-events-auto">
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
+                <TableRow key={headerGroup.id}>
                   <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
                     {headerGroup.headers.map((header) => (
                       <DataTableHeader
@@ -196,7 +204,7 @@ export const PersonTable = ({
                       />
                     ))}
                   </SortableContext>
-                </tr>
+                </TableRow>
               ))}
             </TableHeader>
 
