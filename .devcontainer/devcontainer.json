@@ -17,7 +17,7 @@
   "forwardPorts": [3000, 5432, 8025],
 
   "name": "Node.js & PostgreSQL",
-  "postAttachCommand": "pnpm dev --filter=@formbricks/web... --filter=@formbricks/demo...",
+  "postAttachCommand": "pnpm go",
 
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "cp .env.example .env && sed -i '/^ENCRYPTION_KEY=/c\\ENCRYPTION_KEY='$(openssl rand -hex 32) .env && sed -i '/^NEXTAUTH_SECRET=/c\\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env && sed -i '/^CRON_SECRET=/c\\CRON_SECRET='$(openssl rand -hex 32) .env && pnpm install && pnpm db:migrate:dev",
