@@ -1186,7 +1186,7 @@ export const ZSurvey = z
             if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: `The follow up action ${String(index + 1)} has an invalid email field`,
+                message: `The action in follow up ${String(index + 1)} has an invalid email field`,
                 path: ["followUps"],
               });
             }
@@ -1196,7 +1196,7 @@ export const ZSurvey = z
               if (!followUp.trigger.properties?.endingIds?.length) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
-                  message: `The follow up trigger ${String(index + 1)} has no ending selected`,
+                  message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
                   path: ["followUps"],
                 });
               }
