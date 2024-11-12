@@ -375,7 +375,11 @@ export const FollowUpModal = ({
                                     className="mr-2 h-5 min-h-5 w-5 min-w-5"
                                     aria-hidden="true"
                                   />
-                                  <p className="text-sm">No endings found in the survey!</p>
+                                  <p className="text-sm">
+                                    {t(
+                                      "environments.surveys.edit.follow_ups_modal_trigger_type_ending_warning"
+                                    )}
+                                  </p>
                                 </div>
                               ) : null}
                             </div>
@@ -498,7 +502,9 @@ export const FollowUpModal = ({
                                   className="mr-2 h-5 min-h-5 w-5 min-w-5"
                                   aria-hidden="true"
                                 />
-                                <p className="text-sm">No email field detected in the survey.</p>
+                                <p className="text-sm">
+                                  {t("environments.surveys.edit.follow_ups_modal_action_to_warning")}
+                                </p>
                               </div>
                             )}
 

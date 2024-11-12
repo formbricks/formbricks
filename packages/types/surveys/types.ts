@@ -1190,6 +1190,17 @@ export const ZSurvey = z
                 path: ["followUps"],
               });
             }
+
+            if (followUp.trigger.type === "endings") {
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
+              if (!followUp.trigger.properties?.endingIds?.length) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: `The follow up trigger ${String(index + 1)} has no ending selected`,
+                  path: ["followUps"],
+                });
+              }
+            }
           }
         });
     }
