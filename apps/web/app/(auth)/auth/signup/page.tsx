@@ -22,7 +22,7 @@ const Page = async (props: { searchParams: Promise<{ [key: string]: string | str
   const searchParams = await props.searchParams;
   const inviteToken = searchParams["inviteToken"] ?? null;
   const isMultOrgEnabled = await getIsMultiOrgEnabled();
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }

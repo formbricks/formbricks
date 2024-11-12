@@ -12,8 +12,9 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { getTeamsByOrganizationId, getTeamsByProductId } from "./lib/teams";
 
-export const ProductTeams = async ({ params }: { params: { environmentId: string } }) => {
+export const ProductTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslations();
+  const params = await props.params;
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),

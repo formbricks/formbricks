@@ -53,7 +53,7 @@ export const ExperiencePage = async ({ params }) => {
   if (!isAIEnabled) {
     notFound();
   }
-  const locale = await findMatchingLocale();
+  const locale = await await findMatchingLocale();
 
   return (
     <PageContentWrapper>

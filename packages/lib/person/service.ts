@@ -63,7 +63,7 @@ export const transformPrismaPerson = (person: TransformPersonInput): TPersonWith
 };
 
 export const getPerson = reactCache(
-  (personId: string): Promise<TPerson | null> =>
+  async (personId: string): Promise<TPerson | null> =>
     cache(
       async () => {
         validateInputs([personId, ZId]);
@@ -119,7 +119,7 @@ const buildPersonWhereClause = (environmentId: string, search?: string): Prisma.
 });
 
 export const getPeople = reactCache(
-  (environmentId: string, offset?: number, searchValue?: string): Promise<TPersonWithAttributes[]> =>
+  async (environmentId: string, offset?: number, searchValue?: string): Promise<TPersonWithAttributes[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
@@ -148,7 +148,7 @@ export const getPeople = reactCache(
 );
 
 export const getPersonCount = reactCache(
-  (environmentId: string, searchValue?: string): Promise<number> =>
+  async (environmentId: string, searchValue?: string): Promise<number> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [searchValue, ZOptionalString]);
@@ -248,7 +248,7 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
 };
 
 export const getPersonByUserId = reactCache(
-  (environmentId: string, userId: string): Promise<TPerson | null> =>
+  async (environmentId: string, userId: string): Promise<TPerson | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [userId, ZString]);

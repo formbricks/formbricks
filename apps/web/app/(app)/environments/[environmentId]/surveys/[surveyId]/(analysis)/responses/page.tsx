@@ -73,7 +73,7 @@ const Page = async (props) => {
 
   const isAIEnabled = await getIsAIEnabled(organization);
   const shouldGenerateInsights = needsInsightsGeneration(survey);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>

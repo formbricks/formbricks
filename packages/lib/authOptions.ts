@@ -257,7 +257,7 @@ export const authOptions: NextAuthOptions = {
           emailVerified: new Date(Date.now()),
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
-          locale: findMatchingLocale(),
+          locale: await findMatchingLocale(),
         });
 
         // Default organization assignment if env variable is set

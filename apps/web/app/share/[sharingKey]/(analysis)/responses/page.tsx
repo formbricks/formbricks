@@ -39,7 +39,7 @@ const Page = async (props) => {
   }
 
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   return (
     <div className="flex w-full justify-center">

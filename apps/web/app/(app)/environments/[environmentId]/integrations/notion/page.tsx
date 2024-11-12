@@ -60,7 +60,7 @@ const Page = async (props) => {
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
     databasesArray = await getNotionDatabases(environment.id);
   }
-  const locale = await findMatchingLocale();
+  const locale = await await findMatchingLocale();
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session?.user.id,

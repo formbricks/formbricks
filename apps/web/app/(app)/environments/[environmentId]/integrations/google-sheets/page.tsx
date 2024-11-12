@@ -52,7 +52,7 @@ const Page = async (props) => {
     (integration): integration is TIntegrationGoogleSheets => integration.type === "googleSheets"
   );
 
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session?.user.id,

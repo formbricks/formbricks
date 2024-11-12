@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 
 /* eslint-disable no-console -- debugging*/
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";

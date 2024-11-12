@@ -31,7 +31,7 @@ const Page = async (props) => {
     getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   if (!session) {
     throw new Error(t("common.session_not_found"));

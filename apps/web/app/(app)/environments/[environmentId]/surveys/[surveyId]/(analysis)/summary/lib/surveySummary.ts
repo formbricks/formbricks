@@ -883,7 +883,7 @@ export const getQuestionSummary = async (
 };
 
 export const getSurveySummary = reactCache(
-  (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<TSurveySummary> =>
+  async (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<TSurveySummary> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);

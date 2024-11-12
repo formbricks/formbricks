@@ -51,7 +51,7 @@ const Page = async (props: LinkSurveyPageProps) => {
   }
   const isPreview = searchParams.preview === "true";
   const survey = await getSurvey(params.surveyId);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
   const suId = searchParams.suId;
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;

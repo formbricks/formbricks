@@ -54,7 +54,7 @@ const Page = async (props) => {
     airtableArray = await getAirtableTables(params.environmentId);
   }
 
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session?.user.id,

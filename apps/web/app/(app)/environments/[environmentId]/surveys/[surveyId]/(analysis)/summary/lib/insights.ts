@@ -11,7 +11,12 @@ import { TInsight } from "@formbricks/types/insights";
 import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 export const getInsightsBySurveyIdQuestionId = reactCache(
-  (surveyId: string, questionId: TSurveyQuestionId, limit?: number, offset?: number): Promise<TInsight[]> =>
+  async (
+    surveyId: string,
+    questionId: TSurveyQuestionId,
+    limit?: number,
+    offset?: number
+  ): Promise<TInsight[]> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [questionId, ZSurveyQuestionId]);

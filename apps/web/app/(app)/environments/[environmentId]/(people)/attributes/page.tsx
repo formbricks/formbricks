@@ -26,7 +26,7 @@ const Page = async (props) => {
   let attributeClasses = await getAttributeClasses(params.environmentId);
   const t = await getTranslations();
   const product = await getProductByEnvironmentId(params.environmentId);
-  const locale = await findMatchingLocale();
+  const locale = await await findMatchingLocale();
   if (!product) {
     throw new Error(t("common.product_not_found"));
   }

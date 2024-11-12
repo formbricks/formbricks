@@ -35,6 +35,7 @@
     "@react-email/components": "0.0.25",
     "@sentry/nextjs": "8.34.0",
     "@tanstack/react-table": "8.20.5",
+    "@vercel/functions": "1.5.0",
     "@vercel/og": "0.6.3",
     "@vercel/otel": "1.10.0",
     "@vercel/speed-insights": "1.0.12",

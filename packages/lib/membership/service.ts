@@ -11,7 +11,7 @@ import { organizationCache } from "../organization/cache";
 import { validateInputs } from "../utils/validate";
 
 export const getMembershipByUserIdOrganizationId = reactCache(
-  (userId: string, organizationId: string): Promise<TMembership | null> =>
+  async (userId: string, organizationId: string): Promise<TMembership | null> =>
     cache(
       async () => {
         validateInputs([userId, ZString], [organizationId, ZString]);
