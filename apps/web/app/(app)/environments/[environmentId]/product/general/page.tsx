@@ -19,7 +19,8 @@ import { DeleteProduct } from "./components/DeleteProduct";
 import { EditProductNameForm } from "./components/EditProductNameForm";
 import { EditWaitingTimeForm } from "./components/EditWaitingTimeForm";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
   const t = await getTranslations();
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),

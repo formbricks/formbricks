@@ -13,7 +13,8 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const IS_SMTP_CONFIGURED: boolean = SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
   const session = await getServerSession(authOptions);

@@ -24,7 +24,8 @@ import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
   const [session, surveys, integrations, environment, attributeClasses] = await Promise.all([

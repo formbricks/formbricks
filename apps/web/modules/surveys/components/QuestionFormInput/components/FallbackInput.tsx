@@ -8,7 +8,7 @@ interface FallbackInputProps {
   filteredRecallItems: (TSurveyRecallItem | undefined)[];
   fallbacks: { [type: string]: string };
   setFallbacks: (fallbacks: { [type: string]: string }) => void;
-  fallbackInputRef: RefObject<HTMLInputElement>;
+  fallbackInputRef: RefObject<HTMLInputElement | null>;
   addFallback: () => void;
 }
 

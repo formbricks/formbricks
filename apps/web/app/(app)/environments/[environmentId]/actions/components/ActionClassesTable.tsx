@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type JSX, useState } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ActionDetailModal } from "./ActionDetailModal";
 

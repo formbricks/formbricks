@@ -3,7 +3,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useMemo, useState } from "react";
+import React, { type JSX, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {

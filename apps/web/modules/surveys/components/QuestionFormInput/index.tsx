@@ -5,7 +5,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type JSX, RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
@@ -63,7 +63,7 @@ interface QuestionFormInputProps {
   label: string;
   maxLength?: number;
   placeholder?: string;
-  ref?: RefObject<HTMLInputElement>;
+  ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
   attributeClasses: TAttributeClass[];

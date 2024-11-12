@@ -25,7 +25,8 @@ import { Card } from "@formbricks/ui/components/IntegrationCard";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const environmentId = params.environmentId;
   const t = await getTranslations();
   const [

@@ -17,7 +17,8 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { EditTagsWrapper } from "./components/EditTagsWrapper";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {

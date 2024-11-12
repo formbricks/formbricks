@@ -5,7 +5,8 @@ import { z } from "zod";
 
 const VerificationPageSchema = z.string().email();
 
-const Page = async ({ searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
   const t = await getTranslations();
   const email = searchParams.email;
   try {

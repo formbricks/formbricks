@@ -6,7 +6,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon, XCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";

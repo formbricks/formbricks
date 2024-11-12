@@ -11,12 +11,13 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
 interface XMTemplatePageProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: XMTemplatePageProps) => {
+const Page = async (props: XMTemplatePageProps) => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const environment = await getEnvironment(params.environmentId);
   const t = await getTranslations();

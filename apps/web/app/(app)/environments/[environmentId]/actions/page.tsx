@@ -22,7 +22,8 @@ export const metadata: Metadata = {
   title: "Actions",
 };
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const t = await getTranslations();
   const [actionClasses, organization, product] = await Promise.all([

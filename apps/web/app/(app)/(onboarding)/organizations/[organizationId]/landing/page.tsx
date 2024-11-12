@@ -8,7 +8,8 @@ import { getOrganization, getOrganizationsByUserId } from "@formbricks/lib/organ
 import { getUser } from "@formbricks/lib/user/service";
 import { Header } from "@formbricks/ui/components/Header";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {

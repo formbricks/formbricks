@@ -26,7 +26,8 @@ import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const enabled = !!(
     NOTION_OAUTH_CLIENT_ID &&

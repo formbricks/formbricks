@@ -4,7 +4,11 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-const OnboardingLayout = async ({ children, params }) => {
+const OnboardingLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
