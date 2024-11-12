@@ -55,8 +55,5 @@
     "react": ">=16.8.0",
     "react-native": ">=0.60.0",
     "react-native-webview": ">=13.0.0"
-  },
-  "dependencies": {
-    "react-dom": "19.0.0-rc-ed15d500-20241110"
   }
 }

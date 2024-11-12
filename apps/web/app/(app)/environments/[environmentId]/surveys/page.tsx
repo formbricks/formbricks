@@ -84,7 +84,7 @@ const Page = async (props: SurveyTemplateProps) => {
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   const currentProductChannel = product.config.channel ?? null;
-  const locale = await await findMatchingLocale();
+  const locale = await findMatchingLocale();
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>

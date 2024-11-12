@@ -9,7 +9,7 @@ export interface Section {
   title: string;
   offsetRem?: number;
   tag?: string;
-  headingRef?: React.RefObject<HTMLHeadingElement | null>;
+  headingRef?: React.RefObject<HTMLHeadingElement>;
 }
 
 interface SectionState {
@@ -22,7 +22,7 @@ interface SectionState {
     offsetRem,
   }: {
     id: string;
-    ref: React.RefObject<HTMLHeadingElement | null>;
+    ref: React.RefObject<HTMLHeadingElement>;
     offsetRem: number;
   }) => void;
 }

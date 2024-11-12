@@ -36,7 +36,7 @@ const Page = async (props) => {
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
-  const locale = await await findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   if (!product) {
     throw new Error(t("common.product_not_found"));

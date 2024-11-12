@@ -36,12 +36,7 @@
     "server-only": "0.0.1",
     "stripe": "16.7.0",
     "zod": "3.23.8",
-    "react": "19.0.0-rc-66855b96-20241106",
-    "react-dom": "19.0.0-rc-66855b96-20241106"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "npm:types-react@19.0.0-rc.1"
-    }
+    "react": "19.0.0-rc-ed15d500-20241110",
+    "react-dom": "19.0.0-rc-ed15d500-20241110"
   }
 }

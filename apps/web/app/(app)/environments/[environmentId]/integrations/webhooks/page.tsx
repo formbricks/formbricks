@@ -57,7 +57,7 @@ const Page = async (props) => {
   });
 
   const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;
-  const locale = await await findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>
