@@ -174,7 +174,7 @@ export const InsightView = ({
       {visibleInsights < localInsights.length && (
         <div className="flex justify-center py-4">
           <Button onClick={handleLoadMore} variant="secondary" size="sm">
-            Load more
+            {t("common.load_more")}
           </Button>
         </div>
       )}
