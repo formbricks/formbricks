@@ -1347,6 +1347,8 @@
         "does_not_contain": "Enthält nicht",
         "does_not_end_with": "Endet nicht mit",
         "does_not_equal": "Ungleich",
+        "does_not_include_all_of": "Enthält nicht alle von",
+        "does_not_include_one_of": "Enthält nicht eines von",
         "does_not_start_with": "Fängt nicht an mit",
         "edit_recall": "Erinnerung bearbeiten",
         "edit_segment": "Segment bearbeiten",

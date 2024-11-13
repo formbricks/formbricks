@@ -1347,6 +1347,8 @@
         "does_not_contain": "Does not contain",
         "does_not_end_with": "Does not end with",
         "does_not_equal": "Does not equal",
+        "does_not_include_all_of": "Does not include all of",
+        "does_not_include_one_of": "Does not include one of",
         "does_not_start_with": "Does not start with",
         "edit_recall": "Edit Recall",
         "edit_segment": "Edit Segment",
