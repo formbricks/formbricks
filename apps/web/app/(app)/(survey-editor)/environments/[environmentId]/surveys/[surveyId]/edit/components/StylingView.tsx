@@ -2,7 +2,7 @@ import { RotateCcwIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
-import { UseFormReturn, useForm, useWatch } from "react-hook-form";
+import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
@@ -89,20 +89,17 @@ export const StylingView = ({
     }
   }, [overwriteThemeStyling]);
 
-  const watchedValues = useWatch({
-    control: form.control,
-  });
-
   useEffect(() => {
-    const newValues = form.getValues();
-    setLocalSurvey((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        ...newValues,
-      },
-    }));
-  }, [watchedValues, setLocalSurvey]);
+    form.watch((data: TSurveyStyling) => {
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling: {
+          ...prev.styling,
+          ...data,
+        },
+      }));
+    });
+  }, [setLocalSurvey]);
 
   const defaultProductStyling = useMemo(() => {
     const { styling: productStyling } = product;
