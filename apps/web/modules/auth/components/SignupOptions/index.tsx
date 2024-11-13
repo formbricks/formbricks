@@ -1,22 +1,24 @@
 "use client";
 
+import { createEmailTokenAction } from "@/modules/auth/components/SignupOptions/actions";
+import { AzureButton } from "@/modules/auth/components/SignupOptions/components/AzureButton";
+import { GithubButton } from "@/modules/auth/components/SignupOptions/components/GithubButton";
+import { GoogleButton } from "@/modules/auth/components/SignupOptions/components/GoogleButton";
+import { IsPasswordValid } from "@/modules/auth/components/SignupOptions/components/IsPasswordValid";
+import { OpenIdButton } from "@/modules/auth/components/SignupOptions/components/OpenIdButton";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { z } from "zod";
 import { createUser } from "@formbricks/lib/utils/users";
 import { ZUserName } from "@formbricks/types/user";
-import { Button } from "../Button";
-import { FormControl, FormError, FormField, FormItem } from "../Form";
-import { Input } from "../Input";
-import { PasswordInput } from "../PasswordInput";
-import { AzureButton } from "./components/AzureButton";
-import { GithubButton } from "./components/GithubButton";
-import { GoogleButton } from "./components/GoogleButton";
-import { IsPasswordValid } from "./components/IsPasswordValid";
-import { OpenIdButton } from "./components/OpenIdButton";
+import { Button } from "@formbricks/ui/components/Button";
+import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
+import { Input } from "@formbricks/ui/components/Input";
+import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
 interface SignupOptionsProps {
   emailAuthEnabled: boolean;
@@ -84,9 +86,15 @@ export const SignupOptions = ({
 
     try {
       await createUser(data.name, data.email, data.password, userLocale, inviteToken || "");
+      const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+      if (emailTokenActionResponse?.serverError) {
+        toast.error(emailTokenActionResponse.serverError);
+        return;
+      }
+      const token = emailTokenActionResponse?.data;
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
-        : `/auth/verification-requested?email=${encodeURIComponent(data.email)}`;
+        : `/auth/verification-requested?token=${token}`;
 
       router.push(url);
     } catch (e: any) {

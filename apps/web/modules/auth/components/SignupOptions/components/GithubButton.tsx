@@ -1,44 +1,36 @@
+"use client";
+
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect } from "react";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
-import { Button } from "../../Button";
-import { MicrosoftIcon } from "../../icons";
+import { Button } from "@formbricks/ui/components/Button";
+import { GithubIcon } from "@formbricks/ui/components/icons";
 
-export const AzureButton = ({
-  text = "Continue with Azure",
+export const GithubButton = ({
+  text = "Continue with Github",
   inviteUrl,
-  directRedirect = false,
   lastUsed,
 }: {
   text?: string;
   inviteUrl?: string | null;
-  directRedirect?: boolean;
   lastUsed?: boolean;
 }) => {
   const t = useTranslations();
-  const handleLogin = useCallback(async () => {
+  const handleLogin = async () => {
     if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Azure");
+      localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Github");
     }
-
-    await signIn("azure-ad", {
+    await signIn("github", {
       redirect: true,
-      callbackUrl: inviteUrl ? inviteUrl : "/",
+      callbackUrl: inviteUrl ? inviteUrl : "/", // redirect after login to /
     });
-  }, [inviteUrl]);
-
-  useEffect(() => {
-    if (directRedirect) {
-      handleLogin();
-    }
-  }, [directRedirect, handleLogin]);
+  };
 
   return (
     <Button
       size="base"
       type="button"
-      EndIcon={MicrosoftIcon}
+      EndIcon={GithubIcon}
       startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"

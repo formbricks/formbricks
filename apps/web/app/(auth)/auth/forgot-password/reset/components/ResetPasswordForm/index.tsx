@@ -1,5 +1,6 @@
 "use client";
 
+import { IsPasswordValid } from "@/modules/auth/components/SignupOptions/components/IsPasswordValid";
 import { XCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,7 +9,6 @@ import { toast } from "react-hot-toast";
 import { resetPassword } from "@formbricks/lib/utils/users";
 import { Button } from "@formbricks/ui/components/Button";
 import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
-import { IsPasswordValid } from "@formbricks/ui/components/SignupOptions/components/IsPasswordValid";
 
 export const ResetPasswordForm = () => {
   const t = useTranslations();
