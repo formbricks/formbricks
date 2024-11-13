@@ -1,6 +1,6 @@
 export const loginRoute = (url: string) => url === "/api/auth/callback/credentials";
 
-export const signupRoute = (url: string) => url === "/api/v1/users";
+export const signupRoute = (url: string) => url.includes("/api/v1/users");
 
 export const clientSideApiRoute = (url: string): boolean => {
   if (url.includes("/api/packages/")) return true;

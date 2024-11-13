@@ -73,7 +73,7 @@ export const middleware = async (request: NextRequest) => {
 export const config = {
   matcher: [
     "/api/auth/callback/credentials",
-    "/api/v1/users",
+    "/api/v1/users/:path*",
     "/api/(.*)/client/:path*",
     "/api/v1/js/actions",
     "/api/v1/client/storage",
