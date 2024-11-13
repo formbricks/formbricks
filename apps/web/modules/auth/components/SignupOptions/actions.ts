@@ -6,7 +6,7 @@ import { createEmailToken } from "@formbricks/lib/jwt";
 import { getUserByEmail } from "@formbricks/lib/user/service";
 
 const ZCreateEmailTokenAction = z.object({
-  email: z.string().email(),
+  email: z.string().min(5).max(255).email({ message: "Invalid email" }),
 });
 
 export const createEmailTokenAction = actionClient
@@ -14,7 +14,7 @@ export const createEmailTokenAction = actionClient
   .action(async ({ parsedInput }) => {
     const user = await getUserByEmail(parsedInput.email);
     if (!user) {
-      throw new Error("User not found");
+      throw new Error("Invalid request");
     }
 
     return createEmailToken(parsedInput.email);
