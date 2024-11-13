@@ -2,7 +2,7 @@ import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environme
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
-import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, SendIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
+import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -279,7 +279,7 @@ export const FollowUpModal = ({
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <SendIcon className="h-5 w-5" />
+                <MailIcon className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">
@@ -330,8 +330,8 @@ export const FollowUpModal = ({
 
               <div className="flex flex-col rounded-lg border border-slate-300">
                 <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
-                  <div className="rounded-full border border-slate-300 bg-white p-0.5">
-                    <ZapIcon className="h-4 w-4 text-slate-500" />
+                  <div className="rounded-full border border-slate-300 bg-white p-1">
+                    <ZapIcon className="h-3 w-3 text-slate-500" />
                   </div>
                   <h2 className="text-md font-semibold text-slate-900">
                     {t("environments.surveys.edit.follow_ups_modal_trigger_label")}
@@ -462,8 +462,8 @@ export const FollowUpModal = ({
 
               <div className="flex flex-col rounded-lg border border-slate-300">
                 <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
-                  <div className="rounded-full border border-slate-300 bg-white p-0.5">
-                    <SendIcon className="h-4 w-4 text-slate-500" />
+                  <div className="rounded-full border border-slate-300 bg-white p-1">
+                    <MailIcon className="h-3 w-3 text-slate-500" />
                   </div>
                   <h2 className="text-md font-semibold text-slate-900">
                     {t("environments.surveys.edit.follow_ups_modal_action_label")}
