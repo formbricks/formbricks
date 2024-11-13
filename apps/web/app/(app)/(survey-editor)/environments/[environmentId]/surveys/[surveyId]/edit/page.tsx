@@ -85,7 +85,7 @@ const Page = async ({ params, searchParams }) => {
 
   const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const isSurveyFollowUpsAllowed = getSurveyFollowUpsPermission(organization);
+  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization);
 
   const userEmail = await getUserEmail(session.user.id);
 

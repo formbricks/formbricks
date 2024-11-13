@@ -1,4 +1,4 @@
-import { FollowUpModal } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpModal";
+import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/FollowUpModal";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";

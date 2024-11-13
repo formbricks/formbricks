@@ -1,6 +1,6 @@
 "use client";
 
-import { FollowUpsView } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpsView";
+import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/FollowUpsView";
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";

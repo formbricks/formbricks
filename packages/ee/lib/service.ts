@@ -247,9 +247,9 @@ export const getRemoveLinkBrandingPermission = (organization: TOrganization): bo
   return false;
 };
 
-export const getSurveyFollowUpsPermission = (organization: TOrganization): boolean => {
+export const getSurveyFollowUpsPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
-  else if (!IS_FORMBRICKS_CLOUD) return true;
+  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   return false;
 };
 
