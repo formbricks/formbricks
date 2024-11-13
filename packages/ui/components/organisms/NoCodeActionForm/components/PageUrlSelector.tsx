@@ -21,9 +21,10 @@ import { TabToggle } from "../../../TabToggle";
 
 interface PageUrlSelectorProps {
   form: UseFormReturn<TActionClassInput>;
+  isReadOnly: boolean;
 }
 
-export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
+export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const t = useTranslations();
@@ -74,6 +75,7 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
                 {t("environments.actions.limit_the_pages_on_which_this_action_gets_captured")}
               </p>
               <TabToggle
+                disabled={isReadOnly}
                 id="filter"
                 onChange={(value) => {
                   setFilterType(value);
@@ -91,8 +93,13 @@ export const PageUrlSelector = ({ form }: PageUrlSelectorProps) => {
       {filterType === "specific" && (
         <div className="mb-2 mt-4 w-full space-y-3 pe-2">
           <Label>{t("environments.actions.url")}</Label>
-          <UrlInput control={form.control} fields={fields} removeUrlRule={removeUrlRule} />
-          <Button variant="secondary" size="sm" type="button" onClick={handleAddMore}>
+          <UrlInput
+            control={form.control}
+            fields={fields}
+            removeUrlRule={removeUrlRule}
+            disabled={isReadOnly}
+          />
+          <Button variant="secondary" size="sm" type="button" onClick={handleAddMore} disabled={isReadOnly}>
             <PlusIcon className="mr-2 h-4 w-4" />
             {t("environments.actions.add_url")}
           </Button>
@@ -144,10 +151,12 @@ const UrlInput = ({
   control,
   fields,
   removeUrlRule,
+  disabled,
 }: {
   control: Control<TActionClassInput>;
   fields: FieldArrayWithId<TActionClassInput, "noCodeConfig.urlFilters", "id">[];
   removeUrlRule: UseFieldArrayRemove;
+  disabled: boolean;
 }) => {
   const t = useTranslations();
   return (
@@ -161,7 +170,7 @@ const UrlInput = ({
             render={({ field: { onChange, value, name } }) => (
               <FormItem>
                 <FormControl>
-                  <Select onValueChange={onChange} value={value} name={name}>
+                  <Select onValueChange={onChange} value={value} name={name} disabled={disabled}>
                     <SelectTrigger className="w-[250px] bg-white">
                       <SelectValue placeholder={t("environments.actions.select_match_type")} />
                     </SelectTrigger>
@@ -191,6 +200,7 @@ const UrlInput = ({
                   <Input
                     type="text"
                     className="bg-white"
+                    disabled={disabled}
                     {...field}
                     placeholder="e.g. https://app.com/dashboard"
                     autoComplete="off"

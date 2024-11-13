@@ -1,9 +1,9 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromProductId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromProductId } from "@formbricks/lib/organization/utils";
 import { updateProduct } from "@formbricks/lib/product/service";
 import { ZId } from "@formbricks/types/common";
 import { ZProductUpdateInput } from "@formbricks/types/product";
@@ -16,12 +16,22 @@ const ZUpdateProductAction = z.object({
 export const updateProductAction = authenticatedActionClient
   .schema(ZUpdateProductAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      schema: ZProductUpdateInput,
-      data: parsedInput.data,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
-      rules: ["product", "update"],
+      access: [
+        {
+          schema: ZProductUpdateInput,
+          data: parsedInput.data,
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          productId: parsedInput.productId,
+          minPermission: "manage",
+        },
+      ],
     });
 
     return await updateProduct(parsedInput.productId, parsedInput.data);

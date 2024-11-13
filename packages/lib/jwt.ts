@@ -1,5 +1,6 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { prisma } from "@formbricks/database";
+import { symmetricDecrypt, symmetricEncrypt } from "./crypto";
 import { env } from "./env";
 
 export const createToken = (userId: string, userEmail: string, options = {}): string => {
@@ -10,12 +11,14 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
 };
 
 export const createEmailToken = (email: string): string => {
-  return jwt.sign({ email }, env.NEXTAUTH_SECRET);
+  const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
+  return jwt.sign({ email: encryptedEmail }, env.NEXTAUTH_SECRET);
 };
 
 export const getEmailFromEmailToken = (token: string): string => {
-  const payload = jwt.verify(token, env.NEXTAUTH_SECRET);
-  return (payload as jwt.JwtPayload).email;
+  const payload = jwt.verify(token, env.NEXTAUTH_SECRET) as JwtPayload;
+  const decryptedEmail = symmetricDecrypt(payload.email, env.ENCRYPTION_KEY);
+  return decryptedEmail;
 };
 
 export const createInviteToken = (inviteId: string, email: string, options = {}): string => {

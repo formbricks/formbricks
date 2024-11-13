@@ -48,7 +48,11 @@ export const getAttributeClass = reactCache(
 );
 
 export const getAttributeClasses = reactCache(
-  async (environmentId: string, page?: number): Promise<TAttributeClass[]> =>
+  async (
+    environmentId: string,
+    page?: number,
+    options?: { skipArchived: boolean }
+  ): Promise<TAttributeClass[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
@@ -57,6 +61,7 @@ export const getAttributeClasses = reactCache(
           const attributeClasses = await prisma.attributeClass.findMany({
             where: {
               environmentId: environmentId,
+              ...(options?.skipArchived ? { archived: false } : {}),
             },
             orderBy: {
               createdAt: "asc",

@@ -11,9 +11,10 @@ interface WebhookModalProps {
   setOpen: (v: boolean) => void;
   webhook: TWebhook;
   surveys: TSurvey[];
+  isReadOnly: boolean;
 }
 
-export const WebhookModal = ({ open, setOpen, webhook, surveys }: WebhookModalProps) => {
+export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: WebhookModalProps) => {
   const t = useTranslations();
   const tabs = [
     {
@@ -22,7 +23,9 @@ export const WebhookModal = ({ open, setOpen, webhook, surveys }: WebhookModalPr
     },
     {
       title: t("common.settings"),
-      children: <WebhookSettingsTab webhook={webhook} surveys={surveys} setOpen={setOpen} />,
+      children: (
+        <WebhookSettingsTab webhook={webhook} surveys={surveys} setOpen={setOpen} isReadOnly={isReadOnly} />
+      ),
     },
   ];
 

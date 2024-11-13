@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Trash2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
@@ -22,6 +23,8 @@ interface ManageIntegrationProps {
     React.SetStateAction<(TIntegrationSlackConfigData & { index: number }) | null>
   >;
   refreshChannels: () => void;
+  showReconnectButton: boolean;
+  handleSlackAuthorization: () => void;
   locale: TUserLocale;
 }
 
@@ -32,6 +35,8 @@ export const ManageIntegration = ({
   setIsConnected,
   setSelectedIntegration,
   refreshChannels,
+  showReconnectButton,
+  handleSlackAuthorization,
   locale,
 }: ManageIntegrationProps) => {
   const t = useTranslations();
@@ -44,17 +49,22 @@ export const ManageIntegration = ({
     : [];
 
   const handleDeleteIntegration = async () => {
-    try {
-      setisDeleting(true);
-      await deleteIntegrationAction({ integrationId: slackIntegration.id });
-      setIsConnected(false);
+    setisDeleting(true);
+
+    const deleteIntegrationActionResult = await deleteIntegrationAction({
+      integrationId: slackIntegration.id,
+    });
+
+    if (deleteIntegrationActionResult?.data) {
       toast.success(t("environments.integrations.integration_removed_successfully"));
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setisDeleting(false);
-      setIsDeleteIntegrationModalOpen(false);
+      setIsConnected(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
+      toast.error(errorMessage);
     }
+
+    setisDeleting(false);
+    setIsDeleteIntegrationModalOpen(false);
   };
 
   const editIntegration = (index: number) => {
@@ -64,7 +74,19 @@ export const ManageIntegration = ({
 
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end">
+      {showReconnectButton && (
+        <div className="mb-4 flex w-full items-center justify-between space-x-4">
+          <p className="text-amber-700">
+            {t.rich("environments.integrations.slack.slack_reconnect_button_description", {
+              b: (chunks) => <b>{chunks}</b>,
+            })}
+          </p>
+          <Button onClick={handleSlackAuthorization} variant="secondary">
+            {t("environments.integrations.slack.slack_reconnect_button")}
+          </Button>
+        </div>
+      )}
+      <div className="flex w-full justify-end space-x-4">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">

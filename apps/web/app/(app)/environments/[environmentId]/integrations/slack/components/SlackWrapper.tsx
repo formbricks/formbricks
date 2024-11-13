@@ -1,11 +1,11 @@
 "use client";
 
-import { refreshChannelsAction } from "@/app/(app)/environments/[environmentId]/integrations/slack/actions";
+import { getSlackChannelsAction } from "@/app/(app)/environments/[environmentId]/integrations/slack/actions";
 import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddChannelMappingModal";
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/ManageIntegration";
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
@@ -18,7 +18,6 @@ interface SlackWrapperProps {
   isEnabled: boolean;
   environment: TEnvironment;
   surveys: TSurvey[];
-  channelsArray: TIntegrationItem[];
   slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
   attributeClasses: TAttributeClass[];
@@ -29,26 +28,37 @@ export const SlackWrapper = ({
   isEnabled,
   environment,
   surveys,
-  channelsArray,
   slackIntegration,
   webAppUrl,
   attributeClasses,
   locale,
 }: SlackWrapperProps) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
-  const [slackChannels, setSlackChannels] = useState(channelsArray);
+  const [slackChannels, setSlackChannels] = useState<TIntegrationItem[]>([]);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
+  const [showReconnectButton, setShowReconnectButton] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TIntegrationSlackConfigData & { index: number }) | null
   >(null);
 
-  const refreshChannels = async () => {
-    const refreshChannelsResponse = await refreshChannelsAction({ environmentId: environment.id });
+  const getSlackChannels = async () => {
+    const getSlackChannelsResponse = await getSlackChannelsAction({ environmentId: environment.id });
 
-    if (refreshChannelsResponse?.data) {
-      setSlackChannels(refreshChannelsResponse.data);
+    if (
+      getSlackChannelsResponse?.serverError &&
+      getSlackChannelsResponse.serverError.includes("missing_scope")
+    ) {
+      setShowReconnectButton(true);
+    }
+
+    if (getSlackChannelsResponse?.data) {
+      setSlackChannels(getSlackChannelsResponse.data);
     }
   };
+
+  useEffect(() => {
+    getSlackChannels();
+  }, []);
 
   const handleSlackAuthorization = async () => {
     authorize(environment.id, webAppUrl).then((url: string) => {
@@ -76,7 +86,9 @@ export const SlackWrapper = ({
         setOpenAddIntegrationModal={setModalOpen}
         setIsConnected={setIsConnected}
         setSelectedIntegration={setSelectedIntegration}
-        refreshChannels={refreshChannels}
+        refreshChannels={getSlackChannels}
+        showReconnectButton={showReconnectButton}
+        handleSlackAuthorization={handleSlackAuthorization}
         locale={locale}
       />
     </>

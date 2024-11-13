@@ -6,6 +6,7 @@ import {
   getSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   ArrowUpFromLineIcon,
   CopyIcon,
@@ -20,7 +21,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import {

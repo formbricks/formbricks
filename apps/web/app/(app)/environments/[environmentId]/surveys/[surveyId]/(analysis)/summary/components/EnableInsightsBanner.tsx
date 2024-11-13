@@ -24,10 +24,17 @@ export const EnableInsightsBanner = ({
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   const handleInsightGeneration = async () => {
+    toast.success("Generating insights for this survey. Please check back in a few minutes.", {
+      duration: 3000,
+    });
     setIsGeneratingInsights(true);
     toast.success(t("environments.surveys.summary.enable_ai_insights_banner_success"));
     generateInsightsForSurveyAction({ surveyId });
   };
+
+  if (isGeneratingInsights) {
+    return null;
+  }
 
   return (
     <Alert className="mb-6 mt-4 flex items-center gap-4 border-slate-400 bg-white">
@@ -49,7 +56,7 @@ export const EnableInsightsBanner = ({
         className="shrink-0"
         onClick={handleInsightGeneration}
         loading={isGeneratingInsights}
-        disabled={surveyResponseCount > maxResponseCount || isGeneratingInsights}
+        disabled={surveyResponseCount > maxResponseCount}
         tooltip={
           surveyResponseCount > maxResponseCount
             ? t("environments.surveys.summary.enable_ai_insights_banner_tooltip")

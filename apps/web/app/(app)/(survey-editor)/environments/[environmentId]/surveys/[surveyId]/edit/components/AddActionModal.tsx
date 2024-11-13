@@ -13,7 +13,7 @@ interface AddActionModalProps {
   environmentId: string;
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
-  isViewer: boolean;
+  isReadOnly: boolean;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }
@@ -25,7 +25,7 @@ export const AddActionModal = ({
   setActionClasses,
   localSurvey,
   setLocalSurvey,
-  isViewer,
+  isReadOnly,
   environmentId,
 }: AddActionModalProps) => {
   const t = useTranslations();
@@ -48,7 +48,7 @@ export const AddActionModal = ({
           actionClasses={actionClasses}
           setActionClasses={setActionClasses}
           setOpen={setOpen}
-          isViewer={isViewer}
+          isReadOnly={isReadOnly}
           setLocalSurvey={setLocalSurvey}
           environmentId={environmentId}
         />
