@@ -74,7 +74,7 @@ export const ActionActivityTab = ({
 
   const copyAction = async (data: TActionClassInput) => {
     const { type } = data;
-    let copyName = data.name + " (copy)";
+    let copyName = data.name;
     try {
       if (isReadOnly) {
         throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
