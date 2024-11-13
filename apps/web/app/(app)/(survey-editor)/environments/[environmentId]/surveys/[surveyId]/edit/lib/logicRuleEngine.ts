@@ -117,6 +117,14 @@ export const logicRules = {
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
+          label: "environments.surveys.edit.does_not_include_one_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeOneOf,
+        },
+        {
+          label: "environments.surveys.edit.does_not_include_all_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeAllOf,
+        },
+        {
           label: "environments.surveys.edit.includes_all_of",
           value: ZSurveyLogicConditionsOperator.Enum.includesAllOf,
         },
@@ -143,6 +151,14 @@ export const logicRules = {
         {
           label: "environments.surveys.edit.does_not_equal",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
+        },
+        {
+          label: "environments.surveys.edit.does_not_include_one_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeOneOf,
+        },
+        {
+          label: "environments.surveys.edit.does_not_include_all_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeAllOf,
         },
         {
           label: "environments.surveys.edit.includes_all_of",

@@ -425,6 +425,18 @@ const evaluateSingleCondition = (
           Array.isArray(rightValue) &&
           rightValue.some((v) => leftValue.includes(v))
         );
+      case "doesNotIncludeAllOf":
+        return (
+          Array.isArray(leftValue) &&
+          Array.isArray(rightValue) &&
+          rightValue.every((v) => !leftValue.includes(v))
+        );
+      case "doesNotIncludeOneOf":
+        return (
+          Array.isArray(leftValue) &&
+          Array.isArray(rightValue) &&
+          rightValue.some((v) => !leftValue.includes(v))
+        );
       case "isAccepted":
         return leftValue === "accepted";
       case "isClicked":
