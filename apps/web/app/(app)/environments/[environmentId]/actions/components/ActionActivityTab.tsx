@@ -1,7 +1,6 @@
 "use client";
 
 import { createActionClassAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -22,17 +21,17 @@ interface ActivityTabProps {
   environmentId: string;
   environment: TEnvironment;
   toCopyActionClasses: TActionClass[];
-  toCopyEnvironment: TEnvironment;
-  isViewer: boolean;
+  otherEnvironment: TEnvironment;
+  isReadOnly: boolean;
 }
 
 export const ActionActivityTab = ({
   actionClass,
   toCopyActionClasses,
-  toCopyEnvironment,
+  otherEnvironment,
   environmentId,
   environment,
-  isViewer,
+  isReadOnly,
 }: ActivityTabProps) => {
   const t = useTranslations();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
@@ -77,7 +76,7 @@ export const ActionActivityTab = ({
     const { type } = data;
     let copyName = data.name + " (copy)";
     try {
-      if (isViewer) {
+      if (isReadOnly) {
         throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
 
@@ -91,45 +90,12 @@ export const ActionActivityTab = ({
         throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
       }
 
-      if (
-        data.type === "noCode" &&
-        data.noCodeConfig?.type === "click" &&
-        data.noCodeConfig.elementSelector.cssSelector &&
-        !isValidCssSelector(data.noCodeConfig.elementSelector.cssSelector)
-      ) {
-        throw new Error("Invalid CSS Selector");
-      }
+      let updatedAction = {
+        ...data,
+        name: copyName.trim(),
+        environmentId: otherEnvironment.id,
+      };
 
-      let updatedAction = {};
-
-      if (type === "noCode") {
-        updatedAction = {
-          name: copyName.trim(),
-          description: data.description,
-          environmentId: toCopyEnvironment.id,
-          type: "noCode",
-          noCodeConfig: {
-            ...data.noCodeConfig,
-            ...(data.type === "noCode" &&
-              data.noCodeConfig?.type === "click" && {
-                elementSelector: {
-                  cssSelector: data.noCodeConfig.elementSelector.cssSelector,
-                  innerHtml: data.noCodeConfig.elementSelector.innerHtml,
-                },
-              }),
-          },
-        };
-      } else if (type === "code") {
-        updatedAction = {
-          name: copyName.trim(),
-          description: data.description,
-          environmentId: toCopyEnvironment.id,
-          type: "code",
-          key: data.key,
-        };
-      }
-
-      // const newActionClass: TActionClass =
       const createActionClassResposne = await createActionClassAction({
         action: updatedAction as TActionClassInput,
       });

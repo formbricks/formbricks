@@ -11,7 +11,7 @@ interface ActionClassesTableProps {
   environment: TEnvironment;
   children: [JSX.Element, JSX.Element[]];
   isReadOnly: boolean;
-  toCopyEnvironment: TEnvironment;
+  otherEnvironment: TEnvironment;
   toCopyActionClasses: TActionClass[];
 }
 
@@ -22,7 +22,7 @@ export const ActionClassesTable = ({
   children: [TableHeading, actionRows],
   isReadOnly,
   toCopyActionClasses,
-  toCopyEnvironment,
+  otherEnvironment,
 }: ActionClassesTableProps) => {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
 
@@ -62,7 +62,7 @@ export const ActionClassesTable = ({
           actionClass={activeActionClass}
           isReadOnly={isReadOnly}
           toCopyActionClasses={toCopyActionClasses}
-          toCopyEnvironment={toCopyEnvironment}
+          otherEnvironment={otherEnvironment}
         />
       )}
     </>
