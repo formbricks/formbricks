@@ -488,6 +488,8 @@
   },
   "environments": {
     "actions": {
+      "action_copied_successfully": "Ação copiada com sucesso",
+      "action_copy_failed": "Falha ao copiar a ação",
       "action_created_successfully": "Ação criada com sucesso",
       "action_deleted_successfully": "Ação deletada com sucesso",
       "action_type": "Tipo de Ação",
