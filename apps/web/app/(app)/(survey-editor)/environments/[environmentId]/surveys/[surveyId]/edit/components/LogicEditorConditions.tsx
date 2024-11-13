@@ -244,7 +244,13 @@ export function LogicEditorConditions({
     const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
     const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey, t);
 
-    const allowMultiSelect = ["equalsOneOf", "includesAllOf", "includesOneOf"].includes(condition.operator);
+    const allowMultiSelect = [
+      "equalsOneOf",
+      "includesAllOf",
+      "includesOneOf",
+      "doesNotIncludeOneOf",
+      "doesNotIncludeAllOf",
+    ].includes(condition.operator);
     return (
       <div key={condition.id} className="flex items-center gap-x-2">
         <div className="w-10 shrink-0">

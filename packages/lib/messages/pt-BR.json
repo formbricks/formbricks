@@ -1351,6 +1351,8 @@
         "does_not_contain": "não contém",
         "does_not_end_with": "Não termina com",
         "does_not_equal": "não é igual",
+        "does_not_include_all_of": "Não inclui todos de",
+        "does_not_include_one_of": "Não inclui um de",
         "does_not_start_with": "Não começa com",
         "edit_recall": "Editar Lembrete",
         "edit_segment": "Editar Segmento",
