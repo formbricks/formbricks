@@ -13,7 +13,7 @@ interface ModalProps {
   clickOutsideClose: boolean;
   darkOverlay: boolean;
   borderRadius?: number;
-  background?: string | null;
+  background?: string;
 }
 
 export const Modal = ({

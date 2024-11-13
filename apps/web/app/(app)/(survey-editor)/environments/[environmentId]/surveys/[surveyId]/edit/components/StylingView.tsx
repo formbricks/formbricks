@@ -94,11 +94,12 @@ export const StylingView = ({
   });
 
   useEffect(() => {
+    const newValues = form.getValues();
     setLocalSurvey((prev) => ({
       ...prev,
       styling: {
         ...prev.styling,
-        ...watchedValues,
+        ...newValues,
       },
     }));
   }, [watchedValues, setLocalSurvey]);
