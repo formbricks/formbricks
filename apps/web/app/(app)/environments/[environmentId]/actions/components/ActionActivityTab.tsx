@@ -96,11 +96,11 @@ export const ActionActivityTab = ({
         environmentId: otherEnvironment.id,
       };
 
-      const createActionClassResposne = await createActionClassAction({
+      const createActionClassResponse = await createActionClassAction({
         action: updatedAction as TActionClassInput,
       });
 
-      if (!createActionClassResposne?.data) {
+      if (!createActionClassResponse?.data) {
         throw new Error(t("environments.actions.action_copy_failed", {}));
       }
 
