@@ -233,11 +233,8 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
       select: {
         surveyId: true,
       },
+      distinct: ["surveyId"],
     });
-
-    const uniqueSurveyIds = Array.from(
-      new Set(personRespondedSurveyIds.map((response) => response.surveyId))
-    );
 
     const deletedPerson = await prisma.person.delete({
       where: {
@@ -261,7 +258,7 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
       environmentId: deletedPerson.environmentId,
     });
 
-    for (const surveyId of uniqueSurveyIds) {
+    for (const { surveyId } of personRespondedSurveyIds) {
       responseCache.revalidate({
         surveyId,
       });
