@@ -1,8 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
-import { responseCache } from "response/cache";
-import { surveyCache } from "survey/cache";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZOptionalString, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
@@ -10,6 +8,8 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson, TPersonWithAttributes } from "@formbricks/types/people";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
+import { responseCache } from "../response/cache";
+import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
 
