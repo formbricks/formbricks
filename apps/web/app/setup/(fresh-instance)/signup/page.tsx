@@ -1,3 +1,4 @@
+import { SignupOptions } from "@/modules/auth/components/SignupOptions";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import {
@@ -10,7 +11,6 @@ import {
   OIDC_OAUTH_ENABLED,
 } from "@formbricks/lib/constants";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { SignupOptions } from "@formbricks/ui/components/SignupOptions";
 
 export const metadata: Metadata = {
   title: "Sign up",

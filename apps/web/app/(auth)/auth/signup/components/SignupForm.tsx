@@ -1,11 +1,11 @@
 "use client";
 
+import { SignupOptions } from "@/modules/auth/components/SignupOptions";
 import { XCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { SignupOptions } from "@formbricks/ui/components/SignupOptions";
 
 interface SignupFormProps {
   webAppUrl: string;

@@ -1,7 +1,12 @@
 "use client";
 
-import { TwoFactor } from "@/app/(auth)/auth/login/components/TwoFactor";
-import { TwoFactorBackup } from "@/app/(auth)/auth/login/components/TwoFactorBackup";
+import { TwoFactor } from "@/modules/auth/components/SigninForm/components/TwoFactor";
+import { TwoFactorBackup } from "@/modules/auth/components/SigninForm/components/TwoFactorBackup";
+import { createEmailTokenAction } from "@/modules/auth/components/SignupOptions/actions";
+import { AzureButton } from "@/modules/auth/components/SignupOptions/components/AzureButton";
+import { GithubButton } from "@/modules/auth/components/SignupOptions/components/GithubButton";
+import { GoogleButton } from "@/modules/auth/components/SignupOptions/components/GoogleButton";
+import { OpenIdButton } from "@/modules/auth/components/SignupOptions/components/OpenIdButton";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { XCircleIcon } from "lucide-react";
 import { signIn } from "next-auth/react";
@@ -16,10 +21,6 @@ import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 import { Button } from "@formbricks/ui/components/Button";
 import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
 import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
-import { AzureButton } from "@formbricks/ui/components/SignupOptions/components/AzureButton";
-import { GithubButton } from "@formbricks/ui/components/SignupOptions/components/GithubButton";
-import { GoogleButton } from "@formbricks/ui/components/SignupOptions/components/GoogleButton";
-import { OpenIdButton } from "@formbricks/ui/components/SignupOptions/components/OpenIdButton";
 
 interface TSigninFormState {
   email: string;
@@ -96,7 +97,12 @@ export const SigninForm = ({
       }
 
       if (signInResponse?.error === "Email Verification is Pending") {
-        router.push(`/auth/verification-requested?email=${data.email}`);
+        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+        if (emailTokenActionResponse?.serverError) {
+          setSignInError(emailTokenActionResponse.serverError);
+          return;
+        }
+        router.push(`/auth/verification-requested?token=${emailTokenActionResponse?.data}`);
         return;
       }
 

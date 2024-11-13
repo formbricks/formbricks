@@ -124,6 +124,7 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
       {
         tags: [
           documentCache.tag.byInsightIdSurveyIdQuestionId(insightId, surveyId, questionId),
+          documentCache.tag.byInsightId(insightId),
           insightCache.tag.byId(insightId),
         ],
       }
@@ -159,17 +160,27 @@ export const getDocument = reactCache(
     )()
 );
 
-export const updateDocument = async (documentId: string, data: Partial<TDocument>): Promise<TDocument> => {
+export const updateDocument = async (documentId: string, data: Partial<TDocument>): Promise<void> => {
   validateInputs([documentId, ZId], [data, ZDocument.partial()]);
   try {
     const updatedDocument = await prisma.document.update({
       where: { id: documentId },
       data,
+      select: {
+        environmentId: true,
+        documentInsights: {
+          select: {
+            insightId: true,
+          },
+        },
+      },
     });
 
     documentCache.revalidate({ environmentId: updatedDocument.environmentId });
 
-    return updatedDocument;
+    for (const { insightId } of updatedDocument.documentInsights) {
+      documentCache.revalidate({ insightId });
+    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

@@ -1,17 +1,23 @@
 import {
   clientSideApiEndpointsLimiter,
+  forgetPasswordLimiter,
   loginLimiter,
+  resetPasswordLimiter,
   shareUrlLimiter,
   signUpLimiter,
   syncUserIdentificationLimiter,
+  verifyEmailLimiter,
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
+  forgetPasswordRoute,
   isAuthProtectedRoute,
   isSyncWithUserIdentificationEndpoint,
   loginRoute,
+  resetPasswordRoute,
   shareUrlRoute,
   signupRoute,
+  verifyEmailRoute,
 } from "@/app/middleware/endpointValidator";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
@@ -51,6 +57,12 @@ export const middleware = async (request: NextRequest) => {
         await loginLimiter(`login-${ip}`);
       } else if (signupRoute(request.nextUrl.pathname)) {
         await signUpLimiter(`signup-${ip}`);
+      } else if (forgetPasswordRoute(request.nextUrl.pathname)) {
+        await forgetPasswordLimiter(`forget-password-${ip}`);
+      } else if (verifyEmailRoute(request.nextUrl.pathname)) {
+        await verifyEmailLimiter(`verify-email-${ip}`);
+      } else if (resetPasswordRoute(request.nextUrl.pathname)) {
+        await resetPasswordLimiter(`reset-password-${ip}`);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
 
@@ -75,6 +87,9 @@ export const config = {
   matcher: [
     "/api/auth/callback/credentials",
     "/api/v1/users",
+    "/api/v1/users/forgot-password",
+    "/api/v1/users/verification-email",
+    "/api/v1/users/reset-password",
     "/api/(.*)/client/:path*",
     "/api/v1/js/actions",
     "/api/v1/client/storage",
