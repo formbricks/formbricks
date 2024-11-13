@@ -9,8 +9,8 @@
       "an_error_occurred_when_logging": "Ocorreu um erro ao fazer login",
       "back_to_login": "Voltar para o login",
       "email-sent": {
-        "heading": "Solicitação de redefinição de senha feita com sucesso",
-        "text": "Você pediu um link pra trocar sua senha. Você pode fazer isso clicando no link abaixo:"
+        "heading": "Pedido de redefinição de senha feito com sucesso",
+        "text": "Se existir uma conta com esse e-mail, você vai receber em breve as instruções pra redefinir sua senha."
       },
       "reset": {
         "confirm_password": "Confirmar senha",
