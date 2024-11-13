@@ -10,6 +10,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -45,6 +46,17 @@ const Page = async (props) => {
     throw new Error(t("common.product_not_found"));
   }
 
+  const environments = await getEnvironments(product.id);
+  const currentEnvironment = environments.find((env) => env.id === params.environmentId);
+
+  if (!currentEnvironment) {
+    throw new Error(t("common.environment_not_found"));
+  }
+
+  const otherEnvironment = environments.filter((env) => env.id !== params.environmentId)[0];
+
+  const otherEnvActionClasses = await getActionClasses(otherEnvironment.id);
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
 
@@ -70,6 +82,9 @@ const Page = async (props) => {
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.actions")} cta={!isReadOnly ? renderAddActionButton() : undefined} />
       <ActionClassesTable
+        environment={currentEnvironment}
+        otherEnvironment={otherEnvironment}
+        otherEnvActionClasses={otherEnvActionClasses}
         environmentId={params.environmentId}
         actionClasses={actionClasses}
         isReadOnly={isReadOnly}>
