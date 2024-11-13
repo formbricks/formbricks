@@ -65,7 +65,6 @@ export const getSurveys = reactCache(
           return surveysPrisma.map((survey) => {
             return {
               ...survey,
-              responseCount: survey._count.responses,
             };
           });
         } catch (error) {
@@ -120,7 +119,6 @@ export const getSurveysSortedByRelevance = reactCache(
           surveys = inProgressSurveys.map((survey) => {
             return {
               ...survey,
-              responseCount: survey._count.responses,
             };
           });
 
@@ -145,7 +143,6 @@ export const getSurveysSortedByRelevance = reactCache(
               ...additionalSurveys.map((survey) => {
                 return {
                   ...survey,
-                  responseCount: survey._count.responses,
                 };
               }),
             ];

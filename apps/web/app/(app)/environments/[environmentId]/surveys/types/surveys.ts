@@ -9,7 +9,6 @@ export const ZSurvey = z.object({
   status: ZSurveyStatus,
   createdAt: z.date(),
   updatedAt: z.date(),
-  responseCount: z.number(),
   creator: z
     .object({
       name: z.string(),

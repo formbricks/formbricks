@@ -1,16 +1,15 @@
 import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/lib/documents";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { createHmac } from "crypto";
 import { getIsAIEnabled } from "@/app/lib/utils";
+import { createHmac } from "crypto";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { CRON_SECRET, WEBHOOK_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
+import { CRON_SECRET, IS_AI_CONFIGURED, WEBHOOK_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { getPromptText } from "@formbricks/lib/utils/ai";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
@@ -88,11 +87,7 @@ export const POST = async (request: Request) => {
 
   if (event === "responseFinished") {
     // Fetch integrations, survey, and responseCount in parallel
-    const [integrations, survey, responseCount] = await Promise.all([
-      getIntegrations(environmentId),
-      getSurvey(surveyId),
-      getResponseCountBySurveyId(surveyId),
-    ]);
+    const [integrations, survey] = await Promise.all([getIntegrations(environmentId), getSurvey(surveyId)]);
 
     if (!survey) {
       console.error(`Survey with id ${surveyId} not found`);
@@ -101,12 +96,6 @@ export const POST = async (request: Request) => {
 
     if (integrations.length > 0) {
       await handleIntegrations(integrations, inputValidation.data, survey);
-    }
-
-    // Update survey status if necessary
-    if (survey.autoComplete && responseCount === survey.autoComplete) {
-      survey.status = "completed";
-      await updateSurvey(survey);
     }
 
     // Await webhook and email promises with allSettled to prevent early rejection

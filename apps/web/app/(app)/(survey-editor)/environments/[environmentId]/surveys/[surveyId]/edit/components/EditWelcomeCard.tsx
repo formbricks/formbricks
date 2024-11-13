@@ -262,26 +262,6 @@ export const EditWelcomeCard = ({
                 </div>
               </div>
             </div>
-            {localSurvey?.type === "link" && (
-              <div className="mt-6 flex items-center">
-                <div className="mr-2">
-                  <Switch
-                    id="showResponseCount"
-                    name="showResponseCount"
-                    checked={localSurvey?.welcomeCard?.showResponseCount}
-                    onCheckedChange={() =>
-                      updateSurvey({ showResponseCount: !localSurvey.welcomeCard.showResponseCount })
-                    }
-                  />
-                </div>
-                <div className="flex-column">
-                  <Label htmlFor="showResponseCount">Show Response Count</Label>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
-                    Display number of responses for survey
-                  </div>
-                </div>
-              </div>
-            )}
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

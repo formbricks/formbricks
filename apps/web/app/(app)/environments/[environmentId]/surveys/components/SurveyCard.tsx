@@ -87,9 +87,6 @@ export const SurveyCard = ({
           )}>
           <SurveyStatusIndicator status={survey.status} /> {surveyStatusLabel}{" "}
         </div>
-        <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-          {survey.responseCount}
-        </div>
         <div className="col-span-1 flex justify-between">
           <SurveyTypeIndicator type={survey.type} />
         </div>
