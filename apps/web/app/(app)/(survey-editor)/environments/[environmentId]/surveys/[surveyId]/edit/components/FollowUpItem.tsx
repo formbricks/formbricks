@@ -119,7 +119,7 @@ export const FollowUpItem = ({
         selectedLanguageCode={selectedLanguageCode}
         defaultValues={{
           surveyFollowUpId: followUp.id,
-          name: followUp.name,
+          followUpName: followUp.name,
           triggerType: followUp.trigger.type,
           endingIds: followUp.trigger.type === "endings" ? followUp.trigger.properties?.endingIds : null,
           subject: followUp.action.properties.subject,

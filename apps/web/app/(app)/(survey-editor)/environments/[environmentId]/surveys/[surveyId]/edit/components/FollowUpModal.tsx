@@ -112,7 +112,7 @@ export const FollowUpModal = ({
 
   const form = useForm<TCreateSurveyFollowUpForm>({
     defaultValues: {
-      name: defaultValues?.name ?? "",
+      followUpName: defaultValues?.followUpName ?? "",
       triggerType: defaultValues?.triggerType ?? "response",
       endingIds: defaultValues?.endingIds || null,
       emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
@@ -175,7 +175,7 @@ export const FollowUpModal = ({
         createdAt: new Date(),
         updatedAt: new Date(),
         surveyId: localSurvey.id,
-        name: data.name,
+        name: data.followUpName,
         trigger: {
           type: data.triggerType,
           properties: getProperties(),
@@ -215,7 +215,7 @@ export const FollowUpModal = ({
       createdAt: new Date(),
       updatedAt: new Date(),
       surveyId: localSurvey.id,
-      name: data.name,
+      name: data.followUpName,
       trigger: {
         type: data.triggerType,
         properties: getProperties(),
@@ -304,7 +304,7 @@ export const FollowUpModal = ({
               <div className="flex flex-col space-y-2">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="followUpName"
                   render={({ field }) => {
                     return (
                       <FormItem>
@@ -316,7 +316,7 @@ export const FollowUpModal = ({
                             {...field}
                             type="text"
                             className="max-w-80"
-                            isInvalid={!!formErrors.name}
+                            isInvalid={!!formErrors.followUpName}
                             placeholder={t("environments.surveys.edit.follow_ups_modal_name_placeholder")}
                           />
                         </FormControl>

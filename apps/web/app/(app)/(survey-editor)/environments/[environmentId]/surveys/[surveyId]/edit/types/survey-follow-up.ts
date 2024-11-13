@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ZCreateSurveyFollowUpFormSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
+  followUpName: z.string().trim().min(1, "Name is required"),
   triggerType: z.enum(["response", "endings"]),
   endingIds: z.array(z.string().cuid2()).nullable(),
   emailTo: z.string().trim().min(1, "To is required"),
