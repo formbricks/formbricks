@@ -155,15 +155,15 @@ export const SHARE_RATE_LIMIT = {
 };
 export const FORGET_PASSWORD_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 30,
+  allowedPerInterval: 5, // Limit to 5 requests per hour
 };
 export const RESET_PASSWORD_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 30,
+  allowedPerInterval: 5, // Limit to 5 requests per hour
 };
 export const VERIFY_EMAIL_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 30,
+  allowedPerInterval: 10, // Limit to 10 requests per hour
 };
 export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
   interval: 60, // 1 minute
