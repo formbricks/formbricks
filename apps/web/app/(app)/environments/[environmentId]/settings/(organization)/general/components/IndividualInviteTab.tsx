@@ -1,10 +1,13 @@
 "use client";
 
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
-import { TOrganizationRole } from "@formbricks/types/memberships";
+import { z } from "zod";
+import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import { ZUserName } from "@formbricks/types/user";
 import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
@@ -18,6 +21,7 @@ interface IndividualInviteTabProps {
   isFormbricksCloud: boolean;
   environmentId: string;
 }
+
 export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
@@ -25,6 +29,13 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   environmentId,
 }: IndividualInviteTabProps) => {
+  const ZFormSchema = z.object({
+    name: ZUserName,
+    email: z.string().email("Invalid email address"),
+    role: ZOrganizationRole,
+  });
+
+  type TFormData = z.infer<typeof ZFormSchema>;
   const t = useTranslations();
   const {
     register,
@@ -33,17 +44,18 @@ export const IndividualInviteTab = ({
     reset,
     control,
     watch,
-    formState: { isSubmitting },
-  } = useForm<{
-    name: string;
-    email: string;
-    role: TOrganizationRole;
-  }>();
+    formState: { isSubmitting, errors },
+  } = useForm<TFormData>({
+    resolver: zodResolver(ZFormSchema),
+    defaultValues: {
+      role: "owner",
+    },
+  });
 
   const submitEventClass = async () => {
     const data = getValues();
     data.role = data.role || OrganizationRole.owner;
-    await onSubmit([data]);
+    onSubmit([data]);
     setOpen(false);
     reset();
   };
@@ -55,9 +67,10 @@ export const IndividualInviteTab = ({
             <Label htmlFor="memberNameInput">{t("common.full_name")}</Label>
             <Input
               id="memberNameInput"
-              placeholder="e.g. Hans Wurst"
+              placeholder="Hans Wurst"
               {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
             />
+            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
           </div>
           <div>
             <Label htmlFor="memberEmailInput">{t("common.email")}</Label>
