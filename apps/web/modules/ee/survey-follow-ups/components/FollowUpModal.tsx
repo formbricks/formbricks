@@ -1,5 +1,5 @@
-import FollowUpActionMultiEmailInput from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FollowUpActionMultiEmailInput";
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import FollowUpActionMultiEmailInput from "@/modules/ee/survey-follow-ups/components/FollowUpActionMultiEmailInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
@@ -33,7 +33,10 @@ import {
   SelectValue,
 } from "@formbricks/ui/components/Select";
 import { cn } from "@formbricks/ui/lib/utils";
-import { TCreateSurveyFollowUpForm, ZCreateSurveyFollowUpFormSchema } from "../types/survey-follow-up";
+import {
+  TCreateSurveyFollowUpForm,
+  ZCreateSurveyFollowUpFormSchema,
+} from "../../../../app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/types/survey-follow-up";
 
 interface AddFollowUpModalProps {
   localSurvey: TSurvey;
