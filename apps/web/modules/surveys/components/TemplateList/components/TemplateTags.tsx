@@ -54,7 +54,7 @@ const getChannelTag = (
 
     case 2:
       // Return labels for two channels concatenated with "or", removing "Survey"
-      return labels.map(removeSurveySuffix).join(t(" " + t("common.or") + " "));
+      return labels.map(removeSurveySuffix).join(" " + t("common.or") + " ");
 
     case 3:
       return t("environments.surveys.templates.all_channels");
@@ -76,12 +76,14 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
   const channelTag = useMemo(() => getChannelTag(template.channels, t), [template.channels]);
   const getIndustryTag = (industries: TProductConfigIndustry[] | undefined): string | undefined => {
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
-    if (selectedFilter[1] !== null)
-      return industryMapping.find((industry) => industry.value === selectedFilter[1])?.label;
+    if (selectedFilter[1] !== null) {
+      const industry = industryMapping.find((industry) => industry.value === selectedFilter[1]);
+      if (industry) return t(industry.label);
+    }
     if (!industries || industries.length === 0) return undefined;
     return industries.length > 1
       ? t("environments.surveys.templates.multiple_industries")
-      : industryMapping.find((industry) => industry.value === industries[0])?.label;
+      : t(industryMapping.find((industry) => industry.value === industries[0])?.label);
   };
 
   const industryTag = useMemo(
@@ -95,7 +97,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
       {industryTag && (
         <div
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
-          {t(industryTag)}
+          {industryTag}
         </div>
       )}
       {channelTag && (
@@ -103,7 +105,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
           className={cn(
             "flex-nowrap rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
           )}>
-          {t(channelTag)}
+          {channelTag}
         </div>
       )}
       {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (

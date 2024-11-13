@@ -2,11 +2,24 @@
 
 import { useTranslations } from "next-intl";
 import React from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
+import { FormControl, FormField, FormItem } from "@formbricks/ui/components/Form";
 import { OTPInput } from "@formbricks/ui/components/OTPInput";
 
-export const TwoFactor = () => {
-  const { control } = useFormContext();
+interface TwoFactorProps {
+  form: UseFormReturn<
+    {
+      email: string;
+      password: string;
+      totpCode?: string | undefined;
+      backupCode?: string | undefined;
+    },
+    any,
+    undefined
+  >;
+}
+
+export const TwoFactor = ({ form }: TwoFactorProps) => {
   const t = useTranslations();
 
   return (
@@ -16,11 +29,15 @@ export const TwoFactor = () => {
           {t("auth.login.enter_your_two_factor_authentication_code")}
         </label>
 
-        <Controller
-          control={control}
+        <FormField
+          control={form.control}
           name="totpCode"
           render={({ field }) => (
-            <OTPInput value={field.value ?? ""} onChange={field.onChange} valueLength={6} />
+            <FormItem className="w-full">
+              <FormControl>
+                <OTPInput value={field.value ?? ""} onChange={field.onChange} valueLength={6} />
+              </FormControl>
+            </FormItem>
           )}
         />
       </div>

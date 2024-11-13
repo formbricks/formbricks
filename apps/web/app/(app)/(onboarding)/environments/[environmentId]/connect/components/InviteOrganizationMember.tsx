@@ -19,7 +19,11 @@ interface InviteOrganizationMemberProps {
 
 const ZInviteOrganizationMemberDetails = z.object({
   email: z.string().email(),
-  inviteMessage: z.string().trim().min(1),
+  inviteMessage: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((value) => !/https?:\/\/|<script/i.test(value), "Invite message cannot contain URLs or scripts"),
 });
 type TInviteOrganizationMemberDetails = z.infer<typeof ZInviteOrganizationMemberDetails>;
 
