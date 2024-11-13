@@ -15,7 +15,7 @@ interface ActionDetailModalProps {
   actionClasses: TActionClass[];
   isReadOnly: boolean;
   otherEnvironment: TEnvironment;
-  toCopyActionClasses: TActionClass[];
+  otherEnvActionClasses: TActionClass[];
 }
 
 export const ActionDetailModal = ({
@@ -26,7 +26,7 @@ export const ActionDetailModal = ({
   actionClasses,
   environment,
   isReadOnly,
-  toCopyActionClasses,
+  otherEnvActionClasses,
   otherEnvironment,
 }: ActionDetailModalProps) => {
   const t = useTranslations();
@@ -35,7 +35,7 @@ export const ActionDetailModal = ({
       title: t("common.activity"),
       children: (
         <ActionActivityTab
-          toCopyActionClasses={toCopyActionClasses}
+          otherEnvActionClasses={otherEnvActionClasses}
           otherEnvironment={otherEnvironment}
           isReadOnly={isReadOnly}
           environment={environment}

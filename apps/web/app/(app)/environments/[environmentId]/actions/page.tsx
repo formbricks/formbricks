@@ -54,7 +54,7 @@ const Page = async ({ params }) => {
 
   const otherEnvironment = environments.filter((env) => env.id !== params.environmentId)[0];
 
-  const toCopyActionClasses = await getActionClasses(otherEnvironment.id);
+  const otherEnvActionClasses = await getActionClasses(otherEnvironment.id);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
@@ -83,7 +83,7 @@ const Page = async ({ params }) => {
       <ActionClassesTable
         environment={currentEnvironment}
         otherEnvironment={otherEnvironment}
-        toCopyActionClasses={toCopyActionClasses}
+        otherEnvActionClasses={otherEnvActionClasses}
         environmentId={params.environmentId}
         actionClasses={actionClasses}
         isReadOnly={isReadOnly}>

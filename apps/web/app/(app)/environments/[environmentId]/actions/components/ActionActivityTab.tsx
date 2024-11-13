@@ -20,14 +20,14 @@ interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;
   environment: TEnvironment;
-  toCopyActionClasses: TActionClass[];
+  otherEnvActionClasses: TActionClass[];
   otherEnvironment: TEnvironment;
   isReadOnly: boolean;
 }
 
 export const ActionActivityTab = ({
   actionClass,
-  toCopyActionClasses,
+  otherEnvActionClasses,
   otherEnvironment,
   environmentId,
   environment,
@@ -60,17 +60,17 @@ export const ActionActivityTab = ({
   }, [actionClass.id, environmentId]);
 
   const actionClassNames = useMemo(
-    () => toCopyActionClasses.map((actionClass) => actionClass.name),
-    [toCopyActionClasses]
+    () => otherEnvActionClasses.map((actionClass) => actionClass.name),
+    [otherEnvActionClasses]
   );
 
   const actionClassKeys = useMemo(() => {
-    const codeActionClasses: TActionClassInputCode[] = toCopyActionClasses.filter(
+    const codeActionClasses: TActionClassInputCode[] = otherEnvActionClasses.filter(
       (actionClass) => actionClass.type === "code"
     ) as TActionClassInputCode[];
 
     return codeActionClasses.map((actionClass) => actionClass.key);
-  }, [toCopyActionClasses]);
+  }, [otherEnvActionClasses]);
 
   const copyAction = async (data: TActionClassInput) => {
     const { type } = data;
