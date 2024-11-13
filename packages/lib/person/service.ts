@@ -1,6 +1,8 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { responseCache } from "response/cache";
+import { surveyCache } from "survey/cache";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZOptionalString, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
@@ -224,7 +226,20 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
   validateInputs([personId, ZId]);
 
   try {
-    const person = await prisma.person.delete({
+    const personRespondedSurveyIds = await prisma.response.findMany({
+      where: {
+        personId,
+      },
+      select: {
+        surveyId: true,
+      },
+    });
+
+    const uniqueSurveyIds = Array.from(
+      new Set(personRespondedSurveyIds.map((response) => response.surveyId))
+    );
+
+    const deletedPerson = await prisma.person.delete({
       where: {
         id: personId,
       },
@@ -232,12 +247,27 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
     });
 
     personCache.revalidate({
-      id: person.id,
-      userId: person.userId,
-      environmentId: person.environmentId,
+      id: deletedPerson.id,
+      userId: deletedPerson.userId,
+      environmentId: deletedPerson.environmentId,
     });
 
-    return person;
+    surveyCache.revalidate({
+      environmentId: deletedPerson.environmentId,
+    });
+
+    responseCache.revalidate({
+      personId: deletedPerson.id,
+      environmentId: deletedPerson.environmentId,
+    });
+
+    for (const surveyId of uniqueSurveyIds) {
+      responseCache.revalidate({
+        surveyId,
+      });
+    }
+
+    return deletedPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
