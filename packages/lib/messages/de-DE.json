@@ -10,7 +10,7 @@
       "back_to_login": "Zurück zum Login",
       "email-sent": {
         "heading": "Passwort erfolgreich angefordert",
-        "text": "Du hast einen Link angefordert, um dein Passwort zu ändern. Klicke auf den Link, um dein Passwort zurückzusetzen klickst:"
+        "text": "Wenn ein Konto mit dieser E-Mail-Adresse existiert, erhalten Sie in Kürze Anweisungen zum Zurücksetzen Ihres Passworts."
       },
       "reset": {
         "confirm_password": "Passwort bestätigen",

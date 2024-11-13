@@ -10,7 +10,7 @@
       "back_to_login": "Back to login",
       "email-sent": {
         "heading": "Password reset successfully requested",
-        "text": "You have requested a link to change your password. You can do this by clicking the link below:"
+        "text": "If an account with this email exists, you will receive password reset instructions shortly."
       },
       "reset": {
         "confirm_password": "Confirm password",

@@ -10,7 +10,7 @@
       "back_to_login": "Voltar para o login",
       "email-sent": {
         "heading": "Solicitação de redefinição de senha feita com sucesso",
-        "text": "Você pediu um link pra trocar sua senha. Você pode fazer isso clicando no link abaixo:"
+        "text": "Se uma conta com este e-mail existir, você receberá em breve instruções para redefinir sua senha."
       },
       "reset": {
         "confirm_password": "Confirmar senha",
