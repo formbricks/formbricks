@@ -17,8 +17,9 @@ const fetchAndAuthorizeSurvey = async (authentication: any, surveyId: string): P
 
 export const GET = async (
   request: Request,
-  { params }: { params: { surveyId: string } }
+  props: { params: Promise<{ surveyId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -34,8 +35,9 @@ export const GET = async (
 
 export const DELETE = async (
   request: Request,
-  { params }: { params: { surveyId: string } }
+  props: { params: Promise<{ surveyId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -52,8 +54,9 @@ export const DELETE = async (
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { surveyId: string } }
+  props: { params: Promise<{ surveyId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

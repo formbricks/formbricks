@@ -28,7 +28,7 @@ import {
 } from "@formbricks/types/errors";
 
 export const getTeam = reactCache(
-  (teamId: string): Promise<TTeam> =>
+  async (teamId: string): Promise<TTeam> =>
     cache(
       async () => {
         validateInputs([teamId, ZId]);
@@ -314,7 +314,7 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
 };
 
 export const getMembersByOrganizationId = reactCache(
-  (organizationId: string): Promise<TOrganizationMember[]> =>
+  async (organizationId: string): Promise<TOrganizationMember[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString]);
@@ -441,7 +441,7 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
 };
 
 export const getTeamProducts = reactCache(
-  (teamId: string): Promise<TTeamProduct[]> =>
+  async (teamId: string): Promise<TTeamProduct[]> =>
     cache(
       async () => {
         validateInputs([teamId, ZId]);
@@ -586,7 +586,7 @@ export const removeTeamProduct = async (teamId: string, productId: string): Prom
 };
 
 export const getProductsByOrganizationId = reactCache(
-  (organizationId: string): Promise<TOrganizationProduct[]> =>
+  async (organizationId: string): Promise<TOrganizationProduct[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString]);

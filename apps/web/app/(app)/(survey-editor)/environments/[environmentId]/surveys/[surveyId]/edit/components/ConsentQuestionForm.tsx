@@ -3,7 +3,7 @@
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type JSX, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";

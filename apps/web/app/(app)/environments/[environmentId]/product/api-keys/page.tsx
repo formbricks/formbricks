@@ -17,7 +17,8 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { ApiKeyList } from "./components/ApiKeyList";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const [session, environment, organization, product] = await Promise.all([
     getServerSession(authOptions),

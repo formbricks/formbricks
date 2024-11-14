@@ -15,8 +15,9 @@ const ZGenerateInsightsInput = z.object({
 
 export const POST = async (request: Request) => {
   try {
+    const requestHeaders = await headers();
     // Check authentication
-    if (headers().get("x-api-key") !== CRON_SECRET) {
+    if (requestHeaders.get("x-api-key") !== CRON_SECRET) {
       return responses.notAuthenticatedResponse();
     }
 

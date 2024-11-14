@@ -12,14 +12,13 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const GET = async (
   _: NextRequest,
-  {
-    params,
-  }: {
-    params: {
+  props: {
+    params: Promise<{
       environmentId: string;
-    };
+    }>;
   }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     // validate using zod
     const inputValidation = ZJsSyncInput.safeParse({

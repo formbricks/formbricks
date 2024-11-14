@@ -12,9 +12,9 @@ import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 
 interface Context {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -32,10 +32,11 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
-  const environmentId = context.params.environmentId;
+  const params = await context.params;
+  const environmentId = params.environmentId;
 
   const accessType = "private"; // private files are accessible only by authorized users
-  const headersList = headers();
+  const headersList = await headers();
 
   const fileType = headersList.get("X-File-Type");
   const encodedFileName = headersList.get("X-File-Name");

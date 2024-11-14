@@ -9,7 +9,11 @@ import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
-const ProductOnboardingLayout = async ({ children, params }) => {
+const ProductOnboardingLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
