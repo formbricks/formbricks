@@ -1,5 +1,5 @@
-import { FollowUpItem } from "@/modules/ee/survey-follow-ups/components/FollowUpItem";
-import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/FollowUpModal";
+import { FollowUpItem } from "@/modules/ee/survey-follow-ups/components/follow-up-item";
+import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/follow-up-modal";
 import { LockIcon, MailIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

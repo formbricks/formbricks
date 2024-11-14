@@ -1,5 +1,5 @@
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
-import FollowUpActionMultiEmailInput from "@/modules/ee/survey-follow-ups/components/FollowUpActionMultiEmailInput";
+import FollowUpActionMultiEmailInput from "@/modules/ee/survey-follow-ups/components/follow-up-action-multi-email-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
 import DOMpurify from "isomorphic-dompurify";

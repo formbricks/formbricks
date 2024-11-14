@@ -1,6 +1,6 @@
 "use client";
 
-import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/FollowUpsView";
+import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/follow-ups-view";
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
