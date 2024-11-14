@@ -11,11 +11,10 @@ export const POST = async (request: Request) => {
       },
     });
 
-    if (!foundUser) {
-      return Response.json({ error: "No user with this email found" }, { status: 409 });
+    if (foundUser) {
+      await sendForgotPasswordEmail(foundUser, foundUser.locale);
     }
 
-    await sendForgotPasswordEmail(foundUser, foundUser.locale);
     return Response.json({});
   } catch (e) {
     return Response.json(

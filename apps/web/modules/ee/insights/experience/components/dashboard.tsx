@@ -40,7 +40,6 @@ export const Dashboard = ({
         value={statsPeriod}
         onValueChange={(value) => {
           if (value) {
-            console.log("Stats period changed to:", value);
             setStatsPeriod(value as TStatsPeriod);
           }
         }}

@@ -8,6 +8,9 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson, TPersonWithAttributes } from "@formbricks/types/people";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
+import { displayCache } from "../display/cache";
+import { responseCache } from "../response/cache";
+import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
 
@@ -224,7 +227,34 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
   validateInputs([personId, ZId]);
 
   try {
-    const person = await prisma.person.delete({
+    const personRespondedSurveyIds = await prisma.response.findMany({
+      where: {
+        personId,
+      },
+      select: {
+        surveyId: true,
+      },
+      distinct: ["surveyId"],
+    });
+
+    const displaySurveyIds = await prisma.display.findMany({
+      where: {
+        personId,
+      },
+      select: {
+        surveyId: true,
+      },
+      distinct: ["surveyId"],
+    });
+
+    const uniqueSurveyIds = Array.from(
+      new Set([
+        ...personRespondedSurveyIds.map(({ surveyId }) => surveyId),
+        ...displaySurveyIds.map(({ surveyId }) => surveyId),
+      ])
+    );
+
+    const deletedPerson = await prisma.person.delete({
       where: {
         id: personId,
       },
@@ -232,12 +262,30 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
     });
 
     personCache.revalidate({
-      id: person.id,
-      userId: person.userId,
-      environmentId: person.environmentId,
+      id: deletedPerson.id,
+      userId: deletedPerson.userId,
+      environmentId: deletedPerson.environmentId,
     });
 
-    return person;
+    surveyCache.revalidate({
+      environmentId: deletedPerson.environmentId,
+    });
+
+    responseCache.revalidate({
+      personId: deletedPerson.id,
+      environmentId: deletedPerson.environmentId,
+    });
+
+    for (const surveyId of uniqueSurveyIds) {
+      responseCache.revalidate({
+        surveyId,
+      });
+      displayCache.revalidate({
+        surveyId,
+      });
+    }
+
+    return deletedPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

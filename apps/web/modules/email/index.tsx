@@ -80,9 +80,7 @@ export const sendVerificationEmail = async (user: TEmailUser): Promise<void> => 
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
-  const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?email=${encodeURIComponent(
-    user.email
-  )}`;
+  const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
   const html = await render(VerificationEmail({ verificationRequestLink, verifyLink, locale: user.locale }));
   await sendEmail({
     to: user.email,

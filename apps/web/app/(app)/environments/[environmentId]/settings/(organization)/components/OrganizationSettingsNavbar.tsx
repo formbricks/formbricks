@@ -40,7 +40,7 @@ export const OrganizationSettingsNavbar = ({
       id: "billing",
       label: t("common.billing"),
       href: `/environments/${environmentId}/settings/billing`,
-      hidden: !isFormbricksCloud || isPricingDisabled || loading,
+      hidden: !isFormbricksCloud || loading,
       current: pathname?.includes("/billing"),
     },
     {

@@ -250,6 +250,8 @@ export const ZSurveyLogicConditionsOperator = z.enum([
   "equalsOneOf",
   "includesAllOf",
   "includesOneOf",
+  "doesNotIncludeOneOf",
+  "doesNotIncludeAllOf",
   "isClicked",
   "isAccepted",
   "isBefore",
@@ -1265,9 +1267,16 @@ const isInvalidOperatorsForQuestionType = (
     case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
     case TSurveyQuestionTypeEnum.PictureSelection:
       if (
-        !["equals", "doesNotEqual", "includesAllOf", "includesOneOf", "isSubmitted", "isSkipped"].includes(
-          operator
-        )
+        ![
+          "equals",
+          "doesNotEqual",
+          "includesAllOf",
+          "includesOneOf",
+          "doesNotIncludeAllOf",
+          "doesNotIncludeOneOf",
+          "isSubmitted",
+          "isSkipped",
+        ].includes(operator)
       ) {
         isInvalidOperator = true;
       }
@@ -1606,7 +1615,11 @@ const validateConditions = (
               });
             }
           }
-        } else if (condition.operator === "includesAllOf" || condition.operator === "includesOneOf") {
+        } else if (
+          ["includesAllOf", "includesOneOf", "doesNotIncludeAllOf", "doesNotIncludeOneOf"].includes(
+            condition.operator
+          )
+        ) {
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
               code: z.ZodIssueCode.custom,

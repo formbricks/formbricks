@@ -9,7 +9,7 @@ export const POST = async (request: Request) => {
     const { id } = await verifyToken(token);
     const user = await prisma.user.findUnique({
       where: {
-        id: id,
+        id,
       },
       select: {
         id: true,
