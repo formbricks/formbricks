@@ -232,6 +232,7 @@ export const SurveyEditor = ({
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
               userEmail={userEmail}
+              locale={locale}
             />
           )}
         </main>

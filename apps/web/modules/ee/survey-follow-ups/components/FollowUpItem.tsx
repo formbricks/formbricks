@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
 import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
@@ -15,6 +16,7 @@ interface FollowUpItemProps {
   mailFrom: string;
   userEmail: string;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  locale: TUserLocale;
 }
 
 export const FollowUpItem = ({
@@ -24,6 +26,7 @@ export const FollowUpItem = ({
   selectedLanguageCode,
   userEmail,
   setLocalSurvey,
+  locale,
 }: FollowUpItemProps) => {
   const t = useTranslations();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
@@ -129,6 +132,7 @@ export const FollowUpItem = ({
         }}
         mode="edit"
         userEmail={userEmail}
+        locale={locale}
       />
 
       <ConfirmationModal

@@ -1,21 +1,41 @@
-import { Container, Text } from "@react-email/components";
-import { EmailTemplate } from "../../components/email-template";
+import { Body, Container, Html, Link, Section, Tailwind } from "@react-email/components";
+import { sanitize } from "isomorphic-dompurify";
 
 interface FollowUpEmailProps {
   surveyName: string;
   html: string;
 }
 
-export function FollowUpEmail({ html, surveyName }: FollowUpEmailProps): React.JSX.Element {
+export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
-      <Container>
-        <Text className="mb-1">
-          You have receieved a follow up email from the survey: <strong>{surveyName}</strong>
-        </Text>
-      </Container>
+    <Html>
+      <Tailwind>
+        <Body
+          className="m-0 h-full w-full justify-center bg-slate-50 p-6 text-center text-base font-medium text-slate-800"
+          style={{
+            fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
+          }}>
+          <Container className="mx-auto my-8 max-w-xl bg-white p-4 text-left">
+            <div dangerouslySetInnerHTML={{ __html: sanitize(html) }} />
+          </Container>
 
-      <div dangerouslySetInnerHTML={{ __html: html }} />
-    </EmailTemplate>
+          <Section className="mt-4 text-center">
+            Formbricks {new Date().getFullYear()}. All rights reserved.
+            <br />
+            <Link
+              href="https://formbricks.com/imprint?utm_source=email_footer&utm_medium=email"
+              target="_blank">
+              Imprint
+            </Link>{" "}
+            |{" "}
+            <Link
+              href="https://formbricks.com/privacy-policy?utm_source=email_footer&utm_medium=email"
+              target="_blank">
+              Privacy Policy
+            </Link>
+          </Section>
+        </Body>
+      </Tailwind>
+    </Html>
   );
 }

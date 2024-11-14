@@ -12,6 +12,7 @@ import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/datab
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
 import { Editor } from "@formbricks/ui/components/Editor";
@@ -49,6 +50,7 @@ interface AddFollowUpModalProps {
   mode?: "create" | "edit";
   userEmail: string;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  locale: TUserLocale;
 }
 
 type EmailSendToOption = {
@@ -67,6 +69,7 @@ export const FollowUpModal = ({
   mode = "create",
   userEmail,
   setLocalSurvey,
+  locale,
 }: AddFollowUpModalProps) => {
   const t = useTranslations();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,8 +124,8 @@ export const FollowUpModal = ({
       endingIds: defaultValues?.endingIds || null,
       emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
       replyTo: defaultValues?.replyTo ?? [userEmail],
-      subject: defaultValues?.subject ?? "Thanks for your answers!",
-      body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(),
+      subject: defaultValues?.subject ?? t("environments.surveys.edit.follow_ups_modal_action_subject"),
+      body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(locale),
     },
     resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
     mode: "onChange",
@@ -132,7 +135,7 @@ export const FollowUpModal = ({
   const formSubmitting = form.formState.isSubmitting;
   const triggerType = form.watch("triggerType");
 
-  const handleSubmit = async (data: TCreateSurveyFollowUpForm) => {
+  const handleSubmit = (data: TCreateSurveyFollowUpForm) => {
     if (data.triggerType === "endings" && data.endingIds?.length === 0) {
       toast.error("Please select at least one ending or change the trigger type");
       return;
@@ -143,6 +146,10 @@ export const FollowUpModal = ({
         "No valid options found for sending emails, please add some open-text / contact-info questions or hidden fields"
       );
 
+      return;
+    }
+
+    if (Object.keys(formErrors).length > 0) {
       return;
     }
 
@@ -286,10 +293,10 @@ export const FollowUpModal = ({
         emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
         replyTo: defaultValues?.replyTo ?? [userEmail],
         subject: defaultValues?.subject ?? "Thanks for your answers!",
-        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(),
+        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(locale),
       });
     }
-  }, [open, defaultValues, emailSendToOptions, form, userEmail]);
+  }, [open, defaultValues, emailSendToOptions, form, userEmail, locale]);
 
   const handleModalClose = () => {
     form.reset();
@@ -671,7 +678,11 @@ export const FollowUpModal = ({
                       return (
                         <FormItem>
                           <div className="flex flex-col space-y-2">
-                            <FormLabel className="font-medium text-slate-700">
+                            <FormLabel
+                              className={cn(
+                                "font-medium",
+                                formErrors.body ? "text-red-500" : "text-slate-700"
+                              )}>
                               {t("environments.surveys.edit.follow_ups_modal_action_body_label")}
                             </FormLabel>
                             <FormControl>
@@ -687,8 +698,29 @@ export const FollowUpModal = ({
                                 placeholder={t(
                                   "environments.surveys.edit.follow_ups_modal_action_body_placeholder"
                                 )}
+                                onEmptyChange={(isEmpty) => {
+                                  if (isEmpty) {
+                                    if (!formErrors.body) {
+                                      form.setError("body", {
+                                        type: "manual",
+                                        message: "Body is required",
+                                      });
+                                    }
+                                  } else {
+                                    if (formErrors.body) {
+                                      form.clearErrors("body");
+                                    }
+                                  }
+                                }}
+                                isInvalid={!!formErrors.body}
                               />
                             </FormControl>
+
+                            {formErrors.body ? (
+                              <div>
+                                <span className="text-sm text-red-500">{formErrors.body.message}</span>
+                              </div>
+                            ) : null}
                           </div>
                         </FormItem>
                       );

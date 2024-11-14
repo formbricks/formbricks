@@ -870,6 +870,8 @@ export const createSurvey = async (
           action: followUp.action,
         })),
       };
+    } else {
+      delete data.followUps;
     }
 
     const survey = await prisma.survey.create({

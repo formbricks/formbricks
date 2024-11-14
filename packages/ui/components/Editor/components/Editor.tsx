@@ -11,8 +11,9 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import type { Dispatch, SetStateAction } from "react";
+import { type Dispatch, type SetStateAction } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { EditorContentChecker } from "@formbricks/ui/components/Editor/components/EditorContentChecker";
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "../components/AutoLinkPlugin";
 import { ToolbarPlugin } from "../components/ToolbarPlugin";
 import { exampleTheme } from "../lib/ExampleTheme";
@@ -38,6 +39,8 @@ export type TextEditorProps = {
   firstRender?: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   editable?: boolean;
+  onEmptyChange?: (isEmpty: boolean) => void;
+  isInvalid?: boolean;
 };
 
 const editorConfig = {
@@ -67,7 +70,7 @@ export const Editor = (props: TextEditorProps) => {
   return (
     <div className="editor cursor-text rounded-md">
       <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
-        <div className="editor-container rounded-md p-0">
+        <div className={cn("editor-container rounded-md p-0", props.isInvalid && "!border !border-red-500")}>
           <ToolbarPlugin
             getText={props.getText}
             setText={props.setText}
@@ -78,6 +81,7 @@ export const Editor = (props: TextEditorProps) => {
             firstRender={props.firstRender}
             setFirstRender={props.setFirstRender}
           />
+          {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
           <div
             className={cn("editor-inner scroll-bar", !editable && "bg-muted")}
             style={{ height: props.height }}>

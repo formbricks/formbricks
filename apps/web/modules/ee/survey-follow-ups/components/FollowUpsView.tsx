@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 
 interface FollowUpsViewProps {
@@ -14,6 +15,7 @@ interface FollowUpsViewProps {
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
+  locale: TUserLocale;
 }
 
 export const FollowUpsView = ({
@@ -23,6 +25,7 @@ export const FollowUpsView = ({
   mailFrom,
   isSurveyFollowUpsAllowed,
   userEmail,
+  locale,
 }: FollowUpsViewProps) => {
   const t = useTranslations();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
@@ -105,6 +108,7 @@ export const FollowUpsView = ({
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               userEmail={userEmail}
+              locale={locale}
             />
           );
         })}
@@ -118,6 +122,7 @@ export const FollowUpsView = ({
         selectedLanguageCode={selectedLanguageCode}
         mailFrom={mailFrom}
         userEmail={userEmail}
+        locale={locale}
       />
     </div>
   );

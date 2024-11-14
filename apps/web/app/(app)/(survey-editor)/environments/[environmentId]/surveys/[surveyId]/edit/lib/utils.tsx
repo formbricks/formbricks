@@ -2,6 +2,7 @@ import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
+import { translate } from "@formbricks/lib/templates";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -19,6 +20,7 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/components/InputCombobox";
 import { TLogicRuleOption, logicRules } from "./logicRuleEngine";
 
@@ -1146,6 +1148,6 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = () => {
-  return `<p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">Hey 👋</span><br><br><span style="white-space: pre-wrap;">Thanks for taking the time to respond, we will be in touch shortly.</span><br><br><span style="white-space: pre-wrap;">Have a great day!</span></p>`;
+export const getSurveyFollowUpActionDefaultBody = (locale: TUserLocale) => {
+  return translate("follow_ups_modal_action_body", locale) as string;
 };
