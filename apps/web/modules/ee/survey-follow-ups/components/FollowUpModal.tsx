@@ -2,6 +2,7 @@ import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/
 import FollowUpActionMultiEmailInput from "@/modules/ee/survey-follow-ups/components/FollowUpActionMultiEmailInput";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
+import DOMpurify from "isomorphic-dompurify";
 import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -173,6 +174,7 @@ export const FollowUpModal = ({
         return;
       }
 
+      const sanitizedBody = DOMpurify.sanitize(data.body);
       const updatedFollowUp = {
         id: defaultValues.surveyFollowUpId,
         createdAt: new Date(),
@@ -190,14 +192,13 @@ export const FollowUpModal = ({
             from: mailFrom,
             replyTo: data.replyTo,
             subject: data.subject,
-            body: data.body,
+            body: sanitizedBody,
           },
         },
       };
 
       toast.success("Survey follow up updated successfully");
       setOpen(false);
-
       setLocalSurvey((prev) => {
         return {
           ...prev,
@@ -213,6 +214,7 @@ export const FollowUpModal = ({
       return;
     }
 
+    const sanitizedBody = DOMpurify.sanitize(data.body);
     const newFollowUp = {
       id: createId(),
       createdAt: new Date(),
@@ -230,14 +232,14 @@ export const FollowUpModal = ({
           from: mailFrom,
           replyTo: data.replyTo,
           subject: data.subject,
-          body: data.body,
+          body: sanitizedBody,
         },
       },
     };
 
     toast.success("Survey follow up created successfully");
     setOpen(false);
-
+    form.reset();
     setLocalSurvey((prev) => {
       return {
         ...prev,
@@ -275,8 +277,27 @@ export const FollowUpModal = ({
     };
   }, [open, firstRender]);
 
+  useEffect(() => {
+    if (open && defaultValues) {
+      form.reset({
+        followUpName: defaultValues?.followUpName ?? "",
+        triggerType: defaultValues?.triggerType ?? "response",
+        endingIds: defaultValues?.endingIds || null,
+        emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
+        replyTo: defaultValues?.replyTo ?? [userEmail],
+        subject: defaultValues?.subject ?? "Thanks for your answers!",
+        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(),
+      });
+    }
+  }, [open, defaultValues, emailSendToOptions, form, userEmail]);
+
+  const handleModalClose = () => {
+    form.reset();
+    setOpen(false);
+  };
+
   return (
-    <Modal open={open} setOpen={setOpen} noPadding size="md">
+    <Modal open={open} setOpen={handleModalClose} noPadding size="md">
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -686,6 +707,7 @@ export const FollowUpModal = ({
                 size="sm"
                 onClick={() => {
                   setOpen(false);
+                  form.reset();
                 }}>
                 {t("common.cancel")}
               </Button>
