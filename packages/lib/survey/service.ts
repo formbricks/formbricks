@@ -862,6 +862,16 @@ export const createSurvey = async (
       }
     }
 
+    if (restSurveyBody.followUps?.length) {
+      data.followUps = {
+        create: restSurveyBody.followUps.map((followUp) => ({
+          name: followUp.name,
+          trigger: followUp.trigger,
+          action: followUp.action,
+        })),
+      };
+    }
+
     const survey = await prisma.survey.create({
       data: {
         ...data,

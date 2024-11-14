@@ -2093,7 +2093,19 @@ const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLog
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
 export const ZSurveyUpdateInput = ZSurvey.innerType()
-  .omit({ createdAt: true, updatedAt: true })
+  .omit({ createdAt: true, updatedAt: true, followUps: true })
+  .extend({
+    followUps: z
+      .array(
+        ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true }).and(
+          z.object({
+            createdAt: z.coerce.date(),
+            updatedAt: z.coerce.date(),
+          })
+        )
+      )
+      .default([]),
+  })
   .and(
     z.object({
       createdAt: z.coerce.date(),
@@ -2118,6 +2130,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     updatedAt: true,
     productOverwrites: true,
     languages: true,
+    followUps: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -2128,6 +2141,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     }),
     endings: ZSurveyEndings.default([]),
     type: ZSurveyType.default("link"),
+    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 

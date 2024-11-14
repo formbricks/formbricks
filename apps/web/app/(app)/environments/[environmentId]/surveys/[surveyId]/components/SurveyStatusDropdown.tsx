@@ -33,7 +33,7 @@ export const SurveyStatusDropdown = ({
     false;
 
   const handleStatusChange = async (status: TSurvey["status"]) => {
-    const updateSurveyActionResponse = await updateSurveyAction({ survey: { ...survey, status } });
+    const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
 
     if (updateSurveyActionResponse?.data) {
       toast.success(
