@@ -138,7 +138,7 @@ export const ResponseOptionsCard = ({
   const handleCloseOnDateChange = (date: Date) => {
     const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
     setCloseOnDate(utcDate);
-    setLocalSurvey({ ...localSurvey, closeOnDate: date ?? null });
+    setLocalSurvey({ ...localSurvey, closeOnDate: utcDate ?? null });
   };
 
   const handleClosedSurveyMessageChange = ({
