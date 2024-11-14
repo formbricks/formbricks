@@ -862,6 +862,7 @@ export const createSurvey = async (
       }
     }
 
+    // Survey follow-ups
     if (restSurveyBody.followUps?.length) {
       data.followUps = {
         create: restSurveyBody.followUps.map((followUp) => ({

@@ -64,6 +64,7 @@ export const TemplateList = ({
       environmentId: environment.id,
       surveyBody: augmentedTemplate,
     });
+    console.log({ createSurveyResponse });
 
     if (createSurveyResponse?.data) {
       router.push(`/environments/${environment.id}/surveys/${createSurveyResponse.data.id}/edit`);

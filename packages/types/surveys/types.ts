@@ -1160,8 +1160,7 @@ export const ZSurvey = z
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- followUps is not always defined
-    if (survey.followUps?.length) {
+    if (survey.followUps.length) {
       survey.followUps
         .filter((followUp) => !followUp.deleted)
         .forEach((followUp, index) => {
