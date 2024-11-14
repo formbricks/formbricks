@@ -1,8 +1,15 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { CircleHelpIcon } from "lucide-react";
 import { Metadata } from "next";
+import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { Button } from "@formbricks/ui/components/Button";
@@ -14,7 +21,8 @@ export const metadata: Metadata = {
   title: "Attributes",
 };
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   let attributeClasses = await getAttributeClasses(params.environmentId);
   const t = await getTranslations();
   const product = await getProductByEnvironmentId(params.environmentId);
@@ -22,6 +30,28 @@ const Page = async ({ params }) => {
   if (!product) {
     throw new Error(t("common.product_not_found"));
   }
+
+  const [organization, session] = await Promise.all([
+    getOrganizationByEnvironmentId(params.environmentId),
+    getServerSession(authOptions),
+  ]);
+
+  if (!organization) {
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  if (!session) {
+    throw new Error(t("common.session_not_found"));
+  }
+
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
 
   const HowToAddAttributesButton = (
     <Button
@@ -39,7 +69,7 @@ const Page = async ({ params }) => {
       <PageHeader pageTitle={t("common.people")} cta={HowToAddAttributesButton}>
         <PersonSecondaryNavigation activeId="attributes" environmentId={params.environmentId} />
       </PageHeader>
-      <AttributeClassesTable attributeClasses={attributeClasses} locale={locale} />
+      <AttributeClassesTable attributeClasses={attributeClasses} locale={locale} isReadOnly={isReadOnly} />
     </PageContentWrapper>
   );
 };

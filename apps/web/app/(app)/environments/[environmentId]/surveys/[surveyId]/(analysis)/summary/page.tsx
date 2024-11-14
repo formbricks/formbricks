@@ -4,6 +4,8 @@ import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { getIsAIEnabled } from "@/app/lib/utils";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -26,7 +28,8 @@ import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -69,7 +72,12 @@ const Page = async ({ params }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
@@ -84,7 +92,7 @@ const Page = async ({ params }) => {
           <SurveyAnalysisCTA
             environment={environment}
             survey={survey}
-            isViewer={isViewer}
+            isReadOnly={isReadOnly}
             webAppUrl={WEBAPP_URL}
             user={user}
           />
@@ -113,6 +121,7 @@ const Page = async ({ params }) => {
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
+        isReadOnly={isReadOnly}
         locale={user.locale ?? DEFAULT_LOCALE}
       />
     </PageContentWrapper>

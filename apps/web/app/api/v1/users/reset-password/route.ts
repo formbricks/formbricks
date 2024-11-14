@@ -1,5 +1,5 @@
+import { sendPasswordResetNotifyEmail } from "@/modules/email";
 import { prisma } from "@formbricks/database";
-import { sendPasswordResetNotifyEmail } from "@formbricks/email";
 import { verifyToken } from "@formbricks/lib/jwt";
 
 export const POST = async (request: Request) => {
@@ -9,7 +9,7 @@ export const POST = async (request: Request) => {
     const { id } = await verifyToken(token);
     const user = await prisma.user.findUnique({
       where: {
-        id: id,
+        id,
       },
       select: {
         id: true,

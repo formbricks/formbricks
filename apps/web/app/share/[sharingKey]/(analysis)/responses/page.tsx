@@ -12,7 +12,8 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
@@ -38,7 +39,7 @@ const Page = async ({ params }) => {
   }
 
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   return (
     <div className="flex w-full justify-center">
@@ -59,6 +60,7 @@ const Page = async ({ params }) => {
           environmentTags={tags}
           responsesPerPage={RESPONSES_PER_PAGE}
           locale={locale}
+          isReadOnly={true}
         />
       </PageContentWrapper>
     </div>

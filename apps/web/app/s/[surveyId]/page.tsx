@@ -19,19 +19,21 @@ import { TResponse } from "@formbricks/types/responses";
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
-  params: {
+  params: Promise<{
     surveyId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     suId?: string;
     userId?: string;
     verify?: string;
     lang?: string;
     embed?: string;
-  };
+    preview?: string;
+  }>;
 }
 
-export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise<Metadata> => {
+export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {
+  const params = await props.params;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
@@ -40,13 +42,16 @@ export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise
   return getMetadataForLinkSurvey(params.surveyId);
 };
 
-const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
+const Page = async (props: LinkSurveyPageProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
+  const isPreview = searchParams.preview === "true";
   const survey = await getSurvey(params.surveyId);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
   const suId = searchParams.suId;
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
@@ -62,7 +67,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
-  if (survey && survey.status !== "inProgress") {
+  if (survey && survey.status !== "inProgress" && !isPreview) {
     return (
       <SurveyInactive
         status={survey.status}
@@ -174,6 +179,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         attributeClasses={attributeClasses}
         isEmbed={isEmbed}
         locale={locale}
+        isPreview={isPreview}
       />
     );
   }
@@ -196,6 +202,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       locale={locale}
+      isPreview={isPreview}
     />
   ) : null;
 };

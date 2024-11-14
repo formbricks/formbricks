@@ -1,6 +1,6 @@
+import { sendInviteAcceptedEmail } from "@/modules/email";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { sendInviteAcceptedEmail } from "@formbricks/email";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
@@ -10,7 +10,8 @@ import { getUser, updateUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/components/Button";
 import { ContentLayout } from "./components/ContentLayout";
 
-const Page = async ({ searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const user = session?.user.id ? await getUser(session.user.id) : null;
@@ -37,17 +38,6 @@ const Page = async ({ searchParams }) => {
           headline={t("auth.invite.invite_expired")}
           description={t("auth.invite.invite_expired_description")}
         />
-      );
-    } else if (invite.accepted) {
-      return (
-        <ContentLayout
-          headline={t("auth.invite.already_part_of_squad")}
-          description={t("auth.invite.already_part_of_squad_description")}>
-          <Button variant="secondary" href="/support">
-            {t("auth.invite.contact_support")}
-          </Button>
-          <Button href="/">{t("auth.invite.go_to_app")}</Button>
-        </ContentLayout>
       );
     } else if (!session) {
       const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
@@ -78,7 +68,10 @@ const Page = async ({ searchParams }) => {
         </ContentLayout>
       );
     } else {
-      await createMembership(invite.organizationId, session.user.id, { accepted: true, role: invite.role });
+      await createMembership(invite.organizationId, session.user.id, {
+        accepted: true,
+        role: invite.role,
+      });
       await deleteInvite(inviteId);
 
       await sendInviteAcceptedEmail(
@@ -100,6 +93,7 @@ const Page = async ({ searchParams }) => {
           ),
         },
       });
+
       return (
         <ContentLayout
           headline={t("auth.invite.welcome_to_organization")}

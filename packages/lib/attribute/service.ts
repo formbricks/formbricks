@@ -40,7 +40,7 @@ const convertPrismaAttributes = (prismaAttributes: any): TAttributes => {
 };
 
 export const getAttributes = reactCache(
-  (personId: string): Promise<TAttributes> =>
+  async (personId: string): Promise<TAttributes> =>
     cache(
       async () => {
         validateInputs([personId, ZId]);
@@ -70,7 +70,7 @@ export const getAttributes = reactCache(
 );
 
 export const getAttributesByUserId = reactCache(
-  (environmentId: string, userId: string): Promise<TAttributes> =>
+  async (environmentId: string, userId: string): Promise<TAttributes> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [userId, ZString]);

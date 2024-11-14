@@ -5,13 +5,17 @@ import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DOCUMENTS_PER_PAGE, INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 
-export const ExperiencePage = async ({ params }) => {
+export const ExperiencePage = async (props) => {
+  const params = await props.params;
+
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session not found");
@@ -38,6 +42,12 @@ export const ExperiencePage = async ({ params }) => {
 
   if (!organization) {
     throw new Error("Organization not found");
+  }
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const { isBilling } = getAccessFlags(currentUserMembership?.role);
+
+  if (isBilling) {
+    notFound();
   }
 
   const isAIEnabled = await getIsAIEnabled(organization);

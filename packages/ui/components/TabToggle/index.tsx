@@ -11,6 +11,7 @@ interface TabToggleProps<T> {
   options: Option<T>[];
   defaultSelected?: T;
   onChange: (value: T) => void;
+  disabled?: boolean;
 }
 
 export const TabToggle = <T extends string | number>({
@@ -18,6 +19,7 @@ export const TabToggle = <T extends string | number>({
   options,
   defaultSelected,
   onChange,
+  disabled,
 }: TabToggleProps<T>) => {
   const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
 
@@ -37,11 +39,13 @@ export const TabToggle = <T extends string | number>({
             className={cn(
               "flex-1 cursor-pointer rounded-md py-2 text-center text-sm text-slate-800",
               selectedOption === option.value && "bg-white",
-              "focus:ring-brand-dark focus:outline-none focus:ring-2 focus:ring-opacity-50"
+              "focus:ring-brand-dark focus:outline-none focus:ring-2 focus:ring-opacity-50",
+              disabled && "cursor-not-allowed opacity-50"
             )}>
             <input
               type="radio"
               name={id}
+              disabled={disabled}
               id={option.value.toString()}
               value={option.value.toString()}
               checked={selectedOption === option.value}

@@ -3,6 +3,7 @@
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
 import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import {
   DndContext,
   DragEndEvent,
@@ -18,7 +19,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { useTranslations } from "next-intl";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";

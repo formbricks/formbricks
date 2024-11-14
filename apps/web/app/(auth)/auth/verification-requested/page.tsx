@@ -2,12 +2,14 @@ import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { RequestVerificationEmail } from "@/app/(auth)/auth/verification-requested/components/RequestVerificationEmail";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
+import { getEmailFromEmailToken } from "@formbricks/lib/jwt";
 
 const VerificationPageSchema = z.string().email();
 
-const Page = async ({ searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
   const t = await getTranslations();
-  const email = searchParams.email;
+  const email = getEmailFromEmailToken(searchParams.token);
   try {
     const parsedEmail = VerificationPageSchema.parse(email).toLowerCase();
     return (

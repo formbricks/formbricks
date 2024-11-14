@@ -1,8 +1,12 @@
 import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -17,22 +21,23 @@ import { TTemplateRole } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/components/Button";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { TemplateList } from "@formbricks/ui/components/TemplateList";
 
 export const metadata: Metadata = {
   title: "Your Surveys",
 };
 
 interface SurveyTemplateProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     role?: TTemplateRole;
-  };
+  }>;
 }
 
-const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
+const Page = async (props: SurveyTemplateProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const product = await getProductByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
@@ -57,7 +62,16 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   const prefilledFilters = [product?.config.channel, product.config.industry, searchParams.role ?? null];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
+  if (isBilling) {
+    return redirect(`/environments/${params.environmentId}/settings/billing`);
+  }
 
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
@@ -83,11 +97,11 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     <PageContentWrapper>
       {surveyCount > 0 ? (
         <>
-          <PageHeader pageTitle={t("common.surveys")} cta={isViewer ? <></> : <CreateSurveyButton />} />
+          <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}
-            isViewer={isViewer}
+            isReadOnly={isReadOnly}
             WEBAPP_URL={WEBAPP_URL}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
@@ -95,14 +109,14 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
             locale={locale}
           />
         </>
-      ) : isViewer ? (
+      ) : isReadOnly ? (
         <>
           <h1 className="px-6 text-3xl font-extrabold text-slate-700">
             {t("environments.surveys.no_surveys_created_yet")}
           </h1>
 
           <h2 className="px-6 text-lg font-medium text-slate-500">
-            {t("environments.surveys.viewer_not_allowed_to_create_survey_warning")}
+            {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
           </h2>
         </>
       ) : (

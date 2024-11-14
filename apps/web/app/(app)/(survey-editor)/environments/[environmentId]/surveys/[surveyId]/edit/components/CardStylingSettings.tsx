@@ -41,8 +41,8 @@ export const CardStylingSettings = ({
   const surveyTypeDerived = isAppSurvey ? "App" : "Link";
   const isLogoVisible = !!product.logo?.url;
 
-  const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "simple";
-  const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "simple";
+  const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "straight";
+  const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "straight";
   const roundness = form.watch("roundness") ?? 8;
 
   const [parent] = useAutoAnimate();

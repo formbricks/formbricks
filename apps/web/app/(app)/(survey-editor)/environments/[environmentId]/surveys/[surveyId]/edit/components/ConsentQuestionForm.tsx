@@ -1,13 +1,13 @@
 "use client";
 
+import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { LocalizedEditor } from "@formbricks/ee/multi-language/components/localized-editor";
+import { type JSX, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;

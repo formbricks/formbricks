@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
@@ -13,12 +15,25 @@ import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
   const t = await getTranslations();
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
+  }
+
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+
+  if (!organization) {
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+
+  if (!membership) {
+    throw new Error(t("common.membership_not_found"));
   }
 
   const user = session && session.user ? await getUser(session.user.id) : null;

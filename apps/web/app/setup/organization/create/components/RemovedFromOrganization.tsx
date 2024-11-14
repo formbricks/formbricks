@@ -1,12 +1,12 @@
 "use client";
 
 import { formbricksLogout } from "@/app/lib/formbricks";
+import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { TUser } from "@formbricks/types/user";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
-import { DeleteAccountModal } from "@formbricks/ui/components/DeleteAccountModal";
 
 interface RemovedFromOrganizationProps {
   isFormbricksCloud: boolean;

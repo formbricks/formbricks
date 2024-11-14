@@ -24,7 +24,7 @@ import { createActionClassAction } from "../actions";
 interface CreateNewActionTabProps {
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
-  isViewer: boolean;
+  isReadOnly: boolean;
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
@@ -34,7 +34,7 @@ export const CreateNewActionTab = ({
   actionClasses,
   setActionClasses,
   setOpen,
-  isViewer,
+  isReadOnly,
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
@@ -87,7 +87,7 @@ export const CreateNewActionTab = ({
   const submitHandler = async (data: TActionClassInput) => {
     const { type } = data;
     try {
-      if (isViewer) {
+      if (isReadOnly) {
         throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
 
@@ -247,9 +247,9 @@ export const CreateNewActionTab = ({
             <hr className="border-slate-200" />
 
             {watch("type") === "code" ? (
-              <CodeActionForm form={form} isEdit={false} />
+              <CodeActionForm form={form} isReadOnly={isReadOnly} />
             ) : (
-              <NoCodeActionForm form={form} />
+              <NoCodeActionForm form={form} isReadOnly={isReadOnly} />
             )}
           </div>
           <div className="flex justify-end pt-6">

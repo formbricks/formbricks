@@ -1,7 +1,7 @@
 "use server";
 
+import { actionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
-import { actionClient } from "@formbricks/lib/actionClient";
 import {
   getResponseCountBySurveyId,
   getResponseFilteringValues,

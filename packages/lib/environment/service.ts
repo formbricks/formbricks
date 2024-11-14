@@ -18,12 +18,12 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { getProducts } from "../product/service";
+import { getUserProducts } from "../product/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
 export const getEnvironment = reactCache(
-  (environmentId: string): Promise<TEnvironment | null> =>
+  async (environmentId: string): Promise<TEnvironment | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -52,7 +52,7 @@ export const getEnvironment = reactCache(
 );
 
 export const getEnvironments = reactCache(
-  (productId: string): Promise<TEnvironment[]> =>
+  async (productId: string): Promise<TEnvironment[]> =>
     cache(
       async (): Promise<TEnvironment[]> => {
         validateInputs([productId, ZId]);
@@ -128,14 +128,14 @@ export const updateEnvironment = async (
   }
 };
 
-export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
+export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<string | null> => {
   try {
     const organizations = await getOrganizationsByUserId(userId);
     if (organizations.length === 0) {
       throw new Error(`Unable to get first environment: User ${userId} has no organizations`);
     }
     const firstOrganization = organizations[0];
-    const products = await getProducts(firstOrganization.id);
+    const products = await getUserProducts(userId, firstOrganization.id);
     if (products.length === 0) {
       throw new Error(
         `Unable to get first environment: Organization ${firstOrganization.id} has no products`
@@ -150,7 +150,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
         `Unable to get first environment: Product ${firstProduct.id} has no production environment`
       );
     }
-    return productionEnvironment;
+    return productionEnvironment.id;
   } catch (error) {
     throw error;
   }

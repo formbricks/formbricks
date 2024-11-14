@@ -8,5 +8,10 @@
   },
   "exclude": ["build", "node_modules"],
   "extends": "@formbricks/config-typescript/react-library.json",
-  "include": [".", "../types/*.d.ts", "../lib/templates.ts"]
+  "include": [
+    ".",
+    "../types/*.d.ts",
+    "../lib/templates.ts",
+    "../../apps/web/modules/analysis/components/RatingSmiley"
+  ]
 }

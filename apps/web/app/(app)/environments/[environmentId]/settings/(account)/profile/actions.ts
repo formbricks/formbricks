@@ -1,10 +1,8 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { updateUser } from "@formbricks/lib/user/service";
@@ -66,12 +64,6 @@ const ZRemoveAvatarAction = z.object({
 export const removeAvatarAction = authenticatedActionClient
   .schema(ZRemoveAvatarAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
-    });
-
     const imageUrl = ctx.user.imageUrl;
     if (!imageUrl) {
       throw new Error("Image not found");

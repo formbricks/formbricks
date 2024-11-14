@@ -25,8 +25,9 @@ const fetchAndAuthorizeAttributeClass = async (
 
 export const GET = async (
   request: Request,
-  { params }: { params: { attributeClassId: string } }
+  props: { params: Promise<{ attributeClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -42,8 +43,9 @@ export const GET = async (
 
 export const DELETE = async (
   request: Request,
-  { params }: { params: { attributeClassId: string } }
+  props: { params: Promise<{ attributeClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -63,8 +65,9 @@ export const DELETE = async (
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { attributeClassId: string } }
+  props: { params: Promise<{ attributeClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

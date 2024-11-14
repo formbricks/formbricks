@@ -1,3 +1,4 @@
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
@@ -14,7 +15,6 @@ import {
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {

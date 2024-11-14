@@ -107,19 +107,19 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
               ],
             },
           ],
-          headline: { default: translate("card_abandonment_survey_question_2_headline", locale) },
+          headline: { default: translate("card_abandonment_survey_question_1_headline", locale) },
           required: false,
-          buttonLabel: { default: translate("card_abandonment_survey_question_2_button_label", locale) },
+          buttonLabel: { default: translate("card_abandonment_survey_question_1_button_label", locale) },
           buttonExternal: false,
           dismissButtonLabel: {
-            default: translate("card_abandonment_survey_question_2_dismiss_button_label", locale),
+            default: translate("card_abandonment_survey_question_1_dismiss_button_label", locale),
           },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: translate("card_abandonment_survey_question_3_headline", locale) },
-          subheader: { default: translate("card_abandonment_survey_question_3_subheader", locale) },
+          headline: { default: translate("card_abandonment_survey_question_2_headline", locale) },
+          subheader: { default: translate("card_abandonment_survey_question_2_subheader", locale) },
           buttonLabel: { default: translate("next", locale) },
           backButtonLabel: { default: translate("back", locale) },
           required: true,
@@ -127,27 +127,27 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           choices: [
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_3_choice_1", locale) },
+              label: { default: translate("card_abandonment_survey_question_2_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_3_choice_2", locale) },
+              label: { default: translate("card_abandonment_survey_question_2_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_3_choice_3", locale) },
+              label: { default: translate("card_abandonment_survey_question_2_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_3_choice_4", locale) },
+              label: { default: translate("card_abandonment_survey_question_2_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_3_choice_5", locale) },
+              label: { default: translate("card_abandonment_survey_question_2_choice_5", locale) },
             },
             {
               id: "other",
-              label: { default: translate("card_abandonment_survey_question_3_choice_6", locale) },
+              label: { default: translate("card_abandonment_survey_question_2_choice_6", locale) },
             },
           ],
         },
@@ -155,7 +155,7 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
           headline: {
-            default: translate("card_abandonment_survey_question_4_headline", locale),
+            default: translate("card_abandonment_survey_question_3_headline", locale),
           },
           required: false,
           buttonLabel: { default: translate("next", locale) },
@@ -165,12 +165,12 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.Rating,
-          headline: { default: translate("card_abandonment_survey_question_5_headline", locale) },
+          headline: { default: translate("card_abandonment_survey_question_4_headline", locale) },
           required: true,
           scale: "number",
           range: 5,
-          lowerLabel: { default: translate("card_abandonment_survey_question_5_lower_label", locale) },
-          upperLabel: { default: translate("card_abandonment_survey_question_5_upper_label", locale) },
+          lowerLabel: { default: translate("card_abandonment_survey_question_4_lower_label", locale) },
+          upperLabel: { default: translate("card_abandonment_survey_question_4_upper_label", locale) },
           buttonLabel: { default: translate("next", locale) },
           backButtonLabel: { default: translate("back", locale) },
           isColorCodingEnabled: false,
@@ -179,36 +179,36 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
           headline: {
-            default: translate("card_abandonment_survey_question_6_headline", locale),
+            default: translate("card_abandonment_survey_question_5_headline", locale),
           },
-          subheader: { default: translate("card_abandonment_survey_question_6_subheader", locale) },
+          subheader: { default: translate("card_abandonment_survey_question_5_subheader", locale) },
           buttonLabel: { default: translate("next", locale) },
           backButtonLabel: { default: translate("back", locale) },
           required: true,
           choices: [
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_6_choice_1", locale) },
+              label: { default: translate("card_abandonment_survey_question_5_choice_1", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_6_choice_2", locale) },
+              label: { default: translate("card_abandonment_survey_question_5_choice_2", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_6_choice_3", locale) },
+              label: { default: translate("card_abandonment_survey_question_5_choice_3", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_6_choice_4", locale) },
+              label: { default: translate("card_abandonment_survey_question_5_choice_4", locale) },
             },
             {
               id: createId(),
-              label: { default: translate("card_abandonment_survey_question_6_choice_5", locale) },
+              label: { default: translate("card_abandonment_survey_question_5_choice_5", locale) },
             },
             {
               id: "other",
-              label: { default: translate("card_abandonment_survey_question_6_choice_6", locale) },
+              label: { default: translate("card_abandonment_survey_question_5_choice_6", locale) },
             },
           ],
         },
@@ -241,16 +241,16 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
             },
           ],
           type: TSurveyQuestionTypeEnum.Consent,
-          headline: { default: translate("card_abandonment_survey_question_7_headline", locale) },
+          headline: { default: translate("card_abandonment_survey_question_6_headline", locale) },
           required: false,
-          label: { default: translate("card_abandonment_survey_question_7_label", locale) },
+          label: { default: translate("card_abandonment_survey_question_6_label", locale) },
           buttonLabel: { default: translate("next", locale) },
           backButtonLabel: { default: translate("back", locale) },
         },
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: translate("card_abandonment_survey_question_8_headline", locale) },
+          headline: { default: translate("card_abandonment_survey_question_7_headline", locale) },
           required: true,
           inputType: "email",
           longAnswer: false,
@@ -261,7 +261,7 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
-          headline: { default: translate("card_abandonment_survey_question_9_headline", locale) },
+          headline: { default: translate("card_abandonment_survey_question_8_headline", locale) },
           required: false,
           inputType: "text",
           buttonLabel: { default: translate("finish", locale) },
@@ -2278,6 +2278,7 @@ const employeeSatisfaction = (locale: string): TTemplate => {
 };
 
 const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   return {
     name: translate("uncover_strengths_and_weaknesses_name", locale),
     role: "productManager",
@@ -2285,7 +2286,7 @@ const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
     channels: ["app", "link"],
     description: translate("uncover_strengths_and_weaknesses_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("uncover_strengths_and_weaknesses_name", locale),
       questions: [
         {
@@ -2684,7 +2685,7 @@ const feedbackBox = (locale: string): TTemplate => {
     channels: ["app"],
     description: translate("feedback_box_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("feedback_box_name", locale),
       questions: [
         {
@@ -3099,6 +3100,7 @@ const NPS = (locale: string): TTemplate => {
 };
 
 const customerSatisfactionScore = (locale: string): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(locale);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -3118,8 +3120,8 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
     channels: ["app", "link", "website"],
     description: translate("csat_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
-      name: translate("profuct_csat", locale),
+      ...localSurvey,
+      name: translate("csat_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -3869,8 +3871,14 @@ const professionalDevelopmentSurvey = (locale: string): TTemplate => {
           required: true,
           shuffleOption: "none",
           choices: [
-            { id: createId(), label: { default: translate("yes", locale) } },
-            { id: createId(), label: { default: translate("no", locale) } },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_1_choice_1", locale) },
+            },
+            {
+              id: createId(),
+              label: { default: translate("professional_development_survey_question_1_choice_2", locale) },
+            },
           ],
           buttonLabel: { default: translate("next", locale) },
           backButtonLabel: { default: translate("back", locale) },
@@ -4476,7 +4484,7 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
           range: 5,
           scale: "number",
           headline: { default: translate("measure_task_accomplishment_question_2_headline", locale) },
-          required: true,
+          required: false,
           lowerLabel: { default: translate("measure_task_accomplishment_question_2_lower_label", locale) },
           upperLabel: { default: translate("measure_task_accomplishment_question_2_upper_label", locale) },
           isColorCodingEnabled: false,
@@ -5095,7 +5103,7 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
     channels: ["website", "link", "app"],
     description: translate("understand_purchase_intention_description", locale),
     preset: {
-      ...getDefaultSurveyPreset(locale),
+      ...localSurvey,
       name: translate("understand_purchase_intention_name", locale),
       questions: [
         {

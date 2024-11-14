@@ -14,5 +14,5 @@
   },
   "exclude": ["dist", "build", "node_modules", "../../packages/types/surveys.d.ts"],
   "extends": "@formbricks/config-typescript/nextjs.json",
-  "include": [".", "../types/*.d.ts"]
+  "include": [".", "../types/*.d.ts", "../../apps/web/modules/utils/hooks"]
 }

@@ -22,8 +22,9 @@ const fetchAndAuthorizePerson = async (
 
 export const GET = async (
   request: Request,
-  { params }: { params: { personId: string } }
+  props: { params: Promise<{ personId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -37,7 +38,8 @@ export const GET = async (
   }
 };
 
-export const DELETE = async (request: Request, { params }: { params: { personId: string } }) => {
+export const DELETE = async (request: Request, props: { params: Promise<{ personId: string }> }) => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

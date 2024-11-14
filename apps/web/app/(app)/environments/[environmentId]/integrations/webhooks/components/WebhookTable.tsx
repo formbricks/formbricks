@@ -2,7 +2,7 @@
 
 import { WebhookModal } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type JSX, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
@@ -13,6 +13,7 @@ interface WebhookTableProps {
   webhooks: TWebhook[];
   surveys: TSurvey[];
   children: [JSX.Element, JSX.Element[]];
+  isReadOnly: boolean;
 }
 
 export const WebhookTable = ({
@@ -20,6 +21,7 @@ export const WebhookTable = ({
   webhooks,
   surveys,
   children: [TableHeading, webhookRows],
+  isReadOnly,
 }: WebhookTableProps) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
   const t = useTranslations();
@@ -72,6 +74,7 @@ export const WebhookTable = ({
         setOpen={setWebhookDetailModalOpen}
         webhook={activeWebhook}
         surveys={surveys}
+        isReadOnly={isReadOnly}
       />
     </>
   );

@@ -1,15 +1,16 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
+import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsId } from "@formbricks/ui/components/SettingsId";
@@ -18,7 +19,8 @@ import { DeleteProduct } from "./components/DeleteProduct";
 import { EditProductNameForm } from "./components/EditProductNameForm";
 import { EditWaitingTimeForm } from "./components/EditWaitingTimeForm";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
   const t = await getTranslations();
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
@@ -37,14 +39,17 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isProductNameEditDisabled = isDeveloper ? true : isViewer;
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
-  if (isViewer) {
-    return <ErrorComponent />;
-  }
+  const { isMember, isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
+  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && !hasManageAccess;
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization);
+
+  const isOwnerOrManager = isOwner || isManager;
 
   return (
     <PageContentWrapper>
@@ -53,23 +58,27 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
           environmentId={params.environmentId}
           activeId="general"
           isMultiLanguageAllowed={isMultiLanguageAllowed}
+          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
-
       <SettingsCard
         title={t("common.product_name")}
         description={t("environments.product.general.product_name_settings_description")}>
-        <EditProductNameForm product={product} isProductNameEditDisabled={isProductNameEditDisabled} />
+        <EditProductNameForm product={product} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
         title={t("environments.product.general.recontact_waiting_time")}
         description={t("environments.product.general.recontact_waiting_time_settings_description")}>
-        <EditWaitingTimeForm product={product} />
+        <EditWaitingTimeForm product={product} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
         title={t("environments.product.general.delete_product")}
         description={t("environments.product.general.delete_product_settings_description")}>
-        <DeleteProduct environmentId={params.environmentId} product={product} />
+        <DeleteProduct
+          environmentId={params.environmentId}
+          product={product}
+          isOwnerOrManager={isOwnerOrManager}
+        />
       </SettingsCard>
       <div>
         <SettingsId title={t("common.product_id")} id={product.id}></SettingsId>

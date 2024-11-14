@@ -1,3 +1,5 @@
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
@@ -22,14 +24,17 @@ import { getUserLocale } from "@formbricks/lib/user/service";
 import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
-export const generateMetadata = async ({ params }) => {
+export const generateMetadata = async (props) => {
+  const params = await props.params;
   const survey = await getSurvey(params.surveyId);
   return {
     title: survey?.name ? `${survey?.name} | Editor` : "Editor",
   };
 };
 
-const Page = async ({ params, searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const t = await getTranslations();
   const [
     survey,
@@ -46,7 +51,7 @@ const Page = async ({ params, searchParams }) => {
     getProductByEnvironmentId(params.environmentId),
     getEnvironment(params.environmentId),
     getActionClasses(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getAttributeClasses(params.environmentId, undefined, { skipArchived: true }),
     getResponseCountBySurveyId(params.surveyId),
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -60,10 +65,20 @@ const Page = async ({ params, searchParams }) => {
     throw new Error(t("common.organization_not_found"));
   }
 
+  if (!product) {
+    throw new Error(t("common.product_not_found"));
+  }
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isSurveyCreationDeletionDisabled = isViewer;
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
   const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
+
   const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
@@ -89,6 +104,7 @@ const Page = async ({ params, searchParams }) => {
       attributeClasses={attributeClasses}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
+      productPermission={productPermission}
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}

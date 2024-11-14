@@ -113,7 +113,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 };
 
 export const getSegments = reactCache(
-  (environmentId: string): Promise<TSegment[]> =>
+  async (environmentId: string): Promise<TSegment[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -146,7 +146,7 @@ export const getSegments = reactCache(
 );
 
 export const getSegment = reactCache(
-  (segmentId: string): Promise<TSegment> =>
+  async (segmentId: string): Promise<TSegment> =>
     cache(
       async () => {
         validateInputs([segmentId, ZId]);
@@ -321,7 +321,7 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
 };
 
 export const getSegmentsByAttributeClassName = reactCache(
-  (environmentId: string, attributeClassName: string) =>
+  async (environmentId: string, attributeClassName: string) =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [attributeClassName, ZString]);

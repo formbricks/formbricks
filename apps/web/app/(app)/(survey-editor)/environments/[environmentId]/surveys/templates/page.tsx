@@ -1,3 +1,5 @@
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -12,17 +14,19 @@ import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
 interface SurveyTemplateProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     channel?: TProductConfigChannel;
     industry?: TProductConfigIndustry;
     role?: TTemplateRole;
-  };
+  }>;
 }
 
-const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
+const Page = async (props: SurveyTemplateProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
@@ -52,9 +56,13 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
     session?.user.id,
     product.organizationId
   );
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  if (isViewer) {
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+  if (isReadOnly) {
     return redirect(`/environments/${environment.id}/surveys`);
   }
 

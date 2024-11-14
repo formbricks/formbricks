@@ -45,6 +45,7 @@ interface LinkSurveyProps {
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   locale: string;
+  isPreview: boolean;
 }
 
 export const LinkSurvey = ({
@@ -64,11 +65,11 @@ export const LinkSurvey = ({
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
   locale,
+  isPreview,
 }: LinkSurveyProps) => {
   const t = useTranslations();
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
-  const isPreview = searchParams?.get("preview") === "true";
   const skipPrefilled = searchParams?.get("skipPrefilled") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
@@ -254,12 +255,16 @@ export const LinkSurvey = ({
               apiHost: webAppUrl,
               environmentId: survey.environmentId,
             });
+
             const res = await api.client.display.create({
               surveyId: survey.id,
+              ...(userId && { userId }),
             });
+
             if (!res.ok) {
               throw new Error(t("s.could_not_create_display"));
             }
+
             const { id } = res.data;
 
             surveyState.updateDisplayId(id);
