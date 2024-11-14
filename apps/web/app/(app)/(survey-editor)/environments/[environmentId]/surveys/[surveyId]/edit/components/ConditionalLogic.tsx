@@ -53,45 +53,42 @@ export function ConditionalLogic({
   }, [localSurvey, attributeClasses]);
 
   const addLogic = () => {
-    const operator = getDefaultOperatorForQuestion(question);
+  const operator = getDefaultOperatorForQuestion(question);
 
-    const initialCondition: TSurveyLogic = {
+  const initialCondition: TSurveyLogic = {
+    id: createId(),
+    conditions: {
       id: createId(),
-      conditions: {
-        id: createId(),
-        connector: "and",
-        conditions: [
-          {
-            id: createId(),
-            leftOperand: {
-              value: question.id,
-              type: "question",
-            },
-            operator,
-          },
-        ],
-      },
-      actions: [
+      connector: "and",
+      conditions: [
         {
           id: createId(),
-          objective: "jumpToQuestion",
-          target: "",
+          leftOperand: {
+            value: question.id,
+            type: "question",
+          },
+          operator,
         },
       ],
-    };
-
-    updateQuestion(questionIdx, {
-      logic: [...(question?.logic ?? []), initialCondition],
-    });
+    },
+    actions: [
+      {
+        id: createId(),
+        objective: "jumpToQuestion",
+        target: "",
+      },
+      {
+        id: createId(),
+        objective: "setVariable",
+        target: "variableName", // Replace with the variable name you want to set
+        value: "", // Placeholder for the value to set based on conditions
+      },
+    ],
   };
 
-  const handleRemoveLogic = (logicItemIdx: number) => {
-    const logicCopy = structuredClone(question.logic ?? []);
-    logicCopy.splice(logicItemIdx, 1);
-
-    updateQuestion(questionIdx, {
-      logic: logicCopy,
-    });
+  updateQuestion(questionIdx, {
+    logic: [...(question?.logic ?? []), initialCondition],
+  });
   };
 
   const moveLogic = (from: number, to: number) => {
