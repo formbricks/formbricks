@@ -1,6 +1,6 @@
 import { FollowUpItem } from "@/modules/ee/survey-follow-ups/components/FollowUpItem";
 import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/FollowUpModal";
-import { LockIcon, SendIcon } from "lucide-react";
+import { LockIcon, MailIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
@@ -72,7 +72,7 @@ export const FollowUpsView = ({
         {!surveyFollowUps.length && (
           <div className="flex flex-col items-center gap-y-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
             <div className="flex items-center justify-center rounded-full border border-slate-200 bg-slate-100 p-2">
-              <SendIcon className="h-6 w-6 text-slate-500" />
+              <MailIcon className="h-6 w-6 text-slate-500" />
             </div>
             <div>
               <p className="text-lg font-semibold text-slate-800">

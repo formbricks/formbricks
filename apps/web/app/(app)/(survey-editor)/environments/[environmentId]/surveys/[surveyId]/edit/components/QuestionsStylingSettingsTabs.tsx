@@ -1,4 +1,4 @@
-import { PaintbrushIcon, Rows3Icon, SendIcon, SettingsIcon } from "lucide-react";
+import { MailIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -47,7 +47,7 @@ export const QuestionsAudienceTabs = ({
       {
         id: "followUps",
         label: "environments.surveys.edit.follow_ups",
-        icon: <SendIcon className="h-5 w-5" />,
+        icon: <MailIcon className="h-5 w-5" />,
         isPro: !isSurveyFollowUpsAllowed,
       },
     ],
