@@ -130,20 +130,14 @@ export const ResponseOptionsCard = ({
   };
 
   const handleRunOnDateChange = (date: Date) => {
-    const equivalentDate = date?.getDate();
-    date?.setUTCHours(0, 0, 0, 0);
-    date?.setDate(equivalentDate);
-
-    setRunOnDate(date);
-    setLocalSurvey({ ...localSurvey, runOnDate: date ?? null });
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+    setRunOnDate(utcDate);
+    setLocalSurvey({ ...localSurvey, runOnDate: utcDate ?? null });
   };
 
   const handleCloseOnDateChange = (date: Date) => {
-    const equivalentDate = date?.getDate();
-    date?.setUTCHours(0, 0, 0, 0);
-    date?.setDate(equivalentDate);
-
-    setCloseOnDate(date);
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
+    setCloseOnDate(utcDate);
     setLocalSurvey({ ...localSurvey, closeOnDate: date ?? null });
   };
 
