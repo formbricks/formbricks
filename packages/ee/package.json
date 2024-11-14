@@ -29,7 +29,7 @@
     "https-proxy-agent": "7.0.5",
     "lucide-react": "0.452.0",
     "next": "15.0.3",
-    "next-auth": "4.24.7",
+    "next-auth": "4.24.10",
     "node-fetch": "3.3.2",
     "react-hook-form": "7.53.0",
     "react-hot-toast": "2.4.1",
