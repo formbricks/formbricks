@@ -255,12 +255,16 @@ export const LinkSurvey = ({
               apiHost: webAppUrl,
               environmentId: survey.environmentId,
             });
+
             const res = await api.client.display.create({
               surveyId: survey.id,
+              ...(userId && { userId }),
             });
+
             if (!res.ok) {
               throw new Error(t("s.could_not_create_display"));
             }
+
             const { id } = res.data;
 
             surveyState.updateDisplayId(id);
