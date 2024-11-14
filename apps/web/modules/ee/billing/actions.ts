@@ -1,8 +1,5 @@
 "use server";
 
-import { createCustomerPortalSession } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createCustomerPortalSession";
-import { createSubscription } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createSubscription";
-import { isSubscriptionCancelled } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -12,6 +9,9 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { createCustomerPortalSession } from "./api/lib/createCustomerPortalSession";
+import { createSubscription } from "./api/lib/createSubscription";
+import { isSubscriptionCancelled } from "./api/lib/isSubscriptionCancelled";
 
 const ZUpgradePlanAction = z.object({
   environmentId: ZId,

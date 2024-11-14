@@ -1,6 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { notFound } from "next/navigation";
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -16,9 +17,14 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { PricingTable } from "./components/PricingTable";
 
-const Page = async ({ params }) => {
+const PricingPage = async ({ params }) => {
   const t = await getTranslations();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
+
+  if (!IS_FORMBRICKS_CLOUD) {
+    notFound();
+  }
+
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
@@ -64,4 +70,4 @@ const Page = async ({ params }) => {
   );
 };
 
-export default Page;
+export default PricingPage;
