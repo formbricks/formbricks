@@ -13,12 +13,12 @@ import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { type Dispatch, type SetStateAction } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { EditorContentChecker } from "@formbricks/ui/components/Editor/components/EditorContentChecker";
-import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "../components/AutoLinkPlugin";
-import { ToolbarPlugin } from "../components/ToolbarPlugin";
 import { exampleTheme } from "../lib/ExampleTheme";
 import "../stylesEditor.css";
 import "../stylesEditorFrontend.css";
+import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./AutoLinkPlugin";
+import { EditorContentChecker } from "./EditorContentChecker";
+import { ToolbarPlugin } from "./ToolbarPlugin";
 
 /*
  Detault toolbar items:
