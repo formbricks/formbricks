@@ -80,7 +80,7 @@ const Page = async ({ params }) => {
   return (
     <PageContentWrapper>
       <GoBackButton url={`${WEBAPP_URL}/environments/${params.environmentId}/integrations`} />
-      <PageHeader pageTitle={"environments.integrations.notion.notion_integration"} />
+      <PageHeader pageTitle={t("environments.integrations.notion.notion_integration")} />
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}
