@@ -1,7 +1,7 @@
 import { MembersInfo } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/MembersInfo";
 import { getMembersByOrganizationId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
+import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTranslations } from "next-intl/server";
-import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
 import { TMembership } from "@formbricks/types/memberships";
