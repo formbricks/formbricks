@@ -48,7 +48,7 @@ const setPreviousResult = async (previousResult: {
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
 }) => {
-  revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
+  // revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
   const { lastChecked, active, features } = previousResult;
 
   await cache(
