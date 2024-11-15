@@ -3,9 +3,9 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
-import { Badge } from "../Badge";
-import { Button } from "../Button";
-import { ConfirmationModal } from "../ConfirmationModal";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
+import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 
 interface PricingCardProps {
   plan: {
