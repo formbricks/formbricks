@@ -15,7 +15,7 @@ import {
 } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { PricingTable } from "./components/PricingTable";
+import { PricingTable } from "./components/pricing-table";
 
 export const PricingPage = async ({ params }) => {
   const t = await getTranslations();
