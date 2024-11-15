@@ -12,7 +12,6 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
-  GaugeIcon,
   GlobeIcon,
   GlobeLockIcon,
   KeyIcon,
@@ -163,13 +162,6 @@ export const MainNavigation = ({
 
   const mainNavigation = useMemo(
     () => [
-      {
-        name: t("common.experience"),
-        href: `/environments/${environment.id}/experience`,
-        icon: GaugeIcon,
-        isActive: pathname?.includes("/experience"),
-        isHidden: !isAIEnabled,
-      },
       {
         name: t("common.surveys"),
         href: `/environments/${environment.id}/surveys`,
