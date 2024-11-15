@@ -139,7 +139,11 @@ export const PricingCard = ({
                 plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
-              {planPeriod === "monthly" ? t(plan.price.monthly) : t(plan.price.yearly)}
+              {plan.id !== productFeatureKeys.ENTERPRISE
+                ? planPeriod === "monthly"
+                  ? plan.price.monthly
+                  : plan.price.yearly
+                : t(plan.price.monthly)}
             </p>
             {plan.name !== "Enterprise" && (
               <div className="text-sm leading-5">
