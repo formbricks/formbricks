@@ -15,7 +15,18 @@ export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
           <Container className="mx-auto my-8 max-w-xl bg-white p-4 text-left">
-            <div dangerouslySetInnerHTML={{ __html: sanitize(html) }} />
+            <div
+              dangerouslySetInnerHTML={{
+                __html: sanitize(html, {
+                  ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
+                  ALLOWED_ATTR: ["href", "rel", "dir", "class"],
+                  ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
+                  ADD_ATTR: ["target"], // Optional: Allow 'target' attribute for links (e.g., _blank)
+                  FORBID_ATTR: ["style"], // Prevent inline styles
+                  FORBID_TAGS: ["script", "iframe", "embed", "object", "button"], // Ensure unsafe elements are stripped
+                }),
+              }}
+            />
           </Container>
 
           <Section className="mt-4 text-center">
