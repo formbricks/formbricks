@@ -2034,7 +2034,7 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue
 
   if (!question.logicFallback) return;
 
-  if ((!question.logic || question.logic.length === 0) && question.logicFallback) {
+  if (!question.logic?.length && question.logicFallback) {
     return [
       {
         code: z.ZodIssueCode.custom,

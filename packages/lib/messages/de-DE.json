@@ -1361,6 +1361,7 @@
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Teilnehmer können die Umfragesprache jederzeit während der Umfrage ändern.",
         "end_screen_card": "Abschluss-Karte",
         "ending_card": "Abschluss-Karte",
+        "ending_card_used_in_logic": "Diese Abschlusskarte wird in der Logik der Frage {questionIndex} verwendet.",
         "ends_with": "endet mit",
         "equals": "Gleich",
         "equals_one_of": "Entspricht einem von",

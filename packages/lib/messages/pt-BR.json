@@ -1361,6 +1361,7 @@
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permitir que os participantes mudem o idioma da pesquisa a qualquer momento durante a pesquisa.",
         "end_screen_card": "cartão de tela final",
         "ending_card": "Cartão de encerramento",
+        "ending_card_used_in_logic": "Esse cartão de encerramento é usado na lógica da pergunta {questionIndex}.",
         "ends_with": "Termina com",
         "equals": "Igual",
         "equals_one_of": "É igual a um de",

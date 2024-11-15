@@ -90,21 +90,21 @@ export function LogicEditor({
           </p>
           <Select
             autoComplete="true"
-            defaultValue={question.logicFallback || "default_selection"}
+            defaultValue={question.logicFallback || "defaultSelection"}
             onValueChange={(val) => {
               updateQuestion(questionIdx, {
-                logicFallback: val === "default_selection" ? undefined : val,
+                logicFallback: val === "defaultSelection" ? undefined : val,
               });
             }}>
             <SelectTrigger className="w-auto bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem key="default_selection" value={"default_selection"}>
+              <SelectItem key="fallback_default_selection" value={"defaultSelection"}>
                 {t("environments.surveys.edit.next_question")}
               </SelectItem>
               {fallbackOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={`fallback_${option.value}`} value={option.value}>
                   <div className="flex items-center gap-2">
                     {option.icon}
                     {option.label}
