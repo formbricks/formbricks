@@ -259,6 +259,11 @@ export const Survey = ({
       }
     }
 
+    // Use logicFallback if no jump target was set
+    if (!firstJumpTarget && currQuesTemp.logicFallback) {
+      firstJumpTarget = currQuesTemp.logicFallback;
+    }
+
     // Make all collected questions required
     if (allRequiredQuestionIds.length > 0) {
       makeQuestionsRequired(allRequiredQuestionIds);

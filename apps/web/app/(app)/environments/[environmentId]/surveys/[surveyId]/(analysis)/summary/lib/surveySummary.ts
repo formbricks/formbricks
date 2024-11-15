@@ -119,6 +119,11 @@ const evaluateLogicAndGetNextQuestionId = (
     }
   }
 
+  // If no jump target was set, check for a fallback logic
+  if (!firstJumpTarget && currQuesTemp.logicFallback) {
+    firstJumpTarget = currQuesTemp.logicFallback;
+  }
+
   // Return the first jump target if found, otherwise go to the next question
   const nextQuestionId = firstJumpTarget || questions[currentQuestionIndex + 1]?.id || undefined;
 
