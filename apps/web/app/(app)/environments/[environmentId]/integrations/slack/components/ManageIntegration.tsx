@@ -91,7 +91,7 @@ export const ManageIntegration = ({
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
             {t("environments.integrations.slack.connected_with_team", {
-              team: slackIntegration.config.key.team.name,
+              team: slackIntegration.config.key.team?.name,
             })}
           </span>
         </div>
