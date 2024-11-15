@@ -17,7 +17,9 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 
-export const TeamDetails = async ({ params }) => {
+export const TeamDetails = async (props) => {
+  const params = await props.params;
+
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {

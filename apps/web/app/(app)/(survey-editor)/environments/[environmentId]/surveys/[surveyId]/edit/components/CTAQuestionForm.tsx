@@ -4,7 +4,7 @@ import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type JSX, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";

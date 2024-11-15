@@ -18,7 +18,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 export const getDocumentsByInsightId = reactCache(
-  (
+  async (
     insightId: string,
     limit?: number,
     offset?: number,
@@ -73,7 +73,7 @@ export const getDocumentsByInsightId = reactCache(
 );
 
 export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
-  (
+  async (
     insightId: string,
     surveyId: string,
     questionId: TSurveyQuestionId,
@@ -132,7 +132,7 @@ export const getDocumentsByInsightIdSurveyIdQuestionId = reactCache(
 );
 
 export const getDocument = reactCache(
-  (documentId: string): Promise<TDocument | null> =>
+  async (documentId: string): Promise<TDocument | null> =>
     cache(
       async () => {
         validateInputs([documentId, ZId]);

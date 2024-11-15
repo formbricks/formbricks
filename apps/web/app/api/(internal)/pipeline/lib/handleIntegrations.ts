@@ -4,8 +4,10 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { processResponseData } from "@formbricks/lib/responses";
 import { writeDataToSlack } from "@formbricks/lib/slack/service";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { TAttributes } from "@formbricks/types/attributes";
 import { Result } from "@formbricks/types/error-handlers";
-import { TIntegration } from "@formbricks/types/integration";
+import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
@@ -29,18 +31,20 @@ const convertMetaObjectToString = (metadata: TResponseMeta): string => {
 };
 
 const processDataForIntegration = async (
+  integrationType: TIntegrationType,
   data: TPipelineInput,
   survey: TSurvey,
   includeVariables: boolean,
   includeMetadata: boolean,
   includeHiddenFields: boolean,
-  questionIds: string[]
+  questionIds: string[],
+  attributes?: TAttributes
 ): Promise<string[][]> => {
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
       ? [...questionIds, ...survey.hiddenFields.fieldIds]
       : questionIds;
-  const values = await extractResponses(data, ids, survey);
+  const values = await extractResponses(integrationType, data, ids, survey, attributes);
   if (includeMetadata) {
     values[0].push(convertMetaObjectToString(data.response.meta));
     values[1].push("Metadata");
@@ -61,7 +65,8 @@ const processDataForIntegration = async (
 export const handleIntegrations = async (
   integrations: TIntegration[],
   data: TPipelineInput,
-  survey: TSurvey
+  survey: TSurvey,
+  attributes: TAttributes
 ) => {
   for (const integration of integrations) {
     switch (integration.type) {
@@ -76,7 +81,12 @@ export const handleIntegrations = async (
         }
         break;
       case "slack":
-        const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
+        const slackResult = await handleSlackIntegration(
+          integration as TIntegrationSlack,
+          data,
+          survey,
+          attributes
+        );
         if (!slackResult.ok) {
           console.error("Error in slack integration: ", slackResult.error);
         }
@@ -111,6 +121,7 @@ const handleAirtableIntegration = async (
       for (const element of integration.config.data) {
         if (element.surveyId === data.surveyId) {
           const values = await processDataForIntegration(
+            "airtable",
             data,
             survey,
             !!element.includeVariables,
@@ -145,6 +156,7 @@ const handleGoogleSheetsIntegration = async (
       for (const element of integration.config.data) {
         if (element.surveyId === data.surveyId) {
           const values = await processDataForIntegration(
+            "googleSheets",
             data,
             survey,
             !!element.includeVariables,
@@ -177,19 +189,22 @@ const handleGoogleSheetsIntegration = async (
 const handleSlackIntegration = async (
   integration: TIntegrationSlack,
   data: TPipelineInput,
-  survey: TSurvey
+  survey: TSurvey,
+  attributes: TAttributes
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
         if (element.surveyId === data.surveyId) {
           const values = await processDataForIntegration(
+            "slack",
             data,
             survey,
             !!element.includeVariables,
             !!element.includeMetadata,
             !!element.includeHiddenFields,
-            element.questionIds
+            element.questionIds,
+            attributes
           );
           await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
         }
@@ -209,9 +224,11 @@ const handleSlackIntegration = async (
 };
 
 const extractResponses = async (
+  integrationType: TIntegrationType,
   pipelineData: TPipelineInput,
   questionIds: string[],
-  survey: TSurvey
+  survey: TSurvey,
+  attributes?: TAttributes
 ): Promise<string[][]> => {
   const responses: string[] = [];
   const questions: string[] = [];
@@ -246,7 +263,22 @@ const extractResponses = async (
     } else {
       responses.push("");
     }
-    questions.push(getLocalizedValue(question?.headline, "default") || "");
+    // Create emptyResponseObject with same keys but empty string values
+    const emptyResponseObject = Object.keys(pipelineData.response.data).reduce(
+      (acc, key) => {
+        acc[key] = "";
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+    questions.push(
+      parseRecallInfo(
+        getLocalizedValue(question?.headline, "default"),
+        integrationType === "slack" ? attributes : {},
+        integrationType === "slack" ? pipelineData.response.data : emptyResponseObject,
+        integrationType === "slack" ? pipelineData.response.variables : {}
+      ) || ""
+    );
   }
 
   return [responses, questions];

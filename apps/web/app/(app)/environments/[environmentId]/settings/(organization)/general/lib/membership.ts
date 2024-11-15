@@ -13,7 +13,7 @@ import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMember, TMembership } from "@formbricks/types/memberships";
 
 export const getMembersByOrganizationId = reactCache(
-  (organizationId: string, page?: number): Promise<TMember[]> =>
+  async (organizationId: string, page?: number): Promise<TMember[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
@@ -135,7 +135,7 @@ export const deleteMembership = async (
 };
 
 export const getMembershipsByUserId = reactCache(
-  (userId: string, page?: number): Promise<TMembership[]> =>
+  async (userId: string, page?: number): Promise<TMembership[]> =>
     cache(
       async () => {
         validateInputs([userId, ZString], [page, ZOptionalNumber]);

@@ -6,7 +6,8 @@ import { getEmailFromEmailToken } from "@formbricks/lib/jwt";
 
 const VerificationPageSchema = z.string().email();
 
-const Page = async ({ searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
   const t = await getTranslations();
   const email = getEmailFromEmailToken(searchParams.token);
   try {

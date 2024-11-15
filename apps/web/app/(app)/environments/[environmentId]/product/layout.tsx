@@ -12,7 +12,11 @@ export const metadata: Metadata = {
   title: "Config",
 };
 
-const ConfigLayout = async ({ children, params }) => {
+const ConfigLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const t = await getTranslations();
 
   const [organization, session] = await Promise.all([

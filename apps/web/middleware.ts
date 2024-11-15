@@ -19,6 +19,7 @@ import {
   signupRoute,
   verifyEmailRoute,
 } from "@/app/middleware/endpointValidator";
+import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -48,7 +49,7 @@ export const middleware = async (request: NextRequest) => {
   let ip =
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.ip;
+    ipAddress(request);
 
   if (ip) {
     try {

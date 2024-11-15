@@ -5,10 +5,11 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 
 type Props = {
-  params: { surveyId: string; environmentId: string };
+  params: Promise<{ surveyId: string; environmentId: string }>;
 };
 
-export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
+export const generateMetadata = async (props: Props): Promise<Metadata> => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const survey = await getSurvey(params.surveyId);
   const responseCount = await getResponseCountBySurveyId(params.surveyId);

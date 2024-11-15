@@ -14,9 +14,9 @@
     "@formbricks/js": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "lucide-react": "0.452.0",
-    "next": "14.2.16",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "next": "15.0.3",
+    "react": "19.0.0-rc-ed15d500-20241110",
+    "react-dom": "19.0.0-rc-ed15d500-20241110"
   },
   "devDependencies": {
     "@formbricks/eslint-config": "workspace:*",

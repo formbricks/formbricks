@@ -18,12 +18,10 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
     <div {...props}>
       <div className="grid h-10 w-full grid-cols-[auto,1fr]">
         <nav className="flex h-full min-w-full items-center space-x-4" aria-label="Tabs">
-          {loading ? (
-            <>
-              {navigation.map((navElem) => (
-                <div className="group flex h-full flex-col">
+          {loading
+            ? navigation.map((navElem) => (
+                <div className="group flex h-full flex-col" key={navElem.id}>
                   <div
-                    key={navElem.id}
                     aria-disabled="true"
                     className={cn(
                       navElem.id === activeId ? "font-semibold text-slate-900" : "text-slate-500",
@@ -41,15 +39,11 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
                     )}
                   />
                 </div>
-              ))}
-            </>
-          ) : (
-            <>
-              {navigation.map((navElem) => (
-                <div className="group flex h-full flex-col">
+              ))
+            : navigation.map((navElem) => (
+                <div className="group flex h-full flex-col" key={navElem.id}>
                   {navElem.href ? (
                     <Link
-                      key={navElem.id}
                       href={navElem.href}
                       {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
                       className={cn(
@@ -64,7 +58,6 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
                     </Link>
                   ) : (
                     <button
-                      key={navElem.id}
                       {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
                       className={cn(
                         navElem.id === activeId
@@ -86,8 +79,6 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
                   />
                 </div>
               ))}
-            </>
-          )}
         </nav>
         <div className="justify-self-end"></div>
       </div>

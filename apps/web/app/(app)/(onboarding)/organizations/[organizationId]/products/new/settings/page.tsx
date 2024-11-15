@@ -16,17 +16,19 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
 interface ProductSettingsPageProps {
-  params: {
+  params: Promise<{
     organizationId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     channel?: TProductConfigChannel;
     industry?: TProductConfigIndustry;
     mode?: TProductMode;
-  };
+  }>;
 }
 
-const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
+const Page = async (props: ProductSettingsPageProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
 

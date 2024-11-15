@@ -21,7 +21,8 @@ export const metadata: Metadata = {
   title: "Attributes",
 };
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   let attributeClasses = await getAttributeClasses(params.environmentId);
   const t = await getTranslations();
   const product = await getProductByEnvironmentId(params.environmentId);
