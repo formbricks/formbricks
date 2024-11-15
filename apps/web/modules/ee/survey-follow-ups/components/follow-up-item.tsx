@@ -31,7 +31,6 @@ export const FollowUpItem = ({
   const t = useTranslations();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
   const [deleteFollowUpModalOpen, setDeleteFollowUpModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const isEmailToInvalid = useMemo(() => {
     const { to } = followUp.action.properties;
@@ -94,7 +93,11 @@ export const FollowUpItem = ({
             />
 
             {isEmailToInvalid || isEndingInvalid ? (
-              <Badge size="normal" text="Issue detected" type="warning" />
+              <Badge
+                size="normal"
+                text={t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
+                type="warning"
+              />
             ) : null}
           </div>
         </div>
@@ -140,7 +143,6 @@ export const FollowUpItem = ({
         setOpen={setDeleteFollowUpModalOpen}
         buttonText={t("common.delete")}
         onConfirm={async () => {
-          setLoading(true);
           setLocalSurvey((prev) => {
             return {
               ...prev,
@@ -159,7 +161,6 @@ export const FollowUpItem = ({
         }}
         text={t("environments.surveys.edit.follow_ups_delete_modal_text")}
         title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
-        buttonLoading={loading}
         buttonVariant="warn"
       />
     </>

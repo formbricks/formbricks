@@ -91,7 +91,7 @@ export const HiddenFieldsCard = ({
       });
 
     if (isHiddenFieldUsedInFollowUp) {
-      toast.error("Hidden field is used in a follow-up. Please remove it from follow-up first.");
+      toast.error(t("environments.surveys.edit.follow_ups_hidden_field_error"));
       return;
     }
 

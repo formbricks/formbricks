@@ -52,9 +52,13 @@ export const FollowUpsView = ({
             variant="secondary"
             size="sm"
             onClick={() =>
-              window.open(`/environments/${localSurvey.environmentId}/settings/billing`, "_blank")
+              window.open(
+                `/environments/${localSurvey.environmentId}/settings/billing`,
+                "_blank",
+                "noopener,noreferrer"
+              )
             }>
-            Upgrade to enable follow-ups
+            {t("environments.surveys.edit.follow_ups_upgrade_button_text")}
           </Button>
         </div>
       </div>

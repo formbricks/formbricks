@@ -13,7 +13,6 @@ type FollowUpResult = {
 const evaluateFollowUp = async (
   followUpId: string,
   followUpAction: TSurveyFollowUpAction,
-  survey: TSurvey,
   response: TResponse
 ): Promise<void> => {
   const { properties } = followUpAction;
@@ -28,7 +27,7 @@ const evaluateFollowUp = async (
     const parsedResult = z.string().email().safeParse(toValueFromResponse);
     if (parsedResult.data) {
       // send email to this email address
-      await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
+      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo);
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
@@ -39,7 +38,7 @@ const evaluateFollowUp = async (
     }
     const parsedResult = z.string().email().safeParse(emailAddress);
     if (parsedResult.data) {
-      await sendFollowUpEmail(survey, body, subject, parsedResult.data, replyTo);
+      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo);
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
@@ -63,7 +62,7 @@ export const sendSurvyeFollowUps = async (survey: TSurvey, response: TResponse) 
       }
     }
 
-    return evaluateFollowUp(followUp.id, followUp.action, survey, response)
+    return evaluateFollowUp(followUp.id, followUp.action, response)
       .then(() => ({
         followUpId: followUp.id,
         status: "success" as const,

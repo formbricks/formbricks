@@ -297,7 +297,6 @@ export const sendNoLiveSurveyNotificationEmail = async (
 };
 
 export const sendFollowUpEmail = async (
-  survey: TSurvey,
   html: string,
   subject: string,
   to: string,
@@ -306,7 +305,6 @@ export const sendFollowUpEmail = async (
   const emailHtmlBody = await render(
     FollowUpEmail({
       html,
-      surveyName: survey.name,
     })
   );
 

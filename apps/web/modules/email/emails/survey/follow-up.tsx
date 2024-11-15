@@ -2,7 +2,6 @@ import { Body, Container, Html, Link, Section, Tailwind } from "@react-email/com
 import { sanitize } from "isomorphic-dompurify";
 
 interface FollowUpEmailProps {
-  surveyName: string;
   html: string;
 }
 
@@ -24,13 +23,15 @@ export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
             <br />
             <Link
               href="https://formbricks.com/imprint?utm_source=email_footer&utm_medium=email"
-              target="_blank">
+              target="_blank"
+              rel="noopener noreferrer">
               Imprint
             </Link>{" "}
             |{" "}
             <Link
               href="https://formbricks.com/privacy-policy?utm_source=email_footer&utm_medium=email"
-              target="_blank">
+              target="_blank"
+              rel="noopener noreferrer">
               Privacy Policy
             </Link>
           </Section>

@@ -177,14 +177,18 @@ export const FollowUpModal = ({
 
     if (mode === "edit") {
       if (!defaultValues?.surveyFollowUpId) {
-        console.error("No survey follow up id provided, can't update the survey follow up");
+        toast.error(t("environments.surveys.edit.follow_ups_modal_edit_no_id"));
         return;
       }
+
+      const currentFollowUp = localSurvey.followUps.find(
+        (followUp) => followUp.id === defaultValues.surveyFollowUpId
+      );
 
       const sanitizedBody = DOMpurify.sanitize(data.body);
       const updatedFollowUp = {
         id: defaultValues.surveyFollowUpId,
-        createdAt: new Date(),
+        createdAt: currentFollowUp?.createdAt ?? new Date(),
         updatedAt: new Date(),
         surveyId: localSurvey.id,
         name: data.followUpName,
@@ -444,6 +448,7 @@ export const FollowUpModal = ({
 
                                 return (
                                   <Label
+                                    key={ending.id}
                                     className="w-80 cursor-pointer rounded-md border border-slate-300 bg-slate-50 px-3 py-2 hover:bg-slate-100"
                                     htmlFor={`ending-${ending.id}`}>
                                     <div className="flex items-center space-x-2">
@@ -559,7 +564,7 @@ export const FollowUpModal = ({
                                     <SelectContent>
                                       {emailSendToOptions.map((option) => {
                                         return (
-                                          <SelectItem value={option.id}>
+                                          <SelectItem key={option.id} value={option.id}>
                                             {option.type !== "hiddenField" ? (
                                               <div className="flex items-center space-x-2">
                                                 <div className="h-4 w-4">
