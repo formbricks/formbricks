@@ -36,7 +36,7 @@ const selectProduct = {
 };
 
 export const getUserProducts = reactCache(
-  (userId: string, organizationId: string, page?: number): Promise<TProduct[]> =>
+  async (userId: string, organizationId: string, page?: number): Promise<TProduct[]> =>
     cache(
       async () => {
         validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
@@ -97,7 +97,7 @@ export const getUserProducts = reactCache(
 );
 
 export const getProducts = reactCache(
-  (organizationId: string, page?: number): Promise<TProduct[]> =>
+  async (organizationId: string, page?: number): Promise<TProduct[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
@@ -128,7 +128,7 @@ export const getProducts = reactCache(
 );
 
 export const getProductByEnvironmentId = reactCache(
-  (environmentId: string): Promise<TProduct | null> =>
+  async (environmentId: string): Promise<TProduct | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -215,7 +215,7 @@ export const updateProduct = async (
 };
 
 export const getProduct = reactCache(
-  (productId: string): Promise<TProduct | null> =>
+  async (productId: string): Promise<TProduct | null> =>
     cache(
       async () => {
         let productPrisma;

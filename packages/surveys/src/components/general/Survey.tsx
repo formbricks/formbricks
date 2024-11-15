@@ -11,6 +11,7 @@ import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContain
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import type { JSX } from "react";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
 import type {

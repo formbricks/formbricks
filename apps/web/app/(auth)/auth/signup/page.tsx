@@ -18,10 +18,11 @@ import {
 } from "@formbricks/lib/constants";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
-const Page = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
+const Page = async (props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
+  const searchParams = await props.searchParams;
   const inviteToken = searchParams["inviteToken"] ?? null;
   const isMultOrgEnabled = await getIsMultiOrgEnabled();
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }

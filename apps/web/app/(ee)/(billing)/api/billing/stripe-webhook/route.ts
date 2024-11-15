@@ -4,7 +4,8 @@ import { webhookHandler } from "./lib/stripeWebhook";
 
 export const POST = async (request: Request) => {
   const body = await request.text();
-  const signature = headers().get("stripe-signature") as string;
+  const requestHeaders = await headers();
+  const signature = requestHeaders.get("stripe-signature") as string;
 
   const { status, message } = await webhookHandler(body, signature);
 

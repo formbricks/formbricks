@@ -1,5 +1,6 @@
 import { InboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { JSX } from "react";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";

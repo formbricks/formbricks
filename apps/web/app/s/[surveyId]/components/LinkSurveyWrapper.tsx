@@ -1,6 +1,6 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import { SurveyLoadingAnimation } from "@/app/s/[surveyId]/components/SurveyLoadingAnimation";
-import { useState } from "react";
+import { type JSX, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";

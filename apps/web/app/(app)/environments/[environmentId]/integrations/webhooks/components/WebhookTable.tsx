@@ -2,7 +2,7 @@
 
 import { WebhookModal } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type JSX, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";

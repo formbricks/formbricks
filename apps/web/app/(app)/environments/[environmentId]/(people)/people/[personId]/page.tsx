@@ -19,7 +19,8 @@ import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const [environment, environmentTags, product, session, organization, person, attributes, attributeClasses] =
     await Promise.all([

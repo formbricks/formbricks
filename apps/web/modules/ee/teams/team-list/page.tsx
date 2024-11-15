@@ -13,7 +13,8 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-export const TeamsPage = async ({ params }) => {
+export const TeamsPage = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {

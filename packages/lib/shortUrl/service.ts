@@ -12,7 +12,7 @@ import { shortUrlCache } from "./cache";
 
 // Get the full url from short url and return it
 export const getShortUrl = reactCache(
-  (id: string): Promise<TShortUrl | null> =>
+  async (id: string): Promise<TShortUrl | null> =>
     cache(
       async () => {
         validateInputs([id, ZShortUrlId]);
@@ -38,7 +38,7 @@ export const getShortUrl = reactCache(
 );
 
 export const getShortUrlByUrl = reactCache(
-  (url: string): Promise<TShortUrl | null> =>
+  async (url: string): Promise<TShortUrl | null> =>
     cache(
       async () => {
         validateInputs([url, z.string().url()]);

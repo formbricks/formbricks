@@ -13,7 +13,9 @@ import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 
-export const ExperiencePage = async ({ params }) => {
+export const ExperiencePage = async (props) => {
+  const params = await props.params;
+
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session not found");
