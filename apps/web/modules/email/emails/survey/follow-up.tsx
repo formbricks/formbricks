@@ -20,19 +20,21 @@ export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
           </Container>
 
           <Section className="mt-4 text-center">
-            Formbricks {new Date().getFullYear()}. All rights reserved.
+            powered by Formbricks
             <br />
-            <Link
-              href="https://formbricks.com/imprint?utm_source=email_footer&utm_medium=email"
-              target="_blank">
-              Imprint
-            </Link>{" "}
-            |{" "}
-            <Link
-              href="https://formbricks.com/privacy-policy?utm_source=email_footer&utm_medium=email"
-              target="_blank">
-              Privacy Policy
-            </Link>
+            <span className="text-xs">
+              <Link
+                href="https://formbricks.com/imprint?utm_source=email_footer&utm_medium=email"
+                target="_blank">
+                Imprint
+              </Link>{" "}
+              |{" "}
+              <Link
+                href="https://formbricks.com/privacy-policy?utm_source=email_footer&utm_medium=email"
+                target="_blank">
+                Privacy Policy
+              </Link>
+            </span>
           </Section>
         </Body>
       </Tailwind>
