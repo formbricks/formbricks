@@ -42,6 +42,7 @@ export const POST = async (request: Request) => {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
+  const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
 
   // Fetch webhooks
   const getWebhooksForPipeline = cache(
@@ -99,7 +100,7 @@ export const POST = async (request: Request) => {
     }
 
     if (integrations.length > 0) {
-      await handleIntegrations(integrations, inputValidation.data, survey);
+      await handleIntegrations(integrations, inputValidation.data, survey, attributes);
     }
 
     // Fetch users with notifications in a single query
@@ -197,8 +198,6 @@ export const POST = async (request: Request) => {
         const isAIEnabled = await getIsAIEnabled(organization);
 
         if (isAIEnabled) {
-          const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
-
           for (const question of survey.questions) {
             if (question.type === "openText" && question.insightsEnabled) {
               const isQuestionAnswered =
