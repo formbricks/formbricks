@@ -13,6 +13,7 @@ import {
   TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,
+  TSurveyLogicActions,
   TSurveyLogicConditionsOperator,
   TSurveyQuestion,
   TSurveyQuestionId,
@@ -146,6 +147,10 @@ export const actionObjectiveOptions: TComboboxOption[] = [
   { label: "environments.surveys.edit.require_answer", value: "requireAnswer" },
   { label: "environments.surveys.edit.jump_to_question", value: "jumpToQuestion" },
 ];
+
+export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean => {
+  return actions.some((action) => action.objective === "jumpToQuestion");
+};
 
 const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {
   let options: TLogicRuleOption;

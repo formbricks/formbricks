@@ -444,6 +444,8 @@ export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
 
 const ZSurveyLogicActions = z.array(ZSurveyLogicAction);
 
+export type TSurveyLogicActions = z.infer<typeof ZSurveyLogicActions>;
+
 export const ZSurveyLogic = z.object({
   id: ZId,
   conditions: ZConditionGroup,
