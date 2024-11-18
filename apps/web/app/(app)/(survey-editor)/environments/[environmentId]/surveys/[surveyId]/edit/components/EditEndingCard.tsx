@@ -102,8 +102,6 @@ export const EditEndingCard = ({
   };
 
   const deleteEndingCard = () => {
-    console.log("followups:   ", localSurvey.followUps);
-    console.log("endingCard:   ", endingCard);
     const isEndingCardUsedInFollowUps = localSurvey.followUps.some((followUp) => {
       if (followUp.trigger.type === "endings") {
         if (followUp.trigger.properties?.endingIds?.includes(endingCard.id)) {
