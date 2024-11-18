@@ -3,7 +3,7 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
+import { cache, revalidateTag } from "@formbricks/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
@@ -45,7 +45,7 @@ const setPreviousResult = async (previousResult: {
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
 }) => {
-  // revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
+  revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
   const { lastChecked, active, features } = previousResult;
 
   await cache(
