@@ -29,7 +29,7 @@ export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
           </Container>
 
           <Section className="mt-4 text-center">
-            Formbricks {new Date().getFullYear()}. All rights reserved.
+            powered by Formbricks
             <br />
             <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer">
               Imprint
