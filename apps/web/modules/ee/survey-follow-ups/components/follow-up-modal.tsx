@@ -185,7 +185,13 @@ export const FollowUpModal = ({
         (followUp) => followUp.id === defaultValues.surveyFollowUpId
       );
 
-      const sanitizedBody = DOMpurify.sanitize(data.body);
+      const sanitizedBody = DOMpurify.sanitize(data.body, {
+        ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
+        ALLOWED_ATTR: ["href", "rel", "dir", "class"],
+        ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
+        ADD_ATTR: ["target"], // Optional: Allow 'target' attribute for links (e.g., _blank)
+      });
+
       const updatedFollowUp = {
         id: defaultValues.surveyFollowUpId,
         createdAt: currentFollowUp?.createdAt ?? new Date(),
@@ -225,7 +231,13 @@ export const FollowUpModal = ({
       return;
     }
 
-    const sanitizedBody = DOMpurify.sanitize(data.body);
+    const sanitizedBody = DOMpurify.sanitize(data.body, {
+      ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
+      ALLOWED_ATTR: ["href", "rel", "dir", "class"],
+      ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
+      ADD_ATTR: ["target"], // Optional: Allow 'target' attribute for links (e.g., _blank)
+    });
+
     const newFollowUp = {
       id: createId(),
       createdAt: new Date(),
