@@ -11,7 +11,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { type Dispatch, type SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useRef } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { exampleTheme } from "../lib/ExampleTheme";
 import "../stylesEditor.css";
@@ -66,11 +66,14 @@ const editorConfig = {
 
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="editor cursor-text rounded-md">
       <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
-        <div className={cn("editor-container rounded-md p-0", props.isInvalid && "!border !border-red-500")}>
+        <div
+          ref={editorContainerRef}
+          className={cn("editor-container rounded-md p-0", props.isInvalid && "!border !border-red-500")}>
           <ToolbarPlugin
             getText={props.getText}
             setText={props.setText}
@@ -80,6 +83,7 @@ export const Editor = (props: TextEditorProps) => {
             updateTemplate={props.updateTemplate}
             firstRender={props.firstRender}
             setFirstRender={props.setFirstRender}
+            container={editorContainerRef.current}
           />
           {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
           <div
