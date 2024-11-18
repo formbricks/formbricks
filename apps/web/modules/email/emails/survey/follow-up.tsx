@@ -1,5 +1,6 @@
 import { Body, Container, Html, Link, Section, Tailwind } from "@react-email/components";
 import { sanitize } from "isomorphic-dompurify";
+import { IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
 interface FollowUpEmailProps {
   html: string;
@@ -22,8 +23,6 @@ export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
                   ALLOWED_ATTR: ["href", "rel", "dir", "class"],
                   ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
                   ADD_ATTR: ["target"], // Optional: Allow 'target' attribute for links (e.g., _blank)
-                  FORBID_ATTR: ["style"], // Prevent inline styles
-                  FORBID_TAGS: ["script", "iframe", "embed", "object", "button"], // Ensure unsafe elements are stripped
                 }),
               }}
             />
@@ -32,17 +31,11 @@ export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
           <Section className="mt-4 text-center">
             Formbricks {new Date().getFullYear()}. All rights reserved.
             <br />
-            <Link
-              href="https://formbricks.com/imprint?utm_source=email_footer&utm_medium=email"
-              target="_blank"
-              rel="noopener noreferrer">
+            <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer">
               Imprint
             </Link>{" "}
             |{" "}
-            <Link
-              href="https://formbricks.com/privacy-policy?utm_source=email_footer&utm_medium=email"
-              target="_blank"
-              rel="noopener noreferrer">
+            <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
               Privacy Policy
             </Link>
           </Section>
