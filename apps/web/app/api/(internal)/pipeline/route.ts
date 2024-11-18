@@ -23,8 +23,9 @@ import { TWebhook } from "@formbricks/types/webhooks";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
+  const requestHeaders = await headers();
   // Check authentication
-  if (headers().get("x-api-key") !== CRON_SECRET) {
+  if (requestHeaders.get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
   }
 
@@ -43,6 +44,7 @@ export const POST = async (request: Request) => {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
+  const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
@@ -105,7 +107,7 @@ export const POST = async (request: Request) => {
     }
 
     if (integrations.length > 0) {
-      await handleIntegrations(integrations, inputValidation.data, survey);
+      await handleIntegrations(integrations, inputValidation.data, survey, attributes);
     }
 
     // Fetch users with notifications in a single query
@@ -205,8 +207,6 @@ export const POST = async (request: Request) => {
         const isAIEnabled = await getIsAIEnabled(organization);
 
         if (isAIEnabled) {
-          const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
-
           for (const question of survey.questions) {
             if (question.type === "openText" && question.insightsEnabled) {
               const isQuestionAnswered =

@@ -13,7 +13,11 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
 import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
-const SurveyEditorEnvironmentLayout = async ({ children, params }) => {
+const SurveyEditorEnvironmentLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {

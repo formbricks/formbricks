@@ -8,12 +8,13 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
 interface ConnectPageProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: ConnectPageProps) => {
+const Page = async (props: ConnectPageProps) => {
+  const params = await props.params;
   const t = await getTranslations();
   const environment = await getEnvironment(params.environmentId);
 

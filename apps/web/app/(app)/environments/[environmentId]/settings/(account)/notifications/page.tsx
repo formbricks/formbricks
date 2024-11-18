@@ -141,7 +141,9 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   return memberships;
 };
 
-const Page = async ({ params, searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {

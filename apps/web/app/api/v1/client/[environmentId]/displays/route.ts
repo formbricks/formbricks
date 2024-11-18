@@ -6,9 +6,9 @@ import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 
 interface Context {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -16,10 +16,11 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
+  const params = await context.params;
   const jsonInput = await request.json();
   const inputValidation = ZDisplayCreateInput.safeParse({
     ...jsonInput,
-    environmentId: context.params.environmentId,
+    environmentId: params.environmentId,
   });
 
   if (!inputValidation.success) {

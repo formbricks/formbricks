@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 const Page = async () => {
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
   const t = await getTranslations();
   return (
     <div className="flex flex-col items-center">

@@ -1,7 +1,7 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { type JSX, useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";

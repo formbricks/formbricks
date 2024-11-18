@@ -123,7 +123,7 @@ export const updateAttributeClass = async (
   }
 };
 
-export const getAttributeClassByName = reactCache((environmentId: string, name: string) =>
+export const getAttributeClassByName = reactCache(async (environmentId: string, name: string) =>
   cache(
     async (): Promise<TAttributeClass | null> => {
       validateInputs([environmentId, ZId], [name, ZString]);

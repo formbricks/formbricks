@@ -9,7 +9,11 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-const ConfigLayout = async ({ children, params }) => {
+const ConfigLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const t = await getTranslations();
   const [organization, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),

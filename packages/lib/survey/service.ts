@@ -210,7 +210,7 @@ const handleTriggerUpdates = (
 };
 
 export const getSurvey = reactCache(
-  (surveyId: string): Promise<TSurvey | null> =>
+  async (surveyId: string): Promise<TSurvey | null> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId]);
@@ -245,7 +245,7 @@ export const getSurvey = reactCache(
 );
 
 export const getSurveysByActionClassId = reactCache(
-  (actionClassId: string, page?: number): Promise<TSurvey[]> =>
+  async (actionClassId: string, page?: number): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
@@ -292,7 +292,7 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  (
+  async (
     environmentId: string,
     limit?: number,
     offset?: number,
@@ -331,7 +331,7 @@ export const getSurveys = reactCache(
 );
 
 export const getSurveyCount = reactCache(
-  (environmentId: string): Promise<number> =>
+  async (environmentId: string): Promise<number> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -360,7 +360,7 @@ export const getSurveyCount = reactCache(
 );
 
 export const getInProgressSurveyCount = reactCache(
-  (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
+  async (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -1206,7 +1206,7 @@ export const copySurveyToOtherEnvironment = async (
 };
 
 export const getSyncSurveys = reactCache(
-  (
+  async (
     environmentId: string,
     personId: string,
     deviceType: "phone" | "desktop" = "desktop"
@@ -1358,7 +1358,7 @@ export const getSyncSurveys = reactCache(
 );
 
 export const getSurveyIdByResultShareKey = reactCache(
-  (resultShareKey: string): Promise<string | null> =>
+  async (resultShareKey: string): Promise<string | null> =>
     cache(
       async () => {
         try {
@@ -1457,7 +1457,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
 };
 
 export const getSurveysBySegmentId = reactCache(
-  (segmentId: string): Promise<TSurvey[]> =>
+  async (segmentId: string): Promise<TSurvey[]> =>
     cache(
       async () => {
         try {

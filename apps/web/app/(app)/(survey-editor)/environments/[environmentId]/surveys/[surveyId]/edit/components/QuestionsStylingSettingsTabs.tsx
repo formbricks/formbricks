@@ -1,6 +1,6 @@
 import { MailIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { type JSX, useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
 import { ProBadge } from "@formbricks/ui/components/ProBadge";

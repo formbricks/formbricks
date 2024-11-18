@@ -3,9 +3,9 @@ import { NextRequest } from "next/server";
 import { createPerson } from "@formbricks/lib/person/service";
 
 interface Context {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
 export const OPTIONS = async () => {
@@ -17,7 +17,8 @@ export const OPTIONS = async () => {
 export const POST = async (req: NextRequest, context: Context) => {
   // we need to create a new person
   // call the createPerson service from here
-  const environmentId = context.params.environmentId;
+  const params = await context.params;
+  const environmentId = params.environmentId;
   const { userId } = await req.json();
 
   if (!environmentId) {

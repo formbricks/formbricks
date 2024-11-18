@@ -3,7 +3,10 @@
 import { EditorCardMenu } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EditorCardMenu";
 import { EndScreenForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/EndScreenForm";
 import { RedirectUrlForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RedirectUrlForm";
-import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import {
+  findEndingCardUsedInLogic,
+  formatTextWithSlashes,
+} from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
@@ -11,6 +14,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -98,6 +102,8 @@ export const EditEndingCard = ({
   };
 
   const deleteEndingCard = () => {
+    console.log("followups:   ", localSurvey.followUps);
+    console.log("endingCard:   ", endingCard);
     const isEndingCardUsedInFollowUps = localSurvey.followUps.some((followUp) => {
       if (followUp.trigger.type === "endings") {
         if (followUp.trigger.properties?.endingIds?.includes(endingCard.id)) {
@@ -107,6 +113,14 @@ export const EditEndingCard = ({
 
       return false;
     });
+
+    // checking if this ending card is used in logic
+    const quesIdx = findEndingCardUsedInLogic(localSurvey, endingCard.id);
+
+    if (quesIdx !== -1) {
+      toast.error(t("environments.surveys.edit.ending_card_used_in_logic", { questionIndex: quesIdx + 1 }));
+      return;
+    }
 
     if (isEndingCardUsedInFollowUps) {
       setOpenDeleteConfirmationModal(true);

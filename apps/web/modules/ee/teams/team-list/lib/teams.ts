@@ -12,7 +12,7 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 const getUserTeams = reactCache(
-  (userId: string, organizationId: string): Promise<TUserTeam[]> =>
+  async (userId: string, organizationId: string): Promise<TUserTeam[]> =>
     cache(
       async () => {
         validateInputs([userId, z.string()], [organizationId, ZId]);
@@ -70,7 +70,7 @@ const getUserTeams = reactCache(
 );
 
 export const getOtherTeams = reactCache(
-  (userId: string, organizationId: string): Promise<TOtherTeam[]> =>
+  async (userId: string, organizationId: string): Promise<TOtherTeam[]> =>
     cache(
       async () => {
         validateInputs([userId, z.string()], [organizationId, ZId]);
@@ -122,7 +122,10 @@ export const getOtherTeams = reactCache(
 );
 
 export const getTeams = reactCache(
-  (userId: string, organizationId: string): Promise<{ userTeams: TUserTeam[]; otherTeams: TOtherTeam[] }> =>
+  async (
+    userId: string,
+    organizationId: string
+  ): Promise<{ userTeams: TUserTeam[]; otherTeams: TOtherTeam[] }> =>
     cache(
       async () => {
         const membership = await prisma.membership.findUnique({

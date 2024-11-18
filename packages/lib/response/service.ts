@@ -98,7 +98,7 @@ export const responseSelection = {
 } satisfies Prisma.ResponseSelect;
 
 export const getResponsesByPersonId = reactCache(
-  (personId: string, page?: number): Promise<TResponse[] | null> =>
+  async (personId: string, page?: number): Promise<TResponse[] | null> =>
     cache(
       async () => {
         validateInputs([personId, ZId], [page, ZOptionalNumber]);
@@ -150,7 +150,7 @@ export const getResponsesByPersonId = reactCache(
 );
 
 export const getResponsesByUserId = reactCache(
-  (environmentId: string, userId: string, page?: number): Promise<TResponse[] | null> =>
+  async (environmentId: string, userId: string, page?: number): Promise<TResponse[] | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [userId, ZString], [page, ZOptionalNumber]);
@@ -205,7 +205,7 @@ export const getResponsesByUserId = reactCache(
 );
 
 export const getResponseBySingleUseId = reactCache(
-  (surveyId: string, singleUseId: string): Promise<TResponse | null> =>
+  async (surveyId: string, singleUseId: string): Promise<TResponse | null> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [singleUseId, ZString]);
@@ -370,7 +370,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 };
 
 export const getResponse = reactCache(
-  (responseId: string): Promise<TResponse | null> =>
+  async (responseId: string): Promise<TResponse | null> =>
     cache(
       async () => {
         validateInputs([responseId, ZId]);
@@ -408,7 +408,7 @@ export const getResponse = reactCache(
     )()
 );
 
-export const getResponseFilteringValues = reactCache((surveyId: string) =>
+export const getResponseFilteringValues = reactCache(async (surveyId: string) =>
   cache(
     async () => {
       validateInputs([surveyId, ZId]);
@@ -451,7 +451,7 @@ export const getResponseFilteringValues = reactCache((surveyId: string) =>
 );
 
 export const getResponses = reactCache(
-  (
+  async (
     surveyId: string,
     limit?: number,
     offset?: number,
@@ -587,7 +587,7 @@ export const getResponseDownloadUrl = async (
 };
 
 export const getResponsesByEnvironmentId = reactCache(
-  (environmentId: string, limit?: number, offset?: number): Promise<TResponse[]> =>
+  async (environmentId: string, limit?: number, offset?: number): Promise<TResponse[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
@@ -793,7 +793,7 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
 };
 
 export const getResponseCountBySurveyId = reactCache(
-  (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<number> =>
+  async (surveyId: string, filterCriteria?: TResponseFilterCriteria): Promise<number> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
@@ -825,7 +825,7 @@ export const getResponseCountBySurveyId = reactCache(
 );
 
 export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
-  (surveyId: string, email: string): Promise<boolean> =>
+  async (surveyId: string, email: string): Promise<boolean> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [email, ZString]);

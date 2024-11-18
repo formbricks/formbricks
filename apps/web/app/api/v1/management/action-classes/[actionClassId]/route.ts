@@ -21,8 +21,9 @@ const fetchAndAuthorizeActionClass = async (
 
 export const GET = async (
   request: Request,
-  { params }: { params: { actionClassId: string } }
+  props: { params: Promise<{ actionClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -38,8 +39,9 @@ export const GET = async (
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { actionClassId: string } }
+  props: { params: Promise<{ actionClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -79,8 +81,9 @@ export const PUT = async (
 
 export const DELETE = async (
   request: Request,
-  { params }: { params: { actionClassId: string } }
+  props: { params: Promise<{ actionClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

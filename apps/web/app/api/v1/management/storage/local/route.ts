@@ -13,7 +13,7 @@ import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 
 export const POST = async (req: NextRequest): Promise<Response> => {
   const accessType = "public"; // public files are accessible by anyone
-  const headersList = headers();
+  const headersList = await headers();
 
   const fileType = headersList.get("X-File-Type");
   const encodedFileName = headersList.get("X-File-Name");

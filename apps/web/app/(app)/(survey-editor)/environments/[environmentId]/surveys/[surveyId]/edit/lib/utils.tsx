@@ -1062,7 +1062,9 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
   };
 
   return survey.questions.findIndex(
-    (question) => question.logic && question.id !== questionId && question.logic.some(isUsedInLogicRule)
+    (question) =>
+      question.logicFallback === questionId ||
+      (question.id !== questionId && question.logic?.some(isUsedInLogicRule))
   );
 };
 
@@ -1150,4 +1152,18 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
 
 export const getSurveyFollowUpActionDefaultBody = (locale: TUserLocale) => {
   return translate("follow_ups_modal_action_body", locale) as string;
+};
+
+export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {
+  const isUsedInAction = (action: TSurveyLogicAction): boolean => {
+    return action.objective === "jumpToQuestion" && action.target === endingCardId;
+  };
+
+  const isUsedInLogicRule = (logicRule: TSurveyLogic): boolean => {
+    return logicRule.actions.some(isUsedInAction);
+  };
+
+  return survey.questions.findIndex(
+    (question) => question.logicFallback === endingCardId || question.logic?.some(isUsedInLogicRule)
+  );
 };

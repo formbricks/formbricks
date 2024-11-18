@@ -23,7 +23,8 @@ export const metadata: Metadata = {
   title: "Actions",
 };
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const t = await getTranslations();
   const [actionClasses, organization, product] = await Promise.all([
@@ -31,7 +32,7 @@ const Page = async ({ params }) => {
     getOrganizationByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
   ]);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   if (!session) {
     throw new Error(t("common.session_not_found"));

@@ -11,7 +11,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TInsight, TInsightFilterCriteria, ZInsightFilterCriteria } from "@formbricks/types/insights";
 
 export const getInsights = reactCache(
-  (
+  async (
     environmentId: string,
     limit?: number,
     offset?: number,

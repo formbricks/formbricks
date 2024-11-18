@@ -14,17 +14,19 @@ import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
 interface SurveyTemplateProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     channel?: TProductConfigChannel;
     industry?: TProductConfigIndustry;
     role?: TTemplateRole;
-  };
+  }>;
 }
 
-const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
+const Page = async (props: SurveyTemplateProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;

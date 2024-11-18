@@ -10,12 +10,13 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
 interface InvitePageProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: InvitePageProps) => {
+const Page = async (props: InvitePageProps) => {
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
