@@ -1,20 +1,18 @@
 import {
   clientSideApiEndpointsLimiter,
-  forgetPasswordLimiter,
+  forgotPasswordLimiter,
   loginLimiter,
-  resetPasswordLimiter,
   shareUrlLimiter,
-  signUpLimiter,
+  signupLimiter,
   syncUserIdentificationLimiter,
   verifyEmailLimiter,
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
-  forgetPasswordRoute,
+  forgotPasswordRoute,
   isAuthProtectedRoute,
   isSyncWithUserIdentificationEndpoint,
   loginRoute,
-  resetPasswordRoute,
   shareUrlRoute,
   signupRoute,
   verifyEmailRoute,
@@ -56,13 +54,11 @@ export const middleware = async (request: NextRequest) => {
       if (loginRoute(request.nextUrl.pathname)) {
         await loginLimiter(`login-${ip}`);
       } else if (signupRoute(request.nextUrl.pathname)) {
-        await signUpLimiter(`signup-${ip}`);
-      } else if (forgetPasswordRoute(request.nextUrl.pathname)) {
-        await forgetPasswordLimiter(`forget-password-${ip}`);
+        await signupLimiter(`signup-${ip}`);
       } else if (verifyEmailRoute(request.nextUrl.pathname)) {
         await verifyEmailLimiter(`verify-email-${ip}`);
-      } else if (resetPasswordRoute(request.nextUrl.pathname)) {
-        await resetPasswordLimiter(`reset-password-${ip}`);
+      } else if (forgotPasswordRoute(request.nextUrl.pathname)) {
+        await forgotPasswordLimiter(`forgot-password-${ip}`);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
 
@@ -86,10 +82,6 @@ export const middleware = async (request: NextRequest) => {
 export const config = {
   matcher: [
     "/api/auth/callback/credentials",
-    "/api/v1/users",
-    "/api/v1/users/forgot-password",
-    "/api/v1/users/verification-email",
-    "/api/v1/users/reset-password",
     "/api/(.*)/client/:path*",
     "/api/v1/js/actions",
     "/api/v1/client/storage",
@@ -98,6 +90,9 @@ export const config = {
     "/setup/organization/:path*",
     "/api/auth/signout",
     "/auth/login",
+    "/auth/signup",
     "/api/packages/:path*",
+    "/auth/verification-requested",
+    "/auth/forgot-password",
   ],
 };

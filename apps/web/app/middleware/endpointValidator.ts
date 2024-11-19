@@ -1,12 +1,10 @@
 export const loginRoute = (url: string) => url === "/api/auth/callback/credentials";
 
-export const signupRoute = (url: string) => url === "/api/v1/users";
+export const signupRoute = (url: string) => url === "/auth/signup";
 
-export const resetPasswordRoute = (url: string) => url === "/api/v1/users/reset-password";
+export const verifyEmailRoute = (url: string) => url === "/auth/verify-email";
 
-export const forgetPasswordRoute = (url: string) => url === "/api/v1/users/forgot-password";
-
-export const verifyEmailRoute = (url: string) => url === "/api/v1/users/verification-email";
+export const forgotPasswordRoute = (url: string) => url === "/auth/forgot-password";
 
 export const clientSideApiRoute = (url: string): boolean => {
   if (url.includes("/api/packages/")) return true;

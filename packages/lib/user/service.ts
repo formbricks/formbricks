@@ -168,7 +168,6 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
 
     // send new user customer.io to customer.io
     createCustomerIoCustomer(user);
-
     return user;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

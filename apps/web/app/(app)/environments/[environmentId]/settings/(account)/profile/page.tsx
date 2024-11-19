@@ -2,6 +2,7 @@ import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -16,6 +17,7 @@ import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const enterpriseLicense = await getEnterpriseLicense();
   const params = await props.params;
   const t = await getTranslations();
   const { environmentId } = params;
@@ -65,7 +67,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             <SettingsCard
               title={t("common.security")}
               description={t("environments.settings.profile.security_description")}>
-              <AccountSecurity user={user} />
+              <AccountSecurity
+                user={user}
+                isEnterpriseEdition={enterpriseLicense.active}
+                environmentId={environmentId}
+              />
             </SettingsCard>
           )}
 

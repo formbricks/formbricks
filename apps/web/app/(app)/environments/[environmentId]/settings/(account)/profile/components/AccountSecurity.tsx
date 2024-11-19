@@ -1,13 +1,20 @@
 "use client";
 
-import { DisableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/DisableTwoFactorModal";
-import { EnableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/EnableTwoFactorModal";
+import { DisableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/disable-two-factor-modal";
+import { EnableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/enable-two-factor-modal";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
 import { Switch } from "@formbricks/ui/components/Switch";
+import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 
-export const AccountSecurity = ({ user }: { user: TUser }) => {
+interface AccountSecurityProps {
+  user: TUser;
+  isEnterpriseEdition: boolean;
+  environmentId: string;
+}
+
+export const AccountSecurity = ({ user, isEnterpriseEdition, environmentId }: AccountSecurityProps) => {
   const t = useTranslations();
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [disableTwoFactorModalOpen, setDisableTwoFactorModalOpen] = useState(false);
@@ -17,6 +24,7 @@ export const AccountSecurity = ({ user }: { user: TUser }) => {
       <div className="flex items-center space-x-4">
         <Switch
           checked={user.twoFactorEnabled}
+          disabled={!isEnterpriseEdition && !user.twoFactorEnabled}
           onCheckedChange={(checked) => {
             if (checked) {
               setTwoFactorModalOpen(true);
@@ -35,7 +43,13 @@ export const AccountSecurity = ({ user }: { user: TUser }) => {
           </p>
         </div>
       </div>
-
+      {!isEnterpriseEdition && !user.twoFactorEnabled && (
+        <UpgradePlanNotice
+          message={t("environments.settings.profile.to_enable_two_factor_authentication_you_need_an_active")}
+          textForUrl={t("common.enterprise_license")}
+          url={`/environments/${environmentId}/settings/enterprise`}
+        />
+      )}
       <EnableTwoFactorModal open={twoFactorModalOpen} setOpen={setTwoFactorModalOpen} />
       <DisableTwoFactorModal open={disableTwoFactorModalOpen} setOpen={setDisableTwoFactorModalOpen} />
     </div>

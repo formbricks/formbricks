@@ -188,7 +188,7 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
     // if user has 2fa and NOT using backup code, try totp
   } else if (user.twoFactorEnabled) {
     if (!code) {
-      throw new Error("Second factor required");
+      throw new Error("Two factor code required");
     }
 
     if (!user.twoFactorSecret) {

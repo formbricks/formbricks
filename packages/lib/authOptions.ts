@@ -69,7 +69,6 @@ export const authOptions: NextAuthOptions = {
           console.error(e);
           throw Error("Internal server error. Please try again later");
         }
-
         if (!user || !credentials) {
           throw new Error("Invalid credentials");
         }

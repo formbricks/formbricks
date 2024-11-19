@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
-const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR"]);
+export const ZUserLocale = z.enum(["en-US", "de-DE", "pt-BR"]);
 
 export type TUserLocale = z.infer<typeof ZUserLocale>;
 export const ZUserObjective = z.enum([
@@ -28,12 +28,21 @@ export const ZUserName = z
   .min(1, { message: "Name should be at least 1 character long" })
   .regex(/^[a-zA-Z0-9\s]+$/, { message: "Name should only contain letters, numbers, and spaces" });
 
+export const ZUserEmail = z.string().email();
+
+export const ZUserPassword = z
+  .string()
+  .min(8)
+  .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
+
+export type TUserPassword = z.infer<typeof ZUserPassword>;
+
 export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;
 
 export const ZUser = z.object({
   id: z.string(),
   name: ZUserName,
-  email: z.string().email(),
+  email: ZUserEmail,
   emailVerified: z.date().nullable(),
   imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
@@ -50,8 +59,9 @@ export type TUser = z.infer<typeof ZUser>;
 
 export const ZUserUpdateInput = z.object({
   name: ZUserName.optional(),
-  email: z.string().email().optional(),
+  email: ZUserEmail.optional(),
   emailVerified: z.date().nullish(),
+  password: ZUserPassword.optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
   imageUrl: z.string().nullish(),
@@ -63,7 +73,8 @@ export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
 
 export const ZUserCreateInput = z.object({
   name: ZUserName,
-  email: z.string().email(),
+  email: ZUserEmail,
+  password: ZUserPassword.optional(),
   emailVerified: z.date().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
