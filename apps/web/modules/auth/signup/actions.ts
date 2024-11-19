@@ -1,9 +1,9 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { hashPassword } from "@formbricks/lib/auth";
 import { getInvite } from "@formbricks/lib/invite/service";
 import { deleteInvite } from "@formbricks/lib/invite/service";

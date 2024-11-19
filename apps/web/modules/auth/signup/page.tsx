@@ -1,7 +1,7 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
+import { getEnterpriseLicense, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
-import { getEnterpriseLicense, getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {
   AZURE_OAUTH_ENABLED,
   DEFAULT_ORGANIZATION_ID,
