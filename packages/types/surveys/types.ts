@@ -444,6 +444,8 @@ export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
 
 const ZSurveyLogicActions = z.array(ZSurveyLogicAction);
 
+export type TSurveyLogicActions = z.infer<typeof ZSurveyLogicActions>;
+
 export const ZSurveyLogic = z.object({
   id: ZId,
   conditions: ZConditionGroup,
@@ -2024,6 +2026,15 @@ const validateActions = (
 
     return undefined;
   });
+
+  const jumpToQuestionActions = actions.filter((action) => action.objective === "jumpToQuestion");
+  if (jumpToQuestionActions.length > 1) {
+    actionIssues.push({
+      code: z.ZodIssueCode.custom,
+      message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+      path: ["questions", questionIndex, "logic"],
+    });
+  }
 
   const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
   return filteredActionIssues;
