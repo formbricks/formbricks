@@ -22,12 +22,8 @@ interface TSegmentSettingsTabProps {
   setOpen: (open: boolean) => void;
   initialSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
-<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/segment-settings.tsx
   contactAttributeKeys: TContactAttributeKey[];
-========
-  attributeClasses: TAttributeClass[];
   isReadOnly: boolean;
->>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/segment-settings.tsx
 }
 
 export function SegmentSettings({

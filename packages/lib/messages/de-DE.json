@@ -724,6 +724,7 @@
       "zapier_integration_description": "Integriere Formbricks mit über 5000 Apps über Zapier"
     },
     "people": {
+      "contact_not_found": "Keine solche Contact gefunden",
       "error_fetching_next_page_of_people_data": "Fehler beim Abrufen der nächsten Seite der Personendaten",
       "error_fetching_people_data": "Fehler beim Abrufen der Personendaten",
       "fetching_user": "Benutzer werden abgerufen",
@@ -733,7 +734,6 @@
       "no_responses_found": "Keine Antworten gefunden",
       "not_provided": "Nicht angegeben",
       "person_deleted_successfully": "Person erfolgreich gelöscht",
-      "person_not_found": "Keine solche Person gefunden",
       "search_person": "Person suchen",
       "sessions": "Sitzungen"
     },

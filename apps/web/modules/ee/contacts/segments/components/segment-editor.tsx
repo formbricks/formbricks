@@ -1,11 +1,3 @@
-<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/segment-editor.tsx
-========
-import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
->>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/segment-editor.tsx
 import {
   addFilterBelow,
   addFilterInGroup,
@@ -16,6 +8,7 @@ import {
   toggleGroupConnector,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";

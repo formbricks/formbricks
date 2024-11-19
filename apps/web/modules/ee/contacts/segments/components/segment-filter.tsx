@@ -213,12 +213,8 @@ function AttributeSegmentFilter({
   contactAttributeKeys,
   viewOnly,
 }: TAttributeSegmentFilterProps) {
-<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/segment-filter.tsx
   const { contactAttributeKey } = resource.root;
-========
   const t = useTranslations();
-  const { attributeClassName } = resource.root;
->>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/segment-filter.tsx
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
   const [valueError, setValueError] = useState("");

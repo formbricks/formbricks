@@ -1,8 +1,8 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import {
@@ -27,7 +27,7 @@ const ZGetContactsAction = z.object({
 export const getContactsAction = authenticatedActionClient
   .schema(ZGetContactsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
       rules: ["environment", "read"],

@@ -149,6 +149,7 @@
     "connect": "Connect",
     "connect_formbricks": "Connect Formbricks",
     "connected": "Connected",
+    "contacts": "Contacts",
     "copied_to_clipboard": "Copied to clipboard",
     "copy": "Copy",
     "copy_code": "Copy code",
@@ -724,6 +725,7 @@
       "zapier_integration_description": "Integrate Formbricks with 5000+ apps via Zapier"
     },
     "people": {
+      "contact_not_found": "No such contact found",
       "error_fetching_next_page_of_people_data": "Error fetching next page of people data",
       "error_fetching_people_data": "Error fetching people data",
       "fetching_user": "Fetching user",
@@ -733,7 +735,6 @@
       "no_responses_found": "No responses found",
       "not_provided": "Not provided",
       "person_deleted_successfully": "Person deleted successfully",
-      "person_not_found": "No such person found",
       "search_person": "Search person",
       "sessions": "Sessions"
     },

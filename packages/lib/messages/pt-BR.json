@@ -724,6 +724,7 @@
       "zapier_integration_description": "Integrar o Formbricks com mais de 5000 apps via Zapier"
     },
     "people": {
+      "contact_not_found": "Pessoa não encontrada",
       "error_fetching_next_page_of_people_data": "Erro ao buscar a próxima página de dados das pessoas",
       "error_fetching_people_data": "Erro ao buscar dados das pessoas",
       "fetching_user": "Buscando usuário",
@@ -733,7 +734,6 @@
       "no_responses_found": "Não foram encontradas respostas",
       "not_provided": "Não fornecido",
       "person_deleted_successfully": "Pessoa deletada com sucesso",
-      "person_not_found": "Pessoa não encontrada",
       "search_person": "Procurar pessoa",
       "sessions": "Sessões"
     },
