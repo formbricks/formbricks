@@ -15,6 +15,7 @@
     "test": "dotenv -e ../../.env -- vitest run"
   },
   "dependencies": {
+    "@ai-sdk/azure": "0.0.52",
     "@aws-sdk/client-s3": "3.631.0",
     "@aws-sdk/s3-presigned-post": "3.631.0",
     "@aws-sdk/s3-request-presigner": "3.631.0",

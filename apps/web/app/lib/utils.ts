@@ -1,4 +1,4 @@
-import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { IS_AI_CONFIGURED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TInvite } from "@formbricks/types/invites";
 import { TOrganization, TOrganizationBillingPlan } from "@formbricks/types/organizations";

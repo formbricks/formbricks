@@ -444,6 +444,8 @@ export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
 
 const ZSurveyLogicActions = z.array(ZSurveyLogicAction);
 
+export type TSurveyLogicActions = z.infer<typeof ZSurveyLogicActions>;
+
 export const ZSurveyLogic = z.object({
   id: ZId,
   conditions: ZConditionGroup,
@@ -465,6 +467,7 @@ export const ZSurveyQuestionBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
+  logicFallback: ZSurveyQuestionId.optional(),
   isDraft: z.boolean().optional(),
 });
 
@@ -2024,18 +2027,76 @@ const validateActions = (
     return undefined;
   });
 
+  const jumpToQuestionActions = actions.filter((action) => action.objective === "jumpToQuestion");
+  if (jumpToQuestionActions.length > 1) {
+    actionIssues.push({
+      code: z.ZodIssueCode.custom,
+      message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+      path: ["questions", questionIndex, "logic"],
+    });
+  }
+
   const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 
+const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue[] | undefined => {
+  const question = survey.questions[questionIdx];
+
+  if (!question.logicFallback) return;
+
+  if (!question.logic?.length && question.logicFallback) {
+    return [
+      {
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: Fallback logic is defined without any logic in question ${String(questionIdx + 1)}`,
+        path: ["questions", questionIdx],
+      },
+    ];
+  } else if (question.id === question.logicFallback) {
+    return [
+      {
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: Fallback logic is defined with the same question in question ${String(questionIdx + 1)}`,
+        path: ["questions", questionIdx],
+      },
+    ];
+  }
+
+  const possibleFallbackIds: string[] = [];
+
+  survey.questions.forEach((q, idx) => {
+    if (idx !== questionIdx) {
+      possibleFallbackIds.push(q.id);
+    }
+  });
+
+  survey.endings.forEach((e) => {
+    possibleFallbackIds.push(e.id);
+  });
+
+  if (!possibleFallbackIds.includes(question.logicFallback)) {
+    return [
+      {
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: Fallback question ID ${question.logicFallback} does not exist in question ${String(questionIdx + 1)}`,
+        path: ["questions", questionIdx],
+      },
+    ];
+  }
+};
+
 const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLogic[]): z.ZodIssue[] => {
+  const logicFallbackIssue = validateLogicFallback(survey, questionIndex);
+
   const logicIssues = logic.map((logicItem, logicIndex) => {
     return [
       ...validateConditions(survey, questionIndex, logicIndex, logicItem.conditions),
       ...validateActions(survey, questionIndex, logicIndex, logicItem.actions),
     ];
   });
-  return logicIssues.flat();
+
+  return [...logicIssues.flat(), ...(logicFallbackIssue ? logicFallbackIssue : [])];
 };
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
