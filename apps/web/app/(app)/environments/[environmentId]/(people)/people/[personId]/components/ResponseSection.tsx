@@ -54,7 +54,7 @@ export const ResponseSection = async ({
 
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   return (
     <ResponseTimeline

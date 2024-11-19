@@ -36,7 +36,7 @@ const responseSelection = {
 
 // function to retrive basic information about a user's user
 export const getUser = reactCache(
-  (id: string): Promise<TUser | null> =>
+  async (id: string): Promise<TUser | null> =>
     cache(
       async () => {
         validateInputs([id, ZId]);
@@ -69,7 +69,7 @@ export const getUser = reactCache(
 );
 
 export const getUserByEmail = reactCache(
-  (email: string): Promise<TUser | null> =>
+  async (email: string): Promise<TUser | null> =>
     cache(
       async () => {
         validateInputs([email, z.string().email()]);
@@ -283,7 +283,7 @@ export const userIdRelatedToApiKey = async (apiKey: string) => {
 };
 
 export const getUserLocale = reactCache(
-  (id: string): Promise<TUserLocale | undefined> =>
+  async (id: string): Promise<TUserLocale | undefined> =>
     cache(
       async () => {
         validateInputs([id, ZId]);

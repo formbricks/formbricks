@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   title: "Billing",
 };
 
-const BillingLayout = async ({ children, params }) => {
+const BillingLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const t = await getTranslations();
   if (!IS_FORMBRICKS_CLOUD) {
     notFound();

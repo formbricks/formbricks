@@ -3,8 +3,8 @@
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
-import { Button } from "../../Button";
-import { GoogleIcon } from "../../icons";
+import { Button } from "@formbricks/ui/components/Button";
+import { GoogleIcon } from "@formbricks/ui/components/icons";
 
 export const GoogleButton = ({
   text = "Continue with Google",

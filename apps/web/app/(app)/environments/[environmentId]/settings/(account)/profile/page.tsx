@@ -15,7 +15,8 @@ import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
   const t = await getTranslations();
   const { environmentId } = params;
   const session = await getServerSession(authOptions);

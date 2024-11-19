@@ -1,8 +1,11 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import {
+  getMultiLanguagePermission,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { AccessView } from "@/modules/ee/teams/product-teams/components/access-view";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -12,8 +15,9 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { getTeamsByOrganizationId, getTeamsByProductId } from "./lib/teams";
 
-export const ProductTeams = async ({ params }: { params: { environmentId: string } }) => {
+export const ProductTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslations();
+  const params = await props.params;
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),

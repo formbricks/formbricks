@@ -1,8 +1,8 @@
 import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
@@ -18,10 +18,11 @@ import {
 } from "@formbricks/lib/constants";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
-const Page = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
+const Page = async (props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
+  const searchParams = await props.searchParams;
   const inviteToken = searchParams["inviteToken"] ?? null;
   const isMultOrgEnabled = await getIsMultiOrgEnabled();
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }

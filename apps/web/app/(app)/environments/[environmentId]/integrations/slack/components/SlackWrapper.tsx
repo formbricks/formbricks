@@ -46,7 +46,8 @@ export const SlackWrapper = ({
 
     if (
       getSlackChannelsResponse?.serverError &&
-      getSlackChannelsResponse.serverError.includes("missing_scope")
+      (getSlackChannelsResponse.serverError.includes("missing_scope") ||
+        getSlackChannelsResponse.serverError.includes("invalid_auth"))
     ) {
       setShowReconnectButton(true);
     }

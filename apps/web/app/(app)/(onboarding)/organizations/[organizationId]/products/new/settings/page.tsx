@@ -1,11 +1,11 @@
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
+import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_BRAND_COLOR, DEFAULT_LOCALE } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
@@ -16,17 +16,19 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
 interface ProductSettingsPageProps {
-  params: {
+  params: Promise<{
     organizationId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     channel?: TProductConfigChannel;
     industry?: TProductConfigIndustry;
     mode?: TProductMode;
-  };
+  }>;
 }
 
-const Page = async ({ params, searchParams }: ProductSettingsPageProps) => {
+const Page = async (props: ProductSettingsPageProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
 

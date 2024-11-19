@@ -28,9 +28,9 @@ const Loading = () => {
         <ProductConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
-        title="environments.product.look.theme"
+        title={t("environments.product.look.theme")}
         className="max-w-7xl"
-        description="environments.product.look.theme_settings_description">
+        description={t("environments.product.look.theme_settings_description")}>
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-4 pr-6">
