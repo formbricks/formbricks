@@ -1,11 +1,5 @@
 "use client";
 
-import { CLOUD_PRICING_DATA } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/constants";
-import {
-  isSubscriptionCancelledAction,
-  manageSubscriptionAction,
-  upgradePlanAction,
-} from "@/app/(ee)/(billing)/environments/[environmentId]/settings/(organization)/billing/actions";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,9 +8,11 @@ import { cn } from "@formbricks/lib/cn";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
 import { Badge } from "@formbricks/ui/components/Badge";
-import { BillingSlider } from "@formbricks/ui/components/BillingSlider";
 import { Button } from "@formbricks/ui/components/Button";
-import { PricingCard } from "@formbricks/ui/components/PricingCard";
+import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
+import { CLOUD_PRICING_DATA } from "../api/lib/constants";
+import { BillingSlider } from "./billing-slider";
+import { PricingCard } from "./pricing-card";
 
 interface PricingTableProps {
   organization: TOrganization;

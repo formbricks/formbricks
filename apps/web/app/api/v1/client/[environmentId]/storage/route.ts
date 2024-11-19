@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
+import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
-import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { uploadPrivateFile } from "./lib/uploadPrivateFile";

@@ -460,8 +460,8 @@ model Organization {
   name        String
   memberships Membership[]
   products    Product[]
-  /// @zod.custom(imports.ZTeamBilling)
-  /// [TeamBilling]
+  /// @zod.custom(imports.ZOrganizationBilling)
+  /// [OrganizationBilling]
   billing     Json
   invites     Invite[]
   isAIEnabled Boolean      @default(false)
