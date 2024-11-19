@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { resendVerificationEmail } from "@formbricks/lib/utils/users";
@@ -10,6 +11,7 @@ interface RequestEmailVerificationProps {
 }
 
 export const RequestVerificationEmail = ({ email }: RequestEmailVerificationProps) => {
+  const t = useTranslations();
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -28,7 +30,7 @@ export const RequestVerificationEmail = ({ email }: RequestEmailVerificationProp
     try {
       if (!email) throw new Error("No email provided");
       await resendVerificationEmail(email);
-      toast.success("Verification email successfully sent. Please check your inbox.");
+      toast.success(t("auth.verification-requested.verification_email_successfully_sent"));
     } catch (e) {
       toast.error(`Error: ${e.message}`);
     }
@@ -37,7 +39,7 @@ export const RequestVerificationEmail = ({ email }: RequestEmailVerificationProp
   return (
     <>
       <Button variant="secondary" onClick={requestVerificationEmail} className="w-full justify-center">
-        Request a new verification mail
+        {t("auth.verification-requested.resend_verification_email")}
       </Button>
     </>
   );

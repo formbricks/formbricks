@@ -2,7 +2,7 @@ import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { questionTypes } from "@formbricks/lib/utils/questions";
+import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
@@ -13,6 +13,7 @@ import {
   TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,
+  TSurveyLogicActions,
   TSurveyLogicConditionsOperator,
   TSurveyQuestion,
   TSurveyQuestionId,
@@ -41,7 +42,7 @@ export const formatTextWithSlashes = (text: string) => {
   });
 };
 
-const questionIconMapping = questionTypes.reduce(
+const questionIconMapping = getQuestionTypes("en-US").reduce(
   (prev, curr) => ({
     ...prev,
     [curr.id]: curr.icon,
@@ -51,7 +52,8 @@ const questionIconMapping = questionTypes.reduce(
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
-  currQuestionIdx: number
+  currQuestionIdx: number,
+  t: (key: string) => string
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
@@ -95,7 +97,7 @@ export const getConditionValueOptions = (
 
   if (questionOptions.length > 0) {
     groupedOptions.push({
-      label: "Questions",
+      label: t("common.questions"),
       value: "questions",
       options: questionOptions,
     });
@@ -103,7 +105,7 @@ export const getConditionValueOptions = (
 
   if (variableOptions.length > 0) {
     groupedOptions.push({
-      label: "Variables",
+      label: t("common.variables"),
       value: "variables",
       options: variableOptions,
     });
@@ -111,7 +113,7 @@ export const getConditionValueOptions = (
 
   if (hiddenFieldsOptions.length > 0) {
     groupedOptions.push({
-      label: "Hidden Fields",
+      label: t("common.hidden_fields"),
       value: "hiddenFields",
       options: hiddenFieldsOptions,
     });
@@ -141,10 +143,14 @@ export const replaceEndingCardHeadlineRecall = (
 };
 
 export const actionObjectiveOptions: TComboboxOption[] = [
-  { label: "Calculate", value: "calculate" },
-  { label: "Require Answer", value: "requireAnswer" },
-  { label: "Jump to question", value: "jumpToQuestion" },
+  { label: "environments.surveys.edit.calculate", value: "calculate" },
+  { label: "environments.surveys.edit.require_answer", value: "requireAnswer" },
+  { label: "environments.surveys.edit.jump_to_question", value: "jumpToQuestion" },
 ];
+
+export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean => {
+  return actions.some((action) => action.objective === "jumpToQuestion");
+};
 
 const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {
   let options: TLogicRuleOption;
@@ -193,7 +199,8 @@ export const getConditionOperatorOptions = (
 
 export const getMatchValueProps = (
   condition: TSingleCondition,
-  localSurvey: TSurvey
+  localSurvey: TSurvey,
+  t: (key: string) => string
 ): {
   show?: boolean;
   showInput?: boolean;
@@ -290,7 +297,7 @@ export const getMatchValueProps = (
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
-          label: "Questions",
+          label: t("common.questions"),
           value: "questions",
           options: questionOptions,
         });
@@ -298,7 +305,7 @@ export const getMatchValueProps = (
 
       if (variableOptions.length > 0) {
         groupedOptions.push({
-          label: "Variables",
+          label: t("common.variables"),
           value: "variables",
           options: variableOptions,
         });
@@ -306,7 +313,7 @@ export const getMatchValueProps = (
 
       if (hiddenFieldsOptions.length > 0) {
         groupedOptions.push({
-          label: "Hidden Fields",
+          label: t("common.hidden_fields"),
           value: "hiddenFields",
           options: hiddenFieldsOptions,
         });
@@ -334,13 +341,13 @@ export const getMatchValueProps = (
       return {
         show: true,
         showInput: false,
-        options: [{ label: "Choices", value: "choices", options: choices }],
+        options: [{ label: t("common.choices"), value: "choices", options: choices }],
       };
     } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.PictureSelection) {
       const choices = selectedQuestion.choices.map((choice, idx) => {
         return {
           imgSrc: choice.imageUrl,
-          label: `Picture ${idx + 1}`,
+          label: `${t("environments.surveys.edit.picture_idx")} ${idx + 1}`,
           value: choice.id,
           meta: {
             type: "static",
@@ -351,7 +358,7 @@ export const getMatchValueProps = (
       return {
         show: true,
         showInput: false,
-        options: [{ label: "Choices", value: "choices", options: choices }],
+        options: [{ label: t("common.choices"), value: "choices", options: choices }],
       };
     } else if (selectedQuestion?.type === TSurveyQuestionTypeEnum.Rating) {
       const choices = Array.from({ length: selectedQuestion.range }, (_, idx) => {
@@ -381,7 +388,7 @@ export const getMatchValueProps = (
 
       if (choices.length > 0) {
         groupedOptions.push({
-          label: "Choices",
+          label: t("common.choices"),
           value: "choices",
           options: choices,
         });
@@ -389,7 +396,7 @@ export const getMatchValueProps = (
 
       if (variableOptions.length > 0) {
         groupedOptions.push({
-          label: "Variables",
+          label: t("common.variables"),
           value: "variables",
           options: variableOptions,
         });
@@ -428,7 +435,7 @@ export const getMatchValueProps = (
 
       if (choices.length > 0) {
         groupedOptions.push({
-          label: "Choices",
+          label: t("common.choices"),
           value: "choices",
           options: choices,
         });
@@ -436,7 +443,7 @@ export const getMatchValueProps = (
 
       if (variableOptions.length > 0) {
         groupedOptions.push({
-          label: "Variables",
+          label: t("common.variables"),
           value: "variables",
           options: variableOptions,
         });
@@ -491,7 +498,7 @@ export const getMatchValueProps = (
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
-          label: "Questions",
+          label: t("common.questions"),
           value: "questions",
           options: questionOptions,
         });
@@ -499,7 +506,7 @@ export const getMatchValueProps = (
 
       if (variableOptions.length > 0) {
         groupedOptions.push({
-          label: "Variables",
+          label: t("common.variables"),
           value: "variables",
           options: variableOptions,
         });
@@ -507,7 +514,7 @@ export const getMatchValueProps = (
 
       if (hiddenFieldsOptions.length > 0) {
         groupedOptions.push({
-          label: "Hidden Fields",
+          label: t("common.hidden_fields"),
           value: "hiddenFields",
           options: hiddenFieldsOptions,
         });
@@ -572,7 +579,7 @@ export const getMatchValueProps = (
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
-          label: "Questions",
+          label: t("common.questions"),
           value: "questions",
           options: questionOptions,
         });
@@ -580,7 +587,7 @@ export const getMatchValueProps = (
 
       if (variableOptions.length > 0) {
         groupedOptions.push({
-          label: "Variables",
+          label: t("common.variables"),
           value: "variables",
           options: variableOptions,
         });
@@ -588,7 +595,7 @@ export const getMatchValueProps = (
 
       if (hiddenFieldsOptions.length > 0) {
         groupedOptions.push({
-          label: "Hidden Fields",
+          label: t("common.hidden_fields"),
           value: "hiddenFields",
           options: hiddenFieldsOptions,
         });
@@ -644,7 +651,7 @@ export const getMatchValueProps = (
 
       if (questionOptions.length > 0) {
         groupedOptions.push({
-          label: "Questions",
+          label: t("common.questions"),
           value: "questions",
           options: questionOptions,
         });
@@ -652,7 +659,7 @@ export const getMatchValueProps = (
 
       if (variableOptions.length > 0) {
         groupedOptions.push({
-          label: "Variables",
+          label: t("common.variables"),
           value: "variables",
           options: variableOptions,
         });
@@ -660,7 +667,7 @@ export const getMatchValueProps = (
 
       if (hiddenFieldsOptions.length > 0) {
         groupedOptions.push({
-          label: "Hidden Fields",
+          label: t("common.hidden_fields"),
           value: "hiddenFields",
           options: hiddenFieldsOptions,
         });
@@ -724,7 +731,7 @@ export const getMatchValueProps = (
 
     if (questionOptions.length > 0) {
       groupedOptions.push({
-        label: "Questions",
+        label: t("common.questions"),
         value: "questions",
         options: questionOptions,
       });
@@ -732,7 +739,7 @@ export const getMatchValueProps = (
 
     if (variableOptions.length > 0) {
       groupedOptions.push({
-        label: "Variables",
+        label: t("common.variables"),
         value: "variables",
         options: variableOptions,
       });
@@ -740,7 +747,7 @@ export const getMatchValueProps = (
 
     if (hiddenFieldsOptions.length > 0) {
       groupedOptions.push({
-        label: "Hidden Fields",
+        label: t("common.hidden_fields"),
         value: "hiddenFields",
         options: hiddenFieldsOptions,
       });
@@ -760,7 +767,8 @@ export const getMatchValueProps = (
 export const getActionTargetOptions = (
   action: TSurveyLogicAction,
   localSurvey: TSurvey,
-  currQuestionIdx: number
+  currQuestionIdx: number,
+  t: (key: string) => string
 ): TComboboxOption[] => {
   let questions = localSurvey.questions.filter((_, idx) => idx !== currQuestionIdx);
 
@@ -782,8 +790,8 @@ export const getActionTargetOptions = (
     return {
       label:
         ending.type === "endScreen"
-          ? getLocalizedValue(ending.headline, "default") || "End Screen"
-          : ending.label || "Redirect Thank you card",
+          ? getLocalizedValue(ending.headline, "default") || t("environments.surveys.edit.end_screen_card")
+          : ending.label || t("environments.surveys.edit.redirect_thank_you_card"),
       value: ending.id,
     };
   });
@@ -806,38 +814,41 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
   });
 };
 
-export const getActionOperatorOptions = (variableType?: TSurveyVariable["type"]): TComboboxOption[] => {
+export const getActionOperatorOptions = (
+  t: (key: string) => string,
+  variableType?: TSurveyVariable["type"]
+): TComboboxOption[] => {
   if (variableType === "number") {
     return [
       {
-        label: "Add +",
+        label: t("environments.surveys.edit.add"),
         value: "add",
       },
       {
-        label: "Subtract -",
+        label: t("environments.surveys.edit.subtract"),
         value: "subtract",
       },
       {
-        label: "Multiply *",
+        label: t("environments.surveys.edit.multiply"),
         value: "multiply",
       },
       {
-        label: "Divide /",
+        label: t("environments.surveys.edit.divide"),
         value: "divide",
       },
       {
-        label: "Assign =",
+        label: t("environments.surveys.edit.assign"),
         value: "assign",
       },
     ];
   } else if (variableType === "text") {
     return [
       {
-        label: "Assign =",
+        label: t("environments.surveys.edit.assign"),
         value: "assign",
       },
       {
-        label: "Concat +",
+        label: t("environments.surveys.edit.concat"),
         value: "concat",
       },
     ];
@@ -845,7 +856,11 @@ export const getActionOperatorOptions = (variableType?: TSurveyVariable["type"])
   return [];
 };
 
-export const getActionValueOptions = (variableId: string, localSurvey: TSurvey): TComboboxGroupedOption[] => {
+export const getActionValueOptions = (
+  variableId: string,
+  localSurvey: TSurvey,
+  t: (key: string) => string
+): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
   const questions = localSurvey.questions;
@@ -906,7 +921,7 @@ export const getActionValueOptions = (variableId: string, localSurvey: TSurvey):
 
     if (questionOptions.length > 0) {
       groupedOptions.push({
-        label: "Questions",
+        label: t("common.questions"),
         value: "questions",
         options: questionOptions,
       });
@@ -914,7 +929,7 @@ export const getActionValueOptions = (variableId: string, localSurvey: TSurvey):
 
     if (variableOptions.length > 0) {
       groupedOptions.push({
-        label: "Variables",
+        label: t("common.variables"),
         value: "variables",
         options: variableOptions,
       });
@@ -922,7 +937,7 @@ export const getActionValueOptions = (variableId: string, localSurvey: TSurvey):
 
     if (hiddenFieldsOptions.length > 0) {
       groupedOptions.push({
-        label: "Hidden Fields",
+        label: t("common.hidden_fields"),
         value: "hiddenFields",
         options: hiddenFieldsOptions,
       });
@@ -962,7 +977,7 @@ export const getActionValueOptions = (variableId: string, localSurvey: TSurvey):
 
     if (questionOptions.length > 0) {
       groupedOptions.push({
-        label: "Questions",
+        label: t("common.questions"),
         value: "questions",
         options: questionOptions,
       });
@@ -970,7 +985,7 @@ export const getActionValueOptions = (variableId: string, localSurvey: TSurvey):
 
     if (variableOptions.length > 0) {
       groupedOptions.push({
-        label: "Variables",
+        label: t("common.variables"),
         value: "variables",
         options: variableOptions,
       });
@@ -978,7 +993,7 @@ export const getActionValueOptions = (variableId: string, localSurvey: TSurvey):
 
     if (hiddenFieldsOptions.length > 0) {
       groupedOptions.push({
-        label: "Hidden Fields",
+        label: t("common.hidden_fields"),
         value: "hiddenFields",
         options: hiddenFieldsOptions,
       });
@@ -1050,7 +1065,9 @@ export const findQuestionUsedInLogic = (survey: TSurvey, questionId: TSurveyQues
   };
 
   return survey.questions.findIndex(
-    (question) => question.logic && question.id !== questionId && question.logic.some(isUsedInLogicRule)
+    (question) =>
+      question.logicFallback === questionId ||
+      (question.id !== questionId && question.logic?.some(isUsedInLogicRule))
   );
 };
 
@@ -1134,4 +1151,18 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   };
 
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
+};
+
+export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {
+  const isUsedInAction = (action: TSurveyLogicAction): boolean => {
+    return action.objective === "jumpToQuestion" && action.target === endingCardId;
+  };
+
+  const isUsedInLogicRule = (logicRule: TSurveyLogic): boolean => {
+    return logicRule.actions.some(isUsedInAction);
+  };
+
+  return survey.questions.findIndex(
+    (question) => question.logicFallback === endingCardId || question.logic?.some(isUsedInLogicRule)
+  );
 };

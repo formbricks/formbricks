@@ -1,12 +1,14 @@
 "use client";
 
 import { findOptionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { type JSX, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -17,13 +19,13 @@ import {
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
-interface OpenQuestionFormProps {
+interface MultipleChoiceQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyMultipleChoiceQuestion;
   questionIdx: number;
@@ -33,6 +35,7 @@ interface OpenQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   contactAttributeKeys: TContactAttributeKey[];
+  locale: TUserLocale;
 }
 
 export const MultipleChoiceQuestionForm = ({
@@ -44,7 +47,9 @@ export const MultipleChoiceQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   contactAttributeKeys,
-}: OpenQuestionFormProps): JSX.Element => {
+  locale,
+}: MultipleChoiceQuestionFormProps): JSX.Element => {
+  const t = useTranslations();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
@@ -55,17 +60,17 @@ export const MultipleChoiceQuestionForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: "Keep current order",
+      label: t("environments.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: "Randomize all",
+      label: t("environments.surveys.edit.randomize_all"),
       show: question.choices.filter((c) => c.id === "other").length === 0,
     },
     exceptLast: {
       id: "exceptLast",
-      label: "Randomize all except last option",
+      label: t("environments.surveys.edit.randomize_all_except_last"),
       show: true,
     },
   };
@@ -129,7 +134,9 @@ export const MultipleChoiceQuestionForm = ({
       const questionIdx = findOptionUsedInLogic(localSurvey, question.id, choiceToDelete);
       if (questionIdx !== -1) {
         toast.error(
-          `This option is used in logic for question ${questionIdx + 1}. Please fix the logic first before deleting.`
+          t("environments.surveys.edit.option_used_in_logic_error", {
+            questionIndex: questionIdx + 1,
+          })
         );
         return;
       }
@@ -166,7 +173,7 @@ export const MultipleChoiceQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -174,6 +181,7 @@ export const MultipleChoiceQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         contactAttributeKeys={contactAttributeKeys}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -183,7 +191,7 @@ export const MultipleChoiceQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -191,6 +199,7 @@ export const MultipleChoiceQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 contactAttributeKeys={contactAttributeKeys}
+                locale={locale}
               />
             </div>
           </div>
@@ -207,7 +216,7 @@ export const MultipleChoiceQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -259,6 +268,7 @@ export const MultipleChoiceQuestionForm = ({
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
                       contactAttributeKeys={contactAttributeKeys}
+                      locale={locale}
                     />
                   ))}
               </div>
@@ -267,7 +277,7 @@ export const MultipleChoiceQuestionForm = ({
           <div className="mt-2 flex items-center justify-between space-x-2">
             {question.choices.filter((c) => c.id === "other").length === 0 && (
               <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
-                Add &quot;Other&quot;
+                {t("environments.surveys.edit.add_other")}
               </Button>
             )}
             <Button
@@ -282,8 +292,9 @@ export const MultipleChoiceQuestionForm = ({
                       : TSurveyQuestionTypeEnum.MultipleChoiceMulti,
                 });
               }}>
-              Convert to{" "}
-              {question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? "Multiple" : "Single"} Select
+              {question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
+                ? t("environments.surveys.edit.convert_to_multiple_choice")
+                : t("environments.surveys.edit.convert_to_single_choice")}
             </Button>
 
             <div className="flex flex-1 items-center justify-end gap-2">

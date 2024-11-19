@@ -4,6 +4,7 @@ import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[envir
 import { BaseSelectDropdown } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import AirtableLogo from "@/images/airtableLogo.svg";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -59,10 +60,11 @@ export type IntegrationModalInputs = {
 };
 
 const NoBaseFoundError = () => {
+  const t = useTranslations();
   return (
     <Alert>
-      <AlertTitle>No Airtable bases found</AlertTitle>
-      <AlertDescription>Please create a base on Airtable</AlertDescription>
+      <AlertTitle>{t("environments.integrations.airtable.no_bases_found")}</AlertTitle>
+      <AlertDescription>{t("environments.integrations.airtable.please_create_a_base")}</AlertDescription>
     </Alert>
   );
 };
@@ -78,6 +80,7 @@ export const AddIntegrationModal = ({
   defaultData,
   contactAttributeKeys,
 }: AddIntegrationModalProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -118,19 +121,19 @@ export const AddIntegrationModal = ({
   const submitHandler = async (data: IntegrationModalInputs) => {
     try {
       if (!data.base || data.base === "") {
-        throw new Error("Please select a base");
+        throw new Error(t("environments.integrations.airtable.please_select_a_base"));
       }
 
       if (!data.table || data.table === "") {
-        throw new Error("Please select a table");
+        throw new Error(t("environments.integrations.airtable.please_select_a_table"));
       }
 
       if (!selectedSurvey) {
-        throw new Error("Please select a survey");
+        throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
       if (data.questions.length === 0) {
-        throw new Error("Please select at least one question");
+        throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
 
       const currentTable = tables.find((item) => item.id === data.table);
@@ -139,7 +142,9 @@ export const AddIntegrationModal = ({
         surveyName: selectedSurvey.name,
         questionIds: data.questions,
         questions:
-          data.questions.length === selectedSurvey.questions.length ? "All questions" : "Selected questions",
+          data.questions.length === selectedSurvey.questions.length
+            ? t("common.all_questions")
+            : t("common.selected_questions"),
         createdAt: new Date(),
         baseId: data.base,
         tableId: data.table,
@@ -157,10 +162,12 @@ export const AddIntegrationModal = ({
         airtableIntegrationData.config?.data.push(integrationData);
       }
 
-      const actionMessage = isEditMode ? "updated" : "added";
-
       await createOrUpdateIntegrationAction({ environmentId, integrationData: airtableIntegrationData });
-      toast.success(`Integration ${actionMessage} successfully`);
+      if (isEditMode) {
+        toast.success(t("environments.integrations.integration_updated_successfully"));
+      } else {
+        toast.success(t("environments.integrations.integration_added_successfully"));
+      }
       handleClose();
     } catch (e) {
       toast.error(e.message);
@@ -195,7 +202,7 @@ export const AddIntegrationModal = ({
       handleClose();
       router.refresh();
 
-      toast.success(`Integration deleted successfully`);
+      toast.success(t("environments.integrations.integration_removed_successfully"));
     } catch (e) {
       toast.error(e.message);
     }
@@ -210,8 +217,12 @@ export const AddIntegrationModal = ({
               <Image className="w-12" src={AirtableLogo} alt="Airtable logo" />
             </div>
             <div>
-              <div className="text-xl font-medium text-slate-700">Link Airtable Table</div>
-              <div className="text-sm text-slate-500">Sync responses with an Airtable</div>
+              <div className="text-xl font-medium text-slate-700">
+                {t("environments.integrations.airtable.link_airtable_table")}
+              </div>
+              <div className="text-sm text-slate-500">
+                {t("environments.integrations.airtable.sync_responses_with_airtable")}
+              </div>
             </div>
           </div>
         </div>
@@ -233,7 +244,7 @@ export const AddIntegrationModal = ({
             )}
 
             <div className="flex w-full flex-col">
-              <Label htmlFor="table">Table</Label>
+              <Label htmlFor="table">{t("environments.integrations.airtable.table_name")}</Label>
               <div className="mt-1 flex">
                 <Controller
                   control={control}
@@ -266,7 +277,7 @@ export const AddIntegrationModal = ({
 
             {surveys.length ? (
               <div className="flex w-full flex-col">
-                <Label htmlFor="survey">Select Survey</Label>
+                <Label htmlFor="survey">{t("common.select_survey")}</Label>
                 <div className="mt-1 flex">
                   <Controller
                     control={control}
@@ -298,14 +309,14 @@ export const AddIntegrationModal = ({
 
             {!surveys.length ? (
               <p className="m-1 text-xs text-slate-500">
-                You have to create a survey to be able to setup this integration
+                {t("environments.integrations.create_survey_warning")}
               </p>
             ) : null}
 
             {survey && selectedSurvey && (
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="Surveys">Questions</Label>
+                  <Label htmlFor="Surveys">{t("common.questions")}</Label>
                   <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                       {replaceHeadlineRecall(selectedSurvey, "default", contactAttributeKeys)?.questions.map(
@@ -363,15 +374,15 @@ export const AddIntegrationModal = ({
                   type="button"
                   loading={isLoading}
                   variant="warn">
-                  Delete
+                  {t("common.delete")}
                 </Button>
               ) : (
                 <Button type="button" loading={isLoading} variant="minimal" onClick={handleClose}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               )}
 
-              <Button type="submit">Save</Button>
+              <Button type="submit">{t("common.save")}</Button>
             </div>
           </div>
         </div>

@@ -1,7 +1,10 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
@@ -9,17 +12,17 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
 import { Label } from "@formbricks/ui/components/Label";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 const questionTypes = [
-  { value: "text", label: "Text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },
-  { value: "email", label: "Email", icon: <MailIcon className="h-4 w-4" /> },
-  { value: "url", label: "URL", icon: <LinkIcon className="h-4 w-4" /> },
-  { value: "number", label: "Number", icon: <HashIcon className="h-4 w-4" /> },
-  { value: "phone", label: "Phone", icon: <PhoneIcon className="h-4 w-4" /> },
+  { value: "text", label: "common.text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },
+  { value: "email", label: "common.email", icon: <MailIcon className="h-4 w-4" /> },
+  { value: "url", label: "common.url", icon: <LinkIcon className="h-4 w-4" /> },
+  { value: "number", label: "common.number", icon: <HashIcon className="h-4 w-4" /> },
+  { value: "phone", label: "common.phone", icon: <PhoneIcon className="h-4 w-4" /> },
 ];
 
 interface OpenQuestionFormProps {
@@ -32,6 +35,7 @@ interface OpenQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   contactAttributeKeys: TContactAttributeKey[];
+  locale: TUserLocale;
 }
 
 export const OpenQuestionForm = ({
@@ -43,7 +47,9 @@ export const OpenQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   contactAttributeKeys,
+  locale,
 }: OpenQuestionFormProps): JSX.Element => {
+  const t = useTranslations();
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
@@ -69,7 +75,8 @@ export const OpenQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         contactAttributeKeys={contactAttributeKeys}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -86,7 +93,8 @@ export const OpenQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 contactAttributeKeys={contactAttributeKeys}
-                label={"Description"}
+                label={t("common.description")}
+                locale={locale}
               />
             </div>
           </div>
@@ -103,7 +111,7 @@ export const OpenQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -122,13 +130,14 @@ export const OpenQuestionForm = ({
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
           contactAttributeKeys={contactAttributeKeys}
-          label={"Placeholder"}
+          label={t("common.placeholder")}
+          locale={locale}
         />
       </div>
 
       {/* Add a dropdown to select the question type */}
       <div className="mt-3">
-        <Label htmlFor="questionType">Input Type</Label>
+        <Label htmlFor="questionType">{t("common.input_type")}</Label>
         <div className="mt-2 flex items-center">
           <OptionsSwitch
             options={questionTypes}

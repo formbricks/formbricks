@@ -1,11 +1,12 @@
 "use client";
 
 import { formbricksLogout } from "@/app/lib/formbricks";
+import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { TUser } from "@formbricks/types/user";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
-import { DeleteAccountModal } from "@formbricks/ui/components/DeleteAccountModal";
 
 interface RemovedFromOrganizationProps {
   isFormbricksCloud: boolean;
@@ -13,20 +14,16 @@ interface RemovedFromOrganizationProps {
 }
 
 export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFromOrganizationProps) => {
+  const t = useTranslations();
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="space-y-4">
       <Alert variant="warning">
-        <AlertTitle>No membership found!</AlertTitle>
-        <AlertDescription>
-          You are not a member of any organization at this time. If you believe this is a mistake, please
-          reach out to the organization owner.
-        </AlertDescription>
+        <AlertTitle>{t("setup.organization.create.no_membership_found")}</AlertTitle>
+        <AlertDescription>{t("setup.organization.create.no_membership_found_description")}</AlertDescription>
       </Alert>
       <hr className="my-4 border-slate-200" />
-      <p className="text-sm">
-        If you want to delete your account, you can do so by clicking the button below.
-      </p>
+      <p className="text-sm">{t("setup.organization.create.delete_account_description")}</p>
       <DeleteAccountModal
         open={isModalOpen}
         setOpen={setIsModalOpen}
@@ -34,7 +31,7 @@ export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFrom
         isFormbricksCloud={isFormbricksCloud}
         formbricksLogout={formbricksLogout}
       />
-      <Button onClick={() => setIsModalOpen(true)}>Delete account</Button>
+      <Button onClick={() => setIsModalOpen(true)}>{t("setup.organization.create.delete_account")}</Button>
     </div>
   );
 };

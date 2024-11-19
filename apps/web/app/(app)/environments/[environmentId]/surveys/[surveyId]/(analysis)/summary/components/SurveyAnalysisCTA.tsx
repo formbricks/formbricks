@@ -3,7 +3,16 @@
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { BellRing, Code2Icon, Eye, LinkIcon, MoreVertical, SquarePenIcon, UsersRound } from "lucide-react";
+import {
+  BellRing,
+  Code2Icon,
+  CopyIcon,
+  EyeIcon,
+  MoreVertical,
+  SquarePenIcon,
+  UsersRound,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -24,7 +33,7 @@ import {
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
   environment: TEnvironment;
-  isViewer: boolean;
+  isReadOnly: boolean;
   webAppUrl: string;
   user: TUser;
 }
@@ -39,10 +48,11 @@ interface ModalState {
 export const SurveyAnalysisCTA = ({
   survey,
   environment,
-  isViewer,
+  isReadOnly,
   webAppUrl,
   user,
 }: SurveyAnalysisCTAProps) => {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -80,10 +90,10 @@ export const SurveyAnalysisCTA = ({
     navigator.clipboard
       .writeText(surveyUrl)
       .then(() => {
-        toast.success("Copied link to clipboard");
+        toast.success(t("common.copied_to_clipboard"));
       })
       .catch((err) => {
-        toast.error("Failed to copy link");
+        toast.error(t("environments.surveys.summary.failed_to_copy_link"));
         console.error(err);
       });
     setModalState((prev) => ({ ...prev, dropdown: false }));
@@ -110,43 +120,44 @@ export const SurveyAnalysisCTA = ({
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
-        <Badge text="Results are public" type="warning" size="normal" className="rounded-lg" />
+        <Badge
+          text={t("environments.surveys.summary.results_are_public")}
+          type="warning"
+          size="normal"
+          className="rounded-lg"
+        />
       )}
 
-      {(widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
+      {!isReadOnly && (widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 
-      {!isViewer && (
+      {!isReadOnly && (
         <Button
           variant="secondary"
           size="sm"
           onClick={() => handleModalState("embed")(true)}
           EndIcon={Code2Icon}>
-          Embed
+          {t("common.embed")}
         </Button>
       )}
 
       {survey.type === "link" && (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => window.open(getPreviewUrl(), "_blank")}
-          EndIcon={Eye}>
-          Preview
+        <Button variant="secondary" size="sm" onClick={handleCopyLink} EndIcon={CopyIcon}>
+          {t("common.copy_link")}
         </Button>
       )}
 
-      {!isViewer && (
+      {!isReadOnly && (
         <Button
           href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
           EndIcon={SquarePenIcon}
           size="base">
-          Edit
+          {t("common.edit")}
         </Button>
       )}
 
-      {!isViewer && (
+      {!isReadOnly && (
         <div id={`${survey.name.toLowerCase().replace(/\s+/g, "-")}-survey-actions`}>
           <DropdownMenu
             open={modalState.dropdown}
@@ -154,16 +165,18 @@ export const SurveyAnalysisCTA = ({
             <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
               <Button variant="secondary" className="p-2">
                 <MoreVertical className="h-7 w-4" />
-                <span className="sr-only">Open options</span>
+                <span className="sr-only">{t("environments.surveys.summary.open_options")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mr-8 w-40">
               <DropdownMenuGroup>
                 {survey.type === "link" && (
                   <DropdownMenuItem>
-                    <button onClick={handleCopyLink} className="flex w-full items-center">
-                      <LinkIcon className="mr-2 h-4 w-4" />
-                      Copy Link
+                    <button
+                      onClick={() => window.open(getPreviewUrl(), "_blank")}
+                      className="flex w-full items-center">
+                      <EyeIcon className="mr-2 h-4 w-4" />
+                      {t("common.preview")}
                     </button>
                   </DropdownMenuItem>
                 )}
@@ -176,7 +189,7 @@ export const SurveyAnalysisCTA = ({
                     }}
                     className="flex w-full items-center">
                     <UsersRound className="mr-2 h-4 w-4" />
-                    Send to panel
+                    {t("environments.surveys.summary.send_to_panel")}
                   </button>
                 </DropdownMenuItem>
 
@@ -186,7 +199,7 @@ export const SurveyAnalysisCTA = ({
                     className="flex w-full items-center"
                     onClick={() => setModalState((prev) => ({ ...prev, dropdown: false }))}>
                     <BellRing className="mr-2 h-4 w-4" />
-                    Configure alerts
+                    {t("environments.surveys.summary.configure_alerts")}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>

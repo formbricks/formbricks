@@ -6,9 +6,12 @@ import { Prisma } from "@prisma/client";
 import { embed } from "ai";
 import { prisma } from "@formbricks/database";
 import { embeddingsModel } from "@formbricks/lib/aiModels";
+import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPromptText } from "@formbricks/lib/utils/ai";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
+import { TCreatedDocument } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 import {
   TInsight,
@@ -17,21 +20,16 @@ import {
   ZInsightCreateInput,
 } from "@formbricks/types/insights";
 import {
+  TSurvey,
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
-  TSurveyQuestions,
   ZSurveyQuestions,
 } from "@formbricks/types/surveys/types";
 
-export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
-  id: string;
-  name: string;
-  environmentId: string;
-  questions: TSurveyQuestions;
-}): Promise<void> => {
-  const startTime = Date.now();
-  console.log(`Generating insights for survey responses: ${surveyData.id} at ${startTime}`);
-  const { id: surveyId, name, environmentId, questions } = surveyData;
+export const generateInsightsForSurveyResponsesConcept = async (
+  survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">
+): Promise<void> => {
+  const { id: surveyId, name, environmentId, questions } = survey;
 
   validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
 
@@ -65,7 +63,6 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
       rateLimit = rateLimitHeader ? parseInt(rateLimitHeader, 10) : undefined;
     }
 
-    console.log(`Rate limit for embedding API: ${rateLimit}`);
     while (!allResponsesProcessed || spillover.length > 0) {
       // If there are any spillover documents from the previous iteration, prioritize them
       let answersForDocumentCreation = [...spillover];
@@ -84,12 +81,18 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
           select: {
             id: true,
             data: true,
+            variables: true,
+            personId: true,
+            language: true,
           },
           take: batchSize,
           skip,
         });
 
-        if (responses.length === 0) {
+        if (
+          responses.length === 0 ||
+          (responses.length < batchSize && rateLimit && responses.length < rateLimit)
+        ) {
           allResponsesProcessed = true; // Mark as finished when no more responses are found
         }
 
@@ -99,18 +102,40 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
 
         skip += batchSize - responsesWithOpenTextAnswers.length;
 
-        responsesWithOpenTextAnswers.forEach((response) => {
-          openTextQuestionsWithInsights.forEach((question) => {
-            const responseText = response.data[question.id] as string;
-            if (responseText) {
-              const text = getPromptText(question.headline.default, responseText);
-              answersForDocumentCreation.push({
+        const answersForDocumentCreationPromises = await Promise.all(
+          responsesWithOpenTextAnswers.map(async (response) => {
+            const attributes = response.personId ? await getAttributes(response.personId) : {};
+            const responseEntries = openTextQuestionsWithInsights.map((question) => {
+              const responseText = response.data[question.id] as string;
+              if (!responseText) {
+                return;
+              }
+
+              const headline = parseRecallInfo(
+                question.headline[response.language ?? "default"],
+                attributes,
+                response.data,
+                response.variables
+              );
+
+              const text = getPromptText(headline, responseText);
+
+              return {
                 responseId: response.id,
                 questionId: question.id,
                 text,
-              });
-            }
-          });
+              };
+            });
+
+            return responseEntries;
+          })
+        );
+
+        const answersForDocumentCreationResult = answersForDocumentCreationPromises.flat();
+        answersForDocumentCreationResult.forEach((answer) => {
+          if (answer) {
+            answersForDocumentCreation.push(answer);
+          }
         });
       }
 
@@ -120,10 +145,6 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
         spillover.push(...answersForDocumentCreation.slice(rateLimit));
         answersForDocumentCreation = answersForDocumentCreation.slice(0, rateLimit);
       }
-
-      console.log(
-        `Processing ${answersForDocumentCreation.length} documents and spillover: ${spillover.length}`
-      );
 
       const createDocumentPromises = answersForDocumentCreation.map((answer) => {
         return createDocument(name, {
@@ -135,8 +156,11 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
         });
       });
 
-      const createDocumentResults = await Promise.all(createDocumentPromises);
-      const createdDocuments = createDocumentResults.filter(Boolean);
+      const createDocumentResults = await Promise.allSettled(createDocumentPromises);
+      const fullfilledCreateDocumentResults = createDocumentResults.filter(
+        (result) => result.status === "fulfilled"
+      ) as PromiseFulfilledResult<TCreatedDocument>[];
+      const createdDocuments = fullfilledCreateDocumentResults.filter(Boolean).map((result) => result.value);
 
       for (const document of createdDocuments) {
         if (document) {
@@ -151,7 +175,7 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
               // Create or connect the insight
               insightPromises.push(handleInsightAssignments(environmentId, id, insight));
             }
-            await Promise.all(insightPromises);
+            await Promise.allSettled(insightPromises);
           }
         }
       }
@@ -160,9 +184,6 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
         environmentId: environmentId,
         surveyId: surveyId,
       });
-      console.log(
-        `Processed ${createdDocuments.length} documents in ${(Date.now() - startTime) / 1000} seconds`
-      );
     }
 
     return;
@@ -175,13 +196,10 @@ export const generateInsightsForSurveyResponsesConcept = async (surveyData: {
   }
 };
 
-export const generateInsightsForSurveyResponses = async (surveyData: {
-  id: string;
-  name: string;
-  environmentId: string;
-  questions: TSurveyQuestions;
-}): Promise<void> => {
-  const { id: surveyId, name, environmentId, questions } = surveyData;
+export const generateInsightsForSurveyResponses = async (
+  survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">
+): Promise<void> => {
+  const { id: surveyId, name, environmentId, questions } = survey;
 
   validateInputs([surveyId, ZId], [environmentId, ZId], [questions, ZSurveyQuestions]);
   try {
@@ -223,6 +241,9 @@ export const generateInsightsForSurveyResponses = async (surveyData: {
         select: {
           id: true,
           data: true,
+          variables: true,
+          personId: true,
+          language: true,
         },
         take: batchSize,
         skip,
@@ -234,29 +255,41 @@ export const generateInsightsForSurveyResponses = async (surveyData: {
 
       skip += batchSize - responsesWithOpenTextAnswers.length;
 
-      const createDocumentPromises = responsesWithOpenTextAnswers.map((response) => {
-        return Promise.all(
-          openTextQuestionsWithInsights.map(async (question) => {
-            const responseText = response.data[question.id] as string;
-            if (!responseText) {
-              return;
-            }
+      const createDocumentPromises: Promise<TCreatedDocument | undefined>[] = [];
 
-            const text = getPromptText(question.headline.default, responseText);
+      for (const response of responsesWithOpenTextAnswers) {
+        const attributes = response.personId ? await getAttributes(response.personId) : {};
 
-            return await createDocument(name, {
-              environmentId,
-              surveyId,
-              responseId: response.id,
-              questionId: question.id,
-              text,
-            });
-          })
-        );
-      });
+        for (const question of openTextQuestionsWithInsights) {
+          const responseText = response.data[question.id] as string;
+          if (!responseText) {
+            continue;
+          }
 
-      const createDocumentResults = await Promise.all(createDocumentPromises);
-      const createdDocuments = createDocumentResults.flat().filter(Boolean);
+          const headline = parseRecallInfo(
+            question.headline[response.language ?? "default"],
+            attributes,
+            response.data,
+            response.variables
+          );
+
+          const text = getPromptText(headline, responseText);
+
+          const createDocumentPromise = createDocument(name, {
+            environmentId,
+            surveyId,
+            responseId: response.id,
+            questionId: question.id,
+            text,
+          });
+
+          createDocumentPromises.push(createDocumentPromise);
+        }
+      }
+
+      const createdDocuments = (await Promise.all(createDocumentPromises)).filter(
+        Boolean
+      ) as TCreatedDocument[];
 
       for (const document of createdDocuments) {
         if (document) {
@@ -280,7 +313,6 @@ export const generateInsightsForSurveyResponses = async (surveyData: {
         surveyId: surveyId,
       });
     }
-    return;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -342,45 +374,49 @@ export const handleInsightAssignments = async (
     category: TInsightCategory;
   }
 ) => {
-  // create embedding for insight
-  const { embedding } = await embed({
-    model: embeddingsModel,
-    value: getInsightVectorText(insight.title, insight.description),
-    experimental_telemetry: { isEnabled: true },
-  });
-  // find close insight to merge it with
-  const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.2);
+  try {
+    // create embedding for insight
+    const { embedding } = await embed({
+      model: embeddingsModel,
+      value: getInsightVectorText(insight.title, insight.description),
+      experimental_telemetry: { isEnabled: true },
+    });
+    // find close insight to merge it with
+    const nearestInsights = await findNearestInsights(environmentId, embedding, 1, 0.2);
 
-  if (nearestInsights.length > 0) {
-    // create a documentInsight with this insight
-    await prisma.documentInsight.create({
-      data: {
-        documentId,
+    if (nearestInsights.length > 0) {
+      // create a documentInsight with this insight
+      await prisma.documentInsight.create({
+        data: {
+          documentId,
+          insightId: nearestInsights[0].id,
+        },
+      });
+      documentCache.revalidate({
         insightId: nearestInsights[0].id,
-      },
-    });
-    documentCache.revalidate({
-      insightId: nearestInsights[0].id,
-    });
-  } else {
-    // create new insight and documentInsight
-    const newInsight = await createInsight({
-      environmentId: environmentId,
-      title: insight.title,
-      description: insight.description,
-      category: insight.category ?? "other",
-      vector: embedding,
-    });
-    // create a documentInsight with this insight
-    await prisma.documentInsight.create({
-      data: {
-        documentId,
+      });
+    } else {
+      // create new insight and documentInsight
+      const newInsight = await createInsight({
+        environmentId: environmentId,
+        title: insight.title,
+        description: insight.description,
+        category: insight.category ?? "other",
+        vector: embedding,
+      });
+      // create a documentInsight with this insight
+      await prisma.documentInsight.create({
+        data: {
+          documentId,
+          insightId: newInsight.id,
+        },
+      });
+      documentCache.revalidate({
         insightId: newInsight.id,
-      },
-    });
-    documentCache.revalidate({
-      insightId: newInsight.id,
-    });
+      });
+    }
+  } catch (error) {
+    throw error;
   }
 };
 

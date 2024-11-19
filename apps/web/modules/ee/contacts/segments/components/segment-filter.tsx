@@ -19,6 +19,7 @@ import {
   Trash2,
   Users2Icon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
@@ -91,6 +92,7 @@ function SegmentFilterItemConnector({
   filterId: string;
   viewOnly?: boolean;
 }) {
+  const t = useTranslations();
   const updateLocalSurvey = (newConnector: TSegmentConnector) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
@@ -118,7 +120,7 @@ function SegmentFilterItemConnector({
           if (viewOnly) return;
           onConnectorChange();
         }}>
-        {connector ? connector : "Where"}
+        {connector ? connector : t("environments.segments.where")}
       </span>
     </div>
   );
@@ -139,6 +141,7 @@ function SegmentFilterItemContextMenu({
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
 }) {
+  const t = useTranslations();
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
@@ -151,28 +154,28 @@ function SegmentFilterItemContextMenu({
             onClick={() => {
               onAddFilterBelow();
             }}>
-            Add filter below
+            {t("environments.segments.add_filter_below")}
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => {
               onCreateGroup(filterId);
             }}>
-            Create group
+            {t("environments.segments.create_group")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               onMoveFilter(filterId, "up");
             }}
             icon={<ArrowUpIcon className="h-4 w-4" />}>
-            Move up
+            {t("common.move_up")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               onMoveFilter(filterId, "down");
             }}
             icon={<ArrowDownIcon className="h-4 w-4" />}>
-            Move down
+            {t("common.move_down")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -210,7 +213,12 @@ function AttributeSegmentFilter({
   contactAttributeKeys,
   viewOnly,
 }: TAttributeSegmentFilterProps) {
+<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/segment-filter.tsx
   const { contactAttributeKey } = resource.root;
+========
+  const t = useTranslations();
+  const { attributeClassName } = resource.root;
+>>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/segment-filter.tsx
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
   const [valueError, setValueError] = useState("");
@@ -225,7 +233,7 @@ function AttributeSegmentFilter({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError("Value must be a number");
+        setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value]);
@@ -264,7 +272,7 @@ function AttributeSegmentFilter({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError("Value cannot be empty");
+      setValueError(t("environments.segments.value_cannot_be_empty"));
       return;
     }
 
@@ -277,7 +285,7 @@ function AttributeSegmentFilter({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError("Value must be a number");
+        setValueError(t("environments.segments.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 
@@ -398,7 +406,7 @@ function PersonSegmentFilter({
 }: TPersonSegmentFilterProps) {
   const { personIdentifier } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
-
+  const t = useTranslations();
   const [valueError, setValueError] = useState("");
 
   // when the operator changes, we need to check if the value is valid
@@ -411,7 +419,7 @@ function PersonSegmentFilter({
       if (isNumber.success) {
         setValueError("");
       } else {
-        setValueError("Value must be a number");
+        setValueError(t("environments.segments.value_must_be_a_number"));
       }
     }
   }, [resource.qualifier, resource.value]);
@@ -446,7 +454,7 @@ function PersonSegmentFilter({
     updateValueInLocalSurvey(resource.id, value);
 
     if (!value) {
-      setValueError("Value cannot be empty");
+      setValueError(t("environments.segments.value_cannot_be_empty"));
       return;
     }
 
@@ -459,7 +467,7 @@ function PersonSegmentFilter({
         setValueError("");
         updateValueInLocalSurvey(resource.id, parseInt(value, 10));
       } else {
-        setValueError("Value must be a number");
+        setValueError(t("environments.segments.value_must_be_a_number"));
         updateValueInLocalSurvey(resource.id, value);
       }
 
@@ -682,7 +690,7 @@ function DeviceFilter({
   viewOnly,
 }: TDeviceFilterProps) {
   const { value } = resource;
-
+  const t = useTranslations();
   const operatorText = convertOperatorToText(resource.qualifier.operator);
   const operatorArr = DEVICE_OPERATORS.map((operator) => ({
     id: operator,
@@ -756,8 +764,8 @@ function DeviceFilter({
 
         <SelectContent>
           {[
-            { id: "desktop", name: "Desktop" },
-            { id: "phone", name: "Phone" },
+            { id: "desktop", name: t("environments.segments.desktop") },
+            { id: "phone", name: t("environments.segments.phone") },
           ].map((operator) => (
             <SelectItem value={operator.id}>{operator.name}</SelectItem>
           ))}
@@ -790,6 +798,7 @@ export function SegmentFilter({
   onMoveFilter,
   viewOnly = false,
 }: TSegmentFilterProps) {
+  const t = useTranslations();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
     const updatedSegment = structuredClone(segment);
@@ -914,6 +923,6 @@ export function SegmentFilter({
       );
 
     default:
-      return <div>Unknown filter type</div>;
+      return <div>{t("environments.segments.unknown_filter_type")}</div>;
   }
 }

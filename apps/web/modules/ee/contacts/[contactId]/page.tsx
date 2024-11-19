@@ -7,6 +7,9 @@ import {
 } from "@/modules/ee/contacts/lib/contacts";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
 import { getServerSession } from "next-auth";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -18,12 +21,11 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { ResponseSection } from "./components/response-section";
 
-export const SingleContactPage = async ({
-  params,
-}: {
-  params: { environmentId: string; contactId: string };
-}) => {
-  const [environment, environmentTags, product, session, organization, contact, attributeKeys, attributes] =
+export const SingleContactPage = async (props: {params: {environmentId: string; contactId: string}}) => {
+  const params = await props.params;
+  const t = await getTranslations();
+
+  const [environment, environmentTags, product, session, organization, contact, contactAttributeKeys, attributes] =
     await Promise.all([
       getEnvironment(params.environmentId),
       getTagsByEnvironmentId(params.environmentId),
@@ -36,31 +38,36 @@ export const SingleContactPage = async ({
     ]);
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   if (!contact) {
-    throw new Error("Contact not found");
+    throw new Error(t("common.contact_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
 
   const getDeletePersonButton = () => {
     return (
-      <DeleteContactButton environmentId={environment.id} contactId={params.contactId} isViewer={isViewer} />
+      <DeleteContactButton environmentId={environment.id} contactId={params.contactId} isReadOnly={isReadOnly} />
     );
   };
 
@@ -75,7 +82,7 @@ export const SingleContactPage = async ({
             environment={environment}
             contactId={params.contactId}
             environmentTags={environmentTags}
-            contactAttributeKeys={attributeKeys}
+            contactAttributeKeys={contactAttributeKeys}
           />
         </div>
       </section>

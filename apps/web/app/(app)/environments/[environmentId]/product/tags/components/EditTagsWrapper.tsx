@@ -6,11 +6,12 @@ import {
   updateTagNameAction,
 } from "@/app/(app)/environments/[environmentId]/product/tags/actions";
 import { MergeTagsCombobox } from "@/app/(app)/environments/[environmentId]/product/tags/components/MergeTagsCombobox";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { AlertCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
@@ -24,6 +25,7 @@ interface EditTagsWrapperProps {
   environment: TEnvironment;
   environmentTags: TTag[];
   environmentTagsCount: TTagsCount;
+  isReadOnly: boolean;
 }
 
 const SingleTag: React.FC<{
@@ -33,6 +35,7 @@ const SingleTag: React.FC<{
   tagCountLoading?: boolean;
   updateTagsCount?: () => void;
   environmentTags: TTag[];
+  isReadOnly?: boolean;
 }> = ({
   tagId,
   tagName,
@@ -40,7 +43,9 @@ const SingleTag: React.FC<{
   tagCountLoading = false,
   updateTagsCount = () => {},
   environmentTags,
+  isReadOnly = false,
 }) => {
+  const t = useTranslations();
   const router = useRouter();
   const [updateTagError, setUpdateTagError] = useState(false);
   const [isMergingTags, setIsMergingTags] = useState(false);
@@ -49,12 +54,12 @@ const SingleTag: React.FC<{
   const confirmDeleteTag = async () => {
     const deleteTagResponse = await deleteTagAction({ tagId });
     if (deleteTagResponse?.data) {
-      toast.success(`${deleteTagResponse?.data.name ?? "Tag"} tag deleted`);
+      toast.success(t("environments.product.tags.tag_deleted"));
       updateTagsCount();
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(deleteTagResponse);
-      toast.error(errorMessage ?? "Something went wrong");
+      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
     }
   };
 
@@ -64,6 +69,7 @@ const SingleTag: React.FC<{
         <div className="col-span-2 flex items-center text-sm">
           <div className="w-full text-left">
             <Input
+              disabled={isReadOnly}
               className={cn(
                 "w-full border font-medium text-slate-900",
                 updateTagError
@@ -78,13 +84,17 @@ const SingleTag: React.FC<{
                     toast.success("Tag updated");
                   } else {
                     const errorMessage = getFormattedErrorMessage(updateTagNameResponse);
-                    if (errorMessage.includes("Unique constraint failed on the fields")) {
-                      toast.error("Tag already exists", {
+                    if (
+                      errorMessage.includes(
+                        t("environments.product.tags.unique_constraint_failed_on_the_fields")
+                      )
+                    ) {
+                      toast.error(t("environments.product.tags.tag_already_exists"), {
                         duration: 2000,
                         icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
                       });
                     } else {
-                      toast.error(errorMessage ?? "Something went wrong", {
+                      toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"), {
                         duration: 2000,
                       });
                     }
@@ -100,68 +110,73 @@ const SingleTag: React.FC<{
           <div className="text-slate-900">{tagCountLoading ? <LoadingSpinner /> : <p>{tagCount}</p>}</div>
         </div>
 
-        <div className="col-span-1 my-auto flex items-center justify-center gap-2 whitespace-nowrap text-center text-sm text-slate-500">
-          <div>
-            {isMergingTags ? (
-              <div className="w-24">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <MergeTagsCombobox
-                tags={
-                  environmentTags
-                    ?.filter((tag) => tag.id !== tagId)
-                    ?.map((tag) => ({ label: tag.name, value: tag.id })) ?? []
-                }
-                onSelect={(newTagId) => {
-                  setIsMergingTags(true);
-                  mergeTagsAction({ originalTagId: tagId, newTagId }).then((mergeTagsResponse) => {
-                    if (mergeTagsResponse?.data) {
-                      toast.success("Tags merged");
-                      updateTagsCount();
-                      router.refresh();
-                    } else {
-                      const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
-                      toast.error(errorMessage ?? "Something went wrong");
-                    }
-                    setIsMergingTags(false);
-                  });
-                }}
-              />
-            )}
-          </div>
+        {!isReadOnly && (
+          <div className="col-span-1 my-auto flex items-center justify-center gap-2 whitespace-nowrap text-center text-sm text-slate-500">
+            <div>
+              {isMergingTags ? (
+                <div className="w-24">
+                  <LoadingSpinner />
+                </div>
+              ) : (
+                <MergeTagsCombobox
+                  tags={
+                    environmentTags
+                      ?.filter((tag) => tag.id !== tagId)
+                      ?.map((tag) => ({ label: tag.name, value: tag.id })) ?? []
+                  }
+                  onSelect={(newTagId) => {
+                    setIsMergingTags(true);
+                    mergeTagsAction({ originalTagId: tagId, newTagId }).then((mergeTagsResponse) => {
+                      if (mergeTagsResponse?.data) {
+                        toast.success(t("environments.product.tags.tags_merged"));
+                        updateTagsCount();
+                        router.refresh();
+                      } else {
+                        const errorMessage = getFormattedErrorMessage(mergeTagsResponse);
+                        toast.error(errorMessage ?? t("common.something_went_wrong_please_try_again"));
+                      }
+                      setIsMergingTags(false);
+                    });
+                  }}
+                />
+              )}
+            </div>
 
-          <div>
-            <Button
-              variant="alert"
-              size="sm"
-              // loading={isDeletingTag}
-              className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
-              onClick={() => setOpenDeleteTagDialog(true)}>
-              Delete
-            </Button>
-            <DeleteDialog
-              open={openDeleteTagDialog}
-              setOpen={setOpenDeleteTagDialog}
-              deleteWhat={tagName}
-              text="Are you sure you want to delete this tag?"
-              onDelete={confirmDeleteTag}
-            />
+            <div>
+              <Button
+                variant="alert"
+                size="sm"
+                // loading={isDeletingTag}
+                className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
+                onClick={() => setOpenDeleteTagDialog(true)}>
+                {t("common.delete")}
+              </Button>
+              <DeleteDialog
+                open={openDeleteTagDialog}
+                setOpen={setOpenDeleteTagDialog}
+                deleteWhat={tagName}
+                text={t("environments.product.tags.delete_tag_confirmation")}
+                onDelete={confirmDeleteTag}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
 export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
-  const { environment, environmentTags, environmentTagsCount } = props;
+  const t = useTranslations();
+  const { environment, environmentTags, environmentTagsCount, isReadOnly } = props;
   return (
     <div className="">
       <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
-        <div className="col-span-2">Tag</div>
-        <div className="col-span-1 text-center">Count</div>
-        <div className="col-span-1 flex justify-center text-center">Actions</div>
+        <div className="col-span-2">{t("environments.product.tags.tag")}</div>
+        <div className="col-span-1 text-center">{t("environments.product.tags.count")}</div>
+        {!isReadOnly && (
+          <div className="col-span-1 flex justify-center text-center">{t("common.actions")}</div>
+        )}
       </div>
 
       {!environmentTags?.length ? (
@@ -175,6 +190,7 @@ export const EditTagsWrapper: React.FC<EditTagsWrapperProps> = (props) => {
           tagName={tag.name}
           tagCount={environmentTagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0}
           environmentTags={environmentTags}
+          isReadOnly={isReadOnly}
         />
       ))}
     </div>

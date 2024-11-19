@@ -1,8 +1,9 @@
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { HowToSendCard } from "./HowToSendCard";
@@ -19,9 +20,11 @@ interface SettingsViewProps {
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
+  locale: string;
+  productPermission: TTeamPermission | null;
 }
 
 export const SettingsView = ({
@@ -34,12 +37,20 @@ export const SettingsView = ({
   responseCount,
   membershipRole,
   isUserTargetingAllowed = false,
+  isFormbricksCloud,
+  locale,
+  productPermission,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
+      <HowToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environment={environment}
+        locale={locale}
+      />
 
       {localSurvey.type === "app" ? (
         <div>
@@ -73,6 +84,7 @@ export const SettingsView = ({
         environmentId={environment.id}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
+        productPermission={productPermission}
       />
 
       <ResponseOptionsCard

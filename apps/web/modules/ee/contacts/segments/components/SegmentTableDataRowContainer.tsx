@@ -2,12 +2,14 @@ import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { SegmentTableDataRow } from "./SegmentTableDataRow";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isAdvancedTargetingAllowed: boolean;
+  isReadOnly: boolean;
 };
 
 export const SegmentTableDataRowContainer = async ({
@@ -15,6 +17,7 @@ export const SegmentTableDataRowContainer = async ({
   segments,
   contactAttributeKeys,
   isAdvancedTargetingAllowed,
+  isReadOnly,
 }: TSegmentTableDataRowProps) => {
   const surveys = await getSurveysBySegmentId(currentSegment.id);
 
@@ -36,6 +39,8 @@ export const SegmentTableDataRowContainer = async ({
       segments={segments}
       contactAttributeKeys={contactAttributeKeys}
       isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+      isReadOnly={isReadOnly}
     />
   );
 };

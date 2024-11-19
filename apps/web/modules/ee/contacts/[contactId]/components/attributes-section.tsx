@@ -1,11 +1,14 @@
 import { getResponsesByContactId } from "@formbricks/lib/response/service";
+import { getTranslations } from "next-intl/server";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { getContact, getContactAttributes } from "../../lib/contacts";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
+  const t = await getTranslations();
   const [contact, attributes] = await Promise.all([getContact(contactId), getContactAttributes(contactId)]);
+
   if (!contact) {
-    throw new Error("No such person found");
+    throw new Error(t("environments.people.contact_not_found"));
   }
 
   const responses = await getResponsesByContactId(contactId);
@@ -13,34 +16,34 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-bold text-slate-700">Attributes</h2>
+      <h2 className="text-lg font-bold text-slate-700">{t("common.attributes")}</h2>
       <div>
-        <dt className="text-sm font-medium text-slate-500">Email</dt>
+        <dt className="text-sm font-medium text-slate-500">{t("common.email")}</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.email ? (
             <span>{attributes.email}</span>
           ) : (
-            <span className="text-slate-300">Not provided</span>
+            <span className="text-slate-300">{t("environments.people.not_provided")}</span>
           )}
         </dd>
       </div>
       <div>
-        <dt className="text-sm font-medium text-slate-500">Language</dt>
+        <dt className="text-sm font-medium text-slate-500">{t("common.language")}</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.language ? (
             <span>{attributes.language}</span>
           ) : (
-            <span className="text-slate-300">Not provided</span>
+            <span className="text-slate-300">{t("environments.people.not_provided")}</span>
           )}
         </dd>
       </div>
       <div>
-        <dt className="text-sm font-medium text-slate-500">User Id</dt>
+        <dt className="text-sm font-medium text-slate-500">{t("common.user_id")}</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">
           {attributes.userId ? (
             <span>{attributes.userId}</span>
           ) : (
-            <span className="text-slate-300">Not provided</span>
+            <span className="text-slate-300">{t("environments.people.not_provided")}</span>
           )}
         </dd>
       </div>
@@ -62,7 +65,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       <hr />
 
       <div>
-        <dt className="text-sm font-medium text-slate-500">Responses</dt>
+        <dt className="text-sm font-medium text-slate-500">{t("common.responses")}</dt>
         <dd className="mt-1 text-sm text-slate-900">{numberOfResponses}</dd>
       </div>
     </div>

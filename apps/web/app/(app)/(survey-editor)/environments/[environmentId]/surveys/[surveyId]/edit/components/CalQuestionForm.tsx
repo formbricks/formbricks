@@ -1,13 +1,15 @@
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { type JSX, useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/components/Button";
 import { Input } from "@formbricks/ui/components/Input";
 import { Label } from "@formbricks/ui/components/Label";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -19,6 +21,7 @@ interface CalQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   contactAttributeKeys: TContactAttributeKey[];
+  locale: TUserLocale;
 }
 
 export const CalQuestionForm = ({
@@ -30,10 +33,11 @@ export const CalQuestionForm = ({
   setSelectedLanguageCode,
   isInvalid,
   contactAttributeKeys,
+  locale,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
-
+  const t = useTranslations();
   useEffect(() => {
     if (!isCalHostEnabled) {
       updateQuestion(questionIdx, { calHost: undefined });
@@ -49,7 +53,7 @@ export const CalQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -57,6 +61,7 @@ export const CalQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         contactAttributeKeys={contactAttributeKeys}
+        locale={locale}
       />
       <div>
         {question.subheader !== undefined && (
@@ -65,7 +70,7 @@ export const CalQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -73,6 +78,7 @@ export const CalQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 contactAttributeKeys={contactAttributeKeys}
+                locale={locale}
               />
             </div>
           </div>
@@ -90,12 +96,12 @@ export const CalQuestionForm = ({
             }}>
             {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
         <div className="mt-3 flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <Label htmlFor="calUserName">Cal.com username or username/event</Label>
+            <Label htmlFor="calUserName">{t("environments.surveys.edit.cal_username")}</Label>
             <div>
               <Input
                 id="calUserName"
@@ -110,13 +116,13 @@ export const CalQuestionForm = ({
             isChecked={isCalHostEnabled}
             onToggle={(checked: boolean) => setIsCalHostEnabled(checked)}
             htmlId="calHost"
-            description="Needed for a self-hosted Cal.com instance"
+            description={t("environments.surveys.edit.needed_for_self_hosted_cal_com_instance")}
             childBorder
-            title="Custom hostname"
+            title={t("environments.surveys.edit.custom_hostname")}
             customContainerClass="p-0">
             <div className="p-4">
               <div className="flex items-center gap-2">
-                <Label htmlFor="calHost">Hostname</Label>
+                <Label htmlFor="calHost">{t("environments.surveys.edit.hostname")}</Label>
                 <Input
                   id="calHost"
                   name="calHost"

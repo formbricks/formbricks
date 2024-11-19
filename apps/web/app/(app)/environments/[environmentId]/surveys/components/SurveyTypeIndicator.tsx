@@ -1,15 +1,16 @@
 import { Code, HelpCircle, Link2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface SurveyTypeIndicatorProps {
   type: string;
 }
 
-const surveyTypeMapping = {
-  app: { icon: Code, label: "App" },
-  link: { icon: Link2Icon, label: "Link" },
-};
-
 export const SurveyTypeIndicator = ({ type }: SurveyTypeIndicatorProps) => {
+  const t = useTranslations();
+  const surveyTypeMapping = {
+    app: { icon: Code, label: t("common.app") },
+    link: { icon: Link2Icon, label: t("common.link") },
+  };
   const { icon: Icon, label } = surveyTypeMapping[type] || { icon: HelpCircle, label: "Unknown" };
 
   return (

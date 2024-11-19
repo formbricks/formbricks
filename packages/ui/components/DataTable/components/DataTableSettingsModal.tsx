@@ -10,6 +10,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Modal } from "../../Modal";
 import { DataTableSettingsModalItem } from "./DataTableSettingsModalItem";
@@ -31,6 +32,7 @@ export const DataTableSettingsModal = <T,>({
   handleDragEnd,
   survey,
 }: DataTableSettingsModalProps<T>) => {
+  const t = useTranslations();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -51,8 +53,8 @@ export const DataTableSettingsModal = <T,>({
                 <SettingsIcon className="h-6 w-6" />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Table Settings</div>
-                <div className="text-sm text-slate-500">Reorder and hide columns</div>
+                <div className="text-xl font-medium text-slate-700">{t("common.table_settings")}</div>
+                <div className="text-sm text-slate-500">{t("common.reorder_and_hide_columns")}</div>
               </div>
             </div>
           </div>

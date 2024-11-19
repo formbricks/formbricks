@@ -5,11 +5,15 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TMembership } from "@formbricks/types/memberships";
-import { TUser, TUserCreateInput, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import {
+  TUser,
+  TUserCreateInput,
+  TUserLocale,
+  TUserUpdateInput,
+  ZUserUpdateInput,
+} from "@formbricks/types/user";
 import { cache } from "../cache";
 import { createCustomerIoCustomer } from "../customerio";
-import { deleteMembership, updateMembership } from "../membership/service";
 import { deleteOrganization } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
@@ -27,11 +31,12 @@ const responseSelection = {
   identityProvider: true,
   objective: true,
   notificationSettings: true,
+  locale: true,
 };
 
 // function to retrive basic information about a user's user
 export const getUser = reactCache(
-  (id: string): Promise<TUser | null> =>
+  async (id: string): Promise<TUser | null> =>
     cache(
       async () => {
         validateInputs([id, ZId]);
@@ -64,7 +69,7 @@ export const getUser = reactCache(
 );
 
 export const getUserByEmail = reactCache(
-  (email: string): Promise<TUser | null> =>
+  async (email: string): Promise<TUser | null> =>
     cache(
       async () => {
         validateInputs([email, z.string().email()]);
@@ -92,9 +97,6 @@ export const getUserByEmail = reactCache(
       }
     )()
 );
-
-const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
-  memberships.filter((membership) => membership.role === "admin");
 
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
@@ -152,7 +154,6 @@ const deleteUserById = async (id: string): Promise<TUser> => {
 
 export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   validateInputs([data, ZUserUpdateInput]);
-
   try {
     const user = await prisma.user.create({
       data: data,
@@ -207,17 +208,11 @@ export const deleteUser = async (id: string): Promise<TUser> => {
       const role = currentUserMembership.role;
       const organizationId = currentUserMembership.organizationId;
 
-      const organizationAdminMemberships = getAdminMemberships(organizationMemberships);
-      const organizationHasAtLeastOneAdmin = organizationAdminMemberships.length > 0;
       const organizationHasOnlyOneMember = organizationMemberships.length === 1;
       const currentUserIsOrganizationOwner = role === "owner";
-      await deleteMembership(id, organizationId);
 
       if (organizationHasOnlyOneMember) {
         await deleteOrganization(organizationId);
-      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneAdmin) {
-        const firstAdmin = organizationAdminMemberships[0];
-        await updateMembership(firstAdmin.userId, organizationId, { role: "owner" });
       } else if (currentUserIsOrganizationOwner) {
         await deleteOrganization(organizationId);
       }

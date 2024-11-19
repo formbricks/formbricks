@@ -1,5 +1,6 @@
 import { PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { type JSX, useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
 
@@ -12,17 +13,17 @@ interface Tab {
 const tabs: Tab[] = [
   {
     id: "questions",
-    label: "Questions",
+    label: "common.questions",
     icon: <Rows3Icon className="h-5 w-5" />,
   },
   {
     id: "styling",
-    label: "Styling",
+    label: "common.styling",
     icon: <PaintbrushIcon className="h-5 w-5" />,
   },
   {
     id: "settings",
-    label: "Settings",
+    label: "common.settings",
     icon: <SettingsIcon className="h-5 w-5" />,
   },
 ];
@@ -40,6 +41,7 @@ export const QuestionsAudienceTabs = ({
   isStylingTabVisible,
   isCxMode,
 }: QuestionsAudienceTabsProps) => {
+  const t = useTranslations();
   const tabsComputed = useMemo(() => {
     if (isStylingTabVisible) {
       return tabs;
@@ -66,7 +68,7 @@ export const QuestionsAudienceTabs = ({
             )}
             aria-current={tab.id === activeId ? "page" : undefined}>
             {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}
-            {tab.label}
+            {t(tab.label)}
           </button>
         ))}
       </nav>

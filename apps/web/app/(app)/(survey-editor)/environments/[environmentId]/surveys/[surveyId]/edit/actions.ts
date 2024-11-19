@@ -1,15 +1,19 @@
 "use server";
 
-import { z } from "zod";
-import { createActionClass } from "@formbricks/lib/actionClass/service";
-import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
+import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromProductId,
   getOrganizationIdFromSurveyId,
-} from "@formbricks/lib/organization/utils";
+  getProductIdFromEnvironmentId,
+  getProductIdFromSegmentId,
+  getProductIdFromSurveyId,
+} from "@/lib/utils/helper";
+import { getSegment, getSurvey } from "@/lib/utils/services";
+import { z } from "zod";
+import { createActionClass } from "@formbricks/lib/actionClass/service";
+import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import { getProduct } from "@formbricks/lib/product/service";
 import { updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
@@ -19,11 +23,22 @@ import { ZSurvey } from "@formbricks/types/surveys/types";
 export const updateSurveyAction = authenticatedActionClient
   .schema(ZSurvey)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.id),
-      rules: ["survey", "update"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          productId: await getProductIdFromSurveyId(parsedInput.id),
+          minPermission: "readWrite",
+        },
+      ],
     });
+
     return await updateSurvey(parsedInput);
   });
 
@@ -34,10 +49,20 @@ const ZRefetchProductAction = z.object({
 export const refetchProductAction = authenticatedActionClient
   .schema(ZRefetchProductAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
-      rules: ["product", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: parsedInput.productId,
+        },
+      ],
     });
 
     return await getProduct(parsedInput.productId);
@@ -129,10 +154,20 @@ const ZCreateActionClassAction = z.object({
 export const createActionClassAction = authenticatedActionClient
   .schema(ZCreateActionClassAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.action.environmentId),
-      rules: ["actionClass", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(parsedInput.action.environmentId),
+        },
+      ],
     });
 
     return await createActionClass(parsedInput.action.environmentId, parsedInput.action);

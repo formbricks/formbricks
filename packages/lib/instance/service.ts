@@ -9,7 +9,7 @@ import { userCache } from "../user/cache";
 
 // Function to check if there are any users in the database
 export const getIsFreshInstance = reactCache(
-  (): Promise<boolean> =>
+  async (): Promise<boolean> =>
     cache(
       async () => {
         try {
@@ -30,7 +30,7 @@ export const getIsFreshInstance = reactCache(
 
 // Function to check if there are any organizations in the database
 export const gethasNoOrganizations = reactCache(
-  (): Promise<boolean> =>
+  async (): Promise<boolean> =>
     cache(
       async () => {
         try {

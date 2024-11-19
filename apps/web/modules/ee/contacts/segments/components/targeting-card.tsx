@@ -9,6 +9,7 @@ import {
 } from "@/modules/ee/contacts/segments/actions";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
@@ -49,7 +50,12 @@ export function TargetingCard({
   contactAttributeKeys,
   segments,
   initialSegment,
+<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/targeting-card.tsx
 }: TargetingCardProps) {
+========
+}: UserTargetingAdvancedCardProps) {
+  const t = useTranslations();
+>>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/advanced-targeting-card.tsx
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
@@ -132,14 +138,14 @@ export function TargetingCard({
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
-      if (!segment) throw new Error("Invalid segment");
+      if (!segment) throw new Error(t("environments.segments.invalid_segment"));
       await updateSegmentAction({ segmentId: segment.id, data });
-      toast.success("Segment saved successfully");
+      toast.success(t("environments.segments.segment_saved_successfully"));
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
     } catch (err: any) {
-      toast.error(err.message ?? "Error Saving Segment");
+      toast.error(err.message ?? t("environments.segments.error_saving_segment"));
     }
   };
 
@@ -148,7 +154,7 @@ export function TargetingCard({
       const segmentResponse = await resetSegmentFiltersAction({ surveyId: localSurvey.id });
       return segmentResponse?.data;
     } catch (err) {
-      toast.error("Error resetting filters");
+      toast.error(t("environments.segments.error_resetting_filters"));
     }
   };
 
@@ -157,7 +163,7 @@ export function TargetingCard({
   }
 
   if (!segment) {
-    throw new Error("Survey segment is missing");
+    throw new Error(t("environments.segments.invalid_segment"));
   }
 
   return (
@@ -176,8 +182,8 @@ export function TargetingCard({
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Target Audience</p>
-            <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
+            <p className="font-semibold text-slate-800">{t("environments.segments.target_audience")}</p>
+            <p className="mt-1 text-sm text-slate-500">{t("environments.segments.pre_segment_users")}</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -233,7 +239,7 @@ export function TargetingCard({
                     }}
                     size="sm"
                     variant="secondary">
-                    Add filter
+                    {t("common.add_filter")}
                   </Button>
 
                   {isSegmentEditorOpen && !segment?.isPrivate ? (
@@ -243,7 +249,7 @@ export function TargetingCard({
                       }}
                       size="sm"
                       variant="secondary">
-                      Save changes
+                      {t("common.save_changes")}
                     </Button>
                   ) : null}
 
@@ -260,7 +266,7 @@ export function TargetingCard({
                       }}
                       size="sm"
                       variant="minimal">
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                   ) : null}
                 </div>
@@ -317,7 +323,9 @@ export function TargetingCard({
                     }}
                     size="sm"
                     variant="secondary">
-                    {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
+                    {segmentEditorViewOnly
+                      ? t("environments.segments.hide_filters")
+                      : t("environments.segments.view_filters")}
                     {segmentEditorViewOnly ? (
                       <ChevronUpIcon className="ml-2 h-3 w-3" />
                     ) : (
@@ -327,7 +335,7 @@ export function TargetingCard({
 
                   {isSegmentUsedInOtherSurveys ? (
                     <Button onClick={() => handleCloneSegment()} size="sm" variant="secondary">
-                      Clone & Edit Segment
+                      {t("environments.segments.clone_and_edit_segment")}
                     </Button>
                   ) : null}
                   {!isSegmentUsedInOtherSurveys && (
@@ -338,7 +346,7 @@ export function TargetingCard({
                       }}
                       size="sm"
                       variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}>
-                      Edit Segment
+                      {t("environments.segments.edit_segment")}
                       <PencilIcon className="ml-2 h-3 w-3" />
                     </Button>
                   )}
@@ -346,12 +354,12 @@ export function TargetingCard({
                 {isSegmentUsedInOtherSurveys ? (
                   <p className="mt-1 flex items-center text-xs text-slate-500">
                     <AlertCircle className="mr-1 inline h-3 w-3" />
-                    This segment is used in other surveys. Make changes{" "}
+                    {t("environments.segments.this_segment_is_used_in_other_surveys")}
                     <Link
                       className="ml-1 underline"
                       href={`/environments/${environmentId}/segments`}
                       target="_blank">
-                      here.
+                      {t("environments.segments.here")}
                     </Link>
                   </p>
                 ) : null}
@@ -366,7 +374,7 @@ export function TargetingCard({
               }}
               size="sm"
               variant="secondary">
-              Load Segment
+              {t("environments.segments.load_segment")}
             </Button>
 
             {!segment?.isPrivate && Boolean(segment?.filters.length) && (
@@ -376,7 +384,7 @@ export function TargetingCard({
                 }}
                 size="sm"
                 variant="secondary">
-                Reset all filters
+                {t("environments.segments.reset_all_filters")}
               </Button>
             )}
 
@@ -388,19 +396,19 @@ export function TargetingCard({
                 }}
                 size="sm"
                 variant="secondary">
-                Save as new Segment
+                {t("environments.segments.save_as_new_segment")}
               </Button>
             ) : null}
 
             <AlertDialog
-              confirmBtnLabel="Remove all filters"
-              declineBtnLabel="Cancel"
-              headerText="Are you sure?"
-              mainText="This action resets all filters in this survey."
+              confirmBtnLabel={t("environments.segments.remove_all_filters")}
+              declineBtnLabel={t("common.cancel")}
+              headerText={t("common.are_you_sure")}
+              mainText={t("environments.segments.this_action_resets_all_filters_in_this_survey")}
               onConfirm={async () => {
                 const segment = await handleResetAllFilters();
                 if (segment) {
-                  toast.success("Filters reset successfully");
+                  toast.success(t("environments.segments.filters_reset_successfully"));
 
                   setSegment(segment);
                   setResetAllFiltersModalOpen(false);
@@ -421,14 +429,14 @@ export function TargetingCard({
           <Alert className="flex items-center rounded-none bg-slate-50">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
-                User targeting is currently only available when{" "}
+                {t("environments.segments.user_targeting_is_currently_only_available_when")}{" "}
                 <Link
                   href="https://formbricks.com//docs/app-surveys/user-identification"
                   target="blank"
                   className="underline">
-                  identifying users
+                  {t("environments.segments.identifying_users")}
                 </Link>{" "}
-                with the Formbricks SDK.
+                {t("environments.segments.with_the_formbricks_sdk")}.
               </span>
             </AlertDescription>
           </Alert>

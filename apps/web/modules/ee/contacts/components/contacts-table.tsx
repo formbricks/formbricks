@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DndContext,
   type DragEndEvent,
@@ -12,6 +14,7 @@ import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -27,6 +30,7 @@ import { Skeleton } from "@formbricks/ui/components/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/components/Table";
 import { TContactTableData } from "../types/contact";
 import { generateContactTableColumns } from "./contact-table-column";
+import { deleteContactAction } from "@/modules/ee/contacts/actions";
 
 interface ContactsTableProps {
   data: TContactTableData[];
@@ -37,6 +41,7 @@ interface ContactsTableProps {
   environmentId: string;
   searchValue: string;
   setSearchValue: (value: string) => void;
+  isReadOnly: boolean;
 }
 
 export const ContactsTable = ({
@@ -48,6 +53,7 @@ export const ContactsTable = ({
   environmentId,
   searchValue,
   setSearchValue,
+  isReadOnly,
 }: ContactsTableProps) => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -55,12 +61,16 @@ export const ContactsTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
+  const t = useTranslations();
 
   const [parent] = useAutoAnimate();
+
   // Generate columns
   const columns = useMemo(() => {
     return generateContactTableColumns(searchValue, data);
   }, [searchValue, data]);
+
+
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -157,9 +167,17 @@ export const ContactsTable = ({
     }
   };
 
+  const deletePerson = async (contactId: string) => {
+    await deleteContactAction({ contactId });
+  };
+
   return (
     <div className="w-full">
-      <SearchBar value={searchValue} onChange={setSearchValue} placeholder="Search person" />
+      <SearchBar
+        value={searchValue}
+        onChange={setSearchValue}
+        placeholder={t("environments.people.search_person")}
+      />
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToHorizontalAxis]}
@@ -172,12 +190,13 @@ export const ContactsTable = ({
           table={table}
           deleteRows={deletePersons}
           type="contact"
+          deleteAction={deletePerson}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
-            <TableHeader>
+            <TableHeader className="pointer-events-auto">
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
+                <TableRow key={headerGroup.id}>
                   <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
                     {headerGroup.headers.map((header) => (
                       <DataTableHeader
@@ -187,7 +206,7 @@ export const ContactsTable = ({
                       />
                     ))}
                   </SortableContext>
-                </tr>
+                </TableRow>
               ))}
             </TableHeader>
 
@@ -224,7 +243,7 @@ export const ContactsTable = ({
               {table.getRowModel().rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
+                    {t("common.no_results")}
                   </TableCell>
                 </TableRow>
               )}
@@ -235,7 +254,7 @@ export const ContactsTable = ({
         {data && hasMore && data.length > 0 && (
           <div className="mt-4 flex justify-center">
             <Button onClick={fetchNextPage} className="bg-blue-500 text-white">
-              Load More
+              {t("common.load_more")}
             </Button>
           </div>
         )}

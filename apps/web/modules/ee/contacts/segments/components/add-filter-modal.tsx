@@ -2,7 +2,8 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import React, { type JSX, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
@@ -138,10 +139,12 @@ interface AttributeTabContentProps {
 }
 
 function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: AttributeTabContentProps) {
+  const t = useTranslations();
+
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <h2 className="text-base font-medium">Person</h2>
+        <h2 className="text-base font-medium">{t("common.person")}</h2>
         <div>
           <div
             className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
@@ -163,7 +166,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
               }
             }}>
             <FingerprintIcon className="h-4 w-4" />
-            <p>userId</p>
+            <p>{t("common.user_id")}</p>
           </div>
         </div>
       </div>
@@ -171,11 +174,11 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
       <hr className="my-2" />
 
       <div>
-        <h2 className="text-base font-medium">Attributes</h2>
+        <h2 className="text-base font-medium">{t("common.attributes")}</h2>
       </div>
       {contactAttributeKeys.length === 0 && (
         <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-          <p>There are no attributes yet!</p>
+          <p>{t("environments.segments.no_attributes_yet")}</p>
         </div>
       )}
       {contactAttributeKeys.map((attributeKey) => {
@@ -209,22 +212,30 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
-
+  const t = useTranslations();
   const tabs: {
     id: string;
     label: string;
     icon?: React.ReactNode;
   }[] = [
-    { id: "all", label: "All" },
-    { id: "attributes", label: "Person & Attributes", icon: <TagIcon className="h-4 w-4" /> },
-    { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
-    { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
+    { id: "all", label: t("common.all") },
+    {
+      id: "attributes",
+      label: t("environments.segments.person_and_attributes"),
+      icon: <TagIcon className="h-4 w-4" />,
+    },
+    { id: "segments", label: t("common.segments"), icon: <Users2Icon className="h-4 w-4" /> },
+    {
+      id: "devices",
+      label: t("environments.segments.devices"),
+      icon: <MonitorSmartphoneIcon className="h-4 w-4" />,
+    },
   ];
 
   const devices = useMemo(
     () => [
-      { id: "phone", name: "Phone" },
-      { id: "desktop", name: "Desktop" },
+      { id: "phone", name: t("environments.segments.phone") },
+      { id: "desktop", name: t("environments.segments.desktop") },
     ],
     []
   );
@@ -286,7 +297,7 @@ export function AddFilterModal({
           );
         }) ? (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>There are no filters yet!</p>
+            <p>{t("environments.segments.no_filters_yet")}</p>
           </div>
         ) : null}
 
@@ -384,7 +395,7 @@ export function AddFilterModal({
       <>
         {segmentsFiltered.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>You currently have no saved segments.</p>
+            <p>{t("environments.segments.no_segments_yet")}</p>
           </div>
         )}
         {segmentsFiltered

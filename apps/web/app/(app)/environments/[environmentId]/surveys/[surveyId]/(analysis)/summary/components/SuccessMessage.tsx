@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -13,6 +14,7 @@ interface SummaryMetadataProps {
 }
 
 export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) => {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const [confetti, setConfetti] = useState(false);
 
@@ -25,8 +27,8 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
       setConfetti(true);
       toast.success(
         isAppSurvey && !widgetSetupCompleted
-          ? "Almost there! Install widget to start receiving responses."
-          : "Congrats! Your survey is live.",
+          ? t("environments.surveys.summary.almost_there")
+          : t("environments.surveys.summary.congrats"),
         {
           id: "survey-publish-success-toast",
           icon: isAppSurvey && !widgetSetupCompleted ? "🤏" : "🎉",

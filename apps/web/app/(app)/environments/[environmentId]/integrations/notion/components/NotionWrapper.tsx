@@ -12,6 +12,7 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 import { authorize } from "../lib/notion";
 
@@ -23,6 +24,7 @@ interface NotionWrapperProps {
   surveys: TSurvey[];
   databasesArray: TIntegrationNotionDatabase[];
   contactAttributeKeys: TContactAttributeKey[];
+  locale: TUserLocale;
 }
 
 export const NotionWrapper = ({
@@ -33,6 +35,7 @@ export const NotionWrapper = ({
   surveys,
   databasesArray,
   contactAttributeKeys,
+  locale,
 }: NotionWrapperProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
@@ -63,6 +66,7 @@ export const NotionWrapper = ({
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
             contactAttributeKeys={contactAttributeKeys}
+            locale={locale}
           />
           <ManageIntegration
             environment={environment}
@@ -70,6 +74,7 @@ export const NotionWrapper = ({
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
+            locale={locale}
           />
         </>
       ) : (

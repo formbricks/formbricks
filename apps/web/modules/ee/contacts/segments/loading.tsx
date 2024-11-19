@@ -1,21 +1,23 @@
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { UsersIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Loading = () => {
+const Loading = async () => {
+  const t = await getTranslations();
   return (
     <>
       <PageContentWrapper>
-        <PageHeader pageTitle="People">
+        <PageHeader pageTitle="Contacts">
           <ContactsSecondaryNavigation activeId="segments" loading />
         </PageHeader>
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-4 pl-6">Title</div>
-            <div className="col-span-1 hidden text-center sm:block">Surveys</div>
-            <div className="col-span-1 hidden text-center sm:block">Updated</div>
-            <div className="col-span-1 hidden text-center sm:block">Created</div>
+            <div className="col-span-4 pl-6">{t("common.title")}</div>
+            <div className="col-span-1 hidden text-center sm:block">{t("common.surveys")}</div>
+            <div className="col-span-1 hidden text-center sm:block">{t("common.updated_at")}</div>
+            <div className="col-span-1 hidden text-center sm:block">{t("common.created_at")}</div>
           </div>
           <div className="w-full">
             {[...Array(3)].map((_, index) => (

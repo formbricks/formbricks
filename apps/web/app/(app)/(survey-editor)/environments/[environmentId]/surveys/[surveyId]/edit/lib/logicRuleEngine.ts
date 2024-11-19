@@ -5,43 +5,43 @@ export const logicRules = {
     [`${TSurveyQuestionTypeEnum.OpenText}.text`]: {
       options: [
         {
-          label: "equals",
+          label: "environments.surveys.edit.equals",
           value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
-          label: "does not equal",
+          label: "environments.surveys.edit.does_not_equal",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
-          label: "contains",
+          label: "environments.surveys.edit.contains",
           value: ZSurveyLogicConditionsOperator.Enum.contains,
         },
         {
-          label: "does not contain",
+          label: "environments.surveys.edit.does_not_contain",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
         },
         {
-          label: "starts with",
+          label: "environments.surveys.edit.starts_with",
           value: ZSurveyLogicConditionsOperator.Enum.startsWith,
         },
         {
-          label: "does not start with",
+          label: "environments.surveys.edit.does_not_start_with",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
         },
         {
-          label: "ends with",
+          label: "environments.surveys.edit.ends_with",
           value: ZSurveyLogicConditionsOperator.Enum.endsWith,
         },
         {
-          label: "does not end with",
+          label: "environments.surveys.edit.does_not_end_with",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -73,11 +73,11 @@ export const logicRules = {
           value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -85,23 +85,23 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.MultipleChoiceSingle]: {
       options: [
         {
-          label: "equals",
+          label: "environments.surveys.edit.equals",
           value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
-          label: "does not equal",
+          label: "environments.surveys.edit.does_not_equal",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
-          label: "equals one of",
+          label: "environments.surveys.edit.equals_one_of",
           value: ZSurveyLogicConditionsOperator.Enum.equalsOneOf,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -109,27 +109,35 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.MultipleChoiceMulti]: {
       options: [
         {
-          label: "equals",
+          label: "environments.surveys.edit.equals",
           value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
-          label: "does not equal",
+          label: "environments.surveys.edit.does_not_equal",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
-          label: "includes all of",
+          label: "environments.surveys.edit.does_not_include_one_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeOneOf,
+        },
+        {
+          label: "environments.surveys.edit.does_not_include_all_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeAllOf,
+        },
+        {
+          label: "environments.surveys.edit.includes_all_of",
           value: ZSurveyLogicConditionsOperator.Enum.includesAllOf,
         },
         {
-          label: "includes one of",
+          label: "environments.surveys.edit.includes_one_of",
           value: ZSurveyLogicConditionsOperator.Enum.includesOneOf,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -137,27 +145,35 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.PictureSelection]: {
       options: [
         {
-          label: "equals",
+          label: "environments.surveys.edit.equals",
           value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
-          label: "does not equal",
+          label: "environments.surveys.edit.does_not_equal",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
-          label: "includes all of",
+          label: "environments.surveys.edit.does_not_include_one_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeOneOf,
+        },
+        {
+          label: "environments.surveys.edit.does_not_include_all_of",
+          value: ZSurveyLogicConditionsOperator.Enum.doesNotIncludeAllOf,
+        },
+        {
+          label: "environments.surveys.edit.includes_all_of",
           value: ZSurveyLogicConditionsOperator.Enum.includesAllOf,
         },
         {
-          label: "includes one of",
+          label: "environments.surveys.edit.includes_one_of",
           value: ZSurveyLogicConditionsOperator.Enum.includesOneOf,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -189,11 +205,11 @@ export const logicRules = {
           value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -225,11 +241,11 @@ export const logicRules = {
           value: ZSurveyLogicConditionsOperator.Enum.isLessThanOrEqual,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -237,11 +253,11 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.CTA]: {
       options: [
         {
-          label: "is clicked",
+          label: "environments.surveys.edit.is_clicked",
           value: ZSurveyLogicConditionsOperator.Enum.isClicked,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -249,11 +265,11 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.Consent]: {
       options: [
         {
-          label: "is accepted",
+          label: "environments.surveys.edit.is_accepted",
           value: ZSurveyLogicConditionsOperator.Enum.isAccepted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -261,27 +277,27 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.Date]: {
       options: [
         {
-          label: "equals",
+          label: "environments.surveys.edit.e quals",
           value: ZSurveyLogicConditionsOperator.Enum.equals,
         },
         {
-          label: "does not equal",
+          label: "environments.surveys.edit.does_not_equal",
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
         },
         {
-          label: "is before",
+          label: "environments.surveys.edit.is_before",
           value: ZSurveyLogicConditionsOperator.Enum.isBefore,
         },
         {
-          label: "is after",
+          label: "environments.surveys.edit.is_after",
           value: ZSurveyLogicConditionsOperator.Enum.isAfter,
         },
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -289,11 +305,11 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.FileUpload]: {
       options: [
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -301,11 +317,11 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.Ranking]: {
       options: [
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -313,11 +329,11 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.Cal]: {
       options: [
         {
-          label: "is booked",
+          label: "environments.surveys.edit.is_booked",
           value: ZSurveyLogicConditionsOperator.Enum.isBooked,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -325,15 +341,15 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.Matrix]: {
       options: [
         {
-          label: "is partially submitted",
+          label: "environments.surveys.edit.is_partially_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
         },
         {
-          label: "is completely submitted",
+          label: "environments.surveys.edit.is_completely_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -341,11 +357,11 @@ export const logicRules = {
     [TSurveyQuestionTypeEnum.Address]: {
       options: [
         {
-          label: "is submitted",
+          label: "environments.surveys.edit.is_submitted",
           value: ZSurveyLogicConditionsOperator.Enum.isSubmitted,
         },
         {
-          label: "is skipped",
+          label: "environments.surveys.edit.is_skipped",
           value: ZSurveyLogicConditionsOperator.Enum.isSkipped,
         },
       ],
@@ -354,35 +370,35 @@ export const logicRules = {
   ["variable.text"]: {
     options: [
       {
-        label: "equals",
+        label: "environments.surveys.edit.equals",
         value: ZSurveyLogicConditionsOperator.Enum.equals,
       },
       {
-        label: "does not equal",
+        label: "environments.surveys.edit.does_not_equal",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
       },
       {
-        label: "contains",
+        label: "environments.surveys.edit.contains",
         value: ZSurveyLogicConditionsOperator.Enum.contains,
       },
       {
-        label: "does not contain",
+        label: "environments.surveys.edit.does_not_contain",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
       },
       {
-        label: "starts with",
+        label: "environments.surveys.edit.starts_with",
         value: ZSurveyLogicConditionsOperator.Enum.startsWith,
       },
       {
-        label: "does not start with",
+        label: "environments.surveys.edit.does_not_start_with",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
       },
       {
-        label: "ends with",
+        label: "environments.surveys.edit.ends_with",
         value: ZSurveyLogicConditionsOperator.Enum.endsWith,
       },
       {
-        label: "does not end with",
+        label: "environments.surveys.edit.does_not_end_with",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
       },
     ],
@@ -418,35 +434,35 @@ export const logicRules = {
   hiddenField: {
     options: [
       {
-        label: "equals",
+        label: "environments.surveys.edit.equals",
         value: ZSurveyLogicConditionsOperator.Enum.equals,
       },
       {
-        label: "does not equal",
+        label: "environments.surveys.edit.does_not_equal",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotEqual,
       },
       {
-        label: "contains",
+        label: "environments.surveys.edit.contains",
         value: ZSurveyLogicConditionsOperator.Enum.contains,
       },
       {
-        label: "does not contain",
+        label: "environments.surveys.edit.does_not_contain",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotContain,
       },
       {
-        label: "starts with",
+        label: "environments.surveys.edit.starts_with",
         value: ZSurveyLogicConditionsOperator.Enum.startsWith,
       },
       {
-        label: "does not start with",
+        label: "environments.surveys.edit.does_not_start_with",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotStartWith,
       },
       {
-        label: "ends with",
+        label: "environments.surveys.edit.ends_with",
         value: ZSurveyLogicConditionsOperator.Enum.endsWith,
       },
       {
-        label: "does not end with",
+        label: "environments.surveys.edit.does_not_end_with",
         value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
       },
     ],

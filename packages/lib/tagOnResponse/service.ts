@@ -93,7 +93,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
 };
 
 export const getTagsOnResponsesCount = reactCache(
-  (environmentId: string): Promise<TTagsCount> =>
+  async (environmentId: string): Promise<TTagsCount> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);

@@ -56,7 +56,9 @@
     "data-migration:v2.6": "pnpm data-migration:add-display-id-to-response && pnpm data-migration:address-question && pnpm data-migration:advanced-logic && pnpm data-migration:segments-actions-cleanup && pnpm data-migration:migrate-survey-types",
     "data-migration:xm": "ts-node ./data-migrations/20241010133706_xm_user_identification/data-migration.ts",
     "data-migration:xm-segments": "ts-node ./data-migrations/20241021123456_xm_segment_migration/data-migration.ts",
-    "data-migration:xm-attribute-removal": "ts-node ./data-migrations/20241024123456_xm_attribute_removal/data-migration.ts"
+    "data-migration:xm-attribute-removal": "ts-node ./data-migrations/20241024123456_xm_attribute_removal/data-migration.ts",
+    "data-migration:add-teams": "ts-node ./data-migrations/20241107161932_add_teams/data-migration.ts",
+    "data-migration:v2.7": "pnpm data-migration:add-teams"
   },
   "dependencies": {
     "@prisma/client": "5.20.0",

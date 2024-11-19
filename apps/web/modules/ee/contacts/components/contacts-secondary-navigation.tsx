@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { TProduct } from "@formbricks/types/product";
 import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
@@ -14,7 +15,7 @@ export const ContactsSecondaryNavigation = async ({
   loading,
 }: PersonSecondaryNavigationProps) => {
   let product: TProduct | null = null;
-
+  const t = await getTranslations();
   if (!loading && environmentId) {
     product = await getProductByEnvironmentId(environmentId);
 
@@ -31,7 +32,7 @@ export const ContactsSecondaryNavigation = async ({
     },
     {
       id: "segments",
-      label: "Segments",
+      label: t("common.segments"),
       href: `/environments/${environmentId}/segments`,
     },
   ];

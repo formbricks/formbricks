@@ -1,10 +1,12 @@
 "use client";
 
-export const LoadingSpinner = () => {
+import { cn } from "@formbricks/lib/cn";
+
+export const LoadingSpinner = ({ className = "h-6 w-6" }: { className?: string }) => {
   return (
     <div className="flex h-full w-full items-center justify-center">
       <svg
-        className="m-2 h-6 w-6 animate-spin text-slate-700"
+        className={cn("m-2 animate-spin text-slate-700", className)}
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24">

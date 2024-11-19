@@ -3,13 +3,13 @@
 import { Greeting } from "@/modules/ee/insights/experience/components/greeting";
 import { InsightsCard } from "@/modules/ee/insights/experience/components/insights-card";
 import { ExperiencePageStats } from "@/modules/ee/insights/experience/components/stats";
-import { TemplatesCard } from "@/modules/ee/insights/experience/components/templates-card";
 import { getDateFromTimeRange } from "@/modules/ee/insights/experience/lib/utils";
 import { TStatsPeriod } from "@/modules/ee/insights/experience/types/stats";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 import { Tabs, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
 
 interface DashboardProps {
@@ -18,6 +18,7 @@ interface DashboardProps {
   product: TProduct;
   insightsPerPage: number;
   documentsPerPage: number;
+  locale: TUserLocale;
 }
 
 export const Dashboard = ({
@@ -26,7 +27,9 @@ export const Dashboard = ({
   user,
   insightsPerPage,
   documentsPerPage,
+  locale,
 }: DashboardProps) => {
+  const t = useTranslations();
   const [statsPeriod, setStatsPeriod] = useState<TStatsPeriod>("week");
   const statsFrom = getDateFromTimeRange(statsPeriod);
   return (
@@ -35,23 +38,27 @@ export const Dashboard = ({
       <hr className="border-slate-200" />
       <Tabs
         value={statsPeriod}
-        onValueChange={(value) => value && setStatsPeriod(value as TStatsPeriod)}
+        onValueChange={(value) => {
+          if (value) {
+            setStatsPeriod(value as TStatsPeriod);
+          }
+        }}
         className="flex justify-center">
         <TabsList>
           <TabsTrigger value="day" aria-label="Toggle day">
-            Today
+            {t("environments.experience.today")}
           </TabsTrigger>
           <TabsTrigger value="week" aria-label="Toggle week">
-            This week
+            {t("environments.experience.this_week")}
           </TabsTrigger>
           <TabsTrigger value="month" aria-label="Toggle month">
-            This month
+            {t("environments.experience.this_month")}
           </TabsTrigger>
           <TabsTrigger value="quarter" aria-label="Toggle quarter">
-            This quarter
+            {t("environments.experience.this_quarter")}
           </TabsTrigger>
           <TabsTrigger value="all" aria-label="Toggle all">
-            All time
+            {t("environments.experience.all_time")}
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -62,12 +69,7 @@ export const Dashboard = ({
         environmentId={environment.id}
         insightsPerPage={insightsPerPage}
         documentsPerPage={documentsPerPage}
-      />
-      <TemplatesCard
-        environment={environment}
-        product={product}
-        user={user}
-        prefilledFilters={["link", null, "customerSuccess"]}
+        locale={locale}
       />
     </div>
   );

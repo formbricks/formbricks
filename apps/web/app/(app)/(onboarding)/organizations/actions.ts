@@ -1,19 +1,19 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { sendInviteMemberEmail } from "@/modules/email";
 import { z } from "zod";
-import { sendInviteMemberEmail } from "@formbricks/email";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { ZMembershipRole } from "@formbricks/types/memberships";
+import { ZOrganizationRole } from "@formbricks/types/memberships";
 
 const ZInviteOrganizationMemberAction = z.object({
   organizationId: ZId,
   email: z.string(),
-  role: ZMembershipRole,
+  role: ZOrganizationRole,
   inviteMessage: z.string(),
 });
 
@@ -24,10 +24,15 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["membership", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     const invite = await inviteUser({
@@ -46,7 +51,8 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         ctx.user.name ?? "",
         "",
         true, // is onboarding invite
-        parsedInput.inviteMessage
+        parsedInput.inviteMessage,
+        ctx.user.locale
       );
     }
 

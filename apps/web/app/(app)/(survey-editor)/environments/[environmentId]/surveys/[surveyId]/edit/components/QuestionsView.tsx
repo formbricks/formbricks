@@ -3,6 +3,7 @@
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
 import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import {
   DndContext,
   DragEndEvent,
@@ -14,9 +15,9 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslations } from "next-intl";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { MultiLanguageCard } from "@formbricks/ee/multi-language/components/multi-language-card";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
@@ -34,6 +35,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -61,6 +63,7 @@ interface QuestionsViewProps {
   contactAttributeKeys: TContactAttributeKey[];
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
+  locale: TUserLocale;
 }
 
 export const QuestionsView = ({
@@ -78,7 +81,9 @@ export const QuestionsView = ({
   contactAttributeKeys,
   plan,
   isCxMode,
+  locale,
 }: QuestionsViewProps) => {
+  const t = useTranslations();
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();
@@ -262,7 +267,7 @@ export const QuestionsView = ({
     const quesIdx = findQuestionUsedInLogic(localSurvey, questionId);
 
     if (quesIdx !== -1) {
-      toast.error(`This question is used in logic of question ${quesIdx + 1}.`);
+      toast.error(t("environments.surveys.edit.question_used_in_logic", { questionIndex: quesIdx + 1 }));
       return;
     }
 
@@ -289,7 +294,7 @@ export const QuestionsView = ({
         setActiveQuestionId(firstEndingCard.id);
       }
     }
-    toast.success("Question deleted.");
+    toast.success(t("environments.surveys.edit.question_deleted"));
   };
 
   const duplicateQuestion = (questionIdx: number) => {
@@ -311,7 +316,7 @@ export const QuestionsView = ({
     setActiveQuestionId(newQuestionId);
     internalQuestionIdMap[newQuestionId] = createId();
 
-    toast.success("Question duplicated.");
+    toast.success(t("environments.surveys.edit.question_duplicated"));
   };
 
   const addQuestion = (question: TSurveyQuestion, index?: number) => {
@@ -333,7 +338,7 @@ export const QuestionsView = ({
 
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
-    const newEndingCard = getDefaultEndingCard(localSurvey.languages);
+    const newEndingCard = getDefaultEndingCard(localSurvey.languages, locale);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
 
@@ -374,7 +379,7 @@ export const QuestionsView = ({
     if (questionWithEmptyFallback) {
       setActiveQuestionId(questionWithEmptyFallback.id);
       if (activeQuestionId === questionWithEmptyFallback.id) {
-        toast.error("Fallback missing");
+        toast.error(t("environments.surveys.edit.fallback_missing"));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -427,6 +432,7 @@ export const QuestionsView = ({
             setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
             contactAttributeKeys={contactAttributeKeys}
+            locale={locale}
           />
         </div>
       )}
@@ -453,10 +459,11 @@ export const QuestionsView = ({
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
+          locale={locale}
         />
       </DndContext>
 
-      <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} />
+      <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} locale={locale} />
       <div className="mt-5 flex flex-col gap-5" ref={parent}>
         <hr className="border-t border-dashed" />
         <DndContext
@@ -481,6 +488,7 @@ export const QuestionsView = ({
                   plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
+                  locale={locale}
                 />
               );
             })}
@@ -519,6 +527,7 @@ export const QuestionsView = ({
               isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
               setSelectedLanguageCode={setSelectedLanguageCode}
+              locale={locale}
             />
           </>
         )}

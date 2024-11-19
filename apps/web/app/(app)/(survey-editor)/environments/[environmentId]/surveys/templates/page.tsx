@@ -1,4 +1,7 @@
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -11,22 +14,25 @@ import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
 interface SurveyTemplateProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     channel?: TProductConfigChannel;
     industry?: TProductConfigIndustry;
     role?: TTemplateRole;
-  };
+  }>;
 }
 
-const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
+const Page = async (props: SurveyTemplateProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
 
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   const [user, environment, product] = await Promise.all([
@@ -36,23 +42,27 @@ const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
   ]);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session?.user.id,
     product.organizationId
   );
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  if (isViewer) {
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+  if (isReadOnly) {
     return redirect(`/environments/${environment.id}/surveys`);
   }
 

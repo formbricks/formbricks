@@ -1,10 +1,9 @@
 {
-  "extends": "@formbricks/config-typescript/nextjs.json",
-  "include": [".", "../types/*.d.ts", "../../apps/web/lib/cache/contact-attribute-key.ts"],
+  "include": [".", "../types/*.d.ts", "../../apps/web/lib/cache/contact-attribute-key.ts", "../../apps/web/modules/utils/hooks"],
   "exclude": ["dist", "build", "node_modules", "../../packages/types/surveys.d.ts"],
   "compilerOptions": {
-    "downlevelIteration": true,
     "baseUrl": ".",
+    "downlevelIteration": true,
     "paths": {
       "@prisma/client/*": ["@formbricks/database/client/*"]
     },
@@ -14,5 +13,6 @@
       }
     ],
     "strictNullChecks": true
-  }
+  },
+  "extends": "@formbricks/config-typescript/nextjs.json",
 }

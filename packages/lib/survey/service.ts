@@ -19,6 +19,7 @@ import {
   TSurvey,
   TSurveyCreateInput,
   TSurveyFilterCriteria,
+  TSurveyOpenTextQuestion,
   TSurveyQuestions,
   ZSurvey,
   ZSurveyCreateInput,
@@ -202,7 +203,7 @@ const handleTriggerUpdates = (
 };
 
 export const getSurvey = reactCache(
-  (surveyId: string): Promise<TSurvey | null> =>
+  async (surveyId: string): Promise<TSurvey | null> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId]);
@@ -237,7 +238,7 @@ export const getSurvey = reactCache(
 );
 
 export const getSurveysByActionClassId = reactCache(
-  (actionClassId: string, page?: number): Promise<TSurvey[]> =>
+  async (actionClassId: string, page?: number): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
@@ -284,7 +285,7 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  (
+  async (
     environmentId: string,
     limit?: number,
     offset?: number,
@@ -323,7 +324,7 @@ export const getSurveys = reactCache(
 );
 
 export const getSurveyCount = reactCache(
-  (environmentId: string): Promise<number> =>
+  async (environmentId: string): Promise<number> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -352,7 +353,7 @@ export const getSurveyCount = reactCache(
 );
 
 export const getInProgressSurveyCount = reactCache(
-  (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
+  async (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -575,7 +576,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+    const isAIEnabled = await getIsAIEnabled(organization);
     if (isAIEnabled) {
       if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
         const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
@@ -587,35 +588,43 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
         const questionsToCheckForInsights: TSurveyQuestions = [];
 
         for (const question of openTextQuestions) {
-          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id);
+          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id) as
+            | TSurveyOpenTextQuestion
+            | undefined;
           const isExistingQuestion = !!existingQuestion;
 
-          if (isExistingQuestion && question.headline.default === existingQuestion.headline.default) {
+          if (
+            isExistingQuestion &&
+            question.headline.default === existingQuestion.headline.default &&
+            existingQuestion.insightsEnabled !== undefined
+          ) {
             continue;
           } else {
             questionsToCheckForInsights.push(question);
           }
         }
 
-        const insightsEnabledValues = await Promise.all(
-          questionsToCheckForInsights.map(async (question) => {
-            const insightsEnabled = await getInsightsEnabled(question);
+        if (questionsToCheckForInsights.length > 0) {
+          const insightsEnabledValues = await Promise.all(
+            questionsToCheckForInsights.map(async (question) => {
+              const insightsEnabled = await getInsightsEnabled(question);
 
-            return { id: question.id, insightsEnabled };
-          })
-        );
+              return { id: question.id, insightsEnabled };
+            })
+          );
 
-        data.questions = data.questions?.map((question) => {
-          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-          if (index !== -1) {
-            return {
-              ...question,
-              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-            };
-          }
+          data.questions = data.questions?.map((question) => {
+            const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
+            if (index !== -1) {
+              return {
+                ...question,
+                insightsEnabled: insightsEnabledValues[index].insightsEnabled,
+              };
+            }
 
-          return question;
-        });
+            return question;
+          });
+        }
       }
     } else {
       // check if an existing question got changed that had insights enabled
@@ -797,7 +806,7 @@ export const createSurvey = async (
     }
 
     //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+    const isAIEnabled = await getIsAIEnabled(organization);
     if (isAIEnabled) {
       if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
         const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
@@ -1158,7 +1167,7 @@ export const copySurveyToOtherEnvironment = async (
 };
 
 export const getSurveyIdByResultShareKey = reactCache(
-  (resultShareKey: string): Promise<string | null> =>
+  async (resultShareKey: string): Promise<string | null> =>
     cache(
       async () => {
         try {
@@ -1282,7 +1291,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
 };
 
 export const getSurveysBySegmentId = reactCache(
-  (segmentId: string): Promise<TSurvey[]> =>
+  async (segmentId: string): Promise<TSurvey[]> =>
     cache(
       async () => {
         try {

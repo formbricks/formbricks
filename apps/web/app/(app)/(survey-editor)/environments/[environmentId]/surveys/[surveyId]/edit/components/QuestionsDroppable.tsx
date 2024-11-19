@@ -3,6 +3,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { QuestionCard } from "./QuestionCard";
 
 interface QuestionsDraggableProps {
@@ -22,6 +23,7 @@ interface QuestionsDraggableProps {
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
+  locale: TUserLocale;
 }
 
 export const QuestionsDroppable = ({
@@ -41,6 +43,7 @@ export const QuestionsDroppable = ({
   addQuestion,
   isFormbricksCloud,
   isCxMode,
+  locale,
 }: QuestionsDraggableProps) => {
   const [parent] = useAutoAnimate();
 
@@ -68,6 +71,7 @@ export const QuestionsDroppable = ({
             addQuestion={addQuestion}
             isFormbricksCloud={isFormbricksCloud}
             isCxMode={isCxMode}
+            locale={locale}
           />
         ))}
       </SortableContext>

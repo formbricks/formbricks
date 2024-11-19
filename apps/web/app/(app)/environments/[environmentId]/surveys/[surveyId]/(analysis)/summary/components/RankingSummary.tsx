@@ -1,5 +1,7 @@
+import { useTranslations } from "next-intl";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -8,6 +10,7 @@ interface RankingSummaryProps {
   surveyType: TSurveyType;
   survey: TSurvey;
   contactAttributeKeys: TContactAttributeKey[];
+  locale: TUserLocale;
 }
 
 export const RankingSummary = ({
@@ -15,8 +18,10 @@ export const RankingSummary = ({
   surveyType,
   survey,
   contactAttributeKeys,
+  locale,
 }: RankingSummaryProps) => {
   // sort by count and transform to array
+  const t = useTranslations();
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     return a.avgRanking - b.avgRanking; // Sort by count
   });
@@ -27,6 +32,7 @@ export const RankingSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         contactAttributeKeys={contactAttributeKeys}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
@@ -34,13 +40,13 @@ export const RankingSummary = ({
             <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
               <div className="mr-8 flex w-full justify-between space-x-1 sm:justify-normal">
                 <div className="flex w-full items-center">
-                  <span className="mr-2 text-gray-400">#{resultsIdx + 1}</span>
-                  <div className="rounded bg-gray-100 px-2 py-1">{result.value}</div>
+                  <span className="mr-2 text-slate-400">#{resultsIdx + 1}</span>
+                  <div className="rounded bg-slate-100 px-2 py-1">{result.value}</div>
                   <span className="ml-auto flex items-center space-x-1">
                     <span className="font-bold text-slate-600">
                       #{convertFloatToNDecimal(result.avgRanking, 2)}
                     </span>
-                    <span>average</span>
+                    <span>{t("environments.surveys.summary.average")}</span>
                   </span>
                 </div>
               </div>
@@ -49,8 +55,10 @@ export const RankingSummary = ({
             {result.others && result.others.length > 0 && (
               <div className="mt-4 rounded-lg border border-slate-200">
                 <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-                  <div className="col-span-1 pl-6">Other values found</div>
-                  <div className="col-span-1 pl-6">{surveyType === "app" && "User"}</div>
+                  <div className="col-span-1 pl-6">
+                    {t("environments.surveys.summary.other_values_found")}
+                  </div>
+                  <div className="col-span-1 pl-6">{surveyType === "app" && t("common.user")}</div>
                 </div>
               </div>
             )}

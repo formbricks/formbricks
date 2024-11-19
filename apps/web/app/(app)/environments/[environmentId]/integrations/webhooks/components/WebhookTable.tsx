@@ -1,7 +1,8 @@
 "use client";
 
 import { WebhookModal } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
-import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { type JSX, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
@@ -12,6 +13,7 @@ interface WebhookTableProps {
   webhooks: TWebhook[];
   surveys: TSurvey[];
   children: [JSX.Element, JSX.Element[]];
+  isReadOnly: boolean;
 }
 
 export const WebhookTable = ({
@@ -19,9 +21,10 @@ export const WebhookTable = ({
   webhooks,
   surveys,
   children: [TableHeading, webhookRows],
+  isReadOnly,
 }: WebhookTableProps) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
-
+  const t = useTranslations();
   const [activeWebhook, setActiveWebhook] = useState<TWebhook>({
     environmentId: environment.id,
     id: "",
@@ -47,7 +50,7 @@ export const WebhookTable = ({
           type="table"
           environment={environment}
           noWidgetRequired={true}
-          emptyMessage="Your webhooks will appear here as soon as you add them. ⏲️"
+          emptyMessage={t("environments.integrations.webhooks.empty_webhook_message")}
         />
       ) : (
         <div className="rounded-lg border border-slate-200">
@@ -71,6 +74,7 @@ export const WebhookTable = ({
         setOpen={setWebhookDetailModalOpen}
         webhook={activeWebhook}
         surveys={surveys}
+        isReadOnly={isReadOnly}
       />
     </>
   );

@@ -1,48 +1,59 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { GlobeIcon, GlobeLockIcon, LinkIcon, XIcon } from "lucide-react";
-import { getProducts } from "@formbricks/lib/product/service";
+import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getUserProducts } from "@formbricks/lib/product/service";
 import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
 interface ChannelPageProps {
-  params: {
+  params: Promise<{
     organizationId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: ChannelPageProps) => {
+const Page = async (props: ChannelPageProps) => {
+  const params = await props.params;
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user) {
+    return redirect(`/auth/login`);
+  }
+
+  const t = await getTranslations();
   const channelOptions = [
     {
-      title: "Public website",
-      description: "Run well-timed pop-up surveys.",
+      title: t("organizations.products.new.channel.public_website"),
+      description: t("organizations.products.new.channel.public_website_description"),
       icon: GlobeIcon,
-      iconText: "Built for scale",
+      iconText: t("organizations.products.new.channel.public_website_icon_text"),
       href: `/organizations/${params.organizationId}/products/new/settings?channel=website`,
     },
     {
-      title: "App with sign up",
-      description: "Run highly-targeted micro-surveys.",
+      title: t("organizations.products.new.channel.app_with_sign_up"),
+      description: t("organizations.products.new.channel.app_with_sign_up_description"),
       icon: GlobeLockIcon,
-      iconText: "Enrich user profiles",
+      iconText: t("organizations.products.new.channel.app_with_sign_up_icon_text"),
       href: `/organizations/${params.organizationId}/products/new/settings?channel=app`,
     },
     {
       channel: "link",
-      title: "Link & email surveys",
-      description: "Reach people anywhere online.",
+      title: t("organizations.products.new.channel.link_and_email_surveys"),
+      description: t("organizations.products.new.channel.link_and_email_surveys_description"),
       icon: LinkIcon,
-      iconText: "Anywhere online",
+      iconText: t("organizations.products.new.channel.link_and_email_surveys_icon_text"),
       href: `/organizations/${params.organizationId}/products/new/settings?channel=link`,
     },
   ];
 
-  const products = await getProducts(params.organizationId);
+  const products = await getUserProducts(session.user.id, params.organizationId);
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header
-        title="Where do you mainly want to survey people?"
-        subtitle="Run surveys on public websites, in your app, or with shareable links & emails."
+        title={t("organizations.products.new.channel.channel_select_title")}
+        subtitle={t("organizations.products.new.channel.channel_select_subtitle")}
       />
       <OnboardingOptionsContainer options={channelOptions} />
       {products.length >= 1 && (

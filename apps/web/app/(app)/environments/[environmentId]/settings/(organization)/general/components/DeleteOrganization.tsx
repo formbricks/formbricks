@@ -1,10 +1,12 @@
 "use client";
 
 import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
+import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
 import { Button } from "@formbricks/ui/components/Button";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { Input } from "@formbricks/ui/components/Input";
@@ -23,7 +25,7 @@ export const DeleteOrganization = ({
 }: DeleteOrganizationProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const t = useTranslations();
   const router = useRouter();
 
   const handleDeleteOrganization = async () => {
@@ -31,10 +33,10 @@ export const DeleteOrganization = ({
 
     try {
       await deleteOrganizationAction({ organizationId: organization.id });
-      toast.success("Organization deleted successfully.");
+      toast.success(t("environments.settings.general.organization_deleted_successfully"));
       router.push("/");
     } catch (err) {
-      toast.error("Error deleting organization. Please try again.");
+      toast.error(t("environments.settings.general.error_deleting_organization_please_try_again"));
     }
 
     setIsDeleteDialogOpen(false);
@@ -42,10 +44,9 @@ export const DeleteOrganization = ({
   };
 
   const deleteDisabledWarning = useMemo(() => {
-    if (isUserOwner)
-      return "This is your only organization, it cannot be deleted. Create a new organization first.";
+    if (isUserOwner) return t("environments.settings.general.cannot_delete_only_organization");
 
-    return "Only Owner can delete the organization.";
+    return t("environments.settings.general.only_org_owner_can_perform_action");
   }, [isUserOwner]);
 
   return (
@@ -53,7 +54,7 @@ export const DeleteOrganization = ({
       {!isDeleteDisabled && (
         <div>
           <p className="text-sm text-slate-900">
-            This action cannot be undone. If it&apos;s gone, it&apos;s gone.
+            {t("environments.settings.general.once_its_gone_its_gone")}
           </p>
           <Button
             size="sm"
@@ -61,11 +62,15 @@ export const DeleteOrganization = ({
             variant="warn"
             className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
             onClick={() => setIsDeleteDialogOpen(true)}>
-            Delete
+            {t("common.delete")}
           </Button>
         </div>
       )}
-      {isDeleteDisabled && <p className="text-sm text-red-700">{deleteDisabledWarning}</p>}
+      {isDeleteDisabled && (
+        <Alert variant="warning">
+          <AlertDescription>{deleteDisabledWarning}</AlertDescription>
+        </Alert>
+      )}
       <DeleteOrganizationModal
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
@@ -94,7 +99,7 @@ const DeleteOrganizationModal = ({
   isDeleting,
 }: DeleteOrganizationModalProps) => {
   const [inputValue, setInputValue] = useState("");
-
+  const t = useTranslations();
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
@@ -103,23 +108,21 @@ const DeleteOrganizationModal = ({
     <DeleteDialog
       open={open}
       setOpen={setOpen}
-      deleteWhat="organization"
+      deleteWhat={t("common.organization")}
       onDelete={deleteOrganization}
-      text="Before you proceed with deleting this organization, please be aware of the following consequences:"
+      text={t("environments.settings.general.delete_organization_warning")}
       disabled={inputValue !== organizationData?.name}
       isDeleting={isDeleting}>
-      <div className="py-5">
+      <div className="py-5" data-i18n="[html]content.body">
         <ul className="list-disc pb-6 pl-6">
-          <li>
-            Permanent removal of all <b>products linked to this organization</b>. This includes all surveys,
-            responses, user actions and attributes associated with these products.
-          </li>
-          <li>This action cannot be undone. If it&apos;s gone, it&apos;s gone.</li>
+          <li>{t("environments.settings.general.delete_organization_warning_1")}</li>
+          <li>{t("environments.settings.general.delete_organization_warning_2")}</li>
         </ul>
         <form onSubmit={(e) => e.preventDefault()}>
           <label htmlFor="deleteOrganizationConfirmation">
-            Please enter <b>{organizationData?.name}</b> in the following field to confirm the definitive
-            deletion of this organization:
+            {t("environments.settings.general.delete_organization_warning_3", {
+              organizationName: organizationData?.name,
+            })}
           </label>
           <Input
             value={inputValue}

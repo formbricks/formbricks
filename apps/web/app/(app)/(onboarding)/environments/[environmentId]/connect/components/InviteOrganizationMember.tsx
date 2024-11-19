@@ -2,6 +2,7 @@
 
 import { inviteOrganizationMemberAction } from "@/app/(app)/(onboarding)/organizations/actions";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -18,17 +19,21 @@ interface InviteOrganizationMemberProps {
 
 const ZInviteOrganizationMemberDetails = z.object({
   email: z.string().email(),
-  inviteMessage: z.string().trim().min(1),
+  inviteMessage: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((value) => !/https?:\/\/|<script/i.test(value), "Invite message cannot contain URLs or scripts"),
 });
 type TInviteOrganizationMemberDetails = z.infer<typeof ZInviteOrganizationMemberDetails>;
 
 export const InviteOrganizationMember = ({ organization, environmentId }: InviteOrganizationMemberProps) => {
   const router = useRouter();
-
+  const t = useTranslations();
   const form = useForm<TInviteOrganizationMemberDetails>({
     defaultValues: {
       email: "",
-      inviteMessage: "I'm looking into Formbricks to run targeted surveys. Can you help me set it up? 🙏",
+      inviteMessage: t("environments.connect.invite.invite_message_content"),
     },
     resolver: zodResolver(ZInviteOrganizationMemberDetails),
   });
@@ -39,7 +44,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
       await inviteOrganizationMemberAction({
         organizationId: organization.id,
         email: data.email,
-        role: "developer",
+        role: "member",
         inviteMessage: data.inviteMessage,
       });
       toast.success("Invite sent successful");
@@ -63,7 +68,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
               name="email"
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("common.email")}</FormLabel>
                   <FormControl>
                     <div>
                       <Input
@@ -83,7 +88,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
               name="inviteMessage"
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
-                  <FormLabel>Invite Message</FormLabel>
+                  <FormLabel>{t("environments.connect.invite.invite_message")}</FormLabel>
                   <FormControl>
                     <div>
                       <textarea
@@ -108,10 +113,10 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
                   e.preventDefault();
                   finishOnboarding();
                 }}>
-                Not now
+                {t("common.not_now")}
               </Button>
               <Button id="onboarding-inapp-invite-send-invite" type={"submit"} loading={isSubmitting}>
-                Invite
+                {t("common.invite")}
               </Button>
             </div>
           </div>

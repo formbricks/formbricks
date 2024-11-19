@@ -1,7 +1,8 @@
+import { sendInviteAcceptedEmail } from "@/modules/email";
 import { getServerSession } from "next-auth";
-import { sendInviteAcceptedEmail } from "@formbricks/email";
+import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -9,7 +10,9 @@ import { getUser, updateUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/components/Button";
 import { ContentLayout } from "./components/ContentLayout";
 
-const Page = async ({ searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const user = session?.user.id ? await getUser(session.user.id) : null;
 
@@ -21,8 +24,8 @@ const Page = async ({ searchParams }) => {
     if (!invite) {
       return (
         <ContentLayout
-          headline="Invite not found 😥"
-          description="The invitation code cannot be found or has already been used."
+          headline={t("auth.invite.invite_not_found")}
+          description={t("auth.invite.invite_not_found_description")}
         />
       );
     }
@@ -32,50 +35,51 @@ const Page = async ({ searchParams }) => {
     if (isInviteExpired) {
       return (
         <ContentLayout
-          headline="Invite expired 😥"
-          description="Invites are valid for 7 days. Please request a new invite."
+          headline={t("auth.invite.invite_expired")}
+          description={t("auth.invite.invite_expired_description")}
         />
-      );
-    } else if (invite.accepted) {
-      return (
-        <ContentLayout
-          headline="You’re already part of the squad."
-          description="This invitation has already been used.">
-          <Button variant="secondary" href="/support">
-            Contact support
-          </Button>
-          <Button href="/">Go to app</Button>
-        </ContentLayout>
       );
     } else if (!session) {
       const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
       const encodedEmail = encodeURIComponent(email);
       return (
-        <ContentLayout headline="Happy to have you 🤗" description="Please create an account or login.">
+        <ContentLayout
+          headline={t("auth.invite.happy_to_have_you")}
+          description={t("auth.invite.happy_to_have_you_description")}>
           <Button
             variant="secondary"
             href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
-            Create account
+            {t("auth.invite.create_account")}
           </Button>
-          <Button href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>Login</Button>
+          <Button href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
+            {t("auth.invite.login")}
+          </Button>
         </ContentLayout>
       );
     } else if (user?.email !== email) {
       return (
         <ContentLayout
-          headline="Ooops! Wrong email 🤦"
-          description="The email in the invitation does not match yours.">
+          headline={t("auth.invite.email_does_not_match")}
+          description={t("auth.invite.email_does_not_match_description")}>
           <Button variant="secondary" href="/support">
-            Contact support
+            {t("auth.invite.contact_support")}
           </Button>
-          <Button href="/">Go to app</Button>
+          <Button href="/">{t("auth.invite.go_to_app")}</Button>
         </ContentLayout>
       );
     } else {
-      await createMembership(invite.organizationId, session.user.id, { accepted: true, role: invite.role });
+      await createMembership(invite.organizationId, session.user.id, {
+        accepted: true,
+        role: invite.role,
+      });
       await deleteInvite(inviteId);
 
-      await sendInviteAcceptedEmail(invite.creator.name ?? "", user?.name ?? "", invite.creator.email);
+      await sendInviteAcceptedEmail(
+        invite.creator.name ?? "",
+        user?.name ?? "",
+        invite.creator.email,
+        user?.locale ?? DEFAULT_LOCALE
+      );
       await updateUser(session.user.id, {
         notificationSettings: {
           ...user.notificationSettings,
@@ -89,9 +93,12 @@ const Page = async ({ searchParams }) => {
           ),
         },
       });
+
       return (
-        <ContentLayout headline="You’re in 🎉" description="Welcome to the organization.">
-          <Button href="/">Go to app</Button>
+        <ContentLayout
+          headline={t("auth.invite.welcome_to_organization")}
+          description={t("auth.invite.welcome_to_organization_description")}>
+          <Button href="/">{t("auth.invite.go_to_app")}</Button>
         </ContentLayout>
       );
     }
@@ -99,8 +106,8 @@ const Page = async ({ searchParams }) => {
     console.error(e);
     return (
       <ContentLayout
-        headline="Invite not found 😥"
-        description="The invitation code cannot be found or has already been used."
+        headline={t("auth.invite.invite_not_found")}
+        description={t("auth.invite.invite_not_found_description")}
       />
     );
   }

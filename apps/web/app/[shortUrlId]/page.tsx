@@ -4,7 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { getShortUrl } from "@formbricks/lib/shortUrl/service";
 import { TShortUrl, ZShortUrlId } from "@formbricks/types/short-url";
 
-export const generateMetadata = async ({ params }): Promise<Metadata> => {
+export const generateMetadata = async (props): Promise<Metadata> => {
+  const params = await props.params;
   if (!params.shortUrlId) {
     notFound();
   }
@@ -27,7 +28,8 @@ export const generateMetadata = async ({ params }): Promise<Metadata> => {
   }
 };
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   if (!params.shortUrlId) {
     notFound();
   }

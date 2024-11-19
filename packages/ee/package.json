@@ -28,13 +28,15 @@
     "@radix-ui/react-collapsible": "1.1.0",
     "https-proxy-agent": "7.0.5",
     "lucide-react": "0.452.0",
-    "next": "14.2.15",
-    "next-auth": "4.24.7",
+    "next": "15.0.3",
+    "next-auth": "4.24.10",
     "node-fetch": "3.3.2",
     "react-hook-form": "7.53.0",
     "react-hot-toast": "2.4.1",
     "server-only": "0.0.1",
     "stripe": "16.7.0",
-    "zod": "3.23.8"
+    "zod": "3.23.8",
+    "react": "19.0.0-rc-ed15d500-20241110",
+    "react-dom": "19.0.0-rc-ed15d500-20241110"
   }
 }

@@ -3,8 +3,9 @@
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
@@ -27,6 +28,8 @@ interface PinScreenProps {
   languageCode: string;
   contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
+  locale: string;
+  isPreview: boolean;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -45,11 +48,13 @@ export const PinScreen = (props: PinScreenProps) => {
     languageCode,
     contactAttributeKeys,
     isEmbed,
+    locale,
+    isPreview,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-
+  const t = useTranslations();
   const [error, setError] = useState<TSurveyPinValidationResponseError>();
   const [survey, setSurvey] = useState<TSurvey>();
 
@@ -101,7 +106,7 @@ export const PinScreen = (props: PinScreenProps) => {
       <div className="flex h-full w-full items-center justify-center">
         <div className="flex flex-col items-center justify-center">
           <div className="my-4 font-semibold">
-            <h4>This survey is protected. Enter the PIN below</h4>
+            <h4>{t("s.enter_pin")}</h4>
           </div>
           <OTPInput
             disabled={Boolean(error) || loading}
@@ -131,6 +136,8 @@ export const PinScreen = (props: PinScreenProps) => {
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      locale={locale}
+      isPreview={isPreview}
     />
   );
 };

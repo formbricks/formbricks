@@ -1,4 +1,5 @@
 import "server-only";
+import { TUserLocale } from "@formbricks/types/user";
 import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
@@ -52,7 +53,7 @@ export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
 export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
 export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
-export const SLACK_AUTH_URL = `https://slack.com/oauth/v2/authorize?client_id=${env.SLACK_CLIENT_ID}&scope=channels:read,chat:write,chat:write.public,chat:write.customize`;
+export const SLACK_AUTH_URL = `https://slack.com/oauth/v2/authorize?client_id=${env.SLACK_CLIENT_ID}&scope=channels:read,chat:write,chat:write.public,chat:write.customize,groups:read`;
 
 export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
@@ -152,7 +153,18 @@ export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
   allowedPerInterval: 30,
 };
-
+export const FORGET_PASSWORD_RATE_LIMIT = {
+  interval: 60 * 60, // 60 minutes
+  allowedPerInterval: 5, // Limit to 5 requests per hour
+};
+export const RESET_PASSWORD_RATE_LIMIT = {
+  interval: 60 * 60, // 60 minutes
+  allowedPerInterval: 5, // Limit to 5 requests per hour
+};
+export const VERIFY_EMAIL_RATE_LIMIT = {
+  interval: 60 * 60, // 60 minutes
+  allowedPerInterval: 10, // Limit to 10 requests per hour
+};
 export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 5,
@@ -177,6 +189,9 @@ export const STRIPE_API_VERSION = "2024-06-20";
 
 // Maximum number of attribute classes allowed:
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
+
+export const DEFAULT_LOCALE = "en-US";
+export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR"];
 
 // Billing constants
 

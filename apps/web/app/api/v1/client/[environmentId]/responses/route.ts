@@ -12,9 +12,9 @@ import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/res
 import { createResponse } from "./lib/response";
 
 interface Context {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -22,7 +22,10 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
-  const { environmentId } = context.params;
+  const params = await context.params;
+  const requestHeaders = await headers();
+
+  const { environmentId } = params;
   const environmentIdValidation = ZId.safeParse(environmentId);
 
   if (!environmentIdValidation.success) {
@@ -37,9 +40,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
 
   const agent = UAParser(request.headers.get("user-agent"));
   const country =
-    headers().get("CF-IPCountry") ||
-    headers().get("X-Vercel-IP-Country") ||
-    headers().get("CloudFront-Viewer-Country") ||
+    requestHeaders.get("CF-IPCountry") ||
+    requestHeaders.get("X-Vercel-IP-Country") ||
+    requestHeaders.get("CloudFront-Viewer-Country") ||
     undefined;
   const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 

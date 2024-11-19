@@ -199,7 +199,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
-      await page.getByRole("button", { name: "Finish" }).click();
+      await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
 
@@ -325,6 +325,9 @@ test.describe("Multi Language Survey Create", async () => {
       .fill(surveys.germanCreate.openTextQuestion.question);
     await page.getByLabel("Placeholder").click();
     await page.getByLabel("Placeholder").fill(surveys.germanCreate.openTextQuestion.placeholder);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
 
     // Fill Single select question in german
     await page.getByRole("main").getByText("Single-Select").click();
@@ -336,6 +339,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.singleSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").click();
     await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.singleSelectQuestion.options[1]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Multi select question in german
     await page.getByRole("main").getByText("Multi-Select").click();
@@ -350,6 +358,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.multiSelectQuestion.options[1]);
     await page.getByPlaceholder("Option 3").click();
     await page.getByPlaceholder("Option 3").fill(surveys.germanCreate.multiSelectQuestion.options[2]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Picture select question in german
     await page.getByRole("main").getByText("Picture Selection").click();
@@ -357,6 +370,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.pictureSelectQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Rating question in german
     await page.getByRole("main").getByText("Rating").click();
@@ -368,6 +386,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Not good").fill(surveys.germanCreate.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").click();
     await page.getByPlaceholder("Very satisfied").fill(surveys.germanCreate.ratingQuestion.highLabel);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill NPS question in german
     await page.getByRole("main").getByText("Net Promoter Score (NPS)").click();
@@ -377,6 +398,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Lower Label").fill(surveys.germanCreate.npsQuestion.lowLabel);
     await page.getByLabel("Upper Label").click();
     await page.getByLabel("Upper Label").fill(surveys.germanCreate.npsQuestion.highLabel);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Date question in german
     await page.getByRole("main").getByText("Date").click();
@@ -384,6 +408,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.dateQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill File upload question in german
     await page.getByRole("main").getByText("File Upload").click();
@@ -391,6 +420,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.fileUploadQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Matrix question in german
     await page.getByRole("main").getByText("Matrix").click();
@@ -410,6 +444,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator("#column-2").fill(surveys.germanCreate.matrix.columns[2]);
     await page.locator("#column-3").click();
     await page.locator("#column-3").fill(surveys.germanCreate.matrix.columns[3]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Address question in german
     await page.getByRole("main").getByText("Address").click();
@@ -417,6 +456,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.addressQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Ranking question in german
     await page.getByRole("main").getByText("Ranking").click();
@@ -432,6 +476,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 4").fill(surveys.germanCreate.ranking.choices[3]);
     await page.getByPlaceholder("Option 5").click();
     await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.ranking.choices[4]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Finish").click();
+    await page.getByPlaceholder("Finish").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Thank you card in german
     await page.getByText("Ending card").first().click();
@@ -698,7 +747,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page
         .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)
         .fill("This is my Address");
-      await page.getByRole("button", { name: "Finish" }).click();
+      await page.locator("#questionCard-13").getByRole("button", { name: "Next" }).click();
 
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });

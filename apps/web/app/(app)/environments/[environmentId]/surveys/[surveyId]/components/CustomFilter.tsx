@@ -6,12 +6,27 @@ import {
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
-import { differenceInDays, format, startOfDay, subDays } from "date-fns";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import {
+  differenceInDays,
+  endOfMonth,
+  endOfQuarter,
+  endOfYear,
+  format,
+  startOfDay,
+  startOfMonth,
+  startOfQuarter,
+  startOfYear,
+  subDays,
+  subMonths,
+  subQuarters,
+  subYears,
+} from "date-fns";
 import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Calendar } from "@formbricks/ui/components/Calendar";
@@ -24,35 +39,89 @@ import {
 import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
-  FROM = "from",
-  TO = "to",
+  FROM = "common.from",
+  TO = "common.to",
 }
 
 enum FilterDownload {
-  ALL = "all",
-  FILTER = "filter",
+  ALL = "common.all",
+  FILTER = "common.filter",
 }
 
 enum FilterDropDownLabels {
-  ALL_TIME = "All time",
-  LAST_7_DAYS = "Last 7 days",
-  LAST_30_DAYS = "Last 30 days",
-  CUSTOM_RANGE = "Custom range...",
+  ALL_TIME = "environments.surveys.summary.all_time",
+  LAST_7_DAYS = "environments.surveys.summary.last_7_days",
+  LAST_30_DAYS = "environments.surveys.summary.last_30_days",
+  THIS_MONTH = "environments.surveys.summary.this_month",
+  LAST_MONTH = "environments.surveys.summary.last_month",
+  LAST_6_MONTHS = "environments.surveys.summary.last_6_months",
+  THIS_QUARTER = "environments.surveys.summary.this_quarter",
+  LAST_QUARTER = "environments.surveys.summary.last_quarter",
+  THIS_YEAR = "environments.surveys.summary.this_year",
+  LAST_YEAR = "environments.surveys.summary.last_year",
+  CUSTOM_RANGE = "environments.surveys.summary.custom_range",
 }
 
 interface CustomFilterProps {
   survey: TSurvey;
 }
 
-const getDifferenceOfDays = (from, to) => {
-  const days = differenceInDays(to, from);
-  if (days === 7) {
-    return FilterDropDownLabels.LAST_7_DAYS;
-  } else if (days === 30) {
-    return FilterDropDownLabels.LAST_30_DAYS;
-  } else {
-    return FilterDropDownLabels.CUSTOM_RANGE;
-  }
+const getDateRangeLabel = (from: Date, to: Date): FilterDropDownLabels => {
+  const dateRanges = [
+    {
+      label: FilterDropDownLabels.LAST_7_DAYS,
+      matches: () => differenceInDays(to, from) === 7,
+    },
+    {
+      label: FilterDropDownLabels.LAST_30_DAYS,
+      matches: () => differenceInDays(to, from) === 30,
+    },
+    {
+      label: FilterDropDownLabels.THIS_MONTH,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfMonth(new Date()), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(getTodayDate(), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_MONTH,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 1)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfMonth(subMonths(getTodayDate(), 1)), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_6_MONTHS,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfMonth(subMonths(new Date(), 6)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfMonth(getTodayDate()), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.THIS_QUARTER,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfQuarter(new Date()), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfQuarter(getTodayDate()), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_QUARTER,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfQuarter(subQuarters(new Date(), 1)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfQuarter(subQuarters(getTodayDate(), 1)), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.THIS_YEAR,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfYear(new Date()), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfYear(getTodayDate()), "yyyy-MM-dd"),
+    },
+    {
+      label: FilterDropDownLabels.LAST_YEAR,
+      matches: () =>
+        format(from, "yyyy-MM-dd") === format(startOfYear(subYears(new Date(), 1)), "yyyy-MM-dd") &&
+        format(to, "yyyy-MM-dd") === format(endOfYear(subYears(getTodayDate(), 1)), "yyyy-MM-dd"),
+    },
+  ];
+
+  const matchedRange = dateRanges.find((range) => range.matches());
+  return matchedRange ? matchedRange.label : FilterDropDownLabels.CUSTOM_RANGE;
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
@@ -62,7 +131,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
-      ? getDifferenceOfDays(dateRange.from, dateRange.to)
+      ? getDateRangeLabel(dateRange.from, dateRange.to)
       : FilterDropDownLabels.ALL_TIME
   );
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
@@ -194,7 +263,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
-
+  const t = useTranslations();
   return (
     <>
       <div className="relative flex justify-between">
@@ -212,7 +281,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
                         dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
                       }`
-                    : filterRange}
+                    : t(filterRange)}
                 </span>
                 {isFilterDropDownOpen ? (
                   <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
@@ -227,21 +296,82 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setFilterRange(FilterDropDownLabels.ALL_TIME);
                   setDateRange({ from: undefined, to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">All time</p>
+                <p className="text-slate-700">{t(FilterDropDownLabels.ALL_TIME)}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_7_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">Last 7 days</p>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_7_DAYS)}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_30_DAYS);
                   setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
-                <p className="text-slate-700">Last 30 days</p>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_30_DAYS)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.THIS_MONTH);
+                  setDateRange({ from: startOfMonth(new Date()), to: getTodayDate() });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.THIS_MONTH)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_MONTH);
+                  setDateRange({
+                    from: startOfMonth(subMonths(new Date(), 1)),
+                    to: endOfMonth(subMonths(getTodayDate(), 1)),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_MONTH)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.THIS_QUARTER);
+                  setDateRange({ from: startOfQuarter(new Date()), to: endOfQuarter(getTodayDate()) });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.THIS_QUARTER)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_QUARTER);
+                  setDateRange({
+                    from: startOfQuarter(subQuarters(new Date(), 1)),
+                    to: endOfQuarter(subQuarters(getTodayDate(), 1)),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_QUARTER)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_6_MONTHS);
+                  setDateRange({
+                    from: startOfMonth(subMonths(new Date(), 6)),
+                    to: endOfMonth(getTodayDate()),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_6_MONTHS)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.THIS_YEAR);
+                  setDateRange({ from: startOfYear(new Date()), to: endOfYear(getTodayDate()) });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.THIS_YEAR)}</p>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.LAST_YEAR);
+                  setDateRange({
+                    from: startOfYear(subYears(new Date(), 1)),
+                    to: endOfYear(subYears(getTodayDate(), 1)),
+                  });
+                }}>
+                <p className="text-slate-700">{t(FilterDropDownLabels.LAST_YEAR)}</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -249,7 +379,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   setFilterRange(FilterDropDownLabels.CUSTOM_RANGE);
                   setSelectingDate(DateSelected.FROM);
                 }}>
-                <p className="text-sm text-slate-700 hover:ring-0">Custom range...</p>
+                <p className="text-sm text-slate-700 hover:ring-0">{t(FilterDropDownLabels.CUSTOM_RANGE)}</p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -261,7 +391,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
                 <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
                   <div className="hidden w-full items-center justify-between sm:flex">
-                    <span className="text-sm text-slate-700">Download</span>
+                    <span className="text-sm text-slate-700">{t("common.download")}</span>
                     <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
                   </div>
                   <DownloadIcon className="block h-4 sm:hidden" />
@@ -273,25 +403,27 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.ALL, "csv");
                   }}>
-                  <p className="text-slate-700">All responses (CSV)</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_csv")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.ALL, "xlsx");
                   }}>
-                  <p className="text-slate-700">All responses (Excel)</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.all_responses_excel")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "csv");
                   }}>
-                  <p className="text-slate-700">Current selection (CSV)</p>
+                  <p className="text-slate-700">{t("environments.surveys.summary.current_selection_csv")}</p>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                   }}>
-                  <p className="text-slate-700">Current selection (Excel)</p>
+                  <p className="text-slate-700">
+                    {t("environments.surveys.summary.current_selection_excel")}
+                  </p>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

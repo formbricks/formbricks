@@ -2,6 +2,7 @@
 
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui/components/Badge";
 import { Button } from "@formbricks/ui/components/Button";
@@ -12,23 +13,24 @@ import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup
 import { Switch } from "@formbricks/ui/components/Switch";
 
 const placements = [
-  { name: "Bottom Right", value: "bottomRight", disabled: false },
-  { name: "Top Right", value: "topRight", disabled: false },
-  { name: "Top Left", value: "topLeft", disabled: false },
-  { name: "Bottom Left", value: "bottomLeft", disabled: false },
-  { name: "Centered Modal", value: "center", disabled: false },
+  { name: "common.bottom_right", value: "bottomRight", disabled: false },
+  { name: "common.top_right", value: "topRight", disabled: false },
+  { name: "common.top_left", value: "topLeft", disabled: false },
+  { name: "common.bottom_left", value: "bottomLeft", disabled: false },
+  { name: "common.centered_modal", value: "center", disabled: false },
 ];
 
 const Loading = () => {
+  const t = useTranslations();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
-        title="Theme"
+        title={t("environments.product.look.theme")}
         className="max-w-7xl"
-        description="Create a style theme for all surveys. You can enable custom styling for each survey.">
+        description={t("environments.product.look.theme_settings_description")}>
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-4 pr-6">
@@ -36,9 +38,11 @@ const Loading = () => {
                 <div className="flex items-center gap-6">
                   <Switch />
                   <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      {t("environments.product.look.enable_custom_styling")}
+                    </h3>
                     <p className="text-xs text-slate-500">
-                      Allow users to override this theme in the editor.
+                      {t("environments.product.look.enable_custom_styling_description")}
                     </p>
                   </div>
                 </div>
@@ -47,28 +51,36 @@ const Loading = () => {
               <div className="flex flex-col gap-3 bg-slate-50 p-4">
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
-                    <h2 className="text-sm font-semibold text-slate-700">Form Styling</h2>
+                    <h2 className="text-sm font-semibold text-slate-700">
+                      {t("environments.surveys.edit.form_styling")}
+                    </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      Style the question texts, descriptions and input fields.
+                      {t("environments.surveys.edit.style_the_question_texts_descriptions_and_input_fields")}
                     </p>
                   </div>
                 </div>
 
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
-                    <h2 className="text-sm font-semibold text-slate-700">Card Styling</h2>
-                    <p className="mt-1 text-xs text-slate-500">Style the survey card.</p>
+                    <h2 className="text-sm font-semibold text-slate-700">
+                      {t("environments.surveys.edit.card_styling")}
+                    </h2>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {t("environments.surveys.edit.style_the_survey_card")}
+                    </p>
                   </div>
                 </div>
 
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-semibold text-slate-700">Background Styling</h2>
-                      <Badge text="Link Surveys" type="gray" size="normal" />
+                      <h2 className="text-sm font-semibold text-slate-700">
+                        {t("environments.surveys.edit.background_styling")}
+                      </h2>
+                      <Badge text={t("common.link_surveys")} type="gray" size="normal" />
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      Change the background to a color, image or animation.
+                      {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}
                     </p>
                   </div>
                 </div>
@@ -86,14 +98,14 @@ const Loading = () => {
                     <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
                   </div>
                   <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                    <p>Preview</p>
+                    <p>{t("common.preview")}</p>
 
-                    <div className="flex items-center pr-6">Restart</div>
+                    <div className="flex items-center pr-6">{t("common.restart")}</div>
                   </div>
                 </div>
 
                 <div className="grid h-[500px] place-items-center bg-white">
-                  <h1 className="text-xl font-semibold text-slate-700">Loading preview...</h1>
+                  <h1 className="text-xl font-semibold text-slate-700">{t("common.loading")}</h1>
                 </div>
               </div>
             </div>
@@ -104,7 +116,7 @@ const Loading = () => {
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
         <div className="w-full animate-pulse items-center">
           <div className="relative flex h-52 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
-            <p className="text-xl font-semibold text-slate-700">Loading...</p>
+            <p className="text-xl font-semibold text-slate-700">{t("common.loading")}</p>
           </div>
         </div>
       </SettingsCard>
@@ -128,7 +140,7 @@ const Loading = () => {
                     className={cn(
                       placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900"
                     )}>
-                    {placement.name}
+                    {t(placement.name)}
                   </Label>
                 </div>
               ))}
@@ -138,7 +150,7 @@ const Loading = () => {
             </div>
           </div>
           <Button className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
-            Loading
+            {t("common.loading")}
           </Button>
         </div>
       </SettingsCard>
@@ -149,7 +161,7 @@ const Loading = () => {
         <div className="w-full items-center">
           <div className="pointer-events-none flex cursor-not-allowed select-none items-center space-x-2">
             <Switch id="signature" checked={false} />
-            <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
+            <Label htmlFor="signature">{t("environments.product.look.show_powered_by_formbricks")}</Label>
           </div>
         </div>
       </SettingsCard>

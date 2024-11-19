@@ -1,12 +1,17 @@
 {
-  "extends": "@formbricks/config-typescript/react-library.json",
-  "include": [".", "../types/*.d.ts", "../lib/templates.ts"],
-  "exclude": ["build", "node_modules"],
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": ["ES2021.String"],
     "paths": {
       "@formbricks/ui/*": ["./*"]
-    },
-    "lib": ["ES2021.String"]
-  }
+    }
+  },
+  "exclude": ["build", "node_modules"],
+  "extends": "@formbricks/config-typescript/react-library.json",
+  "include": [
+    ".",
+    "../types/*.d.ts",
+    "../lib/templates.ts",
+    "../../apps/web/modules/analysis/components/RatingSmiley"
+  ]
 }

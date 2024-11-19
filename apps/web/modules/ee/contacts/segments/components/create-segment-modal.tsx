@@ -1,7 +1,12 @@
 "use client";
 
+<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/create-segment-modal.tsx
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+========
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+>>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/create-segment-modal.tsx
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -21,11 +26,16 @@ interface TCreateSegmentModalProps {
   contactAttributeKeys: TContactAttributeKey[];
 }
 
+<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/create-segment-modal.tsx
 export function CreateSegmentModal({
   environmentId,
   contactAttributeKeys,
   segments,
 }: TCreateSegmentModalProps) {
+========
+export function CreateSegmentModal({ environmentId, attributeClasses, segments }: TCreateSegmentModalProps) {
+  const t = useTranslations();
+>>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/create-segment-modal.tsx
   const router = useRouter();
   const initialSegmentState = {
     title: "",
@@ -64,13 +74,13 @@ export function CreateSegmentModal({
 
   const handleCreateSegment = async () => {
     if (!segment.title) {
-      toast.error("Title is required.");
+      toast.error(t("environments.segments.title_is_required"));
       return;
     }
 
     try {
       setIsCreatingSegment(true);
-      await createSegmentAction({
+      const createSegmentResponse = await createSegmentAction({
         title: segment.title,
         description: segment.description ?? "",
         isPrivate: segment.isPrivate,
@@ -79,15 +89,21 @@ export function CreateSegmentModal({
         surveyId: "",
       });
 
+      if (createSegmentResponse?.data) {
+        toast.success(t("environments.segments.segment_saved_successfully"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(createSegmentResponse);
+        toast.error(errorMessage);
+      }
+
       setIsCreatingSegment(false);
-      toast.success("Segment created successfully!");
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (!parsedFilters.success) {
-        toast.error("Invalid filters. Please check the filters and try again.");
+        toast.error(t("environments.segments.invalid_segment_filters"));
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
       setIsCreatingSegment(false);
       return;
@@ -122,7 +138,7 @@ export function CreateSegmentModal({
           setOpen(true);
         }}
         size="sm">
-        Create segment
+        {t("common.create_segment")}
       </Button>
 
       <Modal
@@ -142,9 +158,11 @@ export function CreateSegmentModal({
                   <UsersIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-medium">Create Segment</h3>
+                  <h3 className="text-base font-medium">{t("common.create_segment")}</h3>
                   <p className="text-sm text-slate-600">
-                    Segments help you target the users with the same characteristics easily.
+                    {t(
+                      "environments.segments.segments_help_you_target_users_with_same_characteristics_easily"
+                    )}
                   </p>
                 </div>
               </div>
@@ -154,7 +172,7 @@ export function CreateSegmentModal({
           <div className="flex flex-col overflow-auto rounded-lg bg-white p-6">
             <div className="flex w-full items-center gap-4">
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Title</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.title")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
                     className="w-auto"
@@ -164,13 +182,13 @@ export function CreateSegmentModal({
                         title: e.target.value,
                       }));
                     }}
-                    placeholder="Ex. Power Users"
+                    placeholder={t("environments.segments.ex_power_users")}
                   />
                 </div>
               </div>
 
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Description</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.description")}</label>
                 <Input
                   onChange={(e) => {
                     setSegment((prev) => ({
@@ -178,17 +196,19 @@ export function CreateSegmentModal({
                       description: e.target.value,
                     }));
                   }}
-                  placeholder="Ex. Fully activated recurring users"
+                  placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                 />
               </div>
             </div>
 
-            <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
+            <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
             <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment.filters.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
                   <FilterIcon className="h-5 w-5 text-slate-700" />
-                  <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
+                  <h3 className="text-sm font-medium text-slate-700">
+                    {t("environments.segments.add_your_first_filter_to_get_started")}
+                  </h3>
                 </div>
               )}
 
@@ -208,7 +228,7 @@ export function CreateSegmentModal({
                 }}
                 size="sm"
                 variant="secondary">
-                Add Filter
+                {t("common.add_filter")}
               </Button>
 
               <AddFilterModal
@@ -230,7 +250,7 @@ export function CreateSegmentModal({
                   }}
                   type="button"
                   variant="minimal">
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   disabled={isSaveDisabled}
@@ -239,7 +259,7 @@ export function CreateSegmentModal({
                     handleCreateSegment();
                   }}
                   type="submit">
-                  Create segment
+                  {t("common.create_segment")}
                 </Button>
               </div>
             </div>

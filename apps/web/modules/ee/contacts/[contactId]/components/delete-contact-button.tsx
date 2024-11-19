@@ -1,22 +1,23 @@
 "use client";
 
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
 interface DeletePersonButtonProps {
   environmentId: string;
   contactId: string;
-  isViewer: boolean;
+  isReadOnly: boolean;
 }
 
-export const DeleteContactButton = ({ environmentId, contactId, isViewer }: DeletePersonButtonProps) => {
+export const DeletePersonButton = ({ environmentId, contactId, isReadOnly }: DeletePersonButtonProps) => {
   const router = useRouter();
-
+  const t = useTranslations();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
 
@@ -28,7 +29,7 @@ export const DeleteContactButton = ({ environmentId, contactId, isViewer }: Dele
       if (deletePersonResponse?.data) {
         router.refresh();
         router.push(`/environments/${environmentId}/contacts`);
-        toast.success("Person deleted successfully.");
+        toast.success(t("environments.people.person_deleted_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(deletePersonResponse);
         toast.error(errorMessage);
@@ -41,7 +42,7 @@ export const DeleteContactButton = ({ environmentId, contactId, isViewer }: Dele
     }
   };
 
-  if (isViewer) {
+  if (isReadOnly) {
     return null;
   }
 

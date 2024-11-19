@@ -68,7 +68,7 @@ export const transformPrismaSegment = (segment: PrismaSegment): TSegment => {
 };
 
 export const getSegment = reactCache(
-  (segmentId: string): Promise<TSegment> =>
+  async (segmentId: string): Promise<TSegment> =>
     cache(
       async () => {
         validateInputs([segmentId, ZId]);

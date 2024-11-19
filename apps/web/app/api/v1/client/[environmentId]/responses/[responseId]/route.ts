@@ -12,8 +12,9 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { responseId: string } }
+  props: { params: Promise<{ responseId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   const { responseId } = params;
 
   if (!responseId) {

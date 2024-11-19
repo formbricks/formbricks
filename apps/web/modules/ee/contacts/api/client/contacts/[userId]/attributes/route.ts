@@ -14,15 +14,16 @@ export const OPTIONS = async () => {
 
 export const PUT = async (
   req: NextRequest,
-  context: { params: { environmentId: string; userId: string } }
+  context: { params: Promise<{ environmentId: string; userId: string }> }
 ) => {
   try {
-    const environmentId = context.params.environmentId;
+    const params = await context.params;
+    const environmentId = params.environmentId;
     if (!environmentId) {
       return responses.badRequestResponse("environmentId is required", { environmentId }, true);
     }
 
-    const userId = context.params.userId;
+    const userId = params.userId;
     if (!userId) {
       return responses.badRequestResponse("userId is required", { userId }, true);
     }
