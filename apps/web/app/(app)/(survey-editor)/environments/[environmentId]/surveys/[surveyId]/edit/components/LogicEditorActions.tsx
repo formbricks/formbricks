@@ -4,6 +4,7 @@ import {
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
+  hasJumpToQuestionAction,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
@@ -60,7 +61,11 @@ export function LogicEditorActions({
         actionsClone.splice(actionIdx, 1);
         break;
       case "addBelow":
-        actionsClone.splice(actionIdx + 1, 0, { id: createId(), objective: "jumpToQuestion", target: "" });
+        actionsClone.splice(actionIdx + 1, 0, {
+          id: createId(),
+          objective: hasJumpToQuestionAction(logicItem.actions) ? "requireAnswer" : "jumpToQuestion",
+          target: "",
+        });
         break;
       case "duplicate":
         actionsClone.splice(actionIdx + 1, 0, { ...actionsClone[actionIdx], id: createId() });
@@ -88,6 +93,11 @@ export function LogicEditorActions({
     handleActionsChange("update", actionIdx, actionBody);
   };
 
+  const filteredObjectiveOptions = actionObjectiveOptions.filter(
+    (option) => option.value !== "jumpToQuestion"
+  );
+  const jumpToQuestionActionIdx = actions.findIndex((action) => action.objective === "jumpToQuestion");
+
   return (
     <div className="flex grow gap-2">
       <CornerDownRightIcon className="mt-3 h-4 w-4 shrink-0" />
@@ -102,7 +112,11 @@ export function LogicEditorActions({
                 id={`action-${idx}-objective`}
                 key={`objective-${action.id}`}
                 showSearch={false}
-                options={actionObjectiveOptions}
+                options={
+                  jumpToQuestionActionIdx === -1 || idx === jumpToQuestionActionIdx
+                    ? actionObjectiveOptions
+                    : filteredObjectiveOptions
+                }
                 value={action.objective}
                 onChangeValue={(val: TActionObjective) => {
                   handleObjectiveChange(idx, val);
