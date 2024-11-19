@@ -1,8 +1,8 @@
 import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 import { Testimonial } from "@/app/(auth)/auth/components/Testimonial";
 import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,

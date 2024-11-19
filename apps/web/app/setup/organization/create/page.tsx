@@ -1,9 +1,9 @@
 import { RemovedFromOrganization } from "@/app/setup/organization/create/components/RemovedFromOrganization";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";

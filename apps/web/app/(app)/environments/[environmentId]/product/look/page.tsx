@@ -1,15 +1,15 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { EditLogo } from "@/app/(app)/environments/[environmentId]/product/look/components/EditLogo";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import {
   getMultiLanguagePermission,
   getRemoveInAppBrandingPermission,
   getRemoveLinkBrandingPermission,
   getRoleManagementPermission,
-} from "@formbricks/ee/lib/service";
+} from "@/modules/ee/license-check/lib/utils";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { cn } from "@formbricks/lib/cn";
 import { DEFAULT_LOCALE, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";

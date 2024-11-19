@@ -1,8 +1,11 @@
+import {
+  getAdvancedTargetingPermission,
+  getMultiLanguagePermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";

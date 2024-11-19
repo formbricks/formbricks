@@ -7,10 +7,10 @@ import {
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
