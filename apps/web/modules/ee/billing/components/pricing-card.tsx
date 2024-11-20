@@ -3,9 +3,9 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
-import { Badge } from "../Badge";
-import { Button } from "../Button";
-import { ConfirmationModal } from "../ConfirmationModal";
+import { Badge } from "@formbricks/ui/components/Badge";
+import { Button } from "@formbricks/ui/components/Button";
+import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 
 interface PricingCardProps {
   plan: {
@@ -139,7 +139,11 @@ export const PricingCard = ({
                 plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
-              {planPeriod === "monthly" ? t(plan.price.monthly) : t(plan.price.yearly)}
+              {plan.id !== productFeatureKeys.ENTERPRISE
+                ? planPeriod === "monthly"
+                  ? plan.price.monthly
+                  : plan.price.yearly
+                : t(plan.price.monthly)}
             </p>
             {plan.name !== "Enterprise" && (
               <div className="text-sm leading-5">
