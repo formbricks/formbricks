@@ -1,11 +1,11 @@
 "use server";
 
-import { createCustomerPortalSession } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createCustomerPortalSession";
-import { createSubscription } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/createSubscription";
-import { isSubscriptionCancelled } from "@/app/(ee)/(billing)/api/billing/stripe-webhook/lib/isSubscriptionCancelled";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
+import { createSubscription } from "@/modules/ee/billing/api/lib/create-subscription";
+import { isSubscriptionCancelled } from "@/modules/ee/billing/api/lib/is-subscription-cancelled";
 import { z } from "zod";
 import { STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
