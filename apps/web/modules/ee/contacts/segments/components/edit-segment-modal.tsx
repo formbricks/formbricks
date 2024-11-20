@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
-import { SegmentActivityTab } from "./SegmentActivityTab";
+import { SegmentActivityTab } from "./segment-activity-tab";
 
 interface EditSegmentModalProps {
   environmentId: string;
@@ -16,7 +16,6 @@ interface EditSegmentModalProps {
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isAdvancedTargetingAllowed: boolean;
-  isFormbricksCloud: boolean;
   isReadOnly: boolean;
 }
 
@@ -28,7 +27,6 @@ export const EditSegmentModal = ({
   contactAttributeKeys,
   segments,
   isAdvancedTargetingAllowed,
-  isFormbricksCloud,
   isReadOnly,
 }: EditSegmentModalProps) => {
   const t = useTranslations();

@@ -6,49 +6,35 @@ import React from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
-import { deleteContactAction, getContactAttributeKeysAction, getContactsAction } from "../actions";
+import { deleteContactAction, getContactsAction } from "../actions";
 import { TContactTableData, TContactWithAttributes } from "../types/contact";
 import { ContactsTable } from "./contacts-table";
 
 interface ContactDataViewProps {
   environment: TEnvironment;
+  contactAttributeKeys: TContactAttributeKey[];
   itemsPerPage: number;
+  isReadOnly: boolean;
 }
 
-export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewProps) => {
+export const ContactDataView = ({
+  environment,
+  itemsPerPage,
+  contactAttributeKeys,
+  isReadOnly,
+}: ContactDataViewProps) => {
   const [contacts, setContacts] = useState<TContactWithAttributes[]>([]);
   const [isContactsLoaded, setIsContactsLoaded] = useState<boolean>(false);
-  const [isAttributesLoaded, setIsAttributesLoaded] = useState<boolean>(false);
+  // const [isAttributesLoaded, setIsAttributesLoaded] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
-  const [environmentAttributes, setEnvironmentAttributes] = useState<TContactAttributeKey[]>([]);
 
-  // Fetch environment attributes
-  useEffect(() => {
-    const fetchAttributes = async () => {
-      setIsAttributesLoaded(false);
-      try {
-        const environmentAttributesResponse = await getContactAttributeKeysAction({
-          environmentId: environment.id,
-        });
-        const attrs = environmentAttributesResponse?.data || [];
-
-        const restAttributes = attrs.filter(
-          (attr) => !["userId", "email", "firstName", "lastName"].includes(attr.key)
-        );
-
-        setEnvironmentAttributes(restAttributes);
-      } catch (err) {
-        console.error("Error fetching environment attributes:", err);
-        setEnvironmentAttributes([]);
-      } finally {
-        setIsAttributesLoaded(true);
-      }
-    };
-
-    fetchAttributes();
-  }, [environment.id]);
+  const environmentAttributes = useMemo(() => {
+    return contactAttributeKeys.filter(
+      (attr) => !["userId", "email", "firstName", "lastName"].includes(attr.key)
+    );
+  }, [contactAttributeKeys]);
 
   // Fetch contacts
   useEffect(() => {
@@ -132,7 +118,7 @@ export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewPr
   }, [contacts, environmentAttributes]);
 
   // Show a loading indicator until both contacts and attributes are loaded
-  if (!isContactsLoaded || !isAttributesLoaded) {
+  if (!isContactsLoaded) {
     return <LoadingSpinner />;
   }
 
@@ -141,11 +127,12 @@ export const ContactDataView = ({ environment, itemsPerPage }: ContactDataViewPr
       data={contactsTableData}
       fetchNextPage={fetchNextPage}
       hasMore={hasMore}
-      isDataLoaded={isContactsLoaded && isAttributesLoaded}
+      isDataLoaded={isContactsLoaded}
       deletePersons={deletePersons}
       environmentId={environment.id}
       searchValue={searchValue}
       setSearchValue={setSearchValue}
+      isReadOnly={isReadOnly}
     />
   );
 };

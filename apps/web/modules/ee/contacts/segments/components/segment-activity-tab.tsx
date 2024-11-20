@@ -25,7 +25,11 @@ export const SegmentActivityTab = ({ currentSegment }: SegmentActivityTabProps) 
           <Label className="text-slate-500">{t("common.active_surveys")}</Label>
           {!activeSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {activeSurveys?.map((survey) => <p className="text-sm text-slate-900">{survey}</p>)}
+          {activeSurveys?.map((survey, index) => (
+            <p className="text-sm text-slate-900" key={index}>
+              {survey}
+            </p>
+          ))}
         </div>
         <div>
           <Label className="text-slate-500">{t("common.inactive_surveys")}</Label>

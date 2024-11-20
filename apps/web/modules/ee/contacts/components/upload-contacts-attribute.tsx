@@ -66,10 +66,6 @@ export const UploadContactsAttributes = ({
     if (matchingTag) {
       setCurrentKey(matchingTag);
     } else {
-      console.log({
-        label: attributeKeyMap[mappedValue] || mappedValue,
-        value: mappedValue,
-      });
       // If no matching tag found, create one with the mapped value
       setCurrentKey({
         label: attributeKeyMap[mappedValue] || mappedValue,

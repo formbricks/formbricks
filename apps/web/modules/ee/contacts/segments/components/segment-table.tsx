@@ -1,7 +1,7 @@
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { useTranslations } from "next-intl";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
-import { SegmentTableDataRowContainer } from "./SegmentTableDataRowContainer";
+import { SegmentTableDataRowContainer } from "./segment-table-data-row-container";
 
 type TSegmentTableProps = {
   segments: TSegment[];

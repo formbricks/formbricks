@@ -1,7 +1,7 @@
 "use client";
 
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -9,13 +9,13 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
-interface DeletePersonButtonProps {
+interface DeleteContactButtonProps {
   environmentId: string;
   contactId: string;
   isReadOnly: boolean;
 }
 
-export const DeletePersonButton = ({ environmentId, contactId, isReadOnly }: DeletePersonButtonProps) => {
+export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: DeleteContactButtonProps) => {
   const router = useRouter();
   const t = useTranslations();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

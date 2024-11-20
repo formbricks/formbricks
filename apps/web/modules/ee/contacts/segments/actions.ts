@@ -1,5 +1,8 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId, getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import {
   cloneSegment,
   createSegment,
@@ -8,13 +11,6 @@ import {
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import {
-  getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromSegmentId,
-  getOrganizationIdFromSurveyId,
-} from "@formbricks/lib/organization/utils";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
@@ -22,10 +18,15 @@ import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@form
 export const createSegmentAction = authenticatedActionClient
   .schema(ZSegmentCreateInput)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["segment", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     const parsedFilters = ZSegmentFilters.safeParse(parsedInput.filters);
@@ -40,6 +41,7 @@ export const createSegmentAction = authenticatedActionClient
   });
 
 const ZUpdateSegmentAction = z.object({
+  environmentId: ZId,
   segmentId: ZId,
   data: ZSegmentUpdateInput,
 });
@@ -47,12 +49,16 @@ const ZUpdateSegmentAction = z.object({
 export const updateSegmentAction = authenticatedActionClient
   .schema(ZUpdateSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      data: parsedInput.data,
-      schema: ZSegmentUpdateInput,
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "update"],
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     const { filters } = parsedInput.data;
@@ -77,16 +83,15 @@ const ZLoadNewSegmentAction = z.object({
 export const loadNewSegmentAction = authenticatedActionClient
   .schema(ZLoadNewSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "update"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     return await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
@@ -100,32 +105,37 @@ const ZCloneSegmentAction = z.object({
 export const cloneSegmentAction = authenticatedActionClient
   .schema(ZCloneSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["segment", "create"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     return await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
   });
 
 const ZDeleteSegmentAction = z.object({
+  environmentId: ZId,
   segmentId: ZId,
 });
 
 export const deleteSegmentAction = authenticatedActionClient
   .schema(ZDeleteSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSegmentId(parsedInput.segmentId),
-      rules: ["segment", "delete"],
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     return await deleteSegment(parsedInput.segmentId);
@@ -138,10 +148,15 @@ const ZResetSegmentFiltersAction = z.object({
 export const resetSegmentFiltersAction = authenticatedActionClient
   .schema(ZResetSegmentFiltersAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["survey", "update"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     return await resetSegmentInSurvey(parsedInput.surveyId);

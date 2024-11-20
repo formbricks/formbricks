@@ -5,14 +5,13 @@ import { UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
-import { EditSegmentModal } from "./EditSegmentModal";
+import { EditSegmentModal } from "./edit-segment-modal";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
   isAdvancedTargetingAllowed: boolean;
-  isFormbricksCloud: boolean;
   isReadOnly: boolean;
 };
 
@@ -21,7 +20,6 @@ export const SegmentTableDataRow = ({
   contactAttributeKeys,
   segments,
   isAdvancedTargetingAllowed,
-  isFormbricksCloud,
   isReadOnly,
 }: TSegmentTableDataRowProps) => {
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
@@ -67,7 +65,6 @@ export const SegmentTableDataRow = ({
         contactAttributeKeys={contactAttributeKeys}
         segments={segments}
         isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
-        isFormbricksCloud={isFormbricksCloud}
         isReadOnly={isReadOnly}
       />
     </>

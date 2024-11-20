@@ -74,6 +74,7 @@ export function SegmentSettings({
     try {
       setIsUpdatingSegment(true);
       await updateSegmentAction({
+        environmentId,
         segmentId: segment.id,
         data: {
           title: segment.title,
@@ -104,7 +105,7 @@ export function SegmentSettings({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      await deleteSegmentAction({ segmentId: segment.id });
+      await deleteSegmentAction({ environmentId, segmentId: segment.id });
 
       setIsDeletingSegment(false);
       toast.success(t("environments.segments.segment_deleted_successfully"));

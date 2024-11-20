@@ -1,8 +1,7 @@
 import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
-import { SegmentTableDataRow } from "./SegmentTableDataRow";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { SegmentTableDataRow } from "./segment-table-data-row";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TSegment;
@@ -39,7 +38,6 @@ export const SegmentTableDataRowContainer = async ({
       segments={segments}
       contactAttributeKeys={contactAttributeKeys}
       isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
-      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isReadOnly={isReadOnly}
     />
   );

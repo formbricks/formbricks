@@ -1,10 +1,7 @@
 "use client";
 
-<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/create-segment-modal.tsx
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-========
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
->>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/create-segment-modal.tsx
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -26,16 +23,12 @@ interface TCreateSegmentModalProps {
   contactAttributeKeys: TContactAttributeKey[];
 }
 
-<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/create-segment-modal.tsx
 export function CreateSegmentModal({
   environmentId,
   contactAttributeKeys,
   segments,
 }: TCreateSegmentModalProps) {
-========
-export function CreateSegmentModal({ environmentId, attributeClasses, segments }: TCreateSegmentModalProps) {
   const t = useTranslations();
->>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/create-segment-modal.tsx
   const router = useRouter();
   const initialSegmentState = {
     title: "",

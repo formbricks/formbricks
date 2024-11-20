@@ -6,9 +6,9 @@ import {
   getContactAttributes,
 } from "@/modules/ee/contacts/lib/contacts";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
-import { getServerSession } from "next-auth";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -21,21 +21,31 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { ResponseSection } from "./components/response-section";
 
-export const SingleContactPage = async (props: {params: {environmentId: string; contactId: string}}) => {
+export const SingleContactPage = async (props: {
+  params: Promise<{ environmentId: string; contactId: string }>;
+}) => {
   const params = await props.params;
   const t = await getTranslations();
 
-  const [environment, environmentTags, product, session, organization, contact, contactAttributeKeys, attributes] =
-    await Promise.all([
-      getEnvironment(params.environmentId),
-      getTagsByEnvironmentId(params.environmentId),
-      getProductByEnvironmentId(params.environmentId),
-      getServerSession(authOptions),
-      getOrganizationByEnvironmentId(params.environmentId),
-      getContact(params.contactId),
-      getContactAttributeKeys(params.environmentId),
-      getContactAttributes(params.contactId),
-    ]);
+  const [
+    environment,
+    environmentTags,
+    product,
+    session,
+    organization,
+    contact,
+    contactAttributeKeys,
+    attributes,
+  ] = await Promise.all([
+    getEnvironment(params.environmentId),
+    getTagsByEnvironmentId(params.environmentId),
+    getProductByEnvironmentId(params.environmentId),
+    getServerSession(authOptions),
+    getOrganizationByEnvironmentId(params.environmentId),
+    getContact(params.contactId),
+    getContactAttributeKeys(params.environmentId),
+    getContactAttributes(params.contactId),
+  ]);
 
   if (!product) {
     throw new Error(t("common.product_not_found"));
@@ -67,7 +77,11 @@ export const SingleContactPage = async (props: {params: {environmentId: string; 
 
   const getDeletePersonButton = () => {
     return (
-      <DeleteContactButton environmentId={environment.id} contactId={params.contactId} isReadOnly={isReadOnly} />
+      <DeleteContactButton
+        environmentId={environment.id}
+        contactId={params.contactId}
+        isReadOnly={isReadOnly}
+      />
     );
   };
 
