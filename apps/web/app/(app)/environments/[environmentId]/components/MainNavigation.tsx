@@ -12,7 +12,6 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
-  GaugeIcon,
   GlobeIcon,
   GlobeLockIcon,
   KeyIcon,
@@ -70,7 +69,6 @@ interface NavigationProps {
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
-  isAIEnabled?: boolean;
 }
 
 export const MainNavigation = ({
@@ -82,7 +80,6 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   membershipRole,
   isFormbricksCloud,
-  isAIEnabled,
   isContactsEnabled,
 }: NavigationProps) => {
   const router = useRouter();
@@ -165,13 +162,6 @@ export const MainNavigation = ({
 
   const mainNavigation = useMemo(
     () => [
-      {
-        name: t("common.experience"),
-        href: `/environments/${environment.id}/experience`,
-        icon: GaugeIcon,
-        isActive: pathname?.includes("/experience"),
-        isPaywall: !isAIEnabled,
-      },
       {
         name: t("common.surveys"),
         href: `/environments/${environment.id}/surveys`,

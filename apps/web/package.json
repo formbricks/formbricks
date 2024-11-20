@@ -12,13 +12,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/azure": "0.0.52",
     "@dnd-kit/core": "6.1.0",
     "@dnd-kit/modifiers": "7.0.0",
     "@dnd-kit/sortable": "8.0.0",
     "@dnd-kit/utilities": "3.2.2",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
-    "@formbricks/ee": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/lib": "workspace:*",
@@ -39,6 +39,7 @@
     "@vercel/og": "0.6.3",
     "@vercel/otel": "1.10.0",
     "@vercel/speed-insights": "1.0.12",
+    "ai": "3.4.33",
     "bcryptjs": "2.4.3",
     "csv-parse": "5.5.6",
     "dotenv": "16.4.5",
@@ -46,6 +47,7 @@
     "file-loader": "6.2.0",
     "framer-motion": "11.11.8",
     "googleapis": "144.0.0",
+    "https-proxy-agent": "7.0.5",
     "jiti": "2.3.3",
     "jsonwebtoken": "9.0.2",
     "langfuse-vercel": "3.27.0",
@@ -68,6 +70,7 @@
     "react-icons": "5.3.0",
     "redis": "4.7.0",
     "sharp": "0.33.5",
+    "stripe": "16.7.0",
     "ua-parser-js": "1.0.39",
     "webpack": "5.95.0",
     "xlsx": "0.18.5"

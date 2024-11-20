@@ -59,7 +59,8 @@
     "data-migration:xm-attribute-removal": "ts-node ./data-migrations/20241024123456_xm_attribute_removal/data-migration.ts",
     "data-migration:xm-user-identification": "pnpm data-migration:xm && pnpm data-migration:xm-segments && pnpm data-migration:xm-attribute-removal",
     "data-migration:add-teams": "ts-node ./data-migrations/20241107161932_add_teams/data-migration.ts",
-    "data-migration:v2.7": "pnpm data-migration:add-teams"
+    "data-migration:v2.7": "pnpm data-migration:add-teams",
+    "data-migration:update-org-limits": "ts-node ./data-migrations/20241118123456_update_org_limits/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "5.20.0",

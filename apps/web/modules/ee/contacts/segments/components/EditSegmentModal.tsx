@@ -1,9 +1,9 @@
 "use client";
 
 import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { SegmentActivityTab } from "./SegmentActivityTab";
@@ -33,7 +33,7 @@ export const EditSegmentModal = ({
 }: EditSegmentModalProps) => {
   const t = useTranslations();
   const SettingsTab = () => {
-    if (isAdvancedTargetingAllowed || false) {
+    if (isAdvancedTargetingAllowed) {
       return (
         <SegmentSettings
           contactAttributeKeys={contactAttributeKeys}
