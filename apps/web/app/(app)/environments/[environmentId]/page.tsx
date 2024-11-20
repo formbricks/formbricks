@@ -1,4 +1,3 @@
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -26,12 +25,6 @@ const Page = async (props) => {
 
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
-  }
-
-  const isAIEnabled = await getIsAIEnabled(organization);
-
-  if (isAIEnabled) {
-    return redirect(`/environments/${params.environmentId}/experience`);
   }
 
   return redirect(`/environments/${params.environmentId}/surveys`);
