@@ -1,7 +1,7 @@
 import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
-import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import {
   TOrganizationMember,
   TOrganizationProduct,
@@ -17,7 +17,7 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { organizationCache } from "@formbricks/lib/organization/cache";
-import { productCache } from "@formbricks/lib/product/cache";
+import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
@@ -297,7 +297,7 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
       organizationId: team.organizationId,
     });
 
-    productCache.revalidate({ userId });
+    projectCache.revalidate({ userId });
 
     for (const productTeam of team.productTeams) {
       teamCache.revalidate({ productId: productTeam.productId });
@@ -420,14 +420,14 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
       });
 
       teamCache.revalidate({ userId });
-      productCache.revalidate({ userId });
+      projectCache.revalidate({ userId });
     }
 
     for (const product of team.organization.products) {
       teamCache.revalidate({ productId: product.id });
     }
 
-    productCache.revalidate({ organizationId: team.organizationId });
+    projectCache.revalidate({ organizationId: team.organizationId });
     teamCache.revalidate({ id: teamId, organizationId: team.organizationId });
 
     return true;
@@ -513,7 +513,7 @@ export const updateTeamProductPermission = async (
     });
 
     teamCache.revalidate({ id: teamId, productId });
-    productCache.revalidate({ id: productId });
+    projectCache.revalidate({ id: productId });
 
     return true;
   } catch (error) {
@@ -569,7 +569,7 @@ export const removeTeamProduct = async (teamId: string, productId: string): Prom
     });
 
     teamCache.revalidate({ id: teamId, productId });
-    productCache.revalidate({ id: productId, organizationId: product.organizationId });
+    projectCache.revalidate({ id: productId, organizationId: product.organizationId });
 
     for (const environment of product.environments) {
       organizationCache.revalidate({ environmentId: environment.id });
@@ -617,7 +617,7 @@ export const getProductsByOrganizationId = reactCache(
       },
       [`getProductsByOrganizationId-${organizationId}`],
       {
-        tags: [productCache.tag.byOrganizationId(organizationId)],
+        tags: [projectCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );
@@ -679,7 +679,7 @@ export const addTeamProducts = async (teamId: string, productIds: string[]): Pro
       });
 
       teamCache.revalidate({ id: teamId, productId });
-      productCache.revalidate({ id: productId, organizationId: team.organizationId });
+      projectCache.revalidate({ id: productId, organizationId: team.organizationId });
 
       for (const environment of product.environments) {
         organizationCache.revalidate({ environmentId: environment.id });

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
 import { ZId } from "./common";
-import { ZProduct } from "./product";
+import { ZProject } from "./project";
 import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurvey } from "./surveys/types";
@@ -36,7 +36,7 @@ export const ZJsAppStateSync = z.object({
   userId: z.string().optional(),
   surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProduct,
+  product: ZProject,
   language: z.string().optional(),
 });
 
@@ -46,7 +46,7 @@ export const ZJsAppState = z.object({
   attributes: ZAttributes,
   surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProduct,
+  product: ZProject,
 });
 
 export type TJsAppState = z.infer<typeof ZJsAppState>;
@@ -89,7 +89,7 @@ export type TJsRNSyncParams = z.infer<typeof ZJsRNSyncParams>;
 export const ZJsWebsiteState = z.object({
   surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProduct,
+  product: ZProject,
   displays: z.array(ZJSWebsiteStateDisplay),
   attributes: ZAttributes.optional(),
 });
@@ -101,7 +101,7 @@ export const ZJsEnvironmentState = z.object({
   data: z.object({
     surveys: z.array(ZSurvey),
     actionClasses: z.array(ZActionClass),
-    product: ZProduct,
+    project: ZProject,
   }),
 });
 

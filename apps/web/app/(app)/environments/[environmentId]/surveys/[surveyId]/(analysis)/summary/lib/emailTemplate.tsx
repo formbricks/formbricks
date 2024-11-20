@@ -1,6 +1,6 @@
 import { getPreviewEmailTemplateHtml } from "@/modules/email/components/preview-email-template";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getStyling } from "@formbricks/lib/utils/styling";
 
@@ -9,7 +9,7 @@ export const getEmailTemplateHtml = async (surveyId: string) => {
   if (!survey) {
     throw new Error("Survey not found");
   }
-  const product = await getProductByEnvironmentId(survey.environmentId);
+  const product = await getProjectByEnvironmentId(survey.environmentId);
   if (!product) {
     throw new Error("Product not found");
   }

@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct, TProductStyling } from "@formbricks/types/product";
+import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
 import { Button } from "@formbricks/ui/components/Button";
@@ -24,7 +24,7 @@ import { FormStylingSettings } from "./FormStylingSettings";
 
 interface StylingViewProps {
   environment: TEnvironment;
-  product: TProduct;
+  product: TProject;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
@@ -184,7 +184,7 @@ export const StylingView = ({
             open={formStylingOpen}
             setOpen={setFormStylingOpen}
             disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+            form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
           />
 
           <CardStylingSettings
@@ -192,8 +192,8 @@ export const StylingView = ({
             setOpen={setCardStylingOpen}
             surveyType={localSurvey.type}
             disabled={!overwriteThemeStyling}
-            product={product}
-            form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+            project={product}
+            form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
           />
 
           {localSurvey.type === "link" && (
@@ -204,7 +204,7 @@ export const StylingView = ({
               colors={colors}
               disabled={!overwriteThemeStyling}
               isUnsplashConfigured={isUnsplashConfigured}
-              form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+              form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
             />
           )}
 

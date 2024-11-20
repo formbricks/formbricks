@@ -2,8 +2,8 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromProductId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
-import { ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { getOrganizationIdFromProjectId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import {
   addTeamMembers,
   addTeamProducts,
@@ -167,7 +167,7 @@ export const updateTeamProductPermissionAction = authenticatedActionClient
   .schema(ZUpdateTeamProductPermissionAction)
   .action(async ({ ctx, parsedInput }) => {
     const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
-    const productOrganizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+    const productOrganizationId = await getOrganizationIdFromProjectId(parsedInput.productId);
 
     if (teamOrganizationId !== productOrganizationId) {
       throw new Error("Team and Product must belong to the same organization");
@@ -200,7 +200,7 @@ export const removeTeamProductAction = authenticatedActionClient
   .schema(ZRemoveTeamProductAction)
   .action(async ({ ctx, parsedInput }) => {
     const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
-    const productOrganizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+    const productOrganizationId = await getOrganizationIdFromProjectId(parsedInput.productId);
 
     if (teamOrganizationId !== productOrganizationId) {
       throw new Error("Team and Product must belong to the same organization");

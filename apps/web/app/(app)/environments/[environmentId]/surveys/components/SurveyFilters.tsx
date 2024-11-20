@@ -6,7 +6,7 @@ import { ChevronDownIcon, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDebounce } from "react-use";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -20,7 +20,7 @@ import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
 interface SurveyFilterProps {
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
-  currentProductChannel: TProductConfigChannel;
+  currentProductChannel: TProjectConfigChannel;
 }
 
 const creatorOptions: TFilterOption[] = [

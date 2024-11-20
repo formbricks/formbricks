@@ -1,7 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import type { Session } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -14,7 +14,7 @@ import {
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
 import { LimitsReachedBanner } from "@formbricks/ui/components/LimitsReachedBanner";
@@ -48,7 +48,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const [products, environments] = await Promise.all([
-    getUserProducts(user.id, organization.id),
+    getUserProjects(user.id, organization.id),
     getEnvironments(environment.productId),
   ]);
 
@@ -62,7 +62,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
+  const productPermission = await getProjectPermissionByUserId(session.user.id, environment.productId);
 
   if (isMember && !productPermission) {
     throw new Error(t("common.product_permission_not_found"));
@@ -105,7 +105,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           environment={environment}
           organization={organization}
           organizations={organizations}
-          products={products}
+          projects={products}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
@@ -116,7 +116,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
             environment={environment}
             environments={environments}
             membershipRole={membershipRole}
-            productPermission={productPermission}
+            projectPermission={productPermission}
           />
           <div className="mt-14">{children}</div>
         </div>

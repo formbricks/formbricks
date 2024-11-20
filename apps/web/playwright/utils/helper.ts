@@ -2,7 +2,7 @@ import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/ut
 import { expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 
 export const signUpAndLogin = async (
   page: Page,
@@ -77,7 +77,7 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
 
 export const finishOnboarding = async (
   page: Page,
-  ProductChannel: TProductConfigChannel = "website"
+  ProductChannel: TProjectConfigChannel = "website"
 ): Promise<void> => {
   await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/mode/);
 

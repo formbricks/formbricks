@@ -8,14 +8,14 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { OTPInput } from "@formbricks/ui/components/OTPInput";
 
 interface PinScreenProps {
   surveyId: string;
-  product: TProduct;
+  product: TProject;
   userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;

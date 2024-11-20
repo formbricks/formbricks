@@ -2,7 +2,7 @@ import { PlusCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TTemplate } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/components/Button";
 import { replacePresetPlaceholders } from "../lib/utils";
@@ -11,7 +11,7 @@ interface StartFromScratchTemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick: (template: TTemplate) => void;
-  product: TProduct;
+  project: TProject;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   noPreview?: boolean;
@@ -22,7 +22,7 @@ export const StartFromScratchTemplate = ({
   activeTemplate,
   setActiveTemplate,
   onTemplateClick,
-  product,
+  project,
   createSurvey,
   loading,
   noPreview,
@@ -38,7 +38,7 @@ export const StartFromScratchTemplate = ({
           createSurvey(customSurvey);
           return;
         }
-        const newTemplate = replacePresetPlaceholders(customSurvey, product);
+        const newTemplate = replacePresetPlaceholders(customSurvey, project);
         onTemplateClick(newTemplate);
         setActiveTemplate(newTemplate);
       }}

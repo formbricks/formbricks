@@ -4,7 +4,7 @@ import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { getIsAIEnabled } from "@/app/lib/utils";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -21,7 +21,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -54,7 +54,7 @@ const Page = async (props) => {
     throw new Error(t("common.survey_not_found"));
   }
 
-  const product = await getProductByEnvironmentId(environment.id);
+  const product = await getProjectByEnvironmentId(environment.id);
   if (!product) {
     throw new Error(t("common.product_not_found"));
   }
@@ -73,7 +73,7 @@ const Page = async (props) => {
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const { isMember } = getAccessFlags(currentUserMembership?.role);
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 
   const isReadOnly = isMember && hasReadAccess;

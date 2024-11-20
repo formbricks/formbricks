@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -29,7 +29,7 @@ interface WhenToSendCardProps {
   environmentId: string;
   propActionClasses: TActionClass[];
   membershipRole?: TOrganizationRole;
-  productPermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
 }
 
 export const WhenToSendCard = ({
@@ -38,7 +38,7 @@ export const WhenToSendCard = ({
   setLocalSurvey,
   propActionClasses,
   membershipRole,
-  productPermission,
+  projectPermission,
 }: WhenToSendCardProps) => {
   const t = useTranslations();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
@@ -47,7 +47,7 @@ export const WhenToSendCard = ({
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
   const { isMember } = getAccessFlags(membershipRole);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 
@@ -238,8 +238,8 @@ export const WhenToSendCard = ({
                               </span>
                             )}
                           {trigger.actionClass.type === "noCode" &&
-                          trigger.actionClass.noCodeConfig?.urlFilters &&
-                          trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
+                            trigger.actionClass.noCodeConfig?.urlFilters &&
+                            trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
                             <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
                               {t("environments.surveys.edit.url_filters")}:{" "}
                               {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
@@ -247,7 +247,7 @@ export const WhenToSendCard = ({
                                   {urlFilter.rule} <b>{urlFilter.value}</b>
                                   {trigger.actionClass.type === "noCode" &&
                                     index !==
-                                      (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
+                                    (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
                                     ", "}
                                 </span>
                               ))}

@@ -3,7 +3,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TSurvey,
   TSurveyCreateInput,
@@ -56,7 +56,7 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
   },
 ];
 
-export const mockProduct: TProduct = {
+export const mockProduct: TProject = {
   id: mockId,
   createdAt: currentDate,
   updatedAt: currentDate,

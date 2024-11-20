@@ -10,7 +10,7 @@ import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -124,7 +124,7 @@ const Page = async (props: LinkSurveyPageProps) => {
   }
 
   // get product and person
-  const product = await getProductByEnvironmentId(survey.environmentId);
+  const product = await getProjectByEnvironmentId(survey.environmentId);
   if (!product) {
     throw new Error("Product not found");
   }

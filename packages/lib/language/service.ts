@@ -9,9 +9,9 @@ import {
   TLanguageUpdate,
   ZLanguageInput,
   ZLanguageUpdate,
-} from "@formbricks/types/product";
-import { productCache } from "../product/cache";
-import { getProduct } from "../product/service";
+} from "@formbricks/types/project";
+import { projectCache } from "../project/cache";
+import { getProject } from "../project/service";
 import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
 
@@ -53,7 +53,7 @@ export const createLanguage = async (
 ): Promise<TLanguage> => {
   try {
     validateInputs([productId, ZId], [languageInput, ZLanguageInput]);
-    const product = await getProduct(productId);
+    const product = await getProject(productId);
     if (!product) throw new ResourceNotFoundError("Product not found", productId);
     if (!languageInput.code) {
       throw new ValidationError("Language code is required");
@@ -70,7 +70,7 @@ export const createLanguage = async (
     });
 
     product.environments.forEach((environment) => {
-      productCache.revalidate({
+      projectCache.revalidate({
         environmentId: environment.id,
       });
     });
@@ -116,7 +116,7 @@ export const getSurveysUsingGivenLanguage = reactCache(async (languageId: string
 export const deleteLanguage = async (languageId: string, productId: string): Promise<TLanguage> => {
   try {
     validateInputs([languageId, ZId], [productId, ZId]);
-    const product = await getProduct(productId);
+    const product = await getProject(productId);
     if (!product) throw new ResourceNotFoundError("Product not found", productId);
     const prismaLanguage = await prisma.language.delete({
       where: { id: languageId },
@@ -124,7 +124,7 @@ export const deleteLanguage = async (languageId: string, productId: string): Pro
     });
 
     product.environments.forEach((environment) => {
-      productCache.revalidate({
+      projectCache.revalidate({
         id: prismaLanguage.productId,
         environmentId: environment.id,
       });
@@ -150,7 +150,7 @@ export const updateLanguage = async (
 ): Promise<TLanguage> => {
   try {
     validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate], [productId, ZId]);
-    const product = await getProduct(productId);
+    const product = await getProject(productId);
     if (!product) throw new ResourceNotFoundError("Product not found", productId);
     const prismaLanguage = await prisma.language.update({
       where: { id: languageId },
@@ -159,7 +159,7 @@ export const updateLanguage = async (
     });
 
     product.environments.forEach((environment) => {
-      productCache.revalidate({
+      projectCache.revalidate({
         id: prismaLanguage.productId,
         environmentId: environment.id,
       });

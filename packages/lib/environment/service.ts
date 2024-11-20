@@ -18,7 +18,7 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { getUserProducts } from "../product/service";
+import { getUserProjects } from "../project/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
@@ -94,7 +94,7 @@ export const getEnvironments = reactCache(
       },
       [`getEnvironments-${productId}`],
       {
-        tags: [environmentCache.tag.byProductId(productId)],
+        tags: [environmentCache.tag.byProjectId(productId)],
       }
     )()
 );
@@ -116,7 +116,7 @@ export const updateEnvironment = async (
 
     environmentCache.revalidate({
       id: environmentId,
-      productId: updatedEnvironment.productId,
+      projectId: updatedEnvironment.productId,
     });
 
     return updatedEnvironment;
@@ -135,7 +135,7 @@ export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<str
       throw new Error(`Unable to get first environment: User ${userId} has no organizations`);
     }
     const firstOrganization = organizations[0];
-    const products = await getUserProducts(userId, firstOrganization.id);
+    const products = await getUserProjects(userId, firstOrganization.id);
     if (products.length === 0) {
       throw new Error(
         `Unable to get first environment: Organization ${firstOrganization.id} has no products`
@@ -189,7 +189,7 @@ export const createEnvironment = async (
 
     environmentCache.revalidate({
       id: environment.id,
-      productId: environment.productId,
+      projectId: environment.productId,
     });
 
     await capturePosthogEnvironmentEvent(environment.id, "environment created", {

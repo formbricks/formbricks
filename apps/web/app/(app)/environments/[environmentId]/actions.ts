@@ -6,11 +6,11 @@ import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";
-import { createProduct } from "@formbricks/lib/product/service";
+import { createProject } from "@formbricks/lib/project/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZProductUpdateInput } from "@formbricks/types/product";
+import { ZProjectUpdateInput } from "@formbricks/types/project";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 const ZCreateOrganizationAction = z.object({
@@ -35,8 +35,8 @@ export const createOrganizationAction = authenticatedActionClient
       accepted: true,
     });
 
-    const product = await createProduct(newOrganization.id, {
-      name: "My Product",
+    const project = await createProject(newOrganization.id, {
+      name: "My Project",
     });
 
     const updatedNotificationSettings: TUserNotificationSettings = {
@@ -46,7 +46,7 @@ export const createOrganizationAction = authenticatedActionClient
       },
       weeklySummary: {
         ...ctx.user.notificationSettings?.weeklySummary,
-        [product.id]: true,
+        [project.id]: true,
       },
       unsubscribedOrganizationIds: Array.from(
         new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
@@ -60,13 +60,13 @@ export const createOrganizationAction = authenticatedActionClient
     return newOrganization;
   });
 
-const ZCreateProductAction = z.object({
+const ZCreateProjectAction = z.object({
   organizationId: ZId,
-  data: ZProductUpdateInput,
+  data: ZProjectUpdateInput,
 });
 
-export const createProductAction = authenticatedActionClient
-  .schema(ZCreateProductAction)
+export const createProjectAction = authenticatedActionClient
+  .schema(ZCreateProjectAction)
   .action(async ({ parsedInput, ctx }) => {
     const { user } = ctx;
 
@@ -76,14 +76,14 @@ export const createProductAction = authenticatedActionClient
       access: [
         {
           data: parsedInput.data,
-          schema: ZProductUpdateInput,
+          schema: ZProjectUpdateInput,
           type: "organization",
           roles: ["owner", "manager"],
         },
       ],
     });
 
-    const product = await createProduct(parsedInput.organizationId, parsedInput.data);
+    const project = await createProject(parsedInput.organizationId, parsedInput.data);
     const updatedNotificationSettings = {
       ...user.notificationSettings,
       alert: {
@@ -91,7 +91,7 @@ export const createProductAction = authenticatedActionClient
       },
       weeklySummary: {
         ...user.notificationSettings?.weeklySummary,
-        [product.id]: true,
+        [project.id]: true,
       },
     };
 
@@ -99,5 +99,5 @@ export const createProductAction = authenticatedActionClient
       notificationSettings: updatedNotificationSettings,
     });
 
-    return product;
+    return project;
   });

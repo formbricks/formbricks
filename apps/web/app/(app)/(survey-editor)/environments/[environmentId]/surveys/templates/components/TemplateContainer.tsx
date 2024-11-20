@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
+import type { TProject, TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
@@ -17,15 +17,15 @@ import { getMinimalSurvey } from "../../lib/minimalSurvey";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
-  product: TProduct;
+  project: TProject;
   environment: TEnvironment;
   user: TUser;
-  prefilledFilters: (TProductConfigChannel | TProductConfigIndustry | TTemplateRole | null)[];
+  prefilledFilters: (TProjectConfigChannel | TProjectConfigIndustry | TTemplateRole | null)[];
   isAIEnabled: boolean;
 };
 
 export const TemplateContainerWithPreview = ({
-  product,
+  project,
   environment,
   user,
   prefilledFilters,
@@ -67,7 +67,7 @@ export const TemplateContainerWithPreview = ({
 
           <TemplateList
             environment={environment}
-            product={product}
+            project={project}
             user={user}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
@@ -82,7 +82,7 @@ export const TemplateContainerWithPreview = ({
             <PreviewSurvey
               survey={{ ...getMinimalSurvey(user.locale), ...activeTemplate.preset }}
               questionId={activeQuestionId}
-              product={product}
+              project={project}
               environment={environment}
               languageCode={"default"}
               onFileUpload={async (file) => file.name}

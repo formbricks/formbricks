@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { TEnvironment } from "@formbricks/types/environment";
 import { wrapThrows } from "@formbricks/types/error-handlers";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/components/Button";
@@ -24,7 +24,7 @@ interface SurveysListProps {
   WEBAPP_URL: string;
   userId: string;
   surveysPerPage: number;
-  currentProductChannel: TProductConfigChannel;
+  currentProductChannel: TProjectConfigChannel;
   locale: TUserLocale;
 }
 

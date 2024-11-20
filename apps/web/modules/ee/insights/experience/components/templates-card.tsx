@@ -3,14 +3,14 @@
 import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { useTranslations } from "next-intl";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TTemplateFilter } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 
 interface TemplatesCardProps {
   environment: TEnvironment;
-  product: TProduct;
+  product: TProject;
   user: TUser;
   prefilledFilters: TTemplateFilter[];
 }
@@ -26,7 +26,7 @@ export const TemplatesCard = ({ environment, product, user, prefilledFilters }: 
       <CardContent>
         <TemplateList
           environment={environment}
-          product={product}
+          project={product}
           showFilters={false}
           user={user}
           prefilledFilters={prefilledFilters}

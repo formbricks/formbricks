@@ -1,6 +1,6 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -11,14 +11,14 @@ import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 
-export const getProductPermissionByUserId = reactCache(
-  async (userId: string, productId: string): Promise<TTeamPermission | null> =>
+export const getProjectPermissionByUserId = reactCache(
+  async (userId: string, projectId: string): Promise<TTeamPermission | null> =>
     cache(
       async () => {
-        validateInputs([userId, ZString], [productId, ZString]);
+        validateInputs([userId, ZString], [projectId, ZString]);
 
         try {
-          const productMemberships = await prisma.productTeam.findMany({
+          const projectMemberships = await prisma.productTeam.findMany({
             where: {
               productId,
               team: {
@@ -31,10 +31,10 @@ export const getProductPermissionByUserId = reactCache(
             },
           });
 
-          if (!productMemberships) return null;
+          if (!projectMemberships) return null;
           let highestPermission: TTeamPermission | null = null;
 
-          for (const membership of productMemberships) {
+          for (const membership of projectMemberships) {
             if (membership.permission === "manage") {
               highestPermission = "manage";
             } else if (membership.permission === "readWrite" && highestPermission !== "manage") {
@@ -58,9 +58,9 @@ export const getProductPermissionByUserId = reactCache(
           throw new UnknownError("Error while fetching membership");
         }
       },
-      [`getProductPermissionByUserId-${userId}-${productId}`],
+      [`getProjectPermissionByUserId-${userId}-${projectId}`],
       {
-        tags: [teamCache.tag.byUserId(userId), teamCache.tag.byProductId(productId)],
+        tags: [teamCache.tag.byUserId(userId), teamCache.tag.byProductId(projectId)],
       }
     )()
 );

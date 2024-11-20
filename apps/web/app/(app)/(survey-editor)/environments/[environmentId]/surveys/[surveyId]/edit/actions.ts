@@ -4,7 +4,7 @@ import { actionClient, authenticatedActionClient } from "@/lib/utils/action-clie
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromProductId,
+  getOrganizationIdFromProjectId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getProductIdFromEnvironmentId,
@@ -15,7 +15,7 @@ import { getSegment, getSurvey } from "@/lib/utils/services";
 import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
-import { getProduct } from "@formbricks/lib/product/service";
+import { getProject } from "@formbricks/lib/project/service";
 import {
   cloneSegment,
   createSegment,
@@ -60,7 +60,7 @@ export const refetchProductAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: await getOrganizationIdFromProjectId(parsedInput.productId),
       access: [
         {
           type: "organization",
@@ -74,7 +74,7 @@ export const refetchProductAction = authenticatedActionClient
       ],
     });
 
-    return await getProduct(parsedInput.productId);
+    return await getProject(parsedInput.productId);
   });
 
 const ZCreateBasicSegmentAction = z.object({

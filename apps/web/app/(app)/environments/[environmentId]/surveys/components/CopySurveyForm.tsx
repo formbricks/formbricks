@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { Button } from "@formbricks/ui/components/Button";
 import { Checkbox } from "@formbricks/ui/components/Checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
@@ -22,7 +22,7 @@ export const CopySurveyForm = ({
   onCancel,
   setOpen,
 }: {
-  defaultProducts: TProduct[];
+  defaultProducts: TProject[];
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;

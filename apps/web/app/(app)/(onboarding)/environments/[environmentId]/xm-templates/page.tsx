@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId, getUserProducts } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId, getUserProjects } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
@@ -35,18 +35,18 @@ const Page = async (props: XMTemplatePageProps) => {
 
   const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
 
-  const product = await getProductByEnvironmentId(environment.id);
-  if (!product) {
+  const project = await getProjectByEnvironmentId(environment.id);
+  if (!project) {
     throw new Error(t("common.product_not_found"));
   }
 
-  const products = await getUserProducts(session.user.id, organizationId);
+  const projects = await getUserProjects(session.user.id, organizationId);
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header title={t("environments.xm-templates.headline")} />
-      <XMTemplateList product={product} user={user} environmentId={environment.id} />
-      {products.length >= 2 && (
+      <XMTemplateList project={project} user={user} environmentId={environment.id} />
+      {projects.length >= 2 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="minimal"

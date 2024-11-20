@@ -1,6 +1,6 @@
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 
-export const getCustomHeadline = (channel?: TProductConfigChannel) => {
+export const getCustomHeadline = (channel?: TProjectConfigChannel) => {
   switch (channel) {
     case "website":
       return "organizations.products.new.settings.website_channel_headline";

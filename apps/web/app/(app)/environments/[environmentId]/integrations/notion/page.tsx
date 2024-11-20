@@ -1,5 +1,5 @@
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -18,7 +18,7 @@ import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
@@ -51,8 +51,8 @@ const Page = async (props) => {
     throw new Error(t("common.environment_not_found"));
   }
 
-  const product = await getProductByEnvironmentId(params.environmentId);
-  if (!product) {
+  const project = await getProjectByEnvironmentId(params.environmentId);
+  if (!project) {
     throw new Error(t("common.product_not_found"));
   }
 
@@ -64,13 +64,13 @@ const Page = async (props) => {
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session?.user.id,
-    product.organizationId
+    project.organizationId
   );
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session?.user.id, environment?.productId);
+  const projectPermission = await getProjectPermissionByUserId(session?.user.id, environment?.productId);
 
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

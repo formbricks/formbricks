@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -28,7 +28,7 @@ const Page = async (props) => {
   const [environment, attributeClasses, product] = await Promise.all([
     getEnvironment(environmentId),
     getAttributeClasses(environmentId),
-    getProductByEnvironmentId(environmentId),
+    getProjectByEnvironmentId(environmentId),
   ]);
 
   if (!environment) {

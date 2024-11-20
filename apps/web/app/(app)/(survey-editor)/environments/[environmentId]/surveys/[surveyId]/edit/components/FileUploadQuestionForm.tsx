@@ -12,7 +12,7 @@ import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
@@ -21,7 +21,7 @@ import { Input } from "@formbricks/ui/components/Input";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
-  product?: TProduct;
+  project?: TProject;
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyFileUploadQuestion>) => void;
@@ -40,7 +40,7 @@ export const FileUploadQuestionForm = ({
   questionIdx,
   updateQuestion,
   isInvalid,
-  product,
+  project,
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
@@ -54,7 +54,7 @@ export const FileUploadQuestionForm = ({
     billingInfo,
     error: billingInfoError,
     isLoading: billingInfoLoading,
-  } = useGetBillingInfo(product?.organizationId ?? "");
+  } = useGetBillingInfo(project?.organizationId ?? "");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const handleInputChange = (event) => {

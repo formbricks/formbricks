@@ -1,4 +1,4 @@
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 import { getLocalizedValue } from "../i18n/utils";
@@ -6,7 +6,7 @@ import { structuredClone } from "../pollyfills/structuredClone";
 
 export const replaceQuestionPresetPlaceholders = (
   question: TSurveyQuestion,
-  product: TProduct
+  product: TProject
 ): TSurveyQuestion => {
   if (!product) return question;
   const newQuestion = structuredClone(question);

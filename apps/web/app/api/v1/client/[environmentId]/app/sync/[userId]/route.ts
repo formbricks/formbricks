@@ -15,7 +15,7 @@ import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@formbricks/lib/posthogServer";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
@@ -58,7 +58,7 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    const product = await getProductByEnvironmentId(environmentId);
+    const product = await getProjectByEnvironmentId(environmentId);
 
     if (!product) {
       throw new Error("Product not found");

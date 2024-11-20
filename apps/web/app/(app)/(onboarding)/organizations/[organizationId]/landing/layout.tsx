@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 
 const LandingLayout = async (props) => {
   const params = await props.params;
@@ -21,7 +21,7 @@ const LandingLayout = async (props) => {
     return notFound();
   }
 
-  const products = await getUserProducts(session.user.id, params.organizationId);
+  const products = await getUserProjects(session.user.id, params.organizationId);
 
   if (products.length !== 0) {
     const firstProduct = products[0];

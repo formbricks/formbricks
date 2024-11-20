@@ -4,7 +4,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromLanguageId,
-  getOrganizationIdFromProductId,
+  getOrganizationIdFromProjectId,
   getProductIdFromLanguageId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
@@ -15,10 +15,10 @@ import {
   updateLanguage,
 } from "@formbricks/lib/language/service";
 import { ZId } from "@formbricks/types/common";
-import { ZLanguageInput } from "@formbricks/types/product";
+import { ZLanguageInput } from "@formbricks/types/project";
 
 const ZCreateLanguageAction = z.object({
-  productId: ZId,
+  projectId: ZId,
   languageInput: ZLanguageInput,
 });
 
@@ -27,7 +27,7 @@ export const createLanguageAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
       access: [
         {
           type: "organization",
@@ -37,18 +37,18 @@ export const createLanguageAction = authenticatedActionClient
         },
         {
           type: "productTeam",
-          productId: parsedInput.productId,
+          productId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
     });
 
-    return await createLanguage(parsedInput.productId, parsedInput.languageInput);
+    return await createLanguage(parsedInput.projectId, parsedInput.languageInput);
   });
 
 const ZDeleteLanguageAction = z.object({
   languageId: ZId,
-  productId: ZId,
+  projectId: ZId,
 });
 
 export const deleteLanguageAction = authenticatedActionClient
@@ -56,13 +56,13 @@ export const deleteLanguageAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     const languageProductId = await getProductIdFromLanguageId(parsedInput.languageId);
 
-    if (languageProductId !== parsedInput.productId) {
+    if (languageProductId !== parsedInput.projectId) {
       throw new Error("Invalid language id");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
       access: [
         {
           type: "organization",
@@ -70,13 +70,13 @@ export const deleteLanguageAction = authenticatedActionClient
         },
         {
           type: "productTeam",
-          productId: parsedInput.productId,
+          productId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
     });
 
-    return await deleteLanguage(parsedInput.languageId, parsedInput.productId);
+    return await deleteLanguage(parsedInput.languageId, parsedInput.projectId);
   });
 
 const ZGetSurveysUsingGivenLanguageAction = z.object({
@@ -106,7 +106,7 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
   });
 
 const ZUpdateLanguageAction = z.object({
-  productId: ZId,
+  projectId: ZId,
   languageId: ZId,
   languageInput: ZLanguageInput,
 });
@@ -126,11 +126,11 @@ export const updateLanguageAction = authenticatedActionClient
         },
         {
           type: "productTeam",
-          productId: parsedInput.productId,
+          productId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
     });
 
-    return await updateLanguage(parsedInput.productId, parsedInput.languageId, parsedInput.languageInput);
+    return await updateLanguage(parsedInput.projectId, parsedInput.languageId, parsedInput.languageInput);
   });

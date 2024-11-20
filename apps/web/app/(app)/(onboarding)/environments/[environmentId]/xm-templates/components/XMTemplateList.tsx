@@ -10,18 +10,18 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 
 interface XMTemplateListProps {
-  product: TProduct;
+  project: TProject;
   user: TUser;
   environmentId: string;
 }
 
-export const XMTemplateList = ({ product, user, environmentId }: XMTemplateListProps) => {
+export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListProps) => {
   const [activeTemplateId, setActiveTemplateId] = useState<number | null>(null);
   const t = useTranslations();
   const router = useRouter();
@@ -48,7 +48,7 @@ export const XMTemplateList = ({ product, user, environmentId }: XMTemplateListP
   const handleTemplateClick = (templateIdx) => {
     setActiveTemplateId(templateIdx);
     const template = getXMTemplates(user.locale)[templateIdx];
-    const newTemplate = replacePresetPlaceholders(template, product);
+    const newTemplate = replacePresetPlaceholders(template, project);
     createSurvey(newTemplate);
   };
 

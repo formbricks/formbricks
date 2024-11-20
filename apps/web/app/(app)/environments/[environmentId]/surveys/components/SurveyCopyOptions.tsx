@@ -6,7 +6,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { CopySurveyForm } from "./CopySurveyForm";
 
 interface SurveyCopyOptionsProps {
@@ -17,7 +17,7 @@ interface SurveyCopyOptionsProps {
 }
 
 const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
-  const [products, setProducts] = useState<TProduct[]>([]);
+  const [products, setProducts] = useState<TProject[]>([]);
   const [productLoading, setProductLoading] = useState(true);
 
   useEffect(() => {

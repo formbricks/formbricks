@@ -6,7 +6,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
 export const GET = async (_: Request, context: { params: Promise<{ organizationId: string }> }) => {
@@ -23,7 +23,7 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   // redirect to first product's production environment
-  const products = await getUserProducts(session.user.id, organizationId);
+  const products = await getUserProjects(session.user.id, organizationId);
   if (products.length === 0) {
     return redirect(`/organizations/${organizationId}/landing`);
   }

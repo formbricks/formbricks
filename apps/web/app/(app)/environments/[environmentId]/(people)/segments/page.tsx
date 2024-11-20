@@ -3,7 +3,7 @@ import { BasicCreateSegmentModal } from "@/app/(app)/environments/[environmentId
 import { SegmentTable } from "@/app/(app)/environments/[environmentId]/(people)/segments/components/SegmentTable";
 import { CreateSegmentModal } from "@/modules/ee/advanced-targeting/components/create-segment-modal";
 import { getAdvancedTargetingPermission } from "@/modules/ee/license-check/lib/utils";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -14,7 +14,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
@@ -22,12 +22,12 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslations();
-  const [environment, segments, attributeClasses, organization, product] = await Promise.all([
+  const [environment, segments, attributeClasses, organization, project] = await Promise.all([
     getEnvironment(params.environmentId),
     getSegments(params.environmentId),
     getAttributeClasses(params.environmentId, undefined, { skipArchived: true }),
     getOrganizationByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
+    getProjectByEnvironmentId(params.environmentId),
   ]);
   const session = await getServerSession(authOptions);
 
@@ -39,7 +39,7 @@ const Page = async (props) => {
     throw new Error(t("common.environment_not_found"));
   }
 
-  if (!product) {
+  if (!project) {
     throw new Error(t("common.product_not_found"));
   }
 
@@ -56,9 +56,9 @@ const Page = async (props) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session?.user.id, product.id);
+  const projectPermission = await getProjectPermissionByUserId(session?.user.id, project.id);
 
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

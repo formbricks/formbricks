@@ -15,7 +15,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
 import { BILLING_LIMITS, ITEMS_PER_PAGE, PRODUCT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
-import { getProducts } from "../product/service";
+import { getProjects } from "../project/service";
 import { updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
 import { organizationCache } from "./cache";
@@ -330,7 +330,7 @@ export const getMonthlyOrganizationResponseCount = reactCache(
           }
 
           // Get all environment IDs for the organization
-          const products = await getProducts(organizationId);
+          const products = await getProjects(organizationId);
           const environmentIds = products.flatMap((product) => product.environments.map((env) => env.id));
 
           // Use Prisma's aggregate to count responses for all environments

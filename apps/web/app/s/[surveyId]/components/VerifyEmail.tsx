@@ -14,7 +14,7 @@ import { z } from "zod";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TProductStyling } from "@formbricks/types/product";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/components/Button";
 import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
@@ -26,7 +26,7 @@ interface VerifyEmailProps {
   isErrorComponent?: boolean;
   singleUseId?: string;
   languageCode: string;
-  styling: TProductStyling;
+  styling: TProjectStyling;
   attributeClasses: TAttributeClass[];
   locale: string;
 }

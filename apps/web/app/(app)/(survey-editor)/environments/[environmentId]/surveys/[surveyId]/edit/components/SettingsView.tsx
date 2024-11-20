@@ -1,5 +1,5 @@
 import { AdvancedTargetingCard } from "@/modules/ee/advanced-targeting/components/advanced-targeting-card";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -86,7 +86,7 @@ export const SettingsView = ({
         environmentId={environment.id}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
-        productPermission={productPermission}
+        projectPermission={productPermission}
       />
 
       <ResponseOptionsCard

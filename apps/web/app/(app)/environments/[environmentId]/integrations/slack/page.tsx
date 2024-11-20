@@ -1,5 +1,5 @@
 import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -11,7 +11,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
@@ -39,7 +39,7 @@ const Page = async (props) => {
     throw new Error(t("common.environment_not_found"));
   }
 
-  const product = await getProductByEnvironmentId(params.environmentId);
+  const product = await getProjectByEnvironmentId(params.environmentId);
   if (!product) {
     throw new Error(t("common.product_not_found"));
   }
@@ -52,7 +52,7 @@ const Page = async (props) => {
   );
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session?.user.id, environment?.productId);
+  const productPermission = await getProjectPermissionByUserId(session?.user.id, environment?.productId);
 
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 

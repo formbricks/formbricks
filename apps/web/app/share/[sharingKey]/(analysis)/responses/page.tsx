@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
@@ -27,7 +27,7 @@ const Page = async (props) => {
   const environmentId = survey.environmentId;
   const [environment, product, tags] = await Promise.all([
     getEnvironment(environmentId),
-    getProductByEnvironmentId(environmentId),
+    getProjectByEnvironmentId(environmentId),
     getTagsByEnvironmentId(environmentId),
   ]);
 

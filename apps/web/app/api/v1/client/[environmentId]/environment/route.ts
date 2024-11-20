@@ -39,7 +39,7 @@ export const GET = async (
       if (environmentState.revalidateEnvironment) {
         environmentCache.revalidate({
           id: inputValidation.data.environmentId,
-          productId: environmentState.state.product.id,
+          projectId: environmentState.state.project.id,
         });
       }
 

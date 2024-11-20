@@ -25,7 +25,7 @@ import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TConditionGroup,
   TSingleCondition,
@@ -53,7 +53,7 @@ interface QuestionsViewProps {
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
-  product: TProduct;
+  product: TProject;
   invalidQuestions: string[] | null;
   setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
@@ -444,7 +444,7 @@ export const QuestionsView = ({
         collisionDetection={closestCorners}>
         <QuestionsDroppable
           localSurvey={localSurvey}
-          product={product}
+          project={product}
           moveQuestion={moveQuestion}
           updateQuestion={updateQuestion}
           duplicateQuestion={duplicateQuestion}

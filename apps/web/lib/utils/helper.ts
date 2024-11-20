@@ -42,13 +42,13 @@ export const getFormattedErrorMessage = (result) => {
  * GET organization ID from RESOURCE ID
  */
 
-export const getOrganizationIdFromProductId = async (productId: string) => {
-  const product = await getProduct(productId);
-  if (!product) {
-    throw new ResourceNotFoundError("product", productId);
+export const getOrganizationIdFromProjectId = async (projectId: string) => {
+  const project = await getProduct(projectId);
+  if (!project) {
+    throw new ResourceNotFoundError("project", projectId);
   }
 
-  return product.organizationId;
+  return project.organizationId;
 };
 
 export const getOrganizationIdFromEnvironmentId = async (environmentId: string) => {
@@ -57,7 +57,7 @@ export const getOrganizationIdFromEnvironmentId = async (environmentId: string) 
     throw new ResourceNotFoundError("environment", environmentId);
   }
 
-  return await getOrganizationIdFromProductId(environment.productId);
+  return await getOrganizationIdFromProjectId(environment.productId);
 };
 
 export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
@@ -174,7 +174,7 @@ export const getOrganizationIdFromLanguageId = async (languageId: string) => {
     throw new ResourceNotFoundError("language", languageId);
   }
 
-  return await getOrganizationIdFromProductId(language.productId);
+  return await getOrganizationIdFromProjectId(language.productId);
 };
 
 export const getOrganizationIdFromTeamId = async (teamId: string) => {

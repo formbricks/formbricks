@@ -20,8 +20,8 @@ import {
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 let isSurveyRunning = false;
-let setIsError = (_: boolean) => {};
-let setIsResponseSendingFinished = (_: boolean) => {};
+let setIsError = (_: boolean) => { };
+let setIsResponseSendingFinished = (_: boolean) => { };
 
 export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
@@ -64,7 +64,7 @@ const renderWidget = async (
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay} seconds.`);
   }
 
-  const { product } = config.get().environmentState.data ?? {};
+  const { project: product } = config.get().environmentState.data ?? {};
   const { attributes } = config.get() ?? {};
 
   const isMultiLanguageSurvey = survey.languages.length > 1;

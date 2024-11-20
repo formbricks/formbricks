@@ -1,9 +1,9 @@
 import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseTimeline";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -46,13 +46,13 @@ export const ResponseSection = async ({
     throw new Error(t("environments.people.no_responses_found"));
   }
 
-  const product = await getProductByEnvironmentId(environment.id);
+  const project = await getProjectByEnvironmentId(environment.id);
 
-  if (!product) {
+  if (!project) {
     throw new Error(t("common.no_product_found"));
   }
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
   const locale = await findMatchingLocale();
 
@@ -65,7 +65,7 @@ export const ResponseSection = async ({
       environmentTags={environmentTags}
       attributeClasses={attributeClasses}
       locale={locale}
-      productPermission={productPermission}
+      projectPermission={projectPermission}
     />
   );
 };

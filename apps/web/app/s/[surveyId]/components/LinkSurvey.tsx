@@ -12,7 +12,7 @@ import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TResponse,
   TResponseData,
@@ -23,14 +23,14 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyInline } from "@formbricks/ui/components/Survey";
 
-let setIsError = (_: boolean) => {};
-let setIsResponseSendingFinished = (_: boolean) => {};
-let setQuestionId = (_: string) => {};
-let setResponseData = (_: TResponseData) => {};
+let setIsError = (_: boolean) => { };
+let setIsResponseSendingFinished = (_: boolean) => { };
+let setQuestionId = (_: string) => { };
+let setResponseData = (_: TResponseData) => { };
 
 interface LinkSurveyProps {
   survey: TSurvey;
-  product: TProduct;
+  product: TProject;
   userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;
@@ -241,8 +241,8 @@ export const LinkSurvey = ({
         getSetIsResponseSendingFinished={
           !isPreview
             ? (f: (value: boolean) => void) => {
-                setIsResponseSendingFinished = f;
-              }
+              setIsResponseSendingFinished = f;
+            }
             : undefined
         }
         onRetry={() => {

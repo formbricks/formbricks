@@ -3,7 +3,7 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
 import { ZInsight } from "../insights";
-import { ZLanguage } from "../product";
+import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
 import {
@@ -176,7 +176,7 @@ export const ZSurveyVariables = z.array(ZSurveyVariable);
 export type TSurveyVariable = z.infer<typeof ZSurveyVariable>;
 export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
-export const ZSurveyProductOverwrites = z.object({
+export const ZSurveyProjectOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
@@ -184,7 +184,7 @@ export const ZSurveyProductOverwrites = z.object({
   darkOverlay: z.boolean().nullish(),
 });
 
-export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
+export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
 
 export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "upload", "image"]);
 
@@ -773,7 +773,7 @@ export const ZSurvey = z
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
     runOnDate: z.date().nullable(),
     closeOnDate: z.date().nullable(),
-    productOverwrites: ZSurveyProductOverwrites.nullable(),
+    projectOverwrites: ZSurveyProjectOverwrites.nullable(),
     styling: ZSurveyStyling.nullable(),
     showLanguageSwitch: z.boolean().nullable(),
     surveyClosedMessage: ZSurveyClosedMessage.nullable(),
@@ -2134,7 +2134,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     id: true,
     createdAt: true,
     updatedAt: true,
-    productOverwrites: true,
+    projectOverwrites: true,
     languages: true,
   })
   .extend({

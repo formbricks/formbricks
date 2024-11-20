@@ -1,5 +1,5 @@
 import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { PlusIcon } from "lucide-react";
@@ -13,7 +13,7 @@ import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/ser
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -39,7 +39,7 @@ const Page = async (props: SurveyTemplateProps) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  const product = await getProductByEnvironmentId(params.environmentId);
+  const product = await getProjectByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
   const t = await getTranslations();
   if (!session) {
@@ -64,7 +64,7 @@ const Page = async (props: SurveyTemplateProps) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 
   const isReadOnly = isMember && hasReadAccess;
@@ -126,7 +126,7 @@ const Page = async (props: SurveyTemplateProps) => {
           </h1>
           <TemplateList
             environment={environment}
-            product={product}
+            project={product}
             user={user}
             prefilledFilters={prefilledFilters}
           />

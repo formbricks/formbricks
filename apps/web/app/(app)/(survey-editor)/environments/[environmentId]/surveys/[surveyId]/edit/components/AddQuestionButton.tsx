@@ -13,11 +13,11 @@ import {
   getQuestionTypes,
   universalQuestionPresets,
 } from "@formbricks/lib/utils/questions";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
-  product: TProduct;
+  product: TProject;
   isCxMode: boolean;
   locale: string;
 }
@@ -73,9 +73,8 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode, locale }: Ad
               {questionType.label}
             </div>
             <div
-              className={`absolute right-4 text-xs font-light text-slate-500 transition-opacity duration-200 ${
-                hoveredQuestionId === questionType.id ? "opacity-100" : "opacity-0"
-              }`}>
+              className={`absolute right-4 text-xs font-light text-slate-500 transition-opacity duration-200 ${hoveredQuestionId === questionType.id ? "opacity-100" : "opacity-0"
+                }`}>
               {questionType.description}
             </div>
           </button>

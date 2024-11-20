@@ -1,12 +1,12 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
+import { TProject, TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 
 export const replaceQuestionPresetPlaceholders = (
   question: TSurveyQuestion,
-  product: TProduct
+  product: TProject
 ): TSurveyQuestion => {
   if (!product) return question;
   const newQuestion = structuredClone(question);
@@ -37,15 +37,15 @@ export const replacePresetPlaceholders = (template: TTemplate, product: any) => 
 };
 
 export const channelMapping: {
-  value: TProductConfigChannel;
+  value: TProjectConfigChannel;
   label: string;
 }[] = [
-  { value: "website", label: "common.website_survey" },
-  { value: "app", label: "common.app_survey" },
-  { value: "link", label: "common.link_survey" },
-];
+    { value: "website", label: "common.website_survey" },
+    { value: "app", label: "common.app_survey" },
+    { value: "link", label: "common.link_survey" },
+  ];
 
-export const industryMapping: { value: TProductConfigIndustry; label: string }[] = [
+export const industryMapping: { value: TProjectConfigIndustry; label: string }[] = [
   { value: "eCommerce", label: "common.e_commerce" },
   { value: "saas", label: "common.saas" },
   { value: "other", label: "common.other" },

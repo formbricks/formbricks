@@ -2,7 +2,7 @@
 import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import { type TIntegrationConfig } from "@formbricks/types/integration";
 import { type TOrganizationBilling } from "@formbricks/types/organizations";
-import { type TProductConfig, type TProductStyling } from "@formbricks/types/product";
+import { type TProjeuctConfig, type TProjectStyling } from "@formbricks/types/project";
 import {
   type TResponseData,
   type TResponseMeta,
@@ -13,7 +13,7 @@ import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
   type TSurveyHiddenFields,
-  type TSurveyProductOverwrites,
+  type TSurveyProjectOverwrites,
   type TSurveyQuestions,
   type TSurveySingleUse,
   type TSurveyStyling,
@@ -27,7 +27,7 @@ declare global {
     export type ActionProperties = Record<string, string>;
     export type ActionClassNoCodeConfig = TActionClassNoCodeConfig;
     export type IntegrationConfig = TIntegrationConfig;
-    export type ProductConfig = TProductConfig;
+    export type ProductConfig = TProjeuctConfig;
     export type ResponseData = TResponseData;
     export type ResponseMeta = TResponseMeta;
     export type ResponsePersonAttributes = TResponsePersonAttributes;
@@ -36,14 +36,14 @@ declare global {
     export type SurveyEnding = TSurveyEnding;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyVariables = TSurveyVariables;
-    export type SurveyProductOverwrites = TSurveyProductOverwrites;
+    export type SurveyProductOverwrites = TSurveyProjectOverwrites;
     export type SurveyStyling = TSurveyStyling;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
     export type OrganizationBilling = TOrganizationBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
-    export type Styling = TProductStyling;
+    export type Styling = TProjectStyling;
     export type Locale = TUserLocale;
   }
 }

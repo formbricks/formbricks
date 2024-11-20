@@ -12,7 +12,7 @@ import { environmentCache } from "@formbricks/lib/environment/cache";
 import { integrationCache } from "@formbricks/lib/integration/cache";
 import { inviteCache } from "@formbricks/lib/invite/cache";
 import { personCache } from "@formbricks/lib/person/cache";
-import { productCache } from "@formbricks/lib/product/cache";
+import { projectCache } from "@formbricks/lib/project/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { segmentCache } from "@formbricks/lib/segment/cache";
@@ -284,7 +284,7 @@ export const getProduct = reactCache(
       },
       [`utils-getProduct-${productId}`],
       {
-        tags: [productCache.tag.byId(productId)],
+        tags: [projectCache.tag.byId(productId)],
       }
     )()
 );

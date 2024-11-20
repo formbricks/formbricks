@@ -1,5 +1,5 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { CircleHelpIcon } from "lucide-react";
 import { Metadata } from "next";
@@ -10,7 +10,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { Button } from "@formbricks/ui/components/Button";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
@@ -25,9 +25,9 @@ const Page = async (props) => {
   const params = await props.params;
   let attributeClasses = await getAttributeClasses(params.environmentId);
   const t = await getTranslations();
-  const product = await getProductByEnvironmentId(params.environmentId);
+  const project = await getProjectByEnvironmentId(params.environmentId);
   const locale = await findMatchingLocale();
-  if (!product) {
+  if (!project) {
     throw new Error(t("common.product_not_found"));
   }
 
@@ -47,9 +47,9 @@ const Page = async (props) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

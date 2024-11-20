@@ -9,7 +9,7 @@ import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import type { TLanguage, TProduct } from "@formbricks/types/product";
+import type { TLanguage, TProject } from "@formbricks/types/project";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
@@ -23,7 +23,7 @@ import { SecondaryLanguageSelect } from "./secondary-language-select";
 
 interface MultiLanguageCardProps {
   localSurvey: TSurvey;
-  product: TProduct;
+  product: TProject;
   setLocalSurvey: (survey: TSurvey) => void;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
@@ -62,7 +62,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     open: false,
     text: "",
     buttonText: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const defaultLanguage = useMemo(
@@ -243,8 +243,8 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                     {product.languages.length === 0
                       ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
                       : t(
-                          "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_product_to_work_with_translations"
-                        )}
+                        "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_product_to_work_with_translations"
+                      )}
                   </div>
                 )}
                 {product.languages.length > 1 && (

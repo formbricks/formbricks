@@ -11,7 +11,7 @@ import {
 } from "@/lib/utils/helper";
 import { getEnvironment } from "@/lib/utils/services";
 import { z } from "zod";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 import { copySurveyToOtherEnvironment, deleteSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { ZId } from "@formbricks/types/common";
@@ -115,7 +115,7 @@ export const getProductsByEnvironmentIdAction = authenticatedActionClient
       ],
     });
 
-    return await getUserProducts(ctx.user.id, organizationId);
+    return await getUserProjects(ctx.user.id, organizationId);
   });
 
 const ZDeleteSurveyAction = z.object({

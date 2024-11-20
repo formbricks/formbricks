@@ -9,7 +9,7 @@ import { ZId } from "@formbricks/types/common";
 import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -37,8 +37,8 @@ import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { productCache } from "../product/cache";
-import { getProductByEnvironmentId } from "../product/service";
+import { projectCache } from "../project/cache";
+import { getProjectByEnvironmentId } from "../project/service";
 import { responseCache } from "../response/cache";
 import { getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
@@ -904,7 +904,7 @@ export const copySurveyToOtherEnvironment = async (
     // Fetch required resources
     const [existingEnvironment, existingProduct, existingSurvey] = await Promise.all([
       getEnvironment(environmentId),
-      getProductByEnvironmentId(environmentId),
+      getProjectByEnvironmentId(environmentId),
       getSurvey(surveyId),
     ]);
 
@@ -913,7 +913,7 @@ export const copySurveyToOtherEnvironment = async (
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
 
     let targetEnvironment: TEnvironment | null = null;
-    let targetProduct: TProduct | null = null;
+    let targetProduct: TProject | null = null;
 
     if (isSameEnvironment) {
       targetEnvironment = existingEnvironment;
@@ -921,7 +921,7 @@ export const copySurveyToOtherEnvironment = async (
     } else {
       [targetEnvironment, targetProduct] = await Promise.all([
         getEnvironment(targetEnvironmentId),
-        getProductByEnvironmentId(targetEnvironmentId),
+        getProjectByEnvironmentId(targetEnvironmentId),
       ]);
 
       if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
@@ -952,23 +952,23 @@ export const copySurveyToOtherEnvironment = async (
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
       languages: hasLanguages
         ? {
-            create: existingSurvey.languages.map((surveyLanguage) => ({
-              language: {
-                connectOrCreate: {
-                  where: {
-                    productId_code: { code: surveyLanguage.language.code, productId: targetProduct.id },
-                  },
-                  create: {
-                    code: surveyLanguage.language.code,
-                    alias: surveyLanguage.language.alias,
-                    productId: targetProduct.id,
-                  },
+          create: existingSurvey.languages.map((surveyLanguage) => ({
+            language: {
+              connectOrCreate: {
+                where: {
+                  productId_code: { code: surveyLanguage.language.code, productId: targetProduct.id },
+                },
+                create: {
+                  code: surveyLanguage.language.code,
+                  alias: surveyLanguage.language.alias,
+                  productId: targetProduct.id,
                 },
               },
-              default: surveyLanguage.default,
-              enabled: surveyLanguage.enabled,
-            })),
-          }
+            },
+            default: surveyLanguage.default,
+            enabled: surveyLanguage.enabled,
+          })),
+        }
         : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
@@ -1033,8 +1033,8 @@ export const copySurveyToOtherEnvironment = async (
         ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,
       singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
-      productOverwrites: existingSurvey.productOverwrites
-        ? structuredClone(existingSurvey.productOverwrites)
+      productOverwrites: existingSurvey.projectOverwrites
+        ? structuredClone(existingSurvey.projectOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
       segment: undefined,
@@ -1101,7 +1101,7 @@ export const copySurveyToOtherEnvironment = async (
 
     // Invalidate caches
     if (newLanguageCreated) {
-      productCache.revalidate({ id: targetProduct.id, environmentId: targetEnvironmentId });
+      projectCache.revalidate({ id: targetProduct.id, environmentId: targetEnvironmentId });
     }
 
     surveyCache.revalidate({
@@ -1143,7 +1143,7 @@ export const getSyncSurveys = reactCache(
       async () => {
         validateInputs([environmentId, ZId]);
         try {
-          const product = await getProductByEnvironmentId(environmentId);
+          const product = await getProjectByEnvironmentId(environmentId);
 
           if (!product) {
             throw new Error("Product not found");
@@ -1278,7 +1278,7 @@ export const getSyncSurveys = reactCache(
           personCache.tag.byId(personId),
           displayCache.tag.byPersonId(personId),
           surveyCache.tag.byEnvironmentId(environmentId),
-          productCache.tag.byEnvironmentId(environmentId),
+          projectCache.tag.byEnvironmentId(environmentId),
           attributeCache.tag.byPersonId(personId),
         ],
       }

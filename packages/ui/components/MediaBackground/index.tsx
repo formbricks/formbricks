@@ -4,13 +4,13 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
   survey: TSurvey;
-  product: TProduct;
+  project: TProject;
   isEditorView?: boolean;
   isMobilePreview?: boolean;
   ContentRef?: React.RefObject<HTMLDivElement>;
@@ -19,7 +19,7 @@ interface MediaBackgroundProps {
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   children,
-  product,
+  project: product,
   survey,
   isEditorView = false,
   isMobilePreview = false,
