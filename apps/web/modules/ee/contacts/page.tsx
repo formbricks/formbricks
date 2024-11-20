@@ -11,7 +11,12 @@ import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { ContactDataView } from "./components/contact-data-view";
 import { ContactsSecondaryNavigation } from "./components/contacts-secondary-navigation";
 
-export const ContactsPage = async ({ params }: { params: { environmentId: string } }) => {
+export const ContactsPage = async ({
+  params: paramsProps,
+}: {
+  params: Promise<{ environmentId: string }>;
+}) => {
+  const params = await paramsProps;
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Session not found");

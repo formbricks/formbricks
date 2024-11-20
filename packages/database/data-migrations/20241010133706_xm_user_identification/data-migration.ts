@@ -88,6 +88,7 @@ async function runMigration(): Promise<void> {
           skip,
           take: BATCH_SIZE,
         });
+
         console.log("Processing attributeKeys for", allEnvironmentsInBatch.length, "environments");
 
         for (const env of allEnvironmentsInBatch) {
@@ -104,6 +105,7 @@ async function runMigration(): Promise<void> {
                       },
                     },
                     update: {
+                      type: "default",
                       isUnique: true,
                     },
                     create: {
@@ -121,7 +123,9 @@ async function runMigration(): Promise<void> {
                         environmentId: env.id,
                       },
                     },
-                    update: {},
+                    update: {
+                      type: "default",
+                    },
                     create: {
                       key: "firstName",
                       name: "First Name",
@@ -136,7 +140,9 @@ async function runMigration(): Promise<void> {
                         environmentId: env.id,
                       },
                     },
-                    update: {},
+                    update: {
+                      type: "default",
+                    },
                     create: {
                       key: "lastName",
                       name: "Last Name",

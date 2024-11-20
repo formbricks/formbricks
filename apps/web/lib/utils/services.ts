@@ -6,16 +6,13 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
 import { apiKeyCache } from "@formbricks/lib/apiKey/cache";
-import { attributeClassCache } from "@formbricks/lib/attributeClass/cache";
 import { cache } from "@formbricks/lib/cache";
 import { environmentCache } from "@formbricks/lib/environment/cache";
 import { integrationCache } from "@formbricks/lib/integration/cache";
 import { inviteCache } from "@formbricks/lib/invite/cache";
-import { personCache } from "@formbricks/lib/person/cache";
 import { productCache } from "@formbricks/lib/product/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
-import { segmentCache } from "@formbricks/lib/segment/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { tagCache } from "@formbricks/lib/tag/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
@@ -83,37 +80,6 @@ export const getApiKey = reactCache(
       [`utils-getApiKey-${apiKeyId}`],
       {
         tags: [apiKeyCache.tag.byId(apiKeyId)],
-      }
-    )()
-);
-
-export const getAttributeClass = reactCache(
-  async (attributeClassId: string): Promise<{ environmentId: string } | null> =>
-    cache(
-      async () => {
-        validateInputs([attributeClassId, ZId]);
-
-        try {
-          const attributeClass = await prisma.attributeClass.findFirst({
-            where: {
-              id: attributeClassId,
-            },
-            select: {
-              environmentId: true,
-            },
-          });
-
-          return attributeClass;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`utils-getAttributeClass-${attributeClassId}`],
-      {
-        tags: [attributeClassCache.tag.byId(attributeClassId)],
       }
     )()
 );
@@ -233,34 +199,6 @@ export const getLanguage = async (languageId: string): Promise<{ productId: stri
   }
 };
 
-export const getPerson = reactCache(
-  async (personId: string): Promise<{ environmentId: string } | null> =>
-    cache(
-      async () => {
-        validateInputs([personId, ZId]);
-
-        try {
-          return await prisma.person.findUnique({
-            where: {
-              id: personId,
-            },
-            select: { environmentId: true },
-          });
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`utils-getPerson-${personId}`],
-      {
-        tags: [personCache.tag.byId(personId)],
-      }
-    )()
-);
-
 export const getProduct = reactCache(
   async (productId: string): Promise<{ organizationId: string } | null> =>
     cache(
@@ -344,35 +282,6 @@ export const getResponseNote = reactCache(
       [`utils-getResponseNote-${responseNoteId}`],
       {
         tags: [responseNoteCache.tag.byId(responseNoteId)],
-      }
-    )()
-);
-
-export const getSegment = reactCache(
-  async (segmentId: string): Promise<{ environmentId: string } | null> =>
-    cache(
-      async () => {
-        validateInputs([segmentId, ZId]);
-        try {
-          const segment = await prisma.segment.findUnique({
-            where: {
-              id: segmentId,
-            },
-            select: { environmentId: true },
-          });
-
-          return segment;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`utils-getSegment-${segmentId}`],
-      {
-        tags: [segmentCache.tag.byId(segmentId)],
       }
     )()
 );

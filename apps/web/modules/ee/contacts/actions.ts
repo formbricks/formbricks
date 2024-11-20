@@ -2,8 +2,8 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import {
   createContactsFromCSV,
@@ -30,7 +30,12 @@ export const getContactsAction = authenticatedActionClient
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "member"],
+        },
+      ],
     });
 
     return getContacts(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
@@ -39,10 +44,15 @@ export const getContactsAction = authenticatedActionClient
 export const getContactAttributeKeysAction = authenticatedActionClient
   .schema(z.object({ environmentId: ZId }))
   .action(async ({ ctx, parsedInput: { environmentId } }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(environmentId),
-      rules: ["environment", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "member"],
+        },
+      ],
     });
 
     return getContactAttributeKeys(environmentId);
@@ -55,10 +65,15 @@ const ZPersonDeleteAction = z.object({
 export const deleteContactAction = authenticatedActionClient
   .schema(ZPersonDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromContactId(parsedInput.contactId),
-      rules: ["person", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     return await deleteContact(parsedInput.contactId);
@@ -74,10 +89,15 @@ const ZCreateContactsFromCSV = z.object({
 export const createContactsFromCSVAction = authenticatedActionClient
   .schema(ZCreateContactsFromCSV)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["person", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     const result = await createContactsFromCSV(
