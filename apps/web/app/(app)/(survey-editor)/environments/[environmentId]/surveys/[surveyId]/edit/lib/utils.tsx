@@ -608,8 +608,10 @@ export const getMatchValueProps = (
         options: groupedOptions,
       };
     } else if (selectedVariable?.type === "number") {
-      const allowedQuestions = questions.filter((question) =>
-        [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+      const allowedQuestions = questions.filter(
+        (question) =>
+          [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type) ||
+          (question.type === TSurveyQuestionTypeEnum.OpenText && question.inputType === "number")
       );
 
       const questionOptions = allowedQuestions.map((question) => {
@@ -945,8 +947,10 @@ export const getActionValueOptions = (
 
     return groupedOptions;
   } else if (selectedVariable.type === "number") {
-    const allowedQuestions = questions.filter((question) =>
-      [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+    const allowedQuestions = questions.filter(
+      (question) =>
+        [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type) ||
+        (question.type === TSurveyQuestionTypeEnum.OpenText && question.inputType === "number")
     );
 
     const questionOptions = allowedQuestions.map((question) => {
