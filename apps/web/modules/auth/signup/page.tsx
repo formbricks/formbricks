@@ -20,11 +20,7 @@ import {
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupForm } from "./components/signup-form";
 
-interface SignupPageProps {
-  searchParams: { [key: string]: string | undefined };
-}
-
-export const SignupPage = async ({ searchParams }: SignupPageProps) => {
+export const SignupPage = async (searchParams) => {
   const enterpriseLicense = await getEnterpriseLicense();
   const inviteToken = searchParams["inviteToken"] ?? null;
   const isMultOrgEnabled = enterpriseLicense.features?.isMultiOrgEnabled ?? false;
