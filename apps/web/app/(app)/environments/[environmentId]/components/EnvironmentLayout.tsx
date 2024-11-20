@@ -1,6 +1,5 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getIsAIEnabled } from "@/app/lib/utils";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import type { Session } from "next-auth";
@@ -81,8 +80,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
-  const isAIEnabled = await getIsAIEnabled(organization);
-
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
@@ -113,7 +110,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          isAIEnabled={isAIEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
