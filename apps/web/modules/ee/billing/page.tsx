@@ -1,7 +1,8 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
+import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { PRODUCT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
@@ -14,12 +15,17 @@ import {
 } from "@formbricks/lib/organization/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { PricingTable } from "./components/PricingTable";
+import { PricingTable } from "./components/pricing-table";
 
-const Page = async (props) => {
+export const PricingPage = async (props) => {
   const params = await props.params;
   const t = await getTranslations();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
+
+  if (!IS_FORMBRICKS_CLOUD) {
+    notFound();
+  }
+
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
@@ -64,5 +70,3 @@ const Page = async (props) => {
     </PageContentWrapper>
   );
 };
-
-export default Page;

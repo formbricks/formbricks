@@ -27,7 +27,7 @@ const nextConfig = {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },
   },
-  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  transpilePackages: ["@formbricks/database", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {

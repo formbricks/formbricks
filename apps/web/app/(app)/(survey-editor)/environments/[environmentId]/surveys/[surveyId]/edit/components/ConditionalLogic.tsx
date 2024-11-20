@@ -87,10 +87,12 @@ export function ConditionalLogic({
 
   const handleRemoveLogic = (logicItemIdx: number) => {
     const logicCopy = structuredClone(question.logic ?? []);
+    const isLast = logicCopy.length === 1;
     logicCopy.splice(logicItemIdx, 1);
 
     updateQuestion(questionIdx, {
       logic: logicCopy,
+      logicFallback: isLast ? undefined : question.logicFallback,
     });
   };
 

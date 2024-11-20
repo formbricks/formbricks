@@ -344,9 +344,7 @@ export const SurveyMenuBar = ({
                   <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {t(cautionText)}
-                  </p>
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
