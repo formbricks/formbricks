@@ -95,6 +95,16 @@ export const InsightView = ({
     setVisibleInsights((prevVisibleInsights) => Math.min(prevVisibleInsights + 10, insights.length));
   };
 
+  const updateLocalInsight = (insightId: string, updates: Partial<TInsight>) => {
+    setLocalInsights((prevInsights) =>
+      prevInsights.map((insight) => (insight.id === insightId ? { ...insight, ...updates } : insight))
+    );
+  };
+
+  const onCategoryChange = async (insightId: string, newCategory: TInsight["category"]) => {
+    updateLocalInsight(insightId, { category: newCategory });
+  };
+
   return (
     <div className={cn("mt-2")}>
       <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
@@ -147,7 +157,11 @@ export const InsightView = ({
                       {insight.description}
                     </TableCell>
                     <TableCell>
-                      <CategoryBadge category={insight.category} insightId={insight.id} />
+                      <CategoryBadge
+                        category={insight.category}
+                        insightId={insight.id}
+                        onCategoryChange={onCategoryChange}
+                      />
                     </TableCell>
                   </TableRow>
                 ))
@@ -160,7 +174,7 @@ export const InsightView = ({
       {visibleInsights < localInsights.length && (
         <div className="flex justify-center py-4">
           <Button onClick={handleLoadMore} variant="secondary" size="sm">
-            Load more
+            {t("common.load_more")}
           </Button>
         </div>
       )}

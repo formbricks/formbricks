@@ -15,6 +15,7 @@
     "test": "dotenv -e ../../.env -- vitest run"
   },
   "dependencies": {
+    "@ai-sdk/azure": "0.0.52",
     "@aws-sdk/client-s3": "3.631.0",
     "@aws-sdk/s3-presigned-post": "3.631.0",
     "@aws-sdk/s3-request-presigner": "3.631.0",
@@ -30,7 +31,7 @@
     "markdown-it": "14.1.0",
     "mime-types": "2.1.35",
     "nanoid": "5.0.7",
-    "next-auth": "4.24.7",
+    "next-auth": "4.24.10",
     "posthog-node": "4.1.0",
     "qrcode": "1.5.4",
     "server-only": "0.0.1",

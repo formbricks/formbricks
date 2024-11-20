@@ -7,7 +7,8 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const t = await getTranslations();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);

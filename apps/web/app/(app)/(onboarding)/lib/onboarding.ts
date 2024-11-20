@@ -11,7 +11,7 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getTeamsByOrganizationId = reactCache(
-  (organizationId: string): Promise<TOrganizationTeam[] | null> =>
+  async (organizationId: string): Promise<TOrganizationTeam[] | null> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId]);

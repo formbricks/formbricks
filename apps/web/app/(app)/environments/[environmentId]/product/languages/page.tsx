@@ -1,12 +1,15 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import {
+  getMultiLanguagePermission,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { EditLanguage } from "@/modules/ee/multi-language-surveys/components/edit-language";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -16,7 +19,8 @@ import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
   const t = await getTranslations();
   const product = await getProductByEnvironmentId(params.environmentId);
 

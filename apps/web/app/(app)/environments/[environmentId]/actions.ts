@@ -2,8 +2,8 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";

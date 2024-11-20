@@ -9,12 +9,13 @@ import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
 interface ModePageProps {
-  params: {
+  params: Promise<{
     organizationId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: ModePageProps) => {
+const Page = async (props: ModePageProps) => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);

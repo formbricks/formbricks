@@ -2,8 +2,8 @@ import { headers } from "next/headers";
 import { TUserLocale } from "@formbricks/types/user";
 import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "../constants";
 
-export const findMatchingLocale = (): TUserLocale => {
-  const headersList = headers();
+export const findMatchingLocale = async (): Promise<TUserLocale> => {
+  const headersList = await headers();
   const acceptLanguage = headersList.get("accept-language");
   const userLocales = acceptLanguage?.split(",");
   if (!userLocales) {

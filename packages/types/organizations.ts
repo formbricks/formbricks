@@ -22,8 +22,8 @@ export const ZOrganizationBilling = z.object({
   period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
     monthly: {
-      responses: 500,
-      miu: 1000,
+      responses: 1500,
+      miu: 2000,
     },
   }),
   periodStart: z.date(),

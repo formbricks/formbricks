@@ -3,7 +3,8 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 
 export const dynamic = "force-dynamic";
 
-const Page = ({ searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
   const { environmentId } = searchParams;
 
   return (

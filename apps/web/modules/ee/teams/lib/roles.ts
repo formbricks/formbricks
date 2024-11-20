@@ -12,7 +12,7 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 
 export const getProductPermissionByUserId = reactCache(
-  (userId: string, productId: string): Promise<TTeamPermission | null> =>
+  async (userId: string, productId: string): Promise<TTeamPermission | null> =>
     cache(
       async () => {
         validateInputs([userId, ZString], [productId, ZString]);
@@ -66,7 +66,7 @@ export const getProductPermissionByUserId = reactCache(
 );
 
 export const getTeamRoleByTeamIdUserId = reactCache(
-  (teamId: string, userId: string): Promise<TTeamRole | null> =>
+  async (teamId: string, userId: string): Promise<TTeamRole | null> =>
     cache(
       async () => {
         validateInputs([teamId, ZId], [userId, ZId]);

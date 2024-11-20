@@ -27,7 +27,8 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -72,7 +73,7 @@ const Page = async ({ params }) => {
 
   const isAIEnabled = await getIsAIEnabled(organization);
   const shouldGenerateInsights = needsInsightsGeneration(survey);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>

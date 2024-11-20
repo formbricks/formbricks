@@ -42,7 +42,7 @@ interface InviteWithCreator extends TInvite {
   };
 }
 export const getInvitesByOrganizationId = reactCache(
-  (organizationId: string, page?: number): Promise<TInvite[]> =>
+  async (organizationId: string, page?: number): Promise<TInvite[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
@@ -130,7 +130,7 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
 };
 
 export const getInvite = reactCache(
-  (inviteId: string): Promise<InviteWithCreator | null> =>
+  async (inviteId: string): Promise<InviteWithCreator | null> =>
     cache(
       async () => {
         validateInputs([inviteId, ZString]);

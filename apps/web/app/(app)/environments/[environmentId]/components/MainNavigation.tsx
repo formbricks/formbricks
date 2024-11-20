@@ -222,7 +222,7 @@ export const MainNavigation = ({
     {
       label: t("common.billing"),
       href: `/environments/${environment.id}/settings/billing`,
-      hidden: !isFormbricksCloud || isPricingDisabled,
+      hidden: !isFormbricksCloud,
       icon: CreditCardIcon,
     },
     {
@@ -481,7 +481,11 @@ export const MainNavigation = ({
                   {dropdownNavigation.map(
                     (link) =>
                       !link.hidden && (
-                        <Link href={link.href} target={link.target} className="flex w-full items-center">
+                        <Link
+                          href={link.href}
+                          target={link.target}
+                          className="flex w-full items-center"
+                          key={link.label}>
                           <DropdownMenuItem>
                             <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                             {link.label}

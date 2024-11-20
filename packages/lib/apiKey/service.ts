@@ -14,7 +14,7 @@ import { validateInputs } from "../utils/validate";
 import { apiKeyCache } from "./cache";
 
 export const getApiKey = reactCache(
-  (apiKeyId: string): Promise<TApiKey | null> =>
+  async (apiKeyId: string): Promise<TApiKey | null> =>
     cache(
       async () => {
         validateInputs([apiKeyId, ZString]);
@@ -47,7 +47,7 @@ export const getApiKey = reactCache(
 );
 
 export const getApiKeys = reactCache(
-  (environmentId: string, page?: number): Promise<TApiKey[]> =>
+  async (environmentId: string, page?: number): Promise<TApiKey[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
@@ -110,7 +110,7 @@ export const createApiKey = async (
   }
 };
 
-export const getApiKeyFromKey = reactCache((apiKey: string): Promise<TApiKey | null> => {
+export const getApiKeyFromKey = reactCache(async (apiKey: string): Promise<TApiKey | null> => {
   const hashedKey = getHash(apiKey);
   return cache(
     async () => {

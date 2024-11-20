@@ -23,6 +23,8 @@ interface ManageIntegrationProps {
     React.SetStateAction<(TIntegrationSlackConfigData & { index: number }) | null>
   >;
   refreshChannels: () => void;
+  showReconnectButton: boolean;
+  handleSlackAuthorization: () => void;
   locale: TUserLocale;
 }
 
@@ -33,6 +35,8 @@ export const ManageIntegration = ({
   setIsConnected,
   setSelectedIntegration,
   refreshChannels,
+  showReconnectButton,
+  handleSlackAuthorization,
   locale,
 }: ManageIntegrationProps) => {
   const t = useTranslations();
@@ -70,12 +74,24 @@ export const ManageIntegration = ({
 
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end">
+      {showReconnectButton && (
+        <div className="mb-4 flex w-full items-center justify-between space-x-4">
+          <p className="text-amber-700">
+            {t.rich("environments.integrations.slack.slack_reconnect_button_description", {
+              b: (chunks) => <b>{chunks}</b>,
+            })}
+          </p>
+          <Button onClick={handleSlackAuthorization} variant="secondary">
+            {t("environments.integrations.slack.slack_reconnect_button")}
+          </Button>
+        </div>
+      )}
+      <div className="flex w-full justify-end space-x-4">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
             {t("environments.integrations.slack.connected_with_team", {
-              team: slackIntegration.config.key.team.name,
+              team: slackIntegration.config.key.team?.name,
             })}
           </span>
         </div>

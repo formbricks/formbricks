@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import type { JSX } from "react";
 import { TProductStyling } from "@formbricks/types/product";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";

@@ -33,7 +33,8 @@ const MembersLoading = () => (
   </div>
 );
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {

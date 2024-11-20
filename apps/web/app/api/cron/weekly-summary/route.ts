@@ -10,8 +10,9 @@ import { getProductsByOrganizationId } from "./lib/product";
 const BATCH_SIZE = 500;
 
 export const POST = async (): Promise<Response> => {
+  const headersList = await headers();
   // Check authentication
-  if (headers().get("x-api-key") !== CRON_SECRET) {
+  if (headersList.get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
   }
 

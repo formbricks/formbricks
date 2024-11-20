@@ -1,10 +1,10 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
+import { getIsAIEnabled } from "@formbricks/ee/lib/service";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import type { Session } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getIsAIEnabled } from "@formbricks/ee/lib/service";
-import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -59,15 +59,13 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const membershipRole = currentUserMembership?.role;
-  const { isOwner, isManager } = getAccessFlags(membershipRole);
-
-  const isOwnerOrManager = isOwner || isManager;
+  const { isMember } = getAccessFlags(membershipRole);
 
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
   const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
 
-  if (!isOwnerOrManager && !productPermission) {
+  if (isMember && !productPermission) {
     throw new Error(t("common.product_permission_not_found"));
   }
 

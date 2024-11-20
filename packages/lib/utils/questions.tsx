@@ -18,6 +18,7 @@ import {
   Rows3Icon,
   StarIcon,
 } from "lucide-react";
+import type { JSX } from "react";
 import {
   TSurveyQuestionTypeEnum as QuestionId,
   TSurveyAddressQuestion,

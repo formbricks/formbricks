@@ -337,16 +337,14 @@ export const SurveyMenuBar = ({
           />
         </div>
         {responseCount > 0 && (
-          <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
+          <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
                   <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                    {t(cautionText)}
-                  </p>
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

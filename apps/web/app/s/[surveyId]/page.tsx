@@ -3,9 +3,9 @@ import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
 import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
+import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -19,20 +19,21 @@ import { TResponse } from "@formbricks/types/responses";
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
-  params: {
+  params: Promise<{
     surveyId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     suId?: string;
     userId?: string;
     verify?: string;
     lang?: string;
     embed?: string;
     preview?: string;
-  };
+  }>;
 }
 
-export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise<Metadata> => {
+export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {
+  const params = await props.params;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
@@ -41,14 +42,16 @@ export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise
   return getMetadataForLinkSurvey(params.surveyId);
 };
 
-const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
+const Page = async (props: LinkSurveyPageProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
   const isPreview = searchParams.preview === "true";
   const survey = await getSurvey(params.surveyId);
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
   const suId = searchParams.suId;
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
