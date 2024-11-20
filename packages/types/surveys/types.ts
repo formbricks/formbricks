@@ -1748,7 +1748,11 @@ const validateConditions = (
             });
           } else if (variable.type === "number") {
             const validQuestionTypes = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
-            if (!validQuestionTypes.includes(question.type)) {
+            if (
+              !validQuestionTypes.includes(question.type) &&
+              question.type === TSurveyQuestionTypeEnum.OpenText &&
+              question.inputType !== "number"
+            ) {
               issues.push({
                 code: z.ZodIssueCode.custom,
                 message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
@@ -1985,7 +1989,13 @@ const validateActions = (
         const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
 
         const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
-        if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
+
+        if (
+          !selectedQuestion ||
+          (!allowedQuestions.includes(selectedQuestion.type) &&
+            selectedQuestion.type === TSurveyQuestionTypeEnum.OpenText &&
+            selectedQuestion.inputType !== "number")
+        ) {
           return {
             code: z.ZodIssueCode.custom,
             message: `Conditional Logic: Invalid question type for number variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
