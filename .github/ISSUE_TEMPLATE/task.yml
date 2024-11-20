@@ -6,6 +6,6 @@ body:
     id: task-summary
     attributes:
       label: Task description
-      description: A clear and concise description of the task. This needs to be a clear detailed-rich summary.
+      description: A clear detailed-rich description of the task.
     validations:
       required: true
