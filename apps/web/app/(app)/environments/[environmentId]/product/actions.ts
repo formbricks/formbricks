@@ -52,14 +52,14 @@ export const updateProductAction = authenticatedActionClient
         throw new Error("Organization not found");
       }
 
-      if (parsedInput.data.inAppSurveyBranding) {
+      if (parsedInput.data.inAppSurveyBranding !== undefined) {
         const canRemoveInAppBranding = getRemoveInAppBrandingPermission(organization);
         if (!canRemoveInAppBranding) {
           throw new OperationNotAllowedError("You are not allowed to remove in-app branding");
         }
       }
 
-      if (parsedInput.data.linkSurveyBranding) {
+      if (parsedInput.data.linkSurveyBranding !== undefined) {
         const canRemoveLinkSurveyBranding = getRemoveLinkBrandingPermission(organization);
         if (!canRemoveLinkSurveyBranding) {
           throw new OperationNotAllowedError("You are not allowed to remove link survey branding");
