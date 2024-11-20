@@ -3,10 +3,10 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { getIsAIEnabled } from "@formbricks/ee/lib/service";
 import { llmModel } from "@formbricks/lib/aiModels";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { createSurvey } from "@formbricks/lib/survey/service";

@@ -12,8 +12,8 @@ import {
   getProductIdFromSegmentId,
   getProductIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { getAdvancedTargetingPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import {
   cloneSegment,

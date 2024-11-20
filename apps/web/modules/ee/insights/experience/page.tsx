@@ -1,7 +1,7 @@
 import { Dashboard } from "@/modules/ee/insights/experience/components/dashboard";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { getIsAIEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { DOCUMENTS_PER_PAGE, INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";

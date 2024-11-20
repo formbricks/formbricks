@@ -7,8 +7,8 @@ import {
   getOrganizationIdFromProductId,
   getProductIdFromLanguageId,
 } from "@/lib/utils/helper";
+import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import {
   createLanguage,
   deleteLanguage,

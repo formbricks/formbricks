@@ -4,8 +4,8 @@ import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/uti
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProductIdFromSurveyId } from "@/lib/utils/helper";
+import { getIsAIEnabled, getIsOrganizationAIReady } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getIsAIEnabled, getIsOrganizationAIReady } from "@formbricks/ee/lib/service";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";

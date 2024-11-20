@@ -4,10 +4,11 @@ import {
   TEnterpriseLicenseFeatures,
 } from "@/modules/ee/license-check/types/enterprise-license";
 import { HttpsProxyAgent } from "https-proxy-agent";
+import { unstable_after as after } from "next/server";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
+import { cache, revalidateTag } from "@formbricks/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
@@ -49,7 +50,6 @@ const setPreviousResult = async (previousResult: {
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
 }) => {
-  // revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
   const { lastChecked, active, features } = previousResult;
 
   await cache(
@@ -63,6 +63,10 @@ const setPreviousResult = async (previousResult: {
       tags: [PREVIOUS_RESULTS_CACHE_TAG_KEY],
     }
   )();
+
+  after(() => {
+    revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
+  });
 };
 
 const fetchLicenseForE2ETesting = async (): Promise<{

@@ -3,11 +3,11 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProductId } from "@/lib/utils/helper";
-import { z } from "zod";
 import {
   getRemoveInAppBrandingPermission,
   getRemoveLinkBrandingPermission,
-} from "@formbricks/ee/lib/service";
+} from "@/modules/ee/license-check/lib/utils";
+import { z } from "zod";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { updateProduct } from "@formbricks/lib/product/service";
 import { ZId } from "@formbricks/types/common";
