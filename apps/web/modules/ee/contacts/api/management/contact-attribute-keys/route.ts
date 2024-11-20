@@ -1,7 +1,7 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";

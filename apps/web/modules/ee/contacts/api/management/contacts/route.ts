@@ -1,6 +1,6 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContacts } from "./lib/contacts";
 

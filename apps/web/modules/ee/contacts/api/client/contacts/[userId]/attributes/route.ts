@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
-import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { updateAttributes } from "./lib/attributes";

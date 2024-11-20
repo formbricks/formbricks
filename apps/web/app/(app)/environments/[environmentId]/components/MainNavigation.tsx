@@ -195,7 +195,7 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/product"),
       },
     ],
-    [t, environment.id, pathname, isAIEnabled, isContactsEnabled]
+    [t, environment.id, pathname, isContactsEnabled]
   );
 
   const dropdownNavigation = [

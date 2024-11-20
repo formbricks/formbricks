@@ -1,9 +1,9 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";

@@ -1,8 +1,8 @@
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";

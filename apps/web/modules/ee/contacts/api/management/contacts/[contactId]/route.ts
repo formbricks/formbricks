@@ -1,6 +1,6 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { deleteContact, getContact } from "./lib/contact";

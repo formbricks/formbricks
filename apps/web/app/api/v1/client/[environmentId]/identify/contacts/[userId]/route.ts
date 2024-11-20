@@ -1,8 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { contactCache } from "@/lib/cache/contact";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
-import { getIsContactsEnabled } from "@formbricks/ee/lib/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsPersonIdentifyInput } from "@formbricks/types/js";
 import { getPersonState } from "./lib/personState";
