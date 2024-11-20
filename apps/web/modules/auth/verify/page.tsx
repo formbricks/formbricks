@@ -2,8 +2,13 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { SignIn } from "@/modules/auth/verify/components/sign-in";
 import { getTranslations } from "next-intl/server";
 
-export const VerifyPage = async (props) => {
-  const searchParams = await props.searchParams;
+interface VerifyPageProps {
+  searchParams: {
+    token: string;
+  };
+}
+
+export const VerifyPage = async ({ searchParams }: VerifyPageProps) => {
   const t = await getTranslations();
   return searchParams && searchParams.token ? (
     <FormWrapper>

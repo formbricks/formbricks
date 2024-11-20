@@ -19,8 +19,9 @@ export const resetPasswordAction = actionClient
     const hashedPassword = await hashPassword(parsedInput.password);
     const { id } = await verifyToken(parsedInput.token);
     const user = await getUser(id);
-    if (user) {
-      const updatedUser = await updateUser(id, { password: hashedPassword });
-      await sendPasswordResetNotifyEmail(updatedUser);
+    if (!user) {
+      throw new Error("User not found");
     }
+    const updatedUser = await updateUser(id, { password: hashedPassword });
+    await sendPasswordResetNotifyEmail(updatedUser);
   });

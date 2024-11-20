@@ -4,8 +4,13 @@ import { getTranslations } from "next-intl/server";
 import { getEmailFromEmailToken } from "@formbricks/lib/jwt";
 import { ZUserEmail } from "@formbricks/types/user";
 
-export const VerificationRequestedPage = async (props) => {
-  const searchParams = await props.searchParams;
+interface VerificationRequestedPageProps {
+  searchParams: {
+    token: string;
+  };
+}
+
+export const VerificationRequestedPage = async ({ searchParams }: VerificationRequestedPageProps) => {
   const t = await getTranslations();
   try {
     const email = getEmailFromEmailToken(searchParams.token);

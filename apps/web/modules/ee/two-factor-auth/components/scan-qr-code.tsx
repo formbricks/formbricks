@@ -1,5 +1,7 @@
+import { CopyIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { toast } from "react-hot-toast";
 import { Button } from "@formbricks/ui/components/Button";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
@@ -28,7 +30,19 @@ export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRC
         <p className="text-sm text-slate-700">
           {t("environments.settings.profile.or_enter_the_following_code_manually")}
         </p>
-        <p className="text-sm font-medium text-slate-700">{secret}</p>
+        <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium text-slate-700">{secret}</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(secret).then(() => {
+                toast.success(t("common.copied_to_clipboard"));
+              });
+            }}>
+            <CopyIcon className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">

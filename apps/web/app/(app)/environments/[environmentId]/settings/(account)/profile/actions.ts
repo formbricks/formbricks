@@ -36,7 +36,7 @@ export const enableTwoFactorAuthAction = authenticatedActionClient
   });
 
 const ZDisableTwoFactorAuthAction = z.object({
-  code: z.string(),
+  code: z.string().optional(),
   password: z.string(),
   backupCode: z.string().optional(),
 });

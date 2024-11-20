@@ -1,6 +1,6 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getEnterpriseLicense, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import {
   AZURE_OAUTH_ENABLED,
@@ -20,11 +20,14 @@ import {
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupForm } from "./components/signup-form";
 
-export const SignupPage = async (props: { searchParams: Promise<{ [key: string]: string | undefined }> }) => {
+interface SignupPageProps {
+  searchParams: { [key: string]: string | undefined };
+}
+
+export const SignupPage = async ({ searchParams }: SignupPageProps) => {
   const enterpriseLicense = await getEnterpriseLicense();
-  const searchParams = await props.searchParams;
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const isMultOrgEnabled = await getIsMultiOrgEnabled();
+  const isMultOrgEnabled = enterpriseLicense.features?.isMultiOrgEnabled ?? false;
   const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();

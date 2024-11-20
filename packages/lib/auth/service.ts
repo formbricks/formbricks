@@ -130,7 +130,7 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
 };
 
 type TDisableTwoFactorAuthParams = {
-  code: string;
+  code?: string;
   password: string;
   backupCode?: string;
 };

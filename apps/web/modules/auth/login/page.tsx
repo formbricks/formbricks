@@ -1,6 +1,6 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getEnterpriseLicense, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
@@ -20,8 +20,8 @@ export const metadata: Metadata = {
 };
 
 export const LoginPage = async () => {
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const enterpriseLicense = await getEnterpriseLicense();
+  const isMultiOrgEnabled = enterpriseLicense.features?.isMultiOrgEnabled ?? false;
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">

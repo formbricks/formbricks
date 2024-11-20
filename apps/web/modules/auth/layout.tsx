@@ -6,9 +6,12 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 
 export const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
-  const session = await getServerSession(authOptions);
-  const isFreshInstance = await getIsFreshInstance();
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const [session, isFreshInstance, isMultiOrgEnabled] = await Promise.all([
+    getServerSession(authOptions),
+    getIsFreshInstance(),
+    getIsMultiOrgEnabled(),
+  ]);
+
   if (session) {
     redirect(`/`);
   }

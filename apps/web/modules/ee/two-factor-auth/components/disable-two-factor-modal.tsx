@@ -16,11 +16,16 @@ import { Modal } from "@formbricks/ui/components/Modal";
 import { OTPInput } from "@formbricks/ui/components/OTPInput";
 import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
-const ZDisableTwoFactorFormState = z.object({
-  password: ZUserPassword,
-  code: z.string(),
-  backupCode: z.string().optional(),
-});
+const ZDisableTwoFactorFormState = z
+  .object({
+    password: ZUserPassword,
+    code: z.string().optional(),
+    backupCode: z.string().optional(),
+  })
+  .refine((data) => data.code || data.backupCode, {
+    message: "Either code or backup code must be provided.",
+    path: ["code"],
+  });
 
 type TDisableTwoFactorFormState = z.infer<typeof ZDisableTwoFactorFormState>;
 
@@ -146,7 +151,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                       <FormControl>
                         <FormItem>
                           <OTPInput
-                            value={field.value}
+                            value={field.value || ""}
                             valueLength={6}
                             onChange={field.onChange}
                             containerClassName="justify-start mt-4"

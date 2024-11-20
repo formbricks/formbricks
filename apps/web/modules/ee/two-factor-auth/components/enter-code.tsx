@@ -21,7 +21,7 @@ type TEnterCodeFormState = z.infer<typeof ZEnterCodeFormState>;
 
 export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodeProps) => {
   const t = useTranslations();
-  const { control, handleSubmit } = useForm<TEnterCodeFormState>({
+  const { control, handleSubmit, formState } = useForm<TEnterCodeFormState>({
     defaultValues: {
       code: "",
     },
@@ -88,7 +88,9 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
               {t("common.cancel")}
             </Button>
 
-            <Button size="sm">{t("common.confirm")}</Button>
+            <Button size="sm" loading={formState.isSubmitting}>
+              {t("common.confirm")}
+            </Button>
           </div>
         </form>
       </div>
