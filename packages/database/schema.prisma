@@ -310,9 +310,9 @@ model Survey {
   segmentId           String?
   segment             Segment?                @relation(fields: [segmentId], references: [id])
 
-  /// @zod.custom(imports.ZSurveyProductOverwrites)
-  /// [SurveyProductOverwrites]
-  productOverwrites Json?
+  /// @zod.custom(imports.ZSurveyProjectOverwrites)
+  /// [SurveyProjectOverwrites]
+  projectOverwrites Json?
 
   /// @zod.custom(imports.ZSurveyStyling)
   /// [SurveyStyling]
@@ -394,8 +394,8 @@ model Environment {
   createdAt            DateTime         @default(now()) @map(name: "created_at")
   updatedAt            DateTime         @updatedAt @map(name: "updated_at")
   type                 EnvironmentType
-  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId            String
+  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
   widgetSetupCompleted Boolean          @default(false)
   appSetupCompleted    Boolean          @default(false)
   surveys              Survey[]
@@ -410,7 +410,7 @@ model Environment {
   documents            Document[]
   insights             Insight[]
 
-  @@index([productId])
+  @@index([projectId])
 }
 
 enum WidgetPlacement {
@@ -421,7 +421,7 @@ enum WidgetPlacement {
   center
 }
 
-model Product {
+model Project {
   id                   String          @id @default(cuid())
   createdAt            DateTime        @default(now()) @map(name: "created_at")
   updatedAt            DateTime        @updatedAt @map(name: "updated_at")
@@ -431,11 +431,11 @@ model Product {
   environments         Environment[]
   brandColor           String? // deprecated; use styling.brandColor instead
   highlightBorderColor String? // deprecated
-  /// @zod.custom(imports.ZProductStyling)
+  /// @zod.custom(imports.ZProjectStyling)
   /// [Styling]
   styling              Json            @default("{\"allowStyleOverwrite\":true}")
-  /// @zod.custom(imports.ZProductConfig)
-  /// [ProductConfig]
+  /// @zod.custom(imports.ZProjectConfig)
+  /// [ProjectConfig]
   config               Json            @default("{}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
@@ -447,7 +447,7 @@ model Product {
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                 Json?
-  productTeams         ProductTeam[]
+  projectTeams         ProjectTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -459,7 +459,7 @@ model Organization {
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   name        String
   memberships Membership[]
-  products    Product[]
+  projects    Project[]
   /// @zod.custom(imports.ZOrganizationBilling)
   /// [OrganizationBilling]
   billing     Json
@@ -650,11 +650,11 @@ model Language {
   updatedAt       DateTime         @updatedAt @map(name: "updated_at")
   code            String
   alias           String?
-  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
   surveyLanguages SurveyLanguage[]
 
-  @@unique([productId, code])
+  @@unique([projectId, code])
 }
 
 model SurveyLanguage {
@@ -732,10 +732,10 @@ model Team {
   createdAt      DateTime      @default(now()) @map(name: "created_at")
   updatedAt      DateTime      @updatedAt @map(name: "updated_at")
   name           String
-  organizationId String        @map(name: "organization_id")
+  organizationId String
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   teamUsers      TeamUser[]
-  productTeams   ProductTeam[]
+  projectTeams   ProjectTeam[]
 
   @@unique([organizationId, name])
 }
@@ -748,9 +748,9 @@ enum TeamUserRole {
 model TeamUser {
   createdAt DateTime     @default(now()) @map(name: "created_at")
   updatedAt DateTime     @updatedAt @map(name: "updated_at")
-  teamId    String       @map(name: "team_id")
+  teamId    String
   team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  userId    String       @map(name: "user_id")
+  userId    String
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      TeamUserRole
 
@@ -758,21 +758,21 @@ model TeamUser {
   @@index([userId])
 }
 
-enum ProductTeamPermission {
+enum ProjectTeamPermission {
   read
   readWrite
   manage
 }
 
-model ProductTeam {
+model ProjectTeam {
   createdAt  DateTime              @default(now()) @map(name: "created_at")
   updatedAt  DateTime              @updatedAt @map(name: "updated_at")
-  productId  String                @map(name: "product_id")
-  product    Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
-  teamId     String                @map(name: "team_id")
+  projectId  String
+  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  teamId     String
   team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  permission ProductTeamPermission @default(read)
+  permission ProjectTeamPermission @default(read)
 
-  @@id([productId, teamId])
+  @@id([projectId, teamId])
   @@index([teamId])
 }
