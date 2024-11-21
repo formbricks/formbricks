@@ -45,7 +45,7 @@ const evaluateFollowUp = async (
   }
 };
 
-export const sendSurvyeFollowUps = async (survey: TSurvey, response: TResponse) => {
+export const sendSurveyFollowUps = async (survey: TSurvey, response: TResponse) => {
   const followUpPromises = survey.followUps.map(async (followUp): Promise<FollowUpResult> => {
     const { trigger } = followUp;
 

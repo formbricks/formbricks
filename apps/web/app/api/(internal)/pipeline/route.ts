@@ -1,5 +1,5 @@
 import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/lib/documents";
-import { sendSurvyeFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
+import { sendSurveyFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsAIEnabled } from "@/app/lib/utils";
@@ -169,7 +169,7 @@ export const POST = async (request: Request) => {
     const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization);
 
     if (surveyFollowUpsPermission) {
-      await sendSurvyeFollowUps(survey, response);
+      await sendSurveyFollowUps(survey, response);
     }
 
     const emailPromises = usersWithNotifications.map((user) =>
