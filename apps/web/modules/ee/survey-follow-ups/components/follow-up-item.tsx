@@ -1,7 +1,7 @@
 import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/follow-up-modal";
-import { Badge } from "@/modules/ui/components/Badge";
-import { Button } from "@/modules/ui/components/Button";
-import { ConfirmationModal } from "@/modules/ui/components/ConfirmationModal";
+import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";

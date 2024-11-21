@@ -1,8 +1,8 @@
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import FollowUpActionMultiEmailInput from "@/modules/ee/survey-follow-ups/components/follow-up-action-multi-email-input";
-import { Button } from "@/modules/ui/components/Button";
-import { Checkbox } from "@/modules/ui/components/Checkbox";
-import { Editor } from "@/modules/ui/components/Editor";
+import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { Editor } from "@/modules/ui/components/editor";
 import {
   FormControl,
   FormDescription,
@@ -10,17 +10,18 @@ import {
   FormItem,
   FormLabel,
   FormProvider,
-} from "@/modules/ui/components/Form";
-import { Input } from "@/modules/ui/components/Input";
-import { Label } from "@/modules/ui/components/Label";
-import { Modal } from "@/modules/ui/components/Modal";
+} from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/modules/ui/components/Select";
+} from "@/modules/ui/components/select";
+import { cn } from "@/modules/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
 import DOMpurify from "isomorphic-dompurify";
@@ -34,7 +35,6 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { cn } from "@formbricks/ui/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
   ZCreateSurveyFollowUpFormSchema,

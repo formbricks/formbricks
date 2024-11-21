@@ -1,6 +1,6 @@
 import { FollowUpItem } from "@/modules/ee/survey-follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/follow-up-modal";
-import { Button } from "@/modules/ui/components/Button";
+import { Button } from "@/modules/ui/components/button";
 import { LockIcon, MailIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
