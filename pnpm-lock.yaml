@@ -45,9 +45,6 @@ importers:
       '@formbricks/js':
         specifier: workspace:*
         version: link:../../packages/js
-      '@formbricks/web':
-        specifier: workspace:*
-        version: link:../web
       lucide-react:
         specifier: 0.452.0
         version: 0.452.0(react@19.0.0-rc-ed15d500-20241110)
@@ -273,9 +270,6 @@ importers:
 
   apps/storybook:
     dependencies:
-      '@formbricks/web':
-        specifier: workspace:*
-        version: link:../web
       eslint-plugin-react-refresh:
         specifier: 0.4.12
         version: 0.4.12(eslint@8.57.0)
