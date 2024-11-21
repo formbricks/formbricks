@@ -1,9 +1,9 @@
 "use client";
 
 // Error components must be Client components
+import { Button } from "@/modules/ui/components/button";
+import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { useTranslations } from "next-intl";
-import { Button } from "@formbricks/ui/components/Button";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 
 const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
   const t = useTranslations();

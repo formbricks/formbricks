@@ -1,9 +1,9 @@
 "use client";
 
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { TagIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { AttributeActivityTab } from "./AttributeActivityTab";
 import { AttributeSettingsTab } from "./AttributeSettingsTab";
 

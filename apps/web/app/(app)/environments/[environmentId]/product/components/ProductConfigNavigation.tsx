@@ -1,9 +1,9 @@
 "use client";
 
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface ProductConfigNavigationProps {
   activeId: string;

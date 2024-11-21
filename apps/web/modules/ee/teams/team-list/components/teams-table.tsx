@@ -2,18 +2,11 @@
 
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { TOtherTeam, TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
+import { Badge } from "@/modules/ui/components/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/modules/ui/components/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@formbricks/ui/components/Table";
 
 interface YourTeamsProps {
   teams: { userTeams: TUserTeam[]; otherTeams: TOtherTeam[] };

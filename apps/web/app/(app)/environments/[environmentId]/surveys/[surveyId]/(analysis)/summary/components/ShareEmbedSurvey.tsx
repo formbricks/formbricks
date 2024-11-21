@@ -1,6 +1,8 @@
 "use client";
 
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
+import { Badge } from "@/modules/ui/components/badge";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 import {
   BellRing,
   BlocksIcon,
@@ -16,8 +18,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@formbricks/ui/components/Dialog";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
 import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 

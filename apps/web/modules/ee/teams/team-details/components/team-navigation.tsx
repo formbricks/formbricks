@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +7,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@formbricks/ui/components/Breadcrumb";
+} from "@/modules/ui/components/breadcrumb";
+import { useTranslations } from "next-intl";
 
 interface TeamsNavigationBreadcrumbsProps {
   teamName: string;

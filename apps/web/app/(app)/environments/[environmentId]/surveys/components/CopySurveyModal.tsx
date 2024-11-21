@@ -1,9 +1,9 @@
 "use client";
 
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { Modal } from "@/modules/ui/components/modal";
 import { MousePointerClickIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Modal } from "@formbricks/ui/components/Modal";
 import SurveyCopyOptions from "./SurveyCopyOptions";
 
 interface CopySurveyModalProps {

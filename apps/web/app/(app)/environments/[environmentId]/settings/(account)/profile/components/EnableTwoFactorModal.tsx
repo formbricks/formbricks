@@ -5,16 +5,16 @@ import {
   setupTwoFactorAuthAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { Modal } from "@/modules/ui/components/modal";
+import { OTPInput } from "@/modules/ui/components/otp-input";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
-import { Modal } from "@formbricks/ui/components/Modal";
-import { OTPInput } from "@formbricks/ui/components/OTPInput";
-import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
 type TConfirmPasswordFormState = {
   password: string;

@@ -1,3 +1,4 @@
+import { Button } from "@/modules/ui/components/button";
 import { Languages } from "lucide-react";
 import { useRef, useState } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
@@ -5,7 +6,6 @@ import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface LanguageDropdownProps {
   survey: TSurvey;

@@ -1,18 +1,18 @@
 import { LogicEditorActions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditorActions";
 import { LogicEditorConditions } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditorConditions";
-import { ArrowRightIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { ReactElement, useMemo } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
-import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
+} from "@/modules/ui/components/select";
+import { ArrowRightIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { ReactElement, useMemo } from "react";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorProps {
   localSurvey: TSurvey;

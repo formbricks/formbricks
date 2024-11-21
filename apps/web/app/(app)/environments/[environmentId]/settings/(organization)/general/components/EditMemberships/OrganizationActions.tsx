@@ -6,6 +6,8 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AddMemberModal";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
+import { Button } from "@/modules/ui/components/button";
+import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -13,8 +15,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { TInvitee } from "@formbricks/types/invites";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/components/Button";
-import { CustomDialog } from "@formbricks/ui/components/CustomDialog";
 
 type OrganizationActionsProps = {
   role: string;

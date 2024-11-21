@@ -21,6 +21,8 @@ import { RankingSummary } from "@/app/(app)/environments/[environmentId]/surveys
 import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
 import { constructToastMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
 import { useTranslations } from "next-intl";
 import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -30,8 +32,6 @@ import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/type
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
-import { SkeletonLoader } from "@formbricks/ui/components/SkeletonLoader";
 import { AddressSummary } from "./AddressSummary";
 
 interface SummaryListProps {

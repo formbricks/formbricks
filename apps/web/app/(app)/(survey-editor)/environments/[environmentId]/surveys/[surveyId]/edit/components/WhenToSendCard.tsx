@@ -2,6 +2,9 @@
 
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
@@ -18,9 +21,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
 import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {
