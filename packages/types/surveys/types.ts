@@ -1,4 +1,5 @@
 import { type ZodIssue, z } from "zod";
+import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
@@ -769,6 +770,11 @@ export const ZSurvey = z
         });
       }
     }),
+    followUps: z.array(
+      ZSurveyFollowUp.extend({
+        deleted: z.boolean().optional(),
+      })
+    ),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
     runOnDate: z.date().nullable(),
@@ -1156,6 +1162,52 @@ export const ZSurvey = z
         }
       }
     });
+
+    if (survey.followUps.length) {
+      survey.followUps
+        .filter((followUp) => !followUp.deleted)
+        .forEach((followUp, index) => {
+          if (followUp.action.properties.to) {
+            const validOptions = [
+              ...survey.questions
+                .filter((q) => {
+                  if (q.type === TSurveyQuestionTypeEnum.OpenText) {
+                    if (q.inputType === "email") {
+                      return true;
+                    }
+                  }
+
+                  if (q.type === TSurveyQuestionTypeEnum.ContactInfo) {
+                    return true;
+                  }
+
+                  return false;
+                })
+                .map((q) => q.id),
+              ...(survey.hiddenFields.fieldIds ?? []),
+            ];
+
+            if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `The action in follow up ${String(index + 1)} has an invalid email field`,
+                path: ["followUps"],
+              });
+            }
+
+            if (followUp.trigger.type === "endings") {
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
+              if (!followUp.trigger.properties?.endingIds?.length) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
+                  path: ["followUps"],
+                });
+              }
+            }
+          }
+        });
+    }
   });
 
 const isInvalidOperatorsForQuestionType = (
@@ -1748,7 +1800,11 @@ const validateConditions = (
             });
           } else if (variable.type === "number") {
             const validQuestionTypes = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
-            if (!validQuestionTypes.includes(question.type)) {
+            if (
+              !validQuestionTypes.includes(question.type) &&
+              question.type === TSurveyQuestionTypeEnum.OpenText &&
+              question.inputType !== "number"
+            ) {
               issues.push({
                 code: z.ZodIssueCode.custom,
                 message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
@@ -1985,7 +2041,13 @@ const validateActions = (
         const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
 
         const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
-        if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
+
+        if (
+          !selectedQuestion ||
+          (!allowedQuestions.includes(selectedQuestion.type) &&
+            selectedQuestion.type === TSurveyQuestionTypeEnum.OpenText &&
+            selectedQuestion.inputType !== "number")
+        ) {
           return {
             code: z.ZodIssueCode.custom,
             message: `Conditional Logic: Invalid question type for number variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
@@ -2101,7 +2163,19 @@ const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLog
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
 export const ZSurveyUpdateInput = ZSurvey.innerType()
-  .omit({ createdAt: true, updatedAt: true })
+  .omit({ createdAt: true, updatedAt: true, followUps: true })
+  .extend({
+    followUps: z
+      .array(
+        ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true }).and(
+          z.object({
+            createdAt: z.coerce.date(),
+            updatedAt: z.coerce.date(),
+          })
+        )
+      )
+      .default([]),
+  })
   .and(
     z.object({
       createdAt: z.coerce.date(),
@@ -2126,6 +2200,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     updatedAt: true,
     productOverwrites: true,
     languages: true,
+    followUps: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -2136,6 +2211,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     }),
     endings: ZSurveyEndings.default([]),
     type: ZSurveyType.default("link"),
+    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
@@ -2150,7 +2226,7 @@ export interface TSurveyDates {
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
-export type TSurveyEditorTabs = "questions" | "settings" | "styling";
+export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps";
 
 export const ZSurveyQuestionSummaryOpenText = z.object({
   type: z.literal("openText"),

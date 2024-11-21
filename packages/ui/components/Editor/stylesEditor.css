@@ -215,8 +215,8 @@ pre::-webkit-scrollbar-thumb {
 .link-editor {
   position: absolute;
   z-index: 100;
-  top: -10000px;
-  left: -10000px;
+  top: 10px !important;
+  left: 10px !important;
   margin-left: 80px;
   margin-top: -6px;
   max-width: 300px;

@@ -22,6 +22,7 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
+    after: true,
     instrumentationHook: true,
     outputFileTracingIncludes: {
       "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
