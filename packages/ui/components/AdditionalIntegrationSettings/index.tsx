@@ -24,76 +24,53 @@ export const AdditionalIntegrationSettings = ({
   setIncludeCreatedAt,
 }: AdditionalIntegrationSettingsProps) => {
   const t = useTranslations();
+
+  const checkboxes = [
+    {
+      id: "includeCreatedAt",
+      checked: includeCreatedAt,
+      onChange: setIncludeCreatedAt,
+      label: t("environments.integrations.include_created_at"),
+    },
+    {
+      id: "includeVariables",
+      checked: includeVariables,
+      onChange: setIncludeVariables,
+      label: t("environments.integrations.include_variables"),
+    },
+    {
+      id: "includeHiddenFields",
+      checked: includeHiddenFields,
+      onChange: setIncludeHiddenFields,
+      label: t("environments.integrations.include_hidden_fields"),
+    },
+    {
+      id: "includeMetadata",
+      checked: includeMetadata,
+      onChange: setIncludeMetadata,
+      label: t("environments.integrations.include_metadata"),
+    },
+  ];
+
   return (
     <div className="mt-4">
       <Label htmlFor="Surveys">{t("environments.integrations.additional_settings")}</Label>
       <div className="text-sm">
-        <div className="my-1 flex items-center space-x-2">
-          <label htmlFor={"includeCreatedAt"} className="flex cursor-pointer items-center">
-            <Checkbox
-              type="button"
-              id={"includeCreatedAt"}
-              value={"includeCreatedAt"}
-              className="bg-white"
-              checked={includeCreatedAt}
-              onCheckedChange={() => {
-                setIncludeCreatedAt(!includeCreatedAt);
-              }}
-            />
-            <span className="ml-2 w-[30rem] truncate">
-              {t("environments.integrations.include_created_at")}
-            </span>
-          </label>
-        </div>
-        <div className="my-1 flex items-center space-x-2">
-          <label htmlFor={"includeVariables"} className="flex cursor-pointer items-center">
-            <Checkbox
-              type="button"
-              id={"includeVariables"}
-              value={"includeVariables"}
-              className="bg-white"
-              checked={includeVariables}
-              onCheckedChange={() => {
-                setIncludeVariables(!includeVariables);
-              }}
-            />
-            <span className="ml-2 w-[30rem] truncate">
-              {t("environments.integrations.include_variables")}
-            </span>
-          </label>
-        </div>
-        <div className="my-1 flex items-center space-x-2">
-          <label htmlFor={"includeHiddenFields"} className="flex cursor-pointer items-center">
-            <Checkbox
-              type="button"
-              id={"includeHiddenFields"}
-              value={"includeHiddenFields"}
-              className="bg-white"
-              checked={includeHiddenFields}
-              onCheckedChange={() => {
-                setIncludeHiddenFields(!includeHiddenFields);
-              }}
-            />
-            <span className="ml-2 w-[30rem] truncate">
-              {t("environments.integrations.include_hidden_fields")}
-            </span>
-          </label>
-        </div>
-        <div className="my-1 flex items-center space-x-2">
-          <label htmlFor={"includeMetadata"} className="flex cursor-pointer items-center">
-            <Checkbox
-              type="button"
-              id={"includeMetadata"}
-              value={"includeMetadata"}
-              className="bg-white"
-              checked={includeMetadata}
-              onCheckedChange={() => {
-                setIncludeMetadata(!includeMetadata);
-              }}
-            />
-            <span className="ml-2 w-[30rem] truncate">{t("environments.integrations.include_metadata")}</span>
-          </label>
-        </div>
+        {checkboxes.map(({ id, checked, onChange, label }) => (
+          <div key={id} className="my-1 flex items-center space-x-2">
+            <label htmlFor={id} className="flex cursor-pointer items-center">
+              <Checkbox
+                type="button"
+                id={id}
+                value={id}
+                className="bg-white"
+                checked={checked}
+                onCheckedChange={() => onChange(!checked)}
+              />
+              <span className="ml-2 w-[30rem] truncate">{label}</span>
+            </label>
+          </div>
+        ))}
       </div>
     </div>
   );
