@@ -3,7 +3,6 @@ import { BellRing } from "lucide-react";
 import { Card } from "./index";
 
 const meta = {
-  title: "ui/IntegrationCard",
   component: Card,
   tags: ["autodocs"],
   parameters: {

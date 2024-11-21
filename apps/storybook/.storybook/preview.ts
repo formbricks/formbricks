@@ -1,5 +1,5 @@
 import type { Preview } from "@storybook/react";
-import "../web/modules/ui/globals.css";
+import "@formbricks/web/modules/ui/globals.css";
 
 const preview: Preview = {
   parameters: {

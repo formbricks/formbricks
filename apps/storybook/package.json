@@ -11,6 +11,7 @@
     "clean": "rimraf .turbo node_modules dist storybook-static"
   },
   "dependencies": {
+    "@formbricks/web": "workspace:*",
     "eslint-plugin-react-refresh": "0.4.12",
     "react": "19.0.0-rc-ed15d500-20241110",
     "react-dom": "19.0.0-rc-ed15d500-20241110"
