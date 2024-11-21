@@ -6,13 +6,13 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getUserProjects } from "@formbricks/lib/project/service";
 import { TProject } from "@formbricks/types/project";
 
-type DeleteProductProps = {
+type DeleteProjectProps = {
   environmentId: string;
-  product: TProject;
+  project: TProject;
   isOwnerOrManager: boolean;
 };
 
-export const DeleteProduct = async ({ environmentId, product, isOwnerOrManager }: DeleteProductProps) => {
+export const DeleteProject = async ({ environmentId, project, isOwnerOrManager }: DeleteProjectProps) => {
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -22,16 +22,16 @@ export const DeleteProduct = async ({ environmentId, product, isOwnerOrManager }
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
-  const availableProducts = organization ? await getUserProjects(session.user.id, organization.id) : null;
+  const availableProjects = organization ? await getUserProjects(session.user.id, organization.id) : null;
 
-  const availableProductsLength = availableProducts ? availableProducts.length : 0;
-  const isDeleteDisabled = availableProductsLength <= 1 || !isOwnerOrManager;
+  const availableProjectsLength = availableProjects ? availableProjects.length : 0;
+  const isDeleteDisabled = availableProjectsLength <= 1 || !isOwnerOrManager;
 
   return (
     <DeleteProjectRender
       isDeleteDisabled={isDeleteDisabled}
       isOwnerOrManager={isOwnerOrManager}
-      project={product}
+      project={project}
     />
   );
 };

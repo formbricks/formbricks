@@ -1,6 +1,6 @@
 "use client";
 
-import { getProductsByEnvironmentIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
+import { getProjectsByEnvironmentIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Loader2 } from "lucide-react";
@@ -17,26 +17,26 @@ interface SurveyCopyOptionsProps {
 }
 
 const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
-  const [products, setProducts] = useState<TProject[]>([]);
-  const [productLoading, setProductLoading] = useState(true);
+  const [projects, setProjects] = useState<TProject[]>([]);
+  const [projectLoading, setProjectLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const getProductsByEnvironmentIdResponse = await getProductsByEnvironmentIdAction({ environmentId });
-      if (getProductsByEnvironmentIdResponse?.data) {
-        setProducts(getProductsByEnvironmentIdResponse?.data);
+    const fetchProjects = async () => {
+      const getProjectsByEnvironmentIdResponse = await getProjectsByEnvironmentIdAction({ environmentId });
+      if (getProjectsByEnvironmentIdResponse?.data) {
+        setProjects(getProjectsByEnvironmentIdResponse?.data);
       } else {
-        const errorMessage = getFormattedErrorMessage(getProductsByEnvironmentIdResponse);
+        const errorMessage = getFormattedErrorMessage(getProjectsByEnvironmentIdResponse);
         toast.error(errorMessage);
       }
 
-      setProductLoading(false);
+      setProjectLoading(false);
     };
 
-    fetchProducts();
+    fetchProjects();
   }, [environmentId]);
 
-  if (productLoading) {
+  if (projectLoading) {
     return (
       <div className="relative flex h-full min-h-96 w-full items-center justify-center bg-white pb-12">
         <Loader2 className="animate-spin" />
@@ -44,7 +44,7 @@ const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyC
     );
   }
 
-  return <CopySurveyForm defaultProducts={products} survey={survey} onCancel={onCancel} setOpen={setOpen} />;
+  return <CopySurveyForm defaultProjects={projects} survey={survey} onCancel={onCancel} setOpen={setOpen} />;
 };
 
 export default SurveyCopyOptions;

@@ -9,12 +9,12 @@ export const getEmailTemplateHtml = async (surveyId: string) => {
   if (!survey) {
     throw new Error("Survey not found");
   }
-  const product = await getProjectByEnvironmentId(survey.environmentId);
-  if (!product) {
-    throw new Error("Product not found");
+  const project = await getProjectByEnvironmentId(survey.environmentId);
+  if (!project) {
+    throw new Error("Project not found");
   }
 
-  const styling = getStyling(product, survey);
+  const styling = getStyling(project, survey);
   const surveyUrl = WEBAPP_URL + "/s/" + survey.id;
   const html = await getPreviewEmailTemplateHtml(survey, surveyUrl, styling);
   const doctype =

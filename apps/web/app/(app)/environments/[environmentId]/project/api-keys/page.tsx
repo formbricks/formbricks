@@ -23,7 +23,7 @@ import { ApiKeyList } from "./components/ApiKeyList";
 const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslations();
-  const [session, environment, organization, product] = await Promise.all([
+  const [session, environment, organization, project] = await Promise.all([
     getServerSession(authOptions),
     getEnvironment(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
@@ -41,15 +41,15 @@ const Page = async (props) => {
   }
   const locale = await findMatchingLocale();
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
-  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const { hasManageAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && !hasManageAccess;
 
@@ -66,11 +66,11 @@ const Page = async (props) => {
           canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
-      <EnvironmentNotice environmentId={environment.id} subPageUrl="/product/api-keys" />
+      <EnvironmentNotice environmentId={environment.id} subPageUrl="/project/api-keys" />
       {environment.type === "development" ? (
         <SettingsCard
-          title={t("environments.product.api-keys.dev_api_keys")}
-          description={t("environments.product.api-keys.dev_api_keys_description")}>
+          title={t("environments.project.api-keys.dev_api_keys")}
+          description={t("environments.project.api-keys.dev_api_keys_description")}>
           <ApiKeyList
             environmentId={params.environmentId}
             environmentType="development"
@@ -80,8 +80,8 @@ const Page = async (props) => {
         </SettingsCard>
       ) : (
         <SettingsCard
-          title={t("environments.product.api-keys.prod_api_keys")}
-          description={t("environments.product.api-keys.prod_api_keys_description")}>
+          title={t("environments.project.api-keys.prod_api_keys")}
+          description={t("environments.project.api-keys.prod_api_keys_description")}>
           <ApiKeyList
             environmentId={params.environmentId}
             environmentType="production"

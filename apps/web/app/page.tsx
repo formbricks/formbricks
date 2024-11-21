@@ -50,7 +50,7 @@ const Page = async () => {
   if (!environmentId) {
     console.error(t("common.failed_to_get_first_environment_of_user"));
     if (isOwner || isManager) {
-      return redirect(`/organizations/${userOrganizations[0].id}/products/new/mode`);
+      return redirect(`/organizations/${userOrganizations[0].id}/projects/new/mode`);
     } else {
       return redirect(`/organizations/${userOrganizations[0].id}/landing`);
     }

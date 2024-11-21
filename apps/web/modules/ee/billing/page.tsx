@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { PRODUCT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
+import { PROJECT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import {
@@ -64,7 +64,7 @@ export const PricingPage = async (props) => {
         peopleCount={peopleCount}
         responseCount={responseCount}
         stripePriceLookupKeys={STRIPE_PRICE_LOOKUP_KEYS}
-        productFeatureKeys={PRODUCT_FEATURE_KEYS}
+        projectFeatureKeys={PROJECT_FEATURE_KEYS}
         hasBillingRights={hasBillingRights}
       />
     </PageContentWrapper>

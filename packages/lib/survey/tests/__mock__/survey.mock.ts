@@ -56,11 +56,11 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
   },
 ];
 
-export const mockProduct: TProject = {
+export const mockProject: TProject = {
   id: mockId,
   createdAt: currentDate,
   updatedAt: currentDate,
-  name: "mock Product",
+  name: "mock Project",
   organizationId: mockId,
   brandColor: "#000000",
   highlightBorderColor: "#000000",
@@ -93,7 +93,7 @@ export const mockEnvironment: TEnvironment = {
   createdAt: currentDate,
   updatedAt: currentDate,
   type: "production",
-  productId: mockId,
+  projectId: mockId,
   appSetupCompleted: false,
 };
 
@@ -221,7 +221,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   singleUse: null,
   styling: null,
   displayPercentage: null,
@@ -240,7 +240,7 @@ export const mockSurveyOutput: SurveyMock = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   singleUse: null,
   styling: null,
   displayPercentage: null,
@@ -266,7 +266,7 @@ export const updateSurveyInput: TSurvey = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   styling: null,
   singleUse: null,
   displayPercentage: null,

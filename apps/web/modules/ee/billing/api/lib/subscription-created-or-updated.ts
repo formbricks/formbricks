@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PRODUCT_FEATURE_KEYS, STRIPE_API_VERSION } from "@formbricks/lib/constants";
+import { PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -75,20 +75,20 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   const plan = ZOrganizationBillingPlan.parse(product.metadata.plan);
 
   switch (plan) {
-    case PRODUCT_FEATURE_KEYS.FREE:
-      updatedBillingPlan = PRODUCT_FEATURE_KEYS.STARTUP;
+    case PROJECT_FEATURE_KEYS.FREE:
+      updatedBillingPlan = PROJECT_FEATURE_KEYS.STARTUP;
       break;
 
-    case PRODUCT_FEATURE_KEYS.STARTUP:
-      updatedBillingPlan = PRODUCT_FEATURE_KEYS.STARTUP;
+    case PROJECT_FEATURE_KEYS.STARTUP:
+      updatedBillingPlan = PROJECT_FEATURE_KEYS.STARTUP;
       break;
 
-    case PRODUCT_FEATURE_KEYS.SCALE:
-      updatedBillingPlan = PRODUCT_FEATURE_KEYS.SCALE;
+    case PROJECT_FEATURE_KEYS.SCALE:
+      updatedBillingPlan = PROJECT_FEATURE_KEYS.SCALE;
       break;
 
-    case PRODUCT_FEATURE_KEYS.ENTERPRISE:
-      updatedBillingPlan = PRODUCT_FEATURE_KEYS.ENTERPRISE;
+    case PROJECT_FEATURE_KEYS.ENTERPRISE:
+      updatedBillingPlan = PROJECT_FEATURE_KEYS.ENTERPRISE;
       break;
   }
 

@@ -15,7 +15,7 @@ import { OTPInput } from "@formbricks/ui/components/OTPInput";
 
 interface PinScreenProps {
   surveyId: string;
-  product: TProject;
+  project: TProject;
   userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;
@@ -35,7 +35,7 @@ interface PinScreenProps {
 export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
-    product,
+    project,
     webAppUrl,
     emailVerificationStatus,
     userId,
@@ -123,7 +123,7 @@ export const PinScreen = (props: PinScreenProps) => {
   return (
     <LinkSurvey
       survey={survey}
-      product={product}
+      project={project}
       userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}

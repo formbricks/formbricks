@@ -4,9 +4,9 @@ import { DetailsView } from "@/modules/ee/teams/team-details/components/details-
 import { TeamsNavigationBreadcrumbs } from "@/modules/ee/teams/team-details/components/team-navigation";
 import {
   getMembersByOrganizationId,
-  getProductsByOrganizationId,
+  getProjectsByOrganizationId,
   getTeam,
-  getTeamProducts,
+  getTeamProjects,
 } from "@/modules/ee/teams/team-details/lib/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -51,9 +51,9 @@ export const TeamDetails = async (props) => {
 
   const organizationMembers = await getMembersByOrganizationId(organization.id);
 
-  const teamProducts = await getTeamProducts(params.teamId);
+  const teamProjects = await getTeamProjects(params.teamId);
 
-  const organizationProducts = await getProductsByOrganizationId(organization.id);
+  const organizationProjects = await getProjectsByOrganizationId(organization.id);
 
   return (
     <PageContentWrapper>
@@ -64,8 +64,8 @@ export const TeamDetails = async (props) => {
         userId={userId}
         membershipRole={currentUserMembership?.role}
         teamRole={teamRole}
-        products={teamProducts}
-        organizationProducts={organizationProducts}
+        projects={teamProjects}
+        organizationProjects={organizationProjects}
       />
     </PageContentWrapper>
   );

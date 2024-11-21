@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { BILLING_LIMITS, PRODUCT_FEATURE_KEYS } from "@formbricks/lib/constants";
+import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@formbricks/lib/constants";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
@@ -17,7 +17,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   await updateOrganization(organizationId, {
     billing: {
       ...organization.billing,
-      plan: PRODUCT_FEATURE_KEYS.FREE,
+      plan: PROJECT_FEATURE_KEYS.FREE,
       limits: {
         monthly: {
           responses: BILLING_LIMITS.FREE.RESPONSES,

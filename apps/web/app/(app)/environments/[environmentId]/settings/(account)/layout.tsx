@@ -10,7 +10,7 @@ const AccountSettingsLayout = async (props) => {
   const { children } = props;
 
   const t = await getTranslations();
-  const [organization, product, session] = await Promise.all([
+  const [organization, project, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
     getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -20,8 +20,8 @@ const AccountSettingsLayout = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!session) {

@@ -195,7 +195,7 @@ export const RecontactOptionsCard = ({
               {t("environments.surveys.edit.this_setting_overwrites_your")}{" "}
               <Link
                 className="decoration-brand-dark underline"
-                href={`/environments/${environmentId}/product/general`}
+                href={`/environments/${environmentId}/project/general`}
                 target="_blank">
                 {t("environments.surveys.edit.waiting_period")}
               </Link>

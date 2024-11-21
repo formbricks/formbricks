@@ -9,7 +9,7 @@ import {
   getInvite,
   getLanguage,
   getPerson,
-  getProduct,
+  getProject,
   getResponse,
   getResponseNote,
   getSegment,
@@ -43,7 +43,7 @@ export const getFormattedErrorMessage = (result) => {
  */
 
 export const getOrganizationIdFromProjectId = async (projectId: string) => {
-  const project = await getProduct(projectId);
+  const project = await getProject(projectId);
   if (!project) {
     throw new ResourceNotFoundError("project", projectId);
   }
@@ -57,7 +57,7 @@ export const getOrganizationIdFromEnvironmentId = async (environmentId: string) 
     throw new ResourceNotFoundError("environment", environmentId);
   }
 
-  return await getOrganizationIdFromProjectId(environment.productId);
+  return await getOrganizationIdFromProjectId(environment.projectId);
 };
 
 export const getOrganizationIdFromSurveyId = async (surveyId: string) => {
@@ -174,7 +174,7 @@ export const getOrganizationIdFromLanguageId = async (languageId: string) => {
     throw new ResourceNotFoundError("language", languageId);
   }
 
-  return await getOrganizationIdFromProjectId(language.productId);
+  return await getOrganizationIdFromProjectId(language.projectId);
 };
 
 export const getOrganizationIdFromTeamId = async (teamId: string) => {
@@ -204,122 +204,122 @@ export const getOrganizationIdFromDocumentId = async (documentId: string) => {
   return await getOrganizationIdFromEnvironmentId(document.environmentId);
 };
 
-// product id helpers
-export const getProductIdFromEnvironmentId = async (environmentId: string) => {
+// project id helpers
+export const getProjectIdFromEnvironmentId = async (environmentId: string) => {
   const environment = await getEnvironment(environmentId);
   if (!environment) {
     throw new ResourceNotFoundError("environment", environmentId);
   }
 
-  return environment.productId;
+  return environment.projectId;
 };
 
-export const getProductIdFromSurveyId = async (surveyId: string) => {
+export const getProjectIdFromSurveyId = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
     throw new ResourceNotFoundError("survey", surveyId);
   }
 
-  return await getProductIdFromEnvironmentId(survey.environmentId);
+  return await getProjectIdFromEnvironmentId(survey.environmentId);
 };
 
-export const getProductIdFromInsightId = async (insightId: string) => {
+export const getProjectIdFromInsightId = async (insightId: string) => {
   const insight = await getInsight(insightId);
   if (!insight) {
     throw new ResourceNotFoundError("insight", insightId);
   }
 
-  return await getProductIdFromEnvironmentId(insight.environmentId);
+  return await getProjectIdFromEnvironmentId(insight.environmentId);
 };
 
-export const getProductIdFromSegmentId = async (segmentId: string) => {
+export const getProjectIdFromSegmentId = async (segmentId: string) => {
   const segment = await getSegment(segmentId);
   if (!segment) {
     throw new ResourceNotFoundError("segment", segmentId);
   }
 
-  return await getProductIdFromEnvironmentId(segment.environmentId);
+  return await getProjectIdFromEnvironmentId(segment.environmentId);
 };
 
-export const getProductIdFromApiKeyId = async (apiKeyId: string) => {
+export const getProjectIdFromApiKeyId = async (apiKeyId: string) => {
   const apiKey = await getApiKey(apiKeyId);
   if (!apiKey) {
     throw new ResourceNotFoundError("apiKey", apiKeyId);
   }
 
-  return await getProductIdFromEnvironmentId(apiKey.environmentId);
+  return await getProjectIdFromEnvironmentId(apiKey.environmentId);
 };
 
-export const getProductIdFromActionClassId = async (actionClassId: string) => {
+export const getProjectIdFromActionClassId = async (actionClassId: string) => {
   const actionClass = await getActionClass(actionClassId);
   if (!actionClass) {
     throw new ResourceNotFoundError("actionClass", actionClassId);
   }
 
-  return await getProductIdFromEnvironmentId(actionClass.environmentId);
+  return await getProjectIdFromEnvironmentId(actionClass.environmentId);
 };
 
-export const getProductIdFromTagId = async (tagId: string) => {
+export const getProjectIdFromTagId = async (tagId: string) => {
   const tag = await getTag(tagId);
   if (!tag) {
     throw new ResourceNotFoundError("tag", tagId);
   }
 
-  return await getProductIdFromEnvironmentId(tag.environmentId);
+  return await getProjectIdFromEnvironmentId(tag.environmentId);
 };
 
-export const getProductIdFromLanguageId = async (languageId: string) => {
+export const getProjectIdFromLanguageId = async (languageId: string) => {
   const language = await getLanguage(languageId);
   if (!language) {
     throw new ResourceNotFoundError("language", languageId);
   }
 
-  return language.productId;
+  return language.projectId;
 };
 
-export const getProductIdFromResponseId = async (responseId: string) => {
+export const getProjectIdFromResponseId = async (responseId: string) => {
   const response = await getResponse(responseId);
   if (!response) {
     throw new ResourceNotFoundError("response", responseId);
   }
 
-  return await getProductIdFromSurveyId(response.surveyId);
+  return await getProjectIdFromSurveyId(response.surveyId);
 };
 
-export const getProductIdFromResponseNoteId = async (responseNoteId: string) => {
+export const getProjectIdFromResponseNoteId = async (responseNoteId: string) => {
   const responseNote = await getResponseNote(responseNoteId);
   if (!responseNote) {
     throw new ResourceNotFoundError("responseNote", responseNoteId);
   }
 
-  return await getProductIdFromResponseId(responseNote.responseId);
+  return await getProjectIdFromResponseId(responseNote.responseId);
 };
 
-export const getProductIdFromPersonId = async (personId: string) => {
+export const getProjectIdFromPersonId = async (personId: string) => {
   const person = await getPerson(personId);
   if (!person) {
     throw new ResourceNotFoundError("person", personId);
   }
 
-  return await getProductIdFromEnvironmentId(person.environmentId);
+  return await getProjectIdFromEnvironmentId(person.environmentId);
 };
 
-export const getProductIdFromDocumentId = async (documentId: string) => {
+export const getProjectIdFromDocumentId = async (documentId: string) => {
   const document = await getDocument(documentId);
   if (!document) {
     throw new ResourceNotFoundError("document", documentId);
   }
 
-  return await getProductIdFromEnvironmentId(document.environmentId);
+  return await getProjectIdFromEnvironmentId(document.environmentId);
 };
 
-export const getProductIdFromIntegrationId = async (integrationId: string) => {
+export const getProjectIdFromIntegrationId = async (integrationId: string) => {
   const integration = await getIntegration(integrationId);
   if (!integration) {
     throw new ResourceNotFoundError("integration", integrationId);
   }
 
-  return await getProductIdFromEnvironmentId(integration.environmentId);
+  return await getProjectIdFromEnvironmentId(integration.environmentId);
 };
 
 // environment id helpers

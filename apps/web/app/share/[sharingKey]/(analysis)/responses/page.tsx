@@ -25,7 +25,7 @@ const Page = async (props) => {
     throw new Error(t("common.survey_not_found"));
   }
   const environmentId = survey.environmentId;
-  const [environment, product, tags] = await Promise.all([
+  const [environment, project, tags] = await Promise.all([
     getEnvironment(environmentId),
     getProjectByEnvironmentId(environmentId),
     getTagsByEnvironmentId(environmentId),
@@ -34,8 +34,8 @@ const Page = async (props) => {
   if (!environment) {
     throw new Error(t("common.environment_not_found"));
   }
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);

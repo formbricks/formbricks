@@ -5,7 +5,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
-  product: TProject;
+  project: TProject;
   defaultLanguage: TLanguage;
   setSelectedLanguageCode: (languageCode: string) => void;
   setActiveQuestionId: (questionId: TSurveyQuestionId) => void;
@@ -15,7 +15,7 @@ interface SecondaryLanguageSelectProps {
 }
 
 export function SecondaryLanguageSelect({
-  product,
+  project,
   defaultLanguage,
   setSelectedLanguageCode,
   setActiveQuestionId,
@@ -35,7 +35,7 @@ export function SecondaryLanguageSelect({
       <p className="text-sm">
         {t("environments.surveys.edit.2_activate_translation_for_specific_languages")}:
       </p>
-      {product.languages
+      {project.languages
         .filter((lang) => lang.id !== defaultLanguage.id)
         .map((language) => (
           <LanguageToggle

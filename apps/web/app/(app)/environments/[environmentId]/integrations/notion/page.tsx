@@ -53,7 +53,7 @@ const Page = async (props) => {
 
   const project = await getProjectByEnvironmentId(params.environmentId);
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   let databasesArray: TIntegrationNotionDatabase[] = [];
@@ -68,7 +68,7 @@ const Page = async (props) => {
   );
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const projectPermission = await getProjectPermissionByUserId(session?.user.id, environment?.productId);
+  const projectPermission = await getProjectPermissionByUserId(session?.user.id, environment?.projectId);
 
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 

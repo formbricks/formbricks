@@ -78,7 +78,7 @@ export const ProjectSettings = ({
         );
         if (productionEnvironment) {
           if (typeof window !== "undefined") {
-            // Rmove filters when creating a new product
+            // Rmove filters when creating a new project
             localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
           }
         }

@@ -13,19 +13,19 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { getTeamsByOrganizationId, getTeamsByProductId } from "./lib/teams";
+import { getTeamsByOrganizationId, getTeamsByProjectId } from "./lib/teams";
 
-export const ProductTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const ProjectTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslations();
   const params = await props.params;
-  const [product, session, organization] = await Promise.all([
+  const [project, session, organization] = await Promise.all([
     getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
   if (!session) {
     throw new Error(t("common.session_not_found"));
@@ -40,7 +40,7 @@ export const ProductTeams = async (props: { params: Promise<{ environmentId: str
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
 
-  const teams = await getTeamsByProductId(product.id);
+  const teams = await getTeamsByProjectId(project.id);
 
   if (!teams) {
     throw new Error(t("common.teams_not_found"));
@@ -68,7 +68,7 @@ export const ProductTeams = async (props: { params: Promise<{ environmentId: str
         environmentId={params.environmentId}
         organizationTeams={organizationTeams}
         teams={teams}
-        product={product}
+        project={project}
         isOwnerOrManager={isOwnerOrManager}
       />
     </PageContentWrapper>

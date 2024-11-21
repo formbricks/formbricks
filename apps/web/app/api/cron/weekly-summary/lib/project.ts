@@ -1,13 +1,13 @@
 import { prisma } from "@formbricks/database";
-import { TWeeklySummaryProductData } from "@formbricks/types/weekly-summary";
+import { TWeeklySummaryProjectData } from "@formbricks/types/weekly-summary";
 
-export const getProductsByOrganizationId = async (
+export const getProjectsByOrganizationId = async (
   organizationId: string
-): Promise<TWeeklySummaryProductData[]> => {
+): Promise<TWeeklySummaryProjectData[]> => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  return await prisma.product.findMany({
+  return await prisma.project.findMany({
     where: {
       organizationId: organizationId,
     },

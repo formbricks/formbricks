@@ -90,7 +90,7 @@ export const MainNavigation = ({
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
 
-  const project = projects.find((project) => project.id === environment.productId);
+  const project = projects.find((project) => project.id === environment.projectId);
   const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isManager || isOwner;

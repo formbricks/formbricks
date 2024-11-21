@@ -49,8 +49,8 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
       name?: string;
       email?: string;
       organizationName?: string;
-      productName?: string;
-      withoutProduct?: boolean;
+      projectName?: string;
+      withoutProject?: boolean;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
@@ -74,10 +74,10 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                     periodStart: new Date(),
                     period: "monthly",
                   },
-                  ...(!params?.withoutProduct && {
-                    products: {
+                  ...(!params?.withoutProject && {
+                    projects: {
                       create: {
-                        name: params?.productName ?? "My Product",
+                        name: params?.projectName ?? "My Project",
                         environments: {
                           create: [
                             {

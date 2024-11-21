@@ -31,7 +31,7 @@ export const ResponseTimeline = ({
   environmentTags,
   attributeClasses,
   locale,
-  projectPermission: productPermission,
+  projectPermission,
 }: ResponseTimelineProps) => {
   const t = useTranslations();
   const [sortedResponses, setSortedResponses] = useState(responses);
@@ -64,7 +64,7 @@ export const ResponseTimeline = ({
         environmentTags={environmentTags}
         attributeClasses={attributeClasses}
         locale={locale}
-        projectPermission={productPermission}
+        projectPermission={projectPermission}
       />
     </div>
   );

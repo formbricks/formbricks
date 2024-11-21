@@ -43,9 +43,9 @@ const Page = async (props) => {
   if (!environment) {
     throw new Error(t("common.environment_not_found"));
   }
-  const product = await getProjectByEnvironmentId(params.environmentId);
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  const project = await getProjectByEnvironmentId(params.environmentId);
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const googleSheetIntegration: TIntegrationGoogleSheets | undefined = integrations?.find(
@@ -56,13 +56,13 @@ const Page = async (props) => {
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session?.user.id,
-    product.organizationId
+    project.organizationId
   );
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProjectPermissionByUserId(session?.user.id, environment?.productId);
+  const projectPermission = await getProjectPermissionByUserId(session?.user.id, environment?.projectId);
 
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

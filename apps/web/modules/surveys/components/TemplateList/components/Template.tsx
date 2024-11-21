@@ -11,7 +11,7 @@ interface TemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick?: (template: TTemplate) => void;
-  product: TProject;
+  project: TProject;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   selectedFilter: TTemplateFilter[];
@@ -22,8 +22,8 @@ export const Template = ({
   template,
   activeTemplate,
   setActiveTemplate,
-  onTemplateClick = () => { },
-  product,
+  onTemplateClick = () => {},
+  project,
   createSurvey,
   loading,
   selectedFilter,
@@ -33,7 +33,7 @@ export const Template = ({
   return (
     <div
       onClick={() => {
-        const newTemplate = replacePresetPlaceholders(template, product);
+        const newTemplate = replacePresetPlaceholders(template, project);
         if (noPreview) {
           createSurvey(newTemplate);
           return;

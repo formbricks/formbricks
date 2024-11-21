@@ -19,7 +19,7 @@ interface MediaBackgroundProps {
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   children,
-  project: product,
+  project,
   survey,
   isEditorView = false,
   isMobilePreview = false,
@@ -31,26 +31,26 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
   const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });
 
-  // get the background from either the survey or the product styling
+  // get the background from either the survey or the project styling
   const background = useMemo(() => {
-    // allow style overwrite is disabled from the product
-    if (!product.styling.allowStyleOverwrite) {
-      return product.styling.background;
+    // allow style overwrite is disabled from the project
+    if (!project.styling.allowStyleOverwrite) {
+      return project.styling.background;
     }
 
-    // allow style overwrite is enabled from the product
-    if (product.styling.allowStyleOverwrite) {
+    // allow style overwrite is enabled from the project
+    if (project.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteThemeStyling) {
-        return product.styling.background;
+        return project.styling.background;
       }
 
       // survey style overwrite is enabled
       return survey.styling.background;
     }
 
-    return product.styling.background;
-  }, [product.styling.allowStyleOverwrite, product.styling.background, survey.styling]);
+    return project.styling.background;
+  }, [project.styling.allowStyleOverwrite, project.styling.background, survey.styling]);
 
   useEffect(() => {
     if (background?.bgType === "animation" && animatedBackgroundRef.current) {

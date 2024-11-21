@@ -17,12 +17,12 @@ import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/c
 import { Label } from "@formbricks/ui/components/Label";
 
 export const CopySurveyForm = ({
-  defaultProducts,
+  defaultProjects,
   survey,
   onCancel,
   setOpen,
 }: {
-  defaultProducts: TProject[];
+  defaultProjects: TProject[];
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
@@ -31,24 +31,24 @@ export const CopySurveyForm = ({
   const form = useForm<TSurveyCopyFormData>({
     resolver: zodResolver(ZSurveyCopyFormValidation),
     defaultValues: {
-      products: defaultProducts.map((product) => ({
-        product: product.id,
+      projects: defaultProjects.map((project) => ({
+        project: project.id,
         environments: [],
       })),
     },
   });
 
   const formFields = useFieldArray({
-    name: "products",
+    name: "projects",
     control: form.control,
   });
 
   const onSubmit = async (data: TSurveyCopyFormData) => {
-    const filteredData = data.products.filter((product) => product.environments.length > 0);
+    const filteredData = data.projects.filter((project) => project.environments.length > 0);
 
     try {
-      filteredData.map(async (product) => {
-        product.environments.map(async (environment) => {
+      filteredData.map(async (project) => {
+        project.environments.map(async (environment) => {
           await copySurveyToOtherEnvironmentAction({
             environmentId: survey.environmentId,
             surveyId: survey.id,
@@ -70,23 +70,23 @@ export const CopySurveyForm = ({
         onSubmit={form.handleSubmit(onSubmit)}
         className="relative flex h-full w-full flex-col gap-8 overflow-y-auto bg-white p-4">
         <div className="space-y-8 pb-12">
-          {formFields.fields.map((field, productIndex) => {
-            const product = defaultProducts.find((product) => product.id === field.product);
+          {formFields.fields.map((field, projectIndex) => {
+            const project = defaultProjects.find((project) => project.id === field.project);
 
             return (
-              <div key={product?.id}>
+              <div key={project?.id}>
                 <div className="flex flex-col gap-4">
                   <div className="w-fit">
-                    <p className="text-base font-semibold text-slate-900">{product?.name}</p>
+                    <p className="text-base font-semibold text-slate-900">{project?.name}</p>
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    {product?.environments.map((environment) => {
+                    {project?.environments.map((environment) => {
                       return (
                         <FormField
                           key={environment.id}
                           control={form.control}
-                          name={`products.${productIndex}.environments`}
+                          name={`projects.${projectIndex}.environments`}
                           render={({ field }) => {
                             return (
                               <FormItem>

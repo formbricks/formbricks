@@ -20,8 +20,8 @@ import {
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 let isSurveyRunning = false;
-let setIsError = (_: boolean) => { };
-let setIsResponseSendingFinished = (_: boolean) => { };
+let setIsError = (_: boolean) => {};
+let setIsResponseSendingFinished = (_: boolean) => {};
 
 export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
@@ -64,7 +64,7 @@ const renderWidget = async (
     logger.debug(`Delaying survey "${survey.name}" by ${survey.delay} seconds.`);
   }
 
-  const { project: product } = config.get().environmentState.data ?? {};
+  const { project } = config.get().environmentState.data ?? {};
   const { attributes } = config.get() ?? {};
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
@@ -97,11 +97,11 @@ const renderWidget = async (
     },
     surveyState
   );
-  const productOverwrites = survey.productOverwrites ?? {};
-  const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
-  const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
-  const placement = productOverwrites.placement ?? product.placement;
-  const isBrandingEnabled = product.inAppSurveyBranding;
+  const projectOverwrites = survey.projectOverwrites ?? {};
+  const clickOutside = projectOverwrites.clickOutsideClose ?? project.clickOutsideClose;
+  const darkOverlay = projectOverwrites.darkOverlay ?? project.darkOverlay;
+  const placement = projectOverwrites.placement ?? project.placement;
+  const isBrandingEnabled = project.inAppSurveyBranding;
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
   setTimeout(() => {
@@ -112,7 +112,7 @@ const renderWidget = async (
       darkOverlay,
       languageCode,
       placement,
-      styling: getStyling(product, survey),
+      styling: getStyling(project, survey),
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },

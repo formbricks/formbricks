@@ -2,7 +2,7 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { removeAccessAction, updateAccessPermissionAction } from "@/modules/ee/teams/project-teams/actions";
-import { TProductTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { TProjectTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -28,13 +28,13 @@ import {
 } from "@formbricks/ui/components/Table";
 
 interface AccessTableProps {
-  teams: TProductTeam[];
+  teams: TProjectTeam[];
   environmentId: string;
-  productId: string;
+  projectId: string;
   isOwnerOrManager: boolean;
 }
 
-export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager }: AccessTableProps) => {
+export const AccessTable = ({ teams, environmentId, projectId, isOwnerOrManager }: AccessTableProps) => {
   const t = useTranslations();
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [removeAccessModalOpen, setRemoveAccessModalOpen] = useState<boolean>(false);
@@ -42,7 +42,7 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
   const router = useRouter();
 
   const removeAccess = async (teamId: string) => {
-    const removeAccessActionResponse = await removeAccessAction({ projectId: productId, teamId });
+    const removeAccessActionResponse = await removeAccessAction({ projectId, teamId });
     if (removeAccessActionResponse?.data) {
       router.refresh();
     } else {
@@ -53,7 +53,7 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
 
   const handlePermissionChange = async (teamId: string, permission: TTeamPermission) => {
     const updateAccessPermissionActionResponse = await updateAccessPermissionAction({
-      productId,
+      projectId,
       teamId,
       permission,
     });
@@ -77,8 +77,8 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-100">
-              <TableHead>{t("environments.product.teams.team_name")}</TableHead>
-              <TableHead>{t("environments.product.teams.permission")}</TableHead>
+              <TableHead>{t("environments.project.teams.team_name")}</TableHead>
+              <TableHead>{t("environments.project.teams.permission")}</TableHead>
               {isOwnerOrManager && <TableHead>Actions</TableHead>}
             </TableRow>
           </TableHeader>
@@ -86,7 +86,7 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
             {teams.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center">
-                  {t("environments.product.teams.no_teams_found")}
+                  {t("environments.project.teams.no_teams_found")}
                 </TableCell>
               </TableRow>
             )}
@@ -112,13 +112,13 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={ZTeamPermission.Enum.read}>
-                          {t("environments.product.teams.read")}
+                          {t("environments.project.teams.read")}
                         </SelectItem>
                         <SelectItem value={ZTeamPermission.Enum.readWrite}>
-                          {t("environments.product.teams.read_write")}
+                          {t("environments.project.teams.read_write")}
                         </SelectItem>
                         <SelectItem value={ZTeamPermission.Enum.manage}>
-                          {t("environments.product.teams.manage")}
+                          {t("environments.project.teams.manage")}
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -149,8 +149,8 @@ export const AccessTable = ({ teams, environmentId, productId, isOwnerOrManager 
         <AlertDialog
           open={removeAccessModalOpen}
           setOpen={setRemoveAccessModalOpen}
-          headerText={t("environments.product.teams.remove_access")}
-          mainText={t("environments.product.teams.remove_access_confirmation")}
+          headerText={t("environments.project.teams.remove_access")}
+          mainText={t("environments.project.teams.remove_access_confirmation")}
           confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
             setSelectedTeamId(null);

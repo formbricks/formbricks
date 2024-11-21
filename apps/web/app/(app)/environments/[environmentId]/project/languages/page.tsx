@@ -25,7 +25,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const project = await getProjectByEnvironmentId(params.environmentId);
 
   if (!project) {
-    throw new Error(t("environments.project.general.product_not_found"));
+    throw new Error(t("environments.project.general.project_not_found"));
   }
 
   const organization = await getOrganization(project?.organizationId);

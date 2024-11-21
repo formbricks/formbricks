@@ -3,20 +3,20 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { AccessTable } from "@/modules/ee/teams/project-teams/components/access-table";
 import { AddTeam } from "@/modules/ee/teams/project-teams/components/add-team";
-import { TOrganizationTeam, TProductTeam } from "@/modules/ee/teams/project-teams/types/teams";
+import { TOrganizationTeam, TProjectTeam } from "@/modules/ee/teams/project-teams/types/teams";
 import { useTranslations } from "next-intl";
 import { TProject } from "@formbricks/types/project";
 
 interface AccessViewProps {
-  product: TProject;
-  teams: TProductTeam[];
+  project: TProject;
+  teams: TProjectTeam[];
   environmentId: string;
   organizationTeams: TOrganizationTeam[];
   isOwnerOrManager: boolean;
 }
 
 export const AccessView = ({
-  product,
+  project,
   teams,
   organizationTeams,
   environmentId,
@@ -27,21 +27,21 @@ export const AccessView = ({
     <>
       <SettingsCard
         title={t("common.teams")}
-        description={t("environments.product.teams.team_settings_description")}>
+        description={t("environments.project.teams.team_settings_description")}>
         <div className="flex justify-end gap-2">
           {isOwnerOrManager && (
             <AddTeam
               organizationTeams={organizationTeams}
-              productTeams={teams}
-              productId={product.id}
-              organizationId={product.organizationId}
+              projectTeams={teams}
+              projectId={project.id}
+              organizationId={project.organizationId}
             />
           )}
         </div>
         <div className="mt-2">
           <AccessTable
             teams={teams}
-            productId={product.id}
+            projectId={project.id}
             environmentId={environmentId}
             isOwnerOrManager={isOwnerOrManager}
           />

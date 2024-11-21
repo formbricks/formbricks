@@ -41,7 +41,7 @@ const Page = async (props) => {
   const t = await getTranslations();
   const [
     survey,
-    product,
+    project,
     environment,
     actionClasses,
     attributeClasses,
@@ -68,16 +68,16 @@ const Page = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
   const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
@@ -90,7 +90,7 @@ const Page = async (props) => {
     !environment ||
     !actionClasses ||
     !attributeClasses ||
-    !product ||
+    !project ||
     isSurveyCreationDeletionDisabled
   ) {
     return <ErrorComponent />;
@@ -101,13 +101,13 @@ const Page = async (props) => {
   return (
     <SurveyEditor
       survey={survey}
-      product={product}
+      project={project}
       environment={environment}
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
-      productPermission={productPermission}
+      projectPermission={projectPermission}
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}

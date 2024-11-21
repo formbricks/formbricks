@@ -2,9 +2,9 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
-import { updateTeamProductPermissionAction } from "@/modules/ee/teams/team-details/actions";
-import { AddTeamProductModal } from "@/modules/ee/teams/team-details/components/add-team-product-modal";
-import { TOrganizationProduct, TTeamProduct } from "@/modules/ee/teams/team-details/types/teams";
+import { updateTeamProjectPermissionAction } from "@/modules/ee/teams/team-details/actions";
+import { AddTeamProjectModal } from "@/modules/ee/teams/team-details/components/add-team-project-modal";
+import { TOrganizationProject, TTeamProject } from "@/modules/ee/teams/team-details/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -30,52 +30,52 @@ import {
   TableHeader,
   TableRow,
 } from "@formbricks/ui/components/Table";
-import { removeTeamProductAction } from "../actions";
+import { removeTeamProjectAction } from "../actions";
 
-interface TeamProductsProps {
+interface TeamProjectsProps {
   membershipRole?: TOrganizationRole;
-  products: TTeamProduct[];
+  projects: TTeamProject[];
   teamId: string;
-  organizationProducts: TOrganizationProduct[];
+  organizationProjects: TOrganizationProject[];
 }
 
-export const TeamProducts = ({
+export const TeamProjects = ({
   membershipRole,
-  products,
+  projects,
   teamId,
-  organizationProducts,
-}: TeamProductsProps) => {
+  organizationProjects,
+}: TeamProjectsProps) => {
   const t = useTranslations();
-  const [openAddProductModal, setOpenAddProductModal] = useState<boolean>(false);
-  const [removeProductModalOpen, setRemoveProductModalOpen] = useState<boolean>(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [openAddProjectModal, setOpenAddProjectModal] = useState<boolean>(false);
+  const [removeProjectModalOpen, setRemoveProjectModalOpen] = useState<boolean>(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const router = useRouter();
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
 
-  const handleRemoveProduct = async (productId: string) => {
-    const removeProductActionResponse = await removeTeamProductAction({
+  const handleRemoveProject = async (projectId: string) => {
+    const removeProjectActionResponse = await removeTeamProjectAction({
       teamId,
-      productId,
+      projectId: projectId,
     });
 
-    if (removeProductActionResponse?.data) {
+    if (removeProjectActionResponse?.data) {
       toast.success(t("environments.settings.teams.product_removed_successfully"));
       router.refresh();
     } else {
-      const errorMessage = getFormattedErrorMessage(removeProductActionResponse);
+      const errorMessage = getFormattedErrorMessage(removeProjectActionResponse);
       toast.error(errorMessage);
     }
 
-    setRemoveProductModalOpen(false);
+    setRemoveProjectModalOpen(false);
   };
 
-  const handlePermissionChange = async (productId: string, permission: TTeamPermission) => {
-    const updateTeamPermissionResponse = await updateTeamProductPermissionAction({
+  const handlePermissionChange = async (projectId: string, permission: TTeamPermission) => {
+    const updateTeamPermissionResponse = await updateTeamProjectPermissionAction({
       teamId,
-      productId,
+      projectId,
       permission,
     });
     if (updateTeamPermissionResponse?.data) {
@@ -87,15 +87,15 @@ export const TeamProducts = ({
     }
   };
 
-  const productOptions = useMemo(
+  const projectOptions = useMemo(
     () =>
-      organizationProducts
-        .filter((product) => !products.find((p) => p.id === product.id))
-        .map((product) => ({
-          label: product.name,
-          value: product.id,
+      organizationProjects
+        .filter((project) => !projects.find((p) => p.id === project.id))
+        .map((project) => ({
+          label: project.name,
+          value: project.id,
         })),
-    [organizationProducts, products]
+    [organizationProjects, projects]
   );
 
   return (
@@ -105,7 +105,7 @@ export const TeamProducts = ({
           <CardTitle>{t("environments.settings.teams.team_products")}</CardTitle>
           <div className="flex gap-2">
             {isOwnerOrManager && (
-              <Button variant="primary" size="sm" onClick={() => setOpenAddProductModal(true)}>
+              <Button variant="primary" size="sm" onClick={() => setOpenAddProjectModal(true)}>
                 {t("environments.settings.teams.add_product")}
               </Button>
             )}
@@ -122,22 +122,22 @@ export const TeamProducts = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.length === 0 && (
+                {projects.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
                       {t("environments.settings.teams.empty_product_message")}
                     </TableCell>
                   </TableRow>
                 )}
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-semibold">{product.name}</TableCell>
+                {projects.map((project) => (
+                  <TableRow key={project.id}>
+                    <TableCell className="font-semibold">{project.name}</TableCell>
                     <TableCell>
                       {isOwnerOrManager ? (
                         <Select
-                          value={product.permission}
+                          value={project.permission}
                           onValueChange={(val: TTeamPermission) => {
-                            handlePermissionChange(product.id, val);
+                            handlePermissionChange(project.id, val);
                           }}>
                           <SelectTrigger className="w-40">
                             <SelectValue placeholder="Select type" className="text-sm" />
@@ -155,7 +155,7 @@ export const TeamProducts = ({
                           </SelectContent>
                         </Select>
                       ) : (
-                        <p>{TeamPermissionMapping[product.permission]}</p>
+                        <p>{TeamPermissionMapping[project.permission]}</p>
                       )}
                     </TableCell>
                     {isOwnerOrManager && (
@@ -165,8 +165,8 @@ export const TeamProducts = ({
                           variant="warn"
                           size="sm"
                           onClick={() => {
-                            setSelectedProductId(product.id);
-                            setRemoveProductModalOpen(true);
+                            setSelectedProjectId(project.id);
+                            setRemoveProjectModalOpen(true);
                           }}>
                           {t("common.remove")}
                         </Button>
@@ -179,26 +179,26 @@ export const TeamProducts = ({
           </div>
         </CardContent>
       </Card>
-      {openAddProductModal && (
-        <AddTeamProductModal
+      {openAddProjectModal && (
+        <AddTeamProjectModal
           teamId={teamId}
-          open={openAddProductModal}
-          setOpen={setOpenAddProductModal}
-          productOptions={productOptions}
+          open={openAddProjectModal}
+          setOpen={setOpenAddProjectModal}
+          projectOptions={projectOptions}
         />
       )}
-      {removeProductModalOpen && selectedProductId && (
+      {removeProjectModalOpen && selectedProjectId && (
         <AlertDialog
-          open={removeProductModalOpen}
-          setOpen={setRemoveProductModalOpen}
+          open={removeProjectModalOpen}
+          setOpen={setRemoveProjectModalOpen}
           headerText={t("environments.settings.teams.remove_product")}
           mainText={t("environments.settings.teams.remove_product_confirmation")}
           confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
-            setSelectedProductId(null);
-            setRemoveProductModalOpen(false);
+            setSelectedProjectId(null);
+            setRemoveProjectModalOpen(false);
           }}
-          onConfirm={() => handleRemoveProduct(selectedProductId)}
+          onConfirm={() => handleRemoveProject(selectedProjectId)}
         />
       )}
     </>

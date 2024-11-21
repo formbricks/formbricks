@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
 interface DashboardProps {
   user: TUser;
   environment: TEnvironment;
-  product: TProject;
+  project: TProject;
   insightsPerPage: number;
   documentsPerPage: number;
   locale: TUserLocale;
@@ -23,7 +23,7 @@ interface DashboardProps {
 
 export const Dashboard = ({
   environment,
-  product,
+  project,
   user,
   insightsPerPage,
   documentsPerPage,
@@ -65,7 +65,7 @@ export const Dashboard = ({
       <ExperiencePageStats statsFrom={statsFrom} environmentId={environment.id} />
       <InsightsCard
         statsFrom={statsFrom}
-        productName={product.name}
+        projectName={project.name}
         environmentId={environment.id}
         insightsPerPage={insightsPerPage}
         documentsPerPage={documentsPerPage}

@@ -42,7 +42,7 @@ export const EnvLayout = async (props) => {
   }
   const project = await getProjectByEnvironmentId(params.environmentId);
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);

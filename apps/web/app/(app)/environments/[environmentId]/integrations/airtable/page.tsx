@@ -1,5 +1,5 @@
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
-import { getProjectPermissionByUserId as getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -42,7 +42,7 @@ const Page = async (props) => {
   }
   const project = await getProjectByEnvironmentId(params.environmentId);
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   const airtableIntegration: TIntegrationAirtable | undefined = integrations?.find(

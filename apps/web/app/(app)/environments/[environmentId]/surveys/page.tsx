@@ -39,7 +39,7 @@ const Page = async (props: SurveyTemplateProps) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  const product = await getProjectByEnvironmentId(params.environmentId);
+  const project = await getProjectByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
   const t = await getTranslations();
   if (!session) {
@@ -51,21 +51,21 @@ const Page = async (props: SurveyTemplateProps) => {
     throw new Error(t("common.user_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const prefilledFilters = [product?.config.channel, product.config.industry, searchParams.role ?? null];
+  const prefilledFilters = [project?.config.channel, project.config.industry, searchParams.role ?? null];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 
@@ -80,10 +80,10 @@ const Page = async (props: SurveyTemplateProps) => {
 
   const surveyCount = await getSurveyCount(params.environmentId);
 
-  const environments = await getEnvironments(product.id);
+  const environments = await getEnvironments(project.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
-  const currentProductChannel = product.config.channel ?? null;
+  const currentProjectChannel = project.config.channel ?? null;
   const locale = await findMatchingLocale();
   const CreateSurveyButton = () => {
     return (
@@ -105,7 +105,7 @@ const Page = async (props: SurveyTemplateProps) => {
             WEBAPP_URL={WEBAPP_URL}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
-            currentProductChannel={currentProductChannel}
+            currentProjectChannel={currentProjectChannel}
             locale={locale}
           />
         </>
@@ -126,7 +126,7 @@ const Page = async (props: SurveyTemplateProps) => {
           </h1>
           <TemplateList
             environment={environment}
-            project={product}
+            project={project}
             user={user}
             prefilledFilters={prefilledFilters}
           />

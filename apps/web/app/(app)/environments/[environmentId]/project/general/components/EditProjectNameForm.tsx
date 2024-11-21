@@ -20,22 +20,22 @@ import {
 import { Input } from "@formbricks/ui/components/Input";
 import { updateProjectAction } from "../../actions";
 
-type EditProductNameProps = {
-  product: TProject;
+type EditProjectNameProps = {
+  project: TProject;
   isReadOnly: boolean;
 };
 
-const ZProductNameInput = ZProject.pick({ name: true });
+const ZProjectNameInput = ZProject.pick({ name: true });
 
-type TEditProductName = z.infer<typeof ZProductNameInput>;
+type TEditProjectName = z.infer<typeof ZProjectNameInput>;
 
-export const EditProductNameForm: React.FC<EditProductNameProps> = ({ product, isReadOnly }) => {
+export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, isReadOnly }) => {
   const t = useTranslations();
-  const form = useForm<TEditProductName>({
+  const form = useForm<TEditProjectName>({
     defaultValues: {
-      name: product.name,
+      name: project.name,
     },
-    resolver: zodResolver(ZProductNameInput),
+    resolver: zodResolver(ZProjectNameInput),
     mode: "onChange",
   });
 
@@ -44,7 +44,7 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({ product, i
   const nameError = errors.name?.message;
   const isSubmitting = form.formState.isSubmitting;
 
-  const updateProduct: SubmitHandler<TEditProductName> = async (data) => {
+  const updateProject: SubmitHandler<TEditProjectName> = async (data) => {
     const name = data.name.trim();
     try {
       if (nameError) {
@@ -52,37 +52,37 @@ export const EditProductNameForm: React.FC<EditProductNameProps> = ({ product, i
         return;
       }
 
-      const updatedProductResponse = await updateProjectAction({
-        projectId: product.id,
+      const updatedProjectResponse = await updateProjectAction({
+        projectId: project.id,
         data: {
           name,
         },
       });
 
-      if (updatedProductResponse?.data) {
-        toast.success(t("environments.product.general.product_name_updated_successfully"));
-        form.resetField("name", { defaultValue: updatedProductResponse.data.name });
+      if (updatedProjectResponse?.data) {
+        toast.success(t("environments.project.general.product_name_updated_successfully"));
+        form.resetField("name", { defaultValue: updatedProjectResponse.data.name });
       } else {
-        const errorMessage = getFormattedErrorMessage(updatedProductResponse);
+        const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
         toast.error(errorMessage);
       }
     } catch (err) {
       console.error(err);
-      toast.error(`Error: Unable to save product information`);
+      toast.error(`Error: Unable to save project information`);
     }
   };
 
   return (
     <>
       <FormProvider {...form}>
-        <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProduct)}>
+        <form className="w-full max-w-sm items-center space-y-2" onSubmit={form.handleSubmit(updateProject)}>
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
                 <FormLabel htmlFor="name">
-                  {t("environments.product.general.whats_your_product_called")}
+                  {t("environments.project.general.whats_your_product_called")}
                 </FormLabel>
                 <FormControl>
                   <Input

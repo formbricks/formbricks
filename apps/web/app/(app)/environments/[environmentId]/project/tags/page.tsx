@@ -28,7 +28,7 @@ const Page = async (props) => {
     throw new Error(t("common.environment_not_found"));
   }
 
-  const [tags, environmentTagsCount, organization, session, product] = await Promise.all([
+  const [tags, environmentTagsCount, organization, session, project] = await Promise.all([
     getTagsByEnvironmentId(params.environmentId),
     getTagsOnResponsesCount(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
@@ -47,15 +47,15 @@ const Page = async (props) => {
     throw new Error(t("common.session_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
-  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const { hasManageAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && !hasManageAccess;
 
@@ -73,8 +73,8 @@ const Page = async (props) => {
         />
       </PageHeader>
       <SettingsCard
-        title={t("environments.product.tags.manage_tags")}
-        description={t("environments.product.tags.manage_tags_description")}>
+        title={t("environments.project.tags.manage_tags")}
+        description={t("environments.project.tags.manage_tags_description")}>
         <EditTagsWrapper
           environment={environment}
           environmentTags={tags}

@@ -8,7 +8,7 @@ import { Switch } from "@formbricks/ui/components/Switch";
 import { updateNotificationSettingsAction } from "../actions";
 
 interface NotificationSwitchProps {
-  surveyOrProductOrOrganizationId: string;
+  surveyOrProjectOrOrganizationId: string;
   notificationSettings: TUserNotificationSettings;
   notificationType: "alert" | "weeklySummary" | "unsubscribedOrganizationIds";
   autoDisableNotificationType?: string;
@@ -16,7 +16,7 @@ interface NotificationSwitchProps {
 }
 
 export const NotificationSwitch = ({
-  surveyOrProductOrOrganizationId,
+  surveyOrProjectOrOrganizationId,
   notificationSettings,
   notificationType,
   autoDisableNotificationType,
@@ -26,8 +26,8 @@ export const NotificationSwitch = ({
   const t = useTranslations();
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
-      ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)
-      : notificationSettings[notificationType][surveyOrProductOrOrganizationId] === true;
+      ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProjectOrOrganizationId)
+      : notificationSettings[notificationType][surveyOrProjectOrOrganizationId] === true;
 
   const handleSwitchChange = async () => {
     setIsLoading(true);
@@ -35,19 +35,19 @@ export const NotificationSwitch = ({
     let updatedNotificationSettings = { ...notificationSettings };
     if (notificationType === "unsubscribedOrganizationIds") {
       const unsubscribedOrganizationIds = updatedNotificationSettings.unsubscribedOrganizationIds ?? [];
-      if (unsubscribedOrganizationIds.includes(surveyOrProductOrOrganizationId)) {
+      if (unsubscribedOrganizationIds.includes(surveyOrProjectOrOrganizationId)) {
         updatedNotificationSettings.unsubscribedOrganizationIds = unsubscribedOrganizationIds.filter(
-          (id) => id !== surveyOrProductOrOrganizationId
+          (id) => id !== surveyOrProjectOrOrganizationId
         );
       } else {
         updatedNotificationSettings.unsubscribedOrganizationIds = [
           ...unsubscribedOrganizationIds,
-          surveyOrProductOrOrganizationId,
+          surveyOrProjectOrOrganizationId,
         ];
       }
     } else {
-      updatedNotificationSettings[notificationType][surveyOrProductOrOrganizationId] =
-        !updatedNotificationSettings[notificationType][surveyOrProductOrOrganizationId];
+      updatedNotificationSettings[notificationType][surveyOrProjectOrOrganizationId] =
+        !updatedNotificationSettings[notificationType][surveyOrProjectOrOrganizationId];
     }
 
     await updateNotificationSettingsAction({ notificationSettings: updatedNotificationSettings });
@@ -57,12 +57,12 @@ export const NotificationSwitch = ({
   useEffect(() => {
     if (
       autoDisableNotificationType &&
-      autoDisableNotificationElementId === surveyOrProductOrOrganizationId &&
+      autoDisableNotificationElementId === surveyOrProjectOrOrganizationId &&
       isChecked
     ) {
       switch (notificationType) {
         case "alert":
-          if (notificationSettings[notificationType][surveyOrProductOrOrganizationId] === true) {
+          if (notificationSettings[notificationType][surveyOrProjectOrOrganizationId] === true) {
             handleSwitchChange();
             toast.success(
               t(
@@ -76,7 +76,7 @@ export const NotificationSwitch = ({
           break;
 
         case "unsubscribedOrganizationIds":
-          if (!notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)) {
+          if (!notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProjectOrOrganizationId)) {
             handleSwitchChange();
             toast.success(
               t(

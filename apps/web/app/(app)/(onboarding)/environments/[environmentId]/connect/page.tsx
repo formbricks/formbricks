@@ -24,7 +24,7 @@ const Page = async (props: ConnectPageProps) => {
 
   const project = await getProjectByEnvironmentId(environment.id);
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   const channel = project.config.channel || null;

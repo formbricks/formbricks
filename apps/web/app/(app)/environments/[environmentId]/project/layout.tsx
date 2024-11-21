@@ -39,9 +39,9 @@ const ConfigLayout = async (props) => {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  const product = await getProjectByEnvironmentId(params.environmentId);
-  if (!product) {
-    throw new Error("Product not found");
+  const project = await getProjectByEnvironmentId(params.environmentId);
+  if (!project) {
+    throw new Error("Project not found");
   }
 
   return children;

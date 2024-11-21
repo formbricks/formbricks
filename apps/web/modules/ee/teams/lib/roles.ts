@@ -18,9 +18,9 @@ export const getProjectPermissionByUserId = reactCache(
         validateInputs([userId, ZString], [projectId, ZString]);
 
         try {
-          const projectMemberships = await prisma.productTeam.findMany({
+          const projectMemberships = await prisma.projectTeam.findMany({
             where: {
-              productId,
+              projectId,
               team: {
                 teamUsers: {
                   some: {
@@ -60,7 +60,7 @@ export const getProjectPermissionByUserId = reactCache(
       },
       [`getProjectPermissionByUserId-${userId}-${projectId}`],
       {
-        tags: [teamCache.tag.byUserId(userId), teamCache.tag.byProductId(projectId)],
+        tags: [teamCache.tag.byUserId(userId), teamCache.tag.byProjectId(projectId)],
       }
     )()
 );

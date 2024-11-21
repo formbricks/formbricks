@@ -26,12 +26,12 @@ export const ApiKeyList = async ({
     return null;
   };
 
-  const product = await getProjectByEnvironmentId(environmentId);
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  const project = await getProjectByEnvironmentId(environmentId);
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
-  const environments = await getEnvironments(product.id);
+  const environments = await getEnvironments(project.id);
   const environmentTypeId = findEnvironmentByType(environments, environmentType);
   const apiKeys = await getApiKeys(environmentTypeId);
 

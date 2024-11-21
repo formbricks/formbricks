@@ -24,7 +24,7 @@ interface SurveysListProps {
   WEBAPP_URL: string;
   userId: string;
   surveysPerPage: number;
-  currentProductChannel: TProjectConfigChannel;
+  currentProjectChannel: TProjectConfigChannel;
   locale: TUserLocale;
 }
 
@@ -43,7 +43,7 @@ export const SurveysList = ({
   WEBAPP_URL,
   userId,
   surveysPerPage: surveysLimit,
-  currentProductChannel,
+  currentProjectChannel,
   locale,
 }: SurveysListProps) => {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
@@ -138,7 +138,7 @@ export const SurveysList = ({
       <SurveyFilters
         surveyFilters={surveyFilters}
         setSurveyFilters={setSurveyFilters}
-        currentProductChannel={currentProductChannel}
+        currentProjectChannel={currentProjectChannel}
       />
       {surveys.length > 0 ? (
         <div>

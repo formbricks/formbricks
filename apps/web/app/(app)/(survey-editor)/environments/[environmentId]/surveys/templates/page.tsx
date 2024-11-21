@@ -46,7 +46,7 @@ const Page = async (props: SurveyTemplateProps) => {
   }
 
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!environment) {

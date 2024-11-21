@@ -40,7 +40,7 @@ const Page = async (props) => {
   }
 
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!organization) {

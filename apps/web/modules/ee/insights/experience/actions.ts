@@ -3,7 +3,7 @@
 import { insightCache } from "@/lib/cache/insight";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -31,9 +31,9 @@ export const getEnvironmentInsightsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -63,9 +63,9 @@ export const getStatsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -111,8 +111,8 @@ export const updateInsightAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "productTeam",
-            productId: await getProductIdFromEnvironmentId(insight.environmentId),
+            type: "projectTeam",
+            projectId: await getProjectIdFromEnvironmentId(insight.environmentId),
             minPermission: "readWrite",
           },
         ],

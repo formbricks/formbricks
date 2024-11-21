@@ -2545,7 +2545,7 @@ const identifyCustomerGoals = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-          headline: { default: "What's your primary goal for using {{productName}}?" },
+          headline: { default: "What's your primary goal for using {{projectName}}?" },
           required: true,
           shuffleOption: "none",
           choices: [

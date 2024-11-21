@@ -28,12 +28,12 @@ interface TemplateListProps {
 
 export const TemplateList = ({
   user,
-  project: product,
+  project,
   environment,
   showFilters = true,
   templateSearch,
   prefilledFilters,
-  onTemplateClick = () => { },
+  onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
   const router = useRouter();
@@ -42,16 +42,16 @@ export const TemplateList = ({
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
   const surveyType: TSurveyType = useMemo(() => {
-    if (product.config.channel) {
-      if (product.config.channel === "website") {
+    if (project.config.channel) {
+      if (project.config.channel === "website") {
         return "app";
       }
 
-      return product.config.channel;
+      return project.config.channel;
     }
 
     return "link";
-  }, [product.config.channel]);
+  }, [project.config.channel]);
 
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
@@ -119,7 +119,7 @@ export const TemplateList = ({
           activeTemplate={activeTemplate}
           setActiveTemplate={setActiveTemplate}
           onTemplateClick={onTemplateClick}
-          project={product}
+          project={project}
           createSurvey={createSurvey}
           loading={loading}
           noPreview={noPreview}
@@ -134,7 +134,7 @@ export const TemplateList = ({
                 activeTemplate={activeTemplate}
                 setActiveTemplate={setActiveTemplate}
                 onTemplateClick={onTemplateClick}
-                product={product}
+                project={project}
                 createSurvey={createSurvey}
                 loading={loading}
                 selectedFilter={selectedFilter}

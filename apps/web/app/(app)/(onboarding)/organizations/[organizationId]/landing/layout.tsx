@@ -21,11 +21,11 @@ const LandingLayout = async (props) => {
     return notFound();
   }
 
-  const products = await getUserProjects(session.user.id, params.organizationId);
+  const projects = await getUserProjects(session.user.id, params.organizationId);
 
-  if (products.length !== 0) {
-    const firstProduct = products[0];
-    const environments = await getEnvironments(firstProduct.id);
+  if (projects.length !== 0) {
+    const firstProject = projects[0];
+    const environments = await getEnvironments(firstProject.id);
     const prodEnvironment = environments.find((e) => e.type === "production");
 
     if (prodEnvironment) {

@@ -12,10 +12,10 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
     notFound();
   }
 
-  const product = await getProjectByEnvironmentId(survey.environmentId);
+  const project = await getProjectByEnvironmentId(survey.environmentId);
 
-  if (!product) {
-    throw new Error("Product not found");
+  if (!project) {
+    throw new Error("Project not found");
   }
 
   const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor);

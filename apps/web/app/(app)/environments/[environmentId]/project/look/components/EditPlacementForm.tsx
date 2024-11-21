@@ -29,23 +29,23 @@ interface EditPlacementProps {
   isReadOnly: boolean;
 }
 
-const ZProductPlacementInput = z.object({
+const ZProjectPlacementInput = z.object({
   placement: z.enum(["bottomRight", "topRight", "topLeft", "bottomLeft", "center"]),
   darkOverlay: z.boolean(),
   clickOutsideClose: z.boolean(),
 });
 
-type EditPlacementFormValues = z.infer<typeof ZProductPlacementInput>;
+type EditPlacementFormValues = z.infer<typeof ZProjectPlacementInput>;
 
-export const EditPlacementForm = ({ project: product, isReadOnly }: EditPlacementProps) => {
+export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) => {
   const t = useTranslations();
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
-      placement: product.placement,
-      darkOverlay: product.darkOverlay ?? false,
-      clickOutsideClose: product.clickOutsideClose ?? false,
+      placement: project.placement,
+      darkOverlay: project.darkOverlay ?? false,
+      clickOutsideClose: project.clickOutsideClose ?? false,
     },
-    resolver: zodResolver(ZProductPlacementInput),
+    resolver: zodResolver(ZProjectPlacementInput),
   });
 
   const currentPlacement = form.watch("placement");
@@ -58,7 +58,7 @@ export const EditPlacementForm = ({ project: product, isReadOnly }: EditPlacemen
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
     try {
       await updateProjectAction({
-        projectId: product.id,
+        projectId: project.id,
         data: {
           placement: data.placement,
           darkOverlay: data.darkOverlay,
@@ -66,7 +66,7 @@ export const EditPlacementForm = ({ project: product, isReadOnly }: EditPlacemen
         },
       });
 
-      toast.success(t("environments.product.look.placement_updated_successfully"));
+      toast.success(t("environments.project.look.placement_updated_successfully"));
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     }
@@ -133,7 +133,7 @@ export const EditPlacementForm = ({ project: product, isReadOnly }: EditPlacemen
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-semibold">
-                        {t("environments.product.look.centered_modal_overlay_color")}
+                        {t("environments.project.look.centered_modal_overlay_color")}
                       </FormLabel>
                       <FormControl>
                         <RadioGroup

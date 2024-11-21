@@ -77,15 +77,15 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
 
 export const finishOnboarding = async (
   page: Page,
-  ProductChannel: TProjectConfigChannel = "website"
+  projectChannel: TProjectConfigChannel = "website"
 ): Promise<void> => {
-  await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/mode/);
+  await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
-  if (ProductChannel === "website") {
+  if (projectChannel === "website") {
     await page.getByRole("button", { name: "Built for scale Public website" }).click();
-  } else if (ProductChannel === "app") {
+  } else if (projectChannel === "app") {
     await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
   } else {
     await page.getByRole("button", { name: "Anywhere online Link" }).click();
@@ -93,17 +93,17 @@ export const finishOnboarding = async (
 
   // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
   await page.getByPlaceholder("e.g. Formbricks").click();
-  await page.getByPlaceholder("e.g. Formbricks").fill("My Product");
+  await page.getByPlaceholder("e.g. Formbricks").fill("My Project");
   await page.locator("#form-next-button").click();
 
-  if (ProductChannel !== "link") {
+  if (projectChannel !== "link") {
     await page.getByRole("button", { name: "I don't know how to do it" }).click();
     await page.waitForTimeout(500);
     await page.getByRole("button", { name: "Not now" }).click();
   }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page.getByText("My Product")).toBeVisible();
+  await expect(page.getByText("My Project")).toBeVisible();
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {

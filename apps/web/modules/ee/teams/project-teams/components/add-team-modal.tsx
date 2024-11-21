@@ -17,10 +17,10 @@ interface AddTeamModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   teamOptions: { label: string; value: string }[];
-  productId: string;
+  projectId: string;
 }
 
-export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamModalProps) => {
+export const AddTeamModal = ({ open, setOpen, teamOptions, projectId }: AddTeamModalProps) => {
   const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
@@ -31,7 +31,7 @@ export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamM
     e.preventDefault();
 
     setIsLoading(true);
-    const addTeamActionResponse = await addAccessAction({ productId, teamIds: selectedTeams });
+    const addTeamActionResponse = await addAccessAction({ projectId, teamIds: selectedTeams });
 
     if (addTeamActionResponse?.data) {
       router.refresh();
@@ -56,14 +56,14 @@ export const AddTeamModal = ({ open, setOpen, teamOptions, productId }: AddTeamM
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UsersIcon className="h-5 w-5" />
-            <H4>{t("environments.product.teams.add_existing_team")}</H4>
+            <H4>{t("environments.project.teams.add_existing_team")}</H4>
           </div>
         </div>
       </div>
       <form onSubmit={handleAddTeam}>
         <div className="overflow-visible p-6">
           <Label htmlFor="team-name" className="mb-1 text-sm font-medium text-slate-900">
-            {t("environments.product.teams.select_teams")}
+            {t("environments.project.teams.select_teams")}
           </Label>
           <MultiSelect
             value={selectedTeams}

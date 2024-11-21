@@ -10,12 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@form
 
 interface TemplatesCardProps {
   environment: TEnvironment;
-  product: TProject;
+  project: TProject;
   user: TUser;
   prefilledFilters: TTemplateFilter[];
 }
 
-export const TemplatesCard = ({ environment, product, user, prefilledFilters }: TemplatesCardProps) => {
+export const TemplatesCard = ({ environment, project, user, prefilledFilters }: TemplatesCardProps) => {
   const t = useTranslations();
   return (
     <Card>
@@ -26,7 +26,7 @@ export const TemplatesCard = ({ environment, product, user, prefilledFilters }: 
       <CardContent>
         <TemplateList
           environment={environment}
-          project={product}
+          project={project}
           showFilters={false}
           user={user}
           prefilledFilters={prefilledFilters}

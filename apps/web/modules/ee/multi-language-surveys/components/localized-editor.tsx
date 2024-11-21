@@ -94,7 +94,7 @@ export function LocalizedEditor({
 
           {value && selectedLanguageCode !== "default" && value.default ? (
             <div className="mt-1 flex text-xs text-gray-500">
-              <strong>{t("environments.product.languages.translate")}:</strong>
+              <strong>{t("environments.project.languages.translate")}:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
@@ -110,7 +110,7 @@ export function LocalizedEditor({
 
       {isInComplete ? (
         <div className="mt-1 text-xs text-red-400">
-          {t("environments.product.languages.incomplete_translations")}
+          {t("environments.project.languages.incomplete_translations")}
         </div>
       ) : null}
     </div>

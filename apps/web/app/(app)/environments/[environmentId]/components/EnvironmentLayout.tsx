@@ -47,12 +47,12 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     throw new Error(t("common.environment_not_found"));
   }
 
-  const [products, environments] = await Promise.all([
+  const [projects, environments] = await Promise.all([
     getUserProjects(user.id, organization.id),
-    getEnvironments(environment.productId),
+    getEnvironments(environment.projectId),
   ]);
 
-  if (!products || !environments || !organizations) {
+  if (!projects || !environments || !organizations) {
     throw new Error(t("environments.products_environments_organizations_not_found"));
   }
 
@@ -62,9 +62,9 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
-  const productPermission = await getProjectPermissionByUserId(session.user.id, environment.productId);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, environment.projectId);
 
-  if (isMember && !productPermission) {
+  if (isMember && !projectPermission) {
     throw new Error(t("common.product_permission_not_found"));
   }
 
@@ -105,7 +105,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           environment={environment}
           organization={organization}
           organizations={organizations}
-          projects={products}
+          projects={projects}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
@@ -116,7 +116,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
             environment={environment}
             environments={environments}
             membershipRole={membershipRole}
-            projectPermission={productPermission}
+            projectPermission={projectPermission}
           />
           <div className="mt-14">{children}</div>
         </div>

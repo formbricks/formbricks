@@ -47,8 +47,8 @@ interface TEmailUser {
   locale: string;
 }
 
-const getEmailSubject = (productName: string): string => {
-  return `${productName} User Insights - Last Week by Formbricks`;
+const getEmailSubject = (projectName: string): string => {
+  return `${projectName} User Insights - Last Week by Formbricks`;
 };
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<void> => {
@@ -258,7 +258,7 @@ export const sendWeeklySummaryNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.productName),
+    subject: getEmailSubject(notificationData.projectName),
     html,
   });
 };
@@ -290,7 +290,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.productName),
+    subject: getEmailSubject(notificationData.projectName),
     html,
   });
 };

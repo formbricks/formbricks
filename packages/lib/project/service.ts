@@ -52,11 +52,11 @@ export const getUserProjects = reactCache(
           throw new ValidationError("User is not a member of this organization");
         }
 
-        let projectWhereClause: Prisma.ProductWhereInput = {};
+        let projectWhereClause: Prisma.ProjectWhereInput = {};
 
         if (orgMembership.role === "member") {
           projectWhereClause = {
-            productTeams: {
+            projectTeams: {
               some: {
                 team: {
                   teamUsers: {
@@ -71,7 +71,7 @@ export const getUserProjects = reactCache(
         }
 
         try {
-          const projects = await prisma.product.findMany({
+          const projects = await prisma.project.findMany({
             where: {
               organizationId,
               ...projectWhereClause,
@@ -103,7 +103,7 @@ export const getProjects = reactCache(
         validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
 
         try {
-          const projects = await prisma.product.findMany({
+          const projects = await prisma.project.findMany({
             where: {
               organizationId,
             },
@@ -136,7 +136,7 @@ export const getProjectByEnvironmentId = reactCache(
         let projectPrisma;
 
         try {
-          projectPrisma = await prisma.product.findFirst({
+          projectPrisma = await prisma.project.findFirst({
             where: {
               environments: {
                 some: {
@@ -171,7 +171,7 @@ export const updateProject = async (
   const { environments, ...data } = inputProject;
   let updatedProject;
   try {
-    updatedProject = await prisma.product.update({
+    updatedProject = await prisma.project.update({
       where: {
         id: projectId,
       },
@@ -220,7 +220,7 @@ export const getProject = reactCache(
       async () => {
         let projectPrisma;
         try {
-          projectPrisma = await prisma.product.findUnique({
+          projectPrisma = await prisma.project.findUnique({
             where: {
               id: projectId,
             },
@@ -244,7 +244,7 @@ export const getProject = reactCache(
 
 export const deleteProject = async (projectId: string): Promise<TProject> => {
   try {
-    const project = await prisma.product.delete({
+    const project = await prisma.project.delete({
       where: {
         id: projectId,
       },
@@ -320,7 +320,7 @@ export const createProject = async (
   const { environments, teamIds, ...data } = projectInput;
 
   try {
-    let project = await prisma.product.create({
+    let project = await prisma.project.create({
       data: {
         config: {
           channel: null,
@@ -334,9 +334,9 @@ export const createProject = async (
     });
 
     if (teamIds) {
-      await prisma.productTeam.createMany({
+      await prisma.projectTeam.createMany({
         data: teamIds.map((teamId) => ({
-          productId: project.id,
+          projectId: project.id,
           teamId,
         })),
       });

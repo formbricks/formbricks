@@ -19,14 +19,14 @@ interface EditFormbricksBrandingProps {
 
 export const EditFormbricksBranding = ({
   type,
-  project: product,
+  project,
   canRemoveBranding,
   environmentId,
   isReadOnly,
 }: EditFormbricksBrandingProps) => {
   const t = useTranslations();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
-    type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
+    type === "linkSurvey" ? project.linkSurveyBranding : project.inAppSurveyBranding
   );
   const [updatingBranding, setUpdatingBranding] = useState(false);
 
@@ -35,14 +35,14 @@ export const EditFormbricksBranding = ({
       setUpdatingBranding(true);
       const newBrandingState = !isBrandingEnabled;
       setIsBrandingEnabled(newBrandingState);
-      let inputProduct: Partial<TProjectUpdateInput> = {
+      let inputProject: Partial<TProjectUpdateInput> = {
         [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
       };
-      await updateProjectAction({ projectId: product.id, data: inputProduct });
+      await updateProjectAction({ projectId: project.id, data: inputProject });
       toast.success(
         newBrandingState
-          ? t("environments.product.look.formbricks_branding_shown")
-          : t("environments.product.look.formbricks_branding_hidden")
+          ? t("environments.project.look.formbricks_branding_shown")
+          : t("environments.project.look.formbricks_branding_hidden")
       );
     } catch (error) {
       toast.error(`Error: ${error.message}`);
@@ -61,7 +61,7 @@ export const EditFormbricksBranding = ({
           disabled={!canRemoveBranding || updatingBranding || isReadOnly}
         />
         <Label htmlFor={`branding-${type}`}>
-          {t("environments.product.look.show_formbricks_branding_in", {
+          {t("environments.project.look.show_formbricks_branding_in", {
             type: type === "linkSurvey" ? t("common.link") : t("common.app"),
           })}
         </Label>
@@ -71,16 +71,16 @@ export const EditFormbricksBranding = ({
           {type === "linkSurvey" && (
             <div className="mb-8">
               <UpgradePlanNotice
-                message={t("environments.product.look.formbricks_branding_upgrade_message")}
-                textForUrl={t("environments.product.look.formbricks_branding_upgrade_text")}
+                message={t("environments.project.look.formbricks_branding_upgrade_message")}
+                textForUrl={t("environments.project.look.formbricks_branding_upgrade_text")}
                 url={`/environments/${environmentId}/settings/billing`}
               />
             </div>
           )}
           {type !== "linkSurvey" && (
             <UpgradePlanNotice
-              message={t("environments.product.look.formbricks_branding_upgrade_message_in_app")}
-              textForUrl={t("environments.product.look.formbricks_branding_upgrade_text")}
+              message={t("environments.project.look.formbricks_branding_upgrade_message_in_app")}
+              textForUrl={t("environments.project.look.formbricks_branding_upgrade_text")}
               url={`/environments/${environmentId}/settings/billing`}
             />
           )}

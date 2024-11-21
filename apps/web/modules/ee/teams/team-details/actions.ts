@@ -6,12 +6,12 @@ import { getOrganizationIdFromProjectId, getOrganizationIdFromTeamId } from "@/l
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import {
   addTeamMembers,
-  addTeamProducts,
+  addTeamProjects,
   deleteTeam,
   removeTeamMember,
-  removeTeamProduct,
+  removeTeamProject,
   updateTeamName,
-  updateTeamProductPermission,
+  updateTeamProjectPermission,
   updateUserTeamRole,
 } from "@/modules/ee/teams/team-details/lib/teams";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
@@ -157,25 +157,25 @@ export const addTeamMembersAction = authenticatedActionClient
     return await addTeamMembers(parsedInput.teamId, parsedInput.userIds);
   });
 
-const ZUpdateTeamProductPermissionAction = z.object({
+const ZUpdateTeamProjectPermissionAction = z.object({
   teamId: ZId,
-  productId: ZId,
+  projectId: ZId,
   permission: ZTeamPermission,
 });
 
-export const updateTeamProductPermissionAction = authenticatedActionClient
-  .schema(ZUpdateTeamProductPermissionAction)
+export const updateTeamProjectPermissionAction = authenticatedActionClient
+  .schema(ZUpdateTeamProjectPermissionAction)
   .action(async ({ ctx, parsedInput }) => {
     const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
-    const productOrganizationId = await getOrganizationIdFromProjectId(parsedInput.productId);
+    const projectOrganizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
-    if (teamOrganizationId !== productOrganizationId) {
-      throw new Error("Team and Product must belong to the same organization");
+    if (teamOrganizationId !== projectOrganizationId) {
+      throw new Error("Team and Project must belong to the same organization");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: productOrganizationId,
+      organizationId: projectOrganizationId,
       access: [
         {
           type: "organization",
@@ -184,31 +184,31 @@ export const updateTeamProductPermissionAction = authenticatedActionClient
       ],
     });
 
-    return await updateTeamProductPermission(
+    return await updateTeamProjectPermission(
       parsedInput.teamId,
-      parsedInput.productId,
+      parsedInput.projectId,
       parsedInput.permission
     );
   });
 
-const ZRemoveTeamProductAction = z.object({
+const ZRemoveTeamProjectAction = z.object({
   teamId: ZId,
-  productId: ZId,
+  projectId: ZId,
 });
 
-export const removeTeamProductAction = authenticatedActionClient
-  .schema(ZRemoveTeamProductAction)
+export const removeTeamProjectAction = authenticatedActionClient
+  .schema(ZRemoveTeamProjectAction)
   .action(async ({ ctx, parsedInput }) => {
     const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
-    const productOrganizationId = await getOrganizationIdFromProjectId(parsedInput.productId);
+    const projectOrganizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
 
-    if (teamOrganizationId !== productOrganizationId) {
-      throw new Error("Team and Product must belong to the same organization");
+    if (teamOrganizationId !== projectOrganizationId) {
+      throw new Error("Team and Project must belong to the same organization");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: productOrganizationId,
+      organizationId: projectOrganizationId,
       access: [
         {
           type: "organization",
@@ -217,16 +217,16 @@ export const removeTeamProductAction = authenticatedActionClient
       ],
     });
 
-    return await removeTeamProduct(parsedInput.teamId, parsedInput.productId);
+    return await removeTeamProject(parsedInput.teamId, parsedInput.projectId);
   });
 
-const ZAddTeamProductsAction = z.object({
+const ZAddTeamProjectsAction = z.object({
   teamId: ZId,
-  productIds: z.array(ZId),
+  projectIds: z.array(ZId),
 });
 
-export const addTeamProductsAction = authenticatedActionClient
-  .schema(ZAddTeamProductsAction)
+export const addTeamProjectsAction = authenticatedActionClient
+  .schema(ZAddTeamProjectsAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -239,5 +239,5 @@ export const addTeamProductsAction = authenticatedActionClient
       ],
     });
 
-    return await addTeamProducts(parsedInput.teamId, parsedInput.productIds);
+    return await addTeamProjects(parsedInput.teamId, parsedInput.projectIds);
   });

@@ -54,9 +54,9 @@ const Page = async (props) => {
     throw new Error(t("common.survey_not_found"));
   }
 
-  const product = await getProjectByEnvironmentId(environment.id);
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  const project = await getProjectByEnvironmentId(environment.id);
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const user = await getUser(session.user.id);
@@ -73,8 +73,8 @@ const Page = async (props) => {
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
   const { isMember } = getAccessFlags(currentUserMembership?.role);
-  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

@@ -123,10 +123,10 @@ const Page = async (props: LinkSurveyPageProps) => {
     }
   }
 
-  // get product and person
-  const product = await getProjectByEnvironmentId(survey.environmentId);
-  if (!product) {
-    throw new Error("Product not found");
+  // get project and person
+  const project = await getProjectByEnvironmentId(survey.environmentId);
+  if (!project) {
+    throw new Error("Project not found");
   }
 
   const attributeClasses = await getAttributeClasses(survey.environmentId);
@@ -165,7 +165,7 @@ const Page = async (props: LinkSurveyPageProps) => {
     return (
       <PinScreen
         surveyId={survey.id}
-        product={product}
+        project={project}
         userId={userId}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
@@ -187,7 +187,7 @@ const Page = async (props: LinkSurveyPageProps) => {
   return survey ? (
     <LinkSurvey
       survey={survey}
-      product={product}
+      project={project}
       userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}

@@ -20,7 +20,7 @@ import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
 interface SurveyFilterProps {
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
-  currentProductChannel: TProjectConfigChannel;
+  currentProjectChannel: TProjectConfigChannel;
 }
 
 const creatorOptions: TFilterOption[] = [
@@ -57,7 +57,7 @@ const sortOptions: TSortOption[] = [
 export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
-  currentProductChannel,
+  currentProjectChannel,
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
@@ -146,7 +146,7 @@ export const SurveyFilters = ({
             toggleDropdown={toggleDropdown}
           />
         </div>
-        {currentProductChannel !== "link" && (
+        {currentProjectChannel !== "link" && (
           <div>
             <SurveyFilterDropdown
               title={t("common.type")}

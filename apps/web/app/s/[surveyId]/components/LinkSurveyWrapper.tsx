@@ -10,7 +10,7 @@ import { ResetProgressButton } from "@formbricks/ui/components/ResetProgressButt
 
 interface LinkSurveyWrapperProps {
   children: JSX.Element;
-  product: TProject;
+  project: TProject;
   survey: TSurvey;
   isPreview: boolean;
   isEmbed: boolean;
@@ -24,7 +24,7 @@ interface LinkSurveyWrapperProps {
 
 export const LinkSurveyWrapper = ({
   children,
-  product,
+  project,
   survey,
   isPreview,
   isEmbed,
@@ -60,9 +60,9 @@ export const LinkSurveyWrapper = ({
     return (
       <div>
         <SurveyLoadingAnimation survey={survey} isBackgroundLoaded={isBackgroundLoaded} />
-        <MediaBackground survey={survey} project={product} onBackgroundLoaded={handleBackgroundLoaded}>
+        <MediaBackground survey={survey} project={project} onBackgroundLoaded={handleBackgroundLoaded}>
           <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip sm:items-center">
-            {!styling.isLogoHidden && product.logo?.url && <ClientLogo project={product} />}
+            {!styling.isLogoHidden && project.logo?.url && <ClientLogo project={project} />}
             <div className="h-full w-full space-y-6 p-0 sm:max-w-lg">
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">

@@ -45,21 +45,21 @@ const Page = async (props) => {
         />
       </PageHeader>
       <div className="space-y-4">
-        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/product/app-connection" />
+        <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/project/app-connection" />
         <SettingsCard
-          title={t("environments.product.app-connection.app_connection")}
-          description={t("environments.product.app-connection.app_connection_description")}>
+          title={t("environments.project.app-connection.app_connection")}
+          description={t("environments.project.app-connection.app_connection_description")}>
           {environment && <WidgetStatusIndicator environment={environment} />}
         </SettingsCard>
         <SettingsCard
-          title={t("environments.product.app-connection.how_to_setup")}
-          description={t("environments.product.app-connection.how_to_setup_description")}
+          title={t("environments.project.app-connection.how_to_setup")}
+          description={t("environments.project.app-connection.how_to_setup_description")}
           noPadding>
           <SetupInstructions environmentId={params.environmentId} webAppUrl={WEBAPP_URL} />
         </SettingsCard>
         <SettingsCard
-          title={t("environments.product.app-connection.environment_id")}
-          description={t("environments.product.app-connection.environment_id_description")}>
+          title={t("environments.project.app-connection.environment_id")}
+          description={t("environments.project.app-connection.environment_id_description")}>
           <EnvironmentIdField environmentId={params.environmentId} />
         </SettingsCard>
       </div>

@@ -2,7 +2,7 @@
 import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import { type TIntegrationConfig } from "@formbricks/types/integration";
 import { type TOrganizationBilling } from "@formbricks/types/organizations";
-import { type TProjeuctConfig, type TProjectStyling } from "@formbricks/types/project";
+import { type TProjectConfig, type TProjectStyling } from "@formbricks/types/project";
 import {
   type TResponseData,
   type TResponseMeta,
@@ -27,7 +27,7 @@ declare global {
     export type ActionProperties = Record<string, string>;
     export type ActionClassNoCodeConfig = TActionClassNoCodeConfig;
     export type IntegrationConfig = TIntegrationConfig;
-    export type ProductConfig = TProjeuctConfig;
+    export type ProjectConfig = TProjectConfig;
     export type ResponseData = TResponseData;
     export type ResponseMeta = TResponseMeta;
     export type ResponsePersonAttributes = TResponsePersonAttributes;
@@ -36,7 +36,7 @@ declare global {
     export type SurveyEnding = TSurveyEnding;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyVariables = TSurveyVariables;
-    export type SurveyProductOverwrites = TSurveyProjectOverwrites;
+    export type SurveyProjectOverwrites = TSurveyProjectOverwrites;
     export type SurveyStyling = TSurveyStyling;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;

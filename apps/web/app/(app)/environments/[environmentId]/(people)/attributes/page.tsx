@@ -28,7 +28,7 @@ const Page = async (props) => {
   const project = await getProjectByEnvironmentId(params.environmentId);
   const locale = await findMatchingLocale();
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   const [organization, session] = await Promise.all([

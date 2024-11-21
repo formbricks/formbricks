@@ -23,7 +23,7 @@ interface PricingCardProps {
   organization: TOrganization;
   onUpgrade: () => Promise<void>;
   onManageSubscription: () => Promise<void>;
-  productFeatureKeys: {
+  projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
     SCALE: string;
@@ -37,20 +37,20 @@ export const PricingCard = ({
   onUpgrade,
   onManageSubscription,
   organization,
-  productFeatureKeys,
+  projectFeatureKeys,
 }: PricingCardProps) => {
   const t = useTranslations();
   const [loading, setLoading] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   const isCurrentPlan = useMemo(() => {
-    if (organization.billing.plan === productFeatureKeys.FREE && plan.id === productFeatureKeys.FREE) {
+    if (organization.billing.plan === projectFeatureKeys.FREE && plan.id === projectFeatureKeys.FREE) {
       return true;
     }
 
     if (
-      organization.billing.plan === productFeatureKeys.ENTERPRISE &&
-      plan.id === productFeatureKeys.ENTERPRISE
+      organization.billing.plan === projectFeatureKeys.ENTERPRISE &&
+      plan.id === projectFeatureKeys.ENTERPRISE
     ) {
       return true;
     }
@@ -61,8 +61,8 @@ export const PricingCard = ({
     organization.billing.plan,
     plan.id,
     planPeriod,
-    productFeatureKeys.ENTERPRISE,
-    productFeatureKeys.FREE,
+    projectFeatureKeys.ENTERPRISE,
+    projectFeatureKeys.FREE,
   ]);
 
   const CTAButton = useMemo(() => {
@@ -70,8 +70,8 @@ export const PricingCard = ({
       return null;
     }
 
-    if (plan.id !== productFeatureKeys.ENTERPRISE && plan.id !== productFeatureKeys.FREE) {
-      if (organization.billing.plan === productFeatureKeys.FREE) {
+    if (plan.id !== projectFeatureKeys.ENTERPRISE && plan.id !== projectFeatureKeys.FREE) {
+      if (organization.billing.plan === projectFeatureKeys.FREE) {
         return (
           <Button
             loading={loading}
@@ -105,8 +105,8 @@ export const PricingCard = ({
     onUpgrade,
     organization.billing.plan,
     plan.id,
-    productFeatureKeys.ENTERPRISE,
-    productFeatureKeys.FREE,
+    projectFeatureKeys.ENTERPRISE,
+    projectFeatureKeys.FREE,
   ]);
 
   return (
@@ -139,7 +139,7 @@ export const PricingCard = ({
                 plan.featured ? "text-slate-900" : "text-slate-800",
                 "text-4xl font-bold tracking-tight"
               )}>
-              {plan.id !== productFeatureKeys.ENTERPRISE
+              {plan.id !== projectFeatureKeys.ENTERPRISE
                 ? planPeriod === "monthly"
                   ? plan.price.monthly
                   : plan.price.yearly
@@ -156,7 +156,7 @@ export const PricingCard = ({
 
           {CTAButton}
 
-          {plan.id !== productFeatureKeys.FREE && isCurrentPlan && (
+          {plan.id !== projectFeatureKeys.FREE && isCurrentPlan && (
             <Button
               variant="secondary"
               loading={loading}
@@ -170,7 +170,7 @@ export const PricingCard = ({
             </Button>
           )}
 
-          {organization.billing.plan !== plan.id && plan.id === productFeatureKeys.ENTERPRISE && (
+          {organization.billing.plan !== plan.id && plan.id === projectFeatureKeys.ENTERPRISE && (
             <Button loading={loading} onClick={() => onUpgrade()} className="flex justify-center">
               {t("environments.settings.billing.contact_us")}
             </Button>

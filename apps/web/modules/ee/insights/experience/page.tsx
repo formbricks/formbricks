@@ -26,7 +26,7 @@ export const ExperiencePage = async (props) => {
     throw new Error("User not found");
   }
 
-  const [environment, product, organization] = await Promise.all([
+  const [environment, project, organization] = await Promise.all([
     getEnvironment(params.environmentId),
     getProjectByEnvironmentId(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
@@ -36,8 +36,8 @@ export const ExperiencePage = async (props) => {
     throw new Error("Environment not found");
   }
 
-  if (!product) {
-    throw new Error("Product not found");
+  if (!project) {
+    throw new Error("Project not found");
   }
 
   if (!organization) {
@@ -62,7 +62,7 @@ export const ExperiencePage = async (props) => {
       <Dashboard
         environment={environment}
         insightsPerPage={INSIGHTS_PER_PAGE}
-        product={product}
+        project={project}
         user={user}
         documentsPerPage={DOCUMENTS_PER_PAGE}
         locale={locale}

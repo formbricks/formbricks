@@ -27,8 +27,8 @@ export const updateProjectAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: parsedInput.projectId,
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],

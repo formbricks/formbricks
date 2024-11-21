@@ -1,4 +1,4 @@
-export const mockProductId = "clt2h1ant000f08l36qmx2dy2";
+export const mockProjectId = "clt2h1ant000f08l36qmx2dy2";
 export const mockLanguageId = "rp2di001zicbm3mk8je1ue9u";
 export const mockLanguage = {
   id: mockLanguageId,
@@ -6,7 +6,7 @@ export const mockLanguage = {
   alias: null,
   createdAt: new Date(),
   updatedAt: new Date(),
-  productId: mockProductId,
+  projectId: mockProjectId,
 };
 
 export const mockLanguageUpdate = {

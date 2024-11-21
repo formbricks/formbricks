@@ -5,7 +5,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import {
   getOrganizationIdFromLanguageId,
   getOrganizationIdFromProjectId,
-  getProductIdFromLanguageId,
+  getProjectIdFromLanguageId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import {
@@ -36,8 +36,8 @@ export const createLanguageAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: parsedInput.projectId,
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
@@ -54,9 +54,9 @@ const ZDeleteLanguageAction = z.object({
 export const deleteLanguageAction = authenticatedActionClient
   .schema(ZDeleteLanguageAction)
   .action(async ({ ctx, parsedInput }) => {
-    const languageProductId = await getProductIdFromLanguageId(parsedInput.languageId);
+    const languageProjectId = await getProjectIdFromLanguageId(parsedInput.languageId);
 
-    if (languageProductId !== parsedInput.projectId) {
+    if (languageProjectId !== parsedInput.projectId) {
       throw new Error("Invalid language id");
     }
 
@@ -69,8 +69,8 @@ export const deleteLanguageAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: parsedInput.projectId,
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],
@@ -95,8 +95,8 @@ export const getSurveysUsingGivenLanguageAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromLanguageId(parsedInput.languageId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromLanguageId(parsedInput.languageId),
           minPermission: "manage",
         },
       ],
@@ -125,8 +125,8 @@ export const updateLanguageAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: parsedInput.projectId,
+          type: "projectTeam",
+          projectId: parsedInput.projectId,
           minPermission: "manage",
         },
       ],

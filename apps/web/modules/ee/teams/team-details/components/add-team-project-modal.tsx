@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { addTeamProductsAction } from "@/modules/ee/teams/team-details/actions";
+import { addTeamProjectsAction } from "@/modules/ee/teams/team-details/actions";
 import { UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -13,28 +13,28 @@ import { Modal } from "@formbricks/ui/components/Modal";
 import { MultiSelect } from "@formbricks/ui/components/MultiSelect";
 import { H4 } from "@formbricks/ui/components/Typography";
 
-interface AddTeamProductModalProps {
+interface AddTeamProjectModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   teamId: string;
-  productOptions: { label: string; value: string }[];
+  projectOptions: { label: string; value: string }[];
 }
 
-export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: AddTeamProductModalProps) => {
+export const AddTeamProjectModal = ({ open, setOpen, teamId, projectOptions }: AddTeamProjectModalProps) => {
   const t = useTranslations();
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
-  const handleAddProducts = async (e) => {
+  const handleAddProjects = async (e) => {
     e.preventDefault();
 
     setIsLoading(true);
 
-    const addMembersActionResponse = await addTeamProductsAction({
+    const addMembersActionResponse = await addTeamProjectsAction({
       teamId,
-      productIds: selectedProducts,
+      projectIds: selectedProjects,
     });
     if (addMembersActionResponse?.data) {
       toast.success(t("environments.settings.teams.members_added_successfully"));
@@ -44,7 +44,7 @@ export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: A
       toast.error(errorMessage);
     }
 
-    setSelectedProducts([]);
+    setSelectedProjects([]);
     setIsLoading(false);
     setOpen(false);
   };
@@ -59,16 +59,16 @@ export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: A
           </div>
         </div>
       </div>
-      <form onSubmit={handleAddProducts}>
+      <form onSubmit={handleAddProjects}>
         <div className="overflow-visible p-6">
           <Label className="mb-1 text-sm font-medium text-slate-900">
             {t("environments.settings.teams.organization_products")}
           </Label>
           <MultiSelect
-            value={selectedProducts}
-            options={productOptions}
+            value={selectedProjects}
+            options={projectOptions}
             onChange={(value) => {
-              setSelectedProducts(value);
+              setSelectedProjects(value);
             }}
           />
         </div>
@@ -78,7 +78,7 @@ export const AddTeamProductModal = ({ open, setOpen, teamId, productOptions }: A
             type="button"
             onClick={() => {
               setOpen(false);
-              setSelectedProducts([]);
+              setSelectedProjects([]);
             }}>
             Cancel
           </Button>

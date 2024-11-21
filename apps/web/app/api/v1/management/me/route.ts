@@ -17,7 +17,7 @@ export const GET = async () => {
             createdAt: true,
             updatedAt: true,
             type: true,
-            product: {
+            project: {
               select: {
                 id: true,
                 name: true,

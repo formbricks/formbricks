@@ -23,7 +23,7 @@ export const ZProjectConfig = z.object({
   industry: ZProjectConfigIndustry,
 });
 
-export type TProjeuctConfig = z.infer<typeof ZProjectConfig>;
+export type TProjectConfig = z.infer<typeof ZProjectConfig>;
 
 export const ZLanguage = z.object({
   id: z.string().cuid2(),

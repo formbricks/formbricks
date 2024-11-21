@@ -18,21 +18,21 @@ import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsId } from "@formbricks/ui/components/SettingsId";
 import { SettingsCard } from "../../settings/components/SettingsCard";
-import { DeleteProduct } from "./components/DeleteProject";
-import { EditProductNameForm } from "./components/EditProductNameForm";
+import { DeleteProject } from "./components/DeleteProject";
+import { EditProjectNameForm } from "./components/EditProjectNameForm";
 import { EditWaitingTimeForm } from "./components/EditWaitingTimeForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslations();
-  const [product, session, organization] = await Promise.all([
+  const [project, session, organization] = await Promise.all([
     getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
     getOrganizationByEnvironmentId(params.environmentId),
   ]);
 
-  if (!product) {
-    throw new Error(t("environments.product.general.product_not_found"));
+  if (!project) {
+    throw new Error(t("environments.project.general.project_not_found"));
   }
   if (!session) {
     throw new Error(t("common.session_not_found"));
@@ -42,10 +42,10 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
   const { isMember, isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
-  const { hasManageAccess } = getTeamPermissionFlags(productPermission);
+  const { hasManageAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && !hasManageAccess;
 
@@ -66,25 +66,25 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       </PageHeader>
       <SettingsCard
         title={t("common.product_name")}
-        description={t("environments.product.general.product_name_settings_description")}>
-        <EditProductNameForm product={product} isReadOnly={isReadOnly} />
+        description={t("environments.project.general.product_name_settings_description")}>
+        <EditProjectNameForm project={project} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.product.general.recontact_waiting_time")}
-        description={t("environments.product.general.recontact_waiting_time_settings_description")}>
-        <EditWaitingTimeForm project={product} isReadOnly={isReadOnly} />
+        title={t("environments.project.general.recontact_waiting_time")}
+        description={t("environments.project.general.recontact_waiting_time_settings_description")}>
+        <EditWaitingTimeForm project={project} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.product.general.delete_product")}
-        description={t("environments.product.general.delete_product_settings_description")}>
-        <DeleteProduct
+        title={t("environments.project.general.delete_product")}
+        description={t("environments.project.general.delete_product_settings_description")}>
+        <DeleteProject
           environmentId={params.environmentId}
-          product={product}
+          project={project}
           isOwnerOrManager={isOwnerOrManager}
         />
       </SettingsCard>
       <div>
-        <SettingsId title={t("common.product_id")} id={product.id}></SettingsId>
+        <SettingsId title={t("common.product_id")} id={project.id}></SettingsId>
         {!IS_FORMBRICKS_CLOUD && (
           <SettingsId title={t("common.formbricks_version")} id={packageJson.version}></SettingsId>
         )}

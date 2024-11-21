@@ -42,7 +42,7 @@ export const removeAccessAction = authenticatedActionClient
   });
 
 const ZAddAccessAction = z.object({
-  productId: z.string(),
+  projectId: z.string(),
   teamIds: z.array(ZId),
 });
 
@@ -51,7 +51,7 @@ export const addAccessAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProjectId(parsedInput.productId),
+      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
       access: [
         {
           type: "organization",
@@ -60,11 +60,11 @@ export const addAccessAction = authenticatedActionClient
       ],
     });
 
-    return await addTeamAccess(parsedInput.productId, parsedInput.teamIds);
+    return await addTeamAccess(parsedInput.projectId, parsedInput.teamIds);
   });
 
 const ZUpdateAccessPermissionAction = z.object({
-  productId: z.string(),
+  projectId: z.string(),
   teamId: z.string(),
   permission: ZTeamPermission,
 });
@@ -72,16 +72,16 @@ const ZUpdateAccessPermissionAction = z.object({
 export const updateAccessPermissionAction = authenticatedActionClient
   .schema(ZUpdateAccessPermissionAction)
   .action(async ({ ctx, parsedInput }) => {
-    const productOrganizationId = await getOrganizationIdFromProjectId(parsedInput.productId);
+    const projectOrganizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
     const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
 
-    if (productOrganizationId !== teamOrganizationId) {
-      throw new Error("Team and product are not in the same organization");
+    if (projectOrganizationId !== teamOrganizationId) {
+      throw new Error("Team and project are not in the same organization");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: productOrganizationId,
+      organizationId: projectOrganizationId,
       access: [
         {
           type: "organization",
@@ -91,7 +91,7 @@ export const updateAccessPermissionAction = authenticatedActionClient
     });
 
     return await updateTeamAccessPermission(
-      parsedInput.productId,
+      parsedInput.projectId,
       parsedInput.teamId,
       parsedInput.permission
     );

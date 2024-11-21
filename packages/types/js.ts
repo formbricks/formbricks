@@ -36,7 +36,7 @@ export const ZJsAppStateSync = z.object({
   userId: z.string().optional(),
   surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProject,
+  project: ZProject,
   language: z.string().optional(),
 });
 
@@ -46,7 +46,7 @@ export const ZJsAppState = z.object({
   attributes: ZAttributes,
   surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProject,
+  project: ZProject,
 });
 
 export type TJsAppState = z.infer<typeof ZJsAppState>;
@@ -89,7 +89,7 @@ export type TJsRNSyncParams = z.infer<typeof ZJsRNSyncParams>;
 export const ZJsWebsiteState = z.object({
   surveys: z.array(ZSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProject,
+  project: ZProject,
   displays: z.array(ZJSWebsiteStateDisplay),
   attributes: ZAttributes.optional(),
 });

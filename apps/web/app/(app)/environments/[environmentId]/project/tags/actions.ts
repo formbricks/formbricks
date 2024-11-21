@@ -6,8 +6,8 @@ import {
   getEnvironmentIdFromTagId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromTagId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromTagId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromTagId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
@@ -29,9 +29,9 @@ export const deleteTagAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromTagId(parsedInput.tagId),
+          projectId: await getProjectIdFromTagId(parsedInput.tagId),
         },
       ],
     });
@@ -56,9 +56,9 @@ export const updateTagNameAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromTagId(parsedInput.tagId),
+          projectId: await getProjectIdFromTagId(parsedInput.tagId),
         },
       ],
     });
@@ -90,9 +90,9 @@ export const mergeTagsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(newTagEnvironmentId),
+          projectId: await getProjectIdFromEnvironmentId(newTagEnvironmentId),
         },
       ],
     });

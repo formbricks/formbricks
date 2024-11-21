@@ -25,7 +25,7 @@ interface PricingTableProps {
     SCALE_MONTHLY: string;
     SCALE_YEARLY: string;
   };
-  productFeatureKeys: {
+  projectFeatureKeys: {
     FREE: string;
     STARTUP: string;
     SCALE: string;
@@ -38,7 +38,7 @@ export const PricingTable = ({
   environmentId,
   organization,
   peopleCount,
-  productFeatureKeys,
+  projectFeatureKeys,
   responseCount,
   stripePriceLookupKeys,
   hasBillingRights,
@@ -254,7 +254,7 @@ export const PricingTable = ({
                       await onUpgrade(plan.id);
                     }}
                     organization={organization}
-                    productFeatureKeys={productFeatureKeys}
+                    projectFeatureKeys={projectFeatureKeys}
                     onManageSubscription={openCustomerPortal}
                   />
                 ))}

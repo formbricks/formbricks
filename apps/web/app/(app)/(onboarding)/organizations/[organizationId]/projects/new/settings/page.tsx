@@ -15,7 +15,7 @@ import { TProjectConfigChannel, TProjectConfigIndustry, TProjectMode } from "@fo
 import { Button } from "@formbricks/ui/components/Button";
 import { Header } from "@formbricks/ui/components/Header";
 
-interface ProductSettingsPageProps {
+interface ProjectSettingsPageProps {
   params: Promise<{
     organizationId: string;
   }>;
@@ -26,7 +26,7 @@ interface ProductSettingsPageProps {
   }>;
 }
 
-const Page = async (props: ProductSettingsPageProps) => {
+const Page = async (props: ProjectSettingsPageProps) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const t = await getTranslations();
@@ -41,7 +41,7 @@ const Page = async (props: ProductSettingsPageProps) => {
   const mode = searchParams.mode || "surveys";
   const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
   const customHeadline = getCustomHeadline(channel);
-  const products = await getUserProjects(session.user.id, params.organizationId);
+  const projects = await getUserProjects(session.user.id, params.organizationId);
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
 
@@ -61,13 +61,13 @@ const Page = async (props: ProductSettingsPageProps) => {
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       {channel === "link" || mode === "cx" ? (
         <Header
-          title={t("organizations.products.new.settings.channel_settings_title")}
-          subtitle={t("organizations.products.new.settings.channel_settings_subtitle")}
+          title={t("organizations.projects.new.settings.channel_settings_title")}
+          subtitle={t("organizations.projects.new.settings.channel_settings_subtitle")}
         />
       ) : (
         <Header
           title={t(customHeadline)}
-          subtitle={t("organizations.products.new.settings.channel_settings_description")}
+          subtitle={t("organizations.projects.new.settings.channel_settings_description")}
         />
       )}
       <ProjectSettings
@@ -80,7 +80,7 @@ const Page = async (props: ProductSettingsPageProps) => {
         canDoRoleManagement={canDoRoleManagement}
         locale={locale ?? DEFAULT_LOCALE}
       />
-      {products.length >= 1 && (
+      {projects.length >= 1 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="minimal"

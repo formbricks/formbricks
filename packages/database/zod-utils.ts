@@ -17,7 +17,7 @@ export {
   ZSurveyHiddenFields,
   ZSurveyVariables,
   ZSurveyClosedMessage,
-  ZSurveyProductOverwrites,
+  ZSurveyProjectOverwrites,
   ZSurveyStyling,
   ZSurveySingleUse,
   ZSurveyInlineTriggers,

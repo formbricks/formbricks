@@ -14,7 +14,7 @@ import type { ConfirmationModalProps } from "./multi-language-card";
 interface DefaultLanguageSelectProps {
   defaultLanguage?: TLanguage;
   handleDefaultLanguageChange: (languageCode: string) => void;
-  product: TProject;
+  project: TProject;
   setConfirmationModalInfo: (confirmationModal: ConfirmationModalProps) => void;
   locale: string;
 }
@@ -22,7 +22,7 @@ interface DefaultLanguageSelectProps {
 export function DefaultLanguageSelect({
   defaultLanguage,
   handleDefaultLanguageChange,
-  product,
+  project,
   setConfirmationModalInfo,
   locale,
 }: DefaultLanguageSelectProps) {
@@ -60,7 +60,7 @@ export function DefaultLanguageSelect({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {product.languages.map((language) => (
+              {project.languages.map((language) => (
                 <SelectItem
                   className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
                   key={language.id}

@@ -42,7 +42,7 @@ const ConfigLayout = async (props) => {
 
   const project = await getProjectByEnvironmentId(params.environmentId);
   if (!project) {
-    throw new Error(t("common.product_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   return children;

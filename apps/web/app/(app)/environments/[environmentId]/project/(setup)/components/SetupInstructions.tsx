@@ -32,14 +32,14 @@ export const SetupInstructions = ({ environmentId, webAppUrl }: SetupInstruction
       <div className="px-6 py-5">
         {activeTab === "npm" ? (
           <div className="prose prose-slate prose-p:my-2 prose-p:text-sm prose-p:text-slate-600 prose-h4:text-slate-800 prose-h4:pt-2">
-            <h4>{t("environments.product.app-connection.step_1")}</h4>
+            <h4>{t("environments.project.app-connection.step_1")}</h4>
             <CodeBlock language="sh">pnpm install @formbricks/js</CodeBlock>
             <p>or</p>
             <CodeBlock language="sh">npm install @formbricks/js</CodeBlock>
             <p>or</p>
             <CodeBlock language="sh">yarn add @formbricks/js</CodeBlock>
-            <h4>{t("environments.product.app-connection.step_2")}</h4>
-            <p>{t("environments.product.app-connection.step_2_description")}</p>
+            <h4>{t("environments.project.app-connection.step_2")}</h4>
+            <p>{t("environments.project.app-connection.step_2_description")}</p>
             <CodeBlock language="js">{`import formbricks from "@formbricks/js";
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -50,34 +50,34 @@ if (typeof window !== "undefined") {
             <ul className="list-disc text-sm">
               <li>
                 <span className="font-semibold">environmentId :</span>{" "}
-                {t("environments.product.app-connection.environment_id_description_with_environment_id", {
+                {t("environments.project.app-connection.environment_id_description_with_environment_id", {
                   environmentId: environmentId,
                 })}
               </li>
               <li>
                 <span className="font-semibold">apiHost:</span>{" "}
-                {t("environments.product.app-connection.api_host_description")}
+                {t("environments.project.app-connection.api_host_description")}
               </li>
             </ul>
             <span className="text-sm text-slate-600">
-              {t("environments.product.app-connection.if_you_are_planning_to")}
+              {t("environments.project.app-connection.if_you_are_planning_to")}
               <Link
                 href="https://formbricks.com//docs/app-surveys/user-identification"
                 target="blank"
                 className="underline">
-                {t("environments.product.app-connection.identifying_your_users")}
+                {t("environments.project.app-connection.identifying_your_users")}
               </Link>{" "}
-              {t("environments.product.app-connection.you_also_need_to_pass_a")}{" "}
-              <span className="font-semibold">userId</span> {t("environments.product.app-connection.to_the")}{" "}
-              <span className="font-semibold">init</span> {t("environments.product.app-connection.function")}.
+              {t("environments.project.app-connection.you_also_need_to_pass_a")}{" "}
+              <span className="font-semibold">userId</span> {t("environments.project.app-connection.to_the")}{" "}
+              <span className="font-semibold">init</span> {t("environments.project.app-connection.function")}.
             </span>
-            <h4>{t("environments.product.app-connection.step_3")}</h4>
+            <h4>{t("environments.project.app-connection.step_3")}</h4>
             <p>
-              {t("environments.product.app-connection.switch_on_the_debug_mode_by_appending")}{" "}
+              {t("environments.project.app-connection.switch_on_the_debug_mode_by_appending")}{" "}
               <i>?formbricksDebug=true</i>{" "}
-              {t("environments.product.app-connection.to_the_url_where_you_load_the")}{" "}
-              {t("environments.product.app-connection.formbricks_sdk")}.{" "}
-              {t("environments.product.app-connection.open_the_browser_console_to_see_the_logs")}{" "}
+              {t("environments.project.app-connection.to_the_url_where_you_load_the")}{" "}
+              {t("environments.project.app-connection.formbricks_sdk")}.{" "}
+              {t("environments.project.app-connection.open_the_browser_console_to_see_the_logs")}{" "}
               <Link
                 className="decoration-brand-dark"
                 href="https://formbricks.com/docs/developer-docs/js-sdk#debug-mode"
@@ -85,50 +85,50 @@ if (typeof window !== "undefined") {
                 {t("common.read_docs")}
               </Link>{" "}
             </p>
-            <h4>{t("environments.product.app-connection.you_are_done")}</h4>
-            <p>{t("environments.product.app-connection.your_app_now_communicates_with_formbricks")}</p>
+            <h4>{t("environments.project.app-connection.you_are_done")}</h4>
+            <p>{t("environments.project.app-connection.your_app_now_communicates_with_formbricks")}</p>
             <ul className="list-disc text-sm text-slate-700">
               <li>
-                <span>{t("environments.product.app-connection.need_a_more_detailed_setup_guide_for")}</span>{" "}
+                <span>{t("environments.project.app-connection.need_a_more_detailed_setup_guide_for")}</span>{" "}
                 <Link
                   className="decoration-brand-dark"
                   href="https://formbricks.com/docs/website-surveys/quickstart"
                   target="_blank">
-                  {t("environments.product.app-connection.check_out_the_docs")}
+                  {t("environments.project.app-connection.check_out_the_docs")}
                 </Link>
               </li>
               <li>
-                <span>{t("environments.product.app-connection.not_working")}</span>{" "}
+                <span>{t("environments.project.app-connection.not_working")}</span>{" "}
                 <Link className="decoration-brand-dark" href="https://formbricks.com/discord" target="_blank">
-                  {t("environments.product.app-connection.join_discord")}
+                  {t("environments.project.app-connection.join_discord")}
                 </Link>{" "}
-                {t("environments.product.app-connection.or")}{" "}
+                {t("environments.project.app-connection.or")}{" "}
                 <Link
                   className="decoration-brand-dark"
                   target="_blank"
                   href="https://github.com/formbricks/formbricks/issues">
-                  {t("environments.product.app-connection.open_an_issue_on_github")}
+                  {t("environments.project.app-connection.open_an_issue_on_github")}
                 </Link>{" "}
               </li>
               <li>
                 <span>
-                  {t("environments.product.app-connection.want_to_learn_how_to_add_user_attributes")}
+                  {t("environments.project.app-connection.want_to_learn_how_to_add_user_attributes")}
                 </span>{" "}
                 <Link
                   className="decoration-brand-dark"
                   href="https://formbricks.com/docs/attributes/why"
                   target="_blank">
-                  {t("environments.product.app-connection.dive_into_the_docs")}
+                  {t("environments.project.app-connection.dive_into_the_docs")}
                 </Link>
               </li>
             </ul>
           </div>
         ) : activeTab === "html" ? (
           <div className="prose prose-slate prose-p:my-2 prose-p:text-sm prose-p:text-slate-600 prose-h4:text-slate-800 prose-h4:pt-2">
-            <h4>{t("environments.product.app-connection.step_1")}</h4>
+            <h4>{t("environments.project.app-connection.step_1")}</h4>
             <p>
-              {t("environments.product.app-connection.insert_this_code_into_the")} <code>{`<head>`}</code>{" "}
-              {t("environments.product.app-connection.tag_of_your_app")}
+              {t("environments.project.app-connection.insert_this_code_into_the")} <code>{`<head>`}</code>{" "}
+              {t("environments.project.app-connection.tag_of_your_app")}
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
@@ -137,11 +137,11 @@ if (typeof window !== "undefined") {
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <h4>Step 2: Debug mode</h4>
             <p>
-              {t("environments.product.app-connection.switch_on_the_debug_mode_by_appending")}{" "}
+              {t("environments.project.app-connection.switch_on_the_debug_mode_by_appending")}{" "}
               <i>{`?formbricksDebug=true`}</i>{" "}
-              {t("environments.product.app-connection.to_the_url_where_you_load_the")}{" "}
-              {t("environments.product.app-connection.formbricks_sdk")}.{" "}
-              {t("environments.product.app-connection.open_the_browser_console_to_see_the_logs")}{" "}
+              {t("environments.project.app-connection.to_the_url_where_you_load_the")}{" "}
+              {t("environments.project.app-connection.formbricks_sdk")}.{" "}
+              {t("environments.project.app-connection.open_the_browser_console_to_see_the_logs")}{" "}
               <Link
                 className="decoration-brand-dark"
                 href="https://formbricks.com/docs/developer-docs/js-sdk#debug-mode"
@@ -149,39 +149,39 @@ if (typeof window !== "undefined") {
                 {t("common.read_docs")}
               </Link>{" "}
             </p>
-            <h4>{t("environments.product.app-connection.you_are_done")}</h4>
-            <p>{t("environments.product.app-connection.your_app_now_communicates_with_formbricks")}</p>
+            <h4>{t("environments.project.app-connection.you_are_done")}</h4>
+            <p>{t("environments.project.app-connection.your_app_now_communicates_with_formbricks")}</p>
             <ul className="list-disc text-sm text-slate-700">
               <li>
                 <span className="font-semibold">
-                  {t("environments.product.app-connection.does_your_widget_work")}
+                  {t("environments.project.app-connection.does_your_widget_work")}
                 </span>
-                <span>{t("environments.product.app-connection.scroll_to_the_top")}</span>
+                <span>{t("environments.project.app-connection.scroll_to_the_top")}</span>
               </li>
               <li>
                 <span className="font-semibold">
-                  {t("environments.product.app-connection.have_a_problem")}
+                  {t("environments.project.app-connection.have_a_problem")}
                 </span>{" "}
                 <Link
                   className="decoration-brand-dark"
                   target="_blank"
                   href="https://github.com/formbricks/formbricks/issues">
-                  {t("environments.product.app-connection.open_an_issue_on_github")}
+                  {t("environments.project.app-connection.open_an_issue_on_github")}
                 </Link>{" "}
-                {t("environments.product.app-connection.or")}{" "}
+                {t("environments.project.app-connection.or")}{" "}
                 <Link className="decoration-brand-dark" href="https://formbricks.com/discord" target="_blank">
-                  {t("environments.product.app-connection.join_discord")}
+                  {t("environments.project.app-connection.join_discord")}
                 </Link>
               </li>
               <li>
                 <span className="font-semibold">
-                  {t("environments.product.app-connection.want_to_learn_how_to_add_user_attributes")}
+                  {t("environments.project.app-connection.want_to_learn_how_to_add_user_attributes")}
                 </span>{" "}
                 <Link
                   className="decoration-brand-dark"
                   href="https://formbricks.com/docs/attributes/why"
                   target="_blank">
-                  {t("environments.product.app-connection.dive_into_the_docs")}
+                  {t("environments.project.app-connection.dive_into_the_docs")}
                 </Link>
               </li>
             </ul>

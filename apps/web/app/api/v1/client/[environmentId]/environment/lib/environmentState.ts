@@ -33,7 +33,7 @@ export const getEnvironmentState = async (
   cache(
     async () => {
       let revalidateEnvironment = false;
-      const [environment, organization, product] = await Promise.all([
+      const [environment, organization, project] = await Promise.all([
         getEnvironment(environmentId),
         getOrganizationByEnvironmentId(environmentId),
         getProjectByEnvironmentId(environmentId),
@@ -47,8 +47,8 @@ export const getEnvironmentState = async (
         throw new ResourceNotFoundError("organization", null);
       }
 
-      if (!product) {
-        throw new ResourceNotFoundError("product", null);
+      if (!project) {
+        throw new ResourceNotFoundError("project", null);
       }
 
       if (!environment.appSetupCompleted) {
@@ -104,7 +104,7 @@ export const getEnvironmentState = async (
       const state: TJsEnvironmentState["data"] = {
         surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
         actionClasses,
-        project: product,
+        project: project,
       };
 
       return {

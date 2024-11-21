@@ -38,7 +38,7 @@ export const EditAlerts = ({
                 {t("environments.settings.notifications.auto_subscribe_to_new_surveys")}
               </p>
               <NotificationSwitch
-                surveyOrProductOrOrganizationId={membership.organization.id}
+                surveyOrProjectOrOrganizationId={membership.organization.id}
                 notificationSettings={user.notificationSettings!}
                 notificationType={"unsubscribedOrganizationIds"}
                 autoDisableNotificationType={autoDisableNotificationType}
@@ -64,13 +64,13 @@ export const EditAlerts = ({
               </TooltipProvider>
             </div>
 
-            {membership.organization.products.some((product) =>
-              product.environments.some((environment) => environment.surveys.length > 0)
+            {membership.organization.projects.some((project) =>
+              project.environments.some((environment) => environment.surveys.length > 0)
             ) ? (
               <div className="grid-cols-8 space-y-1 p-2">
-                {membership.organization.products.map((product) => (
-                  <div key={product.id}>
-                    {product.environments.map((environment) => (
+                {membership.organization.projects.map((project) => (
+                  <div key={project.id}>
+                    {project.environments.map((environment) => (
                       <div key={environment.id}>
                         {environment.surveys.map((survey) => (
                           <div
@@ -78,11 +78,11 @@ export const EditAlerts = ({
                             key={survey.name}>
                             <div className="col-span-2 text-left">
                               <div className="font-medium text-slate-900">{survey.name}</div>
-                              <div className="text-xs text-slate-400">{product.name}</div>
+                              <div className="text-xs text-slate-400">{project.name}</div>
                             </div>
                             <div className="col-span-1 text-center">
                               <NotificationSwitch
-                                surveyOrProductOrOrganizationId={survey.id}
+                                surveyOrProjectOrOrganizationId={survey.id}
                                 notificationSettings={user.notificationSettings!}
                                 notificationType={"alert"}
                                 autoDisableNotificationType={autoDisableNotificationType}

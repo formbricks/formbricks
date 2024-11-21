@@ -195,14 +195,14 @@ export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR"];
 
 // Billing constants
 
-export enum PRODUCT_FEATURE_KEYS {
+export enum PROJECT_FEATURE_KEYS {
   FREE = "free",
   STARTUP = "startup",
   SCALE = "scale",
   ENTERPRISE = "enterprise",
 }
 
-export enum STRIPE_PRODUCT_NAMES {
+export enum STRIPE_PROJECT_NAMES {
   STARTUP = "Formbricks Startup",
   SCALE = "Formbricks Scale",
   ENTERPRISE = "Formbricks Enterprise",

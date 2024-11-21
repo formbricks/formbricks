@@ -2,7 +2,7 @@ import "server-only";
 import { teamCache } from "@/lib/cache/team";
 import {
   TOrganizationTeam,
-  TProductTeam,
+  TProjectTeam,
   TTeamPermission,
   ZTeamPermission,
 } from "@/modules/ee/teams/project-teams/types/teams";
@@ -16,36 +16,36 @@ import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const getTeamsByProductId = reactCache(
-  async (productId: string): Promise<TProductTeam[] | null> =>
+export const getTeamsByProjectId = reactCache(
+  async (projectId: string): Promise<TProjectTeam[] | null> =>
     cache(
       async () => {
-        validateInputs([productId, ZId]);
+        validateInputs([projectId, ZId]);
         try {
-          const product = await prisma.product.findUnique({
+          const project = await prisma.project.findUnique({
             where: {
-              id: productId,
+              id: projectId,
             },
           });
 
-          if (!product) {
-            throw new ResourceNotFoundError("Product", productId);
+          if (!project) {
+            throw new ResourceNotFoundError("Project", projectId);
           }
 
           const teams = await prisma.team.findMany({
             where: {
-              productTeams: {
+              projectTeams: {
                 some: {
-                  productId,
+                  projectId: projectId,
                 },
               },
             },
             select: {
               id: true,
               name: true,
-              productTeams: {
+              projectTeams: {
                 where: {
-                  productId,
+                  projectId: projectId,
                 },
                 select: {
                   permission: true,
@@ -59,14 +59,14 @@ export const getTeamsByProductId = reactCache(
             },
           });
 
-          const productTeams = teams.map((team) => ({
+          const projectTeams = teams.map((team) => ({
             id: team.id,
             name: team.name,
-            permission: team.productTeams[0].permission,
+            permission: team.projectTeams[0].permission,
             memberCount: team._count.teamUsers,
           }));
 
-          return productTeams;
+          return projectTeams;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
@@ -75,40 +75,40 @@ export const getTeamsByProductId = reactCache(
           throw error;
         }
       },
-      [`getTeamsByProductId-${productId}`],
+      [`getTeamsByProjectId-${projectId}`],
       {
-        tags: [teamCache.tag.byProductId(productId), projectCache.tag.byId(productId)],
+        tags: [teamCache.tag.byProjectId(projectId), projectCache.tag.byId(projectId)],
       }
     )()
 );
 
-export const removeTeamAccess = async (productId: string, teamId: string): Promise<boolean> => {
-  validateInputs([productId, ZId], [teamId, ZId]);
+export const removeTeamAccess = async (projectId: string, teamId: string): Promise<boolean> => {
+  validateInputs([projectId, ZId], [teamId, ZId]);
   try {
-    const productMembership = await prisma.productTeam.findFirst({
+    const projectMembership = await prisma.projectTeam.findFirst({
       where: {
-        productId,
+        projectId: projectId,
         teamId,
       },
     });
 
-    if (!productMembership) {
-      throw new AuthorizationError("Team does not have access to this product");
+    if (!projectMembership) {
+      throw new AuthorizationError("Team does not have access to this project");
     }
 
-    await prisma.productTeam.deleteMany({
+    await prisma.projectTeam.deleteMany({
       where: {
-        productId,
+        projectId: projectId,
         teamId,
       },
     });
 
     teamCache.revalidate({
       id: teamId,
-      productId,
+      projectId: projectId,
     });
     projectCache.revalidate({
-      id: productId,
+      id: projectId,
     });
 
     return true;
@@ -121,24 +121,24 @@ export const removeTeamAccess = async (productId: string, teamId: string): Promi
   }
 };
 
-export const addTeamAccess = async (productId: string, teamIds: string[]): Promise<boolean> => {
-  validateInputs([productId, ZId], [teamIds, z.array(ZId)]);
+export const addTeamAccess = async (projectId: string, teamIds: string[]): Promise<boolean> => {
+  validateInputs([projectId, ZId], [teamIds, z.array(ZId)]);
   try {
-    const product = await prisma.product.findUnique({
+    const project = await prisma.project.findUnique({
       where: {
-        id: productId,
+        id: projectId,
       },
     });
 
-    if (!product) {
-      throw new ResourceNotFoundError("Product", productId);
+    if (!project) {
+      throw new ResourceNotFoundError("Project", projectId);
     }
 
     for (let teamId of teamIds) {
       const team = await prisma.team.findUnique({
         where: {
           id: teamId,
-          organizationId: product.organizationId,
+          organizationId: project.organizationId,
         },
       });
 
@@ -146,30 +146,30 @@ export const addTeamAccess = async (productId: string, teamIds: string[]): Promi
         throw new ResourceNotFoundError("Team", teamId);
       }
 
-      const productTeam = await prisma.productTeam.findFirst({
+      const projectTeam = await prisma.projectTeam.findFirst({
         where: {
-          productId,
+          projectId,
           teamId,
         },
       });
 
-      if (productTeam) {
-        throw new AuthorizationError("Teams already have access to this product");
+      if (projectTeam) {
+        throw new AuthorizationError("Teams already have access to this project");
       }
 
-      await prisma.productTeam.create({
+      await prisma.projectTeam.create({
         data: {
-          productId,
+          projectId,
           teamId,
         },
       });
     }
 
     teamCache.revalidate({
-      productId,
+      projectId: projectId,
     });
     projectCache.revalidate({
-      id: productId,
+      id: projectId,
     });
 
     teamIds.forEach((teamId) => {
@@ -204,12 +204,12 @@ export const getTeamsByOrganizationId = reactCache(
             },
           });
 
-          const productTeams = teams.map((team) => ({
+          const projectTeams = teams.map((team) => ({
             id: team.id,
             name: team.name,
           }));
 
-          return productTeams;
+          return projectTeams;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
@@ -226,29 +226,29 @@ export const getTeamsByOrganizationId = reactCache(
 );
 
 export const updateTeamAccessPermission = async (
-  productId: string,
+  projectId: string,
   teamId: string,
   permission: TTeamPermission
 ): Promise<boolean> => {
-  validateInputs([productId, ZId], [teamId, ZId], [permission, ZTeamPermission]);
+  validateInputs([projectId, ZId], [teamId, ZId], [permission, ZTeamPermission]);
   try {
-    const productMembership = await prisma.productTeam.findUniqueOrThrow({
+    const projectMembership = await prisma.projectTeam.findUniqueOrThrow({
       where: {
-        productId_teamId: {
-          productId,
+        projectId_teamId: {
+          projectId,
           teamId,
         },
       },
     });
 
-    if (!productMembership) {
-      throw new AuthorizationError("Team does not have access to this product");
+    if (!projectMembership) {
+      throw new AuthorizationError("Team does not have access to this project");
     }
 
-    await prisma.productTeam.update({
+    await prisma.projectTeam.update({
       where: {
-        productId_teamId: {
-          productId,
+        projectId_teamId: {
+          projectId,
           teamId,
         },
       },
@@ -259,11 +259,11 @@ export const updateTeamAccessPermission = async (
 
     teamCache.revalidate({
       id: teamId,
-      productId,
+      projectId: projectId,
     });
 
     projectCache.revalidate({
-      id: productId,
+      id: projectId,
     });
 
     return true;

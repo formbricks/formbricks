@@ -13,7 +13,7 @@ import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
   IS_FORMBRICKS_CLOUD,
-  PRODUCT_FEATURE_KEYS,
+  PROJECT_FEATURE_KEYS,
 } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
@@ -243,13 +243,13 @@ export const fetchLicense = reactCache(
 );
 
 export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return true;
   return false;
 };
 
 export const getRemoveLinkBrandingPermission = (organization: TOrganization): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return true;
   return false;
 };
@@ -257,8 +257,8 @@ export const getRemoveLinkBrandingPermission = (organization: TOrganization): bo
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD)
     return (
-      organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
-      organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
+      organization.billing.plan === PROJECT_FEATURE_KEYS.SCALE ||
+      organization.billing.plan === PROJECT_FEATURE_KEYS.ENTERPRISE
     );
   else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   return false;
@@ -267,15 +267,15 @@ export const getRoleManagementPermission = async (organization: TOrganization): 
 export const getAdvancedTargetingPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD)
     return (
-      organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
-      organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
+      organization.billing.plan === PROJECT_FEATURE_KEYS.SCALE ||
+      organization.billing.plan === PROJECT_FEATURE_KEYS.ENTERPRISE
     );
   else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   else return false;
 };
 
 export const getBiggerUploadFileSizePermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   return false;
 };
@@ -287,8 +287,8 @@ export const getMultiLanguagePermission = async (organization: TOrganization): P
   }
   if (IS_FORMBRICKS_CLOUD)
     return (
-      organization.billing.plan === PRODUCT_FEATURE_KEYS.SCALE ||
-      organization.billing.plan === PRODUCT_FEATURE_KEYS.ENTERPRISE
+      organization.billing.plan === PROJECT_FEATURE_KEYS.SCALE ||
+      organization.billing.plan === PROJECT_FEATURE_KEYS.ENTERPRISE
     );
   else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   return false;

@@ -24,26 +24,26 @@ const Page = async (props: ModePageProps) => {
   const t = await getTranslations();
   const channelOptions = [
     {
-      title: t("organizations.products.new.mode.formbricks_surveys"),
-      description: t("organizations.products.new.mode.formbricks_surveys_description"),
+      title: t("organizations.projects.new.mode.formbricks_surveys"),
+      description: t("organizations.projects.new.mode.formbricks_surveys_description"),
       icon: ListTodoIcon,
-      href: `/organizations/${params.organizationId}/products/new/channel`,
+      href: `/organizations/${params.organizationId}/projects/new/channel`,
     },
     {
-      title: t("organizations.products.new.mode.formbricks_cx"),
-      description: t("organizations.products.new.mode.formbricks_cx_description"),
+      title: t("organizations.projects.new.mode.formbricks_cx"),
+      description: t("organizations.projects.new.mode.formbricks_cx_description"),
       icon: HeartIcon,
-      href: `/organizations/${params.organizationId}/products/new/settings?mode=cx`,
+      href: `/organizations/${params.organizationId}/projects/new/settings?mode=cx`,
     },
   ];
 
-  const products = await getUserProjects(session.user.id, params.organizationId);
+  const projects = await getUserProjects(session.user.id, params.organizationId);
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
-      <Header title={t("organizations.products.new.mode.what_are_you_here_for")} />
+      <Header title={t("organizations.projects.new.mode.what_are_you_here_for")} />
       <OnboardingOptionsContainer options={channelOptions} />
-      {products.length >= 1 && (
+      {projects.length >= 1 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="minimal"
