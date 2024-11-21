@@ -134,6 +134,7 @@ export const selectSurvey = {
       },
     },
   },
+  followUps: true,
 } satisfies Prisma.SurveySelect;
 
 const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TActionClass[]) => {
@@ -385,6 +386,7 @@ export const getInProgressSurveyCount = reactCache(
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
+
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
@@ -396,7 +398,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
+    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
+      updatedSurvey;
 
     if (languages) {
       // Process languages update logic here
@@ -563,6 +566,53 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           environmentId,
         });
       }
+    }
+
+    if (followUps) {
+      // Separate follow-ups into categories based on deletion flag
+      const deletedFollowUps = followUps.filter((followUp) => followUp.deleted);
+      const nonDeletedFollowUps = followUps.filter((followUp) => !followUp.deleted);
+
+      // Get set of existing follow-up IDs from currentSurvey
+      const existingFollowUpIds = new Set(currentSurvey.followUps.map((f) => f.id));
+
+      // Separate non-deleted follow-ups into new and existing
+      const existingFollowUps = nonDeletedFollowUps.filter((followUp) =>
+        existingFollowUpIds.has(followUp.id)
+      );
+      const newFollowUps = nonDeletedFollowUps.filter((followUp) => !existingFollowUpIds.has(followUp.id));
+
+      data.followUps = {
+        // Update existing follow-ups
+        updateMany: existingFollowUps.map((followUp) => ({
+          where: {
+            id: followUp.id,
+          },
+          data: {
+            name: followUp.name,
+            trigger: followUp.trigger,
+            action: followUp.action,
+          },
+        })),
+        // Create new follow-ups
+        createMany:
+          newFollowUps.length > 0
+            ? {
+                data: newFollowUps.map((followUp) => ({
+                  name: followUp.name,
+                  trigger: followUp.trigger,
+                  action: followUp.action,
+                })),
+              }
+            : undefined,
+        // Delete follow-ups marked as deleted, regardless of whether they exist in DB
+        deleteMany:
+          deletedFollowUps.length > 0
+            ? deletedFollowUps.map((followUp) => ({
+                id: followUp.id,
+              }))
+            : undefined,
+      };
     }
 
     data.questions = questions.map((question) => {
@@ -832,6 +882,19 @@ export const createSurvey = async (
       }
     }
 
+    // Survey follow-ups
+    if (restSurveyBody.followUps?.length) {
+      data.followUps = {
+        create: restSurveyBody.followUps.map((followUp) => ({
+          name: followUp.name,
+          trigger: followUp.trigger,
+          action: followUp.action,
+        })),
+      };
+    } else {
+      delete data.followUps;
+    }
+
     const survey = await prisma.survey.create({
       data: {
         ...data,
@@ -1071,6 +1134,15 @@ export const copySurveyToOtherEnvironment = async (
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
       segment: undefined,
+      followUps: {
+        createMany: {
+          data: existingSurvey.followUps.map((followUp) => ({
+            name: followUp.name,
+            trigger: followUp.trigger,
+            action: followUp.action,
+          })),
+        },
+      },
     };
 
     // Handle segment

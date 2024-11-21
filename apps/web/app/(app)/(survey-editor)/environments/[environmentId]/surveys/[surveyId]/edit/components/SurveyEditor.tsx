@@ -1,5 +1,6 @@
 "use client";
 
+import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/follow-ups-view";
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
@@ -40,7 +41,10 @@ interface SurveyEditorProps {
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
+  mailFrom: string;
+  isSurveyFollowUpsAllowed: boolean;
   productPermission: TTeamPermission | null;
+  userEmail: string;
 }
 
 export const SurveyEditor = ({
@@ -60,7 +64,10 @@ export const SurveyEditor = ({
   plan,
   isCxMode = false,
   locale,
+  mailFrom,
+  isSurveyFollowUpsAllowed = false,
   productPermission,
+  userEmail,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -161,6 +168,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+            isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
           {activeView === "questions" && (
@@ -213,6 +221,18 @@ export const SurveyEditor = ({
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
               productPermission={productPermission}
+            />
+          )}
+
+          {activeView === "followUps" && (
+            <FollowUpsView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              selectedLanguageCode={selectedLanguageCode}
+              mailFrom={mailFrom}
+              isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+              userEmail={userEmail}
+              locale={locale}
             />
           )}
         </main>

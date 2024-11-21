@@ -115,6 +115,7 @@ model Response {
   surveyId          String
   contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId         String?
+  endingId          String?
   notes             ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
@@ -332,9 +333,25 @@ model Survey {
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   documents                       Document[]
+  followUps                       SurveyFollowUp[]
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
+}
+
+model SurveyFollowUp {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  name      String
+  /// [SurveyFollowUpTrigger]
+  /// @zod.custom(imports.ZSurveyFollowUpTrigger)
+  trigger   Json
+  /// [SurveyFollowUpAction]
+  /// @zod.custom(imports.ZSurveyFollowUpAction)
+  action    Json
 }
 
 enum ActionType {

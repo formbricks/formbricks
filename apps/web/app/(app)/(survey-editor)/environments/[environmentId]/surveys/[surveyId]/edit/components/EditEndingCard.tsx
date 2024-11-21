@@ -13,6 +13,7 @@ import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
@@ -25,6 +26,7 @@ import {
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
@@ -65,6 +67,8 @@ export const EditEndingCard = ({
     ? plan === "free" && endingCard.type !== "redirectToUrl"
     : false;
 
+  const [openDeleteConfirmationModal, setOpenDeleteConfirmationModal] = useState(false);
+
   const endingCardTypes = [
     { value: "endScreen", label: t("environments.surveys.edit.ending_card") },
     {
@@ -77,6 +81,7 @@ export const EditEndingCard = ({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: endingCard.id,
   });
+
   let open = activeQuestionId === endingCard.id;
 
   const setOpen = (e) => {
@@ -97,11 +102,26 @@ export const EditEndingCard = ({
   };
 
   const deleteEndingCard = () => {
+    const isEndingCardUsedInFollowUps = localSurvey.followUps.some((followUp) => {
+      if (followUp.trigger.type === "endings") {
+        if (followUp.trigger.properties?.endingIds?.includes(endingCard.id)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+
     // checking if this ending card is used in logic
     const quesIdx = findEndingCardUsedInLogic(localSurvey, endingCard.id);
 
     if (quesIdx !== -1) {
       toast.error(t("environments.surveys.edit.ending_card_used_in_logic", { questionIndex: quesIdx + 1 }));
+      return;
+    }
+
+    if (isEndingCardUsedInFollowUps) {
+      setOpenDeleteConfirmationModal(true);
       return;
     }
 
@@ -265,6 +285,37 @@ export const EditEndingCard = ({
           )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
+
+      <ConfirmationModal
+        buttonText={t("common.delete")}
+        onConfirm={() => {
+          setLocalSurvey((prevSurvey) => {
+            const updatedEndings = prevSurvey.endings.filter((_, index) => index !== endingCardIndex);
+            const surveyFollowUps = prevSurvey.followUps.map((f) => {
+              if (f.trigger.properties?.endingIds?.includes(endingCard.id)) {
+                return {
+                  ...f,
+                  trigger: {
+                    ...f.trigger,
+                    properties: {
+                      ...f.trigger.properties,
+                      endingIds: f.trigger.properties.endingIds.filter((id) => id !== endingCard.id),
+                    },
+                  },
+                };
+              }
+
+              return f;
+            });
+
+            return { ...prevSurvey, endings: updatedEndings, followUps: surveyFollowUps };
+          });
+        }}
+        open={openDeleteConfirmationModal}
+        setOpen={setOpenDeleteConfirmationModal}
+        text={t("environments.surveys.edit.follow_ups_ending_card_delete_modal_text")}
+        title={t("environments.surveys.edit.follow_ups_ending_card_delete_modal_title")}
+      />
     </div>
   );
 };

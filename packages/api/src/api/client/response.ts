@@ -23,6 +23,7 @@ export class ResponseAPI {
   async update({
     responseId,
     finished,
+    endingId,
     data,
     ttc,
     variables,
@@ -30,6 +31,7 @@ export class ResponseAPI {
   }: TResponseUpdateInputWithResponseId): Promise<Result<object, NetworkError | Error | ForbiddenError>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
+      endingId,
       data,
       ttc,
       variables,

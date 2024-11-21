@@ -251,6 +251,7 @@ export const mockSurveyOutput: SurveyMock = {
   resultShareKey: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
+  followUps: [],
   ...baseSurveyProperties,
 };
 
@@ -277,6 +278,7 @@ export const updateSurveyInput: TSurvey = {
   languages: [],
   showLanguageSwitch: null,
   variables: [],
+  followUps: [],
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

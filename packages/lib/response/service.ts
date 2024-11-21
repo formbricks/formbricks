@@ -43,6 +43,7 @@ export const responseSelection = {
   updatedAt: true,
   surveyId: true,
   finished: true,
+  endingId: true,
   data: true,
   meta: true,
   ttc: true,
@@ -512,6 +513,7 @@ export const updateResponse = async (
       },
       data: {
         finished: responseInput.finished,
+        endingId: responseInput.endingId,
         data,
         ttc,
         language,

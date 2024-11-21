@@ -678,9 +678,6 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
-      '@formbricks/types':
-        specifier: workspace:*
-        version: link:../types
       '@paralleldrive/cuid2':
         specifier: 2.2.2
         version: 2.2.2
@@ -965,6 +962,9 @@ importers:
       '@formbricks/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
+      '@formbricks/database':
+        specifier: workspace:*
+        version: link:../database
 
   packages/ui:
     dependencies:

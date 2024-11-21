@@ -69,9 +69,8 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/types": "workspace:*",
-    "@paralleldrive/cuid2": "2.2.2",
     "@formbricks/eslint-config": "workspace:*",
+    "@paralleldrive/cuid2": "2.2.2",
     "prisma": "5.20.0",
     "prisma-dbml-generator": "0.12.0",
     "prisma-json-types-generator": "3.1.1",
