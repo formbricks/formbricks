@@ -1,14 +1,14 @@
-import { useTranslations } from "next-intl";
-import { Control, Controller, UseFormSetValue } from "react-hook-form";
-import { TIntegrationItem } from "@formbricks/types/integration";
-import { Label } from "@formbricks/ui/components/Label";
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
+} from "@/modules/ui/components/select";
+import { useTranslations } from "next-intl";
+import { Control, Controller, UseFormSetValue } from "react-hook-form";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import { IntegrationModalInputs } from "./AddIntegrationModal";
 
 interface BaseSelectProps {

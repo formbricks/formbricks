@@ -1,10 +1,10 @@
+import { Button } from "@/modules/ui/components/button";
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import { TProduct } from "@formbricks/types/product";
 import { TTemplate } from "@formbricks/types/templates";
-import { Button } from "@formbricks/ui/components/Button";
 import { replacePresetPlaceholders } from "../lib/utils";
 
 interface StartFromScratchTemplateProps {

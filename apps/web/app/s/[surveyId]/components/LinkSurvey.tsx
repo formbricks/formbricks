@@ -4,6 +4,7 @@ import { LinkSurveyWrapper } from "@/app/s/[surveyId]/components/LinkSurveyWrapp
 import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
+import { SurveyInline } from "@/modules/ui/components/survey";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -21,7 +22,6 @@ import {
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};

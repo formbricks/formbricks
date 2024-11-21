@@ -1,12 +1,12 @@
 "use client";
 
+import { CodeBlock } from "@/modules/ui/components/code-block";
+import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
+import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
-import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
-import { TabBar } from "@formbricks/ui/components/TabBar";
-import { Html5Icon, NpmIcon } from "@formbricks/ui/components/icons";
 
 const tabs = [
   {

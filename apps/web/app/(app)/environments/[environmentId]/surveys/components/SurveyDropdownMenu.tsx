@@ -7,6 +7,14 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import {
   ArrowUpFromLineIcon,
   CopyIcon,
@@ -22,14 +30,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { TEnvironment } from "@formbricks/types/environment";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 import { CopySurveyModal } from "./CopySurveyModal";
 
 interface SurveyDropDownMenuProps {

@@ -1,3 +1,4 @@
+import { Editor } from "@/modules/ui/components/editor";
 import DOMPurify from "dompurify";
 import { useTranslations } from "next-intl";
 import type { Dispatch, SetStateAction } from "react";
@@ -7,7 +8,6 @@ import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import type { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Editor } from "@formbricks/ui/components/Editor";
 import { LanguageIndicator } from "./language-indicator";
 
 interface LocalizedEditorProps {

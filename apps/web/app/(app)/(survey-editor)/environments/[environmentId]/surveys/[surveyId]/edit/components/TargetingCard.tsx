@@ -1,6 +1,16 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { BasicAddFilterModal } from "@/modules/ui/components/basic-add-filter-modal";
+import { BasicSegmentEditor } from "@/modules/ui/components/basic-segment-editor";
+import { Button } from "@/modules/ui/components/button";
+import { LoadSegmentModal } from "@/modules/ui/components/load-segment-modal";
+import { SaveAsNewSegmentModal } from "@/modules/ui/components/save-as-new-segment-modal";
+import { SegmentTitle } from "@/modules/ui/components/segment-title";
+import { TargetingIndicator } from "@/modules/ui/components/targeting-indicator";
+import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
@@ -15,16 +25,6 @@ import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
-import { BasicAddFilterModal } from "@formbricks/ui/components/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/components/BasicSegmentEditor";
-import { Button } from "@formbricks/ui/components/Button";
-import { LoadSegmentModal } from "@formbricks/ui/components/LoadSegmentModal";
-import { SaveAsNewSegmentModal } from "@formbricks/ui/components/SaveAsNewSegmentModal";
-import { SegmentTitle } from "@formbricks/ui/components/SegmentTitle";
-import { TargetingIndicator } from "@formbricks/ui/components/TargetingIndicator";
-import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import {
   cloneBasicSegmentAction,
   createBasicSegmentAction,

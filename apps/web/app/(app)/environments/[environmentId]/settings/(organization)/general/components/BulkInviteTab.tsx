@@ -1,5 +1,7 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
 import { UploadIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -8,8 +10,6 @@ import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { ZInvitees } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;

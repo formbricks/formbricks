@@ -1,9 +1,9 @@
 "use client";
 
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
+import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface CreateTeamButtonProps {
   organizationId: string;

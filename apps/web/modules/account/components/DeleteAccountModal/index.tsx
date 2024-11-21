@@ -1,12 +1,12 @@
 "use client";
 
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { Input } from "@/modules/ui/components/input";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { TUser } from "@formbricks/types/user";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { Input } from "@formbricks/ui/components/Input";
 import { deleteUserAction } from "./actions";
 
 interface DeleteAccountModalProps {

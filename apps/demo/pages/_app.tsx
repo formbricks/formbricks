@@ -1,6 +1,6 @@
 import type { AppProps } from "next/app";
 import Head from "next/head";
-import "@formbricks/ui/globals.css";
+import "@formbricks/web/modules/ui/globals.css";
 
 const App = ({ Component, pageProps }: AppProps) => {
   return (

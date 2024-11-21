@@ -1,5 +1,10 @@
 "use client";
 
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { DatePicker } from "@/modules/ui/components/date-picker";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, CheckIcon } from "lucide-react";
@@ -9,11 +14,6 @@ import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { DatePicker } from "@formbricks/ui/components/DatePicker";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;

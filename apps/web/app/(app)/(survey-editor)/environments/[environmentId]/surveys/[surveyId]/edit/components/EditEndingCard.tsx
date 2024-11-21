@@ -7,6 +7,8 @@ import {
   findEndingCardUsedInLogic,
   formatTextWithSlashes,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
@@ -25,8 +27,6 @@ import {
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
-import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;

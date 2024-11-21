@@ -1,9 +1,9 @@
+import { Label } from "@/modules/ui/components/label";
 import { useTranslations } from "next-intl";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface ActivityTabProps {
   webhook: TWebhook;

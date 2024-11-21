@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { XCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { forgotPassword } from "@formbricks/lib/utils/users";
-import { Button } from "@formbricks/ui/components/Button";
 
 export const PasswordResetForm = ({}) => {
   const router = useRouter();

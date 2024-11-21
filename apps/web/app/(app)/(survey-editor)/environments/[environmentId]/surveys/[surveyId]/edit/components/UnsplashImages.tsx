@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { debounce } from "lodash";
 import { SearchIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -7,9 +10,6 @@ import UnsplashImage from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurveyBackgroundBgType } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { getImagesFromUnsplashAction, triggerDownloadUnsplashImageAction } from "../actions";
 
 interface ImageFromUnsplashSurveyBgProps {
