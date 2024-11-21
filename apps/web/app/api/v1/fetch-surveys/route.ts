@@ -122,6 +122,12 @@ export async function GET(request: Request) {
             url += `&source=[SOURCE]`;
           }
 
+          const backgroundImage =
+            survey.styling?.background?.bgType === "upload" ? survey.styling.background.bg : undefined;
+
+          const backgroundColor =
+            survey.styling?.background?.bgType === "color" ? survey.styling.background.bg : undefined;
+
           return {
             id: survey.id,
             name: survey.name,
@@ -130,6 +136,8 @@ export async function GET(request: Request) {
             reward: survey.reward,
             survey_url: url,
             loi: calculateTimeToComplete(survey),
+            background_image: backgroundImage,
+            background_color: backgroundColor,
             country: survey.countries.reduce((acc, country) => {
               acc[country.isoCode] = country.name;
 
