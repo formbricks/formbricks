@@ -11,13 +11,14 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import type { Dispatch, SetStateAction } from "react";
+import { type Dispatch, type SetStateAction, useRef } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "../components/AutoLinkPlugin";
-import { ToolbarPlugin } from "../components/ToolbarPlugin";
 import { exampleTheme } from "../lib/ExampleTheme";
 import "../stylesEditor.css";
 import "../stylesEditorFrontend.css";
+import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./AutoLinkPlugin";
+import { EditorContentChecker } from "./EditorContentChecker";
+import { ToolbarPlugin } from "./ToolbarPlugin";
 
 /*
  Detault toolbar items:
@@ -38,6 +39,8 @@ export type TextEditorProps = {
   firstRender?: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   editable?: boolean;
+  onEmptyChange?: (isEmpty: boolean) => void;
+  isInvalid?: boolean;
 };
 
 const editorConfig = {
@@ -63,11 +66,14 @@ const editorConfig = {
 
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="editor cursor-text rounded-md">
       <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
-        <div className="editor-container rounded-md p-0">
+        <div
+          ref={editorContainerRef}
+          className={cn("editor-container rounded-md p-0", props.isInvalid && "!border !border-red-500")}>
           <ToolbarPlugin
             getText={props.getText}
             setText={props.setText}
@@ -77,14 +83,16 @@ export const Editor = (props: TextEditorProps) => {
             updateTemplate={props.updateTemplate}
             firstRender={props.firstRender}
             setFirstRender={props.setFirstRender}
+            container={editorContainerRef.current}
           />
+          {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
           <div
             className={cn("editor-inner scroll-bar", !editable && "bg-muted")}
             style={{ height: props.height }}>
             <RichTextPlugin
               contentEditable={<ContentEditable style={{ height: props.height }} className="editor-input" />}
               placeholder={
-                <div className="text-muted -mt-11 cursor-text p-3 text-sm">{props.placeholder || ""}</div>
+                <div className="-mt-11 cursor-text p-3 text-sm text-slate-400">{props.placeholder || ""}</div>
               }
               ErrorBoundary={LexicalErrorBoundary}
             />
