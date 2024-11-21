@@ -257,23 +257,6 @@ export const mergeTags = async (originalTagId: string, newTagId: string): Promis
   }
 };
 
-export const deleteTagFromSurvey = async (surveyId: string, tagId: string): Promise<void> => {
-  validateInputs([surveyId, ZId], [tagId, ZId]);
-
-  try {
-    await prisma.survey.update({
-      where: { id: surveyId },
-      data: {
-        tags: {
-          disconnect: { id: tagId },
-        },
-      },
-    });
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const getTagsBySurveyId = async (surveyId: string): Promise<TTag[]> => {
   validateInputs([surveyId, ZId]);
 
