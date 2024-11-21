@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React from "react";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -29,6 +30,7 @@ export const ConfirmationModal = ({
   closeOnOutsideClick = true,
   hideCloseButton,
 }: ConfirmationModalProps) => {
+  const t = useTranslations();
   const handleButtonAction = async () => {
     if (isButtonDisabled) return;
     await onConfirm();
@@ -47,7 +49,7 @@ export const ConfirmationModal = ({
 
       <div className="mt-4 space-x-2 text-right">
         <Button variant="minimal" onClick={() => setOpen(false)}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button
           loading={buttonLoading}

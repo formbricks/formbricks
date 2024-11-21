@@ -12,9 +12,11 @@ import {
   getProductIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getSegment, getSurvey } from "@/lib/utils/services";
+import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProduct } from "@formbricks/lib/product/service";
 import {
   cloneSegment,
@@ -26,15 +28,37 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { loadNewSegmentInSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZBaseFilters, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { ZSurvey } from "@formbricks/types/surveys/types";
+
+/**
+ * Checks if survey follow-ups are enabled for the given organization.
+ *
+ * @param { string } organizationId  The ID of the organization to check.
+ * @returns { Promise<void> }  A promise that resolves if the permission is granted.
+ * @throws { ResourceNotFoundError }  If the organization is not found.
+ * @throws { OperationNotAllowedError }  If survey follow-ups are not enabled for the organization.
+ */
+const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<void> => {
+  const organization = await getOrganization(organizationId);
+  if (!organization) {
+    throw new ResourceNotFoundError("Organization not found", organizationId);
+  }
+
+  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization);
+  if (!isSurveyFollowUpsEnabled) {
+    throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
+  }
+};
 
 export const updateSurveyAction = authenticatedActionClient
   .schema(ZSurvey)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.id),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -47,6 +71,10 @@ export const updateSurveyAction = authenticatedActionClient
         },
       ],
     });
+
+    if (parsedInput.followUps?.length) {
+      await checkSurveyFollowUpsPermission(organizationId);
+    }
 
     return await updateSurvey(parsedInput);
   });

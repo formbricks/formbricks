@@ -51,6 +51,7 @@ export const responseSelection = {
   updatedAt: true,
   surveyId: true,
   finished: true,
+  endingId: true,
   data: true,
   meta: true,
   ttc: true,
@@ -253,6 +254,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     surveyId,
     displayId,
     finished,
+    endingId,
     data,
     meta,
     singleUseId,
@@ -292,7 +294,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
       },
       display: displayId ? { connect: { id: displayId } } : undefined,
-      finished: finished,
+      finished,
+      endingId,
       data: data,
       language: language,
       ...(person?.id && {
@@ -673,6 +676,7 @@ export const updateResponse = async (
       },
       data: {
         finished: responseInput.finished,
+        endingId: responseInput.endingId,
         data,
         ttc,
         language,

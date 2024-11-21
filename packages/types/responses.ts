@@ -259,6 +259,7 @@ export const ZResponse = z.object({
   person: ZResponsePerson.nullable(),
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
+  endingId: z.string().nullish(),
   data: ZResponseData,
   variables: ZResponseVariables,
   ttc: ZResponseTtc.optional(),
@@ -280,6 +281,7 @@ export const ZResponseInput = z.object({
   displayId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
+  endingId: z.string().nullish(),
   language: z.string().optional(),
   data: ZResponseData,
   variables: ZResponseVariables.optional(),
@@ -305,6 +307,7 @@ export type TResponseInput = z.infer<typeof ZResponseInput>;
 
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
+  endingId: z.string().nullish(),
   data: ZResponseData,
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtc.optional(),
@@ -337,6 +340,7 @@ export const ZResponseUpdate = z.object({
     .optional(),
   hiddenFields: ZResponseHiddenFieldValue.optional(),
   displayId: z.string().nullish(),
+  endingId: z.string().nullish(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
