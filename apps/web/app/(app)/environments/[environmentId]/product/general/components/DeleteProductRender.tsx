@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
 import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
@@ -31,6 +32,7 @@ export const DeleteProductRender = ({
     setIsDeleting(true);
     const deleteProductResponse = await deleteProductAction({ productId: product.id });
     if (deleteProductResponse?.data) {
+      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       toast.success(t("environments.product.general.product_deleted_successfully"));
       router.push("/");
     } else {
