@@ -1,13 +1,13 @@
 import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/user";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import {
   getAdvancedTargetingPermission,
   getMultiLanguagePermission,
   getSurveyFollowUpsPermission,
-} from "@formbricks/ee/lib/service";
+} from "@/modules/ee/license-check/lib/utils";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";

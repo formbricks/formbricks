@@ -1,8 +1,11 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import {
+  getMultiLanguagePermission,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { AccessView } from "@/modules/ee/teams/product-teams/components/access-view";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";

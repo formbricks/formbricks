@@ -3,8 +3,8 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getSurveyFollowUpsPermission } from "@formbricks/ee/lib/service";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { createSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";

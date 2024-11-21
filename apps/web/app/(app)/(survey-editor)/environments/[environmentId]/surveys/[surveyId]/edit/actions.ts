@@ -12,8 +12,8 @@ import {
   getProductIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getSegment, getSurvey } from "@/lib/utils/services";
+import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getSurveyFollowUpsPermission } from "@formbricks/ee/lib/service";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";

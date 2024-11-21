@@ -1,9 +1,14 @@
 import "server-only";
+import {
+  TEnterpriseLicenseDetails,
+  TEnterpriseLicenseFeatures,
+} from "@/modules/ee/license-check/types/enterprise-license";
 import { HttpsProxyAgent } from "https-proxy-agent";
+import { unstable_after as after } from "next/server";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
+import { cache, revalidateTag } from "@formbricks/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
@@ -13,7 +18,6 @@ import {
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TEnterpriseLicenseDetails, TEnterpriseLicenseFeatures } from "./types";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
@@ -45,7 +49,6 @@ const setPreviousResult = async (previousResult: {
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
 }) => {
-  // revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
   const { lastChecked, active, features } = previousResult;
 
   await cache(
@@ -59,6 +62,10 @@ const setPreviousResult = async (previousResult: {
       tags: [PREVIOUS_RESULTS_CACHE_TAG_KEY],
     }
   )();
+
+  after(() => {
+    revalidateTag(PREVIOUS_RESULTS_CACHE_TAG_KEY);
+  });
 };
 
 const fetchLicenseForE2ETesting = async (): Promise<{

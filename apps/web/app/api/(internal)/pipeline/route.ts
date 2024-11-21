@@ -3,10 +3,10 @@ import { sendSurvyeFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-fo
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsAIEnabled } from "@/app/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { getSurveyFollowUpsPermission } from "@formbricks/ee/lib/service";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
