@@ -638,6 +638,7 @@
         "no_integrations_yet": "Your google sheet integrations will appear here as soon as you add them. ⏲️",
         "spreadsheet_url": "Spreadsheet URL"
       },
+      "include_created_at": "Include Created At",
       "include_hidden_fields": "Include Hidden Fields",
       "include_metadata": "Include Metadata (Browser, Country, etc.)",
       "include_variables": "Include Variables",

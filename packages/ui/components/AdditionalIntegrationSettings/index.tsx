@@ -6,24 +6,45 @@ interface AdditionalIntegrationSettingsProps {
   includeVariables: boolean;
   includeHiddenFields: boolean;
   includeMetadata: boolean;
+  includeCreatedAt: boolean;
   setIncludeVariables: (includeVariables: boolean) => void;
   setIncludeHiddenFields: (includeHiddenFields: boolean) => void;
   setIncludeMetadata: (includeHiddenFields: boolean) => void;
+  setIncludeCreatedAt: (includeCreatedAt: boolean) => void;
 }
 
 export const AdditionalIntegrationSettings = ({
   includeVariables,
   includeHiddenFields,
   includeMetadata,
+  includeCreatedAt,
   setIncludeVariables,
   setIncludeHiddenFields,
   setIncludeMetadata,
+  setIncludeCreatedAt,
 }: AdditionalIntegrationSettingsProps) => {
   const t = useTranslations();
   return (
     <div className="mt-4">
       <Label htmlFor="Surveys">{t("environments.integrations.additional_settings")}</Label>
       <div className="text-sm">
+        <div className="my-1 flex items-center space-x-2">
+          <label htmlFor={"includeCreatedAt"} className="flex cursor-pointer items-center">
+            <Checkbox
+              type="button"
+              id={"includeCreatedAt"}
+              value={"includeCreatedAt"}
+              className="bg-white"
+              checked={includeCreatedAt}
+              onCheckedChange={() => {
+                setIncludeCreatedAt(!includeCreatedAt);
+              }}
+            />
+            <span className="ml-2 w-[30rem] truncate">
+              {t("environments.integrations.include_created_at")}
+            </span>
+          </label>
+        </div>
         <div className="my-1 flex items-center space-x-2">
           <label htmlFor={"includeVariables"} className="flex cursor-pointer items-center">
             <Checkbox

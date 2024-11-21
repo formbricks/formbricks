@@ -57,6 +57,7 @@ export type IntegrationModalInputs = {
   includeVariables: boolean;
   includeHiddenFields: boolean;
   includeMetadata: boolean;
+  includeCreatedAt: boolean;
 };
 
 const NoBaseFoundError = () => {
@@ -87,6 +88,7 @@ export const AddIntegrationModal = ({
   const { handleSubmit, control, watch, setValue, reset } = useForm<IntegrationModalInputs>();
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
+  const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const airtableIntegrationData: TIntegrationAirtableInput = {
     type: "airtable",
     config: {
@@ -104,6 +106,7 @@ export const AddIntegrationModal = ({
       setIncludeVariables(!!defaultData.includeVariables);
       setIncludeHiddenFields(!!defaultData.includeHiddenFields);
       setIncludeMetadata(!!defaultData.includeMetadata);
+      setIncludeCreatedAt(!!defaultData.includeCreatedAt);
     } else {
       reset();
     }
@@ -152,6 +155,7 @@ export const AddIntegrationModal = ({
         includeVariables: data.includeVariables,
         includeHiddenFields,
         includeMetadata,
+        includeCreatedAt,
       };
 
       if (isEditMode) {
@@ -361,6 +365,8 @@ export const AddIntegrationModal = ({
                   includeMetadata={includeMetadata}
                   setIncludeHiddenFields={setIncludeHiddenFields}
                   setIncludeMetadata={setIncludeMetadata}
+                  includeCreatedAt={includeCreatedAt}
+                  setIncludeCreatedAt={setIncludeCreatedAt}
                 />
               </div>
             )}

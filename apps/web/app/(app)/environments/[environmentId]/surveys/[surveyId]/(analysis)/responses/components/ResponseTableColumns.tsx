@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { processResponseData } from "@formbricks/lib/responses";
+import { getFormattedDate, getFormattedTime } from "@formbricks/lib/utils/datetime";
 import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
@@ -180,25 +181,11 @@ export const generateResponseTableColumns = (
     header: () => t("common.date"),
     size: 200,
     cell: ({ row }) => {
-      const isoDateString = row.original.createdAt;
-      const date = new Date(isoDateString);
-
-      const formattedDate = date.toLocaleString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
-      const formattedTime = date.toLocaleString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
+      const date = new Date(row.original.createdAt);
       return (
         <div>
-          <p className="text-slate-900">{formattedDate}</p>
-          <p className="text-slate-900">{formattedTime}</p>
+          <p className="text-slate-900">{getFormattedDate(date)}</p>
+          <p className="text-slate-900">{getFormattedTime(date)}</p>
         </div>
       );
     },
