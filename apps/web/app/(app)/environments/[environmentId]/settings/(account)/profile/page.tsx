@@ -1,6 +1,6 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -17,7 +17,7 @@ import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
-  const enterpriseLicense = await getEnterpriseLicense();
+  const isSSOEnabled = await getIsSSOEnabled();
   const params = await props.params;
   const t = await getTranslations();
   const { environmentId } = params;
@@ -67,11 +67,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             <SettingsCard
               title={t("common.security")}
               description={t("environments.settings.profile.security_description")}>
-              <AccountSecurity
-                user={user}
-                isEnterpriseEdition={enterpriseLicense.active}
-                environmentId={environmentId}
-              />
+              <AccountSecurity user={user} isSSOEnabled={isSSOEnabled} environmentId={environmentId} />
             </SettingsCard>
           )}
 

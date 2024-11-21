@@ -1,5 +1,5 @@
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 const Page = async () => {
-  const enterpriseLicense = await getEnterpriseLicense();
+  const isSSOEnabled = await getIsSSOEnabled();
   const locale = await findMatchingLocale();
   const t = await getTranslations();
   return (
@@ -46,7 +46,7 @@ const Page = async () => {
         userLocale={locale}
         defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
         defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-        isEnterpriseEdition={enterpriseLicense.active}
+        isSSOEnabled={isSSOEnabled}
       />
     </div>
   );

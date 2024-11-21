@@ -38,7 +38,7 @@ interface LoginFormProps {
   oidcOAuthEnabled: boolean;
   oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
-  isEnterpriseEdition: boolean;
+  isSSOEnabled: boolean;
 }
 
 export const LoginForm = ({
@@ -51,7 +51,7 @@ export const LoginForm = ({
   oidcOAuthEnabled,
   oidcDisplayName,
   isMultiOrgEnabled,
-  isEnterpriseEdition,
+  isSSOEnabled,
 }: LoginFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -238,7 +238,7 @@ export const LoginForm = ({
               </Button>
             )}
           </form>
-          {isEnterpriseEdition && (
+          {isSSOEnabled && (
             <SSOOptions
               googleOAuthEnabled={googleOAuthEnabled}
               githubOAuthEnabled={githubOAuthEnabled}

@@ -1,6 +1,6 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
@@ -20,8 +20,7 @@ export const metadata: Metadata = {
 };
 
 export const LoginPage = async () => {
-  const enterpriseLicense = await getEnterpriseLicense();
-  const isMultiOrgEnabled = enterpriseLicense.features?.isMultiOrgEnabled ?? false;
+  const [isMultiOrgEnabled, isSSOEnabled] = await Promise.all([getIsMultiOrgEnabled(), getIsSSOEnabled()]);
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -39,7 +38,7 @@ export const LoginPage = async () => {
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
             isMultiOrgEnabled={isMultiOrgEnabled}
-            isEnterpriseEdition={enterpriseLicense.active}
+            isSSOEnabled={isSSOEnabled}
           />
         </FormWrapper>
       </div>

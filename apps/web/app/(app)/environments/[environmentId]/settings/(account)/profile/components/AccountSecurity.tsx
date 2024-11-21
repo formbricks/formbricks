@@ -10,11 +10,11 @@ import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 
 interface AccountSecurityProps {
   user: TUser;
-  isEnterpriseEdition: boolean;
+  isSSOEnabled: boolean;
   environmentId: string;
 }
 
-export const AccountSecurity = ({ user, isEnterpriseEdition, environmentId }: AccountSecurityProps) => {
+export const AccountSecurity = ({ user, isSSOEnabled, environmentId }: AccountSecurityProps) => {
   const t = useTranslations();
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [disableTwoFactorModalOpen, setDisableTwoFactorModalOpen] = useState(false);
@@ -24,7 +24,7 @@ export const AccountSecurity = ({ user, isEnterpriseEdition, environmentId }: Ac
       <div className="flex items-center space-x-4">
         <Switch
           checked={user.twoFactorEnabled}
-          disabled={!isEnterpriseEdition && !user.twoFactorEnabled}
+          disabled={!isSSOEnabled && !user.twoFactorEnabled}
           onCheckedChange={(checked) => {
             if (checked) {
               setTwoFactorModalOpen(true);
@@ -43,7 +43,7 @@ export const AccountSecurity = ({ user, isEnterpriseEdition, environmentId }: Ac
           </p>
         </div>
       </div>
-      {!isEnterpriseEdition && !user.twoFactorEnabled && (
+      {!isSSOEnabled && !user.twoFactorEnabled && (
         <UpgradePlanNotice
           message={t("environments.settings.profile.to_enable_two_factor_authentication_you_need_an_active")}
           textForUrl={t("common.enterprise_license")}

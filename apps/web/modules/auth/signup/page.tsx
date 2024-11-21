@@ -1,6 +1,6 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import {
   AZURE_OAUTH_ENABLED,
@@ -21,9 +21,8 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupForm } from "./components/signup-form";
 
 export const SignupPage = async (searchParams) => {
-  const enterpriseLicense = await getEnterpriseLicense();
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const isMultOrgEnabled = enterpriseLicense.features?.isMultiOrgEnabled ?? false;
+  const [isMultOrgEnabled, isSSOEnabled] = await Promise.all([getIsMultiOrgEnabled(), getIsSSOEnabled()]);
   const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
@@ -52,7 +51,7 @@ export const SignupPage = async (searchParams) => {
             emailFromSearchParams={emailFromSearchParams}
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-            isEnterpriseEdition={enterpriseLicense.active}
+            isSSOEnabled={isSSOEnabled}
           />
         </FormWrapper>
       </div>
