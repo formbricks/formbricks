@@ -184,7 +184,6 @@ export const EditorCardMenu = ({
           deleteCard(cardIdx);
         }}
       />
-
       <DropdownMenu>
         <DropdownMenuTrigger>
           <EllipsisIcon className="h-4 w-4 text-slate-500 hover:text-slate-600" />
@@ -286,7 +285,6 @@ export const EditorCardMenu = ({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
-
       <ConfirmationModal
         open={logicWarningModal}
         setOpen={setLogicWarningModal}

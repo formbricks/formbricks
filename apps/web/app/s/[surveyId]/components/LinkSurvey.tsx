@@ -281,6 +281,7 @@ export const LinkSurvey = ({
               },
               ttc: responseUpdate.ttc,
               finished: responseUpdate.finished,
+              endingId: responseUpdate.endingId,
               language:
                 responseUpdate.language === "default" && defaultLanguageCode
                   ? defaultLanguageCode

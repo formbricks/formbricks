@@ -227,7 +227,7 @@ const getSelectedNode = (selection: RangeSelection) => {
   }
 };
 
-export const ToolbarPlugin = (props: TextEditorProps) => {
+export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement | null }) => {
   const [editor] = useLexicalComposerContext();
 
   const toolbarRef = useRef(null);
@@ -455,6 +455,7 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
   }, [editor]);
 
   if (!props.editable) return <></>;
+
   return (
     <div className="toolbar flex" ref={toolbarRef}>
       <>
@@ -530,7 +531,8 @@ export const ToolbarPlugin = (props: TextEditorProps) => {
                 onClick={insertLink}
                 className={isLink ? "bg-subtle active-button" : "inactive-button"}
               />
-              {isLink && createPortal(<FloatingLinkEditor editor={editor} />, document.body)}{" "}
+              {isLink &&
+                createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)}{" "}
             </>
           )}
         </>
