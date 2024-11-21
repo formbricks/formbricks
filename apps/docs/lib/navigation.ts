@@ -143,6 +143,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Configuration", href: "/self-hosting/configuration" },
       { title: "Integrations", href: "/self-hosting/integrations" },
       { title: "License", href: "/self-hosting/license" },
+      { title: "Cluster Setup", href: "/self-hosting/cluster-setup" },
     ],
   },
   {
