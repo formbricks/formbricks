@@ -67,6 +67,7 @@ export const AddIntegrationModal = ({
   const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
+  const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
     type: "googleSheets",
     config: {
@@ -95,6 +96,7 @@ export const AddIntegrationModal = ({
       setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
+      setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
       return;
     } else {
       setSpreadsheetUrl("");
@@ -108,7 +110,7 @@ export const AddIntegrationModal = ({
         throw new Error(t("environments.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.select_a_survey_error"));
+        throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
       if (selectedQuestions.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
@@ -134,6 +136,7 @@ export const AddIntegrationModal = ({
       integrationData.includeVariables = includeVariables;
       integrationData.includeHiddenFields = includeHiddenFields;
       integrationData.includeMetadata = includeMetadata;
+      integrationData.includeCreatedAt = includeCreatedAt;
       if (selectedIntegration) {
         // update action
         googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
@@ -278,6 +281,8 @@ export const AddIntegrationModal = ({
                     includeMetadata={includeMetadata}
                     setIncludeHiddenFields={setIncludeHiddenFields}
                     setIncludeMetadata={setIncludeMetadata}
+                    includeCreatedAt={includeCreatedAt}
+                    setIncludeCreatedAt={setIncludeCreatedAt}
                   />
                 </div>
               )}

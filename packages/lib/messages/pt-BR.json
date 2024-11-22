@@ -638,6 +638,7 @@
         "no_integrations_yet": "Suas integrações do Google Sheets vão aparecer aqui assim que você adicioná-las. ⏲️",
         "spreadsheet_url": "URL da planilha"
       },
+      "include_created_at": "Incluir Data de Criação",
       "include_hidden_fields": "Incluir Campos Ocultos",
       "include_metadata": "Incluir Metadados (Navegador, País, etc.)",
       "include_variables": "Incluir Variáveis",

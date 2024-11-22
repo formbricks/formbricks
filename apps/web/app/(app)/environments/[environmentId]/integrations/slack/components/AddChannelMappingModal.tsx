@@ -53,6 +53,7 @@ export const AddChannelMappingModal = ({
   const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
+  const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const existingIntegrationData = slackIntegration?.config?.data;
   const slackIntegrationData: TIntegrationSlackInput = {
     type: "slack",
@@ -86,6 +87,7 @@ export const AddChannelMappingModal = ({
       setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
+      setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
       return;
     }
     resetForm();
@@ -97,7 +99,7 @@ export const AddChannelMappingModal = ({
         throw new Error(t("environments.integrations.slack.please_select_a_channel"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.integrations.please_select_a_survey_error"));
+        throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
       if (selectedQuestions.length === 0) {
@@ -118,6 +120,7 @@ export const AddChannelMappingModal = ({
         includeVariables,
         includeHiddenFields,
         includeMetadata,
+        includeCreatedAt,
       };
       if (selectedIntegration) {
         // update action
@@ -274,6 +277,8 @@ export const AddChannelMappingModal = ({
                     includeMetadata={includeMetadata}
                     setIncludeHiddenFields={setIncludeHiddenFields}
                     setIncludeMetadata={setIncludeMetadata}
+                    includeCreatedAt={includeCreatedAt}
+                    setIncludeCreatedAt={setIncludeCreatedAt}
                   />
                 </div>
               )}
