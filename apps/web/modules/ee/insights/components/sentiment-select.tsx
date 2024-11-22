@@ -1,6 +1,6 @@
+import { BadgeSelect, TBadgeSelectOption } from "@/modules/ui/components/badge-select";
 import { useState } from "react";
 import { TDocument, TDocumentSentiment } from "@formbricks/types/documents";
-import { BadgeSelect, TBadgeSelectOption } from "@formbricks/ui/components/BadgeSelect";
 import { updateDocumentAction } from "./insight-sheet/actions";
 
 interface SentimentSelectProps {

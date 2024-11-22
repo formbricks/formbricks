@@ -2,19 +2,19 @@
 
 import { DisableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/disable-two-factor-modal";
 import { EnableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/enable-two-factor-modal";
+import { Switch } from "@/modules/ui/components/switch";
+import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
-import { Switch } from "@formbricks/ui/components/Switch";
-import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 
 interface AccountSecurityProps {
   user: TUser;
-  isSSOEnabled: boolean;
+  isTwoFactorAuthEnabled: boolean;
   environmentId: string;
 }
 
-export const AccountSecurity = ({ user, isSSOEnabled, environmentId }: AccountSecurityProps) => {
+export const AccountSecurity = ({ user, isTwoFactorAuthEnabled, environmentId }: AccountSecurityProps) => {
   const t = useTranslations();
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [disableTwoFactorModalOpen, setDisableTwoFactorModalOpen] = useState(false);
@@ -24,7 +24,7 @@ export const AccountSecurity = ({ user, isSSOEnabled, environmentId }: AccountSe
       <div className="flex items-center space-x-4">
         <Switch
           checked={user.twoFactorEnabled}
-          disabled={!isSSOEnabled && !user.twoFactorEnabled}
+          disabled={!isTwoFactorAuthEnabled && !user.twoFactorEnabled}
           onCheckedChange={(checked) => {
             if (checked) {
               setTwoFactorModalOpen(true);
@@ -43,7 +43,7 @@ export const AccountSecurity = ({ user, isSSOEnabled, environmentId }: AccountSe
           </p>
         </div>
       </div>
-      {!isSSOEnabled && !user.twoFactorEnabled && (
+      {!isTwoFactorAuthEnabled && !user.twoFactorEnabled && (
         <UpgradePlanNotice
           message={t("environments.settings.profile.to_enable_two_factor_authentication_you_need_an_active")}
           textForUrl={t("common.enterprise_license")}

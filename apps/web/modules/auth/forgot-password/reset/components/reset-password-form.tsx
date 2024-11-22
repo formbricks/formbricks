@@ -2,6 +2,9 @@
 
 import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
 import { PasswordChecks } from "@/modules/auth/signup/components/password-checks";
+import { Button } from "@/modules/ui/components/button";
+import { FormField } from "@/modules/ui/components/form";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,9 +13,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormField } from "@formbricks/ui/components/Form";
-import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
 const ZPasswordResetForm = z.object({
   password: ZUserPassword,

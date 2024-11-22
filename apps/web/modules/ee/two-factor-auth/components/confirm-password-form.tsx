@@ -2,15 +2,15 @@
 
 import { setupTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
-import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 const ZConfirmPasswordFormState = z.object({

@@ -1,9 +1,4 @@
-import { OrganizationRole } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import type { Control } from "react-hook-form";
-import { Controller } from "react-hook-form";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { Label } from "@formbricks/ui/components/Label";
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -11,7 +6,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
+} from "@/modules/ui/components/select";
+import { OrganizationRole } from "@prisma/client";
+import { useTranslations } from "next-intl";
+import type { Control } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
   control: Control<{ name: string; email: string; role: TOrganizationRole }>;

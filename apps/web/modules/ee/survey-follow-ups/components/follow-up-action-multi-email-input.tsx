@@ -1,5 +1,5 @@
+import { cn } from "@/modules/ui/lib/utils";
 import React, { useState } from "react";
-import { cn } from "@formbricks/ui/lib/utils";
 
 interface FollowUpActionMultiEmailInputProps {
   emails: string[];

@@ -1,10 +1,10 @@
 import { enableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
+import { Button } from "@/modules/ui/components/button";
+import { OTPInput } from "@/modules/ui/components/otp-input";
 import { useTranslations } from "next-intl";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { Button } from "@formbricks/ui/components/Button";
-import { OTPInput } from "@formbricks/ui/components/OTPInput";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 interface EnterCodeProps {

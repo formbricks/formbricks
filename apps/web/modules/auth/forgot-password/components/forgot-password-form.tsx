@@ -1,6 +1,8 @@
 "use client";
 
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -8,8 +10,6 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { ZUserEmail } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
 
 const ZForgotPasswordForm = z.object({
   email: ZUserEmail,

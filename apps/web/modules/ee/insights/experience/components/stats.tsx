@@ -3,14 +3,14 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getStatsAction } from "@/modules/ee/insights/experience/actions";
 import { TStats } from "@/modules/ee/insights/experience/types/stats";
+import { Badge } from "@/modules/ui/components/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/modules/ui/components/card";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { cn } from "@/modules/ui/lib/utils";
 import { ActivityIcon, GaugeIcon, InboxIcon, MessageCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
-import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
-import { cn } from "@formbricks/ui/lib/utils";
 
 interface ExperiencePageStatsProps {
   statsFrom?: Date;

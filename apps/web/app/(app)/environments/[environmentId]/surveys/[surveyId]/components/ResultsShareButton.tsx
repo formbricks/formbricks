@@ -6,17 +6,17 @@ import {
   getResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
+} from "@/modules/ui/components/dropdown-menu";
+import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurveyResults";
 
 interface ResultsShareButtonProps {

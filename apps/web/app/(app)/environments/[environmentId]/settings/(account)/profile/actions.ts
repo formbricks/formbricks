@@ -1,12 +1,14 @@
 "use server";
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZUserUpdateInput } from "@formbricks/types/user";
 
 export const updateUserAction = authenticatedActionClient
@@ -22,6 +24,10 @@ const ZSetupTwoFactorAuthAction = z.object({
 export const setupTwoFactorAuthAction = authenticatedActionClient
   .schema(ZSetupTwoFactorAuthAction)
   .action(async ({ parsedInput, ctx }) => {
+    const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
+    if (!isTwoFactorAuthEnabled) {
+      throw new OperationNotAllowedError("Two factor auth is not available on your instance");
+    }
     return await setupTwoFactorAuth(ctx.user.id, parsedInput.password);
   });
 
@@ -32,6 +38,10 @@ const ZEnableTwoFactorAuthAction = z.object({
 export const enableTwoFactorAuthAction = authenticatedActionClient
   .schema(ZEnableTwoFactorAuthAction)
   .action(async ({ parsedInput, ctx }) => {
+    const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
+    if (!isTwoFactorAuthEnabled) {
+      throw new OperationNotAllowedError("Two factor auth is not available on your instance");
+    }
     return await enableTwoFactorAuth(ctx.user.id, parsedInput.code);
   });
 

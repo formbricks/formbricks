@@ -1,8 +1,8 @@
+import { Button } from "@/modules/ui/components/button";
 import { CopyIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 interface ScanQRCodeProps {

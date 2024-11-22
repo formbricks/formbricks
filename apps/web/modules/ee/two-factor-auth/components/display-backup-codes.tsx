@@ -1,6 +1,6 @@
+import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { toast } from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface DisplayBackupCodesProps {
   backupCodes: string[];

@@ -4,9 +4,9 @@ import { ConfirmPasswordForm } from "@/modules/ee/two-factor-auth/components/con
 import { DisplayBackupCodes } from "@/modules/ee/two-factor-auth/components/display-backup-codes";
 import { EnterCode } from "@/modules/ee/two-factor-auth/components/enter-code";
 import { ScanQRCode } from "@/modules/ee/two-factor-auth/components/scan-qr-code";
+import { Modal } from "@/modules/ui/components/modal";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 export type EnableTwoFactorModalStep = "confirmPassword" | "scanQRCode" | "enterCode" | "backupCodes";
 

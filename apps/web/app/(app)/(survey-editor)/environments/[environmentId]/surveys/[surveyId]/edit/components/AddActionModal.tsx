@@ -1,9 +1,9 @@
 "use client";
 
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { CreateNewActionTab } from "./CreateNewActionTab";
 import { SavedActionsTab } from "./SavedActionsTab";
 

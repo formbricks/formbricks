@@ -1,5 +1,11 @@
 "use client";
 
+import { Badge } from "@/modules/ui/components/badge";
+import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Slider } from "@/modules/ui/components/slider";
+import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
@@ -10,12 +16,6 @@ import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { CardArrangementTabs } from "@formbricks/ui/components/CardArrangementTabs";
-import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
-import { Slider } from "@formbricks/ui/components/Slider";
-import { Switch } from "@formbricks/ui/components/Switch";
 
 type CardStylingSettingsProps = {
   open: boolean;

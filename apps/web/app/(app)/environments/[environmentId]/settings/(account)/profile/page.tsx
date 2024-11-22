@@ -1,6 +1,9 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -8,16 +11,13 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { SettingsId } from "@formbricks/ui/components/SettingsId";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
-  const isSSOEnabled = await getIsSSOEnabled();
+  const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
   const params = await props.params;
   const t = await getTranslations();
   const { environmentId } = params;
@@ -67,7 +67,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             <SettingsCard
               title={t("common.security")}
               description={t("environments.settings.profile.security_description")}>
-              <AccountSecurity user={user} isSSOEnabled={isSSOEnabled} environmentId={environmentId} />
+              <AccountSecurity
+                user={user}
+                isTwoFactorAuthEnabled={isTwoFactorAuthEnabled}
+                environmentId={environmentId}
+              />
             </SettingsCard>
           )}
 
