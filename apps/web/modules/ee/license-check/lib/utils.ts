@@ -255,6 +255,10 @@ export const getRemoveLinkBrandingPermission = (organization: TOrganization): bo
 };
 
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.active !== null ? previousResult.active : false;
+  }
   if (IS_FORMBRICKS_CLOUD)
     return (
       organization.billing.plan === PROJECT_FEATURE_KEYS.SCALE ||
