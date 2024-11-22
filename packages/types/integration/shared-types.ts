@@ -11,6 +11,7 @@ export const ZIntegrationBaseSurveyData = z.object({
   includeVariables: z.boolean().optional(),
   includeHiddenFields: z.boolean().optional(),
   includeMetadata: z.boolean().optional(),
+  includeCreatedAt: z.boolean().optional(),
   questions: z.string(),
   surveyId: z.string(),
   surveyName: z.string(),
