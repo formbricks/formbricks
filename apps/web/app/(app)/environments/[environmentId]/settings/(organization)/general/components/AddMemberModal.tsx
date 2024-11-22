@@ -1,8 +1,8 @@
 "use client";
 
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { useTranslations } from "next-intl";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { BulkInviteTab } from "./BulkInviteTab";
 import { IndividualInviteTab } from "./IndividualInviteTab";
 

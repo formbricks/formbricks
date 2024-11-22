@@ -3,6 +3,7 @@
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useEffect, useState } from "react";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -13,7 +14,6 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];

@@ -1,4 +1,6 @@
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -11,8 +13,6 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
-import { RatingResponse } from "@formbricks/ui/components/RatingResponse";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {

@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { ArrowLeftIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
 import { AppTab } from "./AppTab";
 import { EmailTab } from "./EmailTab";
 import { LinkTab } from "./LinkTab";

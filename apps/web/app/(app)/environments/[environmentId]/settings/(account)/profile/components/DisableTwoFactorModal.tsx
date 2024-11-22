@@ -2,16 +2,16 @@
 
 import { disableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Modal } from "@/modules/ui/components/modal";
+import { OTPInput } from "@/modules/ui/components/otp-input";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Modal } from "@formbricks/ui/components/Modal";
-import { OTPInput } from "@formbricks/ui/components/OTPInput";
-import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
 type TDisableTwoFactorFormState = {
   password: string;

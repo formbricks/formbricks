@@ -1,6 +1,9 @@
 "use client";
 
 import { inviteOrganizationMemberAction } from "@/app/(app)/(onboarding)/organizations/actions";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -8,9 +11,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
 
 interface InviteOrganizationMemberProps {
   organization: TOrganization;

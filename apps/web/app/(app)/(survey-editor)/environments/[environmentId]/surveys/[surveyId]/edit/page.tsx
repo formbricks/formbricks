@@ -1,9 +1,12 @@
+import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/user";
 import {
   getAdvancedTargetingPermission,
   getMultiLanguagePermission,
+  getSurveyFollowUpsPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -12,6 +15,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
+  MAIL_FROM,
   SURVEY_BG_COLORS,
   UNSPLASH_ACCESS_KEY,
 } from "@formbricks/lib/constants";
@@ -24,7 +28,6 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
 export const generateMetadata = async (props) => {
@@ -60,6 +63,7 @@ const Page = async (props) => {
     getServerSession(authOptions),
     getSegments(params.environmentId),
   ]);
+
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
@@ -84,6 +88,9 @@ const Page = async (props) => {
 
   const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization);
+
+  const userEmail = await getUserEmail(session.user.id);
 
   if (
     !survey ||
@@ -91,6 +98,7 @@ const Page = async (props) => {
     !actionClasses ||
     !attributeClasses ||
     !product ||
+    !userEmail ||
     isSurveyCreationDeletionDisabled
   ) {
     return <ErrorComponent />;
@@ -117,6 +125,9 @@ const Page = async (props) => {
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
       isCxMode={isCxMode}
       locale={locale ?? DEFAULT_LOCALE}
+      mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
+      isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+      userEmail={userEmail}
     />
   );
 };

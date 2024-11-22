@@ -1,6 +1,15 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { Card, CardContent, CardFooter } from "@/modules/ui/components/card";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/modules/ui/components/sheet";
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useDeferredValue, useEffect, useState } from "react";
@@ -9,15 +18,6 @@ import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight } from "@formbricks/types/insights";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { Card, CardContent, CardFooter } from "@formbricks/ui/components/Card";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@formbricks/ui/components/Sheet";
 import CategoryBadge from "../../experience/components/category-select";
 import SentimentSelect from "../sentiment-select";
 import { getDocumentsByInsightIdAction, getDocumentsByInsightIdSurveyIdQuestionIdAction } from "./actions";

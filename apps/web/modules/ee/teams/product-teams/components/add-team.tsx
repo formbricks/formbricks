@@ -4,9 +4,9 @@ import { addAccessAction } from "@/modules/ee/teams/product-teams/actions";
 import { AddTeamModal } from "@/modules/ee/teams/product-teams/components/add-team-modal";
 import { TOrganizationTeam, TProductTeam } from "@/modules/ee/teams/product-teams/types/teams";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
+import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface AddTeamProps {
   organizationTeams: TOrganizationTeam[];

@@ -10,11 +10,11 @@ import {
   TTeamProduct,
 } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
+import { H3 } from "@/modules/ui/components/typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
-import { H3 } from "@formbricks/ui/components/Typography";
 
 interface DetailsViewProps {
   team: TTeam;

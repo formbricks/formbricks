@@ -1,7 +1,7 @@
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import { useTranslations } from "next-intl";
 import { TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface RedirectUrlFormProps {
   endingCard: TSurveyRedirectUrlCard;

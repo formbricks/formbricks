@@ -25,6 +25,7 @@ import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
 import { InviteEmail } from "./emails/invite/invite-email";
 import { OnboardingInviteEmail } from "./emails/invite/onboarding-invite-email";
 import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
+import { FollowUpEmail } from "./emails/survey/follow-up";
 import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
@@ -292,5 +293,25 @@ export const sendNoLiveSurveyNotificationEmail = async (
     to: email,
     subject: getEmailSubject(notificationData.productName),
     html,
+  });
+};
+
+export const sendFollowUpEmail = async (
+  html: string,
+  subject: string,
+  to: string,
+  replyTo: string[]
+): Promise<void> => {
+  const emailHtmlBody = await render(
+    FollowUpEmail({
+      html,
+    })
+  );
+
+  await sendEmail({
+    to,
+    replyTo: replyTo.join(", "),
+    subject,
+    html: emailHtmlBody,
   });
 };

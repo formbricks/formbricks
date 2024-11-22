@@ -1,8 +1,8 @@
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { RefObject } from "react";
 import { toast } from "react-hot-toast";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
 
 interface FallbackInputProps {
   filteredRecallItems: (TSurveyRecallItem | undefined)[];

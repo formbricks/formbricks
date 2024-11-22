@@ -1,6 +1,6 @@
+import { BackIcon } from "@/modules/ui/components/icons";
 import { ArrowDownUpIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { BackIcon } from "@formbricks/ui/components/icons";
 
 const Loading = () => {
   const t = useTranslations();

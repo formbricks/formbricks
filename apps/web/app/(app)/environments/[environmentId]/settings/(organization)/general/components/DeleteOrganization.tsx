@@ -1,15 +1,15 @@
 "use client";
 
 import { deleteOrganizationAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { Input } from "@/modules/ui/components/input";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { Input } from "@formbricks/ui/components/Input";
 
 type DeleteOrganizationProps = {
   organization: TOrganization;

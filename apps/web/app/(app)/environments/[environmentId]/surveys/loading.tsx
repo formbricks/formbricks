@@ -1,7 +1,7 @@
 import { SurveyLoading } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyLoading";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { useTranslations } from "next-intl";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = () => {
   const t = useTranslations();

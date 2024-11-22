@@ -45,9 +45,6 @@ importers:
       '@formbricks/js':
         specifier: workspace:*
         version: link:../../packages/js
-      '@formbricks/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       lucide-react:
         specifier: 0.452.0
         version: 0.452.0(react@19.0.0-rc-ed15d500-20241110)
@@ -125,9 +122,6 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@formbricks/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@headlessui/react':
         specifier: 2.1.9
         version: 2.1.9(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
@@ -250,7 +244,7 @@ importers:
         version: 1.2.1
       tailwindcss:
         specifier: 3.4.13
-        version: 3.4.13(ts-node@10.9.2)
+        version: 3.4.13(ts-node@10.9.2(typescript@5.4.5))
       unist-util-filter:
         specifier: 5.0.1
         version: 5.0.1
@@ -276,9 +270,6 @@ importers:
 
   apps/storybook:
     dependencies:
-      '@formbricks/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       eslint-plugin-react-refresh:
         specifier: 0.4.12
         version: 0.4.12(eslint@8.57.0)
@@ -388,15 +379,33 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@formbricks/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@hookform/resolvers':
         specifier: 3.9.0
         version: 3.9.0(react-hook-form@7.53.0(react@19.0.0-rc-ed15d500-20241110))
       '@json2csv/node':
         specifier: 7.0.6
         version: 7.0.6
+      '@lexical/code':
+        specifier: 0.17.0
+        version: 0.17.0
+      '@lexical/link':
+        specifier: 0.17.0
+        version: 0.17.0
+      '@lexical/list':
+        specifier: 0.17.0
+        version: 0.17.0
+      '@lexical/markdown':
+        specifier: 0.17.0
+        version: 0.17.0
+      '@lexical/react':
+        specifier: 0.17.0
+        version: 0.17.0(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(yjs@13.6.20)
+      '@lexical/rich-text':
+        specifier: 0.17.0
+        version: 0.17.0
+      '@lexical/table':
+        specifier: 0.17.0
+        version: 0.17.0
       '@opentelemetry/api-logs':
         specifier: 0.53.0
         version: 0.53.0
@@ -409,15 +418,69 @@ importers:
       '@paralleldrive/cuid2':
         specifier: 2.2.2
         version: 2.2.2
+      '@radix-ui/react-accordion':
+        specifier: 1.2.0
+        version: 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-checkbox':
+        specifier: 1.1.1
+        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       '@radix-ui/react-collapsible':
         specifier: 1.1.1
         version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-dialog':
+        specifier: 1.1.1
+        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-dropdown-menu':
+        specifier: 2.1.1
+        version: 2.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-label':
+        specifier: 2.1.0
+        version: 2.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-popover':
+        specifier: 1.1.1
+        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-radio-group':
+        specifier: 1.2.0
+        version: 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-select':
+        specifier: 2.1.1
+        version: 2.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-separator':
+        specifier: 1.1.0
+        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-slider':
+        specifier: 1.2.0
+        version: 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-slot':
+        specifier: 1.1.0
+        version: 1.1.0(@types/react@18.3.11)(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-switch':
+        specifier: 1.1.0
+        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-tabs':
+        specifier: 1.1.1
+        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-toggle':
+        specifier: 1.1.0
+        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-toggle-group':
+        specifier: 1.1.0
+        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      '@radix-ui/react-tooltip':
+        specifier: 1.1.2
+        version: 1.1.2(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       '@react-email/components':
         specifier: 0.0.25
         version: 0.0.25(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       '@sentry/nextjs':
         specifier: 8.34.0
         version: 8.34.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(webpack@5.95.0)
+      '@tailwindcss/forms':
+        specifier: 0.5.9
+        version: 0.5.9(tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)))
+      '@tailwindcss/typography':
+        specifier: 0.5.13
+        version: 0.5.13(tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)))
       '@tanstack/react-table':
         specifier: 8.20.5
         version: 8.20.5(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
@@ -436,9 +499,24 @@ importers:
       ai:
         specifier: 3.4.33
         version: 3.4.33(react@19.0.0-rc-ed15d500-20241110)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))(zod@3.23.8)
+      autoprefixer:
+        specifier: 10.4.20
+        version: 10.4.20(postcss@8.4.47)
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
+      boring-avatars:
+        specifier: 1.10.2
+        version: 1.10.2
+      class-variance-authority:
+        specifier: 0.7.0
+        version: 0.7.0
+      clsx:
+        specifier: 2.1.1
+        version: 2.1.1
+      cmdk:
+        specifier: 1.0.0
+        version: 1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       dotenv:
         specifier: 16.4.5
         version: 16.4.5
@@ -466,6 +544,9 @@ importers:
       langfuse-vercel:
         specifier: 3.27.0
         version: 3.27.0(ai@3.4.33(react@19.0.0-rc-ed15d500-20241110)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))(zod@3.23.8))
+      lexical:
+        specifier: 0.17.0
+        version: 0.17.0
       lodash:
         specifier: 4.17.21
         version: 4.17.21
@@ -505,6 +586,15 @@ importers:
       react:
         specifier: 19.0.0-rc-ed15d500-20241110
         version: 19.0.0-rc-ed15d500-20241110
+      react-colorful:
+        specifier: 5.6.1
+        version: 5.6.1(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      react-confetti:
+        specifier: 6.1.0
+        version: 6.1.0(react@19.0.0-rc-ed15d500-20241110)
+      react-day-picker:
+        specifier: 9.0.8
+        version: 9.0.8(react@19.0.0-rc-ed15d500-20241110)
       react-dom:
         specifier: 19.0.0-rc-ed15d500-20241110
         version: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
@@ -517,6 +607,12 @@ importers:
       react-icons:
         specifier: 5.3.0
         version: 5.3.0(react@19.0.0-rc-ed15d500-20241110)
+      react-radio-group:
+        specifier: 3.0.3
+        version: 3.0.3(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      react-use:
+        specifier: 17.5.1
+        version: 17.5.1(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       redis:
         specifier: 4.7.0
         version: 4.7.0
@@ -526,6 +622,12 @@ importers:
       stripe:
         specifier: 16.7.0
         version: 16.7.0
+      tailwind-merge:
+        specifier: 2.5.2
+        version: 2.5.2
+      tailwindcss:
+        specifier: 3.4.13
+        version: 3.4.13(ts-node@10.9.2(typescript@5.4.5))
       ua-parser-js:
         specifier: 1.0.39
         version: 1.0.39
@@ -675,9 +777,6 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
-      '@formbricks/types':
-        specifier: workspace:*
-        version: link:../types
       '@paralleldrive/cuid2':
         specifier: 2.2.2
         version: 2.2.2
@@ -962,160 +1061,9 @@ importers:
       '@formbricks/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
-
-  packages/ui:
-    dependencies:
       '@formbricks/database':
         specifier: workspace:*
         version: link:../database
-      '@formbricks/lib':
-        specifier: workspace:*
-        version: link:../lib
-      '@formbricks/surveys':
-        specifier: workspace:*
-        version: link:../surveys
-      '@lexical/code':
-        specifier: 0.17.0
-        version: 0.17.0
-      '@lexical/link':
-        specifier: 0.17.0
-        version: 0.17.0
-      '@lexical/list':
-        specifier: 0.17.0
-        version: 0.17.0
-      '@lexical/markdown':
-        specifier: 0.17.0
-        version: 0.17.0
-      '@lexical/react':
-        specifier: 0.17.0
-        version: 0.17.0(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(yjs@13.6.19)
-      '@lexical/rich-text':
-        specifier: 0.17.0
-        version: 0.17.0
-      '@lexical/table':
-        specifier: 0.17.0
-        version: 0.17.0
-      '@radix-ui/react-accordion':
-        specifier: 1.2.0
-        version: 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-checkbox':
-        specifier: 1.1.1
-        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-dialog':
-        specifier: 1.1.1
-        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-dropdown-menu':
-        specifier: 2.1.1
-        version: 2.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-label':
-        specifier: 2.1.0
-        version: 2.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-popover':
-        specifier: 1.1.1
-        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-radio-group':
-        specifier: 1.2.0
-        version: 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-select':
-        specifier: 2.1.1
-        version: 2.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-separator':
-        specifier: 1.1.0
-        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-slider':
-        specifier: 1.2.0
-        version: 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-slot':
-        specifier: 1.1.0
-        version: 1.1.0(@types/react@18.3.11)(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-switch':
-        specifier: 1.1.0
-        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-tabs':
-        specifier: 1.1.1
-        version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-toggle':
-        specifier: 1.1.0
-        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-toggle-group':
-        specifier: 1.1.0
-        version: 1.1.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@radix-ui/react-tooltip':
-        specifier: 1.1.2
-        version: 1.1.2(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      '@tailwindcss/forms':
-        specifier: 0.5.9
-        version: 0.5.9(tailwindcss@3.4.13(ts-node@10.9.2))
-      '@tailwindcss/typography':
-        specifier: 0.5.13
-        version: 0.5.13(tailwindcss@3.4.13(ts-node@10.9.2))
-      autoprefixer:
-        specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.41)
-      boring-avatars:
-        specifier: 1.10.2
-        version: 1.10.2
-      class-variance-authority:
-        specifier: 0.7.0
-        version: 0.7.0
-      clsx:
-        specifier: 2.1.1
-        version: 2.1.1
-      cmdk:
-        specifier: 1.0.0
-        version: 1.0.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      lexical:
-        specifier: 0.17.0
-        version: 0.17.0
-      lucide-react:
-        specifier: 0.452.0
-        version: 0.452.0(react@19.0.0-rc-ed15d500-20241110)
-      mime:
-        specifier: 4.0.4
-        version: 4.0.4
-      react-colorful:
-        specifier: 5.6.1
-        version: 5.6.1(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      react-confetti:
-        specifier: 6.1.0
-        version: 6.1.0(react@19.0.0-rc-ed15d500-20241110)
-      react-day-picker:
-        specifier: 9.0.8
-        version: 9.0.8(react@19.0.0-rc-ed15d500-20241110)
-      react-hot-toast:
-        specifier: 2.4.1
-        version: 2.4.1(csstype@3.1.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      react-radio-group:
-        specifier: 3.0.3
-        version: 3.0.3(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      react-use:
-        specifier: 17.5.1
-        version: 17.5.1(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
-      tailwind-merge:
-        specifier: 2.5.2
-        version: 2.5.2
-      tailwindcss:
-        specifier: 3.4.13
-        version: 3.4.13(ts-node@10.9.2)
-    devDependencies:
-      '@formbricks/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@formbricks/eslint-config':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@formbricks/types':
-        specifier: workspace:*
-        version: link:../types
-      concurrently:
-        specifier: 8.2.2
-        version: 8.2.2
-      postcss:
-        specifier: 8.4.41
-        version: 8.4.41
-      react:
-        specifier: 19.0.0-rc-ed15d500-20241110
-        version: 19.0.0-rc-ed15d500-20241110
 
   packages/vite-plugins:
     devDependencies:
@@ -13374,8 +13322,8 @@ packages:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
 
-  yjs@13.6.19:
-    resolution: {integrity: sha512-GNKw4mEUn5yWU2QPHRx8jppxmCm9KzbBhB4qJLUJFiiYD0g/tDVgXQ7aPkyh01YO28kbs2J/BEbWBagjuWyejw==}
+  yjs@13.6.20:
+    resolution: {integrity: sha512-Z2YZI+SYqK7XdWlloI3lhMiKnCdFCVC4PchpdO+mCYwtiTwncjUbnRK9R1JmkNfdmHyDXuWN3ibJAt0wsqTbLQ==}
     engines: {node: '>=16.0.0', npm: '>=8.0.0'}
 
   yn@3.1.1:
@@ -15982,7 +15930,7 @@ snapshots:
 
   '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)))':
     dependencies:
-      tailwindcss: 3.4.13(ts-node@10.9.2)
+      tailwindcss: 3.4.13(ts-node@10.9.2(typescript@5.4.5))
 
   '@hookform/resolvers@3.9.0(react-hook-form@7.53.0(react@19.0.0-rc-ed15d500-20241110))':
     dependencies:
@@ -16280,7 +16228,7 @@ snapshots:
       '@lexical/utils': 0.17.0
       lexical: 0.17.0
 
-  '@lexical/react@0.17.0(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(yjs@13.6.19)':
+  '@lexical/react@0.17.0(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(yjs@13.6.20)':
     dependencies:
       '@lexical/clipboard': 0.17.0
       '@lexical/code': 0.17.0
@@ -16299,7 +16247,7 @@ snapshots:
       '@lexical/table': 0.17.0
       '@lexical/text': 0.17.0
       '@lexical/utils': 0.17.0
-      '@lexical/yjs': 0.17.0(yjs@13.6.19)
+      '@lexical/yjs': 0.17.0(yjs@13.6.20)
       lexical: 0.17.0
       react: 19.0.0-rc-ed15d500-20241110
       react-dom: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
@@ -16334,11 +16282,11 @@ snapshots:
       '@lexical/table': 0.17.0
       lexical: 0.17.0
 
-  '@lexical/yjs@0.17.0(yjs@13.6.19)':
+  '@lexical/yjs@0.17.0(yjs@13.6.20)':
     dependencies:
       '@lexical/offset': 0.17.0
       lexical: 0.17.0
-      yjs: 13.6.19
+      yjs: 13.6.20
 
   '@manypkg/find-root@1.1.0':
     dependencies:
@@ -19496,18 +19444,18 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
-  '@tailwindcss/forms@0.5.9(tailwindcss@3.4.13(ts-node@10.9.2))':
+  '@tailwindcss/forms@0.5.9(tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)))':
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.4.13(ts-node@10.9.2)
+      tailwindcss: 3.4.13(ts-node@10.9.2(typescript@5.4.5))
 
-  '@tailwindcss/typography@0.5.13(tailwindcss@3.4.13(ts-node@10.9.2))':
+  '@tailwindcss/typography@0.5.13(tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)))':
     dependencies:
       lodash.castarray: 4.4.0
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
-      tailwindcss: 3.4.13(ts-node@10.9.2)
+      tailwindcss: 3.4.13(ts-node@10.9.2(typescript@5.4.5))
 
   '@tailwindcss/typography@0.5.15(tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)))':
     dependencies:
@@ -19515,7 +19463,7 @@ snapshots:
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
-      tailwindcss: 3.4.13(ts-node@10.9.2)
+      tailwindcss: 3.4.13(ts-node@10.9.2(typescript@5.4.5))
 
   '@tanstack/react-table@8.20.5(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)':
     dependencies:
@@ -20825,6 +20773,16 @@ snapshots:
       normalize-range: 0.1.2
       picocolors: 1.1.0
       postcss: 8.4.41
+      postcss-value-parser: 4.2.0
+
+  autoprefixer@10.4.20(postcss@8.4.47):
+    dependencies:
+      browserslist: 4.24.0
+      caniuse-lite: 1.0.30001667
+      fraction.js: 4.3.7
+      normalize-range: 0.1.2
+      picocolors: 1.1.0
+      postcss: 8.4.47
       postcss-value-parser: 4.2.0
 
   available-typed-arrays@1.0.7:
@@ -26089,7 +26047,7 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.4.41
 
-  postcss-load-config@4.0.2(postcss@8.4.41)(ts-node@10.9.2):
+  postcss-load-config@4.0.2(postcss@8.4.41)(ts-node@10.9.2(@types/node@22.3.0)(typescript@5.4.5)):
     dependencies:
       lilconfig: 3.1.2
       yaml: 2.5.1
@@ -27800,7 +27758,7 @@ snapshots:
       postcss: 8.4.41
       postcss-import: 15.1.0(postcss@8.4.41)
       postcss-js: 4.0.1(postcss@8.4.41)
-      postcss-load-config: 4.0.2(postcss@8.4.41)(ts-node@10.9.2)
+      postcss-load-config: 4.0.2(postcss@8.4.41)(ts-node@10.9.2(@types/node@22.3.0)(typescript@5.4.5))
       postcss-nested: 6.2.0(postcss@8.4.41)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.8
@@ -27808,7 +27766,7 @@ snapshots:
     transitivePeerDependencies:
       - ts-node
 
-  tailwindcss@3.4.13(ts-node@10.9.2):
+  tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)):
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -27827,7 +27785,7 @@ snapshots:
       postcss: 8.4.41
       postcss-import: 15.1.0(postcss@8.4.41)
       postcss-js: 4.0.1(postcss@8.4.41)
-      postcss-load-config: 4.0.2(postcss@8.4.41)(ts-node@10.9.2)
+      postcss-load-config: 4.0.2(postcss@8.4.41)(ts-node@10.9.2(@types/node@22.3.0)(typescript@5.4.5))
       postcss-nested: 6.2.0(postcss@8.4.41)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.8
@@ -28974,7 +28932,7 @@ snapshots:
       y18n: 5.0.8
       yargs-parser: 21.1.1
 
-  yjs@13.6.19:
+  yjs@13.6.20:
     dependencies:
       lib0: 0.2.98
 

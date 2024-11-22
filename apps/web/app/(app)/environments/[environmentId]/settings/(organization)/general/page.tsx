@@ -7,6 +7,9 @@ import {
   getIsOrganizationAIReady,
   getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -15,9 +18,6 @@ import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants"
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { SettingsId } from "@formbricks/ui/components/SettingsId";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditMemberships } from "./components/EditMemberships";

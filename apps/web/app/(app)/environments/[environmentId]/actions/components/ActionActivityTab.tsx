@@ -2,6 +2,10 @@
 
 import { createActionClassAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { ErrorComponent } from "@/modules/ui/components/error-component";
+import { Label } from "@/modules/ui/components/label";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -10,10 +14,6 @@ import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { Button } from "@formbricks/ui/components/Button";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
-import { Label } from "@formbricks/ui/components/Label";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { getActiveInactiveSurveysAction } from "../actions";
 
 interface ActivityTabProps {

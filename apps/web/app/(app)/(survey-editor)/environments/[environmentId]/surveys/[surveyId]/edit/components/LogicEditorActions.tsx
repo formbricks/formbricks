@@ -6,6 +6,13 @@ import {
   getActionVariableOptions,
   hasJumpToQuestionAction,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -20,13 +27,6 @@ import {
   TSurveyLogicAction,
   TSurveyQuestion,
 } from "@formbricks/types/surveys/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
-import { InputCombobox } from "@formbricks/ui/components/InputCombobox";
 
 interface LogicEditorActions {
   localSurvey: TSurvey;

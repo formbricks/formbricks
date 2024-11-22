@@ -2,6 +2,17 @@
 
 import { updateOrganizationNameAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import {
+  FormControl,
+  FormError,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -10,17 +21,6 @@ import { z } from "zod";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  FormControl,
-  FormError,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
 
 interface EditOrganizationNameProps {
   environmentId: string;

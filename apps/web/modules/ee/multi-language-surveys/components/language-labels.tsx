@@ -1,7 +1,7 @@
+import { Label } from "@/modules/ui/components/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { InfoIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Label } from "@formbricks/ui/components/Label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 export function LanguageLabels() {
   const t = useTranslations();
