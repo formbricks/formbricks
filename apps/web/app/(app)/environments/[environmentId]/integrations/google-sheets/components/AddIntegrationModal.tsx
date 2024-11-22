@@ -110,7 +110,7 @@ export const AddIntegrationModal = ({
         throw new Error(t("environments.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.select_a_survey_error"));
+        throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
       if (selectedQuestions.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));

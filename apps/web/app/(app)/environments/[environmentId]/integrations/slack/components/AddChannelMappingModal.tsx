@@ -99,7 +99,7 @@ export const AddChannelMappingModal = ({
         throw new Error(t("environments.integrations.slack.please_select_a_channel"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.integrations.please_select_a_survey_error"));
+        throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
 
       if (selectedQuestions.length === 0) {
