@@ -6,30 +6,23 @@ import { updateTeamProductPermissionAction } from "@/modules/ee/teams/team-detai
 import { AddTeamProductModal } from "@/modules/ee/teams/team-details/components/add-team-product-modal";
 import { TOrganizationProduct, TTeamProduct } from "@/modules/ee/teams/team-details/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
-import { Button } from "@formbricks/ui/components/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/modules/ui/components/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@formbricks/ui/components/Table";
+} from "@/modules/ui/components/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { removeTeamProductAction } from "../actions";
 
 interface TeamProductsProps {

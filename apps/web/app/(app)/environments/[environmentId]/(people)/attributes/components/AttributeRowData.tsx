@@ -1,6 +1,6 @@
+import { Badge } from "@/modules/ui/components/badge";
 import { TagIcon } from "lucide-react";
 import { timeSince } from "@formbricks/lib/time";
-import { Badge } from "@formbricks/ui/components/Badge";
 
 export const AttributeClassDataRow = ({ attributeClass, locale }) => {
   return (

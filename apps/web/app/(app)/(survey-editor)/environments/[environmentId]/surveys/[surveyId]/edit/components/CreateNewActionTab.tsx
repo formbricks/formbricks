@@ -1,4 +1,11 @@
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
+import { Button } from "@/modules/ui/components/button";
+import { CodeActionForm } from "@/modules/ui/components/code-action-form";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
+import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -12,13 +19,6 @@ import {
   ZActionClassInput,
 } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { TabToggle } from "@formbricks/ui/components/TabToggle";
-import { CodeActionForm } from "@formbricks/ui/components/organisms/CodeActionForm";
-import { NoCodeActionForm } from "@formbricks/ui/components/organisms/NoCodeActionForm";
 import { createActionClassAction } from "../actions";
 
 interface CreateNewActionTabProps {

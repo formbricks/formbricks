@@ -1,4 +1,7 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -6,9 +9,6 @@ import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/uti
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/components/Button";
-import { Label } from "@formbricks/ui/components/Label";
 import { Dropdown } from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {

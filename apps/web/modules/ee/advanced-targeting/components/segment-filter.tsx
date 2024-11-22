@@ -1,3 +1,18 @@
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -47,21 +62,6 @@ import {
   DEVICE_OPERATORS,
   PERSON_OPERATORS,
 } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
-import { Input } from "@formbricks/ui/components/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/components/Select";
 import { AddFilterModal } from "./add-filter-modal";
 
 interface TSegmentFilterProps {

@@ -1,4 +1,4 @@
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 const Loading = () => {
   return <LoadingSpinner />;

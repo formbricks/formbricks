@@ -8,6 +8,7 @@ import {
   getTeam,
   getTeamProducts,
 } from "@/modules/ee/teams/team-details/lib/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -15,7 +16,6 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 
 export const TeamDetails = async (props) => {
   const params = await props.params;

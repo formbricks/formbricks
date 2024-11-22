@@ -2,19 +2,19 @@
 
 import { SortOption } from "@/app/(app)/environments/[environmentId]/surveys/components/SortOption";
 import { initialFilters } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { SearchBar } from "@/modules/ui/components/search-bar";
 import { ChevronDownIcon, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDebounce } from "react-use";
 import { TProductConfigChannel } from "@formbricks/types/product";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
-import { SearchBar } from "@formbricks/ui/components/SearchBar";
 import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
 
 interface SurveyFilterProps {

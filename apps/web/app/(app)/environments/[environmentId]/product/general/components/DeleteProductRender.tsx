@@ -2,6 +2,9 @@
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/product/general/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -9,9 +12,6 @@ import toast from "react-hot-toast";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
 type DeleteProductRenderProps = {
   isDeleteDisabled: boolean;

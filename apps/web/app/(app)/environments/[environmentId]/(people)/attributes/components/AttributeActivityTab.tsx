@@ -1,15 +1,15 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { ErrorComponent } from "@/modules/ui/components/error-component";
+import { Label } from "@/modules/ui/components/label";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { TagIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
-import { Label } from "@formbricks/ui/components/Label";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { getSegmentsByAttributeClassAction } from "../actions";
 
 interface EventActivityTabProps {

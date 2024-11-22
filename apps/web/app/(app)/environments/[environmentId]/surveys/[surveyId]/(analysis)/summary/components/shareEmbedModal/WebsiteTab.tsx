@@ -1,14 +1,14 @@
 "use client";
 
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { CodeBlock } from "@/modules/ui/components/code-block";
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { CopyIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/components/Button";
-import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
-import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 
 export const WebsiteTab = ({ surveyUrl, environmentId }) => {
   const [selectedTab, setSelectedTab] = useState("static");

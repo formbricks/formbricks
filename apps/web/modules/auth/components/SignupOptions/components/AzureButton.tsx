@@ -1,9 +1,9 @@
+import { Button } from "@/modules/ui/components/button";
+import { MicrosoftIcon } from "@/modules/ui/components/icons";
 import { signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect } from "react";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
-import { Button } from "@formbricks/ui/components/Button";
-import { MicrosoftIcon } from "@formbricks/ui/components/icons";
 
 export const AzureButton = ({
   text = "Continue with Azure",

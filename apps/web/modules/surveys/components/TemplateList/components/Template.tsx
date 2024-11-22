@@ -1,8 +1,8 @@
+import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
-import { Button } from "@formbricks/ui/components/Button";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./TemplateTags";
 

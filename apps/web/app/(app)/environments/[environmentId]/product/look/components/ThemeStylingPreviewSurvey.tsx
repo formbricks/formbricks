@@ -1,15 +1,15 @@
 "use client";
 
+import { ClientLogo } from "@/modules/ui/components/client-logo";
+import { MediaBackground } from "@/modules/ui/components/media-background";
+import { Modal } from "@/modules/ui/components/preview-survey/components/modal";
+import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
+import { SurveyInline } from "@/modules/ui/components/survey";
 import { Variants, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Fragment, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
-import { ClientLogo } from "@formbricks/ui/components/ClientLogo";
-import { MediaBackground } from "@formbricks/ui/components/MediaBackground";
-import { Modal } from "@formbricks/ui/components/PreviewSurvey/components/Modal";
-import { ResetProgressButton } from "@formbricks/ui/components/ResetProgressButton";
-import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
