@@ -7,7 +7,7 @@ import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { Button } from "@formbricks/ui/components/Button";
@@ -25,6 +25,7 @@ export const UploadContactsCSVButton = ({
 }: UploadContactsCSVButtonProps) => {
   const router = useRouter();
 
+  const errorContainerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [duplicateContactsAction, setDuplicateContactsAction] = useState<"skip" | "update" | "overwrite">(
     "skip"
@@ -107,8 +108,16 @@ export const UploadContactsCSVButton = ({
 
     // check for duplicate values in the attribute map
     const values = Object.values(attributeMap);
+
     if (new Set(values).size !== values.length) {
-      setErrror("Attribute map contains duplicate values");
+      const entries = Object.entries(attributeMap);
+      const duplicateKeyValuePairs = entries.filter(
+        ([key, value], index) => entries.indexOf([key, value]) !== index
+      );
+
+      const duplicateKeys = duplicateKeyValuePairs.map(([key, _]) => key);
+
+      setErrror(`Duplicate mappings found for the following attributes: ${duplicateKeys.join(", ")}`);
       setLoading(false);
       return;
     }
@@ -160,6 +169,12 @@ export const UploadContactsCSVButton = ({
     setLoading(false);
   };
 
+  useEffect(() => {
+    if (error && errorContainerRef.current) {
+      errorContainerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [error]);
+
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
@@ -202,7 +217,9 @@ export const UploadContactsCSVButton = ({
         </div>
 
         {error ? (
-          <div className="mx-4 my-4 flex items-center gap-2 rounded-md border-2 border-red-200 bg-red-50 p-4">
+          <div
+            className="mx-4 my-4 flex items-center gap-2 rounded-md border-2 border-red-200 bg-red-50 p-4"
+            ref={errorContainerRef}>
             <CircleAlertIcon className="text-red-600" />
             <p className="text-red-600">{error}</p>
           </div>
