@@ -1,8 +1,8 @@
+import { Button } from "@/modules/ui/components/button";
 import { Unplug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TEnvironment } from "@formbricks/types/environment";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface TEmptyAppSurveysProps {
   environment: TEnvironment;

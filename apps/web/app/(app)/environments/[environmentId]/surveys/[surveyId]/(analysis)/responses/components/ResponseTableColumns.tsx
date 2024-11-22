@@ -1,6 +1,9 @@
 "use client";
 
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { getSelectionColumn } from "@/modules/ui/components/data-table";
+import { ResponseBadges } from "@/modules/ui/components/response-badges";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
@@ -12,9 +15,6 @@ import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/qu
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
-import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 const getAddressFieldLabel = (field: string, t: (key: string) => string) => {
   switch (field) {

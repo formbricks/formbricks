@@ -2,6 +2,10 @@ import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/in
 import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { validWebHookURL } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/lib/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -12,10 +16,6 @@ import toast from "react-hot-toast";
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhookInput } from "@formbricks/types/webhooks";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { Modal } from "@formbricks/ui/components/Modal";
 import { createWebhookAction, testEndpointAction } from "../actions";
 
 interface AddWebhookModalProps {

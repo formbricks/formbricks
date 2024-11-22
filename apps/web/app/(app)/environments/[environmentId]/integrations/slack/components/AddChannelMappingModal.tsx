@@ -1,5 +1,11 @@
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
+import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
+import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -15,12 +21,6 @@ import {
   TIntegrationSlackInput,
 } from "@formbricks/types/integration/slack";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { AdditionalIntegrationSettings } from "@formbricks/ui/components/AdditionalIntegrationSettings";
-import { Button } from "@formbricks/ui/components/Button";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
-import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
-import { Label } from "@formbricks/ui/components/Label";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddChannelMappingModalProps {
   environmentId: string;

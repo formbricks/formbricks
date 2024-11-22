@@ -1,11 +1,11 @@
 "use client";
 
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TUserLocale } from "@formbricks/types/user";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
 import { AttributeDetailModal } from "./AttributeDetailModal";
 import { AttributeClassDataRow } from "./AttributeRowData";
 

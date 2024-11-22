@@ -1,6 +1,9 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { Button } from "@/modules/ui/components/button";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { CircleHelpIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
@@ -12,9 +15,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { Button } from "@formbricks/ui/components/Button";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { AttributeClassesTable } from "./components/AttributeClassesTable";
 
 export const metadata: Metadata = {

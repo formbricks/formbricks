@@ -2,10 +2,10 @@
 
 import { DisableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/DisableTwoFactorModal";
 import { EnableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/EnableTwoFactorModal";
+import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
-import { Switch } from "@formbricks/ui/components/Switch";
 
 export const AccountSecurity = ({ user }: { user: TUser }) => {
   const t = useTranslations();

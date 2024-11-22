@@ -1,5 +1,15 @@
 "use client";
 
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -19,16 +29,6 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
-import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 
 interface EditorCardMenuProps {
   survey: TSurvey;

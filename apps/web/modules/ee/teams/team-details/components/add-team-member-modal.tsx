@@ -2,16 +2,16 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { addTeamMembersAction } from "@/modules/ee/teams/team-details/actions";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
+import { H4 } from "@/modules/ui/components/typography";
 import { UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
-import { Label } from "@formbricks/ui/components/Label";
-import { Modal } from "@formbricks/ui/components/Modal";
-import { MultiSelect } from "@formbricks/ui/components/MultiSelect";
-import { H4 } from "@formbricks/ui/components/Typography";
 
 interface AddTeamMemberModalProps {
   open: boolean;

@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import type { AttributeClass } from "@prisma/client";
 import { ArchiveIcon, ArchiveXIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -7,9 +10,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { updateAttributeClass } from "@formbricks/lib/attributeClass/service";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface AttributeSettingsTabProps {
   attributeClass: AttributeClass;

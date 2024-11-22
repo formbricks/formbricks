@@ -6,15 +6,15 @@ import {
   TSurveyCopyFormData,
   ZSurveyCopyFormValidation,
 } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
+import { Label } from "@/modules/ui/components/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/components/Button";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
-import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
-import { Label } from "@formbricks/ui/components/Label";
 
 export const CopySurveyForm = ({
   defaultProducts,

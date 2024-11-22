@@ -1,11 +1,11 @@
 "use client";
 
 import { SegmentSettings } from "@/modules/ee/advanced-targeting/components/segment-settings";
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { BasicSegmentSettings } from "./BasicSegmentSettings";
 import { SegmentActivityTab } from "./SegmentActivityTab";
 

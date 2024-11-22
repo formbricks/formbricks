@@ -1,6 +1,6 @@
+import { Button } from "@/modules/ui/components/button";
+import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { useTranslations } from "next-intl";
-import { Button } from "@formbricks/ui/components/Button";
-import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
 
 const Loading = () => {
   const t = useTranslations();

@@ -1,6 +1,6 @@
+import { Button } from "@/modules/ui/components/button";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { Button } from "@formbricks/ui/components/Button";
 
 const NotFound = async () => {
   const t = await getTranslations();

@@ -4,6 +4,13 @@ import {
   getDefaultOperatorForQuestion,
   getMatchValueProps,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
@@ -27,13 +34,6 @@ import {
   TSurveyLogicConditionsOperator,
   TSurveyQuestion,
 } from "@formbricks/types/surveys/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
-import { InputCombobox, TComboboxOption } from "@formbricks/ui/components/InputCombobox";
 
 interface LogicEditorConditionsProps {
   conditions: TConditionGroup;

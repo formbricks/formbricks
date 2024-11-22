@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import clsx from "clsx";
 import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
@@ -10,8 +12,6 @@ import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/responses";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
 
 interface ResponseNotesProps {

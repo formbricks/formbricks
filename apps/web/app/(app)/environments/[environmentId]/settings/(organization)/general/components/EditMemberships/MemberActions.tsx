@@ -8,6 +8,8 @@ import {
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { ShareInviteModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/ShareInviteModal";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -16,8 +18,6 @@ import toast from "react-hot-toast";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 type MemberActionsProps = {
   organization: TOrganization;

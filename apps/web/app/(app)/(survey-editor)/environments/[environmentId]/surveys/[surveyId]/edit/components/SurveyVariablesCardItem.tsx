@@ -1,6 +1,17 @@
 "use client";
 
 import { findVariableUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { createId } from "@paralleldrive/cuid2";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -9,17 +20,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/components/Select";
 
 interface SurveyVariablesCardItemProps {
   variable?: TSurveyVariable;
