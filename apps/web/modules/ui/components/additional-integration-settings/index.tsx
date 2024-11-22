@@ -9,7 +9,7 @@ interface AdditionalIntegrationSettingsProps {
   includeCreatedAt: boolean;
   setIncludeVariables: (includeVariables: boolean) => void;
   setIncludeHiddenFields: (includeHiddenFields: boolean) => void;
-  setIncludeMetadata: (includeHiddenFields: boolean) => void;
+  setIncludeMetadata: (includeMetadata: boolean) => void;
   setIncludeCreatedAt: (includeCreatedAt: boolean) => void;
 }
 
