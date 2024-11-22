@@ -1,11 +1,13 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
+import { updateUser } from "@/modules/auth/lib/user";
 import { sendPasswordResetNotifyEmail } from "@/modules/email";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
 import { verifyToken } from "@formbricks/lib/jwt";
-import { getUser, updateUser } from "@formbricks/lib/user/service";
+import { getUser } from "@formbricks/lib/user/service";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
 
 const ZResetPasswordAction = z.object({
@@ -20,7 +22,7 @@ export const resetPasswordAction = actionClient
     const { id } = await verifyToken(parsedInput.token);
     const user = await getUser(id);
     if (!user) {
-      throw new Error("User not found");
+      throw new ResourceNotFoundError("user", id);
     }
     const updatedUser = await updateUser(id, { password: hashedPassword });
     await sendPasswordResetNotifyEmail(updatedUser);

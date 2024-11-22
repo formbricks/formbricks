@@ -16,12 +16,9 @@ export const actionClient = createSafeActionClient({
       e instanceof ResourceNotFoundError ||
       e instanceof AuthorizationError ||
       e instanceof InvalidInputError ||
-      e instanceof UnknownError
+      e instanceof UnknownError ||
+      e instanceof AuthenticationError
     ) {
-      return e.message;
-    }
-
-    if (e instanceof Error) {
       return e.message;
     }
 

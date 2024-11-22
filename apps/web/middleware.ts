@@ -8,14 +8,14 @@ import {
   verifyEmailLimiter,
 } from "@/app/middleware/bucket";
 import {
-  clientSideApiRoute,
-  forgotPasswordRoute,
   isAuthProtectedRoute,
+  isClientSideApiRoute,
+  isForgotPasswordRoute,
+  isLoginRoute,
+  isShareUrlRoute,
+  isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
-  loginRoute,
-  shareUrlRoute,
-  signupRoute,
-  verifyEmailRoute,
+  isVerifyEmailRoute,
 } from "@/app/middleware/endpointValidator";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
@@ -51,15 +51,15 @@ export const middleware = async (request: NextRequest) => {
 
   if (ip) {
     try {
-      if (loginRoute(request.nextUrl.pathname)) {
+      if (isLoginRoute(request.nextUrl.pathname)) {
         await loginLimiter(`login-${ip}`);
-      } else if (signupRoute(request.nextUrl.pathname)) {
+      } else if (isSignupRoute(request.nextUrl.pathname)) {
         await signupLimiter(`signup-${ip}`);
-      } else if (verifyEmailRoute(request.nextUrl.pathname)) {
+      } else if (isVerifyEmailRoute(request.nextUrl.pathname)) {
         await verifyEmailLimiter(`verify-email-${ip}`);
-      } else if (forgotPasswordRoute(request.nextUrl.pathname)) {
+      } else if (isForgotPasswordRoute(request.nextUrl.pathname)) {
         await forgotPasswordLimiter(`forgot-password-${ip}`);
-      } else if (clientSideApiRoute(request.nextUrl.pathname)) {
+      } else if (isClientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
 
         const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
@@ -67,7 +67,7 @@ export const middleware = async (request: NextRequest) => {
           const { environmentId, userId } = envIdAndUserId;
           await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
         }
-      } else if (shareUrlRoute(request.nextUrl.pathname)) {
+      } else if (isShareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter(`share-${ip}`);
       }
       return NextResponse.next();

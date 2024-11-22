@@ -17,6 +17,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
@@ -102,7 +103,10 @@ export const sendForgotPasswordEmail = async (user: TEmailUser, locale: string):
   });
 };
 
-export const sendPasswordResetNotifyEmail = async (user: TEmailUser): Promise<void> => {
+export const sendPasswordResetNotifyEmail = async (user: {
+  email: string;
+  locale: TUserLocale;
+}): Promise<void> => {
   const html = await render(PasswordResetNotifyEmail({ locale: user.locale }));
   await sendEmail({
     to: user.email,
