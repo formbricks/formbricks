@@ -76,10 +76,13 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
         role = parsedInput.defaultOrganizationRole || "owner";
       }
       organizationId = organization.id;
-    } else if (await getIsMultiOrgEnabled()) {
-      // Create new organization
-      const organization = await createOrganization({ name: `${user.name}'s Organization` });
-      organizationId = organization.id;
+    } else {
+      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+      if (isMultiOrgEnabled) {
+        // Create new organization
+        const organization = await createOrganization({ name: `${user.name}'s Organization` });
+        organizationId = organization.id;
+      }
     }
 
     if (organizationId) {
