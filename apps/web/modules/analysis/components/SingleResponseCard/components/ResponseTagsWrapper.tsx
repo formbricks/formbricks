@@ -1,15 +1,15 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { Tag } from "@/modules/ui/components/tag";
+import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
 import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TTag } from "@formbricks/types/tags";
-import { Button } from "@formbricks/ui/components/Button";
-import { Tag } from "@formbricks/ui/components/Tag";
-import { TagsCombobox } from "@formbricks/ui/components/TagsCombobox";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {

@@ -1,8 +1,8 @@
 "use client";
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/modules/ui/components/card";
 import { useTranslations } from "next-intl";
 import { TUserLocale } from "@formbricks/types/user";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@formbricks/ui/components/Card";
 import { InsightView } from "./insight-view";
 
 interface InsightsCardProps {

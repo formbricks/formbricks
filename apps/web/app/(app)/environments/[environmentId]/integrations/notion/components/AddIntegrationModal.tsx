@@ -5,6 +5,10 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
+import { Button } from "@/modules/ui/components/button";
+import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -24,10 +28,6 @@ import {
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
-import { Label } from "@formbricks/ui/components/Label";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -144,8 +144,15 @@ export const AddIntegrationModal = ({
         type: TSurveyQuestionTypeEnum.OpenText,
       },
     ];
+    const createdAt = [
+      {
+        id: "createdAt",
+        name: t("common.created_at"),
+        type: TSurveyQuestionTypeEnum.OpenText,
+      },
+    ];
 
-    return [...questions, ...variables, ...hiddenFields, ...Metadata];
+    return [...questions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 

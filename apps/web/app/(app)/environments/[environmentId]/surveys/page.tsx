@@ -2,6 +2,9 @@ import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/co
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TemplateList } from "@/modules/surveys/components/TemplateList";
+import { Button } from "@/modules/ui/components/button";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
@@ -18,9 +21,6 @@ import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TTemplateRole } from "@formbricks/types/templates";
-import { Button } from "@formbricks/ui/components/Button";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 export const metadata: Metadata = {
   title: "Your Surveys",

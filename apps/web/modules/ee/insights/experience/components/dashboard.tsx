@@ -5,12 +5,12 @@ import { InsightsCard } from "@/modules/ee/insights/experience/components/insigh
 import { ExperiencePageStats } from "@/modules/ee/insights/experience/components/stats";
 import { getDateFromTimeRange } from "@/modules/ee/insights/experience/lib/utils";
 import { TStatsPeriod } from "@/modules/ee/insights/experience/types/stats";
+import { Tabs, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { Tabs, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
 
 interface DashboardProps {
   user: TUser;

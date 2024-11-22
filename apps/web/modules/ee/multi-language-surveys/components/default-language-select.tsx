@@ -1,14 +1,14 @@
-import { useTranslations } from "next-intl";
-import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import type { TLanguage, TProject } from "@formbricks/types/project";
-import { DefaultTag } from "@formbricks/ui/components/DefaultTag";
+import { DefaultTag } from "@/modules/ui/components/default-tag";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
+} from "@/modules/ui/components/select";
+import { useTranslations } from "next-intl";
+import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
+import type { TLanguage, TProject } from "@formbricks/types/project";
 import type { ConfirmationModalProps } from "./multi-language-card";
 
 interface DefaultLanguageSelectProps {

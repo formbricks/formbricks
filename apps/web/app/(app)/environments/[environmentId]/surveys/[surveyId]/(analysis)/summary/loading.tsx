@@ -1,7 +1,7 @@
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
 import { useTranslations } from "next-intl";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { SkeletonLoader } from "@formbricks/ui/components/SkeletonLoader";
 
 const Loading = () => {
   const t = useTranslations();

@@ -7,6 +7,13 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Calendar } from "@/modules/ui/components/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import {
   differenceInDays,
   endOfMonth,
@@ -29,13 +36,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Calendar } from "@formbricks/ui/components/Calendar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {

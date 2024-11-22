@@ -2,6 +2,16 @@
 
 import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/(people)/people/actions";
 import { generatePersonTableColumns } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonTableColumn";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@/modules/ui/components/data-table";
+import { getCommonPinningStyles } from "@/modules/ui/components/data-table/lib/utils";
+import { SearchBar } from "@/modules/ui/components/search-bar";
+import { Skeleton } from "@/modules/ui/components/skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 import {
   DndContext,
   type DragEndEvent,
@@ -21,16 +31,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TPersonTableData } from "@formbricks/types/people";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DataTableHeader,
-  DataTableSettingsModal,
-  DataTableToolbar,
-} from "@formbricks/ui/components/DataTable";
-import { getCommonPinningStyles } from "@formbricks/ui/components/DataTable/lib/utils";
-import { SearchBar } from "@formbricks/ui/components/SearchBar";
-import { Skeleton } from "@formbricks/ui/components/Skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/components/Table";
 
 interface PersonTableProps {
   data: TPersonTableData[];

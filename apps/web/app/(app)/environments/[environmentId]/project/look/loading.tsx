@@ -2,15 +2,15 @@
 
 import { ProjectConfigNavigation } from "@/app/(app)/environments/[environmentId]/project/components/ProjectConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
+import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
-import { Label } from "@formbricks/ui/components/Label";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
-import { Switch } from "@formbricks/ui/components/Switch";
 
 const placements = [
   { name: "common.bottom_right", value: "bottomRight", disabled: false },

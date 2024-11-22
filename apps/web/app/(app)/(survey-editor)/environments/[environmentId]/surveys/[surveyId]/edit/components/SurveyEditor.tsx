@@ -1,6 +1,8 @@
 "use client";
 
+import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/follow-ups-view";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -14,7 +16,6 @@ import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
 import { refetchProjectAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";
@@ -41,6 +42,9 @@ interface SurveyEditorProps {
   isCxMode: boolean;
   locale: TUserLocale;
   projectPermission: TTeamPermission | null;
+  mailFrom: string;
+  isSurveyFollowUpsAllowed: boolean;
+  userEmail: string;
 }
 
 export const SurveyEditor = ({
@@ -61,6 +65,9 @@ export const SurveyEditor = ({
   isCxMode = false,
   locale,
   projectPermission,
+  mailFrom,
+  isSurveyFollowUpsAllowed = false,
+  userEmail,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -161,6 +168,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!project.styling.allowStyleOverwrite}
+            isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
           {activeView === "questions" && (
@@ -213,6 +221,18 @@ export const SurveyEditor = ({
               isFormbricksCloud={isFormbricksCloud}
               locale={locale}
               projectPermission={projectPermission}
+            />
+          )}
+
+          {activeView === "followUps" && (
+            <FollowUpsView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              selectedLanguageCode={selectedLanguageCode}
+              mailFrom={mailFrom}
+              isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+              userEmail={userEmail}
+              locale={locale}
             />
           )}
         </main>

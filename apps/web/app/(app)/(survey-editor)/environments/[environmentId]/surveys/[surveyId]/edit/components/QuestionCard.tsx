@@ -4,6 +4,8 @@ import { ContactInfoQuestionForm } from "@/app/(app)/(survey-editor)/environment
 import { RankingQuestionForm } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/RankingQuestionForm";
 import { formatTextWithSlashes } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -24,8 +26,6 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
 import { AddressQuestionForm } from "./AddressQuestionForm";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CTAQuestionForm } from "./CTAQuestionForm";
@@ -199,14 +199,14 @@ export const QuestionCard = ({
                     attributeClasses
                   )[selectedLanguageCode]
                     ? formatTextWithSlashes(
-                      recallToHeadline(
-                        question.headline,
-                        localSurvey,
-                        true,
-                        selectedLanguageCode,
-                        attributeClasses
-                      )[selectedLanguageCode] ?? ""
-                    )
+                        recallToHeadline(
+                          question.headline,
+                          localSurvey,
+                          true,
+                          selectedLanguageCode,
+                          attributeClasses
+                        )[selectedLanguageCode] ?? ""
+                      )
                     : getTSurveyQuestionTypeEnumName(question.type, locale)}
                 </p>
                 {!open && (
@@ -451,8 +451,8 @@ export const QuestionCard = ({
 
               <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
                 {question.type !== TSurveyQuestionTypeEnum.NPS &&
-                  question.type !== TSurveyQuestionTypeEnum.Rating &&
-                  question.type !== TSurveyQuestionTypeEnum.CTA ? (
+                question.type !== TSurveyQuestionTypeEnum.Rating &&
+                question.type !== TSurveyQuestionTypeEnum.CTA ? (
                   <div className="mt-2 flex space-x-2">
                     <div className="w-full">
                       <QuestionFormInput

@@ -1,5 +1,7 @@
 "use client";
 
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
@@ -8,8 +10,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
 import { Placement } from "./Placement";
 
 interface SurveyPlacementCardProps {

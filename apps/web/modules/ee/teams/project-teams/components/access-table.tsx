@@ -4,28 +4,21 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { removeAccessAction, updateAccessPermissionAction } from "@/modules/ee/teams/project-teams/actions";
 import { TProjectTeam, TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
-import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
-import { Button } from "@formbricks/ui/components/Button";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@formbricks/ui/components/Table";
+} from "@/modules/ui/components/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface AccessTableProps {
   teams: TProjectTeam[];

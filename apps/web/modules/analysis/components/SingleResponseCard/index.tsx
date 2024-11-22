@@ -1,5 +1,6 @@
 "use client";
 
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import clsx from "clsx";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -12,7 +13,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { TUserLocale } from "@formbricks/types/user";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";

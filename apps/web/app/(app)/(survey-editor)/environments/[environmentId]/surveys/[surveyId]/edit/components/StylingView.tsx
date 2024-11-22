@@ -1,3 +1,14 @@
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
+import { Switch } from "@/modules/ui/components/switch";
 import { RotateCcwIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -7,17 +18,6 @@ import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@formbricks/ui/components/Form";
-import { Switch } from "@formbricks/ui/components/Switch";
 import { BackgroundStylingCard } from "./BackgroundStylingCard";
 import { CardStylingSettings } from "./CardStylingSettings";
 import { FormStylingSettings } from "./FormStylingSettings";

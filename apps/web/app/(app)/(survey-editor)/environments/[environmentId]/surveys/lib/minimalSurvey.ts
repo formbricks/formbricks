@@ -39,4 +39,5 @@ export const getMinimalSurvey = (locale: string): TSurvey => ({
   isVerifyEmailEnabled: false,
   isSingleResponsePerEmailEnabled: false,
   variables: [],
+  followUps: [],
 });

@@ -1,12 +1,12 @@
 import { LegalFooter } from "@/app/s/[surveyId]/components/LegalFooter";
 import { SurveyLoadingAnimation } from "@/app/s/[surveyId]/components/SurveyLoadingAnimation";
+import { ClientLogo } from "@/modules/ui/components/client-logo";
+import { MediaBackground } from "@/modules/ui/components/media-background";
+import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { type JSX, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { ClientLogo } from "@formbricks/ui/components/ClientLogo";
-import { MediaBackground } from "@formbricks/ui/components/MediaBackground";
-import { ResetProgressButton } from "@formbricks/ui/components/ResetProgressButton";
 
 interface LinkSurveyWrapperProps {
   children: JSX.Element;

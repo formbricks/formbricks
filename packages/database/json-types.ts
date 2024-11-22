@@ -1,14 +1,12 @@
+/* eslint-disable import/no-relative-packages -- required for importing types */
+
 /* eslint-disable @typescript-eslint/no-namespace -- using namespaces is required for prisma-json-types-generator */
-import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
-import { type TIntegrationConfig } from "@formbricks/types/integration";
-import { type TOrganizationBilling } from "@formbricks/types/organizations";
-import { type TProjectConfig, type TProjectStyling } from "@formbricks/types/project";
-import {
-  type TResponseData,
-  type TResponseMeta,
-  type TResponsePersonAttributes,
-} from "@formbricks/types/responses";
-import { type TBaseFilters } from "@formbricks/types/segment";
+import { type TActionClassNoCodeConfig } from "../types/action-classes";
+import { type TIntegrationConfig } from "../types/integration";
+import { type TOrganizationBilling } from "../types/organizations";
+import { type TProjectConfig, type TProjectStyling } from "../types/project";
+import { type TResponseData, type TResponseMeta, type TResponsePersonAttributes } from "../types/responses";
+import { type TBaseFilters } from "../types/segment";
 import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
@@ -19,8 +17,9 @@ import {
   type TSurveyStyling,
   type TSurveyVariables,
   type TSurveyWelcomeCard,
-} from "@formbricks/types/surveys/types";
-import { type TUserLocale, type TUserNotificationSettings } from "@formbricks/types/user";
+} from "../types/surveys/types";
+import { type TUserLocale, type TUserNotificationSettings } from "../types/user";
+import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "./types/survey-follow-up";
 
 declare global {
   namespace PrismaJson {
@@ -45,5 +44,7 @@ declare global {
     export type SegmentFilter = TBaseFilters;
     export type Styling = TProjectStyling;
     export type Locale = TUserLocale;
+    export type SurveyFollowUpTrigger = TSurveyFollowUpTrigger;
+    export type SurveyFollowUpAction = TSurveyFollowUpAction;
   }
 }

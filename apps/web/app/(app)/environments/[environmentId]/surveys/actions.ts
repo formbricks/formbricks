@@ -63,10 +63,6 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
       );
     }
 
-    if (sourceEnvironment.projectId !== targetEnvironment.projectId) {
-      throw new Error("Cannot copy survey to environment with different project");
-    }
-
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
@@ -79,6 +75,22 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           type: "projectTeam",
           minPermission: "readWrite",
           projectId: sourceEnvironment.projectId,
+        },
+      ],
+    });
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: targetEnvironment.projectId,
         },
       ],
     });

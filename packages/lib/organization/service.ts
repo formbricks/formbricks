@@ -228,14 +228,32 @@ export const updateOrganization = async (
   }
 };
 
-export const deleteOrganization = async (organizationId: string): Promise<TOrganization> => {
+export const deleteOrganization = async (organizationId: string) => {
   validateInputs([organizationId, ZId]);
   try {
     const deletedOrganization = await prisma.organization.delete({
       where: {
         id: organizationId,
       },
-      select: { ...select, memberships: true, projects: { select: { environments: true } } }, // include memberships & environments
+      select: {
+        id: true,
+        name: true,
+        memberships: {
+          select: {
+            userId: true,
+          },
+        },
+        projects: {
+          select: {
+            id: true,
+            environments: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // revalidate cache for members
@@ -268,8 +286,6 @@ export const deleteOrganization = async (organizationId: string): Promise<TOrgan
       id: organization.id,
       count: true,
     });
-
-    return organization;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

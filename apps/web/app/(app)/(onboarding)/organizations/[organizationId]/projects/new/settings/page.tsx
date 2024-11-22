@@ -2,6 +2,8 @@ import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboardin
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -12,8 +14,6 @@ import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUserProjects } from "@formbricks/lib/project/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
 import { TProjectConfigChannel, TProjectConfigIndustry, TProjectMode } from "@formbricks/types/project";
-import { Button } from "@formbricks/ui/components/Button";
-import { Header } from "@formbricks/ui/components/Header";
 
 interface ProjectSettingsPageProps {
   params: Promise<{

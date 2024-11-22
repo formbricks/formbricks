@@ -3,6 +3,7 @@
 import { getSurveysAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { getFormattedFilters } from "@/app/(app)/environments/[environmentId]/surveys/lib/utils";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { Button } from "@/modules/ui/components/button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -12,7 +13,6 @@ import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
 import { SurveyCard } from "./SurveyCard";
 import { SurveyFilters } from "./SurveyFilters";
 import { SurveyLoading } from "./SurveyLoading";

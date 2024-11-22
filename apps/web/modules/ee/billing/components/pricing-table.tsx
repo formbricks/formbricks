@@ -1,5 +1,7 @@
 "use client";
 
+import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -7,8 +9,6 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization, TOrganizationBillingPeriod } from "@formbricks/types/organizations";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
 import { isSubscriptionCancelledAction, manageSubscriptionAction, upgradePlanAction } from "../actions";
 import { CLOUD_PRICING_DATA } from "../api/lib/constants";
 import { BillingSlider } from "./billing-slider";

@@ -4,6 +4,20 @@ import { createProjectAction } from "@/app/(app)/environments/[environmentId]/ac
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/teams";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
+import { Button } from "@/modules/ui/components/button";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
+import {
+  FormControl,
+  FormDescription,
+  FormError,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
+import { SurveyInline } from "@/modules/ui/components/survey";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -20,20 +34,6 @@ import {
   TProjectUpdateInput,
   ZProjectUpdateInput,
 } from "@formbricks/types/project";
-import { Button } from "@formbricks/ui/components/Button";
-import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
-import {
-  FormControl,
-  FormDescription,
-  FormError,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { MultiSelect } from "@formbricks/ui/components/MultiSelect";
-import { SurveyInline } from "@formbricks/ui/components/Survey";
 
 interface ProjectSettingsProps {
   organizationId: string;

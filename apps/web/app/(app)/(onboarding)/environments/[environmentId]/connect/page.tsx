@@ -1,11 +1,11 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
+import { Button } from "@/modules/ui/components/button";
+import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { Button } from "@formbricks/ui/components/Button";
-import { Header } from "@formbricks/ui/components/Header";
 
 interface ConnectPageProps {
   params: Promise<{

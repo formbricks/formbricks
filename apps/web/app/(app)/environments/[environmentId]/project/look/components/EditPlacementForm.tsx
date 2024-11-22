@@ -1,5 +1,11 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
+import { Label } from "@/modules/ui/components/label";
+import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -7,12 +13,6 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { TProject } from "@formbricks/types/project";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/components/Form";
-import { Label } from "@formbricks/ui/components/Label";
-import { getPlacementStyle } from "@formbricks/ui/components/PreviewSurvey/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 import { updateProjectAction } from "../../actions";
 
 const placements = [

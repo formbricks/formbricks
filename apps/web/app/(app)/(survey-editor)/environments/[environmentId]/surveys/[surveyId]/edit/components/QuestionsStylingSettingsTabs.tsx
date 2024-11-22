@@ -1,4 +1,5 @@
-import { PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
+import { ProBadge } from "@/modules/ui/components/pro-badge";
+import { MailIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type JSX, useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -8,31 +9,15 @@ interface Tab {
   id: TSurveyEditorTabs;
   label: string;
   icon: JSX.Element;
+  isPro?: boolean;
 }
-
-const tabs: Tab[] = [
-  {
-    id: "questions",
-    label: "common.questions",
-    icon: <Rows3Icon className="h-5 w-5" />,
-  },
-  {
-    id: "styling",
-    label: "common.styling",
-    icon: <PaintbrushIcon className="h-5 w-5" />,
-  },
-  {
-    id: "settings",
-    label: "common.settings",
-    icon: <SettingsIcon className="h-5 w-5" />,
-  },
-];
 
 interface QuestionsAudienceTabsProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   isStylingTabVisible?: boolean;
   isCxMode: boolean;
+  isSurveyFollowUpsAllowed: boolean;
 }
 
 export const QuestionsAudienceTabs = ({
@@ -40,7 +25,35 @@ export const QuestionsAudienceTabs = ({
   setActiveId,
   isStylingTabVisible,
   isCxMode,
+  isSurveyFollowUpsAllowed = false,
 }: QuestionsAudienceTabsProps) => {
+  const tabs: Tab[] = useMemo(
+    () => [
+      {
+        id: "questions",
+        label: "common.questions",
+        icon: <Rows3Icon className="h-5 w-5" />,
+      },
+      {
+        id: "styling",
+        label: "common.styling",
+        icon: <PaintbrushIcon className="h-5 w-5" />,
+      },
+      {
+        id: "settings",
+        label: "common.settings",
+        icon: <SettingsIcon className="h-5 w-5" />,
+      },
+      {
+        id: "followUps",
+        label: "environments.surveys.edit.follow_ups",
+        icon: <MailIcon className="h-5 w-5" />,
+        isPro: !isSurveyFollowUpsAllowed,
+      },
+    ],
+    [isSurveyFollowUpsAllowed]
+  );
+
   const t = useTranslations();
   const tabsComputed = useMemo(() => {
     if (isStylingTabVisible) {
@@ -69,6 +82,7 @@ export const QuestionsAudienceTabs = ({
             aria-current={tab.id === activeId ? "page" : undefined}>
             {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}
             {t(tab.label)}
+            {tab.isPro && <ProBadge />}
           </button>
         ))}
       </nav>

@@ -7,6 +7,9 @@ import { AzureButton } from "@/modules/auth/components/SignupOptions/components/
 import { GithubButton } from "@/modules/auth/components/SignupOptions/components/GithubButton";
 import { GoogleButton } from "@/modules/auth/components/SignupOptions/components/GoogleButton";
 import { OpenIdButton } from "@/modules/auth/components/SignupOptions/components/OpenIdButton";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { XCircleIcon } from "lucide-react";
 import { signIn } from "next-auth/react";
@@ -18,9 +21,6 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
-import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
 interface TSigninFormState {
   email: string;

@@ -1,5 +1,9 @@
 "use client";
 
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
@@ -7,10 +11,6 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 
 interface DisplayOption {
   id: "displayOnce" | "displayMultiple" | "respondMultiple" | "displaySome";

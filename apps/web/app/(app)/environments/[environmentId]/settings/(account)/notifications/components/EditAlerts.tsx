@@ -1,8 +1,8 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TUser } from "@formbricks/types/user";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 

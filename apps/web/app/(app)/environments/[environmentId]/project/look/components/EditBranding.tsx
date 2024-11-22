@@ -1,12 +1,12 @@
 "use client";
 
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
+import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TProject, TProjectUpdateInput } from "@formbricks/types/project";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
-import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { updateProjectAction } from "../../actions";
 
 interface EditFormbricksBrandingProps {

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -7,7 +8,6 @@ import { useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProjectConfigChannel } from "@formbricks/types/project";
-import { Button } from "@formbricks/ui/components/Button";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {

@@ -1,5 +1,14 @@
 "use client";
 
+import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { OrganizationRole } from "@prisma/client";
 import { ChevronDownIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,15 +17,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 import { updateInviteAction, updateMembershipAction } from "../actions";
 
 interface Role {

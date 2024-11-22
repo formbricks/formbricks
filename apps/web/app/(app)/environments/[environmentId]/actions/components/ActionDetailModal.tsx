@@ -1,8 +1,8 @@
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { ActionActivityTab } from "./ActionActivityTab";
 import { ActionSettingsTab } from "./ActionSettingsTab";
 

@@ -1,18 +1,18 @@
 "use client";
 
 import { handleFileUpload } from "@/app/lib/fileUpload";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { ColorPicker } from "@/modules/ui/components/color-picker";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { FileInput } from "@/modules/ui/components/file-input";
+import { Input } from "@/modules/ui/components/input";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TProject, TProjectUpdateInput } from "@formbricks/types/project";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
-import { ColorPicker } from "@formbricks/ui/components/ColorPicker";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { FileInput } from "@formbricks/ui/components/FileInput";
-import { Input } from "@formbricks/ui/components/Input";
 import { updateProjectAction } from "../../actions";
 
 interface EditLogoProps {

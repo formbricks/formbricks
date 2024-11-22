@@ -1,6 +1,9 @@
 "use client";
 
 import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
+import { FileInput } from "@/modules/ui/components/file-input";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
@@ -32,9 +35,6 @@ import {
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { FileInput } from "@formbricks/ui/components/FileInput";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
 import { FallbackInput } from "./components/FallbackInput";
 import { RecallItemSelect } from "./components/RecallItemSelect";
 import {

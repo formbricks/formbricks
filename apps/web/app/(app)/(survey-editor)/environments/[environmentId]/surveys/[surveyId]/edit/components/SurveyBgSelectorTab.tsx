@@ -1,7 +1,7 @@
+import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { TabBar } from "@formbricks/ui/components/TabBar";
 import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
 import { ColorSurveyBg } from "./ColorSurveyBg";
 import { UploadImageSurveyBg } from "./ImageSurveyBg";

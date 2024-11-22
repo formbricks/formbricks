@@ -2,6 +2,8 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -10,8 +12,6 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 export const TeamsPage = async (props) => {
   const params = await props.params;

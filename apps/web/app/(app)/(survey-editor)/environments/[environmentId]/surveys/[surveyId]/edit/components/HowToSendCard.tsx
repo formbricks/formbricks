@@ -1,5 +1,8 @@
 "use client";
 
+import { Badge } from "@/modules/ui/components/badge";
+import { Label } from "@/modules/ui/components/label";
+import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
@@ -11,9 +14,6 @@ import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Label } from "@formbricks/ui/components/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;

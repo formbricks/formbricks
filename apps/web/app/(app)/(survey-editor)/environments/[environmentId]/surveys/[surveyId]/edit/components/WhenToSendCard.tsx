@@ -2,6 +2,9 @@
 
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
@@ -18,9 +21,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
 import { AddActionModal } from "./AddActionModal";
 
 interface WhenToSendCardProps {
@@ -238,8 +238,8 @@ export const WhenToSendCard = ({
                               </span>
                             )}
                           {trigger.actionClass.type === "noCode" &&
-                            trigger.actionClass.noCodeConfig?.urlFilters &&
-                            trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
+                          trigger.actionClass.noCodeConfig?.urlFilters &&
+                          trigger.actionClass.noCodeConfig.urlFilters.length > 0 ? (
                             <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">
                               {t("environments.surveys.edit.url_filters")}:{" "}
                               {trigger.actionClass.noCodeConfig.urlFilters.map((urlFilter, index) => (
@@ -247,7 +247,7 @@ export const WhenToSendCard = ({
                                   {urlFilter.rule} <b>{urlFilter.value}</b>
                                   {trigger.actionClass.type === "noCode" &&
                                     index !==
-                                    (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
+                                      (trigger.actionClass.noCodeConfig?.urlFilters?.length || 0) - 1 &&
                                     ", "}
                                 </span>
                               ))}

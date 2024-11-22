@@ -6,13 +6,13 @@ import {
   getMultiLanguagePermission,
   getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
+import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslations } from "next-intl/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { EnvironmentNotice } from "@formbricks/ui/components/EnvironmentNotice";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { SettingsCard } from "../../../settings/components/SettingsCard";
 
 const Page = async (props) => {

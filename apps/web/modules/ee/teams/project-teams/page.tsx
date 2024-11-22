@@ -4,6 +4,8 @@ import {
   getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { AccessView } from "@/modules/ee/teams/project-teams/components/access-view";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -11,8 +13,6 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { getTeamsByOrganizationId, getTeamsByProjectId } from "./lib/teams";
 
 export const ProjectTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
