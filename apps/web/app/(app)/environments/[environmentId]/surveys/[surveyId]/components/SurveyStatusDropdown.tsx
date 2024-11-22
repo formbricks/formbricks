@@ -1,17 +1,17 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { useTranslations } from "next-intl";
-import toast from "react-hot-toast";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
-import { SurveyStatusIndicator } from "@formbricks/ui/components/SurveyStatusIndicator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
+} from "@/modules/ui/components/select";
+import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslations } from "next-intl";
+import toast from "react-hot-toast";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { updateSurveyAction } from "../actions";
 
 interface SurveyStatusDropdownProps {

@@ -16,7 +16,7 @@ const withMDX = nextMDX({
 const nextConfig = {
   basePath: "/docs",
   pageExtensions: ["js", "jsx", "ts", "tsx", "mdx"],
-  transpilePackages: ["@formbricks/ui", "@formbricks/lib"],
+  transpilePackages: ["@formbricks/lib"],
   images: {
     remotePatterns: [
       {

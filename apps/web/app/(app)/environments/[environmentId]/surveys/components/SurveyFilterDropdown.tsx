@@ -1,15 +1,15 @@
 "use client";
 
-import { ChevronDownIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { TFilterOption } from "@formbricks/types/surveys/types";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
+import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
+} from "@/modules/ui/components/dropdown-menu";
+import { ChevronDownIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { TFilterOption } from "@formbricks/types/surveys/types";
 
 interface SurveyFilterDropdownProps {
   title: string;

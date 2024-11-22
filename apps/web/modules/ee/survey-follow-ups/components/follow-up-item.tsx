@@ -1,13 +1,13 @@
 import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/follow-up-modal";
+import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
-import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 
 interface FollowUpItemProps {
   followUp: TSurveyFollowUp;

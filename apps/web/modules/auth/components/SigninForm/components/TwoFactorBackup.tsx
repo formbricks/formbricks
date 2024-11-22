@@ -1,11 +1,11 @@
 "use client";
 
+import { FormField, FormItem } from "@/modules/ui/components/form";
+import { FormControl } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
-import { FormField, FormItem } from "@formbricks/ui/components/Form";
-import { FormControl } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
 
 interface TwoFactorBackupProps {
   form: UseFormReturn<

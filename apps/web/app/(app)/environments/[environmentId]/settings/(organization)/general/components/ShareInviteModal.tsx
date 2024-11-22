@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { Modal } from "@/modules/ui/components/modal";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import toast from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 interface ShareInviteModalProps {
   inviteToken: string;

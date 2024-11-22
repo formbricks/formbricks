@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { resendVerificationEmail } from "@formbricks/lib/utils/users";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface RequestEmailVerificationProps {
   email: string | null;

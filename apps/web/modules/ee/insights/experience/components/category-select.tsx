@@ -1,8 +1,8 @@
+import { BadgeSelect, TBadgeSelectOption } from "@/modules/ui/components/badge-select";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { TInsight } from "@formbricks/types/insights";
-import { BadgeSelect, TBadgeSelectOption } from "@formbricks/ui/components/BadgeSelect";
 import { updateInsightAction } from "../actions";
 
 interface CategoryBadgeProps {

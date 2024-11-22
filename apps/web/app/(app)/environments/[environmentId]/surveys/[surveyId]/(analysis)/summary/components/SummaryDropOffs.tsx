@@ -1,8 +1,8 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { TimerIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getQuestionIcon } from "@formbricks/lib/utils/questions";
 import { TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface SummaryDropOffsProps {
   dropOff: TSurveySummary["dropOff"];

@@ -1,5 +1,27 @@
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import FollowUpActionMultiEmailInput from "@/modules/ee/survey-follow-ups/components/follow-up-action-multi-email-input";
+import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { Editor } from "@/modules/ui/components/editor";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import { cn } from "@/modules/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
 import DOMpurify from "isomorphic-dompurify";
@@ -13,28 +35,6 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
-import { Editor } from "@formbricks/ui/components/Editor";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { Modal } from "@formbricks/ui/components/Modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/components/Select";
-import { cn } from "@formbricks/ui/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
   ZCreateSurveyFollowUpFormSchema,
