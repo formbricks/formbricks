@@ -478,6 +478,20 @@ export const createContactsFromCSV = async (
     const createdContactsFiltered = results.filter((contact) => contact !== null) as TContact[];
     createdContacts.push(...createdContactsFiltered);
 
+    contactCache.revalidate({
+      environmentId,
+    });
+
+    for (const contact of createdContactsFiltered) {
+      contactCache.revalidate({
+        id: contact.id,
+      });
+    }
+
+    contactAttributeKeyCache.revalidate({
+      environmentId,
+    });
+
     console.log(`createContactsFromCSV took ${Date.now() - startTime}ms`);
 
     return createdContacts;

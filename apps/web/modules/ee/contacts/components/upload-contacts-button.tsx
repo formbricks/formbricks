@@ -95,6 +95,7 @@ export const UploadContactsCSVButton = ({
     setDuplicateContactsAction("skip");
     setErrror("");
     setAttributeMap({});
+    setLoading(false);
     if (closeModal) {
       setOpen(false);
     }

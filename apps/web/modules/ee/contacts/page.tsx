@@ -1,5 +1,5 @@
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
+import { getContactAttributeKeys, getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -59,6 +59,7 @@ export const ContactsPage = async ({
   const isReadOnly = isMember && hasReadAccess;
 
   const contactAttributeKeys = await getContactAttributeKeys(params.environmentId);
+  const initialContacts = await getContacts(params.environmentId, 0);
 
   const HowToAddPeopleButton = (
     <UploadContactsCSVButton environmentId={environment.id} contactAttributeKeys={contactAttributeKeys} />
@@ -70,10 +71,13 @@ export const ContactsPage = async ({
         <ContactsSecondaryNavigation activeId="contacts" environmentId={params.environmentId} />
       </PageHeader>
       <ContactDataView
+        key={initialContacts.length + contactAttributeKeys.length}
         environment={environment}
         itemsPerPage={ITEMS_PER_PAGE}
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}
+        initialContacts={initialContacts}
+        hasMore={initialContacts.length <= ITEMS_PER_PAGE}
       />
     </PageContentWrapper>
   );

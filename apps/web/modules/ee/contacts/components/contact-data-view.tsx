@@ -1,6 +1,7 @@
 "use client";
 
 import { debounce } from "lodash";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import React from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -13,20 +14,25 @@ import { ContactsTable } from "./contacts-table";
 interface ContactDataViewProps {
   environment: TEnvironment;
   contactAttributeKeys: TContactAttributeKey[];
+  initialContacts: TContactWithAttributes[];
   itemsPerPage: number;
   isReadOnly: boolean;
+  hasMore: boolean;
 }
 
 export const ContactDataView = ({
   environment,
   itemsPerPage,
   contactAttributeKeys,
+  initialContacts,
   isReadOnly,
+  hasMore: initialHasMore,
 }: ContactDataViewProps) => {
-  const [contacts, setContacts] = useState<TContactWithAttributes[]>([]);
-  const [isContactsLoaded, setIsContactsLoaded] = useState<boolean>(false);
-  // const [isAttributesLoaded, setIsAttributesLoaded] = useState<boolean>(false);
-  const [hasMore, setHasMore] = useState<boolean>(false);
+  const router = useRouter();
+  const [isFirstRender, setIsFirstRender] = useState(true);
+  const [contacts, setContacts] = useState<TContactWithAttributes[]>(initialContacts);
+  const [isContactsLoaded, setIsContactsLoaded] = useState(true);
+  const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
 
@@ -38,6 +44,12 @@ export const ContactDataView = ({
 
   // Fetch contacts
   useEffect(() => {
+    // Skip the initial render
+    if (isFirstRender) {
+      setIsFirstRender(false);
+      return;
+    }
+
     const fetchContacts = async () => {
       setIsContactsLoaded(false);
       try {
@@ -68,7 +80,7 @@ export const ContactDataView = ({
     return () => {
       debouncedFetchContacts.cancel();
     };
-  }, [searchValue, environment.id, itemsPerPage]);
+  }, [searchValue, environment.id, itemsPerPage, isFirstRender]);
 
   // Fetch next page of contacts
   const fetchNextPage = async () => {
@@ -99,6 +111,8 @@ export const ContactDataView = ({
   const deletePersons = async (contactIds: string[]) => {
     await Promise.all(contactIds.map((contactId) => deleteContactAction({ contactId })));
     setContacts((prevContacts) => prevContacts.filter((contact) => !contactIds.includes(contact.id)));
+
+    router.refresh();
   };
 
   // Prepare data for the ContactTable component
