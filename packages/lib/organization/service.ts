@@ -286,8 +286,6 @@ export const deleteOrganization = async (organizationId: string) => {
       id: organization.id,
       count: true,
     });
-
-    return organization;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
