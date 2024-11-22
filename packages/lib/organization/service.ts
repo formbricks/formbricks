@@ -228,14 +228,32 @@ export const updateOrganization = async (
   }
 };
 
-export const deleteOrganization = async (organizationId: string): Promise<TOrganization> => {
+export const deleteOrganization = async (organizationId: string) => {
   validateInputs([organizationId, ZId]);
   try {
     const deletedOrganization = await prisma.organization.delete({
       where: {
         id: organizationId,
       },
-      select: { ...select, memberships: true, products: { select: { environments: true } } }, // include memberships & environments
+      select: {
+        id: true,
+        name: true,
+        memberships: {
+          select: {
+            userId: true,
+          },
+        },
+        products: {
+          select: {
+            id: true,
+            environments: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // revalidate cache for members
