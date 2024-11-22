@@ -65,8 +65,8 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         />
       </PageHeader>
       <SettingsCard
-        title={t("common.product_name")}
-        description={t("environments.project.general.product_name_settings_description")}>
+        title={t("common.project_name")}
+        description={t("environments.project.general.project_name_settings_description")}>
         <EditProjectNameForm project={project} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
@@ -75,8 +75,8 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         <EditWaitingTimeForm project={project} isReadOnly={isReadOnly} />
       </SettingsCard>
       <SettingsCard
-        title={t("environments.project.general.delete_product")}
-        description={t("environments.project.general.delete_product_settings_description")}>
+        title={t("environments.project.general.delete_project")}
+        description={t("environments.project.general.delete_project_settings_description")}>
         <DeleteProject
           environmentId={params.environmentId}
           project={project}
@@ -84,7 +84,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         />
       </SettingsCard>
       <div>
-        <SettingsId title={t("common.product_id")} id={project.id}></SettingsId>
+        <SettingsId title={t("common.project_id")} id={project.id}></SettingsId>
         {!IS_FORMBRICKS_CLOUD && (
           <SettingsId title={t("common.formbricks_version")} id={packageJson.version}></SettingsId>
         )}

@@ -62,7 +62,7 @@ export const TeamProjects = ({
     });
 
     if (removeProjectActionResponse?.data) {
-      toast.success(t("environments.settings.teams.product_removed_successfully"));
+      toast.success(t("environments.settings.teams.project_removed_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(removeProjectActionResponse);
@@ -102,11 +102,11 @@ export const TeamProjects = ({
     <>
       <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("environments.settings.teams.team_products")}</CardTitle>
+          <CardTitle>{t("environments.settings.teams.team_projects")}</CardTitle>
           <div className="flex gap-2">
             {isOwnerOrManager && (
               <Button variant="primary" size="sm" onClick={() => setOpenAddProjectModal(true)}>
-                {t("environments.settings.teams.add_product")}
+                {t("environments.settings.teams.add_project")}
               </Button>
             )}
           </div>
@@ -116,7 +116,7 @@ export const TeamProjects = ({
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-100">
-                  <TableHead>{t("environments.settings.teams.product_name")}</TableHead>
+                  <TableHead>{t("environments.settings.teams.project_name")}</TableHead>
                   <TableHead>{t("environments.settings.teams.permission")}</TableHead>
                   {isOwnerOrManager && <TableHead>{t("common.actions")}</TableHead>}
                 </TableRow>
@@ -125,7 +125,7 @@ export const TeamProjects = ({
                 {projects.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center">
-                      {t("environments.settings.teams.empty_product_message")}
+                      {t("environments.settings.teams.empty_project_message")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -191,8 +191,8 @@ export const TeamProjects = ({
         <AlertDialog
           open={removeProjectModalOpen}
           setOpen={setRemoveProjectModalOpen}
-          headerText={t("environments.settings.teams.remove_product")}
-          mainText={t("environments.settings.teams.remove_product_confirmation")}
+          headerText={t("environments.settings.teams.remove_project")}
+          mainText={t("environments.settings.teams.remove_project_confirmation")}
           confirmBtnLabel={t("common.confirm")}
           onDecline={() => {
             setSelectedProjectId(null);

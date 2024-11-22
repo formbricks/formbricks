@@ -46,7 +46,7 @@ export const DetailsView = ({
     },
     {
       id: "projects",
-      label: t("common.products"),
+      label: t("common.projects"),
       onClick: () => setActiveId("projects"),
     },
     {

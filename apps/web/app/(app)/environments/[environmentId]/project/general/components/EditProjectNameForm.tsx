@@ -60,7 +60,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
       });
 
       if (updatedProjectResponse?.data) {
-        toast.success(t("environments.project.general.product_name_updated_successfully"));
+        toast.success(t("environments.project.general.project_name_updated_successfully"));
         form.resetField("name", { defaultValue: updatedProjectResponse.data.name });
       } else {
         const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
@@ -89,7 +89,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
                     type="text"
                     id="name"
                     {...field}
-                    placeholder={t("common.product_name")}
+                    placeholder={t("common.project_name")}
                     autoComplete="off"
                     required
                     isInvalid={!!nameError}

@@ -55,14 +55,14 @@ export const AddTeamProjectModal = ({ open, setOpen, teamId, projectOptions }: A
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <UserIcon className="h-5 w-5" />
-            <H4>{t("environments.settings.teams.add_products")}</H4>
+            <H4>{t("environments.settings.teams.add_projects")}</H4>
           </div>
         </div>
       </div>
       <form onSubmit={handleAddProjects}>
         <div className="overflow-visible p-6">
           <Label className="mb-1 text-sm font-medium text-slate-900">
-            {t("environments.settings.teams.organization_products")}
+            {t("environments.settings.teams.organization_projects")}
           </Label>
           <MultiSelect
             value={selectedProjects}

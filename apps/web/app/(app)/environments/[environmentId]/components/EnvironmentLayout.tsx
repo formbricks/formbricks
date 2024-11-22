@@ -53,7 +53,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   ]);
 
   if (!projects || !environments || !organizations) {
-    throw new Error(t("environments.products_environments_organizations_not_found"));
+    throw new Error(t("environments.projects_environments_organizations_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -65,7 +65,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   const projectPermission = await getProjectPermissionByUserId(session.user.id, environment.projectId);
 
   if (isMember && !projectPermission) {
-    throw new Error(t("common.product_permission_not_found"));
+    throw new Error(t("common.project_permission_not_found"));
   }
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;

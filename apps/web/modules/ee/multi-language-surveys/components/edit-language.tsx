@@ -102,7 +102,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: `${t("environments.project.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("environments.project.languages.remove_language_from_surveys_to_remove_it_from_product")}`,
+            text: `${t("environments.project.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("environments.project.languages.remove_language_from_surveys_to_remove_it_from_project")}`,
             isButtonDisabled: true,
           });
         } else {
@@ -146,14 +146,14 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
       languages.map((lang) => {
         return lang.id === "new"
           ? createLanguageAction({
-            projectId: project.id,
-            languageInput: { code: lang.code, alias: lang.alias },
-          })
+              projectId: project.id,
+              languageInput: { code: lang.code, alias: lang.alias },
+            })
           : updateLanguageAction({
-            projectId: project.id,
-            languageId: lang.id,
-            languageInput: { code: lang.code, alias: lang.alias },
-          });
+              projectId: project.id,
+              languageId: lang.id,
+              languageInput: { code: lang.code, alias: lang.alias },
+            });
       })
     );
     toast.success(t("environments.project.languages.languages_updated_successfully"));
@@ -229,17 +229,17 @@ const EditSaveButtons: React.FC<{
   onEdit: () => void;
   t: (key: string) => string;
 }> = ({ isEditing, onEdit, onSave, onCancel, t }) =>
-    isEditing ? (
-      <div className="flex gap-4">
-        <Button onClick={onSave} size="sm">
-          {t("common.save_changes")}
-        </Button>
-        <Button onClick={onCancel} size="sm" variant="minimal">
-          {t("common.cancel")}
-        </Button>
-      </div>
-    ) : (
-      <Button className="w-fit" onClick={onEdit} size="sm">
-        {t("environments.project.languages.edit_languages")}
+  isEditing ? (
+    <div className="flex gap-4">
+      <Button onClick={onSave} size="sm">
+        {t("common.save_changes")}
       </Button>
-    );
+      <Button onClick={onCancel} size="sm" variant="minimal">
+        {t("common.cancel")}
+      </Button>
+    </div>
+  ) : (
+    <Button className="w-fit" onClick={onEdit} size="sm">
+      {t("environments.project.languages.edit_languages")}
+    </Button>
+  );

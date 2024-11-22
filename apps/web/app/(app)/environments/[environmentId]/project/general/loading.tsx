@@ -10,8 +10,8 @@ const Loading = () => {
   const t = useTranslations();
   const cards = [
     {
-      title: t("common.product_name"),
-      description: t("environments.project.general.product_name_settings_description"),
+      title: t("common.project_name"),
+      description: t("environments.project.general.project_name_settings_description"),
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
@@ -20,7 +20,7 @@ const Loading = () => {
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: t("environments.project.general.delete_product"),
+      title: t("environments.project.general.delete_project"),
       description: t("environments.project.general.delete_product_settings_description"),
       skeletonLines: [{ classes: "h-4 w-96" }, { classes: "h-8 w-24" }],
     },

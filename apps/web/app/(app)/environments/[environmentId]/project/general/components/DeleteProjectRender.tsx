@@ -31,7 +31,7 @@ export const DeleteProjectRender = ({
     setIsDeleting(true);
     const deleteProjectResponse = await deleteProjectAction({ projectId: project.id });
     if (deleteProjectResponse?.data) {
-      toast.success(t("environments.project.general.product_deleted_successfully"));
+      toast.success(t("environments.project.general.project_deleted_successfully"));
       router.push("/");
     } else {
       const errorMessage = getFormattedErrorMessage(deleteProjectResponse);
@@ -47,7 +47,7 @@ export const DeleteProjectRender = ({
         <div>
           <p className="text-sm text-slate-900">
             {t(
-              "environments.project.general.delete_product_name_includes_surveys_responses_people_and_more",
+              "environments.project.general.delete_project_name_includes_surveys_responses_people_and_more",
               {
                 projectName: truncate(project.name, 30),
               }
@@ -68,8 +68,8 @@ export const DeleteProjectRender = ({
         <Alert variant="warning">
           <AlertDescription>
             {!isOwnerOrManager
-              ? t("environments.project.general.only_owners_or_managers_can_delete_products")
-              : t("environments.project.general.cannot_delete_only_product")}
+              ? t("environments.project.general.only_owners_or_managers_can_delete_projects")
+              : t("environments.project.general.cannot_delete_only_project")}
           </AlertDescription>
         </Alert>
       )}
@@ -79,7 +79,7 @@ export const DeleteProjectRender = ({
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteProject}
-        text={t("environments.project.general.delete_product_confirmation", {
+        text={t("environments.project.general.delete_project_confirmation", {
           projectName: truncate(project.name, 30),
         })}
         isDeleting={isDeleting}

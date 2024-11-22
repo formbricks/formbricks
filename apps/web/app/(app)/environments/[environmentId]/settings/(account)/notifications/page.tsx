@@ -180,7 +180,7 @@ const Page = async (props) => {
       </SettingsCard>
       <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard
-        title={t("environments.settings.notifications.weekly_summary_products")}
+        title={t("environments.settings.notifications.weekly_summary_projects")}
         description={t("environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday")}>
         <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>

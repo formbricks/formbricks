@@ -26,7 +26,7 @@ export const InsightsCard = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("environments.experience.insights_for_product", { projectName })}</CardTitle>
+        <CardTitle>{t("environments.experience.insights_for_project", { projectName })}</CardTitle>
         <CardDescription>{t("environments.experience.insights_description")}</CardDescription>
       </CardHeader>
       <CardContent>
