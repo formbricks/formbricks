@@ -1,7 +1,7 @@
 "use client";
 
-import { disableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { disableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -10,6 +10,7 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -22,8 +23,8 @@ const ZDisableTwoFactorFormState = z
     code: z.string().optional(),
     backupCode: z.string().optional(),
   })
-  .refine((data) => data.code || data.backupCode, {
-    message: "Either code or backup code must be provided.",
+  .refine((data) => (!!data.code && !data.backupCode) || (!data.code && !!data.backupCode), {
+    message: "Please provide either the code OR the backup code",
     path: ["code"],
   });
 
@@ -35,6 +36,7 @@ interface DisableTwoFactorModalProps {
 }
 
 export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalProps) => {
+  const router = useRouter();
   const form = useForm<TDisableTwoFactorFormState>({
     defaultValues: {
       password: "",
@@ -51,6 +53,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
     const disableTwoFactorAuthResponse = await disableTwoFactorAuthAction({ code, password, backupCode });
     if (disableTwoFactorAuthResponse?.data) {
       toast.success(disableTwoFactorAuthResponse.data.message);
+      router.refresh();
       form.reset();
       setOpen(false);
     } else {
@@ -178,7 +181,14 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                 </Button>
               </div>
               <div className="flex items-center space-x-4">
-                <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    form.reset();
+                    setOpen(false);
+                  }}>
                   {t("common.cancel")}
                 </Button>
 

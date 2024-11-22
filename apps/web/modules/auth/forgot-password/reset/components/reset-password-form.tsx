@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
 import { PasswordChecks } from "@/modules/auth/signup/components/password-checks";
 import { Button } from "@/modules/ui/components/button";
@@ -54,10 +55,11 @@ export const ResetPasswordForm = () => {
       return;
     }
     const resetPasswordResponse = await resetPasswordAction({ token, password: data.password });
-    if (resetPasswordResponse?.serverError) {
-      toast.error(resetPasswordResponse.serverError);
-    } else {
+    if (resetPasswordResponse?.data) {
       router.push("/auth/forgot-password/reset/success");
+    } else {
+      const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
+      toast.error(errorMessage);
     }
   };
 

@@ -18,6 +18,7 @@ export const createEmailToken = (email: string): string => {
 };
 
 export const getEmailFromEmailToken = (token: string): string => {
+  console.log(token);
   const payload = jwt.verify(token, env.NEXTAUTH_SECRET) as JwtPayload;
   try {
     // Try to decrypt first (for newer tokens)

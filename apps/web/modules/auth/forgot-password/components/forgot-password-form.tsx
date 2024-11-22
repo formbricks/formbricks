@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
@@ -9,10 +10,9 @@ import { useRouter } from "next/navigation";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { ZUserEmail } from "@formbricks/types/user";
 
 const ZForgotPasswordForm = z.object({
-  email: ZUserEmail,
+  email: z.string().email(),
 });
 
 type TForgotPasswordForm = z.infer<typeof ZForgotPasswordForm>;
@@ -29,10 +29,11 @@ export const ForgotPasswordForm = () => {
 
   const handleSubmit: SubmitHandler<TForgotPasswordForm> = async (data) => {
     const forgotPasswordResponse = await forgotPasswordAction({ email: data.email });
-    if (forgotPasswordResponse?.serverError) {
-      toast.error(forgotPasswordResponse.serverError);
-    } else {
+    if (forgotPasswordResponse?.data) {
       router.push("/auth/forgot-password/email-sent");
+    } else {
+      const errorMessage = getFormattedErrorMessage(forgotPasswordResponse);
+      toast.error(errorMessage);
     }
   };
 

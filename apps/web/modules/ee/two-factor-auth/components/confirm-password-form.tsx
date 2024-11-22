@@ -1,7 +1,7 @@
 "use client";
 
-import { setupTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { setupTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FormProvider } from "react-hook-form";
+import toast from "react-hot-toast";
 import { z } from "zod";
 import { ZUserPassword } from "@formbricks/types/user";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
@@ -38,7 +39,7 @@ export const ConfirmPasswordForm = ({
     },
     resolver: zodResolver(ZConfirmPasswordFormState),
   });
-  const { handleSubmit, setError } = form;
+  const { handleSubmit } = form;
   const t = useTranslations();
 
   const onSubmit: SubmitHandler<TConfirmPasswordFormState> = async (data) => {
@@ -51,7 +52,7 @@ export const ConfirmPasswordForm = ({
       setCurrentStep("scanQRCode");
     } else {
       const errorMessage = getFormattedErrorMessage(setupTwoFactorAuthResponse);
-      setError("password", { message: errorMessage });
+      toast.error(errorMessage);
     }
   };
 

@@ -2,7 +2,9 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteMemberEmail } from "@/modules/email";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
@@ -20,6 +22,10 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     if (INVITE_DISABLED) {
       throw new AuthenticationError("Invite disabled");
+    }
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      throw new AuthenticationError("Not authenticated");
     }
 
     await checkAuthorizationUpdated({
@@ -42,6 +48,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         name: "",
         role: "manager",
       },
+      currentUserId: session.user.id,
     });
 
     if (invite) {

@@ -1,3 +1,5 @@
+import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
+import { verifyPassword } from "@/modules/auth/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import AzureAD from "next-auth/providers/azure-ad";
@@ -5,9 +7,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@formbricks/database";
-import { TUserNotificationSettings } from "@formbricks/types/user";
-import { createAccount } from "./account/service";
-import { verifyPassword } from "./auth/utils";
+import { createAccount } from "@formbricks/lib/account/service";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
@@ -25,13 +25,13 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
   OIDC_SIGNING_ALGORITHM,
-} from "./constants";
-import { symmetricDecrypt, symmetricEncrypt } from "./crypto";
-import { verifyToken } from "./jwt";
-import { createMembership } from "./membership/service";
-import { createOrganization, getOrganization } from "./organization/service";
-import { createUser, getUserByEmail, updateUser } from "./user/service";
-import { findMatchingLocale } from "./utils/locale";
+} from "@formbricks/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
+import { verifyToken } from "@formbricks/lib/jwt";
+import { createMembership } from "@formbricks/lib/membership/service";
+import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export const authOptions: NextAuthOptions = {
   providers: [

@@ -1,4 +1,5 @@
-import { enableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { enableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 import { useTranslations } from "next-intl";
@@ -37,7 +38,8 @@ export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodePro
         // refresh data to update the UI
         refreshData();
       } else {
-        toast.error(t("environments.settings.profile.the_2fa_otp_is_incorrect_please_try_again"));
+        const errorMessage = getFormattedErrorMessage(enableTwoFactorAuthResponse);
+        toast.error(errorMessage);
       }
     } catch (err) {
       toast.error(err.message);

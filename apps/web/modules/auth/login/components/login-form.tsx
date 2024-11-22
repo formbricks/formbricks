@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
@@ -90,11 +91,12 @@ export const LoginForm = ({
 
       if (signInResponse?.error === "Email Verification is Pending") {
         const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
-        if (emailTokenActionResponse?.serverError) {
-          toast.error(emailTokenActionResponse.serverError);
-          return;
+        if (emailTokenActionResponse?.data) {
+          router.push(`/auth/verification-requested?token=${emailTokenActionResponse?.data}`);
+        } else {
+          const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
+          toast.error(errorMessage);
         }
-        router.push(`/auth/verification-requested?token=${emailTokenActionResponse?.data}`);
         return;
       }
 

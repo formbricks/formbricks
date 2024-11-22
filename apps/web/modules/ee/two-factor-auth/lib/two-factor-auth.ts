@@ -1,12 +1,13 @@
+import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
+import { verifyPassword } from "@/modules/auth/lib/utils";
 import crypto from "crypto";
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
 import { prisma } from "@formbricks/database";
-import { verifyPassword } from "../auth";
-import { ENCRYPTION_KEY } from "../constants";
-import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
-import { totpAuthenticatorCheck } from "../totp";
-import { userCache } from "../user/cache";
+import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
+import { userCache } from "@formbricks/lib/user/cache";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const setupTwoFactorAuth = async (
   userId: string,
@@ -31,21 +32,21 @@ export const setupTwoFactorAuth = async (
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new ResourceNotFoundError("user", userId);
   }
 
   if (!user.password) {
-    throw new Error("User does not have a password set");
+    throw new InvalidInputError("User does not have a password set");
   }
 
   if (user.identityProvider !== "email") {
-    throw new Error("Third party login is already enabled");
+    throw new InvalidInputError("Third party login is already enabled");
   }
 
   const isCorrectPassword = await verifyPassword(password, user.password);
 
   if (!isCorrectPassword) {
-    throw new Error("Incorrect password");
+    throw new InvalidInputError("Incorrect password");
   }
 
   if (!ENCRYPTION_KEY) {
@@ -78,23 +79,23 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new ResourceNotFoundError("user", id);
   }
 
   if (!user.password) {
-    throw new Error("User does not have a password set");
+    throw new InvalidInputError("User does not have a password set");
   }
 
   if (user.identityProvider !== "email") {
-    throw new Error("Third party login is already enabled");
+    throw new InvalidInputError("Third party login is already enabled");
   }
 
   if (user.twoFactorEnabled) {
-    throw new Error("Two factor authentication is already enabled");
+    throw new InvalidInputError("Two factor authentication is already enabled");
   }
 
   if (!user.twoFactorSecret) {
-    throw new Error("Two factor setup has not been completed");
+    throw new InvalidInputError("Two factor setup has not been completed");
   }
 
   if (!ENCRYPTION_KEY) {
@@ -103,12 +104,12 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
 
   const secret = symmetricDecrypt(user.twoFactorSecret, ENCRYPTION_KEY);
   if (secret.length !== 32) {
-    throw new Error("Invalid secret");
+    throw new InvalidInputError("Invalid secret");
   }
 
   const isValidCode = totpAuthenticatorCheck(code, secret);
   if (!isValidCode) {
-    throw new Error("Invalid code");
+    throw new InvalidInputError("Invalid code");
   }
 
   await prisma.user.update({
@@ -143,26 +144,26 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new ResourceNotFoundError("user", id);
   }
 
   if (!user.password) {
-    throw new Error("User does not have a password set");
+    throw new InvalidInputError("User does not have a password set");
   }
 
   if (!user.twoFactorEnabled) {
-    throw new Error("Two factor authentication is not enabled");
+    throw new InvalidInputError("Two factor authentication is not enabled");
   }
 
   if (user.identityProvider !== "email") {
-    throw new Error("Third party login is already enabled");
+    throw new InvalidInputError("Third party login is already enabled");
   }
 
   const { code, password, backupCode } = params;
   const isCorrectPassword = await verifyPassword(password, user.password);
 
   if (!isCorrectPassword) {
-    throw new Error("Incorrect password");
+    throw new InvalidInputError("Incorrect password");
   }
 
   // if user has 2fa and using backup code
@@ -172,7 +173,7 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
     }
 
     if (!user.backupCodes) {
-      throw new Error("Missing backup codes");
+      throw new InvalidInputError("Missing backup codes");
     }
 
     const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, ENCRYPTION_KEY));
@@ -180,7 +181,7 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
     // check if user-supplied code matches one
     const index = backupCodes.indexOf(backupCode.replaceAll("-", ""));
     if (index === -1) {
-      throw new Error("Incorrect backup code");
+      throw new InvalidInputError("Incorrect backup code");
     }
 
     // we delete all stored backup codes at the end, no need to do this here
@@ -188,11 +189,11 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
     // if user has 2fa and NOT using backup code, try totp
   } else if (user.twoFactorEnabled) {
     if (!code) {
-      throw new Error("Two factor code required");
+      throw new InvalidInputError("Two factor code required");
     }
 
     if (!user.twoFactorSecret) {
-      throw new Error("Two factor setup has not been completed");
+      throw new InvalidInputError("Two factor setup has not been completed");
     }
 
     if (!ENCRYPTION_KEY) {
@@ -201,12 +202,12 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
 
     const secret = symmetricDecrypt(user.twoFactorSecret, ENCRYPTION_KEY);
     if (secret.length !== 32) {
-      throw new Error("Invalid secret");
+      throw new InvalidInputError("Invalid secret");
     }
 
     const isValidCode = totpAuthenticatorCheck(code, secret);
     if (!isValidCode) {
-      throw new Error("Invalid code");
+      throw new InvalidInputError("Invalid code");
     }
   }
 

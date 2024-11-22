@@ -1,9 +1,10 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
+import { getUserByEmail } from "@/modules/auth/lib/user";
 import { sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
-import { getUserByEmail } from "@formbricks/lib/user/service";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 const ZResendVerificationEmailAction = z.object({
   email: z.string().max(255).email({ message: "Invalid email" }),
@@ -14,10 +15,11 @@ export const resendVerificationEmailAction = actionClient
   .action(async ({ parsedInput }) => {
     const user = await getUserByEmail(parsedInput.email);
     if (!user) {
-      throw new Error("No user with this email address found");
+      throw new ResourceNotFoundError("user", parsedInput.email);
     }
     if (user.emailVerified) {
-      throw new Error("Email address has already been verified");
+      throw new InvalidInputError("Email address has already been verified");
     }
     await sendVerificationEmail(user);
+    return { success: true };
   });

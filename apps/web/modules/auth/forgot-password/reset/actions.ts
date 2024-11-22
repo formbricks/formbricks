@@ -2,11 +2,11 @@
 
 import { actionClient } from "@/lib/utils/action-client";
 import { updateUser } from "@/modules/auth/lib/user";
+import { getUser } from "@/modules/auth/lib/user";
 import { sendPasswordResetNotifyEmail } from "@/modules/email";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
 import { verifyToken } from "@formbricks/lib/jwt";
-import { getUser } from "@formbricks/lib/user/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
 
@@ -26,4 +26,5 @@ export const resetPasswordAction = actionClient
     }
     const updatedUser = await updateUser(id, { password: hashedPassword });
     await sendPasswordResetNotifyEmail(updatedUser);
+    return { success: true };
   });

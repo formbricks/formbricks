@@ -2,7 +2,9 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteMemberEmail } from "@/modules/email";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
@@ -20,10 +22,14 @@ const ZInviteOrganizationMemberAction = z.object({
 export const inviteOrganizationMemberAction = authenticatedActionClient
   .schema(ZInviteOrganizationMemberAction)
   .action(async ({ ctx, parsedInput }) => {
+    const session = await getServerSession(authOptions);
     if (INVITE_DISABLED) {
       throw new AuthenticationError("Invite disabled");
     }
-
+    const currentUser = session?.user;
+    if (!currentUser) {
+      throw new AuthenticationError("Not Authenticated");
+    }
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -42,6 +48,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         name: "",
         role: parsedInput.role,
       },
+      currentUserId: currentUser.id,
     });
 
     if (invite) {

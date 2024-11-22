@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
@@ -29,10 +30,11 @@ export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProp
   const requestVerificationEmail = async () => {
     if (!email) return toast.error(t("auth.verification-requested.no_email_provided"));
     const response = await resendVerificationEmailAction({ email });
-    if (response?.serverError) {
-      toast.error(response.serverError);
-    } else {
+    if (response?.data) {
       toast.success(t("auth.verification-requested.verification_email_successfully_sent"));
+    } else {
+      const errorMessage = getFormattedErrorMessage(response);
+      toast.error(errorMessage);
     }
   };
 

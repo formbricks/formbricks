@@ -1,6 +1,8 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
+import { createUser } from "@/modules/auth/lib/user";
+import { updateUser } from "@/modules/auth/lib/user";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
@@ -10,7 +12,6 @@ import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { createUser, updateUser } from "@formbricks/lib/user/service";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserLocale, ZUserName } from "@formbricks/types/user";
 

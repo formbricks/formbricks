@@ -1,7 +1,7 @@
 import { DeleteProductRender } from "@/app/(app)/environments/[environmentId]/product/general/components/DeleteProductRender";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUserProducts } from "@formbricks/lib/product/service";
 import { TProduct } from "@formbricks/types/product";

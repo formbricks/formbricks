@@ -1,8 +1,8 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Toaster } from "react-hot-toast";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 
 export const AuthLayout = async ({ children }: { children: React.ReactNode }) => {

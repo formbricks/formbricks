@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
@@ -108,22 +109,23 @@ export const SignupForm = ({
         defaultOrganizationRole,
       });
 
-      if (createUserResponse?.serverError) {
-        toast.error(createUserResponse.serverError);
-        return;
-      }
+      if (createUserResponse?.data) {
+        const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
+        if (emailTokenActionResponse?.data) {
+          const token = emailTokenActionResponse?.data;
+          const url = emailVerificationDisabled
+            ? `/auth/signup-without-verification-success`
+            : `/auth/verification-requested?token=${token}`;
 
-      const emailTokenActionResponse = await createEmailTokenAction({ email: data.email });
-      if (emailTokenActionResponse?.serverError) {
-        toast.error(emailTokenActionResponse.serverError);
-        return;
+          router.push(url);
+        } else {
+          const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
+          toast.error(errorMessage);
+        }
+      } else {
+        const errorMessage = getFormattedErrorMessage(createUserResponse);
+        toast.error(errorMessage);
       }
-      const token = emailTokenActionResponse?.data;
-      const url = emailVerificationDisabled
-        ? `/auth/signup-without-verification-success`
-        : `/auth/verification-requested?token=${token}`;
-
-      router.push(url);
     } catch (e: any) {
       toast.error(e.message);
     }
