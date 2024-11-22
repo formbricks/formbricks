@@ -25,16 +25,16 @@ const ZCreateLanguageAction = z.object({
   languageInput: ZLanguageInput,
 });
 
-const checkMultiLanguagePermission = async (organizationId: string) => {
+export const checkMultiLanguagePermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
 
   if (!organization) {
     throw new Error("Organization not found");
   }
 
-  const isAdvancedTargetingAllowed = await getMultiLanguagePermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
-  if (!isAdvancedTargetingAllowed) {
+  if (!isMultiLanguageAllowed) {
     throw new OperationNotAllowedError("Multi language is not allowed for this organization");
   }
 };

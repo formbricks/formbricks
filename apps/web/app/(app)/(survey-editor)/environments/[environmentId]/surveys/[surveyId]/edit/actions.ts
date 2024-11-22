@@ -13,6 +13,7 @@ import {
 } from "@/lib/utils/helper";
 import { getSegment, getSurvey } from "@/lib/utils/services";
 import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
+import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
@@ -74,6 +75,10 @@ export const updateSurveyAction = authenticatedActionClient
 
     if (parsedInput.followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);
+    }
+
+    if (parsedInput.languages?.length) {
+      await checkMultiLanguagePermission(organizationId);
     }
 
     return await updateSurvey(parsedInput);
