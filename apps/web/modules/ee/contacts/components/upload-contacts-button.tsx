@@ -106,18 +106,25 @@ export const UploadContactsCSVButton = ({
     setLoading(true);
     setErrror("");
 
-    // check for duplicate values in the attribute map
     const values = Object.values(attributeMap);
 
     if (new Set(values).size !== values.length) {
-      const entries = Object.entries(attributeMap);
-      const duplicateKeyValuePairs = entries.filter(
-        ([key, value], index) => entries.indexOf([key, value]) !== index
+      const valueCount = values.reduce((acc, value) => {
+        acc[value] = (acc[value] || 0) + 1;
+        return acc;
+      }, {}) as Record<string, number>;
+
+      const duplicateValues = Object.entries(valueCount)
+        .filter(([_, count]) => count > 1)
+        .map(([value, _]) => value);
+
+      const duplicateAttributeKeys = Object.entries(attributeMap)
+        .filter(([_, value]) => duplicateValues.includes(value))
+        .map(([key, _]) => key);
+
+      setErrror(
+        `Duplicate mappings found for the following attributes: ${duplicateAttributeKeys.join(", ")}`
       );
-
-      const duplicateKeys = duplicateKeyValuePairs.map(([key, _]) => key);
-
-      setErrror(`Duplicate mappings found for the following attributes: ${duplicateKeys.join(", ")}`);
       setLoading(false);
       return;
     }

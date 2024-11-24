@@ -568,6 +568,20 @@
       "subtitle": "It takes less than 4 minutes.",
       "waiting_for_your_signal": "Waiting for your signal..."
     },
+    "contacts": {
+      "contact_not_found": "No such contact found",
+      "error_fetching_next_page_of_people_data": "Error fetching next page of people data",
+      "error_fetching_people_data": "Error fetching people data",
+      "fetching_user": "Fetching user",
+      "formbricks_id": "Formbricks Id (internal)",
+      "how_to_add_people": "How to add people",
+      "loading_user_responses": "Loading user responses",
+      "no_responses_found": "No responses found",
+      "not_provided": "Not provided",
+      "person_deleted_successfully": "Person deleted successfully",
+      "search_person": "Search person",
+      "sessions": "Sessions"
+    },
     "experience": {
       "all": "All",
       "all_time": "All time",
@@ -723,20 +737,6 @@
       },
       "website_or_app_integration_description": "Integrate Formbricks into your Website or App",
       "zapier_integration_description": "Integrate Formbricks with 5000+ apps via Zapier"
-    },
-    "people": {
-      "contact_not_found": "No such contact found",
-      "error_fetching_next_page_of_people_data": "Error fetching next page of people data",
-      "error_fetching_people_data": "Error fetching people data",
-      "fetching_user": "Fetching user",
-      "formbricks_id": "Formbricks Id (internal)",
-      "how_to_add_people": "How to add people",
-      "loading_user_responses": "Loading user responses",
-      "no_responses_found": "No responses found",
-      "not_provided": "Not provided",
-      "person_deleted_successfully": "Person deleted successfully",
-      "search_person": "Search person",
-      "sessions": "Sessions"
     },
     "product": {
       "api-keys": {
