@@ -1,10 +1,11 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getIsMultiOrgEnabled, getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
+  ENTERPRISE_LICENSE_KEY,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   OIDC_DISPLAY_NAME,
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 export const LoginPage = async () => {
-  const [isMultiOrgEnabled, isSSOEnabled] = await Promise.all([getIsMultiOrgEnabled(), getIsSSOEnabled()]);
+  const [isMultiOrgEnabled] = await Promise.all([getIsMultiOrgEnabled()]);
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -38,7 +39,7 @@ export const LoginPage = async () => {
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
             isMultiOrgEnabled={isMultiOrgEnabled}
-            isSSOEnabled={isSSOEnabled}
+            isSSOEnabled={ENTERPRISE_LICENSE_KEY ? true : false}
           />
         </FormWrapper>
       </div>

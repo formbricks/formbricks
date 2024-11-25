@@ -1,6 +1,6 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getIsMultiOrgEnabled, getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import {
   AZURE_OAUTH_ENABLED,
@@ -8,6 +8,7 @@ import {
   DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
+  ENTERPRISE_LICENSE_KEY,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   OIDC_DISPLAY_NAME,
@@ -22,7 +23,7 @@ import { SignupForm } from "./components/signup-form";
 
 export const SignupPage = async ({ searchParams }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const [isMultOrgEnabled, isSSOEnabled] = await Promise.all([getIsMultiOrgEnabled(), getIsSSOEnabled()]);
+  const [isMultOrgEnabled] = await Promise.all([getIsMultiOrgEnabled()]);
   const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
@@ -51,7 +52,7 @@ export const SignupPage = async ({ searchParams }) => {
             emailFromSearchParams={emailFromSearchParams}
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-            isSSOEnabled={isSSOEnabled}
+            isSSOEnabled={ENTERPRISE_LICENSE_KEY ? true : false}
           />
         </FormWrapper>
       </div>
