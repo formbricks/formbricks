@@ -136,7 +136,7 @@ export const AddressQuestionForm = ({
         {question.subheader === undefined && (
           <Button
             size="sm"
-            variant="minimal"
+            variant="secondary"
             className="mt-4"
             type="button"
             onClick={() => {

@@ -155,7 +155,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("main").getByText("What would you like to know?").click();
 
   await page.getByLabel("Question*").fill(params.openTextQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
@@ -169,7 +169,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Single-Select" }).click();
   await page.getByLabel("Question*").fill(params.singleSelectQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
@@ -183,7 +183,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Multi-Select" }).click();
   await page.getByLabel("Question*").fill(params.multiSelectQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.multiSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.multiSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.multiSelectQuestion.options[1]);
@@ -197,7 +197,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Rating" }).click();
   await page.getByLabel("Question*").fill(params.ratingQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.ratingQuestion.description);
   await page.getByPlaceholder("Not good").fill(params.ratingQuestion.lowLabel);
   await page.getByPlaceholder("Very satisfied").fill(params.ratingQuestion.highLabel);
@@ -241,7 +241,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Picture Selection" }).click();
   await page.getByLabel("Question*").fill(params.pictureSelectQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.pictureSelectQuestion.description);
 
   // File Upload Question
@@ -261,7 +261,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Matrix" }).click();
   await page.getByLabel("Question*").fill(params.matrix.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.matrix.description);
   await page.locator("#row-0").click();
   await page.locator("#row-0").fill(params.matrix.rows[0]);
@@ -357,7 +357,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("main").getByText("What would you like to know?").click();
 
   await page.getByLabel("Question*").fill(params.openTextQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.openTextQuestion.description);
   await page.getByLabel("Placeholder").fill(params.openTextQuestion.placeholder);
 
@@ -371,7 +371,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Single-Select" }).click();
   await page.getByLabel("Question*").fill(params.singleSelectQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.singleSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.singleSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.singleSelectQuestion.options[1]);
@@ -386,7 +386,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Multi-Select" }).click();
   await page.getByLabel("Question*").fill(params.multiSelectQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.multiSelectQuestion.description);
   await page.getByPlaceholder("Option 1").fill(params.multiSelectQuestion.options[0]);
   await page.getByPlaceholder("Option 2").fill(params.multiSelectQuestion.options[1]);
@@ -400,7 +400,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Picture Selection" }).click();
   await page.getByLabel("Question*").fill(params.pictureSelectQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.pictureSelectQuestion.description);
   await page.getByLabel("Required").click();
 
@@ -412,7 +412,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Rating" }).click();
   await page.getByLabel("Question*").fill(params.ratingQuestion.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.ratingQuestion.description);
   await page.getByPlaceholder("Not good").fill(params.ratingQuestion.lowLabel);
   await page.getByPlaceholder("Very satisfied").fill(params.ratingQuestion.highLabel);
@@ -446,7 +446,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Matrix" }).click();
   await page.getByLabel("Question*").fill(params.matrix.question);
-  await page.getByRole("button", { name: "Add Description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description", exact: true }).click();
   await page.getByLabel("Description").fill(params.matrix.description);
   await page.locator("#row-0").click();
   await page.locator("#row-0").fill(params.matrix.rows[0]);

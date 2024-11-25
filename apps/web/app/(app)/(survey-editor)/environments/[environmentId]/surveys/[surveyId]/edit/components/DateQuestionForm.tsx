@@ -93,7 +93,7 @@ export const DateQuestionForm = ({
           <Button
             size="sm"
             className="mt-3"
-            variant="minimal"
+            variant="secondary"
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
