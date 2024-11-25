@@ -1,4 +1,5 @@
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
+import { getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import {
@@ -7,7 +8,6 @@ import {
   DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
-  ENTERPRISE_LICENSE_KEY,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   OIDC_DISPLAY_NAME,
@@ -25,6 +25,7 @@ export const metadata: Metadata = {
 
 const Page = async () => {
   const locale = await findMatchingLocale();
+  const isSSOEnabled = await getIsSSOEnabled();
   const t = await getTranslations();
   return (
     <div className="flex flex-col items-center">
@@ -45,7 +46,7 @@ const Page = async () => {
         userLocale={locale}
         defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
         defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-        isSSOEnabled={ENTERPRISE_LICENSE_KEY ? true : false}
+        isSSOEnabled={isSSOEnabled}
       />
     </div>
   );

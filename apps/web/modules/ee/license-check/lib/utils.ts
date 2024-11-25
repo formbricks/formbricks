@@ -81,7 +81,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
       // first call
       const newResult = {
         active: true,
-        features: { isMultiOrgEnabled: true, twoFactorAuth: true },
+        features: { isMultiOrgEnabled: true, twoFactorAuth: true, sso: true },
         lastChecked: currentTime,
       };
       await setPreviousResult(newResult);
@@ -138,7 +138,7 @@ export const getEnterpriseLicense = async (): Promise<{
     if (isValid === null) {
       const newResult = {
         active: false,
-        features: { isMultiOrgEnabled: false, twoFactorAuth: false },
+        features: { isMultiOrgEnabled: false, twoFactorAuth: false, sso: false },
         lastChecked: new Date(),
       };
 
@@ -320,6 +320,17 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
   if (!licenseFeatures) return false;
   return licenseFeatures.twoFactorAuth;
 };
+
+export const getIsSSOEnabled = async (): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? previousResult.features.sso : false;
+  }
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return licenseFeatures.sso;
+};
+
 export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
   // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
   if (IS_FORMBRICKS_CLOUD) {
