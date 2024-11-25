@@ -1,7 +1,7 @@
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
-import { handleSSOCallback } from "@/modules/ee/sso/lib/ssoHandlers";
+import { handleSSOCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@formbricks/database";
