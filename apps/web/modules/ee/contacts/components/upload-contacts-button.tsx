@@ -235,7 +235,7 @@ export const UploadContactsCSVButton = ({
               </label>
             ) : (
               <div className="flex flex-col items-center gap-8">
-                <h3 className="text-lg font-medium text-slate-500">Here&apos;s a preview of your data.</h3>
+                <h3 className="font-medium text-slate-500">Here&apos;s a preview of your data.</h3>
                 <div className="h-[300px] w-full overflow-auto rounded-md border border-slate-300">
                   <CsvTable data={[...csvResponse.slice(0, 11)]} />
                 </div>
