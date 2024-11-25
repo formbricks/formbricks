@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { TOrganization } from "@formbricks/types/organizations";
 
 type DeleteOrganizationProps = {
@@ -34,6 +35,9 @@ export const DeleteOrganization = ({
     try {
       await deleteOrganizationAction({ organizationId: organization.id });
       toast.success(t("environments.settings.general.organization_deleted_successfully"));
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      }
       router.push("/");
     } catch (err) {
       toast.error(t("environments.settings.general.error_deleting_organization_please_try_again"));

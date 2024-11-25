@@ -640,6 +640,7 @@
         "no_integrations_yet": "Deine verknüpften Tabellen werden hier angezeigt, sobald Du sie hinzufügst ⏲️",
         "spreadsheet_url": "Tabellen-URL"
       },
+      "include_created_at": "Erstellungsdatum einbeziehen",
       "include_hidden_fields": "Versteckte Felder (hidden fields) einbeziehen",
       "include_metadata": "Metadaten einbeziehen (Browser, Land, etc.)",
       "include_variables": "Variablen einbeziehen",
