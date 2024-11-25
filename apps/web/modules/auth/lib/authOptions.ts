@@ -1,30 +1,17 @@
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
+import { getSSOProviders } from "@/modules/ee/sso/providers";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
-import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GitHubProvider from "next-auth/providers/github";
-import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@formbricks/database";
 import { createAccount } from "@formbricks/lib/account/service";
 import {
-  AZUREAD_CLIENT_ID,
-  AZUREAD_CLIENT_SECRET,
-  AZUREAD_TENANT_ID,
   DEFAULT_ORGANIZATION_ID,
   DEFAULT_ORGANIZATION_ROLE,
   EMAIL_VERIFICATION_DISABLED,
   ENCRYPTION_KEY,
-  GITHUB_ID,
-  GITHUB_SECRET,
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
-  OIDC_CLIENT_ID,
-  OIDC_CLIENT_SECRET,
-  OIDC_DISPLAY_NAME,
-  OIDC_ISSUER,
-  OIDC_SIGNING_ALGORITHM,
+  ENTERPRISE_LICENSE_KEY,
 } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import { verifyToken } from "@formbricks/lib/jwt";
@@ -182,42 +169,8 @@ export const authOptions: NextAuthOptions = {
         return user;
       },
     }),
-    GitHubProvider({
-      clientId: GITHUB_ID || "",
-      clientSecret: GITHUB_SECRET || "",
-    }),
-    GoogleProvider({
-      clientId: GOOGLE_CLIENT_ID || "",
-      clientSecret: GOOGLE_CLIENT_SECRET || "",
-      allowDangerousEmailAccountLinking: true,
-    }),
-    AzureAD({
-      clientId: AZUREAD_CLIENT_ID || "",
-      clientSecret: AZUREAD_CLIENT_SECRET || "",
-      tenantId: AZUREAD_TENANT_ID || "",
-    }),
-    {
-      id: "openid",
-      name: OIDC_DISPLAY_NAME || "OpenId",
-      type: "oauth",
-      clientId: OIDC_CLIENT_ID || "",
-      clientSecret: OIDC_CLIENT_SECRET || "",
-      wellKnown: `${OIDC_ISSUER}/.well-known/openid-configuration`,
-      authorization: { params: { scope: "openid email profile" } },
-      idToken: true,
-      client: {
-        id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM || "RS256",
-      },
-      checks: ["pkce", "state"],
-      profile: (profile) => {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-        };
-      },
-    },
+    // Conditionally add enterprise SSO providers
+    ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   callbacks: {
     async jwt({ token }) {
