@@ -151,7 +151,7 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
 };
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 30,
+  allowedPerInterval: 100,
 };
 export const FORGET_PASSWORD_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes

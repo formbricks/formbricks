@@ -2,19 +2,22 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/OrganizationActions";
 import { getMembershipsByUserId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
-import { getIsOrganizationAIReady } from "@/app/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsOrganizationAIReady,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { SettingsId } from "@formbricks/ui/components/SettingsId";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditMemberships } from "./components/EditMemberships";
@@ -124,7 +127,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             organization={organization}
             isDeleteDisabled={isDeleteDisabled}
             isUserOwner={currentUserRole === "owner"}
-            isMultiOrgEnabled={isMultiOrgEnabled}
           />
         </SettingsCard>
       )}

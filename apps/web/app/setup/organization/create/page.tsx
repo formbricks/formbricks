@@ -1,16 +1,16 @@
 import { RemovedFromOrganization } from "@/app/setup/organization/create/components/RemovedFromOrganization";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { ClientLogout } from "@formbricks/ui/components/ClientLogout";
 import { CreateOrganization } from "./components/CreateOrganization";
 
 export const metadata: Metadata = {

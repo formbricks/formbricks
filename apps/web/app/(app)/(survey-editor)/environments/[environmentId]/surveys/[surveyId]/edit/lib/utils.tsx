@@ -1,7 +1,9 @@
+import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
+import { translate } from "@formbricks/lib/templates";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
@@ -13,13 +15,14 @@ import {
   TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,
+  TSurveyLogicActions,
   TSurveyLogicConditionsOperator,
   TSurveyQuestion,
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
-import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/components/InputCombobox";
+import { TUserLocale } from "@formbricks/types/user";
 import { TLogicRuleOption, logicRules } from "./logicRuleEngine";
 
 // formats the text to highlight specific parts of the text with slashes
@@ -146,6 +149,10 @@ export const actionObjectiveOptions: TComboboxOption[] = [
   { label: "environments.surveys.edit.require_answer", value: "requireAnswer" },
   { label: "environments.surveys.edit.jump_to_question", value: "jumpToQuestion" },
 ];
+
+export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean => {
+  return actions.some((action) => action.objective === "jumpToQuestion");
+};
 
 const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {
   let options: TLogicRuleOption;
@@ -603,8 +610,10 @@ export const getMatchValueProps = (
         options: groupedOptions,
       };
     } else if (selectedVariable?.type === "number") {
-      const allowedQuestions = questions.filter((question) =>
-        [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+      const allowedQuestions = questions.filter(
+        (question) =>
+          [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type) ||
+          (question.type === TSurveyQuestionTypeEnum.OpenText && question.inputType === "number")
       );
 
       const questionOptions = allowedQuestions.map((question) => {
@@ -940,8 +949,10 @@ export const getActionValueOptions = (
 
     return groupedOptions;
   } else if (selectedVariable.type === "number") {
-    const allowedQuestions = questions.filter((question) =>
-      [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type)
+    const allowedQuestions = questions.filter(
+      (question) =>
+        [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS].includes(question.type) ||
+        (question.type === TSurveyQuestionTypeEnum.OpenText && question.inputType === "number")
     );
 
     const questionOptions = allowedQuestions.map((question) => {
@@ -1146,6 +1157,10 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   };
 
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
+};
+
+export const getSurveyFollowUpActionDefaultBody = (locale: TUserLocale) => {
+  return translate("follow_ups_modal_action_body", locale) as string;
 };
 
 export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {

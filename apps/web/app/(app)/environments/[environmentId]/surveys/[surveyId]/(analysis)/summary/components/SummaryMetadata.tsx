@@ -1,7 +1,7 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface SummaryMetadataProps {
   setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;

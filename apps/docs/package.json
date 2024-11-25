@@ -18,7 +18,6 @@
     "@docsearch/react": "3.6.2",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@formbricks/ui": "workspace:*",
     "@headlessui/react": "2.1.9",
     "@headlessui/tailwindcss": "0.2.1",
     "@mapbox/rehype-prism": "0.9.0",

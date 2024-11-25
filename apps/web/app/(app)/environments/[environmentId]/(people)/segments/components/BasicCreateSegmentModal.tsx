@@ -1,6 +1,12 @@
 "use client";
 
 import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
+import { BasicAddFilterModal } from "@/modules/ui/components/basic-add-filter-modal";
+import { BasicSegmentEditor } from "@/modules/ui/components/basic-segment-editor";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Modal } from "@/modules/ui/components/modal";
+import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -9,12 +15,6 @@ import toast from "react-hot-toast";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { BasicAddFilterModal } from "@formbricks/ui/components/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/components/BasicSegmentEditor";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Modal } from "@formbricks/ui/components/Modal";
-import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 
 type TCreateSegmentModalProps = {
   environmentId: string;

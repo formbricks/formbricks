@@ -1,7 +1,9 @@
 import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/lib/documents";
+import { sendSurveyFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getIsAIEnabled } from "@/app/lib/utils";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
@@ -43,6 +45,11 @@ export const POST = async (request: Request) => {
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
   const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
+
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
 
   // Fetch webhooks
   const getWebhooksForPipeline = cache(
@@ -158,6 +165,13 @@ export const POST = async (request: Request) => {
       select: { email: true, locale: true },
     });
 
+    // send follow up emails
+    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization);
+
+    if (surveyFollowUpsPermission) {
+      await sendSurveyFollowUps(survey, response);
+    }
+
     const emailPromises = usersWithNotifications.map((user) =>
       sendResponseFinishedEmail(
         user.email,
@@ -190,11 +204,6 @@ export const POST = async (request: Request) => {
     if (hasSurveyOpenTextQuestions) {
       const isAICofigured = IS_AI_CONFIGURED;
       if (hasSurveyOpenTextQuestions && isAICofigured) {
-        const organization = await getOrganizationByEnvironmentId(environmentId);
-        if (!organization) {
-          throw new Error("Organization not found");
-        }
-
         const isAIEnabled = await getIsAIEnabled(organization);
 
         if (isAIEnabled) {

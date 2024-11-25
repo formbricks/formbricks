@@ -1,4 +1,5 @@
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
+import { ClientLogout } from "@/modules/ui/components/client-logout";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -9,7 +10,6 @@ import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
-import { ClientLogout } from "@formbricks/ui/components/ClientLogout";
 
 const Page = async () => {
   const t = await getTranslations();

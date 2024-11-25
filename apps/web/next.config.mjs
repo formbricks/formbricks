@@ -20,14 +20,14 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   poweredByHeader: false,
-  experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk"],
-    instrumentationHook: true,
-    outputFileTracingIncludes: {
-      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
-    },
+  serverExternalPackages: ["@aws-sdk"],
+  outputFileTracingIncludes: {
+    "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
-  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  experimental: {
+    after: true,
+  },
+  transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {

@@ -6,6 +6,10 @@ import { GithubButton } from "@/modules/auth/components/SignupOptions/components
 import { GoogleButton } from "@/modules/auth/components/SignupOptions/components/GoogleButton";
 import { IsPasswordValid } from "@/modules/auth/components/SignupOptions/components/IsPasswordValid";
 import { OpenIdButton } from "@/modules/auth/components/SignupOptions/components/OpenIdButton";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -15,10 +19,6 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { createUser } from "@formbricks/lib/utils/users";
 import { ZUserName } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { PasswordInput } from "@formbricks/ui/components/PasswordInput";
 
 interface SignupOptionsProps {
   emailAuthEnabled: boolean;

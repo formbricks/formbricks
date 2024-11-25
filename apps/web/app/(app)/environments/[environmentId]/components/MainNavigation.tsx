@@ -5,6 +5,21 @@ import { NavigationLink } from "@/app/(app)/environments/[environmentId]/compone
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
+import { ProfileAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import {
   ArrowUpRightIcon,
   BlendIcon,
@@ -12,7 +27,6 @@ import {
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
-  GaugeIcon,
   GlobeIcon,
   GlobeLockIcon,
   KeyIcon,
@@ -43,21 +57,6 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
-import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
@@ -69,7 +68,6 @@ interface NavigationProps {
   isMultiOrgEnabled: boolean;
   isFormbricksCloud?: boolean;
   membershipRole?: TOrganizationRole;
-  isAIEnabled?: boolean;
 }
 
 export const MainNavigation = ({
@@ -81,7 +79,6 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   isFormbricksCloud = true,
   membershipRole,
-  isAIEnabled = false,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -163,13 +160,6 @@ export const MainNavigation = ({
 
   const mainNavigation = useMemo(
     () => [
-      {
-        name: t("common.experience"),
-        href: `/environments/${environment.id}/experience`,
-        icon: GaugeIcon,
-        isActive: pathname?.includes("/experience"),
-        isHidden: !isAIEnabled,
-      },
       {
         name: t("common.surveys"),
         href: `/environments/${environment.id}/surveys`,

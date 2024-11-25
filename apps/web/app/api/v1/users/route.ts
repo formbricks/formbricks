@@ -1,6 +1,6 @@
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { prisma } from "@formbricks/database";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import {
   DEFAULT_ORGANIZATION_ID,
   DEFAULT_ORGANIZATION_ROLE,
@@ -113,7 +113,6 @@ export const POST = async (request: Request) => {
     }
     // Without default organization assignment
     else {
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
       if (isMultiOrgEnabled) {
         const organization = await createOrganization({ name: user.name + "'s Organization" });
         await createMembership(organization.id, user.id, { role: "owner", accepted: true });

@@ -1,10 +1,12 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getIsAIEnabled } from "@/app/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
+import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
+import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
 import type { Session } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -17,9 +19,6 @@ import {
 } from "@formbricks/lib/organization/service";
 import { getUserProducts } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
-import { LimitsReachedBanner } from "@formbricks/ui/components/LimitsReachedBanner";
-import { PendingDowngradeBanner } from "@formbricks/ui/components/PendingDowngradeBanner";
 
 interface EnvironmentLayoutProps {
   environmentId: string;
@@ -81,8 +80,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
-  const isAIEnabled = await getIsAIEnabled(organization);
-
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
@@ -113,7 +110,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          isAIEnabled={isAIEnabled}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar

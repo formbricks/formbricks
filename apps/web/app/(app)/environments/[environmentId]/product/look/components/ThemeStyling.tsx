@@ -5,6 +5,18 @@ import { CardStylingSettings } from "@/app/(app)/(survey-editor)/environments/[e
 import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/product/look/components/ThemeStylingPreviewSurvey";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
+import { Switch } from "@/modules/ui/components/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcwIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -15,18 +27,6 @@ import toast from "react-hot-toast";
 import { COLOR_DEFAULTS, getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import { TProduct, TProductStyling, ZProductStyling } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormProvider,
-} from "@formbricks/ui/components/Form";
-import { Switch } from "@formbricks/ui/components/Switch";
 import { updateProductAction } from "../../actions";
 
 type ThemeStylingProps = {

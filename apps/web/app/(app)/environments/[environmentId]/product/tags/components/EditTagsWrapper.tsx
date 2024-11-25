@@ -7,6 +7,11 @@ import {
 } from "@/app/(app)/environments/[environmentId]/product/tags/actions";
 import { MergeTagsCombobox } from "@/app/(app)/environments/[environmentId]/product/tags/components/MergeTagsCombobox";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { Input } from "@/modules/ui/components/input";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { AlertCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -15,11 +20,6 @@ import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTag, TTagsCount } from "@formbricks/types/tags";
-import { Button } from "@formbricks/ui/components/Button";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
-import { Input } from "@formbricks/ui/components/Input";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 
 interface EditTagsWrapperProps {
   environment: TEnvironment;
