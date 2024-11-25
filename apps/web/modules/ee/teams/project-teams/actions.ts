@@ -3,6 +3,7 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProjectId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
+import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import {
   addTeamAccess,
   removeTeamAccess,
@@ -38,6 +39,8 @@ export const removeAccessAction = authenticatedActionClient
       ],
     });
 
+    await checkRoleManagementPermission(projectOrganizationId);
+
     return await removeTeamAccess(parsedInput.projectId, parsedInput.teamId);
   });
 
@@ -49,9 +52,10 @@ const ZAddAccessAction = z.object({
 export const addAccessAction = authenticatedActionClient
   .schema(ZAddAccessAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -59,6 +63,8 @@ export const addAccessAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkRoleManagementPermission(organizationId);
 
     return await addTeamAccess(parsedInput.projectId, parsedInput.teamIds);
   });
@@ -89,6 +95,8 @@ export const updateAccessPermissionAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkRoleManagementPermission(projectOrganizationId);
 
     return await updateTeamAccessPermission(
       parsedInput.projectId,

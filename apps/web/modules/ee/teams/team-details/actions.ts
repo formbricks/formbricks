@@ -3,6 +3,7 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProjectId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
+import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import {
   addTeamMembers,
@@ -29,9 +30,11 @@ const ZUpdateTeamNameAction = z.object({
 export const updateTeamNameAction = authenticatedActionClient
   .schema(ZUpdateTeamNameAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -39,6 +42,8 @@ export const updateTeamNameAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkRoleManagementPermission(organizationId);
 
     return await updateTeamName(parsedInput.teamId, parsedInput.name);
   });
@@ -50,9 +55,11 @@ const ZDeleteTeamAction = z.object({
 export const deleteTeamAction = authenticatedActionClient
   .schema(ZDeleteTeamAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -61,6 +68,7 @@ export const deleteTeamAction = authenticatedActionClient
       ],
     });
 
+    await checkRoleManagementPermission(organizationId);
     return await deleteTeam(parsedInput.teamId);
   });
 
@@ -73,9 +81,11 @@ const ZUpdateUserTeamRoleAction = z.object({
 export const updateUserTeamRoleAction = authenticatedActionClient
   .schema(ZUpdateUserTeamRoleAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -88,6 +98,8 @@ export const updateUserTeamRoleAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkRoleManagementPermission(organizationId);
 
     return await updateUserTeamRole(parsedInput.teamId, parsedInput.userId, parsedInput.role);
   });
@@ -100,16 +112,7 @@ const ZRemoveTeamMemberAction = z.object({
 export const removeTeamMemberAction = authenticatedActionClient
   .schema(ZRemoveTeamMemberAction)
   .action(async ({ ctx, parsedInput }) => {
-    const teamOrganizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
-    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, teamOrganizationId);
-
-    const { isOwner, isManager } = getAccessFlags(membership?.role);
-
-    const isOwnerOrManager = isOwner || isManager;
-
-    if (!isOwnerOrManager && ctx.user.id === parsedInput.userId) {
-      throw new Error("You can not remove yourself from the team");
-    }
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -126,6 +129,18 @@ export const removeTeamMemberAction = authenticatedActionClient
         },
       ],
     });
+
+    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, organizationId);
+
+    const { isOwner, isManager } = getAccessFlags(membership?.role);
+
+    const isOwnerOrManager = isOwner || isManager;
+
+    if (!isOwnerOrManager && ctx.user.id === parsedInput.userId) {
+      throw new Error("You can not remove yourself from the team");
+    }
+
+    await checkRoleManagementPermission(organizationId);
 
     return await removeTeamMember(parsedInput.teamId, parsedInput.userId);
   });
@@ -138,9 +153,10 @@ const ZAddTeamMembersAction = z.object({
 export const addTeamMembersAction = authenticatedActionClient
   .schema(ZAddTeamMembersAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -153,6 +169,8 @@ export const addTeamMembersAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkRoleManagementPermission(organizationId);
 
     return await addTeamMembers(parsedInput.teamId, parsedInput.userIds);
   });
@@ -183,6 +201,8 @@ export const updateTeamProjectPermissionAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkRoleManagementPermission(projectOrganizationId);
 
     return await updateTeamProjectPermission(
       parsedInput.teamId,
@@ -217,6 +237,8 @@ export const removeTeamProjectAction = authenticatedActionClient
       ],
     });
 
+    await checkRoleManagementPermission(projectOrganizationId);
+
     return await removeTeamProject(parsedInput.teamId, parsedInput.projectId);
   });
 
@@ -228,9 +250,11 @@ const ZAddTeamProjectsAction = z.object({
 export const addTeamProjectsAction = authenticatedActionClient
   .schema(ZAddTeamProjectsAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromTeamId(parsedInput.teamId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -238,6 +262,8 @@ export const addTeamProjectsAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkRoleManagementPermission(organizationId);
 
     return await addTeamProjects(parsedInput.teamId, parsedInput.projectIds);
   });

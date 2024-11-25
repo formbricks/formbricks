@@ -4,6 +4,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
+import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { z } from "zod";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getResponseDownloadUrl, getResponseFilteringValues } from "@formbricks/lib/response/service";
@@ -124,6 +125,10 @@ export const updateSurveyAction = authenticatedActionClient
 
     if (followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);
+    }
+
+    if (parsedInput.languages?.length) {
+      await checkMultiLanguagePermission(organizationId);
     }
 
     return await updateSurvey(parsedInput);

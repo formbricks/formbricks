@@ -1,6 +1,6 @@
 "use client";
 
-import { generateInsightsForSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { generateInsightsForSurveyAction } from "@/modules/ee/insights/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";

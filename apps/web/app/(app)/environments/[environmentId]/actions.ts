@@ -2,10 +2,10 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization } from "@formbricks/lib/organization/service";
+import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProject } from "@formbricks/lib/project/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
@@ -70,6 +70,8 @@ export const createProjectAction = authenticatedActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { user } = ctx;
 
+    const organizationId = parsedInput.organizationId;
+
     await checkAuthorizationUpdated({
       userId: user.id,
       organizationId: parsedInput.organizationId,
@@ -82,6 +84,20 @@ export const createProjectAction = authenticatedActionClient
         },
       ],
     });
+
+    if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
+      const organization = await getOrganization(organizationId);
+
+      if (!organization) {
+        throw new Error("Organization not found");
+      }
+
+      const canDoRoleManagement = await getRoleManagementPermission(organization);
+
+      if (!canDoRoleManagement) {
+        throw new OperationNotAllowedError("You do not have permission to manage roles");
+      }
+    }
 
     const project = await createProject(parsedInput.organizationId, parsedInput.data);
     const updatedNotificationSettings = {
