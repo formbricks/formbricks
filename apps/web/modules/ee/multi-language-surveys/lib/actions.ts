@@ -17,7 +17,7 @@ import {
 } from "@formbricks/lib/language/service";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZLanguageInput } from "@formbricks/types/product";
 
 const ZCreateLanguageAction = z.object({
@@ -29,7 +29,7 @@ export const checkMultiLanguagePermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", organizationId);
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
