@@ -1,6 +1,6 @@
-import { getIsAIEnabled } from "@/app/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Dashboard } from "@/modules/ee/insights/experience/components/dashboard";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";

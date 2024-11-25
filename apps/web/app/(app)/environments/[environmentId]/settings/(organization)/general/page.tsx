@@ -2,9 +2,12 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { OrganizationActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/OrganizationActions";
 import { getMembershipsByUserId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
-import { getIsOrganizationAIReady } from "@/app/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsOrganizationAIReady,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
@@ -124,7 +127,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             organization={organization}
             isDeleteDisabled={isDeleteDisabled}
             isUserOwner={currentUserRole === "owner"}
-            isMultiOrgEnabled={isMultiOrgEnabled}
           />
         </SettingsCard>
       )}

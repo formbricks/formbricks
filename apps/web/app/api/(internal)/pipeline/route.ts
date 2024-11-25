@@ -2,7 +2,7 @@ import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/li
 import { sendSurveyFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getIsAIEnabled } from "@/app/lib/utils";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { headers } from "next/headers";

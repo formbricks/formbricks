@@ -12,12 +12,13 @@ import { cache, revalidateTag } from "@formbricks/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
+  IS_AI_CONFIGURED,
   IS_FORMBRICKS_CLOUD,
   PRODUCT_FEATURE_KEYS,
 } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
-import { TOrganization } from "@formbricks/types/organizations";
+import { TOrganization, TOrganizationBillingPlan } from "@formbricks/types/organizations";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
@@ -328,4 +329,22 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.twoFactorAuth;
+};
+export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
+  // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
+  if (IS_FORMBRICKS_CLOUD) {
+    return (
+      IS_AI_CONFIGURED &&
+      (await getEnterpriseLicense()).active &&
+      (billingPlan === PRODUCT_FEATURE_KEYS.STARTUP ||
+        billingPlan === PRODUCT_FEATURE_KEYS.SCALE ||
+        billingPlan === PRODUCT_FEATURE_KEYS.ENTERPRISE)
+    );
+  }
+
+  return false;
+};
+
+export const getIsAIEnabled = async (organization: TOrganization) => {
+  return organization.isAIEnabled && (await getIsOrganizationAIReady(organization.billing.plan));
 };

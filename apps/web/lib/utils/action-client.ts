@@ -6,6 +6,7 @@ import {
   AuthenticationError,
   AuthorizationError,
   InvalidInputError,
+  OperationNotAllowedError,
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
@@ -17,7 +18,8 @@ export const actionClient = createSafeActionClient({
       e instanceof AuthorizationError ||
       e instanceof InvalidInputError ||
       e instanceof UnknownError ||
-      e instanceof AuthenticationError
+      e instanceof AuthenticationError ||
+      e instanceof OperationNotAllowedError
     ) {
       return e.message;
     }
