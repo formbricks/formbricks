@@ -1,10 +1,10 @@
 "use client";
 
-import { IconBar } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/IconBar";
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { Badge } from "@/modules/ui/components/badge";
+import { IconBar } from "@/modules/ui/components/iconbar";
 import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -101,6 +101,48 @@ export const SurveyAnalysisCTA = ({
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
 
+  const iconActions = [
+    {
+      icon: Eye,
+      tooltip: t("common.preview"),
+      onClick: () => window.open(getPreviewUrl(), "_blank"),
+      show: survey.type === "link",
+    },
+    {
+      icon: LinkIcon,
+      tooltip: t("common.copy_link"),
+      onClick: handleCopyLink,
+      show: !isReadOnly && survey.type === "link",
+    },
+    {
+      icon: Code2Icon,
+      tooltip: t("common.embed"),
+      onClick: () => handleModalState("embed")(true),
+      show: !isReadOnly,
+    },
+    {
+      icon: BellRing,
+      tooltip: t("environments.surveys.summary.configure_alerts"),
+      onClick: () => router.push(`/environments/${survey.environmentId}/settings/notifications`),
+      show: !isReadOnly,
+    },
+    {
+      icon: UsersRound,
+      tooltip: t("environments.surveys.summary.send_to_panel"),
+      onClick: () => {
+        handleModalState("panel")(true);
+        setModalState((prev) => ({ ...prev, dropdown: false }));
+      },
+      show: !isReadOnly,
+    },
+    {
+      icon: SquarePenIcon,
+      tooltip: t("common.edit"),
+      onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
+      show: !isReadOnly,
+    },
+  ];
+
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
@@ -116,47 +158,7 @@ export const SurveyAnalysisCTA = ({
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 
-      <div className="border-formbricks-border-primary flex items-center justify-center rounded-lg border bg-transparent">
-        {survey.type === "link" && (
-          <IconBar
-            icon={<Eye />}
-            tooltip={t("common.preview")}
-            onClick={() => window.open(getPreviewUrl(), "_blank")}
-          />
-        )}
-
-        {!isReadOnly && (
-          <div>
-            {survey.type === "link" && (
-              <IconBar icon={<LinkIcon />} tooltip={t("common.copy_link")} onClick={handleCopyLink} />
-            )}
-            <IconBar
-              icon={<Code2Icon />}
-              tooltip={t("common.embed")}
-              onClick={() => handleModalState("embed")(true)}
-            />
-            <IconBar
-              icon={<BellRing />}
-              tooltip={t("environments.surveys.summary.configure_alerts")}
-              href={`/environments/${survey.environmentId}/settings/notifications`}
-              onClick={() => setModalState((prev) => ({ ...prev, dropdown: false }))}
-            />
-            <IconBar
-              icon={<UsersRound />}
-              tooltip={t("environments.surveys.summary.send_to_panel")}
-              onClick={() => {
-                handleModalState("panel")(true);
-                setModalState((prev) => ({ ...prev, dropdown: false }));
-              }}
-            />
-            <IconBar
-              icon={<SquarePenIcon />}
-              tooltip={t("common.edit")}
-              href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
-            />
-          </div>
-        )}
-      </div>
+      <IconBar actions={iconActions} />
 
       {user && (
         <>

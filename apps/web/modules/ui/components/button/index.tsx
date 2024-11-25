@@ -141,17 +141,19 @@ export const Button: React.ForwardRefExoticComponent<
       {EndIcon && <EndIcon className={cn("-mr-1 ml-2 inline h-4 w-4 rtl:mr-2", endIconClassName || "")} />}
     </>
   );
-  return props.href ? (
-    <Link passHref href={props.href} shallow={shallow && shallow} target={props.target || "_self"}>
-      {element}
-    </Link>
-  ) : (
+  return (
     <Wrapper
       data-testid="wrapper"
       tooltip={props.tooltip}
       tooltipSide={tooltipSide}
       tooltipOffset={tooltipOffset}>
-      {element}
+      {props.href ? (
+        <Link passHref href={props.href} shallow={shallow && shallow} target={props.target || "_self"}>
+          {element}
+        </Link>
+      ) : (
+        element
+      )}
     </Wrapper>
   );
 });
