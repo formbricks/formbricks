@@ -2,10 +2,18 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getOrganizationProjectsLimit,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
+import {
+  createOrganization,
+  getOrganization,
+  getOrganizationProjectsCount,
+} from "@formbricks/lib/organization/service";
 import { createProject } from "@formbricks/lib/project/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
@@ -85,13 +93,20 @@ export const createProjectAction = authenticatedActionClient
       ],
     });
 
+    const organization = await getOrganization(organizationId);
+
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
+
+    const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+    const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
+
+    if (organizationProjectsCount >= organizationProjectsLimit) {
+      throw new OperationNotAllowedError("Organization project limit reached");
+    }
+
     if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
-      const organization = await getOrganization(organizationId);
-
-      if (!organization) {
-        throw new Error("Organization not found");
-      }
-
       const canDoRoleManagement = await getRoleManagementPermission(organization);
 
       if (!canDoRoleManagement) {
