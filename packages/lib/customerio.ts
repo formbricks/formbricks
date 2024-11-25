@@ -1,7 +1,7 @@
-import { validateInputs } from "utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { TUserEmail, ZUserEmail } from "@formbricks/types/user";
 import { CUSTOMER_IO_API_KEY, CUSTOMER_IO_SITE_ID } from "./constants";
+import { validateInputs } from "./utils/validate";
 
 export const createCustomerIoCustomer = async ({ id, email }: { id: string; email: TUserEmail }) => {
   if (!CUSTOMER_IO_SITE_ID || !CUSTOMER_IO_API_KEY) {
