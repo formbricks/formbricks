@@ -1,24 +1,18 @@
-import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
+import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
-import { getSSOProviders } from "@/modules/ee/sso/providers";
-import type { IdentityProvider } from "@prisma/client";
-import type { NextAuthOptions } from "next-auth";
+import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
+import { handleSSOCallback } from "@/modules/ee/sso/lib/ssoHandlers";
+import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@formbricks/database";
-import { createAccount } from "@formbricks/lib/account/service";
 import {
-  DEFAULT_ORGANIZATION_ID,
-  DEFAULT_ORGANIZATION_ROLE,
   EMAIL_VERIFICATION_DISABLED,
   ENCRYPTION_KEY,
   ENTERPRISE_LICENSE_KEY,
 } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import { verifyToken } from "@formbricks/lib/jwt";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { TUserNotificationSettings } from "@formbricks/types/user";
+import { TUser } from "@formbricks/types/user";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -193,122 +187,17 @@ export const authOptions: NextAuthOptions = {
 
       return session;
     },
-    async signIn({ user, account }: any) {
-      if (account.provider === "credentials" || account.provider === "token") {
+    async signIn({ user, account }: { user: TUser; account: Account }) {
+      if (account?.provider === "credentials" || account?.provider === "token") {
         // check if user's email is verified or not
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");
         }
         return true;
       }
-
-      if (!user.email || account.type !== "oauth") {
-        return false;
+      if (ENTERPRISE_LICENSE_KEY) {
+        return handleSSOCallback({ user, account });
       }
-
-      if (account.provider) {
-        const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
-        // check if accounts for this provider / account Id already exists
-        const existingUserWithAccount = await prisma.user.findFirst({
-          include: {
-            accounts: {
-              where: {
-                provider: account.provider,
-              },
-            },
-          },
-          where: {
-            identityProvider: provider,
-            identityProviderAccountId: account.providerAccountId,
-          },
-        });
-
-        if (existingUserWithAccount) {
-          // User with this provider found
-          // check if email still the same
-          if (existingUserWithAccount.email === user.email) {
-            return true;
-          }
-
-          // user seemed to change his email within the provider
-          // check if user with this email already exist
-          // if not found just update user with new email address
-          // if found throw an error (TODO find better solution)
-          const otherUserWithEmail = await getUserByEmail(user.email);
-
-          if (!otherUserWithEmail) {
-            await updateUser(existingUserWithAccount.id, { email: user.email });
-            return true;
-          }
-          throw new Error(
-            "Looks like you updated your email somewhere else. A user with this new email exists already."
-          );
-        }
-
-        // There is no existing account for this identity provider / account id
-        // check if user account with this email already exists
-        // if user already exists throw error and request password login
-        const existingUserWithEmail = await getUserByEmail(user.email);
-
-        if (existingUserWithEmail) {
-          // Sign in the user with the existing account
-          return true;
-        }
-
-        const userProfile = await createUser({
-          name: user.name || user.email.split("@")[0],
-          email: user.email,
-          emailVerified: new Date(Date.now()),
-          identityProvider: provider,
-          identityProviderAccountId: account.providerAccountId,
-          locale: await findMatchingLocale(),
-        });
-
-        // Default organization assignment if env variable is set
-        if (DEFAULT_ORGANIZATION_ID && DEFAULT_ORGANIZATION_ID.length > 0) {
-          // check if organization exists
-          let organization = await getOrganization(DEFAULT_ORGANIZATION_ID);
-          let isNewOrganization = false;
-          if (!organization) {
-            // create organization with id from env
-            organization = await createOrganization({
-              id: DEFAULT_ORGANIZATION_ID,
-              name: userProfile.name + "'s Organization",
-            });
-            isNewOrganization = true;
-          }
-          const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "manager";
-          await createMembership(organization.id, userProfile.id, { role: role, accepted: true });
-          await createAccount({
-            ...account,
-            userId: userProfile.id,
-          });
-
-          const updatedNotificationSettings: TUserNotificationSettings = {
-            ...userProfile.notificationSettings,
-            alert: {
-              ...userProfile.notificationSettings?.alert,
-            },
-            unsubscribedOrganizationIds: Array.from(
-              new Set([
-                ...(userProfile.notificationSettings?.unsubscribedOrganizationIds || []),
-                organization.id,
-              ])
-            ),
-            weeklySummary: {
-              ...userProfile.notificationSettings?.weeklySummary,
-            },
-          };
-
-          await updateUser(userProfile.id, {
-            notificationSettings: updatedNotificationSettings,
-          });
-          return true;
-        }
-        // Without default organization assignment
-        return true;
-      }
-
       return true;
     },
   },
