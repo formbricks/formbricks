@@ -7,11 +7,9 @@ import {
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { OrganizationRole } from "@prisma/client";
-import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
@@ -247,10 +245,6 @@ const ZInviteUserAction = z.object({
 export const inviteUserAction = authenticatedActionClient
   .schema(ZInviteUserAction)
   .action(async ({ parsedInput, ctx }) => {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      throw new AuthenticationError("Not authenticated");
-    }
     if (INVITE_DISABLED) {
       throw new AuthenticationError("Invite disabled");
     }
@@ -277,7 +271,7 @@ export const inviteUserAction = authenticatedActionClient
         name: parsedInput.name,
         role: parsedInput.role,
       },
-      currentUserId: session.user.id,
+      currentUserId: ctx.user.id,
     });
 
     if (invite) {
