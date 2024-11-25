@@ -5,6 +5,7 @@ import { NavigationLink } from "@/app/(app)/environments/[environmentId]/compone
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
+import { ModalButton, ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -68,6 +69,8 @@ interface NavigationProps {
   isMultiOrgEnabled: boolean;
   isFormbricksCloud?: boolean;
   membershipRole?: TOrganizationRole;
+  organizationProjectsLimit: number;
+  isLicenseActive: boolean;
 }
 
 export const MainNavigation = ({
@@ -79,6 +82,8 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   isFormbricksCloud = true,
   membershipRole,
+  organizationProjectsLimit,
+  isLicenseActive,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -89,6 +94,7 @@ export const MainNavigation = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
+  const [openLimitModal, setOpenLimitModal] = useState(false);
 
   const project = projects.find((project) => project.id === environment.projectId);
   const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
@@ -155,6 +161,10 @@ export const MainNavigation = ({
   };
 
   const handleAddProject = (organizationId: string) => {
+    if (projects.length >= organizationProjectsLimit) {
+      setOpenLimitModal(true);
+      return;
+    }
     router.push(`/organizations/${organizationId}/projects/new/mode`);
   };
 
@@ -252,6 +262,45 @@ export const MainNavigation = ({
 
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
+  const LimitModalButtons = (): [ModalButton, ModalButton] => {
+    if (isFormbricksCloud) {
+      return [
+        {
+          text: organization.billing.plan === "free" ? "Srart free trial" : "Upgrade",
+          onClick: () => router.push(`/organizations/${organization.id}/settings/billing`),
+        },
+        {
+          text: "Learn more",
+          onClick: () => router.push(`/organizations/${organization.id}/settings/billing`),
+        },
+      ];
+    } else {
+      if (isLicenseActive) {
+        return [
+          {
+            text: "Get in touch",
+            href: "https://cal.com/johannes/license",
+          },
+          {
+            text: "Learn more",
+            href: "https://formbricks.com/docs/self-hosting/license",
+          },
+        ];
+      }
+
+      return [
+        {
+          text: organization.billing.plan === "free" ? "Srart free trial" : "Get in touch",
+          href: "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+        },
+        {
+          text: "Learn more",
+          href: "https://formbricks.com/docs/self-hosting/license",
+        },
+      ];
+    }
+  };
+
   return (
     <>
       {project && (
@@ -312,6 +361,14 @@ export const MainNavigation = ({
             )}
           </div>
 
+          {openLimitModal && (
+            <ProjectLimitModal
+              open={openLimitModal}
+              setOpen={setOpenLimitModal}
+              buttons={LimitModalButtons()}
+              projectLimit={organizationProjectsLimit}
+            />
+          )}
           <div>
             {/* New Version Available */}
             {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (

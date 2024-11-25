@@ -80,7 +80,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
       // first call
       const newResult = {
         active: true,
-        features: { isMultiOrgEnabled: true },
+        features: { isMultiOrgEnabled: true, projects: 3 },
         lastChecked: currentTime,
       };
       await setPreviousResult(newResult);
@@ -137,7 +137,7 @@ export const getEnterpriseLicense = async (): Promise<{
     if (isValid === null) {
       const newResult = {
         active: false,
-        features: { isMultiOrgEnabled: false },
+        features: { isMultiOrgEnabled: false, projects: 3 },
         lastChecked: new Date(),
       };
 
@@ -312,4 +312,26 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.isMultiOrgEnabled;
+};
+
+export const getOrganizationProjectsLimit = async (organization: TOrganization): Promise<number> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? (previousResult.features.projects ?? Infinity) : 3;
+  }
+
+  let limit: number;
+
+  if (IS_FORMBRICKS_CLOUD && (await getEnterpriseLicense()).active) {
+    limit = organization.billing.limits.projects ?? Infinity;
+  } else {
+    const licenseFeatures = await getLicenseFeatures();
+    if (!licenseFeatures) {
+      limit = 3;
+    } else {
+      limit = licenseFeatures.projects ?? Infinity;
+    }
+  }
+
+  return limit;
 };

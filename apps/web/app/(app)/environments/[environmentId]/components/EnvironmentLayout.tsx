@@ -1,6 +1,6 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -80,6 +80,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
@@ -106,10 +108,12 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           organization={organization}
           organizations={organizations}
           projects={projects}
+          organizationProjectsLimit={organizationProjectsLimit}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          isLicenseActive={active}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
