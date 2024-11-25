@@ -20,7 +20,7 @@ export const useMembershipRole = (environmentId: string, userId: string) => {
       }
     };
     getRole();
-  }, [environmentId]);
+  }, [environmentId, userId]);
 
   return { membershipRole, isLoading, error };
 };
