@@ -144,8 +144,15 @@ export const AddIntegrationModal = ({
         type: TSurveyQuestionTypeEnum.OpenText,
       },
     ];
+    const createdAt = [
+      {
+        id: "createdAt",
+        name: t("common.created_at"),
+        type: TSurveyQuestionTypeEnum.OpenText,
+      },
+    ];
 
-    return [...questions, ...variables, ...hiddenFields, ...Metadata];
+    return [...questions, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSurvey?.id]);
 

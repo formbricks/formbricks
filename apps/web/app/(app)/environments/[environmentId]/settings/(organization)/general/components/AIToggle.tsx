@@ -1,7 +1,7 @@
 "use client";
 
-import { updateOrganizationAIEnabledAction } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateOrganizationAIEnabledAction } from "@/modules/ee/insights/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";

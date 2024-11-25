@@ -128,6 +128,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
                   includeVariables: !!data.includeVariables,
                   includeHiddenFields: !!data.includeHiddenFields,
                   includeMetadata: !!data.includeMetadata,
+                  includeCreatedAt: !!data.includeCreatedAt,
                   index,
                 });
                 setIsModalOpen(true);
