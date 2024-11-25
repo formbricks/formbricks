@@ -255,7 +255,7 @@ export const getRemoveLinkBrandingPermission = (organization: TOrganization): bo
 };
 
 export const getSurveyFollowUpsPermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PRODUCT_FEATURE_KEYS.FREE;
+  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   return false;
 };

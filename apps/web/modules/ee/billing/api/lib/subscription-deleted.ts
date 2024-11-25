@@ -19,6 +19,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
       ...organization.billing,
       plan: PROJECT_FEATURE_KEYS.FREE,
       limits: {
+        projects: BILLING_LIMITS.FREE.PROJECTS,
         monthly: {
           responses: BILLING_LIMITS.FREE.RESPONSES,
           miu: BILLING_LIMITS.FREE.MIU,

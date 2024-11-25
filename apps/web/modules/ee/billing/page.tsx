@@ -14,6 +14,7 @@ import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
+  getOrganizationProjectsCount,
 } from "@formbricks/lib/organization/service";
 import { PricingTable } from "./components/pricing-table";
 
@@ -35,9 +36,10 @@ export const PricingPage = async (props) => {
     throw new Error(t("common.not_authorized"));
   }
 
-  const [peopleCount, responseCount] = await Promise.all([
+  const [peopleCount, responseCount, projectCount] = await Promise.all([
     getMonthlyActiveOrganizationPeopleCount(organization.id),
     getMonthlyOrganizationResponseCount(organization.id),
+    getOrganizationProjectsCount(organization.id),
   ]);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -63,6 +65,7 @@ export const PricingPage = async (props) => {
         environmentId={params.environmentId}
         peopleCount={peopleCount}
         responseCount={responseCount}
+        projectCount={projectCount}
         stripePriceLookupKeys={STRIPE_PRICE_LOOKUP_KEYS}
         projectFeatureKeys={PROJECT_FEATURE_KEYS}
         hasBillingRights={hasBillingRights}

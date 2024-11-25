@@ -19,6 +19,7 @@ interface PricingTableProps {
   environmentId: string;
   peopleCount: number;
   responseCount: number;
+  projectCount: number;
   stripePriceLookupKeys: {
     STARTUP_MONTHLY: string;
     STARTUP_YEARLY: string;
@@ -40,6 +41,7 @@ export const PricingTable = ({
   peopleCount,
   projectFeatureKeys,
   responseCount,
+  projectCount,
   stripePriceLookupKeys,
   hasBillingRights,
 }: PricingTableProps) => {
@@ -137,6 +139,8 @@ export const PricingTable = ({
     organization.billing.plan === "enterprise" && organization.billing.limits.monthly.responses === null;
   const peopleUnlimitedCheck =
     organization.billing.plan === "enterprise" && organization.billing.limits.monthly.miu === null;
+  const projectsUnlimitedCheck =
+    organization.billing.plan === "enterprise" && organization.billing.limits.projects === null;
 
   return (
     <main>
@@ -197,7 +201,7 @@ export const PricingTable = ({
 
             <div
               className={cn(
-                "relative mx-8 flex flex-col gap-4 pb-12",
+                "relative mx-8 mb-8 flex flex-col gap-4",
                 peopleUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
               )}>
               <p className="text-md font-semibold text-slate-700">
@@ -205,7 +209,7 @@ export const PricingTable = ({
               </p>
               {organization.billing.limits.monthly.miu && (
                 <BillingSlider
-                  className="slider-class"
+                  className="slider-class mb-8"
                   value={peopleCount}
                   max={organization.billing.limits.monthly.miu * 1.5}
                   freeTierLimit={organization.billing.limits.monthly.miu}
@@ -213,7 +217,34 @@ export const PricingTable = ({
                 />
               )}
 
-              {peopleUnlimitedCheck && <Badge text="Unlimited MIU" type="success" size="normal" />}
+              {peopleUnlimitedCheck && (
+                <Badge text={t("environments.settings.billing.unlimited_miu")} type="success" size="normal" />
+              )}
+            </div>
+
+            <div
+              className={cn(
+                "relative mx-8 flex flex-col gap-4 pb-12",
+                projectsUnlimitedCheck && "mb-0 mt-4 flex-row pb-0"
+              )}>
+              <p className="text-md font-semibold text-slate-700">{t("common.projects")}</p>
+              {organization.billing.limits.projects && (
+                <BillingSlider
+                  className="slider-class mb-8"
+                  value={projectCount}
+                  max={organization.billing.limits.projects * 1.5}
+                  freeTierLimit={organization.billing.limits.projects}
+                  metric={t("common.projects")}
+                />
+              )}
+
+              {projectsUnlimitedCheck && (
+                <Badge
+                  text={t("environments.settings.billing.unlimited_projects")}
+                  type="success"
+                  size="normal"
+                />
+              )}
             </div>
           </div>
         </div>

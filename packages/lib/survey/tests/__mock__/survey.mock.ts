@@ -202,14 +202,16 @@ export const mockOrganizationOutput: TOrganization = {
   name: "mock Organization",
   createdAt: currentDate,
   updatedAt: currentDate,
+  isAIEnabled: false,
   billing: {
     stripeCustomerId: null,
     plan: "free",
     period: "monthly",
     limits: {
+      projects: 3,
       monthly: {
-        responses: 500,
-        miu: 1000,
+        responses: 1500,
+        miu: 2000,
       },
     },
     periodStart: currentDate,

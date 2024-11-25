@@ -91,7 +91,13 @@ export const GET = async (
         try {
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
             plan: organization.billing.plan,
-            limits: { monthly: { responses: monthlyResponseLimit, miu: null } },
+            limits: {
+              projects: null,
+              monthly: {
+                responses: monthlyResponseLimit,
+                miu: null,
+              },
+            },
           });
         } catch (error) {
           console.error(`Error sending plan limits reached event to Posthog: ${error}`);

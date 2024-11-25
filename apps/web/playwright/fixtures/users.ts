@@ -69,7 +69,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                   name: params?.organizationName ?? "My Organization",
                   billing: {
                     plan: "free",
-                    limits: { monthly: { responses: 500, miu: 1000 } },
+                    limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
                     stripeCustomerId: null,
                     periodStart: new Date(),
                     period: "monthly",

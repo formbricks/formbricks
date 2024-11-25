@@ -217,14 +217,17 @@ export enum STRIPE_PRICE_LOOKUP_KEYS {
 
 export const BILLING_LIMITS = {
   FREE: {
+    PROJECTS: 3,
     RESPONSES: 1500,
     MIU: 2000,
   },
   STARTUP: {
+    PROJECTS: 3,
     RESPONSES: 5000,
     MIU: 7500,
   },
   SCALE: {
+    PROJECTS: 5,
     RESPONSES: 10000,
     MIU: 30000,
   },

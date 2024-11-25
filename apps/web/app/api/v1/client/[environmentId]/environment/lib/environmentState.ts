@@ -81,8 +81,9 @@ export const getEnvironmentState = async (
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
             plan: organization.billing.plan,
             limits: {
+              projects: null,
               monthly: {
-                miu: organization.billing.limits.monthly.miu,
+                miu: null,
                 responses: organization.billing.limits.monthly.responses,
               },
             },

@@ -53,6 +53,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
 
   let responses: number | null = null;
   let miu: number | null = null;
+  let projects: number | null = null;
 
   if (product.metadata.responses === "unlimited") {
     responses = null;
@@ -70,6 +71,15 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   } else {
     console.error("Invalid miu metadata in product: ", product.metadata.miu);
     throw new Error("Invalid miu metadata in product");
+  }
+
+  if (product.metadata.projects === "unlimited") {
+    projects = null;
+  } else if (parseInt(product.metadata.projects) > 0) {
+    projects = parseInt(product.metadata.projects);
+  } else {
+    console.error("Invalid projects metadata in product: ", product.metadata.projects);
+    throw new Error("Invalid projects metadata in product");
   }
 
   const plan = ZOrganizationBillingPlan.parse(product.metadata.plan);
@@ -99,6 +109,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
       plan: updatedBillingPlan,
       period,
       limits: {
+        projects,
         monthly: {
           responses,
           miu,
