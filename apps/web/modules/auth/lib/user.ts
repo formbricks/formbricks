@@ -129,7 +129,7 @@ export const createUser = async (data: TUserCreateInput) => {
     });
 
     // send new user customer.io to customer.io
-    createCustomerIoCustomer(user);
+    createCustomerIoCustomer({ id: user.id, email: user.email });
     return user;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
