@@ -70,7 +70,7 @@ export const POST = async (request: Request): Promise<Response> => {
     if (surveyData.languages && surveyData.languages.length) {
       const isMultiLanguageEnabled = await getMultiLanguagePermission(organization);
       if (!isMultiLanguageEnabled) {
-        return responses.forbiddenResponse("Multi-language is not enabled for this organization");
+        return responses.forbiddenResponse("Multi language is not enabled for this organization");
       }
     }
 
