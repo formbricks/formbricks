@@ -36,6 +36,15 @@ export const DataTableSettingsModalItem = <T,>({ column, survey }: DataTableSett
         return t("environments.surveys.edit.zip");
       case "verifiedEmail":
         return t("common.verified_email");
+      case "userId":
+        return t("common.user_id");
+      case "contactsTableUser":
+        return "ID";
+      case "firstName":
+        return t("environments.contacts.first_name");
+      case "lastName":
+        return t("environments.contacts.last_name");
+
       default:
         return capitalize(column.id);
     }

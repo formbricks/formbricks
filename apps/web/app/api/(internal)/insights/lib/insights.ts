@@ -6,7 +6,6 @@ import { Prisma } from "@prisma/client";
 import { embed } from "ai";
 import { prisma } from "@formbricks/database";
 import { embeddingsModel } from "@formbricks/lib/aiModels";
-import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getPromptText } from "@formbricks/lib/utils/ai";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { validateInputs } from "@formbricks/lib/utils/validate";
@@ -25,6 +24,7 @@ import {
   TSurveyQuestionTypeEnum,
   ZSurveyQuestions,
 } from "@formbricks/types/surveys/types";
+import { getContactAttributes } from "./contact-attribute";
 
 export const generateInsightsForSurveyResponsesConcept = async (
   survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">
@@ -82,7 +82,7 @@ export const generateInsightsForSurveyResponsesConcept = async (
             id: true,
             data: true,
             variables: true,
-            personId: true,
+            contactId: true,
             language: true,
           },
           take: batchSize,
@@ -104,7 +104,9 @@ export const generateInsightsForSurveyResponsesConcept = async (
 
         const answersForDocumentCreationPromises = await Promise.all(
           responsesWithOpenTextAnswers.map(async (response) => {
-            const attributes = response.personId ? await getAttributes(response.personId) : {};
+            const contactAttributes = response.contactId
+              ? await getContactAttributes(response.contactId)
+              : {};
             const responseEntries = openTextQuestionsWithInsights.map((question) => {
               const responseText = response.data[question.id] as string;
               if (!responseText) {
@@ -113,7 +115,7 @@ export const generateInsightsForSurveyResponsesConcept = async (
 
               const headline = parseRecallInfo(
                 question.headline[response.language ?? "default"],
-                attributes,
+                contactAttributes,
                 response.data,
                 response.variables
               );
@@ -242,7 +244,7 @@ export const generateInsightsForSurveyResponses = async (
           id: true,
           data: true,
           variables: true,
-          personId: true,
+          contactId: true,
           language: true,
         },
         take: batchSize,
@@ -258,7 +260,7 @@ export const generateInsightsForSurveyResponses = async (
       const createDocumentPromises: Promise<TCreatedDocument | undefined>[] = [];
 
       for (const response of responsesWithOpenTextAnswers) {
-        const attributes = response.personId ? await getAttributes(response.personId) : {};
+        const contactAttributes = response.contactId ? await getContactAttributes(response.contactId) : {};
 
         for (const question of openTextQuestionsWithInsights) {
           const responseText = response.data[question.id] as string;
@@ -268,7 +270,7 @@ export const generateInsightsForSurveyResponses = async (
 
           const headline = parseRecallInfo(
             question.headline[response.language ?? "default"],
-            attributes,
+            contactAttributes,
             response.data,
             response.variables
           );

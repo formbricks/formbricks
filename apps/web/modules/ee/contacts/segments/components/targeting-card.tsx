@@ -50,12 +50,8 @@ export function TargetingCard({
   contactAttributeKeys,
   segments,
   initialSegment,
-<<<<<<<< HEAD:apps/web/modules/ee/contacts/segments/components/targeting-card.tsx
 }: TargetingCardProps) {
-========
-}: UserTargetingAdvancedCardProps) {
   const t = useTranslations();
->>>>>>>> main:apps/web/modules/ee/advanced-targeting/components/advanced-targeting-card.tsx
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
@@ -127,7 +123,7 @@ export function TargetingCard({
   };
 
   const handleSaveAsNewSegmentUpdate = async (segmentId: string, data: TSegmentUpdateInput) => {
-    const updatedSegment = await updateSegmentAction({ segmentId, data });
+    const updatedSegment = await updateSegmentAction({ segmentId, environmentId, data });
     return updatedSegment?.data as TSegment;
   };
 
@@ -139,7 +135,7 @@ export function TargetingCard({
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error(t("environments.segments.invalid_segment"));
-      await updateSegmentAction({ segmentId: segment.id, data });
+      await updateSegmentAction({ segmentId: segment.id, environmentId, data });
       toast.success(t("environments.segments.segment_saved_successfully"));
 
       setIsSegmentEditorOpen(false);

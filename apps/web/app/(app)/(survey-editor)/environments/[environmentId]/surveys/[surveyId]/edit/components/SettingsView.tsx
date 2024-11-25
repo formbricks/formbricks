@@ -22,7 +22,6 @@ interface SettingsViewProps {
   responseCount: number;
   membershipRole?: TOrganizationRole;
   isUserTargetingAllowed?: boolean;
-  isFormbricksCloud: boolean;
   locale: string;
   productPermission: TTeamPermission | null;
 }
@@ -37,7 +36,6 @@ export const SettingsView = ({
   responseCount,
   membershipRole,
   isUserTargetingAllowed = false,
-  isFormbricksCloud,
   locale,
   productPermission,
 }: SettingsViewProps) => {

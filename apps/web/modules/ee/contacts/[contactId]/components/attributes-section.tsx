@@ -1,5 +1,5 @@
-import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { getTranslations } from "next-intl/server";
+import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { getContact, getContactAttributes } from "../../lib/contacts";
 
@@ -48,7 +48,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
         </dd>
       </div>
       <div>
-        <dt className="text-sm font-medium text-slate-500">Formbricks Id (internal)</dt>
+        <dt className="text-sm font-medium text-slate-500">ID</dt>
         <dd className="ph-no-capture mt-1 text-sm text-slate-900">{contact.id}</dd>
       </div>
 

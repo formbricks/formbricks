@@ -6,6 +6,7 @@ import { processResponseData } from "@formbricks/lib/responses";
 import { writeDataToSlack } from "@formbricks/lib/slack/service";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributes } from "@formbricks/types/attributes";
+import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -38,13 +39,13 @@ const processDataForIntegration = async (
   includeMetadata: boolean,
   includeHiddenFields: boolean,
   questionIds: string[],
-  attributes?: TAttributes
+  contactAttributes?: TContactAttributes
 ): Promise<string[][]> => {
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
       ? [...questionIds, ...survey.hiddenFields.fieldIds]
       : questionIds;
-  const values = await extractResponses(integrationType, data, ids, survey, attributes);
+  const values = await extractResponses(integrationType, data, ids, survey, contactAttributes);
   if (includeMetadata) {
     values[0].push(convertMetaObjectToString(data.response.meta));
     values[1].push("Metadata");
@@ -66,7 +67,7 @@ export const handleIntegrations = async (
   integrations: TIntegration[],
   data: TPipelineInput,
   survey: TSurvey,
-  attributes: TAttributes
+  contactAttributes: TContactAttributes
 ) => {
   for (const integration of integrations) {
     switch (integration.type) {
@@ -85,7 +86,7 @@ export const handleIntegrations = async (
           integration as TIntegrationSlack,
           data,
           survey,
-          attributes
+          contactAttributes
         );
         if (!slackResult.ok) {
           console.error("Error in slack integration: ", slackResult.error);
@@ -190,7 +191,7 @@ const handleSlackIntegration = async (
   integration: TIntegrationSlack,
   data: TPipelineInput,
   survey: TSurvey,
-  attributes: TAttributes
+  contactAttributes: TContactAttributes
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -204,7 +205,7 @@ const handleSlackIntegration = async (
             !!element.includeMetadata,
             !!element.includeHiddenFields,
             element.questionIds,
-            attributes
+            contactAttributes
           );
           await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
         }

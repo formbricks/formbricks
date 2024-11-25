@@ -23,9 +23,10 @@ const fetchAndAuthorizeContact = async (authentication: TAuthenticationApiKey, c
 
 export const GET = async (
   request: Request,
-  { params }: { params: { contactId: string } }
+  { params: paramsPromise }: { params: Promise<{ contactId: string }> }
 ): Promise<Response> => {
   try {
+    const params = await paramsPromise;
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
@@ -45,8 +46,12 @@ export const GET = async (
   }
 };
 
-export const DELETE = async (request: Request, { params }: { params: { contactId: string } }) => {
+export const DELETE = async (
+  request: Request,
+  { params: paramsPromise }: { params: Promise<{ contactId: string }> }
+) => {
   try {
+    const params = await paramsPromise;
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 

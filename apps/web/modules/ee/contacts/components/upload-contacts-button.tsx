@@ -97,12 +97,17 @@ export const UploadContactsCSVButton = ({
     setErrror("");
     setAttributeMap({});
     setLoading(false);
+
     if (closeModal) {
       setOpen(false);
     }
   };
 
   const handleUpload = async () => {
+    if (!csvResponse.length) {
+      return;
+    }
+
     setLoading(true);
     setErrror("");
 
@@ -125,6 +130,7 @@ export const UploadContactsCSVButton = ({
       setErrror(
         `Duplicate mappings found for the following attributes: ${duplicateAttributeKeys.join(", ")}`
       );
+      errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       setLoading(false);
       return;
     }
@@ -318,16 +324,24 @@ export const UploadContactsCSVButton = ({
 
         <div className="sticky bottom-0 w-full bg-white">
           <div className="flex justify-end rounded-b-lg p-4">
+            {csvResponse.length > 0 ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  resetState();
+                }}
+                className="mr-2">
+                Pick a different file
+              </Button>
+            ) : null}
+
             <Button
               size="sm"
-              variant="secondary"
-              onClick={() => {
-                resetState();
-              }}
-              className="mr-2">
-              Pick a different file
-            </Button>
-            <Button size="sm" variant="primary" onClick={handleUpload} loading={loading} disabled={loading}>
+              variant="primary"
+              onClick={handleUpload}
+              loading={loading}
+              disabled={loading || !csvResponse.length}>
               Upload contacts
             </Button>
           </div>

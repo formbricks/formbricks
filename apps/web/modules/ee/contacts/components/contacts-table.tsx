@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import {
   DndContext,
   type DragEndEvent,
@@ -16,7 +17,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { Button } from "@formbricks/ui/components/Button";
 import {
@@ -30,13 +31,12 @@ import { Skeleton } from "@formbricks/ui/components/Skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/components/Table";
 import { TContactTableData } from "../types/contact";
 import { generateContactTableColumns } from "./contact-table-column";
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
 
 interface ContactsTableProps {
   data: TContactTableData[];
   fetchNextPage: () => void;
   hasMore: boolean;
-  deletePersons: (personIds: string[]) => void;
+  deleteContacts: (contactIds: string[]) => void;
   isDataLoaded: boolean;
   environmentId: string;
   searchValue: string;
@@ -48,7 +48,7 @@ export const ContactsTable = ({
   data,
   fetchNextPage,
   hasMore,
-  deletePersons,
+  deleteContacts,
   isDataLoaded,
   environmentId,
   searchValue,
@@ -67,25 +67,63 @@ export const ContactsTable = ({
 
   // Generate columns
   const columns = useMemo(() => {
-    return generateContactTableColumns(searchValue, data);
-  }, [searchValue, data]);
-
-
+    return generateContactTableColumns(searchValue, data, isReadOnly);
+  }, [searchValue, data, isReadOnly]);
 
   // Load saved settings from localStorage
   useEffect(() => {
     const savedColumnOrder = localStorage.getItem(`${environmentId}-columnOrder`);
     const savedColumnVisibility = localStorage.getItem(`${environmentId}-columnVisibility`);
     const savedExpandedSettings = localStorage.getItem(`${environmentId}-rowExpand`);
-    if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
-      setColumnOrder(JSON.parse(savedColumnOrder));
+
+    let savedColumnOrderParsed: string[] = [];
+    if (savedColumnOrder) {
+      try {
+        savedColumnOrderParsed = JSON.parse(savedColumnOrder);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (
+      savedColumnOrderParsed.length > 0 &&
+      table.getAllLeafColumns().length === savedColumnOrderParsed.length
+    ) {
+      setColumnOrder(savedColumnOrderParsed);
     } else {
       setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
     }
 
+    let savedColumnVisibilityParsed: VisibilityState = {};
     if (savedColumnVisibility) {
-      setColumnVisibility(JSON.parse(savedColumnVisibility));
+      try {
+        savedColumnVisibilityParsed = JSON.parse(savedColumnVisibility);
+      } catch (err) {
+        console.error(err);
+      }
     }
+
+    if (
+      savedColumnVisibilityParsed &&
+      Object.keys(savedColumnVisibilityParsed).length === table.getAllLeafColumns().length
+    ) {
+      setColumnVisibility(savedColumnVisibilityParsed);
+    } else {
+      const initialVisibility = table
+        .getAllLeafColumns()
+        .map((column) => column.id)
+        .reduce((acc, curr) => {
+          acc[curr] = true;
+          return acc;
+        }, {}) as Record<string, true>;
+
+      setColumnVisibility({
+        ...initialVisibility,
+        userId: false,
+        contactsTableUser: false,
+      });
+    }
+
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
@@ -96,6 +134,7 @@ export const ContactsTable = ({
     if (columnOrder.length > 0) {
       localStorage.setItem(`${environmentId}-columnOrder`, JSON.stringify(columnOrder));
     }
+
     if (Object.keys(columnVisibility).length > 0) {
       localStorage.setItem(`${environmentId}-columnVisibility`, JSON.stringify(columnVisibility));
     }
@@ -117,6 +156,7 @@ export const ContactsTable = ({
     () => (!isDataLoaded ? Array(10).fill({}) : data),
     [data, isDataLoaded]
   );
+
   const tableColumns = useMemo(
     () =>
       !isDataLoaded
@@ -129,7 +169,7 @@ export const ContactsTable = ({
             ),
           }))
         : columns,
-    [columns, data]
+    [columns, isDataLoaded]
   );
 
   // React Table instance
@@ -188,7 +228,7 @@ export const ContactsTable = ({
           setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
           isExpanded={isExpanded ?? false}
           table={table}
-          deleteRows={deletePersons}
+          deleteRows={deleteContacts}
           type="contact"
           deleteAction={deletePerson}
         />

@@ -1,12 +1,7 @@
-import { TAttributes } from "@formbricks/types/attributes";
+import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyQuestion,
-  TSurveyRecallItem,
-} from "@formbricks/types/surveys/types";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "./datetime";
@@ -237,15 +232,15 @@ export const headlineToRecall = (
 
 export const parseRecallInfo = (
   text: string,
-  attributes?: TAttributes,
+  contactAttributes?: TContactAttributes,
   responseData?: TResponseData,
   variables?: TResponseVariables,
   withSlash: boolean = false
 ) => {
   let modifiedText = text;
-  const attributeKeys = attributes ? Object.keys(attributes) : [];
+  const attributeKeys = contactAttributes ? Object.keys(contactAttributes) : [];
   const questionIds = responseData ? Object.keys(responseData) : [];
-  if (attributes && attributeKeys.length > 0) {
+  if (contactAttributes && attributeKeys.length > 0) {
     attributeKeys.forEach((attributeKey) => {
       const recallPattern = `#recall:${attributeKey}`;
       while (modifiedText.includes(recallPattern)) {
@@ -256,7 +251,7 @@ export const parseRecallInfo = (
         if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
 
         const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-        let value = attributes[recallItemId.replace("nbsp", " ")] || fallback;
+        let value = contactAttributes[recallItemId.replace("nbsp", " ")] || fallback;
         if (withSlash) {
           modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
         } else {

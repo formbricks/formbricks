@@ -218,7 +218,6 @@ export const SurveyEditor = ({
               responseCount={responseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
-              isFormbricksCloud={isFormbricksCloud}
               locale={locale}
               productPermission={productPermission}
             />

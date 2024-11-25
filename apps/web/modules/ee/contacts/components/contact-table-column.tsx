@@ -7,12 +7,13 @@ import { TContactTableData } from "../types/contact";
 
 export const generateContactTableColumns = (
   searchValue: string,
-  data: TContactTableData[]
+  data: TContactTableData[],
+  isReadOnly: boolean
 ): ColumnDef<TContactTableData>[] => {
   const userColumn: ColumnDef<TContactTableData> = {
-    id: "user",
-    accessorKey: "user",
-    header: "User",
+    id: "contactsTableUser",
+    accessorKey: "contactsTableUser",
+    header: "ID",
     cell: ({ row }) => {
       const contactId = row.original.id;
       return <HighlightedText value={contactId} searchValue={searchValue} />;
@@ -75,13 +76,7 @@ export const generateContactTableColumns = (
       })
     : [];
 
-  return [
-    getSelectionColumn(),
-    userColumn,
-    userIdColumn,
-    emailColumn,
-    firstNameColumn,
-    lastNameColumn,
-    ...restCols,
-  ];
+  const baseColumns = [userColumn, userIdColumn, emailColumn, firstNameColumn, lastNameColumn, ...restCols];
+
+  return isReadOnly ? baseColumns : [getSelectionColumn(), ...baseColumns];
 };

@@ -9,8 +9,8 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
-import { useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Modal } from "../../Modal";
 import { DataTableSettingsModalItem } from "./DataTableSettingsModalItem";

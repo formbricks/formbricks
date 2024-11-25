@@ -28,7 +28,7 @@ import { getUser } from "@formbricks/lib/user/service";
 import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async (props: { params: { environmentId: string; surveyId: string } }) => {
+const SurveyPage = async (props: { params: Promise<{ environmentId: string; surveyId: string }> }) => {
   const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
@@ -128,4 +128,4 @@ const Page = async (props: { params: { environmentId: string; surveyId: string }
   );
 };
 
-export default Page;
+export default SurveyPage;
