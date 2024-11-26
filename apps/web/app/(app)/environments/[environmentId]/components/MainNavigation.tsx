@@ -5,7 +5,7 @@ import { NavigationLink } from "@/app/(app)/environments/[environmentId]/compone
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
-import { ModalButton, ProjectLimitModal } from "@/modules/projects/components/project-limit-modal";
+import { ProjectSwitcher } from "@/modules/projects/components/project-switcher";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -23,15 +23,11 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import {
   ArrowUpRightIcon,
-  BlendIcon,
   BlocksIcon,
   ChevronRightIcon,
   Cog,
   CreditCardIcon,
-  GlobeIcon,
-  GlobeLockIcon,
   KeyIcon,
-  LinkIcon,
   LogOutIcon,
   MessageCircle,
   MousePointerClick,
@@ -94,7 +90,6 @@ export const MainNavigation = ({
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
   const [latestVersion, setLatestVersion] = useState("");
-  const [openLimitModal, setOpenLimitModal] = useState(false);
 
   const project = projects.find((project) => project.id === environment.projectId);
   const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
@@ -152,20 +147,8 @@ export const MainNavigation = ({
     return channelOrder.flatMap((channel) => groupedProjects[channel !== null ? channel : "null"] || []);
   }, [projects]);
 
-  const handleEnvironmentChangeByProject = (projectId: string) => {
-    router.push(`/projects/${projectId}/`);
-  };
-
   const handleEnvironmentChangeByOrganization = (organizationId: string) => {
     router.push(`/organizations/${organizationId}/`);
-  };
-
-  const handleAddProject = (organizationId: string) => {
-    if (projects.length >= organizationProjectsLimit) {
-      setOpenLimitModal(true);
-      return;
-    }
-    router.push(`/organizations/${organizationId}/projects/new/mode`);
   };
 
   const mainNavigation = useMemo(
@@ -262,45 +245,6 @@ export const MainNavigation = ({
 
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
-  const LimitModalButtons = (): [ModalButton, ModalButton] => {
-    if (isFormbricksCloud) {
-      return [
-        {
-          text: organization.billing.plan === "free" ? "Srart free trial" : "Upgrade",
-          onClick: () => router.push(`/organizations/${organization.id}/settings/billing`),
-        },
-        {
-          text: "Learn more",
-          onClick: () => router.push(`/organizations/${organization.id}/settings/billing`),
-        },
-      ];
-    } else {
-      if (isLicenseActive) {
-        return [
-          {
-            text: "Get in touch",
-            href: "https://cal.com/johannes/license",
-          },
-          {
-            text: "Learn more",
-            href: "https://formbricks.com/docs/self-hosting/license",
-          },
-        ];
-      }
-
-      return [
-        {
-          text: organization.billing.plan === "free" ? "Srart free trial" : "Get in touch",
-          href: "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
-        },
-        {
-          text: "Learn more",
-          href: "https://formbricks.com/docs/self-hosting/license",
-        },
-      ];
-    }
-  };
-
   return (
     <>
       {project && (
@@ -361,14 +305,6 @@ export const MainNavigation = ({
             )}
           </div>
 
-          {openLimitModal && (
-            <ProjectLimitModal
-              open={openLimitModal}
-              setOpen={setOpenLimitModal}
-              buttons={LimitModalButtons()}
-              projectLimit={organizationProjectsLimit}
-            />
-          )}
           <div>
             {/* New Version Available */}
             {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (
@@ -385,100 +321,18 @@ export const MainNavigation = ({
 
             {/* Project Switch */}
             {!isBilling && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  asChild
-                  id="projectDropdownTrigger"
-                  className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
-                  <div
-                    tabIndex={0}
-                    className={cn(
-                      "flex cursor-pointer flex-row items-center space-x-3",
-                      isCollapsed ? "pl-2" : "pl-4"
-                    )}>
-                    <div className="rounded-lg bg-slate-900 p-1.5 text-slate-50">
-                      {project.config.channel === "website" ? (
-                        <GlobeIcon strokeWidth={1.5} />
-                      ) : project.config.channel === "app" ? (
-                        <GlobeLockIcon strokeWidth={1.5} />
-                      ) : project.config.channel === "link" ? (
-                        <LinkIcon strokeWidth={1.5} />
-                      ) : (
-                        <BlendIcon strokeWidth={1.5} />
-                      )}
-                    </div>
-                    {!isCollapsed && !isTextVisible && (
-                      <>
-                        <div>
-                          <p
-                            title={project.name}
-                            className={cn(
-                              "ph-no-capture ph-no-capture -mb-0.5 max-w-28 truncate text-sm font-bold text-slate-700 transition-opacity duration-200",
-                              isTextVisible ? "opacity-0" : "opacity-100"
-                            )}>
-                            {project.name}
-                          </p>
-                          <p
-                            className={cn(
-                              "text-sm text-slate-500 transition-opacity duration-200",
-                              isTextVisible ? "opacity-0" : "opacity-100"
-                            )}>
-                            {project.config.channel === "link"
-                              ? "Link & Email"
-                              : capitalizeFirstLetter(project.config.channel)}
-                          </p>
-                        </div>
-                        <ChevronRightIcon
-                          className={cn(
-                            "h-5 w-5 text-slate-700 transition-opacity duration-200 hover:text-slate-500",
-                            isTextVisible ? "opacity-0" : "opacity-100"
-                          )}
-                        />
-                      </>
-                    )}
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  id="userDropdownInnerContentWrapper"
-                  side="right"
-                  sideOffset={10}
-                  alignOffset={-1}
-                  align="end">
-                  <DropdownMenuRadioGroup
-                    value={project!.id}
-                    onValueChange={(v) => handleEnvironmentChangeByProject(v)}>
-                    {sortedProjects.map((project) => (
-                      <DropdownMenuRadioItem
-                        value={project.id}
-                        className="cursor-pointer break-all"
-                        key={project.id}>
-                        <div>
-                          {project.config.channel === "website" ? (
-                            <GlobeIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          ) : project.config.channel === "app" ? (
-                            <GlobeLockIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          ) : project.config.channel === "link" ? (
-                            <LinkIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          ) : (
-                            <BlendIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                          )}
-                        </div>
-                        <div className="">{project?.name}</div>
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                  {isOwnerOrManager && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => handleAddProject(organization.id)}
-                        icon={<PlusIcon className="mr-2 h-4 w-4" />}>
-                        <span>{t("common.add_project")}</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ProjectSwitcher
+                environmentId={environment.id}
+                projects={sortedProjects}
+                project={project}
+                isCollapsed={isCollapsed}
+                isFormbricksCloud={isFormbricksCloud}
+                isLicenseActive={isLicenseActive}
+                isOwnerOrManager={isOwnerOrManager}
+                isTextVisible={isTextVisible}
+                organization={organization}
+                organizationProjectsLimit={organizationProjectsLimit}
+              />
             )}
 
             {/* User Switch */}

@@ -308,6 +308,7 @@
     "project_not_found": "Projeto não encontrado",
     "project_permission_not_found": "Permissão do projeto não encontrada",
     "projects": "Projetos",
+    "projects_limit_reached": "Limites de projetos atingidos",
     "question": "Pergunta",
     "question_id": "ID da Pergunta",
     "questions": "Perguntas",
@@ -383,6 +384,7 @@
     "try_again": "Tenta de novo",
     "type": "Tipo",
     "unarchive": "Desarquivar",
+    "unlock_more_projects_with_a_higher_plan": "Desbloqueie mais projetos com um plano superior.",
     "update": "atualizar",
     "updated": "atualizado",
     "updated_at": "Atualizado em",
@@ -409,6 +411,7 @@
     "you": "Você",
     "you_are_downgraded_to_the_community_edition": "Você foi rebaixado para a Edição Comunitária.",
     "you_are_not_authorised_to_perform_this_action": "Você não tem autorização para fazer isso.",
+    "you_have_reached_your_limit_of_project_limit": "Você atingiu seu limite de {projectLimit} projeto.",
     "you_have_reached_your_monthly_miu_limit_of": "Você atingiu o seu limite mensal de MIU de",
     "you_have_reached_your_monthly_response_limit_of": "Você atingiu o limite mensal de respostas de",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Você será rebaixado para a Edição Comunitária em {data}."

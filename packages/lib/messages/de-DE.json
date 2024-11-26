@@ -308,6 +308,7 @@
     "project_not_found": "Projekt nicht gefunden",
     "project_permission_not_found": "Projekt-Berechtigung nicht gefunden",
     "projects": "Projekte",
+    "projects_limit_reached": "Projektgrenzen erreicht",
     "question": "Frage",
     "question_id": "Frage-ID",
     "questions": "Fragen",
@@ -383,6 +384,7 @@
     "try_again": "Versuch's nochmal",
     "type": "Typ",
     "unarchive": "Wiederherstellen",
+    "unlock_more_projects_with_a_higher_plan": "Schalte mehr Projekte mit einem höheren Plan frei.",
     "update": "Aktualisierung",
     "updated": "Aktualisiert",
     "updated_at": "Aktualisiert am",
@@ -409,6 +411,7 @@
     "you": "Du",
     "you_are_downgraded_to_the_community_edition": "Du wurdest auf die Community Edition herabgestuft.",
     "you_are_not_authorised_to_perform_this_action": "Du bist nicht berechtigt, diese Aktion auszuführen.",
+    "you_have_reached_your_limit_of_project_limit": "Du hast dein Limit von {projectLimit} Projekten erreicht.",
     "you_have_reached_your_monthly_miu_limit_of": "Du hast dein monatliches MIU-Limit erreicht",
     "you_have_reached_your_monthly_response_limit_of": "Du hast dein monatliches Antwortlimit erreicht",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Du wirst am {Datum} auf die Community Edition herabgestuft."
