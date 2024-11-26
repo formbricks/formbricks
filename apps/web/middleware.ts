@@ -21,12 +21,35 @@ import {
 } from "@/app/middleware/endpointValidator";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
 export const middleware = async (request: NextRequest) => {
+  // Get existing response
+  const response = NextResponse.next();
+
+  // Add Intercom domains to CSP headers
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.intercom.io https://*.intercomcdn.com;
+    style-src 'self' 'unsafe-inline' https://*.intercomcdn.com;
+    img-src 'self' blob: data: https://*.intercom.io https://*.intercomcdn.com;
+    font-src 'self' data: https://*.intercomcdn.com;
+    connect-src 'self' https://*.intercom.io wss://*.intercom.io https://*.intercomcdn.com https:;
+    frame-src 'self' https://*.intercom.io;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+  `
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  response.headers.set("Content-Security-Policy", cspHeader);
+
   // issue with next auth types; let's review when new fixes are available
   const token = await getToken({ req: request as any });
 
