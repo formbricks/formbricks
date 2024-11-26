@@ -63,7 +63,6 @@
     "react-dom": "19.0.0-rc-ed15d500-20241110",
     "react-hook-form": "7.53.0",
     "react-hot-toast": "2.4.1",
-    "react-icons": "5.3.0",
     "redis": "4.7.0",
     "sharp": "0.33.5",
     "stripe": "16.7.0",

@@ -24,7 +24,7 @@ Ready to dive into the code and make a real impact? Here's your path:
 
 1. **Pull Request Act:** If you're ready to go, craft a new pull request closely following our PR template 🙏
 
-Would you prefer a chat before you dive into a lot of work? Our [Discord server](https://formbricks.com/discord) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
+Would you prefer a chat before you dive into a lot of work? [Github Discussions](https://github.com/formbricks/formbricks/discussions) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
 
 ## 🚀 Aspiring Features
 
