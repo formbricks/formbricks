@@ -17,12 +17,12 @@ export const IntercomClient = ({
 }) => {
   const crypto = require("crypto");
 
-  const secretKey = "eH92d3gRYsztRrolQNwjijMfcfIFx57EhFjs9EKR"; // TODO: Move to env variable
+  const secretKey = "123"; // TODO: Move to env variable
   const hash = crypto.createHmac("sha256", secretKey).update(session.user.id).digest("hex");
 
   const initializeIntercom = useCallback(() => {
     Intercom({
-      app_id: "u1x4ge59", // TODO: Replace with env variable
+      app_id: "123", // TODO: Replace with env variable
       user_id: session.user.id,
       user_hash: hash,
       api_base: "https://api-iam.eu.intercom.io",
