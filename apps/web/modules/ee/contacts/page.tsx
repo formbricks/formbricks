@@ -6,7 +6,7 @@ import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { UpgradePrompt } from "@/modules/ui/components/upgrade-actions";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { UserIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
