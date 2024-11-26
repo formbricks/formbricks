@@ -1,3 +1,4 @@
+import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -22,7 +23,6 @@ import {
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { TComboboxGroupedOption, TComboboxOption } from "@formbricks/ui/components/InputCombobox";
 import { TLogicRuleOption, logicRules } from "./logicRuleEngine";
 
 // formats the text to highlight specific parts of the text with slashes

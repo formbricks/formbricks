@@ -6,6 +6,13 @@ import {
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/util";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
+import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
+import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -20,13 +27,6 @@ import {
   TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { AdditionalIntegrationSettings } from "@formbricks/ui/components/AdditionalIntegrationSettings";
-import { Button } from "@formbricks/ui/components/Button";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
-import { DropdownSelector } from "@formbricks/ui/components/DropdownSelector";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -67,6 +67,7 @@ export const AddIntegrationModal = ({
   const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
+  const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
     type: "googleSheets",
     config: {
@@ -95,6 +96,7 @@ export const AddIntegrationModal = ({
       setIncludeVariables(!!selectedIntegration.includeVariables);
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
+      setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
       return;
     } else {
       setSpreadsheetUrl("");
@@ -108,7 +110,7 @@ export const AddIntegrationModal = ({
         throw new Error(t("environments.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"));
       }
       if (!selectedSurvey) {
-        throw new Error(t("environments.integrations.select_a_survey_error"));
+        throw new Error(t("environments.integrations.please_select_a_survey_error"));
       }
       if (selectedQuestions.length === 0) {
         throw new Error(t("environments.integrations.select_at_least_one_question_error"));
@@ -134,6 +136,7 @@ export const AddIntegrationModal = ({
       integrationData.includeVariables = includeVariables;
       integrationData.includeHiddenFields = includeHiddenFields;
       integrationData.includeMetadata = includeMetadata;
+      integrationData.includeCreatedAt = includeCreatedAt;
       if (selectedIntegration) {
         // update action
         googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
@@ -280,6 +283,8 @@ export const AddIntegrationModal = ({
                     includeMetadata={includeMetadata}
                     setIncludeHiddenFields={setIncludeHiddenFields}
                     setIncludeMetadata={setIncludeMetadata}
+                    includeCreatedAt={includeCreatedAt}
+                    setIncludeCreatedAt={setIncludeCreatedAt}
                   />
                 </div>
               )}

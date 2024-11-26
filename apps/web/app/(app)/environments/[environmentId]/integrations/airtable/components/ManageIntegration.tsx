@@ -6,6 +6,9 @@ import {
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { Trash2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -17,9 +20,6 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
 
 interface ManageIntegrationProps {
   airtableIntegration: TIntegrationAirtable;
@@ -128,6 +128,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
                   includeVariables: !!data.includeVariables,
                   includeHiddenFields: !!data.includeHiddenFields,
                   includeMetadata: !!data.includeMetadata,
+                  includeCreatedAt: !!data.includeCreatedAt,
                   index,
                 });
                 setIsModalOpen(true);

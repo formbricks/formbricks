@@ -8,6 +8,9 @@ import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environment
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
+import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
@@ -15,9 +18,6 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/components/Popover";
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {

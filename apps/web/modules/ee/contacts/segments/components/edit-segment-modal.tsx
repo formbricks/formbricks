@@ -1,11 +1,11 @@
 "use client";
 
 import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { SegmentActivityTab } from "./segment-activity-tab";
 
 interface EditSegmentModalProps {

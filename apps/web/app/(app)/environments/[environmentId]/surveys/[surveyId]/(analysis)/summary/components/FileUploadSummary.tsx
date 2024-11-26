@@ -1,3 +1,5 @@
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
 import { DownloadIcon, FileIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -8,8 +10,6 @@ import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { PersonAvatar } from "@formbricks/ui/components/Avatars";
-import { Button } from "@formbricks/ui/components/Button";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface FileUploadSummaryProps {

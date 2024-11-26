@@ -12,12 +12,13 @@ import { cache, revalidateTag } from "@formbricks/lib/cache";
 import {
   E2E_TESTING,
   ENTERPRISE_LICENSE_KEY,
+  IS_AI_CONFIGURED,
   IS_FORMBRICKS_CLOUD,
   PRODUCT_FEATURE_KEYS,
 } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
-import { TOrganization } from "@formbricks/types/organizations";
+import { TOrganization, TOrganizationBillingPlan } from "@formbricks/types/organizations";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
@@ -80,7 +81,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
       // first call
       const newResult = {
         active: true,
-        features: { isMultiOrgEnabled: true, isContactsEnabled: true },
+        features: { isMultiOrgEnabled: true, twoFactorAuth: true, sso: true, isContactsEnabled: true },
         lastChecked: currentTime,
       };
       await setPreviousResult(newResult);
@@ -137,7 +138,7 @@ export const getEnterpriseLicense = async (): Promise<{
     if (isValid === null) {
       const newResult = {
         active: false,
-        features: { isMultiOrgEnabled: false, isContactsEnabled: false },
+        features: { isMultiOrgEnabled: false, twoFactorAuth: false, sso: false, isContactsEnabled: false },
         lastChecked: new Date(),
       };
 
@@ -318,4 +319,43 @@ export const getIsContactsEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.isContactsEnabled;
+};
+
+export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? previousResult.features.twoFactorAuth : false;
+  }
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return licenseFeatures.twoFactorAuth;
+};
+
+export const getIsSSOEnabled = async (): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? previousResult.features.sso : false;
+  }
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return licenseFeatures.sso;
+};
+
+export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
+  // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
+  if (IS_FORMBRICKS_CLOUD) {
+    return (
+      IS_AI_CONFIGURED &&
+      (await getEnterpriseLicense()).active &&
+      (billingPlan === PRODUCT_FEATURE_KEYS.STARTUP ||
+        billingPlan === PRODUCT_FEATURE_KEYS.SCALE ||
+        billingPlan === PRODUCT_FEATURE_KEYS.ENTERPRISE)
+    );
+  }
+
+  return false;
+};
+
+export const getIsAIEnabled = async (organization: TOrganization) => {
+  return organization.isAIEnabled && (await getIsOrganizationAIReady(organization.billing.plan));
 };

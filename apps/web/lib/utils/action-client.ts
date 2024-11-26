@@ -1,6 +1,6 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getUser } from "@formbricks/lib/user/service";
 import {
   AuthenticationError,
@@ -18,6 +18,7 @@ export const actionClient = createSafeActionClient({
       e instanceof AuthorizationError ||
       e instanceof InvalidInputError ||
       e instanceof UnknownError ||
+      e instanceof AuthenticationError ||
       e instanceof OperationNotAllowedError
     ) {
       return e.message;

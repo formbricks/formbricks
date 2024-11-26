@@ -3,6 +3,14 @@ import {
   getDefaultOperatorForQuestion,
   replaceEndingCardHeadlineRecall,
 } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { Label } from "@/modules/ui/components/label";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -20,14 +28,6 @@ import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface ConditionalLogicProps {
   localSurvey: TSurvey;

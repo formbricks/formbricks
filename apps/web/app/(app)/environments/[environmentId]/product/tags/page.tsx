@@ -1,14 +1,16 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   getMultiLanguagePermission,
   getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -16,8 +18,6 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { EditTagsWrapper } from "./components/EditTagsWrapper";
 
 const Page = async (props) => {

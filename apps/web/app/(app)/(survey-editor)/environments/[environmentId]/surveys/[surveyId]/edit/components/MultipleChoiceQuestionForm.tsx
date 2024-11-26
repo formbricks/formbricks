@@ -2,6 +2,9 @@
 
 import { findOptionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -20,9 +23,6 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { Label } from "@formbricks/ui/components/Label";
-import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface MultipleChoiceQuestionFormProps {

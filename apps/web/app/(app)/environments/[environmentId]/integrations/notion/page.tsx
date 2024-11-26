@@ -1,10 +1,13 @@
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { GoBackButton } from "@/modules/ui/components/go-back-button";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
@@ -21,9 +24,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
-import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { getContactAttributeKeys } from "../lib/contact-attribute-key";
 
 const Page = async (props) => {

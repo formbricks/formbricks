@@ -1,7 +1,7 @@
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { getTranslations } from "next-intl/server";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { TProduct } from "@formbricks/types/product";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface PersonSecondaryNavigationProps {
   activeId: string;

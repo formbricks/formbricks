@@ -1,9 +1,11 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { PRODUCT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -13,8 +15,6 @@ import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { PricingTable } from "./components/pricing-table";
 
 export const PricingPage = async (props) => {

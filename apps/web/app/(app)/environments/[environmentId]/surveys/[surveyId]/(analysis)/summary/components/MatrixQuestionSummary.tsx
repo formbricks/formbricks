@@ -1,3 +1,4 @@
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslations } from "next-intl";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
@@ -8,7 +9,6 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {

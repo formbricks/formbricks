@@ -5,15 +5,15 @@ import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
 import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
+import { Button } from "@/modules/ui/components/button";
+import { Modal } from "@/modules/ui/components/modal";
+import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { Button } from "@formbricks/ui/components/Button";
-import { Modal } from "@formbricks/ui/components/Modal";
-import { StylingTabs } from "@formbricks/ui/components/StylingTabs";
 
 interface UploadContactsCSVButtonProps {
   environmentId: string;

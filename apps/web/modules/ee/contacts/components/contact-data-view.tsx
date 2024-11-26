@@ -1,12 +1,12 @@
 "use client";
 
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import React from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { deleteContactAction, getContactsAction } from "../actions";
 import { TContactTableData, TContactWithAttributes } from "../types/contact";
 

@@ -71,12 +71,14 @@ These variables are present inside your machine’s docker-compose file. Restart
 | OIDC_SIGNING_ALGORITHM       | Signing Algorithm for Custom OpenID Connect Provider                                                           | optional                                                | RS256                     |
 | OPENTELEMETRY_LISTENER_URL   | URL for OpenTelemetry listener inside Formbricks.                                                              | optional                                                |                           |
 | CUSTOM_CACHE_DISABLED        | Disables custom cache handler if set to 1 (required for deployment on Vercel)                                  | optional                                                |                           |
-| `<add more>`                 |                                                                                                                |                                                         |                           |
-|                              |                                                                                                                |                                                         |                           |
 
-Note: If you want to configure something that is not possible via above, please open an issue on our GitHub repo here or reach out to us on Discord and we’ll try our best to work out a solution with you.
+Note: If you want to configure something that is not possible via above, please open an issue on our GitHub repo here or reach out to us on Github Discussions and we’ll try our best to work out a solution with you.
 
 ## OAuth Configuration
+
+<Note>
+  Single Sign-On (SSO) functionality, including OAuth integrations with Google, Microsoft Entra ID, Github and OpenID Connect, requires a valid Formbricks Enterprise License.
+</Note>
 
 ### Google OAuth
 
@@ -113,9 +115,11 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
   <CodeGroup title="Configuration URLs">
     ``` {{ title: "Redirect & Origin URLs" }}
     Authorized JavaScript origins: {WEBAPP_URL}
-    Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google ```
+    Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google
+    ```
   </CodeGroup>
 </Col>
+
 
 5. **Update Environment Variables in Docker**:
    - To integrate the Google OAuth, you have two options: either update the environment variables in the docker-compose file or directly add them to the running container.

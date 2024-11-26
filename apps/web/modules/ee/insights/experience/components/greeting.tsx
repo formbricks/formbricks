@@ -1,7 +1,7 @@
 "use client";
 
+import { H1 } from "@/modules/ui/components/typography";
 import { useTranslations } from "next-intl";
-import { H1 } from "@formbricks/ui/components/Typography";
 
 interface GreetingProps {
   userName: string;

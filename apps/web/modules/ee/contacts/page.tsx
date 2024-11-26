@@ -1,20 +1,20 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getContactAttributeKeys, getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-actions";
 import { UserIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { ContactDataView } from "./components/contact-data-view";
 import { ContactsSecondaryNavigation } from "./components/contacts-secondary-navigation";
 

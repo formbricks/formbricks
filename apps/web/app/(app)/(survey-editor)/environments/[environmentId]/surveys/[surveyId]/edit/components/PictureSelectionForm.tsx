@@ -1,4 +1,8 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
+import { FileInput } from "@/modules/ui/components/file-input";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon } from "lucide-react";
@@ -9,10 +13,6 @@ import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/uti
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { FileInput } from "@formbricks/ui/components/FileInput";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;

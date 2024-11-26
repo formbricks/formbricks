@@ -1,3 +1,5 @@
+import { ArrayResponse } from "@/modules/ui/components/array-response";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { timeSince } from "@formbricks/lib/time";
@@ -5,8 +7,6 @@ import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryContactInfo } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { ArrayResponse } from "@formbricks/ui/components/ArrayResponse";
-import { PersonAvatar } from "@formbricks/ui/components/Avatars";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface ContactInfoSummaryProps {

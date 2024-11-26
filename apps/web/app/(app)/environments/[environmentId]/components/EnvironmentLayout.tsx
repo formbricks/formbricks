@@ -2,6 +2,9 @@ import { MainNavigation } from "@/app/(app)/environments/[environmentId]/compone
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
+import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
+import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
 import type { Session } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -16,9 +19,6 @@ import {
 } from "@formbricks/lib/organization/service";
 import { getUserProducts } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
-import { LimitsReachedBanner } from "@formbricks/ui/components/LimitsReachedBanner";
-import { PendingDowngradeBanner } from "@formbricks/ui/components/PendingDowngradeBanner";
 
 interface EnvironmentLayoutProps {
   environmentId: string;

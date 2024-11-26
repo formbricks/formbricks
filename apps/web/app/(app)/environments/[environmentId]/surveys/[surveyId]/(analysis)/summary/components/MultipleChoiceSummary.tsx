@@ -1,3 +1,6 @@
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { InboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -13,9 +16,6 @@ import {
   TSurveyType,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { PersonAvatar } from "@formbricks/ui/components/Avatars";
-import { Button } from "@formbricks/ui/components/Button";
-import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 

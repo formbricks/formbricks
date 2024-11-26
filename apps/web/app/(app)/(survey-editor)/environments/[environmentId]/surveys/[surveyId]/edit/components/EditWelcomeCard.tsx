@@ -2,6 +2,9 @@
 
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { FileInput } from "@/modules/ui/components/file-input";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,9 +14,6 @@ import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { FileInput } from "@formbricks/ui/components/FileInput";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;

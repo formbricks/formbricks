@@ -1,11 +1,15 @@
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
+import { getContactAttributeKeys } from "@/app/(app)/environments/[environmentId]/integrations/lib/contact-attribute-key";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { GoBackButton } from "@/modules/ui/components/go-back-button";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -16,10 +20,6 @@ import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { getContactAttributeKeys } from "../lib/contact-attribute-key";
 
 const Page = async (props) => {
   const params = await props.params;

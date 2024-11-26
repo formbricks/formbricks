@@ -7,6 +7,13 @@ import {
   moveResource,
   toggleGroupConnector,
 } from "@/modules/ee/contacts/segments/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -14,13 +21,6 @@ import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentFilter } from "./segment-filter";
 

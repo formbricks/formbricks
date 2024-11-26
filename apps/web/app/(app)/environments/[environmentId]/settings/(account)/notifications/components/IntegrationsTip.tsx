@@ -1,5 +1,5 @@
+import { SlackIcon } from "@/modules/ui/components/icons";
 import { useTranslations } from "next-intl";
-import { SlackIcon } from "@formbricks/ui/components/icons";
 
 interface IntegrationsTipProps {
   environmentId: string;

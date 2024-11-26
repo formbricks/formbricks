@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui/components/Button";
+import { Button } from "@/modules/ui/components/button";
 
 export type ModalButton = {
   text: string;

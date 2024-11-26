@@ -1,9 +1,9 @@
 "use client";
 
+import { Label } from "@/modules/ui/components/label";
 import { useTranslations } from "next-intl";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { TSegment } from "@formbricks/types/segment";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface SegmentActivityTabProps {
   environmentId: string;

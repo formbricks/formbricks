@@ -1,4 +1,5 @@
 import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/user";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -8,10 +9,10 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
@@ -27,7 +28,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
 import { SurveyEditor } from "./components/SurveyEditor";
 
 export const generateMetadata = async (props) => {

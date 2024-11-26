@@ -1,8 +1,8 @@
+import { ProBadge } from "@/modules/ui/components/pro-badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import Link from "next/link";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
-import { ProBadge } from "@formbricks/ui/components/ProBadge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface NavigationLinkProps {
   href: string;

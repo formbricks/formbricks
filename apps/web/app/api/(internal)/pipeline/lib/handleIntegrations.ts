@@ -4,6 +4,8 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { processResponseData } from "@formbricks/lib/responses";
 import { writeDataToSlack } from "@formbricks/lib/slack/service";
+import { getFormattedDate } from "@formbricks/lib/utils/datetime";
+import { getFormattedTime } from "@formbricks/lib/utils/datetime";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
@@ -38,6 +40,7 @@ const processDataForIntegration = async (
   includeVariables: boolean,
   includeMetadata: boolean,
   includeHiddenFields: boolean,
+  includeCreatedAt: boolean,
   questionIds: string[],
   contactAttributes?: TContactAttributes
 ): Promise<string[][]> => {
@@ -58,6 +61,11 @@ const processDataForIntegration = async (
         values[1].push(variable.name);
       }
     });
+  }
+  if (includeCreatedAt) {
+    const date = new Date(data.response.createdAt);
+    values[0].push(`${getFormattedDate(date)} ${getFormattedTime(date)}`);
+    values[1].push("Created At");
   }
 
   return values;
@@ -128,6 +136,7 @@ const handleAirtableIntegration = async (
             !!element.includeVariables,
             !!element.includeMetadata,
             !!element.includeHiddenFields,
+            !!element.includeCreatedAt,
             element.questionIds
           );
           await airtableWriteData(integration.config.key, element, values);
@@ -163,6 +172,7 @@ const handleGoogleSheetsIntegration = async (
             !!element.includeVariables,
             !!element.includeMetadata,
             !!element.includeHiddenFields,
+            !!element.includeCreatedAt,
             element.questionIds
           );
           const integrationData = structuredClone(integration);
@@ -204,6 +214,7 @@ const handleSlackIntegration = async (
             !!element.includeVariables,
             !!element.includeMetadata,
             !!element.includeHiddenFields,
+            !!element.includeCreatedAt,
             element.questionIds,
             contactAttributes
           );
@@ -339,6 +350,10 @@ const buildNotionPayloadProperties = (
     if (map.question.id === "metadata") {
       properties[map.column.name] = {
         [map.column.type]: getValue(map.column.type, convertMetaObjectToString(data.response.meta)),
+      };
+    } else if (map.question.id === "createdAt") {
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, data.response.createdAt.toISOString()),
       };
     } else {
       const value = responses[map.question.id];

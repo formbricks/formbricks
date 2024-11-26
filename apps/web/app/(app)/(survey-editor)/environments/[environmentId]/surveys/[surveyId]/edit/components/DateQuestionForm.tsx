@@ -1,4 +1,7 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -7,9 +10,6 @@ import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/uti
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { Label } from "@formbricks/ui/components/Label";
-import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;

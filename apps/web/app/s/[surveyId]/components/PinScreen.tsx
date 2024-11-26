@@ -4,6 +4,7 @@ import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { OTPInput } from "@/modules/ui/components/otp-input";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -11,7 +12,6 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { OTPInput } from "@formbricks/ui/components/OTPInput";
 
 interface PinScreenProps {
   surveyId: string;

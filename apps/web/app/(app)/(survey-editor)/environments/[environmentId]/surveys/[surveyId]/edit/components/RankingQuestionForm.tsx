@@ -1,6 +1,9 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -12,9 +15,6 @@ import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/uti
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TI18nString, TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { Label } from "@formbricks/ui/components/Label";
-import { ShuffleOptionSelect } from "@formbricks/ui/components/ShuffleOptionSelect";
 import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface RankingQuestionFormProps {

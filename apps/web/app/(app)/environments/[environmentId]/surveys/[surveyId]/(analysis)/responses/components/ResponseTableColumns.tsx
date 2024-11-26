@@ -1,19 +1,20 @@
 "use client";
 
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { getSelectionColumn } from "@/modules/ui/components/data-table";
+import { ResponseBadges } from "@/modules/ui/components/response-badges";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { processResponseData } from "@formbricks/lib/responses";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
+import { getFormattedDate, getFormattedTime } from "@formbricks/lib/utils/datetime";
 import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
-import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 const getAddressFieldLabel = (field: string, t: (key: string) => string) => {
   switch (field) {
@@ -180,25 +181,11 @@ export const generateResponseTableColumns = (
     header: () => t("common.date"),
     size: 200,
     cell: ({ row }) => {
-      const isoDateString = row.original.createdAt;
-      const date = new Date(isoDateString);
-
-      const formattedDate = date.toLocaleString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
-      const formattedTime = date.toLocaleString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
+      const date = new Date(row.original.createdAt);
       return (
         <div>
-          <p className="text-slate-900">{formattedDate}</p>
-          <p className="text-slate-900">{formattedTime}</p>
+          <p className="text-slate-900">{getFormattedDate(date)}</p>
+          <p className="text-slate-900">{getFormattedTime(date)}</p>
         </div>
       );
     },

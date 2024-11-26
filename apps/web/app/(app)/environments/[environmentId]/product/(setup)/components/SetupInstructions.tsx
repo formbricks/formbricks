@@ -1,12 +1,12 @@
 "use client";
 
+import { CodeBlock } from "@/modules/ui/components/code-block";
+import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
+import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
-import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
-import { TabBar } from "@formbricks/ui/components/TabBar";
-import { Html5Icon, NpmIcon } from "@formbricks/ui/components/icons";
 
 const tabs = [
   {
@@ -99,10 +99,6 @@ if (typeof window !== "undefined") {
               </li>
               <li>
                 <span>{t("environments.product.app-connection.not_working")}</span>{" "}
-                <Link className="decoration-brand-dark" href="https://formbricks.com/discord" target="_blank">
-                  {t("environments.product.app-connection.join_discord")}
-                </Link>{" "}
-                {t("environments.product.app-connection.or")}{" "}
                 <Link
                   className="decoration-brand-dark"
                   target="_blank"
@@ -168,10 +164,6 @@ if (typeof window !== "undefined") {
                   href="https://github.com/formbricks/formbricks/issues">
                   {t("environments.product.app-connection.open_an_issue_on_github")}
                 </Link>{" "}
-                {t("environments.product.app-connection.or")}{" "}
-                <Link className="decoration-brand-dark" href="https://formbricks.com/discord" target="_blank">
-                  {t("environments.product.app-connection.join_discord")}
-                </Link>
               </li>
               <li>
                 <span className="font-semibold">

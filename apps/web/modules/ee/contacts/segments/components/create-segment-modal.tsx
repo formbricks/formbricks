@@ -2,6 +2,9 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Modal } from "@/modules/ui/components/modal";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -11,9 +14,6 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Modal } from "@formbricks/ui/components/Modal";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 

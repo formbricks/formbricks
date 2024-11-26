@@ -2,7 +2,11 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
+import {
+  getEnvironmentIdFromSurveyId,
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromSurveyId,
+} from "@/lib/utils/helper";
 import {
   cloneSegment,
   createSegment,
@@ -10,17 +14,45 @@ import {
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
+
+const checkAdvancedTargetingPermission = async (organizationId: string) => {
+  const organization = await getOrganization(organizationId);
+
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
+  // const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(organization);
+  const isContactsEnabled = await getIsContactsEnabled();
+
+  if (!isContactsEnabled) {
+    throw new OperationNotAllowedError("Advanced targeting is not allowed for this organization");
+  }
+};
 
 export const createSegmentAction = authenticatedActionClient
   .schema(ZSegmentCreateInput)
   .action(async ({ ctx, parsedInput }) => {
+    if (parsedInput.surveyId) {
+      const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+
+      if (surveyEnvironmentId !== parsedInput.environmentId) {
+        throw new Error("Survey and segment are not in the same environment");
+      }
+    }
+
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -28,6 +60,8 @@ export const createSegmentAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkAdvancedTargetingPermission(organizationId);
 
     const parsedFilters = ZSegmentFilters.safeParse(parsedInput.filters);
 
@@ -61,6 +95,8 @@ export const updateSegmentAction = authenticatedActionClient
       ],
     });
 
+    await checkAdvancedTargetingPermission(organizationId);
+
     const { filters } = parsedInput.data;
     if (filters) {
       const parsedFilters = ZSegmentFilters.safeParse(filters);
@@ -83,9 +119,10 @@ const ZLoadNewSegmentAction = z.object({
 export const loadNewSegmentAction = authenticatedActionClient
   .schema(ZLoadNewSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -93,6 +130,8 @@ export const loadNewSegmentAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkAdvancedTargetingPermission(organizationId);
 
     return await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
   });
@@ -105,9 +144,19 @@ const ZCloneSegmentAction = z.object({
 export const cloneSegmentAction = authenticatedActionClient
   .schema(ZCloneSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
+    // const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+    // const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+
+    // if (surveyEnvironmentId !== segmentEnvironmentId) {
+    //   throw new Error("Segment and survey are not in the same environment");
+    // }
+
+    // const organizationId = await getOrganizationIdFromEnvironmentId(surveyEnvironmentId);
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -115,6 +164,8 @@ export const cloneSegmentAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkAdvancedTargetingPermission(organizationId);
 
     return await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
   });
@@ -127,9 +178,10 @@ const ZDeleteSegmentAction = z.object({
 export const deleteSegmentAction = authenticatedActionClient
   .schema(ZDeleteSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -137,6 +189,8 @@ export const deleteSegmentAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkAdvancedTargetingPermission(organizationId);
 
     return await deleteSegment(parsedInput.segmentId);
   });
@@ -148,9 +202,11 @@ const ZResetSegmentFiltersAction = z.object({
 export const resetSegmentFiltersAction = authenticatedActionClient
   .schema(ZResetSegmentFiltersAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -158,6 +214,8 @@ export const resetSegmentFiltersAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkAdvancedTargetingPermission(organizationId);
 
     return await resetSegmentInSurvey(parsedInput.surveyId);
   });

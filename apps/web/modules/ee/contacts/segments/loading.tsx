@@ -1,8 +1,8 @@
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { UsersIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Loading = async () => {
   const t = await getTranslations();

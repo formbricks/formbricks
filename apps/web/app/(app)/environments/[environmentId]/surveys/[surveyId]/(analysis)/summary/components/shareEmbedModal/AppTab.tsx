@@ -1,9 +1,9 @@
 "use client";
 
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
-import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
 
 export const AppTab = ({ environmentId }) => {
   const t = useTranslations();

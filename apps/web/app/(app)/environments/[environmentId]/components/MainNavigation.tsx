@@ -5,6 +5,21 @@ import { NavigationLink } from "@/app/(app)/environments/[environmentId]/compone
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
+import { ProfileAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import {
   ArrowUpRightIcon,
   BlendIcon,
@@ -33,7 +48,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { AiOutlineDiscord } from "react-icons/ai";
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -42,21 +56,6 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TUser } from "@formbricks/types/user";
-import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 import packageJson from "../../../../../package.json";
 
 interface NavigationProps {
@@ -226,12 +225,6 @@ export const MainNavigation = ({
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
-    },
-    {
-      label: t("common.join_discord"),
-      href: "https://formbricks.com/discord",
-      target: "_blank",
-      icon: AiOutlineDiscord,
     },
   ];
 

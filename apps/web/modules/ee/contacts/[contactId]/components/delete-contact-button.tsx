@@ -2,12 +2,12 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
 
 interface DeleteContactButtonProps {
   environmentId: string;

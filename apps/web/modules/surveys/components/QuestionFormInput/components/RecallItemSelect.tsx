@@ -1,3 +1,9 @@
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import {
   CalendarDaysIcon,
@@ -24,12 +30,6 @@ import {
   TSurveyQuestionId,
   TSurveyRecallItem,
 } from "@formbricks/types/surveys/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
-import { Input } from "@formbricks/ui/components/Input";
 
 const questionIconMapping = {
   openText: MessageSquareTextIcon,

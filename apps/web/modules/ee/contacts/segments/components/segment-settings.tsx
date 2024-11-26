@@ -1,6 +1,9 @@
 "use client";
 
 import { deleteSegmentAction, updateSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
+import { Input } from "@/modules/ui/components/input";
 import { FilterIcon, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -11,9 +14,6 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/components/Button";
-import { ConfirmDeleteSegmentModal } from "@formbricks/ui/components/ConfirmDeleteSegmentModal";
-import { Input } from "@formbricks/ui/components/Input";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 

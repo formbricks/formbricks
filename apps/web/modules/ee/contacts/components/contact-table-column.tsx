@@ -1,8 +1,8 @@
 "use client";
 
+import { getSelectionColumn } from "@/modules/ui/components/data-table";
+import { HighlightedText } from "@/modules/ui/components/highlighted-text";
 import { ColumnDef } from "@tanstack/react-table";
-import { getSelectionColumn } from "@formbricks/ui/components/DataTable";
-import { HighlightedText } from "@formbricks/ui/components/HighlightedText";
 import { TContactTableData } from "../types/contact";
 
 export const generateContactTableColumns = (

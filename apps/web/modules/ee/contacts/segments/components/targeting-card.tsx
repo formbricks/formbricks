@@ -7,6 +7,13 @@ import {
   resetSegmentFiltersAction,
   updateSegmentAction,
 } from "@/modules/ee/contacts/segments/actions";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
+import { LoadSegmentModal } from "@/modules/ui/components/load-segment-modal";
+import { SaveAsNewSegmentModal } from "@/modules/ui/components/save-as-new-segment-modal";
+import { SegmentTitle } from "@/modules/ui/components/segment-title";
+import { TargetingIndicator } from "@/modules/ui/components/targeting-indicator";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,13 +31,6 @@ import type {
   TSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { Alert, AlertDescription } from "@formbricks/ui/components/Alert";
-import { AlertDialog } from "@formbricks/ui/components/AlertDialog";
-import { Button } from "@formbricks/ui/components/Button";
-import { LoadSegmentModal } from "@formbricks/ui/components/LoadSegmentModal";
-import { SaveAsNewSegmentModal } from "@formbricks/ui/components/SaveAsNewSegmentModal";
-import { SegmentTitle } from "@formbricks/ui/components/SegmentTitle";
-import { TargetingIndicator } from "@formbricks/ui/components/TargetingIndicator";
 import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 

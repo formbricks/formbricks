@@ -1,13 +1,13 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";

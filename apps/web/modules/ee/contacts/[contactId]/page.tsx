@@ -1,3 +1,4 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { DeleteContactButton } from "@/modules/ee/contacts/[contactId]/components/delete-contact-button";
 import {
@@ -8,17 +9,16 @@ import {
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { ResponseSection } from "./components/response-section";
 
 export const SingleContactPage = async (props: {

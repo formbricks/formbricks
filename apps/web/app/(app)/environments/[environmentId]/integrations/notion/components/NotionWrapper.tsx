@@ -3,6 +3,7 @@
 import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/ManageIntegration";
 import notionLogo from "@/images/notion.png";
+import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -13,7 +14,6 @@ import {
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 import { authorize } from "../lib/notion";
 
 interface NotionWrapperProps {

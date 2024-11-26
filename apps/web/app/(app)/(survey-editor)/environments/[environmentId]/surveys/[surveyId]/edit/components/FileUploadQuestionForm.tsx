@@ -1,6 +1,9 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon, XCircleIcon } from "lucide-react";
@@ -15,9 +18,6 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;

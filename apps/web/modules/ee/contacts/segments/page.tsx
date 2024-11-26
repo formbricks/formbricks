@@ -1,3 +1,4 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
@@ -5,18 +6,17 @@ import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-actions";
 import { UserIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 
 export const SegmentsPage = async ({

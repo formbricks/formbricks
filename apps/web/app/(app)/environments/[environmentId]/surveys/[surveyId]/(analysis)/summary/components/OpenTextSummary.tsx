@@ -1,4 +1,8 @@
 import { InsightView } from "@/modules/ee/insights/components/insights-view";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
@@ -7,17 +11,6 @@ import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { PersonAvatar } from "@formbricks/ui/components/Avatars";
-import { Button } from "@formbricks/ui/components/Button";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@formbricks/ui/components/Table";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {

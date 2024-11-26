@@ -4,6 +4,10 @@ import {
   getIfResponseWithSurveyIdAndEmailExistAction,
   sendLinkSurveyEmailAction,
 } from "@/app/s/[surveyId]/actions";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, MailIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,10 +20,6 @@ import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { StackedCardsContainer } from "@formbricks/ui/components/StackedCardsContainer";
 
 interface VerifyEmailProps {
   survey: TSurvey;

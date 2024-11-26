@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
-import { Button } from "@formbricks/ui/components/Button";
+import { Button } from "@/modules/ui/components/button";
 import {
   Command,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@formbricks/ui/components/Command";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/components/Popover";
+} from "@/modules/ui/components/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useEffect } from "react";
 
 type Key = {
   label: string;
