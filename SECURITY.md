@@ -1,7 +1,7 @@
 # Security Policy of Formbricks
 
 This is Formbrick's security policy. Please reach out to us
-on our Discord or, if privately, via <security@formbricks.com>
+on Github or, if privately, via <security@formbricks.com>
 
 ## Introduction
 
@@ -40,7 +40,7 @@ We invite you to report if:
 
 Avoid reporting if:
 
-- Assistance is needed to optimize Formbricks for security – please engage on our Discord for this.
+- Assistance is needed to optimize Formbricks for security – please engage on Github Discussions for this.
 - Help is required for applying security-related updates.
 - The concern is not related to security.
 
