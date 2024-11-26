@@ -94,8 +94,6 @@ export const ContactDataView = ({
     }));
   }, [contacts, environmentAttributes]);
 
-  // Show a loading indicator until both contacts and attributes are loaded
-
   return (
     <ContactsTableDynamic
       data={contactsTableData}

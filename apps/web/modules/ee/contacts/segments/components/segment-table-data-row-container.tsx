@@ -7,7 +7,7 @@ type TSegmentTableDataRowProps = {
   currentSegment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
-  isAdvancedTargetingAllowed: boolean;
+  isContactsEnabled: boolean;
   isReadOnly: boolean;
 };
 
@@ -15,7 +15,7 @@ export const SegmentTableDataRowContainer = async ({
   currentSegment,
   segments,
   contactAttributeKeys,
-  isAdvancedTargetingAllowed,
+  isContactsEnabled,
   isReadOnly,
 }: TSegmentTableDataRowProps) => {
   const surveys = await getSurveysBySegmentId(currentSegment.id);
@@ -37,7 +37,7 @@ export const SegmentTableDataRowContainer = async ({
       }}
       segments={segments}
       contactAttributeKeys={contactAttributeKeys}
-      isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+      isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
     />
   );

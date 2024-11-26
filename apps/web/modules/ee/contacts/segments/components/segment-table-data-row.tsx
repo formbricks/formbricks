@@ -11,7 +11,7 @@ type TSegmentTableDataRowProps = {
   currentSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
-  isAdvancedTargetingAllowed: boolean;
+  isContactsEnabled: boolean;
   isReadOnly: boolean;
 };
 
@@ -19,7 +19,7 @@ export const SegmentTableDataRow = ({
   currentSegment,
   contactAttributeKeys,
   segments,
-  isAdvancedTargetingAllowed,
+  isContactsEnabled,
   isReadOnly,
 }: TSegmentTableDataRowProps) => {
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
@@ -64,7 +64,7 @@ export const SegmentTableDataRow = ({
         currentSegment={currentSegment}
         contactAttributeKeys={contactAttributeKeys}
         segments={segments}
-        isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+        isContactsEnabled={isContactsEnabled}
         isReadOnly={isReadOnly}
       />
     </>

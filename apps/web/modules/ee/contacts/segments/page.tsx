@@ -2,9 +2,11 @@ import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/co
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
-import { getAdvancedTargetingPermission } from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-actions";
+import { UserIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -60,11 +62,7 @@ export const SegmentsPage = async ({
 
   const isReadOnly = isMember && hasReadAccess;
 
-  const isAdvancedTargetingAllowed = await getAdvancedTargetingPermission(organization);
-
-  if (!isAdvancedTargetingAllowed) {
-    throw new Error("Advanced targeting is not allowed");
-  }
+  const isContactsEnabled = await getIsContactsEnabled();
 
   if (!segments) {
     throw new Error("Failed to fetch segments");
@@ -77,20 +75,43 @@ export const SegmentsPage = async ({
       <PageHeader
         pageTitle="Contacts"
         cta={
-          <CreateSegmentModal
-            environmentId={params.environmentId}
-            contactAttributeKeys={contactAttributeKeys}
-            segments={filteredSegments}
-          />
+          isContactsEnabled && !isReadOnly ? (
+            <CreateSegmentModal
+              environmentId={params.environmentId}
+              contactAttributeKeys={contactAttributeKeys}
+              segments={filteredSegments}
+            />
+          ) : undefined
         }>
         <ContactsSecondaryNavigation activeId="segments" environmentId={params.environmentId} />
       </PageHeader>
-      <SegmentTable
-        segments={filteredSegments}
-        contactAttributeKeys={contactAttributeKeys}
-        isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
-        isReadOnly={isReadOnly}
-      />
+
+      {isContactsEnabled ? (
+        <SegmentTable
+          segments={filteredSegments}
+          contactAttributeKeys={contactAttributeKeys}
+          isContactsEnabled={isContactsEnabled}
+          isReadOnly={isReadOnly}
+        />
+      ) : (
+        <div className="flex items-center justify-center">
+          <UpgradePrompt
+            icon={<UserIcon className="h-6 w-6 text-slate-900" />}
+            title="Unlock segments with a higher plan"
+            description="Organize contacts into segments to target specific user groups"
+            buttons={[
+              {
+                text: "Upgrade",
+                href: `/environments/${params.environmentId}/settings/billing`,
+              },
+              {
+                text: "Learn more",
+                href: "https://formbricks.com/pricing",
+              },
+            ]}
+          />
+        </div>
+      )}
     </PageContentWrapper>
   );
 };

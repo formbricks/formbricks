@@ -6,14 +6,14 @@ import { SegmentTableDataRowContainer } from "./segment-table-data-row-container
 type TSegmentTableProps = {
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
-  isAdvancedTargetingAllowed: boolean;
+  isContactsEnabled: boolean;
   isReadOnly: boolean;
 };
 
 export const SegmentTable = ({
   segments,
   contactAttributeKeys,
-  isAdvancedTargetingAllowed,
+  isContactsEnabled,
   isReadOnly,
 }: TSegmentTableProps) => {
   const t = useTranslations();
@@ -36,7 +36,7 @@ export const SegmentTable = ({
               currentSegment={segment}
               segments={segments}
               contactAttributeKeys={contactAttributeKeys}
-              isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+              isContactsEnabled={isContactsEnabled}
               isReadOnly={isReadOnly}
             />
           ))}

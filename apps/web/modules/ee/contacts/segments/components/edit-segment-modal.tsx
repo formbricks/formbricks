@@ -15,7 +15,7 @@ interface EditSegmentModalProps {
   currentSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
-  isAdvancedTargetingAllowed: boolean;
+  isContactsEnabled: boolean;
   isReadOnly: boolean;
 }
 
@@ -26,12 +26,12 @@ export const EditSegmentModal = ({
   currentSegment,
   contactAttributeKeys,
   segments,
-  isAdvancedTargetingAllowed,
+  isContactsEnabled,
   isReadOnly,
 }: EditSegmentModalProps) => {
   const t = useTranslations();
   const SettingsTab = () => {
-    if (isAdvancedTargetingAllowed) {
+    if (isContactsEnabled) {
       return (
         <SegmentSettings
           contactAttributeKeys={contactAttributeKeys}
