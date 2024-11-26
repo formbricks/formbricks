@@ -42,7 +42,7 @@ export const VerificationRequestedPage = async ({ searchParams }) => {
   } catch (error) {
     return (
       <FormWrapper>
-        <p className="text-center">{t("common.invalid_token")}</p>
+        <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>
       </FormWrapper>
     );
   }

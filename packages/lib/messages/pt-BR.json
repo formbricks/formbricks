@@ -78,6 +78,7 @@
     "testimonial_title": "Transforme insights dos clientes em experiências irresistíveis.",
     "verification-requested": {
       "invalid_email_address": "Endereço de email inválido",
+      "invalid_token": "Token inválido ☹️",
       "no_email_provided": "Nenhum e-mail fornecido",
       "please_click_the_link_in_the_email_to_activate_your_account": "Por favor, clica no link do e-mail pra ativar sua conta.",
       "please_confirm_your_email_address": "Por favor, confirme seu endereço de e-mail",
@@ -218,7 +219,6 @@
     "insights": "Percepções",
     "integration": "integração",
     "integrations": "Integrações",
-    "invalid_token": "Token inválido ☹️",
     "invite": "convidar",
     "invite_them": "Convida eles",
     "join_discord": "Entrar no Discord",
