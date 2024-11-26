@@ -106,25 +106,25 @@ export const SurveyAnalysisCTA = ({
       icon: Eye,
       tooltip: t("common.preview"),
       onClick: () => window.open(getPreviewUrl(), "_blank"),
-      show: survey.type === "link",
+      isVisible: survey.type === "link",
     },
     {
       icon: LinkIcon,
       tooltip: t("common.copy_link"),
       onClick: handleCopyLink,
-      show: !isReadOnly && survey.type === "link",
+      isVisible: survey.type === "link",
     },
     {
       icon: Code2Icon,
       tooltip: t("common.embed"),
       onClick: () => handleModalState("embed")(true),
-      show: !isReadOnly,
+      isVisible: !isReadOnly,
     },
     {
       icon: BellRing,
       tooltip: t("environments.surveys.summary.configure_alerts"),
       onClick: () => router.push(`/environments/${survey.environmentId}/settings/notifications`),
-      show: !isReadOnly,
+      isVisible: !isReadOnly,
     },
     {
       icon: UsersRound,
@@ -133,13 +133,13 @@ export const SurveyAnalysisCTA = ({
         handleModalState("panel")(true);
         setModalState((prev) => ({ ...prev, dropdown: false }));
       },
-      show: !isReadOnly,
+      isVisible: !isReadOnly,
     },
     {
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
       onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
-      show: !isReadOnly,
+      isVisible: !isReadOnly,
     },
   ];
 
