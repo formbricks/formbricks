@@ -1,6 +1,6 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getRequestConfig } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_LOCALE } from "@formbricks/lib/constants";
 import { getUserLocale } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";

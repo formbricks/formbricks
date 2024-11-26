@@ -1,6 +1,7 @@
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProductSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/products/new/settings/components/ProductSettings";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
@@ -8,7 +9,6 @@ import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { DEFAULT_BRAND_COLOR, DEFAULT_LOCALE } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUserProducts } from "@formbricks/lib/product/service";

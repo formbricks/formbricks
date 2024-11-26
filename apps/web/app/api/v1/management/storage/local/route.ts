@@ -2,10 +2,10 @@
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";

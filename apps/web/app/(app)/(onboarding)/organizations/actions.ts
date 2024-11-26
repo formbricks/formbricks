@@ -23,7 +23,6 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
     if (INVITE_DISABLED) {
       throw new AuthenticationError("Invite disabled");
     }
-
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -42,6 +41,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         name: "",
         role: parsedInput.role,
       },
+      currentUserId: ctx.user.id,
     });
 
     if (invite) {

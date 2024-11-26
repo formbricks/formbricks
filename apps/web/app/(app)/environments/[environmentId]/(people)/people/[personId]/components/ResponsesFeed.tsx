@@ -104,7 +104,7 @@ const ResponseSurveyCard = ({
     return survey.id === response.surveyId;
   });
 
-  const { membershipRole } = useMembershipRole(survey?.environmentId || "");
+  const { membershipRole } = useMembershipRole(survey?.environmentId || "", user.id);
   const { isMember } = getAccessFlags(membershipRole);
 
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
