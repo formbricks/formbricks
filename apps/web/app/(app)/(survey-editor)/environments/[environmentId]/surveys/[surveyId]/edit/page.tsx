@@ -1,4 +1,5 @@
 import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/user";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   getAdvancedTargetingPermission,
   getMultiLanguagePermission,
@@ -11,7 +12,6 @@ import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,

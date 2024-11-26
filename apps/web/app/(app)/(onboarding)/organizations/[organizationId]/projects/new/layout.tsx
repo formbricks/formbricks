@@ -1,8 +1,8 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganization, getOrganizationProjectsCount } from "@formbricks/lib/organization/service";

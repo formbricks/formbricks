@@ -78,6 +78,8 @@
     "testimonial_title": "Transforme insights dos clientes em experiências irresistíveis.",
     "verification-requested": {
       "invalid_email_address": "Endereço de email inválido",
+      "invalid_token": "Token inválido ☹️",
+      "no_email_provided": "Nenhum e-mail fornecido",
       "please_click_the_link_in_the_email_to_activate_your_account": "Por favor, clica no link do e-mail pra ativar sua conta.",
       "please_confirm_your_email_address": "Por favor, confirme seu endereço de e-mail",
       "resend_verification_email": "Reenviar e-mail de verificação",
@@ -1162,6 +1164,7 @@
         "scan_the_qr_code_below_with_your_authenticator_app": "Escaneie o código QR abaixo com seu app autenticador.",
         "security_description": "Gerencie sua senha e outras configurações de segurança.",
         "the_2fa_otp_is_incorrect_please_try_again": "O código OTP de 2FA está incorreto. Por favor, tente novamente.",
+        "to_enable_two_factor_authentication_you_need_an_active": "Pra ativar a autenticação de dois fatores, você precisa de um ativo",
         "two_factor_authentication": "Autenticação de dois fatores",
         "two_factor_authentication_description": "Adicione uma camada extra de segurança à sua conta caso sua senha seja roubada.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Autenticação de dois fatores ativada. Por favor, insira o código de seis dígitos do seu app autenticador.",

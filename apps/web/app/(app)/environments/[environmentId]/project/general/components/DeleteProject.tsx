@@ -1,7 +1,7 @@
 import { DeleteProjectRender } from "@/app/(app)/environments/[environmentId]/project/general/components/DeleteProjectRender";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUserProjects } from "@formbricks/lib/project/service";
 import { TProject } from "@formbricks/types/project";
