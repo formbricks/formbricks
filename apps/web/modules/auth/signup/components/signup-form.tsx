@@ -69,7 +69,6 @@ export const SignupForm = ({
   isSSOEnabled,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
-  const [isValid, setIsValid] = useState(false);
   const searchParams = useSearchParams();
   const t = useTranslations();
   const inviteToken = searchParams?.get("inviteToken");
@@ -93,10 +92,6 @@ export const SignupForm = ({
   });
 
   const handleSubmit = async (data: TSignupInput) => {
-    if (!isValid) {
-      return;
-    }
-
     try {
       const createUserResponse = await createUserAction({
         name: data.name,
@@ -206,7 +201,7 @@ export const SignupForm = ({
                     )}
                   />
                 </div>
-                <PasswordChecks password={form.watch("password")} setIsValid={setIsValid} />
+                <PasswordChecks password={form.watch("password")} />
               </div>
             )}
             {showLogin && (

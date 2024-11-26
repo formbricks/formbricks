@@ -1,10 +1,9 @@
 import { CheckIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 interface PasswordChecksProps {
   password: string | null;
-  setIsValid: (isValid: boolean) => void;
 }
 
 const PASSWORD_REGEX = {
@@ -27,7 +26,7 @@ const ValidationIcon = ({ state }: { state: boolean }) =>
     </span>
   );
 
-export const PasswordChecks = ({ password, setIsValid }: PasswordChecksProps) => {
+export const PasswordChecks = ({ password }: PasswordChecksProps) => {
   const t = useTranslations();
 
   const validations = useMemo(() => {
@@ -48,14 +47,6 @@ export const PasswordChecks = ({ password, setIsValid }: PasswordChecksProps) =>
       },
     ];
   }, [password]);
-
-  useEffect(() => {
-    if (password === null) {
-      setIsValid(false);
-      return;
-    }
-    setIsValid(validations.every((validation) => validation.state));
-  }, [validations, password, setIsValid]);
 
   return (
     <div className="my-2 text-left text-slate-700 sm:text-sm">

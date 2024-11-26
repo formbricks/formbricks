@@ -78,7 +78,6 @@
     "testimonial_title": "Erschaffe einzigartige Kundenerlebnisse",
     "verification-requested": {
       "invalid_email_address": "Ungültige E-Mail-Adresse",
-      "invalid_token": "Ungültiges Token ☹️",
       "no_email_provided": "Keine E-Mail bereitgestellt",
       "please_click_the_link_in_the_email_to_activate_your_account": "Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
@@ -219,6 +218,7 @@
     "insights": "Einblicke",
     "integration": "Integration",
     "integrations": "Integrationen",
+    "invalid_token": "Ungültiges Token ☹️",
     "invite": "Einladen",
     "invite_them": "Lade sie ein",
     "join_discord": "Discord beitreten",

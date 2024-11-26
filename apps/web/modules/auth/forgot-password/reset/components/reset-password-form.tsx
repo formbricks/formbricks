@@ -9,7 +9,6 @@ import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
@@ -34,7 +33,6 @@ export const ResetPasswordForm = () => {
   const t = useTranslations();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [isValid, setIsValid] = useState(false);
 
   const form = useForm<TPasswordResetForm>({
     defaultValues: {
@@ -90,13 +88,13 @@ export const ResetPasswordForm = () => {
             />
           </div>
 
-          <PasswordChecks password={form.watch("password")} setIsValid={setIsValid} />
+          <PasswordChecks password={form.watch("password")} />
         </div>
 
         <div>
           <Button
             type="submit"
-            disabled={!isValid}
+            disabled={!form.formState.isValid}
             className="w-full justify-center"
             loading={form.formState.isSubmitting}>
             {t("auth.forgot-password.reset_password")}
