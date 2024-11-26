@@ -85,10 +85,8 @@ export const UploadContactsCSVButton = ({
 
     // Extract column names (headers) from the first row
     const headers = Object.keys(csvResponse[0]);
-    const uniqueHeadersSet = new Set(headers.map((header) => header.trim()));
-    const uniqueHeadersArray = Array.from(uniqueHeadersSet);
 
-    return uniqueHeadersArray;
+    return headers.map((header) => header.trim());
   }, [csvResponse]);
 
   const resetState = (closeModal?: boolean) => {
