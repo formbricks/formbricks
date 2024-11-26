@@ -58,6 +58,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "api-iam.eu.intercom.io",
+      },
     ],
   },
   async redirects() {
