@@ -32,7 +32,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   ]);
 
   if (!product) {
-    throw new Error(t("environments.product.general.product_not_found"));
+    throw new Error(t("common.product_not_found"));
   }
   if (!session) {
     throw new Error(t("common.session_not_found"));

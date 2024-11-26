@@ -13,11 +13,11 @@ import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProduct } from "@formbricks/types/product";
 
-type DeleteProductRenderProps = {
+interface DeleteProductRenderProps {
   isDeleteDisabled: boolean;
   isOwnerOrManager: boolean;
   product: TProduct;
-};
+}
 
 export const DeleteProductRender = ({
   isDeleteDisabled,
