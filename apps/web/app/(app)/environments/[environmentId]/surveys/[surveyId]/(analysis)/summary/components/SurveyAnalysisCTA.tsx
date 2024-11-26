@@ -4,25 +4,9 @@ import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surve
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { Badge } from "@/modules/ui/components/badge";
-import { Button } from "@/modules/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
-import {
-  BellRing,
-  Code2Icon,
-  CopyIcon,
-  EyeIcon,
-  MoreVertical,
-  SquarePenIcon,
-  UsersRound,
-} from "lucide-react";
+import { IconBar } from "@/modules/ui/components/iconbar";
+import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -117,6 +101,48 @@ export const SurveyAnalysisCTA = ({
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
 
+  const iconActions = [
+    {
+      icon: Eye,
+      tooltip: t("common.preview"),
+      onClick: () => window.open(getPreviewUrl(), "_blank"),
+      isVisible: survey.type === "link",
+    },
+    {
+      icon: LinkIcon,
+      tooltip: t("common.copy_link"),
+      onClick: handleCopyLink,
+      isVisible: survey.type === "link",
+    },
+    {
+      icon: Code2Icon,
+      tooltip: t("common.embed"),
+      onClick: () => handleModalState("embed")(true),
+      isVisible: !isReadOnly,
+    },
+    {
+      icon: BellRing,
+      tooltip: t("environments.surveys.summary.configure_alerts"),
+      onClick: () => router.push(`/environments/${survey.environmentId}/settings/notifications`),
+      isVisible: !isReadOnly,
+    },
+    {
+      icon: UsersRound,
+      tooltip: t("environments.surveys.summary.send_to_panel"),
+      onClick: () => {
+        handleModalState("panel")(true);
+        setModalState((prev) => ({ ...prev, dropdown: false }));
+      },
+      isVisible: !isReadOnly,
+    },
+    {
+      icon: SquarePenIcon,
+      tooltip: t("common.edit"),
+      onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
+      isVisible: !isReadOnly,
+    },
+  ];
+
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
@@ -132,81 +158,7 @@ export const SurveyAnalysisCTA = ({
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 
-      {!isReadOnly && (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => handleModalState("embed")(true)}
-          EndIcon={Code2Icon}>
-          {t("common.embed")}
-        </Button>
-      )}
-
-      {survey.type === "link" && (
-        <Button variant="secondary" size="sm" onClick={handleCopyLink} EndIcon={CopyIcon}>
-          {t("common.copy_link")}
-        </Button>
-      )}
-
-      {!isReadOnly && (
-        <Button
-          href={`/environments/${environment.id}/surveys/${survey.id}/edit`}
-          EndIcon={SquarePenIcon}
-          size="base">
-          {t("common.edit")}
-        </Button>
-      )}
-
-      {!isReadOnly && (
-        <div id={`${survey.name.toLowerCase().replace(/\s+/g, "-")}-survey-actions`}>
-          <DropdownMenu
-            open={modalState.dropdown}
-            onOpenChange={(open) => setModalState((prev) => ({ ...prev, dropdown: open }))}>
-            <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-              <Button variant="secondary" className="p-2">
-                <MoreVertical className="h-7 w-4" />
-                <span className="sr-only">{t("environments.surveys.summary.open_options")}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="mr-8 w-40">
-              <DropdownMenuGroup>
-                {survey.type === "link" && (
-                  <DropdownMenuItem>
-                    <button
-                      onClick={() => window.open(getPreviewUrl(), "_blank")}
-                      className="flex w-full items-center">
-                      <EyeIcon className="mr-2 h-4 w-4" />
-                      {t("common.preview")}
-                    </button>
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuItem>
-                  <button
-                    onClick={() => {
-                      handleModalState("panel")(true);
-                      setModalState((prev) => ({ ...prev, dropdown: false }));
-                    }}
-                    className="flex w-full items-center">
-                    <UsersRound className="mr-2 h-4 w-4" />
-                    {t("environments.surveys.summary.send_to_panel")}
-                  </button>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem>
-                  <Link
-                    href={`/environments/${survey.environmentId}/settings/notifications`}
-                    className="flex w-full items-center"
-                    onClick={() => setModalState((prev) => ({ ...prev, dropdown: false }))}>
-                    <BellRing className="mr-2 h-4 w-4" />
-                    {t("environments.surveys.summary.configure_alerts")}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
+      <IconBar actions={iconActions} />
 
       {user && (
         <>

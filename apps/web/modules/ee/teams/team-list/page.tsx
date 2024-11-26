@@ -1,4 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/teams";
@@ -7,7 +8,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";

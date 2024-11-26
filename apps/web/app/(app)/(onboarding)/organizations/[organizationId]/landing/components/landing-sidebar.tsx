@@ -24,7 +24,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { AiOutlineDiscord } from "react-icons/ai";
 import { cn } from "@formbricks/lib/cn";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -59,12 +58,6 @@ export const LandingSidebar = ({
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
-    },
-    {
-      label: t("common.join_discord"),
-      href: "https://formbricks.com/discord",
-      target: "_blank",
-      icon: AiOutlineDiscord,
     },
   ];
 
