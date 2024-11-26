@@ -31,7 +31,13 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().url("Invalid Button Url in Ending card").optional(),
+  buttonLink: z
+    .string()
+    .url({ message: "Invalid Button Url in Ending card" })
+    .refine((url) => url.startsWith("https://"), {
+      message: "URL must start with https://",
+    })
+    .optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -40,7 +46,13 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z.string().url("Invalid Redirect Url in Ending card").optional(),
+  url: z
+    .string()
+    .url({ message: "Invalid Redirect Url in Ending card" })
+    .refine((url) => url.startsWith("https://"), {
+      message: "URL must start with https://",
+    })
+    .optional(),
   label: z.string().optional(),
 });
 
