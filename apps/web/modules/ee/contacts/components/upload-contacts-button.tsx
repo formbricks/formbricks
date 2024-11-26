@@ -1,5 +1,6 @@
 "use client";
 
+import { isStringMatch } from "@/lib/utils/helper";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
@@ -68,7 +69,6 @@ export const UploadContactsCSVButton = ({
           return;
         }
 
-        // Do something with the parsed records
         setCSVResponse(parsedRecords.data);
       } catch (error) {
         console.error("Error parsing CSV:", error);
@@ -183,6 +183,24 @@ export const UploadContactsCSVButton = ({
   };
 
   useEffect(() => {
+    const matches: Record<string, string> = {};
+    for (const columnName of csvColumns) {
+      for (const attributeKey of contactAttributeKeys) {
+        if (isStringMatch(columnName, attributeKey.name ?? attributeKey.key)) {
+          matches[columnName] = attributeKey.id;
+          break;
+        }
+      }
+
+      if (!matches[columnName]) {
+        matches[columnName] = columnName;
+      }
+    }
+
+    setAttributeMap(matches);
+  }, [contactAttributeKeys, csvColumns]);
+
+  useEffect(() => {
     if (error && errorContainerRef.current) {
       errorContainerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -231,7 +249,7 @@ export const UploadContactsCSVButton = ({
 
         {error ? (
           <div
-            className="mx-4 my-4 flex items-center gap-2 rounded-md border-2 border-red-200 bg-red-50 p-4"
+            className="mx-6 my-4 flex items-center gap-2 rounded-md border-2 border-red-200 bg-red-50 p-4"
             ref={errorContainerRef}>
             <CircleAlertIcon className="text-red-600" />
             <p className="text-red-600">{error}</p>
@@ -280,9 +298,10 @@ export const UploadContactsCSVButton = ({
               <p className="mb-2 text-slate-500">Attribute mappings</p>
 
               <div className="flex flex-col gap-2">
-                {csvColumns.map((column) => {
+                {csvColumns.map((column, index) => {
                   return (
                     <UploadContactsAttributes
+                      key={index}
                       csvColumn={column}
                       attributeMap={attributeMap}
                       setAttributeMap={setAttributeMap}

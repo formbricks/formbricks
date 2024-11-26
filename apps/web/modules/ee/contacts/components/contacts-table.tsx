@@ -216,7 +216,7 @@ export const ContactsTable = ({
       <SearchBar
         value={searchValue}
         onChange={setSearchValue}
-        placeholder={t("environments.people.search_person")}
+        placeholder={t("environments.contacts.search_contact")}
       />
       <DndContext
         collisionDetection={closestCenter}

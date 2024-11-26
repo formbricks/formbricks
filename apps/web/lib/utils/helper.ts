@@ -364,3 +364,14 @@ export const getEnvironmentIdFromTagId = async (tagId: string) => {
 
   return tag.environmentId;
 };
+
+export const isStringMatch = (query: string, value: string): boolean => {
+  // lowercase both query and value
+  // replace all spaces with empty string
+  // replace all underscores with empty string
+  // replace all dashes with empty string
+  const queryModified = query.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
+  const valueModified = value.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
+
+  return valueModified.includes(queryModified);
+};
