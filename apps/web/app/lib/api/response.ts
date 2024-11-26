@@ -1,20 +1,21 @@
 import { NextApiResponse } from "next";
-import { NextResponse } from "next/server";
 
 export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
-export interface ApiSuccessResponse<T = { [key: string]: any }> {
+interface ApiSuccessResponse<T = { [key: string]: unknown }> {
   data: T;
 }
 
-export interface ApiErrorResponse {
+interface ApiErrorResponse {
   code:
     | "not_found"
+    | "gone"
     | "bad_request"
     | "internal_server_error"
     | "unauthorized"
     | "method_not_allowed"
-    | "not_authenticated";
+    | "not_authenticated"
+    | "forbidden";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -29,8 +30,42 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-const badRequestResponse = (message: string, details?: { [key: string]: string }, cors: boolean = false) =>
-  NextResponse.json(
+const goneResponse = (
+  message: string,
+  details?: { [key: string]: string },
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      code: "gone",
+      message,
+      details: details || {},
+    } as ApiErrorResponse,
+    {
+      status: 410,
+      headers,
+    }
+  );
+};
+
+const badRequestResponse = (
+  message: string,
+  details?: { [key: string]: string },
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "bad_request",
       message,
@@ -38,25 +73,23 @@ const badRequestResponse = (message: string, details?: { [key: string]: string }
     } as ApiErrorResponse,
     {
       status: 400,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
-
-const missingFieldResponse = (field: string, cors: boolean = false) =>
-  badRequestResponse(
-    `Missing ${field}`,
-    {
-      missing_field: field,
-    },
-    cors
-  );
+};
 
 const methodNotAllowedResponse = (
   res: CustomNextApiResponse,
   allowedMethods: string[],
-  cors: boolean = false
-) =>
-  NextResponse.json(
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "method_not_allowed",
       message: `The HTTP ${res.req?.method} method is not supported by this route.`,
@@ -66,12 +99,23 @@ const methodNotAllowedResponse = (
     } as ApiErrorResponse,
     {
       status: 405,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
 
-const notFoundResponse = (resourceType: string, resourceId: string, cors: boolean = false) =>
-  NextResponse.json(
+const notFoundResponse = (
+  resourceType: string,
+  resourceId: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "not_found",
       message: `${resourceType} not found`,
@@ -82,12 +126,18 @@ const notFoundResponse = (resourceType: string, resourceId: string, cors: boolea
     } as ApiErrorResponse,
     {
       status: 404,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
 
-const notAuthenticatedResponse = (cors: boolean = false) =>
-  NextResponse.json(
+const notAuthenticatedResponse = (cors: boolean = false, cache: string = "private, no-store") => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "not_authenticated",
       message: "Not authenticated",
@@ -97,12 +147,18 @@ const notAuthenticatedResponse = (cors: boolean = false) =>
     } as ApiErrorResponse,
     {
       status: 401,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
 
-const unauthorizedResponse = (cors: boolean = false) =>
-  NextResponse.json(
+const unauthorizedResponse = (cors: boolean = false, cache: string = "private, no-store") => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "unauthorized",
       message: "You are not authorized to access this resource",
@@ -110,23 +166,63 @@ const unauthorizedResponse = (cors: boolean = false) =>
     } as ApiErrorResponse,
     {
       status: 401,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
 
-const successResponse = (data: Object, cors: boolean = false) =>
-  NextResponse.json(
+const forbiddenResponse = (
+  message: string,
+  cors: boolean = false,
+  details: ApiErrorResponse["details"] = {},
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      code: "forbidden",
+      message,
+      details,
+    } as ApiErrorResponse,
+    {
+      status: 403,
+      headers,
+    }
+  );
+};
+
+const successResponse = (data: Object, cors: boolean = false, cache: string = "private, no-store") => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       data,
     } as ApiSuccessResponse<typeof data>,
     {
       status: 200,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
 
-const internalServerErrorResponse = (message: string, cors: boolean = false) =>
-  NextResponse.json(
+const internalServerErrorResponse = (
+  message: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "internal_server_error",
       message,
@@ -134,17 +230,43 @@ const internalServerErrorResponse = (message: string, cors: boolean = false) =>
     } as ApiErrorResponse,
     {
       status: 500,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
+
+const tooManyRequestsResponse = (
+  message: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      code: "internal_server_error",
+      message,
+      details: {},
+    } as ApiErrorResponse,
+    {
+      status: 429,
+      headers,
+    }
+  );
+};
 
 export const responses = {
+  goneResponse,
   badRequestResponse,
   internalServerErrorResponse,
-  missingFieldResponse,
   methodNotAllowedResponse,
   notAuthenticatedResponse,
   unauthorizedResponse,
   notFoundResponse,
   successResponse,
+  tooManyRequestsResponse,
+  forbiddenResponse,
 };

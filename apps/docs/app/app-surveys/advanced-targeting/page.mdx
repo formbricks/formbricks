@@ -1,0 +1,81 @@
+import { MdxImage } from "@/components/MdxImage";
+import { ResponsiveVideo } from "@/components/ResponsiveVideo";
+
+import GermansGpt from "./germans-gpt.webp";
+import Hni from "./hni.webp";
+import PowerUsers from "./power-users.webp";
+import RideHailing from "./ride-hailing.webp";
+import UpsellMiro from "./upsell-miro.webp";
+
+export const metadata = {
+  title: "Advanced Targeting for In-app Surveys | Formbricks",
+  description:
+    "Advanced Targeting allows you to show surveys to just the right group of people. You can target surveys based on user attributes, user events, and metadata. This helps you get more relevant feedback and make data-driven decisions.",
+};
+
+#### App Surveys
+
+# Advanced Targeting
+
+<Note>
+  Targeting based on actions is deprecated in Advanced Targeting and will be removed soon. We recommend using
+  filters on user attributes to target the survey only to specific groups of users.
+</Note>
+
+Advanced Targeting allows you to show surveys to the right group of people. You can target surveys based on user attributes, device type, and more instead of spraying and praying. This helps you get more relevant feedback and make data-driven decisions. All of this without writing a single line of code.
+
+<ResponsiveVideo
+  title="Formbricks Multi-language Surveys"
+  src="https://www.youtube-nocookie.com/embed/0BQp6N4cXzU?si=KeBM7G7Ch1xtrsOm&amp;controls=0"
+/>
+
+## How to setup Advanced Targeting
+
+<Note>
+  Advanced Targeting is available on the Pro plan!
+</Note>
+
+1. On the Formbricks dashboard, click on **People** tab from the top navigation bar.
+
+2. Switch to the **Segments** tab & click on **Create Segment**.
+
+3. Give your segment a title & a description to help you remember what this segment is about.
+
+4. Now click on the **Add Filter** button to add a filter. You can filter based on actions, user attributes, other segments, devices, and more.
+
+5. To group a set of filters together, click on the Three Dots icon on the right side of the filter and click on **Create Group**.
+
+6. Try playing around with different filters & conditions that we have provided to see how the segment size changes.
+
+7. Once you are happy with the segment, click on **Save Segment**.
+
+8. Now, when you create a survey, you can select this segment to target your survey to.
+
+## Examples:
+
+1. Let's say you want to upsell to: Miro, Loom, Figma, Slack and Asana.
+
+   <MdxImage
+     src={UpsellMiro}
+     alt="Upselling Opportunity"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />
+
+2. Post-experience surveying for a ride hailing app where users who have taken more than 1 ride are shown a survey.
+
+   <MdxImage
+     src={RideHailing}
+     alt="Ride Hailing Targeting"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />
+
+3. Sneak Peak: How we at Formbricks automate inviting power users to chat with us
+
+   <MdxImage
+     src={PowerUsers}
+     alt="Automate inviting power users to chat with us at Formbricks"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl"
+   />

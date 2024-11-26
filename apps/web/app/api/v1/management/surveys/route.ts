@@ -1,17 +1,20 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
-
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZSurveyInput } from "@formbricks/types/surveys";
+import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 
-export async function GET(request: Request) {
+export const GET = async (request: Request) => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const surveys = await getSurveys(authentication.environmentId!);
+
+    const searchParams = new URL(request.url).searchParams;
+    const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
+    const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
+
+    const surveys = await getSurveys(authentication.environmentId!, limit, offset);
     return responses.successResponse(surveys);
   } catch (error) {
     if (error instanceof DatabaseError) {
@@ -19,14 +22,22 @@ export async function GET(request: Request) {
     }
     throw error;
   }
-}
+};
 
-export async function POST(request: Request): Promise<NextResponse> {
+export const POST = async (request: Request): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const surveyInput = await request.json();
-    const inputValidation = ZSurveyInput.safeParse(surveyInput);
+
+    let surveyInput;
+    try {
+      surveyInput = await request.json();
+    } catch (error) {
+      console.error(`Error parsing JSON: ${error}`);
+      return responses.badRequestResponse("Malformed JSON input, please check your request body");
+    }
+
+    const inputValidation = ZSurveyCreateInput.safeParse(surveyInput);
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -47,4 +58,4 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     throw error;
   }
-}
+};

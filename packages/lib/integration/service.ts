@@ -1,28 +1,20 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import {
-  TIntegration,
-  TIntegrationInput,
-  ZIntegration,
-  ZIntegrationType,
-} from "@formbricks/types/integration";
-
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { formatDateFields } from "../utils/datetime";
+import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
-export async function createOrUpdateIntegration(
+export const createOrUpdateIntegration = async (
   environmentId: string,
   integrationData: TIntegrationInput
-): Promise<TIntegration> {
+): Promise<TIntegration> => {
   validateInputs([environmentId, ZId]);
 
   try {
@@ -55,94 +47,91 @@ export async function createOrUpdateIntegration(
     }
     throw error;
   }
-}
-
-export const getIntegrations = async (environmentId: string, page?: number): Promise<TIntegration[]> => {
-  const integrations = await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
-
-      try {
-        const integrations = await prisma.integration.findMany({
-          where: {
-            environmentId,
-          },
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-        });
-        return integrations;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    [`getIntegrations-${environmentId}-${page}`],
-    {
-      tags: [integrationCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-  return integrations.map((integration) => formatDateFields(integration, ZIntegration));
 };
 
-export const getIntegration = async (integrationId: string): Promise<TIntegration | null> => {
-  const integration = await unstable_cache(
-    async () => {
-      try {
-        const integration = await prisma.integration.findUnique({
-          where: {
-            id: integrationId,
-          },
-        });
-        return integration;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-        throw error;
-      }
-    },
-    [`getIntegration-${integrationId}`],
-    { tags: [integrationCache.tag.byId(integrationId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
-  )();
-  return integration ? formatDateFields(integration, ZIntegration) : null;
-};
+export const getIntegrations = reactCache(
+  (environmentId: string, page?: number): Promise<TIntegration[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
-export const getIntegrationByType = async (
-  environmentId: string,
-  type: TIntegrationInput["type"]
-): Promise<TIntegration | null> => {
-  const integration = await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId], [type, ZIntegrationType]);
-
-      try {
-        const integration = await prisma.integration.findUnique({
-          where: {
-            type_environmentId: {
+        try {
+          const integrations = await prisma.integration.findMany({
+            where: {
               environmentId,
-              type,
             },
-          },
-        });
-        return integration;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+          return integrations;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
         }
-        throw error;
+      },
+      [`getIntegrations-${environmentId}-${page}`],
+      {
+        tags: [integrationCache.tag.byEnvironmentId(environmentId)],
       }
-    },
-    [`getIntegrationByType-${environmentId}-${type}`],
-    {
-      tags: [integrationCache.tag.byEnvironmentIdAndType(environmentId, type)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-  return integration ? formatDateFields(integration, ZIntegration) : null;
-};
+    )()
+);
+
+export const getIntegration = reactCache(
+  (integrationId: string): Promise<TIntegration | null> =>
+    cache(
+      async () => {
+        try {
+          const integration = await prisma.integration.findUnique({
+            where: {
+              id: integrationId,
+            },
+          });
+          return integration;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getIntegration-${integrationId}`],
+      {
+        tags: [integrationCache.tag.byId(integrationId)],
+      }
+    )()
+);
+
+export const getIntegrationByType = reactCache(
+  (environmentId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [type, ZIntegrationType]);
+
+        try {
+          const integration = await prisma.integration.findUnique({
+            where: {
+              type_environmentId: {
+                environmentId,
+                type,
+              },
+            },
+          });
+          return integration;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getIntegrationByType-${environmentId}-${type}`],
+      {
+        tags: [integrationCache.tag.byEnvironmentIdAndType(environmentId, type)],
+      }
+    )()
+);
 
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
   validateInputs([integrationId, ZString]);

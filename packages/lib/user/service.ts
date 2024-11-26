@@ -1,20 +1,16 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+import { cache as reactCache } from "react";
 import { z } from "zod";
-
 import { prisma } from "@formbricks/database";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
-import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } from "@formbricks/types/user";
-
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { TUser, TUserCreateInput, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import { cache } from "../cache";
 import { createCustomerIoCustomer } from "../customerio";
-import { updateMembership } from "../membership/service";
-import { deleteTeam } from "../team/service";
-import { formatDateFields } from "../utils/datetime";
+import { deleteMembership, updateMembership } from "../membership/service";
+import { deleteOrganization } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
 
@@ -26,7 +22,7 @@ const responseSelection = {
   imageUrl: true,
   createdAt: true,
   updatedAt: true,
-  onboardingCompleted: true,
+  role: true,
   twoFactorEnabled: true,
   identityProvider: true,
   objective: true,
@@ -34,82 +30,68 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's user
-export const getUser = async (id: string): Promise<TUser | null> => {
-  const user = await unstable_cache(
-    async () => {
-      validateInputs([id, ZId]);
+export const getUser = reactCache(
+  (id: string): Promise<TUser | null> =>
+    cache(
+      async () => {
+        validateInputs([id, ZId]);
 
-      try {
-        const user = await prisma.user.findUnique({
-          where: {
-            id,
-          },
-          select: responseSelection,
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              id,
+            },
+            select: responseSelection,
+          });
 
-        if (!user) {
-          return null;
+          if (!user) {
+            return null;
+          }
+          return user;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-        return user;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+      },
+      [`getUser-${id}`],
+      {
+        tags: [userCache.tag.byId(id)],
+      }
+    )()
+);
+
+export const getUserByEmail = reactCache(
+  (email: string): Promise<TUser | null> =>
+    cache(
+      async () => {
+        validateInputs([email, z.string().email()]);
+
+        try {
+          const user = await prisma.user.findFirst({
+            where: {
+              email,
+            },
+            select: responseSelection,
+          });
+
+          return user;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getUserByEmail-${email}`],
+      {
+        tags: [userCache.tag.byEmail(email)],
       }
-    },
-    [`getUser-${id}`],
-    {
-      tags: [userCache.tag.byId(id)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  return user
-    ? {
-        ...user,
-        ...formatDateFields(user, ZUser),
-      }
-    : null;
-};
-
-export const getUserByEmail = async (email: string): Promise<TUser | null> => {
-  const user = await unstable_cache(
-    async () => {
-      validateInputs([email, z.string().email()]);
-
-      try {
-        const user = await prisma.user.findFirst({
-          where: {
-            email,
-          },
-          select: responseSelection,
-        });
-
-        return user;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getUserByEmail-${email}`],
-    {
-      tags: [userCache.tag.byEmail(email)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  return user
-    ? {
-        ...user,
-        ...formatDateFields(user, ZUser),
-      }
-    : null;
-};
+    )()
+);
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");
@@ -136,50 +118,71 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
       throw new ResourceNotFoundError("User", personId);
-    } else {
-      throw error; // Re-throw any other errors
     }
+    throw error; // Re-throw any other errors
   }
 };
 
 const deleteUserById = async (id: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
-  const user = await prisma.user.delete({
-    where: {
+  try {
+    const user = await prisma.user.delete({
+      where: {
+        id,
+      },
+      select: responseSelection,
+    });
+
+    userCache.revalidate({
+      email: user.email,
       id,
-    },
-    select: responseSelection,
-  });
+      count: true,
+    });
 
-  userCache.revalidate({
-    email: user.email,
-    id,
-  });
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
 
-  return user;
+    throw error;
+  }
 };
 
 export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   validateInputs([data, ZUserUpdateInput]);
 
-  const user = await prisma.user.create({
-    data: data,
-    select: responseSelection,
-  });
+  try {
+    const user = await prisma.user.create({
+      data: data,
+      select: responseSelection,
+    });
 
-  userCache.revalidate({
-    email: user.email,
-    id: user.id,
-  });
+    userCache.revalidate({
+      email: user.email,
+      id: user.id,
+      count: true,
+    });
 
-  // send new user customer.io to customer.io
-  createCustomerIoCustomer(user);
+    // send new user customer.io to customer.io
+    createCustomerIoCustomer(user);
 
-  return user;
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new DatabaseError("User with this email already exists");
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
-// function to delete a user's user including teams
+// function to delete a user's user including organizations
 export const deleteUser = async (id: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
@@ -189,7 +192,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
         userId: id,
       },
       include: {
-        team: {
+        organization: {
           select: {
             id: true,
             name: true,
@@ -200,22 +203,23 @@ export const deleteUser = async (id: string): Promise<TUser> => {
     });
 
     for (const currentUserMembership of currentUserMemberships) {
-      const teamMemberships = currentUserMembership.team.memberships;
+      const organizationMemberships = currentUserMembership.organization.memberships;
       const role = currentUserMembership.role;
-      const teamId = currentUserMembership.teamId;
+      const organizationId = currentUserMembership.organizationId;
 
-      const teamAdminMemberships = getAdminMemberships(teamMemberships);
-      const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
-      const teamHasOnlyOneMember = teamMemberships.length === 1;
-      const currentUserIsTeamOwner = role === "owner";
+      const organizationAdminMemberships = getAdminMemberships(organizationMemberships);
+      const organizationHasAtLeastOneAdmin = organizationAdminMemberships.length > 0;
+      const organizationHasOnlyOneMember = organizationMemberships.length === 1;
+      const currentUserIsOrganizationOwner = role === "owner";
+      await deleteMembership(id, organizationId);
 
-      if (teamHasOnlyOneMember) {
-        await deleteTeam(teamId);
-      } else if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
-        const firstAdmin = teamAdminMemberships[0];
-        await updateMembership(firstAdmin.userId, teamId, { role: "owner" });
-      } else if (currentUserIsTeamOwner) {
-        await deleteTeam(teamId);
+      if (organizationHasOnlyOneMember) {
+        await deleteOrganization(organizationId);
+      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneAdmin) {
+        const firstAdmin = organizationAdminMemberships[0];
+        await updateMembership(firstAdmin.userId, organizationId, { role: "owner" });
+      } else if (currentUserIsOrganizationOwner) {
+        await deleteOrganization(organizationId);
       }
     }
 
@@ -231,37 +235,54 @@ export const deleteUser = async (id: string): Promise<TUser> => {
   }
 };
 
-export const getUsersWithTeam = async (teamId: string): Promise<TUser[]> => {
-  validateInputs([teamId, ZId]);
+export const getUsersWithOrganization = async (organizationId: string): Promise<TUser[]> => {
+  validateInputs([organizationId, ZId]);
 
-  const users = await prisma.user.findMany({
-    where: {
-      memberships: {
-        some: {
-          teamId,
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            organizationId,
+          },
         },
       },
-    },
-    select: responseSelection,
-  });
+      select: responseSelection,
+    });
 
-  return users;
+    return users;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const userIdRelatedToApiKey = async (apiKey: string) => {
-  const userId = await prisma.apiKey.findUnique({
-    where: { id: apiKey },
-    select: {
-      environment: {
-        select: {
-          people: {
-            select: {
-              userId: true,
+  validateInputs([apiKey, z.string()]);
+
+  try {
+    const userId = await prisma.apiKey.findUnique({
+      where: { id: apiKey },
+      select: {
+        environment: {
+          select: {
+            people: {
+              select: {
+                userId: true,
+              },
             },
           },
         },
       },
-    },
-  });
-  return userId;
+    });
+    return userId;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
 };

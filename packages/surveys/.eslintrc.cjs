@@ -1,3 +1,4 @@
 module.exports = {
-  extends: [ "turbo", "prettier"],
+  extends: ["@formbricks/eslint-config/legacy-react.js"],
+  parser: "@typescript-eslint/parser",
 };

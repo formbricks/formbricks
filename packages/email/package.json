@@ -1,0 +1,25 @@
+{
+  "name": "@formbricks/email",
+  "version": "1.0.0",
+  "description": "Email package",
+  "main": "./index.tsx",
+  "scripts": {
+    "clean": "rimraf .turbo node_modules dist",
+    "lint": "eslint --ext .ts,.tsx --fix ."
+  },
+  "dependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/lib": "workspace:*",
+    "@formbricks/types": "workspace:*",
+    "@formbricks/ui": "workspace:*",
+    "@react-email/components": "^0.0.22",
+    "@react-email/render": "^0.0.17",
+    "lucide-react": "^0.427.0",
+    "nodemailer": "^6.9.14",
+    "react-email": "^2.1.6"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.15",
+    "@types/react": "18.3.3"
+  }
+}

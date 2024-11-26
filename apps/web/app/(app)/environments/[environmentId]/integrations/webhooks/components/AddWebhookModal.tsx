@@ -1,23 +1,20 @@
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
-import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
+import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
+import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhookInput } from "@formbricks/types/webhooks";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
-
-import { createWebhookAction } from "../actions";
+import { createWebhookAction, testEndpointAction } from "../actions";
 
 interface AddWebhookModalProps {
   environmentId: string;
@@ -26,7 +23,7 @@ interface AddWebhookModalProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function AddWebhookModal({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) {
+export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) => {
   const router = useRouter();
   const {
     handleSubmit,
@@ -46,14 +43,18 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
       setHittingEndpoint(true);
-      await testEndpoint(testEndpointInput);
+      await testEndpointAction({ url: testEndpointInput });
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
       return true;
     } catch (err) {
       setHittingEndpoint(false);
-      toast.error("Oh no! We are unable to ping the webhook!");
+      toast.error(
+        `Unable to ping the webhook! \n ${err.message.length < 250 ? `Error:  ${err.message}` : "Please check the console for more details"}`,
+        { className: err.message.length < 250 ? "break-all" : "" }
+      );
+      console.error("Webhook Test Failed due to: ", err.message);
       setEndpointAccessible(false);
       return false;
     }
@@ -106,7 +107,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
           surveyIds: selectedSurveys,
         };
 
-        await createWebhookAction(environmentId, updatedData);
+        await createWebhookAction({ environmentId, webhookInput: updatedData });
         router.refresh();
         setOpenWithStates(false);
         toast.success("Webhook added successfully.");
@@ -129,7 +130,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
   };
 
   return (
-    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
+    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={true}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -185,6 +186,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                     variant="secondary"
                     loading={hittingEndpoint}
                     className="ml-2 whitespace-nowrap"
+                    disabled={testEndpointInput.trim() === ""}
                     onClick={() => {
                       handleTestEndpoint(true);
                     }}>
@@ -226,7 +228,7 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={creatingWebhook}>
+              <Button type="submit" loading={creatingWebhook}>
                 Add Webhook
               </Button>
             </div>
@@ -235,4 +237,4 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
       </div>
     </Modal>
   );
-}
+};

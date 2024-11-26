@@ -1,7 +1,7 @@
-import BackToLoginButton from "@/app/(auth)/auth/components/BackToLoginButton";
-import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
+import { BackToLoginButton } from "@/app/(auth)/auth/components/BackToLoginButton";
+import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 
-const SignInPage: React.FC = () => {
+const Page = () => {
   return (
     <FormWrapper>
       <div>
@@ -18,4 +18,4 @@ const SignInPage: React.FC = () => {
   );
 };
 
-export default SignInPage;
+export default Page;

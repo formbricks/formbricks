@@ -1,3 +1,5 @@
-export default async function SurveyLayout({ children }) {
-  return <div className="h-full">{children}</div>;
-}
+const SurveyLayout = ({ children }) => {
+  return <div className="h-dvh">{children}</div>;
+};
+
+export default SurveyLayout;

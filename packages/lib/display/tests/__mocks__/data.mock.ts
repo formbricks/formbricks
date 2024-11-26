@@ -1,10 +1,5 @@
-import {
-  TDisplay,
-  TDisplayCreateInput,
-  TDisplayLegacyCreateInput,
-  TDisplayLegacyUpdateInput,
-  TDisplayUpdateInput,
-} from "@formbricks/types/displays";
+import { Prisma } from "@prisma/client";
+import { selectDisplay } from "../../service";
 
 export const mockEnvironmentId = "clqkr5961000108jyfnjmbjhi";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
@@ -15,7 +10,7 @@ export const mockId = "ars2tjk8hsi8oqk1uac00mo8";
 export const mockPersonId = "clqnj99r9000008lebgf8734j";
 export const mockResponseId = "clqnfg59i000208i426pb4wcv";
 
-function createMockDisplay(overrides = {}) {
+const createMockDisplay = (overrides = {}) => {
   return {
     id: mockDisplayId,
     createdAt: new Date(),
@@ -26,51 +21,32 @@ function createMockDisplay(overrides = {}) {
     status: null,
     ...overrides,
   };
-}
+};
 
-export const mockDisplay: TDisplay = createMockDisplay();
+export const mockDisplay = createMockDisplay();
 
-export const mockDisplayWithPersonId: TDisplay = createMockDisplay({ personId: mockPersonId });
+export const mockDisplayWithPersonId = createMockDisplay({ personId: mockPersonId });
 
-export const mockDisplayWithResponseId: TDisplay = createMockDisplay({
+export const mockDisplayWithResponseId = createMockDisplay({
   personId: mockPersonId,
   responseId: mockResponseId,
 });
 
-export const mockDisplayInput: TDisplayCreateInput = {
+export const mockDisplayInput = {
   environmentId: mockEnvironmentId,
   surveyId: mockSurveyId,
 };
-export const mockDisplayInputWithUserId: TDisplayCreateInput = {
+export const mockDisplayInputWithUserId = {
   ...mockDisplayInput,
   userId: mockUserId,
 };
-export const mockDisplayInputWithResponseId: TDisplayCreateInput = {
+export const mockDisplayInputWithResponseId = {
   ...mockDisplayInputWithUserId,
   responseId: mockResponseId,
 };
 
-export const mockDisplayLegacyInput: TDisplayLegacyCreateInput = {
-  responseId: mockResponseId,
-  surveyId: mockSurveyId,
-};
-export const mockDisplayLegacyInputWithPersonId: TDisplayLegacyCreateInput = {
-  ...mockDisplayLegacyInput,
-  personId: mockPersonId,
-};
-
-export const mockDisplayUpdate: TDisplayUpdateInput = {
+export const mockDisplayUpdate = {
   environmentId: mockEnvironmentId,
   userId: mockUserId,
   responseId: mockResponseId,
-};
-
-export const mockDisplayLegacyUpdateInput: TDisplayLegacyUpdateInput = {
-  personId: mockPersonId,
-  responseId: mockResponseId,
-};
-
-export const mockDisplayLegacyWithRespondedStatus: TDisplay = {
-  ...mockDisplayWithPersonId,
-  status: "responded",
 };

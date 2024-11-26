@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./sharedTypes";
+import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./shared-types";
 
 export const ZIntegrationAirtableCredential = z.object({
   expiry_date: z.string(),
@@ -23,7 +22,7 @@ export type TIntegrationAirtableConfigData = z.infer<typeof ZIntegrationAirtable
 export const ZIntegrationAirtableConfig = z.object({
   key: ZIntegrationAirtableCredential,
   data: z.array(ZIntegrationAirtableConfigData),
-  email: z.string(),
+  email: z.string().email(),
 });
 
 export type TIntegrationAirtableConfig = z.infer<typeof ZIntegrationAirtableConfig>;

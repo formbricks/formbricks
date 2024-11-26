@@ -1,6 +1,6 @@
-import Sidebar from "./Sidebar";
+import { Sidebar } from "./Sidebar";
 
-export default function LayoutApp({ children }: { children: React.ReactNode }) {
+export const LayoutApp = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-full">
       {/* Static sidebar for desktop */}
@@ -10,4 +10,4 @@ export default function LayoutApp({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 flex-col lg:pl-64">{children}</div>
     </div>
   );
-}
+};

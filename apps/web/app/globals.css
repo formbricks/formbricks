@@ -28,7 +28,7 @@
 
 .dark {
   /* Brand Colors */
-  --formbricks-brand: #038178; 
+  --formbricks-brand: #038178;
 
   /* Fill Colors */
   --formbricks-fill-primary: #0f172a;
@@ -50,17 +50,10 @@
   --formbricks-error: #d13a3a;
 }
 
-
 @layer base {
   [data-nextjs-scroll-focus-boundary] {
     display: contents;
   }
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #e2e8f0;
 }
 
 /* Chrome, Edge, and Safari */
@@ -75,6 +68,18 @@
 *::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border: 3px solid #cbd5e1;
+}
+
+.filter-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-track {
+  border-radius: 8px;
 }
 
 input:focus {
@@ -112,7 +117,7 @@ input[type="search"]::-ms-reveal {
   display: none;
 }
 
-.surveyFilterDropdown[data-state="open"]{
+.surveyFilterDropdown[data-state="open"] {
   background-color: #0f172a;
   color: white;
 }
@@ -121,10 +126,57 @@ input[type="search"]::-ms-reveal {
   color: white;
 }
 
-input[type='range']::-webkit-slider-thumb {
+input[type="range"]::-webkit-slider-thumb {
   background: #0f172a;
   height: 20px;
-  width: 20px; 
+  width: 20px;
   border-radius: 50%;
   -webkit-appearance: none;
+}
+
+@import '@radix-ui/colors/black-alpha.css';
+@import '@radix-ui/colors/violet.css';
+
+.SliderRoot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    user-select: none;
+    touch-action: none;
+}
+
+.SliderTrack {
+    background-color: rgb(203 213 225 / var(--tw-bg-opacity));
+    position: relative;
+    flex-grow: 1;
+    border-radius: 9999px;
+    height: 3px;
+}
+
+.SliderRange {
+    position: absolute;
+    /*background-color: white;*/
+    border-radius: 9999px;
+    height: 100%;
+    background-color: rgb(203 213 225 / var(--tw-bg-opacity));
+}
+
+.SliderThumb {
+    display: block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: white;
+    color: #000;
+    text-align: center;
+    box-shadow: 0 2px 10px #000;
+    border-radius: 10px;
+}
+.SliderThumb:hover {
+    background-color: #000;
+    color: #fff;
+}
+.SliderThumb:focus {
+    outline: none;
+    /*box-shadow: 0 0 0 5px #000;*/
 }

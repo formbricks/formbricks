@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-
 import { prisma } from "@formbricks/database";
-import { sendPasswordResetNotifyEmail } from "@formbricks/lib/emails/emails";
+import { sendPasswordResetNotifyEmail } from "@formbricks/email";
 import { verifyToken } from "@formbricks/lib/jwt";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   const { token, hashedPassword } = await request.json();
 
   try {
@@ -15,16 +13,16 @@ export async function POST(request: Request) {
       },
     });
     if (!user) {
-      return NextResponse.json({ error: "Invalid token provided or no longer valid" }, { status: 409 });
+      return Response.json({ error: "Invalid token provided or no longer valid" }, { status: 409 });
     }
     await prisma.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
     });
     await sendPasswordResetNotifyEmail(user);
-    return NextResponse.json({});
+    return Response.json({});
   } catch (e) {
-    return NextResponse.json(
+    return Response.json(
       {
         error: e.message,
         errorCode: e.code,
@@ -32,4 +30,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+};

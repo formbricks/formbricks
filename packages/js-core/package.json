@@ -1,0 +1,66 @@
+{
+  "name": "@formbricks/js-core",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "Js core for Formbricks that contains the logic for executing the @formbricks/js library and is loaded asynchronously over the Formbricks API.",
+  "homepage": "https://formbricks.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "keywords": [
+    "Formbricks",
+    "surveys",
+    "experience management"
+  ],
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./app": {
+      "import": "./dist/app.js",
+      "require": "./dist/app.umd.cjs",
+      "types": "./dist/app.d.ts"
+    },
+    "./website": {
+      "import": "./dist/website.js",
+      "require": "./dist/website.umd.cjs",
+      "types": "./dist/website.d.ts"
+    },
+    "./*": "./dist/*"
+  },
+  "typesVersions": {
+    "*": {
+      "app": [
+        "./dist/app.d.ts"
+      ],
+      "website": [
+        "./dist/website.d.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "dev": "vite build --watch --mode dev",
+    "build:app": "tsc && vite build --config app.vite.config.ts",
+    "build:website": "tsc && vite build --config website.vite.config.ts",
+    "build": "pnpm build:app && pnpm build:website",
+    "build:dev": "tsc && vite build --mode dev",
+    "go": "vite build --watch --mode dev",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "clean": "rimraf .turbo node_modules dist coverage"
+  },
+  "author": "Formbricks <hola@formbricks.com>",
+  "devDependencies": {
+    "@formbricks/api": "workspace:*",
+    "@formbricks/lib": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/types": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
+    "terser": "^5.31.6",
+    "vite": "^5.4.1",
+    "vite-plugin-dts": "^3.9.1"
+  }
+}

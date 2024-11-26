@@ -1,12 +1,13 @@
 "use client";
 
+import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
-
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@formbricks/ui/Command";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@formbricks/ui/Command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,12 +22,12 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type: TSurveyQuestionType | "Attributes" | "Tags" | undefined;
+  type?: TSurveyQuestionTypeEnum | Omit<OptionsType, OptionsType.QUESTIONS>;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };
 
-const QuestionFilterComboBox = ({
+export const QuestionFilterComboBox = ({
   filterComboBoxOptions,
   filterComboBoxValue,
   filterOptions,
@@ -40,20 +41,29 @@ const QuestionFilterComboBox = ({
   const [open, setOpen] = React.useState(false);
   const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
   const commandRef = React.useRef(null);
+  const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
 
   // multiple when question type is multi selection
   const isMultiple =
-    type === TSurveyQuestionType.MultipleChoiceMulti || type === TSurveyQuestionType.MultipleChoiceSingle;
+    type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
+    type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
+    type === TSurveyQuestionTypeEnum.PictureSelection ||
+    (type === TSurveyQuestionTypeEnum.NPS && filterValue === "Includes either");
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
-    ? filterComboBoxOptions?.filter((o) => !filterComboBoxValue?.includes(o))
+    ? filterComboBoxOptions?.filter(
+        (o) =>
+          !filterComboBoxValue?.includes(
+            typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+          )
+      )
     : filterComboBoxOptions;
 
   // disable the combo box for selection of value when question type is nps or rating and selected value is submitted or skipped
   const isDisabledComboBox =
-    (type === TSurveyQuestionType.NPS || type === TSurveyQuestionType.Rating) &&
+    (type === TSurveyQuestionTypeEnum.NPS || type === TSurveyQuestionTypeEnum.Rating) &&
     (filterValue === "Submitted" || filterValue === "Skipped");
 
   return (
@@ -107,11 +117,11 @@ const QuestionFilterComboBox = ({
         <div
           onClick={() => !disabled && !isDisabledComboBox && filterValue && setOpen(true)}
           className={clsx(
-            "group flex items-center justify-between rounded-md rounded-l-none bg-white  px-3 py-2 text-sm",
+            "group flex items-center justify-between rounded-md rounded-l-none bg-white px-3 py-2 text-sm",
             disabled || isDisabledComboBox || !filterValue ? "opacity-50" : "cursor-pointer"
           )}>
           {filterComboBoxValue && filterComboBoxValue?.length > 0 ? (
-            !isMultiple ? (
+            !Array.isArray(filterComboBoxValue) ? (
               <p className="text-slate-600">{filterComboBoxValue}</p>
             ) : (
               <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
@@ -141,23 +151,32 @@ const QuestionFilterComboBox = ({
         <div className="relative mt-2 h-full">
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-              <CommandEmpty>No result found.</CommandEmpty>
-              <CommandGroup>
-                {options?.map((o) => (
-                  <CommandItem
-                    onSelect={() => {
-                      !isMultiple
-                        ? onChangeFilterComboBoxValue(o)
-                        : onChangeFilterComboBoxValue(
-                            Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, o] : [o]
-                          );
-                      !isMultiple && setOpen(false);
-                    }}
-                    className="cursor-pointer">
-                    {o}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              <CommandList>
+                <CommandEmpty>No result found.</CommandEmpty>
+                <CommandGroup>
+                  {options?.map((o) => (
+                    <CommandItem
+                      onSelect={() => {
+                        !isMultiple
+                          ? onChangeFilterComboBoxValue(
+                              typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+                            )
+                          : onChangeFilterComboBoxValue(
+                              Array.isArray(filterComboBoxValue)
+                                ? [
+                                    ...filterComboBoxValue,
+                                    typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
+                                  ]
+                                : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
+                            );
+                        !isMultiple && setOpen(false);
+                      }}
+                      className="cursor-pointer">
+                      {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
             </div>
           )}
         </div>
@@ -165,5 +184,3 @@ const QuestionFilterComboBox = ({
     </div>
   );
 };
-
-export default QuestionFilterComboBox;

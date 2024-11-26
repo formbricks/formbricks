@@ -1,6 +1,6 @@
 import { Button } from "@formbricks/ui/Button";
 
-export default function DocsSidebar() {
+export const DocsSidebar = () => {
   return (
     <div className="w-20 min-w-max rounded-lg border border-slate-200 bg-slate-100 p-8">
       <p className="font-bold text-slate-700">Documentation</p>
@@ -15,4 +15,4 @@ export default function DocsSidebar() {
       </Button>
     </div>
   );
-}
+};

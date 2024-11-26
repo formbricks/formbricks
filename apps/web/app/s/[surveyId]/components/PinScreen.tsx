@@ -1,25 +1,22 @@
 "use client";
 
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
-import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import type { NextPage } from "next";
 import { useCallback, useEffect, useState } from "react";
-
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { OTPInput } from "@formbricks/ui/OTPInput";
 
-interface LinkSurveyPinScreenProps {
+interface PinScreenProps {
   surveyId: string;
   product: TProduct;
   userId?: string;
   emailVerificationStatus?: string;
-  prefillAnswer?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
@@ -27,22 +24,27 @@ interface LinkSurveyPinScreenProps {
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
+  languageCode: string;
+  attributeClasses: TAttributeClass[];
+  isEmbed: boolean;
 }
 
-const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
+export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
     product,
     webAppUrl,
     emailVerificationStatus,
     userId,
-    prefillAnswer,
     singleUseId,
     singleUseResponse,
     IMPRINT_URL,
     PRIVACY_URL,
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
+    languageCode,
+    attributeClasses,
+    isEmbed,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -52,12 +54,15 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   const [survey, setSurvey] = useState<TSurvey>();
 
   const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: string) => {
-    const response = await validateSurveyPinAction(surveyId, pin);
-    if (response.error) {
-      setError(response.error);
-    } else if (response.survey) {
-      setSurvey(response.survey);
+    const response = await validateSurveyPinAction({ surveyId, pin });
+
+    if (response?.data) {
+      setSurvey(response.data.survey);
+    } else {
+      const errorMessage = getFormattedErrorMessage(response) as TSurveyPinValidationResponseError;
+      setError(errorMessage);
     }
+
     setLoading(false);
   }, []);
 
@@ -111,29 +116,21 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   }
 
   return (
-    <div>
-      <MediaBackground survey={survey}>
-        <LinkSurvey
-          survey={survey}
-          product={product}
-          userId={userId}
-          emailVerificationStatus={emailVerificationStatus}
-          prefillAnswer={prefillAnswer}
-          singleUseId={singleUseId}
-          singleUseResponse={singleUseResponse}
-          webAppUrl={webAppUrl}
-          verifiedEmail={verifiedEmail}
-        />
-      </MediaBackground>
-      <LegalFooter
-        bgColor={survey.styling?.background?.bg || "#ffff"}
-        IMPRINT_URL={IMPRINT_URL}
-        PRIVACY_URL={PRIVACY_URL}
-        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-        surveyUrl={webAppUrl + "/s/" + survey.id}
-      />
-    </div>
+    <LinkSurvey
+      survey={survey}
+      product={product}
+      userId={userId}
+      emailVerificationStatus={emailVerificationStatus}
+      singleUseId={singleUseId}
+      singleUseResponse={singleUseResponse}
+      webAppUrl={webAppUrl}
+      verifiedEmail={verifiedEmail}
+      languageCode={languageCode}
+      attributeClasses={attributeClasses}
+      isEmbed={isEmbed}
+      IMPRINT_URL={IMPRINT_URL}
+      PRIVACY_URL={PRIVACY_URL}
+      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+    />
   );
 };
-
-export default LinkSurveyPinScreen;

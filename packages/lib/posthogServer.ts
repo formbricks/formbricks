@@ -1,36 +1,63 @@
 import { PostHog } from "posthog-node";
+import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
+import { cache } from "./cache";
+import { env } from "./env";
 
 const enabled =
   process.env.NODE_ENV === "production" &&
-  process.env.NEXT_PUBLIC_POSTHOG_API_HOST &&
-  process.env.NEXT_PUBLIC_POSTHOG_API_KEY;
+  env.NEXT_PUBLIC_POSTHOG_API_HOST &&
+  env.NEXT_PUBLIC_POSTHOG_API_KEY;
 
-export const capturePosthogEvent = async (
-  userId: string,
+export const capturePosthogEnvironmentEvent = async (
+  environmentId: string,
   eventName: string,
-  teamId?: string,
   properties: any = {}
 ) => {
   if (
     !enabled ||
-    typeof process.env.NEXT_PUBLIC_POSTHOG_API_HOST !== "string" ||
-    typeof process.env.NEXT_PUBLIC_POSTHOG_API_KEY !== "string"
+    typeof env.NEXT_PUBLIC_POSTHOG_API_HOST !== "string" ||
+    typeof env.NEXT_PUBLIC_POSTHOG_API_KEY !== "string"
   ) {
     return;
   }
   try {
-    const client = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_API_KEY, {
-      host: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    const client = new PostHog(env.NEXT_PUBLIC_POSTHOG_API_KEY, {
+      host: env.NEXT_PUBLIC_POSTHOG_API_HOST,
     });
     client.capture({
+      // workaround with a static string as exaplained in PostHog docs: https://posthog.com/docs/product-analytics/group-analytics
+      distinctId: "environmentEvents",
       event: eventName,
-      distinctId: userId,
-      groups: teamId ? { company: teamId } : {},
+      groups: { environment: environmentId },
       properties,
     });
-
-    await client.shutdownAsync();
+    await client.shutdown();
   } catch (error) {
     console.error("error sending posthog event:", error);
   }
 };
+
+export const sendPlanLimitsReachedEventToPosthogWeekly = (
+  environmentId: string,
+  billing: {
+    plan: TOrganizationBillingPlan;
+    limits: TOrganizationBillingPlanLimits;
+  }
+): Promise<string> =>
+  cache(
+    async () => {
+      try {
+        await capturePosthogEnvironmentEvent(environmentId, "plan limit reached", {
+          ...billing,
+        });
+        return "success";
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    },
+    [`sendPlanLimitsReachedEventToPosthogWeekly-${billing.plan}-${environmentId}`],
+    {
+      revalidate: 60 * 60 * 24 * 7, // 7 days
+    }
+  )();

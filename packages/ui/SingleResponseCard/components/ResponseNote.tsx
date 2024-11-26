@@ -1,16 +1,14 @@
 "use client";
 
-import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/responses";
 import { TUser } from "@formbricks/types/user";
-
 import { Button } from "../../Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
 import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
@@ -24,14 +22,14 @@ interface ResponseNotesProps {
   updateFetchedResponses: () => void;
 }
 
-export default function ResponseNotes({
+export const ResponseNotes = ({
   user,
   responseId,
   notes,
   isOpen,
   setIsOpen,
   updateFetchedResponses,
-}: ResponseNotesProps) {
+}: ResponseNotesProps) => {
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
@@ -43,7 +41,7 @@ export default function ResponseNotes({
     e.preventDefault();
     setIsCreatingNote(true);
     try {
-      await createResponseNoteAction(responseId, user.id, noteText);
+      await createResponseNoteAction({ responseId: responseId, text: noteText });
       updateFetchedResponses();
       setIsCreatingNote(false);
       setNoteText("");
@@ -55,7 +53,7 @@ export default function ResponseNotes({
 
   const handleResolveNote = (note: TResponseNote) => {
     try {
-      resolveResponseNoteAction(responseId, note.id);
+      resolveResponseNoteAction({ responseNoteId: note.id });
       // when this was the last note, close the notes panel
       if (unresolvedNotes.length === 1) {
         setIsOpen(false);
@@ -78,7 +76,7 @@ export default function ResponseNotes({
     e.preventDefault();
     setIsUpdatingNote(true);
     try {
-      await updateResponseNoteAction(noteId, noteText);
+      await updateResponseNoteAction({ responseNoteId: noteId, text: noteText });
       updateFetchedResponses();
       setIsUpdatingNote(false);
       setNoteText("");
@@ -131,9 +129,9 @@ export default function ResponseNotes({
             )}
           </div>
           {!unresolvedNotes.length ? (
-            <div className="flex  flex-1 items-center justify-end pr-3">
+            <div className="flex flex-1 items-center justify-end pr-3">
               <span>
-                <PlusIcon className=" h-5 w-5 text-slate-400" />
+                <PlusIcon className="h-5 w-5 text-slate-400" />
               </span>
             </div>
           ) : null}
@@ -214,7 +212,7 @@ export default function ResponseNotes({
                   <textarea
                     rows={2}
                     className={cn(
-                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm  focus:border-slate-500 focus:ring-0 sm:text-sm",
+                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm",
                       !isTextAreaOpen && "scale-y-0 transition-all duration-1000",
                       !isTextAreaOpen && "translate-y-8 transition-all duration-300",
                       isTextAreaOpen && "scale-y-1 transition-all duration-1000",
@@ -238,14 +236,14 @@ export default function ResponseNotes({
                     variant="minimal"
                     type="button"
                     size="sm"
-                    className={cn("mr-auto duration-300 ")}
+                    className={cn("mr-auto duration-300")}
                     onClick={() => {
                       setIsTextAreaOpen(!isTextAreaOpen);
                     }}>
                     {isTextAreaOpen ? "Hide" : "Show"}
                   </Button>
                   {isTextAreaOpen && (
-                    <Button variant="darkCTA" size="sm" type="submit" loading={isCreatingNote}>
+                    <Button size="sm" type="submit" loading={isCreatingNote}>
                       {isUpdatingNote ? "Save" : "Send"}
                     </Button>
                   )}
@@ -257,4 +255,4 @@ export default function ResponseNotes({
       )}
     </div>
   );
-}
+};

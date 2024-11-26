@@ -1,7 +1,15 @@
-export default function Subheader({ subheader, questionId }: { subheader?: string; questionId: string }) {
-  return (
-    <label htmlFor={questionId} className="text-subheading block text-sm font-normal leading-6">
-      {subheader}
-    </label>
-  );
+interface SubheaderProps {
+  subheader?: string;
+  questionId: string;
 }
+
+export const Subheader = ({ subheader, questionId }: SubheaderProps) => {
+  return (
+    <p
+      htmlFor={questionId}
+      className="fb-text-subheading fb-block fb-break-words fb-text-sm fb-font-normal fb-leading-5"
+      dir="auto">
+      {subheader}
+    </p>
+  );
+};

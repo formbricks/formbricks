@@ -1,6 +1,16 @@
-import { RefObject, useEffect } from "react";
-
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TAttributes } from "@formbricks/types/attributes";
+import { TResponseData } from "@formbricks/types/responses";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyQuestion,
+  TSurveyRecallItem,
+  TSurveyVariables,
+} from "@formbricks/types/surveys/types";
+import { getLocalizedValue } from "../i18n/utils";
+import { structuredClone } from "../pollyfills/structuredClone";
+import { formatDateWithOrdinal, isValidDateString } from "./datetime";
 
 export interface fallbacks {
   [id: string]: string;
@@ -8,7 +18,7 @@ export interface fallbacks {
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
 export const extractId = (text: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9]+)/;
+  const pattern = /#recall:([A-Za-z0-9_-]+)/;
   const match = text.match(pattern);
   if (match && match[1]) {
     return match[1];
@@ -19,7 +29,7 @@ export const extractId = (text: string): string | null => {
 
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
 export const extractIds = (text: string): string[] => {
-  const pattern = /#recall:([A-Za-z0-9]+)/g;
+  const pattern = /#recall:([A-Za-z0-9_-]+)/g;
   const matches = Array.from(text.matchAll(pattern));
   return matches.map((match) => match[1]).filter((id) => id !== null);
 };
@@ -36,8 +46,9 @@ export const extractFallbackValue = (text: string): string => {
 };
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
-export const extractRecallInfo = (headline: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9]+)\/fallback:(\S*)#/;
+export const extractRecallInfo = (headline: string, id?: string): string | null => {
+  const idPattern = id ? id : "[A-Za-z0-9_-]+";
+  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
@@ -49,51 +60,91 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
   return match ? match[0] : null;
 };
 
-// Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
-export const recallToHeadline = (headline: string, survey: TSurvey, withSlash: boolean): string => {
-  let newHeadline = headline;
-  if (!headline.includes("#recall:")) return headline;
+const getRecallItemLabel = <T extends TSurvey>(
+  recallItemId: string,
+  survey: T,
+  languageCode: string,
+  attributeClasses: TAttributeClass[]
+): string | undefined => {
+  const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
+  if (isHiddenField) return recallItemId;
 
-  while (newHeadline.includes("#recall:")) {
-    const recallInfo = extractRecallInfo(newHeadline);
-    if (recallInfo) {
-      const questionId = extractId(recallInfo);
-      let questionHeadline = survey.questions.find((question) => question.id === questionId)?.headline;
-      while (questionHeadline?.includes("#recall:")) {
-        const recallInfo = extractRecallInfo(questionHeadline);
-        if (recallInfo) {
-          questionHeadline = questionHeadline.replaceAll(recallInfo, "___");
+  const surveyQuestion = survey.questions.find((question) => question.id === recallItemId);
+  if (surveyQuestion) return surveyQuestion.headline[languageCode];
+
+  const attributeClass = attributeClasses.find(
+    (attributeClass) => attributeClass.name.replaceAll(" ", "nbsp") === recallItemId
+  );
+  if (attributeClass) return attributeClass?.name;
+
+  const variable = survey.variables?.find((variable) => variable.id === recallItemId);
+  if (variable) return variable.name;
+};
+
+// Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
+export const recallToHeadline = <T extends TSurvey>(
+  headline: TI18nString,
+  survey: T,
+  withSlash: boolean,
+  languageCode: string,
+  attributeClasses: TAttributeClass[]
+): TI18nString => {
+  let newHeadline = structuredClone(headline);
+  const localizedHeadline = newHeadline[languageCode];
+
+  if (!localizedHeadline?.includes("#recall:")) return headline;
+
+  const replaceNestedRecalls = (text: string): string => {
+    while (text.includes("#recall:")) {
+      const recallInfo = extractRecallInfo(text);
+      if (!recallInfo) break;
+
+      const recallItemId = extractId(recallInfo);
+      if (!recallItemId) break;
+
+      let recallItemLabel =
+        getRecallItemLabel(recallItemId, survey, languageCode, attributeClasses) || recallItemId;
+
+      while (recallItemLabel.includes("#recall:")) {
+        const nestedRecallInfo = extractRecallInfo(recallItemLabel);
+        if (nestedRecallInfo) {
+          recallItemLabel = recallItemLabel.replace(nestedRecallInfo, "___");
         }
       }
-      if (withSlash) {
-        newHeadline = newHeadline.replace(recallInfo, `/${questionHeadline}\\`);
-      } else {
-        newHeadline = newHeadline.replace(recallInfo, `@${questionHeadline}`);
-      }
+
+      const replacement = withSlash ? `/${recallItemLabel}\\` : `@${recallItemLabel}`;
+      text = text.replace(recallInfo, replacement);
     }
-  }
+    return text;
+  };
+
+  newHeadline[languageCode] = replaceNestedRecalls(localizedHeadline);
   return newHeadline;
 };
 
 // Replaces recall information in a survey question's headline with an ___.
-export const replaceRecallInfoWithUnderline = (recallQuestion: TSurveyQuestion): TSurveyQuestion => {
-  while (recallQuestion.headline.includes("#recall:")) {
-    const recallInfo = extractRecallInfo(recallQuestion.headline);
+export const replaceRecallInfoWithUnderline = (label: string): string => {
+  let newLabel = label;
+  while (newLabel.includes("#recall:")) {
+    const recallInfo = extractRecallInfo(newLabel);
     if (recallInfo) {
-      recallQuestion.headline = recallQuestion.headline.replace(recallInfo, "___");
+      newLabel = newLabel.replace(recallInfo, "___");
     }
   }
-  return recallQuestion;
+  return newLabel;
 };
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
-export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | null => {
+export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): TSurveyQuestion | null => {
   const findRecalls = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
     return recalls && recalls.some((recall) => !extractFallbackValue(recall));
   };
   for (const question of survey.questions) {
-    if (findRecalls(question.headline) || (question.subheader && findRecalls(question.subheader))) {
+    if (
+      findRecalls(getLocalizedValue(question.headline, language)) ||
+      (question.subheader && findRecalls(getLocalizedValue(question.subheader, language)))
+    ) {
       return question;
     }
   }
@@ -101,35 +152,66 @@ export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | n
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const checkForRecallInHeadline = (survey: TSurvey): TSurvey => {
-  const modifiedSurvey = { ...survey };
+export const replaceHeadlineRecall = <T extends TSurvey>(
+  survey: T,
+  language: string,
+  attributeClasses: TAttributeClass[]
+): T => {
+  const modifiedSurvey = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
-    question.headline = recallToHeadline(question.headline, modifiedSurvey, false);
+    question.headline = recallToHeadline(
+      question.headline,
+      modifiedSurvey,
+      false,
+      language,
+      attributeClasses
+    );
   });
   return modifiedSurvey;
 };
 
 // Retrieves an array of survey questions referenced in a text containing recall information.
-export const getRecallQuestions = (text: string, survey: TSurvey): TSurveyQuestion[] => {
+export const getRecallItems = (
+  text: string,
+  survey: TSurvey,
+  languageCode: string,
+  attributeClasses: TAttributeClass[]
+): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
   const ids = extractIds(text);
-  let recallQuestionArray: TSurveyQuestion[] = [];
-  ids.forEach((questionId) => {
-    let recallQuestion = survey.questions.find((question) => question.id === questionId);
-    if (recallQuestion) {
-      let recallQuestionTemp = { ...recallQuestion };
-      recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp);
-      recallQuestionArray.push(recallQuestionTemp);
+  let recallItems: TSurveyRecallItem[] = [];
+  ids.forEach((recallItemId) => {
+    const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
+    const isSurveyQuestion = survey.questions.find((question) => question.id === recallItemId);
+    const isVariable = survey.variables.find((variable) => variable.id === recallItemId);
+
+    const recallItemLabel = getRecallItemLabel(recallItemId, survey, languageCode, attributeClasses);
+
+    const getRecallItemType = () => {
+      if (isHiddenField) return "hiddenField";
+      if (isSurveyQuestion) return "question";
+      if (isVariable) return "variable";
+      return "attributeClass";
+    };
+
+    if (recallItemLabel) {
+      let recallItemLabelTemp = recallItemLabel;
+      recallItemLabelTemp = replaceRecallInfoWithUnderline(recallItemLabelTemp);
+      recallItems.push({
+        id: recallItemId,
+        label: recallItemLabelTemp,
+        type: getRecallItemType(),
+      });
     }
   });
-  return recallQuestionArray;
+  return recallItems;
 };
 
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
 export const getFallbackValues = (text: string): fallbacks => {
   if (!text.includes("#recall:")) return {};
-  const pattern = /#recall:([A-Za-z0-9]+)\/fallback:([\S*]+)#/g;
+  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([\S*]+)#/g;
   let match;
   const fallbacks: fallbacks = {};
 
@@ -144,38 +226,100 @@ export const getFallbackValues = (text: string): fallbacks => {
 // Transforms headlines in a text to their corresponding recall information.
 export const headlineToRecall = (
   text: string,
-  recallQuestions: TSurveyQuestion[],
+  recallItems: TSurveyRecallItem[],
   fallbacks: fallbacks
 ): string => {
-  recallQuestions.forEach((recallQuestion) => {
-    const recallInfo = `#recall:${recallQuestion.id}/fallback:${fallbacks[recallQuestion.id]}#`;
-    text = text.replace(`@${recallQuestion.headline}`, recallInfo);
+  recallItems.forEach((recallItem) => {
+    const recallInfo = `#recall:${recallItem.id}/fallback:${fallbacks[recallItem.id]}#`;
+    text = text.replace(`@${recallItem.label}`, recallInfo);
   });
   return text;
 };
 
-// Custom hook to synchronize the horizontal scroll position of two elements.
-export const useSyncScroll = (
-  highlightContainerRef: RefObject<HTMLElement>,
-  inputRef: RefObject<HTMLElement>,
-  text: string
+export const parseRecallInfo = (
+  text: string,
+  attributes?: TAttributes,
+  responseData?: TResponseData,
+  variables?: TSurveyVariables,
+  withSlash: boolean = false
 ) => {
-  useEffect(() => {
-    const syncScrollPosition = () => {
-      if (highlightContainerRef.current && inputRef.current) {
-        highlightContainerRef.current.scrollLeft = inputRef.current.scrollLeft;
-      }
-    };
+  let modifiedText = text;
+  const attributeKeys = attributes ? Object.keys(attributes) : [];
+  const questionIds = responseData ? Object.keys(responseData) : [];
+  if (attributes && attributeKeys.length > 0) {
+    attributeKeys.forEach((attributeKey) => {
+      const recallPattern = `#recall:${attributeKey}`;
+      while (modifiedText.includes(recallPattern)) {
+        const recallInfo = extractRecallInfo(modifiedText, attributeKey);
+        if (!recallInfo) break; // Exit the loop if no recall info is found
 
-    const sourceElement = inputRef.current;
-    if (sourceElement) {
-      sourceElement.addEventListener("scroll", syncScrollPosition);
+        const recallItemId = extractId(recallInfo);
+        if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
+
+        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+        let value = attributes[recallItemId.replace("nbsp", " ")] || fallback;
+        if (withSlash) {
+          modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
+        } else {
+          modifiedText = modifiedText.replace(recallInfo, value);
+        }
+      }
+    });
+  }
+
+  if (variables && variables.length > 0) {
+    variables.forEach((variable) => {
+      const recallPattern = `#recall:`;
+      while (modifiedText.includes(recallPattern)) {
+        const recallInfo = extractRecallInfo(modifiedText, variable.id);
+        if (!recallInfo) break; // Exit the loop if no recall info is found
+
+        const recallItemId = extractId(recallInfo);
+        if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
+
+        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+
+        let value = variable.value?.toString() || fallback;
+        if (withSlash) {
+          modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
+        } else {
+          modifiedText = modifiedText.replace(recallInfo, value);
+        }
+      }
+    });
+  }
+
+  if (responseData && questionIds.length > 0) {
+    while (modifiedText.includes("recall:")) {
+      const recallInfo = extractRecallInfo(modifiedText);
+      if (!recallInfo) break; // Exit the loop if no recall info is found
+
+      const recallItemId = extractId(recallInfo);
+      if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
+
+      const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+      let value;
+
+      // Fetching value from responseData or attributes based on recallItemId
+      if (responseData[recallItemId]) {
+        value = (responseData[recallItemId] as string) ?? fallback;
+      }
+      // Additional value formatting if it exists
+      if (value) {
+        if (isValidDateString(value)) {
+          value = formatDateWithOrdinal(new Date(value));
+        } else if (Array.isArray(value)) {
+          value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
+        }
+      }
+
+      if (withSlash) {
+        modifiedText = modifiedText.replace(recallInfo, "#/" + (value ?? fallback) + "\\#");
+      } else {
+        modifiedText = modifiedText.replace(recallInfo, value ?? fallback);
+      }
     }
+  }
 
-    return () => {
-      if (sourceElement) {
-        sourceElement.removeEventListener("scroll", syncScrollPosition);
-      }
-    };
-  }, [inputRef, highlightContainerRef, text]);
+  return modifiedText;
 };

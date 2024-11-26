@@ -1,9 +1,7 @@
-import { NextResponse } from "next/server";
-
 import { prisma } from "@formbricks/database";
-import { sendVerificationEmail } from "@formbricks/lib/emails/emails";
+import { sendVerificationEmail } from "@formbricks/email";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   const { email } = await request.json();
   // check for user in DB
   try {
@@ -11,15 +9,15 @@ export async function POST(request: Request) {
       where: { email },
     });
     if (!user) {
-      return NextResponse.json({ error: "No user with this email address found" }, { status: 404 });
+      return Response.json({ error: "No user with this email address found" }, { status: 404 });
     }
     if (user.emailVerified) {
-      return NextResponse.json({ error: "Email address has already been verified" }, { status: 400 });
+      return Response.json({ error: "Email address has already been verified" }, { status: 400 });
     }
     await sendVerificationEmail(user);
-    return NextResponse.json(user);
+    return Response.json(user);
   } catch (e) {
-    return NextResponse.json(
+    return Response.json(
       {
         error: e.message,
         errorCode: e.code,
@@ -27,4 +25,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+};

@@ -4,16 +4,14 @@
 import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
-
+import { NextRequest } from "next/server";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { env } from "@formbricks/lib/env.mjs";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export const POST = async (req: NextRequest): Promise<Response> => {
   const accessType = "public"; // public files are accessible by anyone
   const headersList = headers();
 
@@ -72,7 +70,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     fileType,
     Number(signedTimestamp),
     signedSignature,
-    env.ENCRYPTION_KEY
+    ENCRYPTION_KEY
   );
 
   if (!validated) {
@@ -90,7 +88,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
-    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, true);
+    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
 
     return responses.successResponse({
       message: "File uploaded successfully",
@@ -101,4 +99,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     return responses.internalServerErrorResponse("File upload failed");
   }
-}
+};

@@ -1,9 +1,9 @@
-export default function Progress({ progress }: { progress: number }) {
+export const Progress = ({ progress }: { progress: number }) => {
   return (
-    <div className="bg-accent-bg h-2 w-full overflow-hidden rounded-full">
+    <div className="fb-bg-accent-bg fb-h-2 fb-w-full fb-overflow-hidden fb-rounded-full">
       <div
-        className="transition-width bg-brand z-20 h-2 rounded-full duration-500"
+        className="fb-transition-width fb-bg-brand fb-z-20 fb-h-2 fb-rounded-full fb-duration-500"
         style={{ width: `${Math.floor(progress * 100)}%` }}></div>
     </div>
   );
-}
+};

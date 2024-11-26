@@ -1,11 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { AsyncParser } from "@json2csv/node";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
-
+import { NextRequest } from "next/server";
 import { authOptions } from "@formbricks/lib/authOptions";
 
-export async function POST(request: NextRequest) {
+export const POST = async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -29,7 +28,7 @@ export async function POST(request: NextRequest) {
   try {
     csv = await parser.parse(json).promise();
   } catch (err) {
-    console.log({ err });
+    console.error(err);
     throw new Error("Failed to convert to CSV");
   }
 
@@ -40,7 +39,7 @@ export async function POST(request: NextRequest) {
     `attachment; filename="${fallbackFileName}"; filename*=UTF-8''${encodedFileName}`
   );
 
-  return NextResponse.json(
+  return Response.json(
     {
       fileResponse: csv,
     },
@@ -48,4 +47,4 @@ export async function POST(request: NextRequest) {
       headers,
     }
   );
-}
+};

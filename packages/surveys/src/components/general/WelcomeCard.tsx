@@ -1,25 +1,31 @@
-import SubmitButton from "@/components/buttons/SubmitButton";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { calculateElementIdx } from "@/lib/utils";
-
+import { useEffect } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
-
-import Headline from "./Headline";
-import HtmlBody from "./HtmlBody";
+import { TI18nString, TSurvey, TSurveyVariables } from "@formbricks/types/surveys/types";
+import { Headline } from "./Headline";
+import { HtmlBody } from "./HtmlBody";
 
 interface WelcomeCardProps {
-  headline?: string;
-  html?: string;
+  headline?: TI18nString;
+  html?: TI18nString;
   fileUrl?: string;
-  buttonLabel?: string;
+  buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurvey;
+  languageCode: string;
   responseCount?: number;
+  autoFocusEnabled: boolean;
+  replaceRecallInfo: (text: string, responseData: TResponseData, variables: TSurveyVariables) => string;
+  isCurrent: boolean;
+  responseData: TResponseData;
 }
 
 const TimerIcon = () => {
   return (
-    <div className="mr-1">
+    <div className="fb-mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="16"
@@ -36,17 +42,17 @@ const TimerIcon = () => {
 
 const UsersIcon = () => {
   return (
-    <div className="mr-1">
+    <div className="fb-mr-1">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
-        stroke-width="1.5"
+        strokeWidth="1.5"
         stroke="currentColor"
-        class="h-4 w-4">
+        class="fb-h-4 fb-w-4">
         <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
         />
       </svg>
@@ -54,15 +60,20 @@ const UsersIcon = () => {
   );
 };
 
-export default function WelcomeCard({
+export const WelcomeCard = ({
   headline,
   html,
   fileUrl,
   buttonLabel,
   onSubmit,
+  languageCode,
   survey,
   responseCount,
-}: WelcomeCardProps) {
+  autoFocusEnabled,
+  replaceRecallInfo,
+  isCurrent,
+  responseData,
+}: WelcomeCardProps) => {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
     if (idx === 0.5) {
@@ -94,49 +105,90 @@ export default function WelcomeCard({
   const timeToFinish = survey.welcomeCard.timeToFinish;
   const showResponseCount = survey.welcomeCard.showResponseCount;
 
+  const handleSubmit = () => {
+    onSubmit({ ["welcomeCard"]: "clicked" }, {});
+  };
+
+  useEffect(() => {
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      }
+    };
+
+    if (isCurrent && survey.type === "link") {
+      document.addEventListener("keydown", handleEnter);
+    } else {
+      document.removeEventListener("keydown", handleEnter);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEnter);
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCurrent]);
+
   return (
     <div>
-      {fileUrl && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
-      )}
+      <ScrollableContainer>
+        <div>
+          {fileUrl && (
+            <img
+              src={fileUrl}
+              className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
+              alt="Company Logo"
+            />
+          )}
 
-      <Headline headline={headline} questionId="welcomeCard" />
-      <HtmlBody htmlString={html} questionId="welcomeCard" />
-
-      <div className="mt-10 flex w-full justify-between">
-        <div className="flex w-full justify-start gap-4">
-          <SubmitButton
-            buttonLabel={buttonLabel}
-            isLastQuestion={false}
-            focus={true}
-            onClick={() => {
-              onSubmit({ ["welcomeCard"]: "clicked" }, {});
-            }}
-            type="button"
+          <Headline
+            headline={replaceRecallInfo(
+              getLocalizedValue(headline, languageCode),
+              responseData,
+              survey.variables
+            )}
+            questionId="welcomeCard"
           />
-          <div className="text-subheading flex items-center text-xs">Press Enter ↵</div>
+          <HtmlBody
+            htmlString={replaceRecallInfo(
+              getLocalizedValue(html, languageCode),
+              responseData,
+              survey.variables
+            )}
+            questionId="welcomeCard"
+          />
         </div>
+      </ScrollableContainer>
+
+      <div className="fb-mx-6 fb-mt-4 fb-flex fb-gap-4 fb-py-4">
+        <SubmitButton
+          buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
+          isLastQuestion={false}
+          focus={autoFocusEnabled}
+          onClick={handleSubmit}
+          type="button"
+          onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+        />
       </div>
 
       {timeToFinish && !showResponseCount ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
       ) : showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <UsersIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span>{`${responseCount} people responded`}</span>
           </p>
         </div>
       ) : timeToFinish && showResponseCount ? (
-        <div className="item-center mt-4 flex text-slate-500">
+        <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
-          <p className="pt-1 text-xs">
+          <p className="fb-pt-1 fb-text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
             <span>{responseCount && responseCount > 3 ? `⋅ ${responseCount} people responded` : ""}</span>
           </p>
@@ -144,4 +196,4 @@ export default function WelcomeCard({
       ) : null}
     </div>
   );
-}
+};

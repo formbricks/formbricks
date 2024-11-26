@@ -1,23 +1,21 @@
-import { CheckCircleIcon, PauseCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
-import { TSurveyClosedMessage } from "@formbricks/types/surveys";
+import { TSurveyClosedMessage } from "@formbricks/types/surveys/types";
 import { Button } from "@formbricks/ui/Button";
-
 import footerLogo from "../lib/footerlogo.svg";
 
-const SurveyInactive = ({
+export const SurveyInactive = ({
   status,
   surveyClosedMessage,
 }: {
-  status: "paused" | "completed" | "link invalid";
+  status: "paused" | "completed" | "link invalid" | "scheduled";
   surveyClosedMessage?: TSurveyClosedMessage | null;
 }) => {
   const icons = {
     paused: <PauseCircleIcon className="h-20 w-20" />,
-    completed: <CheckCircleIcon className="h-20 w-20" />,
-    "link invalid": <QuestionMarkCircleIcon className="h-20 w-20" />,
+    completed: <CheckCircle2Icon className="h-20 w-20" />,
+    "link invalid": <HelpCircleIcon className="h-20 w-20" />,
   };
 
   const descriptions = {
@@ -40,7 +38,7 @@ const SurveyInactive = ({
             : descriptions[status]}
         </p>
         {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
-          <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
+          <Button className="mt-2" href="https://formbricks.com">
             Create your own
           </Button>
         )}
@@ -53,5 +51,3 @@ const SurveyInactive = ({
     </div>
   );
 };
-
-export default SurveyInactive;

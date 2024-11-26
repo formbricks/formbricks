@@ -2,19 +2,20 @@
   <script type="text/javascript">
     !(function () {
       var t = document.createElement("script");
-      (t.type = "text/javascript"), (t.async = !0), (t.src = "./dist/index.umd.js");
+      (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/api/packages/app");
       var e = document.getElementsByTagName("script")[0];
       e.parentNode.insertBefore(t, e),
         setTimeout(function () {
-          window.formbricks.init({
-            environmentId: "clrtawhu7002n7qagsf6t4rxj",
+          formbricks.init({
+            environmentId: "cm020vmv0000cpq4xvxabpo8x",
+            userId: "RANDOM_USER_ID",
             apiHost: "http://localhost:3000",
-            debug: true,
           });
         }, 500);
     })();
   </script>
 </head>
+
 <body style="background-color: #fff">
   <p>This is my sample page using the Formbricks JS javascript widget</p>
 </body>

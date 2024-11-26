@@ -1,9 +1,7 @@
-import { NextResponse } from "next/server";
-
 import { prisma } from "@formbricks/database";
-import { sendForgotPasswordEmail } from "@formbricks/lib/emails/emails";
+import { sendForgotPasswordEmail } from "@formbricks/email";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   const { email } = await request.json();
 
   try {
@@ -14,13 +12,13 @@ export async function POST(request: Request) {
     });
 
     if (!foundUser) {
-      return NextResponse.json({ error: "No user with this email found" }, { status: 409 });
+      return Response.json({ error: "No user with this email found" }, { status: 409 });
     }
 
     await sendForgotPasswordEmail(foundUser);
-    return NextResponse.json({});
+    return Response.json({});
   } catch (e) {
-    return NextResponse.json(
+    return Response.json(
       {
         error: e.message,
         errorCode: e.code,
@@ -28,4 +26,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+};

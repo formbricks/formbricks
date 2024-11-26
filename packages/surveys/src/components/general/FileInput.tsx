@@ -1,184 +1,144 @@
-import { useMemo } from "preact/hooks";
+import { useMemo, useState } from "preact/hooks";
 import { JSXInternal } from "preact/src/jsx";
-import { useState } from "react";
-
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
+import { isFulfilled, isRejected } from "@formbricks/lib/utils/promises";
 import { TAllowedFileExtension } from "@formbricks/types/common";
+import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 
-interface MultipleFileInputProps {
+interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
   surveyId: string | undefined;
   onUploadCallback: (uploadedUrls: string[]) => void;
-  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   fileUrls: string[] | undefined;
   maxSizeInMB?: number;
   allowMultipleFiles?: boolean;
+  htmlFor?: string;
 }
 
-export default function FileInput({
+const FILE_LIMIT = 25;
+
+export const FileInput = ({
   allowedFileExtensions,
   surveyId,
-  onUploadCallback,
   onFileUpload,
+  onUploadCallback,
   fileUrls,
   maxSizeInMB,
   allowMultipleFiles,
-}: MultipleFileInputProps) {
+  htmlFor = "",
+}: FileInputProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const validateFileSize = async (file: File): Promise<boolean> => {
+    if (maxSizeInMB) {
+      const fileBuffer = await file.arrayBuffer();
+      const bufferKB = fileBuffer.byteLength / 1024;
+      if (bufferKB > maxSizeInMB * 1024) {
+        alert(`File should be less than ${maxSizeInMB} MB`);
+        return false;
+      }
+    }
+    return true;
+  };
 
-  const handleFileUpload = async (file: File) => {
-    if (file) {
-      if (maxSizeInMB) {
-        const fileBuffer = await file.arrayBuffer();
+  const handleFileSelection = async (files: FileList) => {
+    const fileArray = Array.from(files);
 
-        const bufferBytes = fileBuffer.byteLength;
-        const bufferKB = bufferBytes / 1024;
-        if (bufferKB > maxSizeInMB * 1024) {
-          alert(`File should be less than ${maxSizeInMB} MB`);
-        } else {
-          setIsUploading(true);
-          try {
-            const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
-            setSelectedFiles([...selectedFiles, file]);
+    if (!allowMultipleFiles && fileArray.length > 1) {
+      alert("Only one file can be uploaded at a time.");
+      return;
+    }
 
-            setIsUploading(false);
-            if (fileUrls) {
-              onUploadCallback([...fileUrls, response]);
-            } else {
-              onUploadCallback([response]);
-            }
-          } catch (err: any) {
-            setIsUploading(false);
-            if (err.name === "FileTooLargeError") {
-              alert(err.message);
-            } else {
-              alert("Upload failed! Please try again.");
-            }
-          }
-        }
+    if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
+      alert(`You can only upload a maximum of ${FILE_LIMIT} files.`);
+      return;
+    }
+
+    // filter out files that are not allowed
+    const validFiles = Array.from(files).filter((file) => {
+      const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
+      if (allowedFileExtensions) {
+        return allowedFileExtensions?.includes(fileExtension);
       } else {
-        setIsUploading(true);
+        return true;
+      }
+    });
 
-        try {
-          const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
+    const filteredFiles: File[] = [];
 
-          setSelectedFiles([...selectedFiles, file]);
-          setIsUploading(false);
-          if (fileUrls) {
-            onUploadCallback([...fileUrls, response]);
-          } else {
-            onUploadCallback([response]);
-          }
-        } catch (err: any) {
-          setIsUploading(false);
-          if (err.name === "FileTooLargeError") {
-            alert(err.message);
-          } else {
-            alert("Upload failed! Please try again.");
-          }
+    for (const validFile of validFiles) {
+      const isAllowed = await validateFileSize(validFile);
+      if (isAllowed) {
+        filteredFiles.push(validFile);
+      }
+    }
+
+    try {
+      setIsUploading(true);
+      const toBase64 = (file: File) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+
+      const filePromises = filteredFiles.map(async (file) => {
+        const base64 = await toBase64(file);
+        return { name: file.name, type: file.type, base64: base64 as string };
+      });
+
+      const filesToUpload = await Promise.all(filePromises);
+      const uploadPromises = filesToUpload.map((file) => {
+        return onFileUpload(file, { allowedFileExtensions, surveyId });
+      });
+
+      const uploadedFiles = await Promise.allSettled(uploadPromises);
+
+      const rejectedFiles = uploadedFiles.filter(isRejected);
+      const uploadedFilesUrl = uploadedFiles.filter(isFulfilled).map((url) => url.value);
+
+      setSelectedFiles((prevFiles) => [...prevFiles, ...filteredFiles]);
+      onUploadCallback(fileUrls ? [...fileUrls, ...uploadedFilesUrl] : uploadedFilesUrl);
+
+      if (rejectedFiles.length > 0) {
+        if (rejectedFiles[0].reason?.name === "FileTooLargeError") {
+          alert(rejectedFiles[0].reason.message);
         }
       }
-    } else {
-      alert("Please select a file");
+    } catch (err: any) {
+      console.error("error in uploading file: ", err);
+      alert("Upload failed! Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
     // @ts-expect-error
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
+  const handleDrop = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     // @ts-expect-error
-    const files = Array.from(e.dataTransfer.files);
-
-    if (!allowMultipleFiles && files.length > 1) {
-      alert("Only one file can be uploaded at a time.");
-      return;
-    }
-
-    if (files.length > 0) {
-      const validFiles = files.filter((file) =>
-        allowedFileExtensions && allowedFileExtensions.length > 0
-          ? allowedFileExtensions.includes(
-              file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension
-            )
-          : true
-      );
-
-      if (validFiles.length > 0) {
-        const uploadedUrls: string[] = [];
-
-        for (const file of validFiles) {
-          if (maxSizeInMB) {
-            const fileBuffer = await file.arrayBuffer();
-
-            const bufferBytes = fileBuffer.byteLength;
-            const bufferKB = bufferBytes / 1024;
-
-            if (bufferKB > maxSizeInMB * 1024) {
-              alert(`File should be less than ${maxSizeInMB} MB`);
-            } else {
-              setIsUploading(true);
-              try {
-                const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
-                setSelectedFiles([...selectedFiles, file]);
-
-                uploadedUrls.push(response);
-              } catch (err: any) {
-                setIsUploading(false);
-                if (err.name === "FileTooLargeError") {
-                  alert(err.message);
-                } else {
-                  alert("Upload failed! Please try again.");
-                }
-              }
-            }
-          } else {
-            setIsUploading(true);
-            try {
-              const response = await onFileUpload(file, { allowedFileExtensions, surveyId });
-              setSelectedFiles([...selectedFiles, file]);
-
-              uploadedUrls.push(response);
-            } catch (err: any) {
-              setIsUploading(false);
-              if (err.name === "FileTooLargeError") {
-                alert(err.message);
-              } else {
-                alert("Upload failed! Please try again.");
-              }
-            }
-          }
-        }
-
-        setIsUploading(false);
-        if (fileUrls) {
-          onUploadCallback([...fileUrls, ...uploadedUrls]);
-        } else {
-          onUploadCallback(uploadedUrls);
-        }
-      } else {
-        alert("no selected files are valid");
-      }
-    }
+    handleFileSelection(e.dataTransfer.files);
   };
 
   const handleDeleteFile = (index: number, event: JSXInternal.TargetedMouseEvent<SVGSVGElement>) => {
     event.stopPropagation();
-
-    if (fileUrls) {
-      const newFiles = [...selectedFiles];
+    setSelectedFiles((prevFiles) => {
+      const newFiles = [...prevFiles];
       newFiles.splice(index, 1);
-      setSelectedFiles(newFiles);
+      return newFiles;
+    });
+    if (fileUrls) {
       const updatedFileUrls = [...fileUrls];
       updatedFileUrls.splice(index, 1);
       onUploadCallback(updatedFileUrls);
@@ -186,111 +146,112 @@ export default function FileInput({
   };
 
   const showUploader = useMemo(() => {
-    if (isUploading) {
-      return false;
-    }
-
-    if (allowMultipleFiles) {
-      return true;
-    }
-
-    if (fileUrls && fileUrls.length > 0) {
-      return false;
-    }
-
-    return true;
+    if (isUploading) return false;
+    if (allowMultipleFiles) return true;
+    return !(fileUrls && fileUrls.length > 0);
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
+  const uniqueHtmlFor = useMemo(() => `selectedFile-${htmlFor}`, [htmlFor]);
+
   return (
-    <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:cursor-pointer hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
-      <div className="max-h-[40vh] overflow-auto">
-        {fileUrls &&
-          fileUrls?.map((file, index) => {
-            const fileName = getOriginalFileNameFromUrl(file);
-
-            return (
-              <div key={index} className="relative m-2 rounded-md bg-slate-200">
-                <div className="absolute right-0 top-0 m-2">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 hover:bg-slate-50">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 26 26"
-                      strokeWidth={1}
-                      stroke="currentColor"
-                      className="h-5 text-slate-700 hover:text-slate-900"
-                      onClick={(e) => handleDeleteFile(index, e)}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center justify-center p-2">
+    <div
+      className={`fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800`}>
+      <div>
+        {fileUrls?.map((fileUrl, index) => {
+          const fileName = getOriginalFileNameFromUrl(fileUrl);
+          return (
+            <div
+              key={index}
+              className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
+              <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
+                <div className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
                     fill="none"
+                    viewBox="0 0 26 26"
+                    strokeWidth={1}
                     stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-file"
-                    className="h-6 text-slate-500">
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                    <polyline points="14 2 14 8 20 8" />
+                    className="fb-text-heading fb-h-5"
+                    onClick={(e) => handleDeleteFile(index, e)}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
                   </svg>
-                  <p className="mt-1 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-center text-sm text-slate-600 dark:text-slate-400">
-                    {fileName}
-                  </p>
                 </div>
               </div>
-            );
-          })}
+              <div className="fb-flex fb-flex-col fb-items-center fb-justify-center fb-p-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="fb-text-heading fb-h-6">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <p className="fb-text-heading fb-mt-1 fb-w-full fb-overflow-hidden fb-overflow-ellipsis fb-whitespace-nowrap fb-px-2 fb-text-center fb-text-sm">
+                  {fileName}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div>
         {isUploading && (
-          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg bg-slate-100 py-4">
-            <label htmlFor="selectedFile" className="text-sm font-medium text-slate-500">
+          <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
+            <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
               Uploading...
             </label>
           </div>
         )}
 
-        <label htmlFor="selectedFile" onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
+        <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader && (
-            <div className="flex flex-col items-center justify-center py-6">
+            <div
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
+              tabIndex={1}
+              onKeyDown={(e) => {
+                // Accessibility: if spacebar was pressed pass this down to the input
+                if (e.key === " ") {
+                  e.preventDefault();
+                  document.getElementById(uniqueHtmlFor)?.click();
+                  document.getElementById(uniqueHtmlFor)?.focus();
+                }
+              }}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="h-6 text-slate-500">
+                className="fb-text-placeholder fb-h-6">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                <span className="font-medium">Click or drag to upload files.</span>
+              <p className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400">
+                <span className="fb-font-medium">Click or drag to upload files.</span>
               </p>
               <input
                 type="file"
-                id="selectedFile"
-                name="selectedFile"
+                id={uniqueHtmlFor}
+                name={uniqueHtmlFor}
                 accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
-                className="hidden"
-                onChange={(e) => {
-                  const inputElement = e.target as HTMLInputElement; // Cast e.target to HTMLInputElement
+                className="fb-hidden"
+                onChange={async (e) => {
+                  const inputElement = e.target as HTMLInputElement;
                   if (inputElement.files) {
-                    handleFileUpload(inputElement.files[0]);
+                    handleFileSelection(inputElement.files);
                   }
                 }}
+                multiple={allowMultipleFiles}
               />
             </div>
           )}
@@ -298,4 +259,4 @@ export default function FileInput({
       </div>
     </div>
   );
-}
+};

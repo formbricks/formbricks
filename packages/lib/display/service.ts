@@ -1,33 +1,26 @@
 import "server-only";
-
 import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import {
   TDisplay,
   TDisplayCreateInput,
-  TDisplayLegacyCreateInput,
-  TDisplayLegacyUpdateInput,
+  TDisplayFilters,
   TDisplayUpdateInput,
-  ZDisplay,
   ZDisplayCreateInput,
-  ZDisplayLegacyCreateInput,
-  ZDisplayLegacyUpdateInput,
   ZDisplayUpdateInput,
 } from "@formbricks/types/displays";
-import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { cache } from "../cache";
+import { ITEMS_PER_PAGE } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
-import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 
-const selectDisplay = {
+export const selectDisplay = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -37,36 +30,35 @@ const selectDisplay = {
   status: true,
 };
 
-export const getDisplay = async (displayId: string): Promise<TDisplay | null> => {
-  const display = await unstable_cache(
-    async () => {
-      validateInputs([displayId, ZId]);
+export const getDisplay = reactCache(
+  async (displayId: string): Promise<TDisplay | null> =>
+    cache(
+      async () => {
+        validateInputs([displayId, ZId]);
 
-      try {
-        const display = await prisma.display.findUnique({
-          where: {
-            id: displayId,
-          },
-          select: selectDisplay,
-        });
+        try {
+          const display = await prisma.display.findUnique({
+            where: {
+              id: displayId,
+            },
+            select: selectDisplay,
+          });
 
-        return display;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          return display;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
         }
-
-        throw error;
+      },
+      [`getDisplay-${displayId}`],
+      {
+        tags: [displayCache.tag.byId(displayId)],
       }
-    },
-    [`getDisplay-${displayId}`],
-    {
-      tags: [displayCache.tag.byId(displayId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-  return display ? formatDateFields(display, ZDisplay) : null;
-};
+    )()
+);
 
 export const updateDisplay = async (
   displayId: string,
@@ -103,47 +95,6 @@ export const updateDisplay = async (
       select: selectDisplay,
     });
 
-    displayCache.revalidate({
-      id: display.id,
-      surveyId: display.surveyId,
-    });
-
-    return display;
-  } catch (error) {
-    console.error(error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-export const updateDisplayLegacy = async (
-  displayId: string,
-  displayInput: TDisplayLegacyUpdateInput
-): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayLegacyUpdateInput]);
-  try {
-    const data = {
-      ...(displayInput.personId && {
-        person: {
-          connect: {
-            id: displayInput.personId,
-          },
-        },
-      }),
-      ...(displayInput.responseId && {
-        responseId: displayInput.responseId,
-      }),
-    };
-    const display = await prisma.display.update({
-      where: {
-        id: displayId,
-      },
-      data,
-      select: selectDisplay,
-    });
     displayCache.revalidate({
       id: display.id,
       surveyId: display.surveyId,
@@ -205,115 +156,40 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   }
 };
 
-export const createDisplayLegacy = async (displayInput: TDisplayLegacyCreateInput): Promise<TDisplay> => {
-  validateInputs([displayInput, ZDisplayLegacyCreateInput]);
-  try {
-    const display = await prisma.display.create({
-      data: {
-        survey: {
-          connect: {
-            id: displayInput.surveyId,
-          },
-        },
+export const getDisplaysByPersonId = reactCache(
+  async (personId: string, page?: number): Promise<TDisplay[]> =>
+    cache(
+      async () => {
+        validateInputs([personId, ZId], [page, ZOptionalNumber]);
 
-        ...(displayInput.personId && {
-          person: {
-            connect: {
-              id: displayInput.personId,
+        try {
+          const displays = await prisma.display.findMany({
+            where: {
+              personId: personId,
             },
-          },
-        }),
-      },
-      select: selectDisplay,
-    });
+            select: selectDisplay,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
 
-    displayCache.revalidate({
-      id: display.id,
-      personId: display.personId,
-      surveyId: display.surveyId,
-    });
+          return displays;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
 
-    return display;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-export const markDisplayRespondedLegacy = async (displayId: string): Promise<TDisplay> => {
-  validateInputs([displayId, ZId]);
-
-  try {
-    if (!displayId) throw new Error("Display ID is required");
-
-    const display = await prisma.display.update({
-      where: {
-        id: displayId,
-      },
-      data: {
-        status: "responded",
-      },
-      select: selectDisplay,
-    });
-
-    if (!display) {
-      throw new ResourceNotFoundError("Display", displayId);
-    }
-
-    displayCache.revalidate({
-      id: display.id,
-      personId: display.personId,
-      surveyId: display.surveyId,
-    });
-
-    return display;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-export const getDisplaysByPersonId = async (personId: string, page?: number): Promise<TDisplay[]> => {
-  const displays = await unstable_cache(
-    async () => {
-      validateInputs([personId, ZId], [page, ZOptionalNumber]);
-
-      try {
-        const displays = await prisma.display.findMany({
-          where: {
-            personId: personId,
-          },
-          select: selectDisplay,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-          orderBy: {
-            createdAt: "desc",
-          },
-        });
-
-        return displays;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
+          throw error;
         }
-
-        throw error;
+      },
+      [`getDisplaysByPersonId-${personId}-${page}`],
+      {
+        tags: [displayCache.tag.byPersonId(personId)],
       }
-    },
-    [`getDisplaysByPersonId-${personId}-${page}`],
-    {
-      tags: [displayCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-  return displays.map((display) => formatDateFields(display, ZDisplay));
-};
+    )()
+);
 
 export const deleteDisplayByResponseId = async (
   responseId: string,
@@ -343,25 +219,42 @@ export const deleteDisplayByResponseId = async (
   }
 };
 
-export const getDisplayCountBySurveyId = async (surveyId: string): Promise<number> =>
-  unstable_cache(
-    async () => {
-      validateInputs([surveyId, ZId]);
+export const getDisplayCountBySurveyId = reactCache(
+  (surveyId: string, filters?: TDisplayFilters): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([surveyId, ZId]);
 
-      try {
-        const displayCount = await prisma.display.count({
-          where: {
-            surveyId: surveyId,
-          },
-        });
-        return displayCount;
-      } catch (error) {
-        throw error;
+        try {
+          const displayCount = await prisma.display.count({
+            where: {
+              surveyId: surveyId,
+              ...(filters &&
+                filters.createdAt && {
+                  createdAt: {
+                    gte: filters.createdAt.min,
+                    lte: filters.createdAt.max,
+                  },
+                }),
+              ...(filters &&
+                filters.responseIds && {
+                  responseId: {
+                    in: filters.responseIds,
+                  },
+                }),
+            },
+          });
+          return displayCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getDisplayCountBySurveyId-${surveyId}-${JSON.stringify(filters)}`],
+      {
+        tags: [displayCache.tag.bySurveyId(surveyId)],
       }
-    },
-    [`getDisplayCountBySurveyId-${surveyId}`],
-    {
-      tags: [displayCache.tag.bySurveyId(surveyId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
+    )()
+);

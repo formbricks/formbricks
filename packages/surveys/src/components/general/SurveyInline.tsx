@@ -1,11 +1,17 @@
-import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
-
+import { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { Survey } from "./Survey";
 
-export function SurveyInline(props: SurveyInlineProps) {
+export const SurveyInline = (props: SurveyInlineProps) => {
+  console.log("props SurveyInlineProps= ", props);
   return (
-    <div id="fbjs" className="formbricks-form h-full w-full">
+    <div
+      id="fbjs"
+      className="fb-formbricks-form abc"
+      style={{
+        height: "100%",
+        width: "100%",
+      }}>
       <Survey {...props} />
     </div>
   );
-}
+};

@@ -1,16 +1,16 @@
-export default function FormbricksBranding() {
+export const FormbricksBranding = () => {
   return (
     <a
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
       tabIndex={-1}
-      className="mb-5 mt-2 flex justify-center">
-      <p className="text-signature text-xs">
+      className="fb-my-2 fb-flex fb-justify-center">
+      <p className="fb-text-signature fb-text-xs">
         Powered by{" "}
         <b>
-          <span className="text-info-text hover:text-heading">Formbricks</span>
+          <span className="fb-text-branding-text hover:fb-text-signature">Formbricks</span>
         </b>
       </p>
     </a>
   );
-}
+};

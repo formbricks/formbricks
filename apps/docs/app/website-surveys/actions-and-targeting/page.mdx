@@ -1,0 +1,134 @@
+import { MdxImage } from "@/components/MdxImage";
+
+import StepOne from "./images/StepOne.webp";
+import StepTwo from "./images/StepTwo.webp";
+
+export const metadata = {
+  title: "Using Actions in Formbricks | Fine-tuning Session Moments",
+  description:
+    "Dive deep into how actions in Formbricks help products and organizations to engage active sessions at precise moments in their journey. Discover the power of actions, from coding to no-code setups, to refine public facing websites' targeting and generate richer, more detailed insights.",
+};
+
+#### Website Surveys
+
+# Actions & Targeting
+
+For public-facing websites, landing pages, and pages without user authentication walls, actions serve as effective triggers for displaying surveys. This method is particularly suitable for engaging general audiences, where **individual user tracking is not required or feasible**.
+
+Actions in this context are straightforward triggers based on interactions with your website, allowing you to capture feedback precisely when it's most relevant.
+
+<Note>
+  These actions operate **independently** as website surveys do not involve user identification. If you have
+  user identification enabled (you’ve initialized Formbricks with a userId), please refer to the App Surveys
+  Action Guide.
+</Note>
+
+## **How Do Actions Work?**
+
+Actions are predefined events within your website that prompt Formbricks to display a survey when triggered. These are detected by the Formbricks widget, which then presents the appropriate survey based on your predefined settings.
+
+## **Why Are Actions Useful?**
+
+Actions enable surveys to be displayed based on specific site interactions or behaviours, independent of user identity. This approach is perfect for:
+
+- **Public-Facing Websites**: Engage visitors on general content pages where user authentication is not present.
+- **Anonymous User Interactions**: Capture feedback without needing to identify or track individual users, maintaining user privacy and simplicity in data collection.
+
+Using actions to trigger surveys enhances the relevance of survey content to the visitor's current interaction, potentially increasing engagement and the accuracy of feedback.
+
+## **Setting Up No-Code Actions**
+
+Formbricks provides an intuitive No-Code interface for configuring actions, enabling surveys to be triggered by various interactions on your website. To add a No-Code Action:
+
+1. Visit the Formbricks Dashboard & switch to the Actions tab:
+
+   <MdxImage
+     src={StepOne}
+     alt="Choose a link survey template"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl "
+   />
+
+2. Now click on “Add Action”
+
+   <MdxImage
+     src={StepTwo}
+     alt="Choose a link survey template"
+     quality="100"
+     className="max-w-full rounded-lg sm:max-w-3xl "
+   />
+
+Here are four types of No-Code actions you can set up:
+
+### **1. Click Action**
+
+Click Action is triggered when a user clicks on a specific element within your application. You can define the element's inner text or CSS selector to trigger the survey.
+
+- **Inner Text**: Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
+
+- **CSS Selector**: Verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
+
+### **2. Page view Action**
+
+This action is triggered when a user visits a page within your application.
+
+### **3. Exit Intent Action**
+
+This action is triggered when a user is about to leave your application. It helps capture user feedback before they exit, providing valuable insights into user experiences and potential improvements.
+
+### **4. 50% Scroll Action**
+
+This action is triggered when a user scrolls through 50% of a page within your application. It helps capture user feedback at a specific point in their journey, enabling you to gather insights based on user interactions.
+
+This action is triggered when a user visits a specific page within your application. You can define the URL match conditions as follows:
+
+<Note>
+You can combine the url filters with any of the no-code actions to trigger the survey based on the URL match conditions.
+
+### **URL Match Conditions**
+
+- **exactMatch**: Triggers the action when the URL exactly matches the specified string.
+- **contains**: Activates when the URL contains the specified substring.
+- **startsWith**: Fires when the URL starts with the specified string.
+- **endsWith**: Executes when the URL ends with the specified string.
+- **notMatch**: Triggers when the URL does not match the specified condition.
+- **notContains**: Activates when the URL does not contain the specified substring.
+
+</Note>
+
+## **Setting Up Code Actions**
+
+For enhanced customization, actions can also be implemented directly through code:
+
+1. **Configure the Action**: First, add the action via the Formbricks web interface to link it with the desired survey.
+2. **Track an Action**: Use the **`formbricks.track()`** function to activate the survey from your website's frontend.
+
+<Col>
+<CodeGroup title="Example of tracking an action">
+
+```jsx
+formbricks.track("Action Name");
+```
+
+</CodeGroup>
+</Col>
+
+**Example - Tracking a Button Click**:
+
+<Col>
+<CodeGroup title="Example: Button Click Action">
+
+```jsx
+const handleClick = () => {
+  formbricks.track("Button Clicked");
+};
+return <button onClick={handleClick}>Click Me</button>;
+
+```
+
+</CodeGroup>
+</Col>
+
+## **Conclusion**
+
+Using generic actions to trigger surveys on your website provides a straightforward and effective method to engage visitors and gather feedback. This approach is especially valuable for public-facing websites and pages where user authentication barriers are absent, allowing for broad interaction and feedback collection without the complexities of user identification.

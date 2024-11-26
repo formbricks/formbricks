@@ -2,21 +2,12 @@ import { SurveyInline } from "@/components/general/SurveyInline";
 import { SurveyModal } from "@/components/general/SurveyModal";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
 import { h, render } from "preact";
+import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 
-import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
-
-declare global {
-  interface Window {
-    formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps & { brandColor: string }) => void;
-      renderSurveyModal: (props: SurveyModalProps & { brandColor: string }) => void;
-    };
-  }
-}
-
-export const renderSurveyInline = (props: SurveyInlineProps & { brandColor: string }) => {
+export const renderSurveyInline = (props: SurveyInlineProps) => {
+  console.log("renderSurveyInline=======");
   addStylesToDom();
-  addCustomThemeToDom({ brandColor: props.brandColor });
+  addCustomThemeToDom({ styling: props.styling });
 
   const element = document.getElementById(props.containerId);
   if (!element) {
@@ -25,9 +16,10 @@ export const renderSurveyInline = (props: SurveyInlineProps & { brandColor: stri
   render(h(SurveyInline, props), element);
 };
 
-export const renderSurveyModal = (props: SurveyModalProps & { brandColor: string }) => {
+export const renderSurveyModal = (props: SurveyModalProps) => {
+  console.log("renderSurveyModal=======");
   addStylesToDom();
-  addCustomThemeToDom({ brandColor: props.brandColor });
+  addCustomThemeToDom({ styling: props.styling });
 
   // add container element to DOM
   const element = document.createElement("div");

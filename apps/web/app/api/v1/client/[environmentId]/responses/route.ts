@@ -2,17 +2,14 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
-
 import { getPerson } from "@formbricks/lib/person/service";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
-import { ZId } from "@formbricks/types/environment";
+import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse, ZResponseInput } from "@formbricks/types/responses";
+import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 
 interface Context {
   params: {
@@ -20,11 +17,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(request: Request, context: Context): Promise<NextResponse> {
+export const POST = async (request: Request, context: Context): Promise<Response> => {
   const { environmentId } = context.params;
   const environmentIdValidation = ZId.safeParse(environmentId);
 
@@ -77,19 +74,18 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     );
   }
 
-  const teamDetails = await getTeamDetails(survey.environmentId);
-
   let response: TResponse;
   try {
-    const meta = {
+    const meta: TResponseInput["meta"] = {
       source: responseInput?.meta?.source,
       url: responseInput?.meta?.url,
       userAgent: {
         browser: agent?.browser.name,
-        device: agent?.device.type,
+        device: agent?.device.type || "desktop",
         os: agent?.os.name,
       },
       country: country,
+      action: responseInput?.meta?.action,
     };
 
     response = await createResponse({
@@ -121,14 +117,10 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     });
   }
 
-  if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "response created", teamDetails.teamId, {
-      surveyId: response.surveyId,
-      surveyType: survey.type,
-    });
-  } else {
-    console.warn("Posthog capture not possible. No team owner found");
-  }
+  await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
+    surveyId: response.surveyId,
+    surveyType: survey.type,
+  });
 
   return responses.successResponse({ id: response.id }, true);
-}
+};

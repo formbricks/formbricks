@@ -3,7 +3,6 @@
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { Circle } from "lucide-react";
 import * as React from "react";
-
 import { cn } from "@formbricks/lib/cn";
 
 const RadioGroup: React.FC<React.ComponentProps<typeof RadioGroupPrimitive.Root>> = React.forwardRef(
@@ -21,12 +20,12 @@ const RadioGroupItem: React.ComponentType<RadioGroupPrimitive.RadioGroupItemProp
     <RadioGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "h-4 w-4 rounded-full border border-slate-300  disabled:cursor-not-allowed disabled:opacity-50",
+        "h-4 w-4 rounded-full border border-slate-300 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}>
       <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
-        <Circle className="h-2.5 w-2.5 fill-slate-800 " />
+        <Circle className="h-2.5 w-2.5 fill-slate-800" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

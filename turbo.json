@@ -1,10 +1,7 @@
 {
   "$schema": "https://turborepo.org/schema.json",
-  "pipeline": {
-    "@formbricks/database#build": {
-      "cache": false,
-      "dependsOn": ["post-install"]
-    },
+  "ui": "stream",
+  "tasks": {
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
@@ -50,24 +47,40 @@
       "persistent": true,
       "dependsOn": ["@formbricks/api#build"]
     },
+    "@formbricks/react-native#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
+    "@formbricks/react-native#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"]
+    },
+    "@formbricks/react-native#lint": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/js#lint": {
+      "dependsOn": ["@formbricks/js-core#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "AIRTABLE_CLIENT_ID",
         "ASSET_PREFIX_URL",
-        "AWS_ACCESS_KEY",
-        "AWS_SECRET_KEY",
         "AZUREAD_CLIENT_ID",
         "AZUREAD_CLIENT_SECRET",
         "AZUREAD_TENANT_ID",
-        "DEFAULT_TEAM_ID",
-        "DEFAULT_TEAM_ROLE",
-        "ONBOARDING_DISABLED",
+        "DEFAULT_ORGANIZATION_ID",
+        "DEFAULT_ORGANIZATION_ROLE",
         "CRON_SECRET",
+        "CUSTOM_CACHE_DISABLED",
         "CUSTOMER_IO_API_KEY",
         "CUSTOMER_IO_SITE_ID",
+        "DATABASE_URL",
         "DEBUG",
+        "E2E_TESTING",
+        "EMAIL_AUTH_DISABLED",
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
         "ENTERPRISE_LICENSE_KEY",
@@ -82,9 +95,9 @@
         "NOTION_OAUTH_CLIENT_ID",
         "NOTION_OAUTH_CLIENT_SECRET",
         "HEROKU_APP_NAME",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
         "IMPRINT_URL",
-        "INSTANCE_ID",
-        "INTERNAL_SECRET",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
         "MAIL_FROM",
@@ -102,24 +115,39 @@
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
+        "OPENTELEMETRY_LISTENER_URL",
+        "NEXT_RUNTIME",
         "NEXTAUTH_SECRET",
         "NEXTAUTH_URL",
         "NODE_ENV",
+        "OIDC_CLIENT_ID",
+        "OIDC_CLIENT_SECRET",
+        "OIDC_DISPLAY_NAME",
+        "OIDC_ISSUER",
+        "OIDC_SIGNING_ALGORITHM",
         "PASSWORD_RESET_DISABLED",
         "PLAYWRIGHT_CI",
         "PRIVACY_URL",
+        "RATE_LIMITING_DISABLED",
+        "REDIS_HTTP_URL",
+        "REDIS_URL",
         "S3_ACCESS_KEY",
-        "S3_SECRET_KEY",
-        "S3_REGION",
         "S3_BUCKET_NAME",
+        "S3_ENDPOINT_URL",
+        "S3_FORCE_PATH_STYLE",
+        "S3_REGION",
+        "S3_SECRET_KEY",
         "SENTRY_DSN",
         "SHORT_URL_BASE",
         "SIGNUP_DISABLED",
+        "SLACK_CLIENT_ID",
+        "SLACK_CLIENT_SECRET",
         "SMTP_HOST",
         "SMTP_PASSWORD",
         "SMTP_PORT",
         "SMTP_SECURE_ENABLED",
         "SMTP_USER",
+        "SMTP_REJECT_UNAUTHORIZED_TLS",
         "STRAPI_API_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
@@ -127,20 +155,17 @@
         "SURVEYS_PACKAGE_BUILD",
         "TELEMETRY_DISABLED",
         "TERMS_URL",
+        "UPLOADS_DIR",
         "VERCEL",
         "VERCEL_URL",
-        "WEBAPP_URL"
+        "VERSION",
+        "WEBAPP_URL",
+        "UNSPLASH_ACCESS_KEY"
       ]
     },
     "build:dev": {
       "dependsOn": ["^build:dev"],
       "outputs": ["dist/**", ".next/**"]
-    },
-    "post-install": {
-      "cache": false,
-      "dependsOn": [],
-      "outputs": [],
-      "inputs": ["./schema.prisma"]
     },
     "db:setup": {
       "cache": false,
@@ -190,7 +215,12 @@
       "outputs": []
     },
     "clean": {
-      "outputs": []
+      "outputs": [],
+      "cache": false
+    },
+    "storybook": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

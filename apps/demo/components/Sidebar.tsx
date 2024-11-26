@@ -1,31 +1,31 @@
-import { classNames } from "@/lib/utils";
 import {
   ClockIcon,
   CogIcon,
   CreditCardIcon,
-  DocumentChartBarIcon,
+  FileBarChartIcon,
+  HelpCircleIcon,
   HomeIcon,
-  QuestionMarkCircleIcon,
   ScaleIcon,
   ShieldCheckIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline";
+  UsersIcon,
+} from "lucide-react";
+import { classNames } from "../lib/utils";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: true },
   { name: "History", href: "#", icon: ClockIcon, current: false },
   { name: "Balances", href: "#", icon: ScaleIcon, current: false },
   { name: "Cards", href: "#", icon: CreditCardIcon, current: false },
-  { name: "Recipients", href: "#", icon: UserGroupIcon, current: false },
-  { name: "Reports", href: "#", icon: DocumentChartBarIcon, current: false },
+  { name: "Recipients", href: "#", icon: UsersIcon, current: false },
+  { name: "Reports", href: "#", icon: FileBarChartIcon, current: false },
 ];
 const secondaryNavigation = [
   { name: "Settings", href: "#", icon: CogIcon },
-  { name: "Help", href: "#", icon: QuestionMarkCircleIcon },
+  { name: "Help", href: "#", icon: HelpCircleIcon },
   { name: "Privacy", href: "#", icon: ShieldCheckIcon },
 ];
 
-export default function Sidebar({}) {
+export const Sidebar = () => {
   return (
     <div className="flex flex-grow flex-col overflow-y-auto bg-cyan-700 pb-4 pt-5">
       <nav
@@ -62,4 +62,4 @@ export default function Sidebar({}) {
       </nav>
     </div>
   );
-}
+};

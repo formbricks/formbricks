@@ -1,4 +1,4 @@
-name: Docker
+name: Docker Release to Github
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -31,16 +31,6 @@ jobs:
       id-token: write
 
     steps:
-      - name: Generate Random NEXTAUTH_SECRET
-        run: |
-          SECRET=$(openssl rand -hex 32)
-          echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
-
-      - name: Generate Random ENCRYPTION_KEY
-        run: |
-          SECRET=$(openssl rand -hex 32)
-          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -51,9 +41,7 @@ jobs:
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
-        with:
-          cosign-release: "v2.1.1"
+        uses: sigstore/cosign-installer@v3.5.0
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -89,10 +77,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
-            DATABASE_URL=${{ env.DATABASE_URL }}
-            ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker

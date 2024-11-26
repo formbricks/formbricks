@@ -1,29 +1,28 @@
-import Modal from "@/components/wrappers/Modal";
+import { Modal } from "@/components/wrappers/Modal";
 import { useState } from "preact/hooks";
-
-import { SurveyModalProps } from "@formbricks/types/formbricksSurveys";
-
+import { SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 import { Survey } from "./Survey";
 
-export function SurveyModal({
+export const SurveyModal = ({
   survey,
   isBrandingEnabled,
-  activeQuestionId,
   getSetIsError,
   placement,
   clickOutside,
   darkOverlay,
-  highlightBorderColor,
   onDisplay,
-  onActiveQuestionChange,
+  getSetIsResponseSendingFinished,
   onResponse,
   onClose,
   onFinished = () => {},
   onFileUpload,
   onRetry,
   isRedirectDisabled = false,
+  languageCode,
   responseCount,
-}: SurveyModalProps) {
+  styling,
+  hiddenFieldsRecord,
+}: SurveyModalProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
@@ -35,8 +34,10 @@ export function SurveyModal({
     }, 1000); // wait for animation to finish}
   };
 
+  const highlightBorderColor = styling?.highlightBorderColor?.light || null;
+
   return (
-    <div id="fbjs" className="formbricks-form">
+    <div id="fbjs" className="fb-formbricks-form abc">
       <Modal
         placement={placement}
         clickOutside={clickOutside}
@@ -47,26 +48,34 @@ export function SurveyModal({
         <Survey
           survey={survey}
           isBrandingEnabled={isBrandingEnabled}
-          activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
-          onActiveQuestionChange={onActiveQuestionChange}
+          getSetIsResponseSendingFinished={getSetIsResponseSendingFinished}
           onResponse={onResponse}
+          languageCode={languageCode}
           onClose={close}
           onFinished={() => {
             onFinished();
-            setTimeout(() => {
-              if (!survey.redirectUrl) {
-                close();
-              }
-            }, 3000); // close modal automatically after 3 seconds
+            setTimeout(
+              () => {
+                const firstEnabledEnding = survey.endings[0];
+                if (firstEnabledEnding?.type !== "redirectToUrl") {
+                  close();
+                }
+              },
+              survey.endings.length ? 3000 : 0 // close modal automatically after 3 seconds if no ending is enabled; otherwise, close immediately
+            );
           }}
           onRetry={onRetry}
           getSetIsError={getSetIsError}
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}
+          styling={styling}
+          isCardBorderVisible={!highlightBorderColor}
+          clickOutside={placement === "center" ? clickOutside : undefined}
+          hiddenFieldsRecord={hiddenFieldsRecord}
         />
       </Modal>
     </div>
   );
-}
+};

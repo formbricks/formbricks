@@ -3,14 +3,13 @@
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
-
-import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { NextRequest } from "next/server";
+import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
+import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { env } from "@formbricks/lib/env.mjs";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 
 interface Context {
   params: {
@@ -18,8 +17,8 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
-  return NextResponse.json(
+export const OPTIONS = async (): Promise<Response> => {
+  return Response.json(
     {},
     {
       headers: {
@@ -30,9 +29,9 @@ export async function OPTIONS(): Promise<NextResponse> {
       },
     }
   );
-}
+};
 
-export async function POST(req: NextRequest, context: Context): Promise<NextResponse> {
+export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
   const environmentId = context.params.environmentId;
 
   const accessType = "private"; // private files are accessible only by authorized users
@@ -70,14 +69,17 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
     return responses.unauthorizedResponse();
   }
 
-  const [survey, team] = await Promise.all([getSurvey(surveyId), getTeamByEnvironmentId(environmentId)]);
+  const [survey, organization] = await Promise.all([
+    getSurvey(surveyId),
+    getOrganizationByEnvironmentId(environmentId),
+  ]);
 
   if (!survey) {
     return responses.notFoundResponse("Survey", surveyId);
   }
 
-  if (!team) {
-    return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
+  if (!organization) {
+    return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
   }
 
   const fileName = decodeURIComponent(encodedFileName);
@@ -91,34 +93,45 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
     fileType,
     Number(signedTimestamp),
     signedSignature,
-    env.ENCRYPTION_KEY
+    ENCRYPTION_KEY
   );
 
   if (!validated) {
     return responses.unauthorizedResponse();
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file") as unknown as File;
+  const formData = await req.json();
+  const base64String = formData.fileBase64String as string;
+
+  const buffer = Buffer.from(base64String.split(",")[1], "base64");
+  const file = new Blob([buffer], { type: fileType });
 
   if (!file) {
     return responses.badRequestResponse("fileBuffer is required");
   }
 
   try {
-    const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
+    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
-    await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR, false, plan);
+    await putFileToLocalStorage(
+      fileName,
+      fileBuffer,
+      accessType,
+      environmentId,
+      UPLOADS_DIR,
+      isBiggerFileUploadAllowed
+    );
 
     return responses.successResponse({
       message: "File uploaded successfully",
     });
   } catch (err) {
+    console.error("err: ", err);
     if (err.name === "FileTooLargeError") {
       return responses.badRequestResponse(err.message);
     }
     return responses.internalServerErrorResponse("File upload failed");
   }
-}
+};

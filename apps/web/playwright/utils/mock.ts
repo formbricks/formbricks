@@ -1,4 +1,4 @@
-export const users = {
+export const mockUsers = {
   signup: [
     {
       name: "SignUp Flow User 1",
@@ -17,12 +17,32 @@ export const users = {
       email: "onboarding2@formbricks.com",
       password: "231Xh7D&dM8u75EjIYV",
     },
+    {
+      name: "Onboarding User 3",
+      email: "onboarding3@formbricks.com",
+      password: "231Xh7D&dM8u75EjIYV",
+    },
   ],
   survey: [
     {
       name: "Survey User 1",
       email: "survey1@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
+    },
+    {
+      name: "Survey User 2",
+      email: "survey2@formbricks.com",
+      password: "G73*Gjif22F4JKM1pA",
+    },
+    {
+      name: "Survey User 3",
+      email: "survey3@formbricks.com",
+      password: "Gj2DGji27D&M8u53V",
+    },
+    {
+      name: "Survey User 4",
+      email: "survey4@formbricks.com",
+      password: "UU3efj8vJa&M8u5M1",
     },
   ],
   js: [
@@ -36,49 +56,46 @@ export const users = {
     {
       name: "Action User 1",
       email: "action1@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 2",
       email: "action2@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 3",
       email: "action3@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 4",
       email: "action4@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
     },
     {
       name: "Action User 5",
       email: "action5@formbricks.com",
-      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 6",
+      email: "action6@formbricks.com",
     },
   ],
-  team: [
+  organization: [
     {
-      name: "Team User 1",
-      email: "team1@formbricks.com",
-      password: "Test#1234",
+      name: "Organization User 1",
+      email: "organization1@formbricks.com",
     },
     {
-      name: "Team User 2",
-      email: "team2@formbricks.com",
-      password: "Test#1234",
+      name: "Organization User 2",
+      email: "organization2@formbricks.com",
     },
   ],
 };
 
-export const teams = {
+export const organizations = {
   onboarding: [
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "Formbricks E2E Test Suite",
+      productName: "My Product",
     },
   ],
 };
@@ -130,61 +147,154 @@ export const surveys = {
     fileUploadQuestion: {
       question: "This is my File Upload Question",
     },
+    matrix: {
+      question: "How much do you love these flowers?",
+      description: "0: Not at all, 3: Love it",
+      rows: ["Roses", "Trees", "Ocean"],
+      columns: ["0", "1", "2", "3"],
+    },
+    address: {
+      question: "Where do you live?",
+      placeholder: "Address Line 1",
+    },
+    ranking: {
+      question: "What is most important for you in life?",
+      choices: ["Work", "Money", "Travel", "Family", "Friends"],
+    },
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
     },
   },
+  germanCreate: {
+    welcomeCard: {
+      headline: "Willkommen zu meiner Testumfrage Willkommenskarte!", // German translation
+      description: "Dies ist die Beschreibung meiner Willkommenskarte!", // German translation
+    },
+    openTextQuestion: {
+      question: "Dies ist meine offene Textfrage", // German translation
+      description: "Dies ist meine Beschreibung zum offenen Text", // German translation
+      placeholder: "Dies ist mein Platzhalter", // German translation
+    },
+    singleSelectQuestion: {
+      question: "Dies ist meine Einzelauswahlfrage", // German translation
+      description: "Dies ist meine Beschreibung zur Einzelauswahl", // German translation
+      options: ["Option 1", "Option 2"], // Translated options
+    },
+    multiSelectQuestion: {
+      question: "Dies ist meine Mehrfachauswahlfrage", // German translation
+      description: "Dies ist die Beschreibung zur Mehrfachauswahl", // German translation
+      options: ["Option 1", "Option 2", "Option 3"], // Translated options
+    },
+    ratingQuestion: {
+      question: "Dies ist meine Bewertungsfrage", // German translation
+      description: "Dies ist die Beschreibung zur Bewertung", // German translation
+      lowLabel: "Mein unteres Label", // German translation
+      highLabel: "Mein oberes Label", // German translation
+    },
+    npsQuestion: {
+      question: "Dies ist meine NPS-Frage", // German translation
+      lowLabel: "Mein unteres Label", // German translation
+      highLabel: "Mein oberes Label", // German translation
+    },
+    ctaQuestion: {
+      question: "Dies ist meine CTA-Frage", // German translation
+      buttonLabel: "Mein Knopfetikett", // German translation
+    },
+    consentQuestion: {
+      question: "Dies ist meine Zustimmungsfrage", // German translation
+      checkboxLabel: "Mein Kontrollkästchen-Label", // German translation
+    },
+    pictureSelectQuestion: {
+      question: "Dies ist meine Bildauswahlfrage", // German translation
+      description: "Dies ist die Beschreibung zur Bildauswahl", // German translation
+    },
+    fileUploadQuestion: {
+      question: "Dies ist meine Datei-Upload-Frage", // German translation
+    },
+    dateQuestion: {
+      question: "Dies ist date question", // German translation
+    },
+    calQuestion: {
+      question: "Dies ist cal question", // German translation
+    },
+    matrix: {
+      question: "Wie hoch würden Sie diese Blumen bewerten?",
+      description: "0: Überhaupt nicht, 3: Ich liebe es",
+      rows: ["Rose", "Sunflower", "Hibiscus"],
+      columns: ["0", "1", "2", "3"],
+    },
+    addressQuestion: {
+      question: "Wo wohnst du ?",
+    },
+    ranking: {
+      question: "Was ist für Sie im Leben am wichtigsten?",
+      choices: ["Arbeit", "Geld", "Reisen", "Familie", "Freunde"],
+    },
+    thankYouCard: {
+      headline: "Dies ist meine Dankeskarte Überschrift!", // German translation
+      description: "Dies ist meine Beschreibung zur Dankeskarte!", // German translation
+      buttonLabel: "Erstellen Sie Ihre eigene Umfrage",
+    },
+  },
 };
+
+export type CreateSurveyParams = typeof surveys.createAndSubmit;
 
 export const actions = {
   create: {
     noCode: {
-      cssSelector: {
-        name: "Create Action (CSS Selector)",
-        description: "This is my Create Action (CSS Selector)",
+      click: {
+        name: "Create Click Action (CSS Selector)",
+        description: "This is my Create Action (click, CSS Selector)",
         selector: ".my-custom-class",
       },
-      pageURL: {
-        name: "Create Action (Page URL)",
-        description: "This is my Create Action (Page URL)",
+      pageView: {
+        name: "Create Page view Action (specific Page URL)",
+        description: "This is my Create Action (Page view)",
         matcher: {
-          label: "Starts with",
+          label: "Contains",
           value: "custom-url",
         },
-        testURL: "http://localhost:3000/custom-url",
       },
-      innerText: {
-        name: "Create Action (Inner Text)",
-        description: "This is my Create Action (Inner Text)",
-        innerText: "Download",
+      exitIntent: {
+        name: "Create Exit Intent Action",
+        description: "This is my Create Action (Exit Intent)",
+      },
+      fiftyPercentScroll: {
+        name: "Create 50% Scroll Action",
+        description: "This is my Create Action (50% Scroll)",
       },
     },
     code: {
       name: "Create Action (Code)",
       description: "This is my Create Action (Code)",
+      key: "Create Action (Code)",
     },
   },
   edit: {
     noCode: {
-      cssSelector: {
-        name: "Edit Action (CSS Selector)",
-        description: "This is my Edit Action (CSS Selector)",
+      click: {
+        name: "Edit Click Action (CSS Selector)",
+        description: "This is my Edit Action (click, CSS Selector)",
         selector: ".my-custom-class-edited",
       },
-      pageURL: {
-        name: "Edit Action (Page URL)",
-        description: "This is my Edit Action (Page URL)",
+      pageView: {
+        name: "Edit Page view Action (specific Page URL)",
+        description: "This is my Edit Action (Page view)",
         matcher: {
           label: "Starts with",
           value: "custom-url0-edited",
         },
         testURL: "http://localhost:3000/custom-url",
       },
-      innerText: {
-        name: "Edit Action (Inner Text)",
-        description: "This is my Edit Action (Inner Text)",
-        innerText: "Download Edited",
+      exitIntent: {
+        name: "Edit Exit Intent Action",
+        description: "This is my Edit Action (Exit Intent)",
+      },
+      fiftyPercentScroll: {
+        name: "Edit 50% Scroll Action",
+        description: "This is my Edit Action (50% Scroll)",
       },
     },
     code: {
@@ -193,7 +303,7 @@ export const actions = {
   },
   delete: {
     noCode: {
-      name: "Delete Action (CSS Selector)",
+      name: "Delete click Action (CSS Selector)",
       description: "This is my Delete Action (CSS Selector)",
       selector: ".my-custom-class-deleted",
     },
@@ -206,7 +316,7 @@ export const actions = {
 
 export const invites = {
   addMember: {
-    name: "Team User 2",
-    email: "team2@formbricks.com",
+    name: "Organization User 2",
+    email: "organization2@formbricks.com",
   },
 };

@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-
 import { Button } from "../Button";
-import { Command, CommandGroup, CommandInput, CommandItem } from "../Command";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "../Command";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
 interface ITagsComboboxProps {
@@ -22,7 +21,7 @@ type Tag = {
   value: string;
 };
 
-const TagsCombobox: React.FC<ITagsComboboxProps> = ({
+export const TagsCombobox = ({
   tags,
   currentTags,
   addTag,
@@ -31,7 +30,7 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
   setSearchValue,
   open,
   setOpen,
-}) => {
+}: ITagsComboboxProps) => {
   const tagsToSearch = useMemo(
     () =>
       tags.filter((tag) => {
@@ -54,7 +53,7 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="darkCTA" size="sm" aria-expanded={open}>
+        <Button size="sm" aria-expanded={open}>
           Add Tag
         </Button>
       </PopoverTrigger>
@@ -91,38 +90,38 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
               }}
             />
           </div>
-          <CommandGroup>
-            {tagsToSearch?.map((tag) => {
-              return (
-                <CommandItem
-                  key={tag.value}
-                  value={tag.value}
-                  onSelect={(currentValue) => {
-                    setOpen(false);
-                    addTag(currentValue);
-                  }}
-                  className="hover:cursor-pointer hover:bg-slate-50">
-                  {tag.label}
-                </CommandItem>
-              );
-            })}
-            {searchValue !== "" &&
-              !currentTags.find((tag) => tag.label === searchValue) &&
-              !tagsToSearch.find((tag) => tag.label === searchValue) && (
-                <CommandItem value="_create">
-                  <button
-                    onClick={() => createTag?.(searchValue)}
-                    className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!!currentTags.find((tag) => tag.label === searchValue)}>
-                    + Add {searchValue}
-                  </button>
-                </CommandItem>
-              )}
-          </CommandGroup>
+          <CommandList>
+            <CommandGroup>
+              {tagsToSearch?.map((tag) => {
+                return (
+                  <CommandItem
+                    key={tag.value}
+                    value={tag.value}
+                    onSelect={(currentValue) => {
+                      setOpen(false);
+                      addTag(currentValue);
+                    }}
+                    className="hover:cursor-pointer hover:bg-slate-50">
+                    {tag.label}
+                  </CommandItem>
+                );
+              })}
+              {searchValue !== "" &&
+                !currentTags.find((tag) => tag.label === searchValue) &&
+                !tagsToSearch.find((tag) => tag.label === searchValue) && (
+                  <CommandItem value="_create">
+                    <button
+                      onClick={() => createTag?.(searchValue)}
+                      className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!!currentTags.find((tag) => tag.label === searchValue)}>
+                      + Add {searchValue}
+                    </button>
+                  </CommandItem>
+                )}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
   );
 };
-
-export default TagsCombobox;

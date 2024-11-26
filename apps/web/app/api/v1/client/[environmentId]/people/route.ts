@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
-
 import { createPerson } from "@formbricks/lib/person/service";
 
 interface Context {
@@ -9,13 +8,13 @@ interface Context {
   };
 }
 
-export async function OPTIONS() {
+export const OPTIONS = async () => {
   // cors headers
 
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(req: NextRequest, context: Context) {
+export const POST = async (req: NextRequest, context: Context) => {
   // we need to create a new person
   // call the createPerson service from here
   const environmentId = context.params.environmentId;
@@ -36,4 +35,4 @@ export async function POST(req: NextRequest, context: Context) {
   } catch (err) {
     return responses.internalServerErrorResponse("Something went wrong", true);
   }
-}
+};

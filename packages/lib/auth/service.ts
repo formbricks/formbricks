@@ -1,9 +1,7 @@
 import crypto from "crypto";
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
-
 import { prisma } from "@formbricks/database";
-
 import { verifyPassword } from "../auth";
 import { ENCRYPTION_KEY } from "../constants";
 import { symmetricDecrypt, symmetricEncrypt } from "../crypto";

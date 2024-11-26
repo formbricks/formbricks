@@ -1,24 +1,21 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
-
 import { prisma } from "@formbricks/database";
-import { INTERNAL_SECRET } from "@formbricks/lib/constants";
-import { sendResponseFinishedEmail } from "@formbricks/lib/emails/emails";
+import { sendResponseFinishedEmail } from "@formbricks/email";
+import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-
 import { handleIntegrations } from "./lib/handleIntegrations";
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   // check authentication with x-api-key header and CRON_SECRET env variable
-  if (headers().get("x-api-key") !== INTERNAL_SECRET) {
+  if (headers().get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
   }
   const jsonInput = await request.json();
@@ -37,6 +34,8 @@ export async function POST(request: Request) {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
+  const product = await getProductByEnvironmentId(environmentId);
+  if (!product) return;
 
   // get all webhooks of this environment where event in triggers
   const webhooks = await prisma.webhook.findMany({
@@ -79,12 +78,12 @@ export async function POST(request: Request) {
 
   if (event === "responseFinished") {
     // check for email notifications
-    // get all users that have a membership of this environment's team
+    // get all users that have a membership of this environment's organization
     const users = await prisma.user.findMany({
       where: {
         memberships: {
           some: {
-            team: {
+            organization: {
               products: {
                 some: {
                   environments: {
@@ -100,23 +99,16 @@ export async function POST(request: Request) {
       },
     });
 
-    let surveyData;
+    const [integrations, surveyData] = await Promise.all([
+      getIntegrations(environmentId),
+      getSurvey(surveyId),
+    ]);
+    const survey = surveyData ?? undefined;
 
-    const integrations = await getIntegrations(environmentId);
-
-    if (integrations.length > 0) {
-      surveyData = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-        },
-        select: {
-          id: true,
-          name: true,
-          questions: true,
-        },
-      });
-      handleIntegrations(integrations, inputValidation.data, surveyData);
+    if (integrations.length > 0 && survey) {
+      await handleIntegrations(integrations, inputValidation.data, survey);
     }
+
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
       const notificationSettings: TUserNotificationSettings | null = user.notificationSettings;
@@ -130,32 +122,12 @@ export async function POST(request: Request) {
     const responseCount = await getResponseCountBySurveyId(surveyId);
 
     if (usersWithNotifications.length > 0) {
-      // get survey
-      if (!surveyData) {
-        surveyData = await prisma.survey.findUnique({
-          where: {
-            id: surveyId,
-          },
-          select: {
-            id: true,
-            name: true,
-            questions: true,
-          },
-        });
-      }
-
-      if (!surveyData) {
+      if (!survey) {
         console.error(`Pipeline: Survey with id ${surveyId} not found`);
         return new Response("Survey not found", {
           status: 404,
         });
       }
-      // create survey object
-      const survey = {
-        id: surveyData.id,
-        name: surveyData.name,
-        questions: JSON.parse(JSON.stringify(surveyData.questions)) as TSurveyQuestion[],
-      };
       // send email to all users
       await Promise.all(
         usersWithNotifications.map(async (user) => {
@@ -185,5 +157,5 @@ export async function POST(request: Request) {
     await updateSurveyStatus(surveyId);
   }
 
-  return NextResponse.json({ data: {} });
-}
+  return Response.json({ data: {} });
+};

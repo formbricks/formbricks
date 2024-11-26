@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -12,9 +11,9 @@ type Props = {
 export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
   const session = await getServerSession(authOptions);
   const survey = await getSurvey(params.surveyId);
+  const responseCount = await getResponseCountBySurveyId(params.surveyId);
 
   if (session) {
-    const responseCount = await getResponseCountBySurveyId(params.surveyId);
     return {
       title: `${responseCount} Responses | ${survey?.name} Results`,
     };
@@ -24,8 +23,8 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   };
 };
 
-const SurveyLayout = ({ children }) => {
-  return <div>{children}</div>;
+const SurveyLayout = async ({ children }) => {
+  return <>{children}</>;
 };
 
 export default SurveyLayout;

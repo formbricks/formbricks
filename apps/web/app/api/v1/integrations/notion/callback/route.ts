@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { NextRequest, NextResponse } from "next/server";
-
+import { NextRequest } from "next/server";
 import {
   ENCRYPTION_KEY,
   NOTION_OAUTH_CLIENT_ID,
@@ -11,7 +10,7 @@ import {
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -66,11 +65,11 @@ export async function GET(req: NextRequest) {
     const result = await createOrUpdateIntegration(environmentId, notionIntegration);
 
     if (result) {
-      return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`);
+      return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`);
     }
   } else if (error) {
-    return NextResponse.redirect(
+    return Response.redirect(
       `${WEBAPP_URL}/environments/${environmentId}/integrations/notion?error=${error}`
     );
   }
-}
+};

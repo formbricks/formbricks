@@ -5,20 +5,18 @@ import { addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useRef } from "react";
 import { SelectSingleEventHandler } from "react-day-picker";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Button } from "../Button";
 import { Calendar } from "../Calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
-export function DatePicker({
+export const DatePicker = ({
   date,
   handleDateChange,
 }: {
-  date?: Date;
+  date?: Date | null;
   handleDateChange: (date?: Date) => void;
-}) {
+}) => {
   let formattedDate = date ? new Date(date) : undefined;
 
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -44,15 +42,15 @@ export function DatePicker({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
         <Calendar
+          autoFocus
           mode="single"
           selected={formattedDate}
           disabled={{
             before: addDays(new Date(), 1),
           }}
           onSelect={handleDateSelect}
-          initialFocus
         />
       </PopoverContent>
     </Popover>
   );
-}
+};

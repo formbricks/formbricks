@@ -1,4 +1,4 @@
-export function Logo(props: any) {
+export const Logo = (props: any) => {
   return (
     <svg viewBox="0 0 697 150" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -190,4 +190,4 @@ export function Logo(props: any) {
       </defs>
     </svg>
   );
-}
+};

@@ -5,74 +5,64 @@ import {
   generateResultShareUrlAction,
   getResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { DocumentDuplicateIcon, GlobeAltIcon, LinkIcon } from "@heroicons/react/24/outline";
-import { DownloadIcon } from "lucide-react";
+import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-
-import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TUser } from "@formbricks/types/user";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
-import ShareEmbedSurvey from "../(analysis)/summary/components/ShareEmbedSurvey";
-import ShareSurveyResults from "../(analysis)/summary/components/ShareSurveyResults";
+import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurveyResults";
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
-  className?: string;
   webAppUrl: string;
-  product: TProduct;
-  user: TUser;
 }
 
-export default function ResultsShareButton({ survey, webAppUrl, product, user }: ResultsShareButtonProps) {
-  const [showLinkModal, setShowLinkModal] = useState(false);
+export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProps) => {
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [surveyUrl, setSurveyUrl] = useState("");
 
   const handlePublish = async () => {
-    const key = await generateResultShareUrlAction(survey.id);
-    setSurveyUrl(webAppUrl + "/share/" + key);
-    setShowPublishModal(true);
+    const resultShareKeyResponse = await generateResultShareUrlAction({ surveyId: survey.id });
+    if (resultShareKeyResponse?.data) {
+      setSurveyUrl(webAppUrl + "/share/" + resultShareKeyResponse.data);
+      setShowPublishModal(true);
+    } else {
+      const errorMessage = getFormattedErrorMessage(resultShareKeyResponse);
+      toast.error(errorMessage);
+    }
   };
 
   const handleUnpublish = () => {
-    deleteResultShareUrlAction(survey.id)
-      .then(() => {
+    deleteResultShareUrlAction({ surveyId: survey.id }).then((deleteResultShareUrlResponse) => {
+      if (deleteResultShareUrlResponse?.data) {
         toast.success("Results unpublished successfully.");
         setShowPublishModal(false);
-        setShowLinkModal(false);
-      })
-      .catch((error) => {
-        toast.error(`Error: ${error.message}`);
-      });
+      } else {
+        const errorMessage = getFormattedErrorMessage(deleteResultShareUrlResponse);
+        toast.error(errorMessage);
+      }
+    });
   };
 
   useEffect(() => {
-    async function fetchSharingKey() {
-      const sharingKey = await getResultShareUrlAction(survey.id);
-      if (sharingKey) {
-        setSurveyUrl(webAppUrl + "/share/" + sharingKey);
+    const fetchSharingKey = async () => {
+      const resultShareUrlResponse = await getResultShareUrlAction({ surveyId: survey.id });
+      if (resultShareUrlResponse?.data) {
+        setSurveyUrl(webAppUrl + "/share/" + resultShareUrlResponse.data);
         setShowPublishModal(true);
       }
-    }
+    };
 
     fetchSharingKey();
   }, [survey.id, webAppUrl]);
-
-  useEffect(() => {
-    if (showResultsLinkModal) {
-      setShowLinkModal(false);
-    }
-  }, [showResultsLinkModal]);
 
   const copyUrlToClipboard = () => {
     if (typeof window !== "undefined") {
@@ -92,14 +82,14 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
     }
   };
   return (
-    <div className="mb-12">
+    <div>
       <DropdownMenu>
         <DropdownMenuTrigger
           asChild
-          className="focus:bg-muted cursor-pointer border border-slate-300 outline-none hover:border-slate-400">
+          className="focus:bg-muted cursor-pointer border border-slate-200 outline-none hover:border-slate-300">
           <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[7rem] sm:px-6 sm:py-3">
             <div className="hidden w-full items-center justify-between sm:flex">
-              <span className="text-sm text-slate-700">Share Results</span>
+              <span className="text-sm text-slate-700">Share results</span>
               <LinkIcon className="ml-2 h-4 w-4" />
             </div>
             <DownloadIcon className="block h-4 sm:hidden" />
@@ -114,17 +104,17 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
                 toast.success("Link to public results copied");
               }}>
               <p className="text-slate-700">
-                Copy link to public results <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
+                Copy link to public results <CopyIcon className="ml-1.5 inline h-4 w-4" />
               </p>
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
-              className="hover:ring-0"
+              className="text-slate-700 hover:ring-0"
               onClick={() => {
                 copyUrlToClipboard();
               }}>
-              <p className="text-slate-700">
-                Copy link <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
+              <p className="flex items-center text-slate-700">
+                Copy link <CopyIcon className="ml-1.5 h-4 w-4" />
               </p>
             </DropdownMenuItem>
           )}
@@ -133,24 +123,13 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
             onClick={() => {
               setShowResultsLinkModal(true);
             }}>
-            <p className="text-slate-700">
+            <p className="flex items-center text-slate-700">
               {survey.resultShareKey ? "Unpublish from web" : "Publish to web"}
-              <GlobeAltIcon className="ml-1.5 inline h-4 w-4" />
+              <GlobeIcon className="ml-1.5 h-4 w-4" />
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {showLinkModal && (
-        <ShareEmbedSurvey
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          product={product}
-          webAppUrl={webAppUrl}
-          user={user}
-        />
-      )}
       {showResultsLinkModal && (
         <ShareSurveyResults
           open={showResultsLinkModal}
@@ -163,4 +142,4 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
       )}
     </div>
   );
-}
+};

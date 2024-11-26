@@ -1,3 +1,7 @@
 module.exports = {
-  extends: ["turbo", "prettier"],
+  extends: ["@formbricks/eslint-config/library.js"],
+  parserOptions: {
+    project: "tsconfig.json",
+    tsconfigRootDir: __dirname,
+  },
 };

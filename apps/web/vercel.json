@@ -1,13 +1,16 @@
 {
   "functions": {
-    "app/api/cron/weekly_summary/*.ts": {
-      "maxDuration": 30
+    "app/api/cron/**/*.ts": {
+      "maxDuration": 180,
+      "memory": 512
     },
-    "app/api/v1/js/sync/*.ts": {
-      "maxDuration": 5
+    "app/api/v1/client/**/*.ts": {
+      "maxDuration": 10,
+      "memory": 200
     },
-    "app/api/**/*.ts": {
-      "maxDuration": 10
+    "app/**/*.ts": {
+      "maxDuration": 10,
+      "memory": 512
     }
   }
 }

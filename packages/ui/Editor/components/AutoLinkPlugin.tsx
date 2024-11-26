@@ -31,8 +31,6 @@ const MATCHERS = [
   },
 ];
 
-export const PlaygroundAutoLinkPlugin: React.FC = () => {
+export const PlaygroundAutoLinkPlugin = () => {
   return <AutoLinkPlugin matchers={MATCHERS} />;
 };
-
-export default PlaygroundAutoLinkPlugin;

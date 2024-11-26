@@ -51,3 +51,10 @@ Zone.Identifier
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# uploads
+packages/lib/uploads
+
+# Vite Timestamps
+*vite.config.*.timestamp-*
+

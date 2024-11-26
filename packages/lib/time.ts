@@ -82,6 +82,20 @@ export const timeSince = (dateString: string) => {
   });
 };
 
+export const timeSinceDate = (date: Date) => {
+  return formatDistance(date, new Date(), {
+    addSuffix: true,
+  });
+};
+
+export const formatDate = (date: Date) => {
+  return intlFormat(date, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
 export const timeSinceConditionally = (dateString: string) => {
   return new Date().getTime() - new Date(dateString).getTime() > 14 * 24 * 60 * 60 * 1000
     ? convertDateTimeStringShort(dateString)
@@ -95,7 +109,15 @@ export const getTodaysDateFormatted = (seperator: string) => {
   return formattedDate;
 };
 
-export function convertDatesInObject(obj: any) {
+export const getTodaysDateTimeFormatted = (seperator: string) => {
+  const date = new Date();
+  const formattedDate = date.toISOString().split("T")[0].split("-").join(seperator);
+  const formattedTime = date.toTimeString().split(" ")[0].split(":").join(seperator);
+
+  return [formattedDate, formattedTime].join(seperator);
+};
+
+export const convertDatesInObject = (obj: any) => {
   for (let key in obj) {
     if ((key === "createdAt" || key === "updatedAt") && !isNaN(Date.parse(obj[key]))) {
       obj[key] = new Date(obj[key]);
@@ -103,4 +125,4 @@ export function convertDatesInObject(obj: any) {
       convertDatesInObject(obj[key]);
     }
   }
-}
+};

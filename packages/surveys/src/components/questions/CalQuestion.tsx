@@ -1,29 +1,33 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import CalEmbed from "@/components/general/CalEmbed";
-import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
-import Subheader from "@/components/general/Subheader";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { CalEmbed } from "@/components/general/CalEmbed";
+import { Headline } from "@/components/general/Headline";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { Subheader } from "@/components/general/Subheader";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
-
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import { TSurveyCalQuestion } from "@formbricks/types/surveys";
+import { TSurveyCalQuestion } from "@formbricks/types/surveys/types";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  autoFocusEnabled: boolean;
+  currentQuestionId: string;
 }
 
-export default function CalQuestion({
+export const CalQuestion = ({
   question,
   value,
   onChange,
@@ -31,13 +35,15 @@ export default function CalQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
-}: CalQuestionProps) {
+  currentQuestionId,
+}: CalQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
-
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const onSuccessfulBooking = useCallback(() => {
     onChange({ [question.id]: "booked" });
@@ -48,6 +54,7 @@ export default function CalQuestion({
 
   return (
     <form
+      key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
         if (question.required && !value) {
@@ -61,21 +68,29 @@ export default function CalQuestion({
         onChange({ [question.id]: value });
         onSubmit({ [question.id]: value }, updatedttc);
       }}
-      className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-
-      <Subheader subheader={question.subheader} questionId={question.id} />
-
-      <>
-        {errorMessage && <span className="text-red-500">{errorMessage}</span>}
-        <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
-      </>
-
-      <div className="mt-4 flex w-full justify-between">
+      className="fb-w-full">
+      <ScrollableContainer>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
+            required={question.required}
+          />
+          <Subheader
+            subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+            questionId={question.id}
+          />
+          <>
+            {errorMessage && <span className="fb-text-red-500">{errorMessage}</span>}
+            <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
+          </>
+        </div>
+      </ScrollableContainer>
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
@@ -84,12 +99,11 @@ export default function CalQuestion({
         <div></div>
         {!question.required && (
           <SubmitButton
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         )}
       </div>
     </form>
   );
-}
+};

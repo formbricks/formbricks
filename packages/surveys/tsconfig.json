@@ -1,6 +1,6 @@
 {
-  "extends": "@formbricks/tsconfig/js-library.json",
-  "include": ["src"],
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "../types/surveys.d.ts"],
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "isolatedModules": true,

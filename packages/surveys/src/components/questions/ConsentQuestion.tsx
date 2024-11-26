@@ -1,27 +1,31 @@
 import { BackButton } from "@/components/buttons/BackButton";
-import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
-import HtmlBody from "@/components/general/HtmlBody";
-import QuestionImage from "@/components/general/QuestionImage";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { Headline } from "@/components/general/Headline";
+import { HtmlBody } from "@/components/general/HtmlBody";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
-
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
+import type { TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  autoFocusEnabled: boolean;
+  currentQuestionId: string;
 }
 
-export default function ConsentQuestion({
+export const ConsentQuestion = ({
   question,
   value,
   onChange,
@@ -29,78 +33,96 @@ export default function ConsentQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
-}: ConsentQuestionProps) {
+  currentQuestionId,
+}: ConsentQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   return (
-    <div>
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <HtmlBody htmlString={question.html || ""} questionId={question.id} />
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-          setTtc(updatedTtcObj);
-          onSubmit({ [question.id]: value }, updatedTtcObj);
-        }}>
-        <label
-          tabIndex={1}
-          onKeyDown={(e) => {
-            if (e.key == "Enter") {
-              onChange({ [question.id]: "accepted" });
-            }
-          }}
-          className="border-border bg-survey-bg text-heading hover:bg-accent-bg focus:bg-accent-bg focus:ring-border-highlight relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
-          <input
-            type="checkbox"
-            id={question.id}
-            name={question.id}
-            value={question.label}
-            onChange={(e) => {
-              if (e.target instanceof HTMLInputElement && e.target.checked) {
-                onChange({ [question.id]: "accepted" });
-              } else {
-                onChange({ [question.id]: "dismissed" });
-              }
-            }}
-            checked={value === "accepted"}
-            className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
-            aria-labelledby={`${question.id}-label`}
+    <form
+      key={question.id}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
+      }}>
+      <ScrollableContainer>
+        <div>
+          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          <Headline
+            headline={getLocalizedValue(question.headline, languageCode)}
+            questionId={question.id}
             required={question.required}
           />
-          <span id={`${question.id}-label`} className="ml-3 font-medium">
-            {question.label}
-          </span>
-        </label>
-
-        <div className="mt-4 flex w-full justify-between">
-          {!isFirstQuestion && (
-            <BackButton
-              tabIndex={3}
-              backButtonLabel={question.backButtonLabel}
-              onClick={() => {
-                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedTtcObj);
-                onSubmit({ [question.id]: value }, updatedTtcObj);
-                onBack();
-              }}
-            />
-          )}
-          <div />
-          <SubmitButton
-            tabIndex={2}
-            buttonLabel={question.buttonLabel}
-            isLastQuestion={isLastQuestion}
-            onClick={() => {}}
+          <HtmlBody
+            htmlString={getLocalizedValue(question.html, languageCode) || ""}
+            questionId={question.id}
           />
+          <div className="fb-bg-survey-bg fb-sticky -fb-bottom-2 fb-z-10 fb-w-full fb-px-1 fb-py-1">
+            <label
+              dir="auto"
+              tabIndex={1}
+              id={`${question.id}-label`}
+              onKeyDown={(e) => {
+                // Accessibility: if spacebar was pressed pass this down to the input
+                if (e.key === " ") {
+                  e.preventDefault();
+                  document.getElementById(question.id)?.click();
+                  document.getElementById(`${question.id}-label`)?.focus();
+                }
+              }}
+              className="fb-border-border fb-bg-input-bg fb-text-heading hover:fb-bg-input-bg-selected focus:fb-bg-input-bg-selected focus:fb-ring-brand fb-rounded-custom fb-relative fb-z-10 fb-my-2 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-border fb-p-4 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2">
+              <input
+                type="checkbox"
+                id={question.id}
+                name={question.id}
+                value={getLocalizedValue(question.label, languageCode)}
+                onChange={(e) => {
+                  if (e.target instanceof HTMLInputElement && e.target.checked) {
+                    onChange({ [question.id]: "accepted" });
+                  } else {
+                    onChange({ [question.id]: "" });
+                  }
+                }}
+                checked={value === "accepted"}
+                className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                aria-labelledby={`${question.id}-label`}
+                required={question.required}
+              />
+              <span id={`${question.id}-label`} className="fb-ml-3 fb-mr-3 fb-font-medium">
+                {getLocalizedValue(question.label, languageCode)}
+              </span>
+            </label>
+          </div>
         </div>
-      </form>
-    </div>
+      </ScrollableContainer>
+
+      <div className="fb-flex fb-w-full fb-justify-between fb-px-6 fb-py-4">
+        {!isFirstQuestion && (
+          <BackButton
+            tabIndex={3}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onSubmit({ [question.id]: value }, updatedTtcObj);
+              onBack();
+            }}
+          />
+        )}
+        <div />
+        <SubmitButton
+          tabIndex={2}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
+      </div>
+    </form>
   );
-}
+};

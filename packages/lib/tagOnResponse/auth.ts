@@ -1,35 +1,34 @@
 import "server-only";
-
-import { unstable_cache } from "next/cache";
-
-import { ZId } from "@formbricks/types/environment";
-
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getMembershipByUserIdTeamId } from "../membership/service";
+import { ZId } from "@formbricks/types/common";
+import { cache } from "../cache";
+import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { getAccessFlags } from "../membership/utils";
+import { getOrganizationByEnvironmentId } from "../organization/service";
 import { canUserAccessResponse } from "../response/auth";
 import { canUserAccessTag } from "../tag/auth";
-import { getTeamByEnvironmentId } from "../team/service";
 import { validateInputs } from "../utils/validate";
 import { tagOnResponseCache } from "./cache";
 
-export const canUserAccessTagOnResponse = async (
+export const canUserAccessTagOnResponse = (
   userId: string,
   tagId: string,
   responseId: string
 ): Promise<boolean> =>
-  await unstable_cache(
+  cache(
     async () => {
       validateInputs([userId, ZId], [tagId, ZId], [responseId, ZId]);
 
-      const isAuthorizedForTag = await canUserAccessTag(userId, tagId);
-      const isAuthorizedForResponse = await canUserAccessResponse(userId, responseId);
+      try {
+        const isAuthorizedForTag = await canUserAccessTag(userId, tagId);
+        const isAuthorizedForResponse = await canUserAccessResponse(userId, responseId);
 
-      return isAuthorizedForTag && isAuthorizedForResponse;
+        return isAuthorizedForTag && isAuthorizedForResponse;
+      } catch (error) {
+        throw error;
+      }
     },
-    [`users-${userId}-tagOnResponse-${tagId}-${responseId}`],
+    [`canUserAccessTagOnResponse-${userId}-${tagId}-${responseId}`],
     {
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
       tags: [tagOnResponseCache.tag.byResponseIdAndTagId(responseId, tagId)],
     }
   )();
@@ -41,11 +40,11 @@ export const verifyUserRoleAccess = async (
   hasCreateOrUpdateAccess: boolean;
   hasDeleteAccess: boolean;
 }> => {
-  const team = await getTeamByEnvironmentId(environmentId);
-  if (!team) {
-    throw new Error("Team not found");
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+  if (!organization) {
+    throw new Error("Organization not found");
   }
-  const currentUserMembership = await getMembershipByUserIdTeamId(userId, team.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organization.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   if (isViewer) {

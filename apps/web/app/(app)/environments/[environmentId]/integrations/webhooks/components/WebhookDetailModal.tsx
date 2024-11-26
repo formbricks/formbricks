@@ -1,20 +1,18 @@
-import WebhookOverviewTab from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookOverviewTab";
-import WebhookSettingsTab from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookSettingsTab";
+import { WebhookOverviewTab } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookOverviewTab";
+import { WebhookSettingsTab } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookSettingsTab";
 import { Webhook } from "lucide-react";
-
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook } from "@formbricks/types/webhooks";
-import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
+import { ModalWithTabs } from "@formbricks/ui/ModalWithTabs";
 
 interface WebhookModalProps {
-  environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
   webhook: TWebhook;
   surveys: TSurvey[];
 }
 
-export default function WebhookModal({ environmentId, open, setOpen, webhook, surveys }: WebhookModalProps) {
+export const WebhookModal = ({ open, setOpen, webhook, surveys }: WebhookModalProps) => {
   const tabs = [
     {
       title: "Overview",
@@ -22,14 +20,7 @@ export default function WebhookModal({ environmentId, open, setOpen, webhook, su
     },
     {
       title: "Settings",
-      children: (
-        <WebhookSettingsTab
-          environmentId={environmentId}
-          webhook={webhook}
-          surveys={surveys}
-          setOpen={setOpen}
-        />
-      ),
+      children: <WebhookSettingsTab webhook={webhook} surveys={surveys} setOpen={setOpen} />,
     },
   ];
 
@@ -45,4 +36,4 @@ export default function WebhookModal({ environmentId, open, setOpen, webhook, su
       />
     </>
   );
-}
+};

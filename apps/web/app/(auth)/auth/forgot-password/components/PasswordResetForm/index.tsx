@@ -1,10 +1,9 @@
 "use client";
 
-import { forgotPassword } from "@/app/lib/users/users";
-import { XCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+import { forgotPassword } from "@formbricks/lib/utils/users";
 import { Button } from "@formbricks/ui/Button";
 
 export const PasswordResetForm = ({}) => {
@@ -60,7 +59,7 @@ export const PasswordResetForm = ({}) => {
         </div>
 
         <div>
-          <Button type="submit" variant="darkCTA" className="w-full justify-center" loading={loading}>
+          <Button type="submit" className="w-full justify-center" loading={loading}>
             Reset password
           </Button>
           <div className="mt-3 text-center">

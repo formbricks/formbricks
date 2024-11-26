@@ -1,9 +1,6 @@
-"use client";
-
-import { CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
 import { toast } from "react-hot-toast";
-
 import { Button } from "@formbricks/ui/Button";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
 
@@ -15,14 +12,14 @@ interface ShareEmbedSurveyProps {
   showPublishModal: boolean;
   surveyUrl: string;
 }
-export default function ShareSurveyResults({
+export const ShareSurveyResults = ({
   open,
   setOpen,
   handlePublish,
   handleUnpublish,
   showPublishModal,
   surveyUrl,
-}: ShareEmbedSurveyProps) {
+}: ShareEmbedSurveyProps) => {
   return (
     <Dialog
       open={open}
@@ -32,7 +29,7 @@ export default function ShareSurveyResults({
       {showPublishModal && surveyUrl ? (
         <DialogContent className="flex flex-col rounded-2xl bg-white px-12 py-6">
           <div className="flex flex-col items-center gap-y-6 text-center">
-            <CheckCircleIcon className="h-20 w-20 text-slate-300" />
+            <CheckCircle2Icon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">Your survey results are public!</p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
@@ -63,12 +60,12 @@ export default function ShareSurveyResults({
               <Button
                 type="submit"
                 variant="secondary"
-                className=" text-center"
+                className="text-center"
                 onClick={() => handleUnpublish()}>
                 Unpublish
               </Button>
 
-              <Button variant="darkCTA" className=" text-center" href={surveyUrl} target="_blank">
+              <Button className="text-center" href={surveyUrl} target="_blank">
                 View site
               </Button>
             </div>
@@ -77,21 +74,17 @@ export default function ShareSurveyResults({
       ) : (
         <DialogContent className="flex flex-col rounded-2xl bg-white p-8">
           <div className="flex flex-col items-center gap-y-6 text-center">
-            <ExclamationCircleIcon className="h-20 w-20 text-slate-300" />
+            <AlertCircleIcon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">
                 You are about to release these survey results to the public.
               </p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
-                Your survey results will be public. Anyone outside your team can access them if they have the
-                link.
+                Your survey results will be public. Anyone outside your organization can access them if they
+                have the link.
               </p>
             </div>
-            <Button
-              type="submit"
-              variant="darkCTA"
-              className="h-full text-center"
-              onClick={() => handlePublish()}>
+            <Button type="submit" className="h-full text-center" onClick={() => handlePublish()}>
               Publish to public web
             </Button>
           </div>
@@ -99,4 +92,4 @@ export default function ShareSurveyResults({
       )}
     </Dialog>
   );
-}
+};

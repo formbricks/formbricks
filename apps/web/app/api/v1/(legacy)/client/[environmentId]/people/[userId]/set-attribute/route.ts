@@ -1,15 +1,14 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
-
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
+import { updateAttributes } from "@formbricks/lib/attribute/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { personCache } from "@formbricks/lib/person/cache";
-import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
+import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
-import { TJsStateSync, ZJsPeopleAttributeInput } from "@formbricks/types/js";
+import { ZJsPeopleAttributeInput } from "@formbricks/types/js";
 
 interface Context {
   params: {
@@ -18,11 +17,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
-}
+};
 
-export async function POST(req: Request, context: Context): Promise<NextResponse> {
+export const POST = async (req: Request, context: Context): Promise<Response> => {
   try {
     const { userId, environmentId } = context.params;
     const personId = userId; // legacy workaround for formbricks-js 1.2.0 & 1.2.1
@@ -47,19 +46,7 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
       return responses.notFoundResponse("Person", personId, true);
     }
 
-    let attributeClass = await getAttributeClassByName(environmentId, key);
-
-    // create new attribute class if not found
-    if (attributeClass === null) {
-      attributeClass = await createAttributeClass(environmentId, key, "code");
-    }
-
-    if (!attributeClass) {
-      return responses.internalServerErrorResponse("Unable to create attribute class", true);
-    }
-
-    // upsert attribute (update or create)
-    await updatePersonAttribute(personId, attributeClass.id, value);
+    await updateAttributes(personId, { [key]: value });
 
     personCache.revalidate({
       id: personId,
@@ -70,8 +57,14 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
       environmentId,
     });
 
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
+
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person),
+      getSyncSurveys(environmentId, person.id),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
@@ -81,7 +74,7 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
     }
 
     // return state
-    const state: TJsStateSync = {
+    const state = {
       person: { id: person.id, userId: person.userId },
       surveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
@@ -93,4 +86,4 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);
   }
-}
+};

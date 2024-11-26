@@ -1,0 +1,115 @@
+import { MdxImage } from "@/components/MdxImage";
+
+import I1 from "./images/I1.webp";
+import I2 from "./images/I2.webp";
+import I3 from "./images/I3.webp";
+import I4 from "./images/I4.webp";
+import I5 from "./images/I5.webp";
+import I6 from "./images/I6.webp";
+import I7 from "./images/I7.webp";
+import I8 from "./images/I8.webp";
+
+export const metadata = {
+  title: "Formbricks Quickstart Guide: Website Surveys Made Easier & Faster",
+  description:
+    "Formbricks is the easiest way to create and manage website surveys. This quickstart guide will show you how to create your first website survey in under 5 minutes.",
+};
+
+#### Website Surveys
+
+# Quickstart
+
+Website Surveys make it easy for your public website visitors to give you feedback. They are a great way to get feedback from your users, without interrupting their workflow. This quickstart guide will show you how to create your first website survey in under 5 minutes.
+
+<Note>
+  Website Surveys are ideal for **public facing websites**. If you are looking to run surveys in your app where you have user identification & want advanced user targeting, head over to the [App Surveys Quickstart Guide](/app-surveys/quickstart).
+</Note>
+
+1. **Create a free Formbricks Cloud account**: While you can [self-host](/self-hosting/deployment) Formbricks, but the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and you'll be guided to our onboarding like below:
+
+<Note>
+  Website & App Surveys have the same integration process. The difference will come when we setup our survey.
+</Note>
+
+<MdxImage
+  src={I1}
+  alt="Choose website survey from survey type"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+2. **Connect your App/Website**: Once you get through a couple of onboarding steps, you’ll be asked to connect your app or website. This is where you’ll find the code snippet for both HTML as well as the npm package which you need to embed in your app:
+
+<MdxImage
+  src={I2}
+  alt="Code snippet for connecting app with Formbricks"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Paste the code snippet in your app and reload the page. You should now see the Formbricks widget in the lower right corner of your app! The integration is now complete.
+
+<MdxImage
+  src={I3}
+  alt="App connected with Formbricks"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Onboarding is complete! Now let’s create our first survey as you should see templates to choose from after clicking on **Next**:
+
+<MdxImage
+  src={I4}
+  alt="Choose a survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. **Create your first survey**: To be able to see a survey in your app, you need to create one. We’ll choose one of the templates and head over to the survey settings:
+
+Pick the Survey Type as **Website Survey**.
+
+<MdxImage
+  src={I5}
+  alt="Survey settings for app survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+1. **Set Trigger for the Survey**: Scroll down to Survey Trigger and click on **+ Add action**, choose **New Session**. This will cause this survey to appear when the Formbricks Widget tracks a new session:
+
+<MdxImage
+  src={I6}
+  alt="Survey trigger settings for app survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+5. **Set Recontact Options for debugging**: In Recontact Options we choose the following settings, so that we can play around with the survey more easily. By default, each survey will be shown only once for each session to prevent survey fatigue:
+
+<Note>
+  Please change this setting later on after testing your survey to prevent survey fatigue for your users.
+</Note>
+
+<MdxImage
+  src={I7}
+  alt="Recontact options for app survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+6. **Publish your survey**: Now hit **Publish** and you’ll be forwarded to the Summary Page. This is where you’ll find the responses to this survey.
+
+<MdxImage
+  src={I8}
+  alt="Survey published successfully"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+---
+
+- We offer framework guides for various frontend tech, head over to the the [Website Survey Framework Guides](/website-survey/framework-guides) to get started with your public facing website surveys.
+- Head over to our Website Survey SDK documentation to get started with the [Website Survey JS SDK](/developer-docs/website-survey-sdk).
+
+Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

@@ -2,7 +2,6 @@ import { createHash } from "crypto";
 import { NextApiRequest, NextApiResponse } from "next";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
-
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -49,12 +48,12 @@ export const hasApiEnvironmentAccess = async (apiKey, environmentId) => {
   return false;
 };
 
-export const hasTeamAccess = async (user, teamId) => {
+export const hasOrganizationAccess = async (user, organizationId) => {
   const membership = await prisma.membership.findUnique({
     where: {
-      userId_teamId: {
+      userId_organizationId: {
         userId: user.id,
-        teamId: teamId,
+        organizationId: organizationId,
       },
     },
   });
@@ -75,12 +74,12 @@ export const getSessionUser = async (req?: NextApiRequest, res?: NextApiResponse
   if (session && "user" in session) return session.user;
 };
 
-export const isOwner = async (user, teamId) => {
+export const isOwner = async (user, organizationId) => {
   const membership = await prisma.membership.findUnique({
     where: {
-      userId_teamId: {
+      userId_organizationId: {
         userId: user.id,
-        teamId: teamId,
+        organizationId: organizationId,
       },
     },
   });
@@ -90,12 +89,12 @@ export const isOwner = async (user, teamId) => {
   return false;
 };
 
-export const isAdminOrOwner = async (user, teamId) => {
+export const isAdminOrOwner = async (user, organizationId) => {
   const membership = await prisma.membership.findUnique({
     where: {
-      userId_teamId: {
+      userId_organizationId: {
         userId: user.id,
-        teamId: teamId,
+        organizationId: organizationId,
       },
     },
   });

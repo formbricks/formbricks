@@ -1,7 +1,7 @@
-import z from "zod";
+import { z } from "zod";
 
 export const ZActionProperties = z.record(z.string());
-export { ZActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+export { ZActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 export { ZIntegrationConfig } from "@formbricks/types/integration";
 
 export {
@@ -14,14 +14,16 @@ export {
 export {
   ZSurveyWelcomeCard,
   ZSurveyQuestions,
-  ZSurveyThankYouCard,
   ZSurveyHiddenFields,
+  ZSurveyVariables,
   ZSurveyClosedMessage,
   ZSurveyProductOverwrites,
   ZSurveyStyling,
-  ZSurveyVerifyEmail,
   ZSurveySingleUse,
-} from "@formbricks/types/surveys";
+  ZSurveyInlineTriggers,
+  ZSurveyEnding,
+} from "@formbricks/types/surveys/types";
 
-export { ZTeamBilling } from "@formbricks/types/teams";
+export { ZSegmentFilters } from "@formbricks/types/segment";
+export { ZOrganizationBilling } from "@formbricks/types/organizations";
 export { ZUserNotificationSettings } from "@formbricks/types/user";

@@ -1,39 +1,30 @@
 "use client";
 
 import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
-import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
+import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import clsx from "clsx";
+import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-
-import { deleteWebhookAction, updateWebhookAction } from "../actions";
+import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 
 interface ActionSettingsTabProps {
-  environmentId: string;
   webhook: TWebhook;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
 }
 
-export default function WebhookSettingsTab({
-  environmentId,
-  webhook,
-  surveys,
-  setOpen,
-}: ActionSettingsTabProps) {
+export const WebhookSettingsTab = ({ webhook, surveys, setOpen }: ActionSettingsTabProps) => {
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: {
@@ -56,14 +47,18 @@ export default function WebhookSettingsTab({
   const handleTestEndpoint = async (sendSuccessToast: boolean) => {
     try {
       setHittingEndpoint(true);
-      await testEndpoint(testEndpointInput);
+      await testEndpointAction({ url: testEndpointInput });
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success("Yay! We are able to ping the webhook!");
       setEndpointAccessible(true);
       return true;
     } catch (err) {
       setHittingEndpoint(false);
-      toast.error("Oh no! We are unable to ping the webhook!");
+      toast.error(
+        `Unable to ping the webhook! \n ${err.message.length < 250 ? `Error:  ${err.message}` : "Please check the console for more details"}`,
+        { className: err.message.length < 250 ? "break-all" : "" }
+      );
+      console.error("Webhook Test Failed due to: ", err.message);
       setEndpointAccessible(false);
       return false;
     }
@@ -117,7 +112,7 @@ export default function WebhookSettingsTab({
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    await updateWebhookAction(environmentId, webhook.id, updatedData);
+    await updateWebhookAction({ webhookId: webhook.id, webhookInput: updatedData });
     toast.success("Webhook updated successfully.");
     router.refresh();
     setIsUpdatingWebhook(false);
@@ -222,7 +217,7 @@ export default function WebhookSettingsTab({
           </div>
 
           <div className="flex space-x-2">
-            <Button type="submit" variant="darkCTA" loading={isUpdatingWebhook}>
+            <Button type="submit" loading={isUpdatingWebhook}>
               Save changes
             </Button>
           </div>
@@ -236,7 +231,7 @@ export default function WebhookSettingsTab({
         onDelete={async () => {
           setOpen(false);
           try {
-            await deleteWebhookAction(webhook.id);
+            await deleteWebhookAction({ id: webhook.id });
             router.refresh();
             toast.success("Webhook deleted successfully");
           } catch (error) {
@@ -246,4 +241,4 @@ export default function WebhookSettingsTab({
       />
     </div>
   );
-}
+};

@@ -1,9 +1,7 @@
 import { ImageResponse } from "@vercel/og";
 import { NextRequest } from "next/server";
 
-export const runtime = "edge";
-
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   let name = req.nextUrl.searchParams.get("name");
   let brandColor = req.nextUrl.searchParams.get("brandColor");
 
@@ -52,6 +50,9 @@ export async function GET(req: NextRequest) {
     {
       width: 800,
       height: 400,
+      headers: {
+        "Cache-Control": "public, s-maxage=600, max-age=1800, stale-while-revalidate=600, stale-if-error=600",
+      },
     }
   );
-}
+};

@@ -1,0 +1,17 @@
+{
+  "name": "@formbricks/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^14.2.5",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vercel/style-guide": "^6.0.0",
+    "eslint-config-next": "^14.2.5",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-turbo": "^2.0.14",
+    "eslint-plugin-react": "7.35.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.9"
+  }
+}

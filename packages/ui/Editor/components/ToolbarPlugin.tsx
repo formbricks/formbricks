@@ -23,12 +23,11 @@ import {
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
+import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
 import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
 import { cn } from "@formbricks/lib/cn";
-
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 import { Input } from "../../Input";
@@ -51,7 +50,7 @@ const blockTypeToBlockName: BlockType = {
   h2: "Small Heading",
 };
 
-function positionEditorElement(editor: HTMLInputElement, rect: DOMRect | null) {
+const positionEditorElement = (editor: HTMLInputElement, rect: DOMRect | null) => {
   if (rect === null) {
     editor.style.opacity = "0";
     editor.style.top = "-1000px";
@@ -61,9 +60,9 @@ function positionEditorElement(editor: HTMLInputElement, rect: DOMRect | null) {
     editor.style.top = `${rect.top + rect.height + window.pageYOffset + 10}px`;
     editor.style.left = `${rect.left + window.pageXOffset - editor.offsetWidth / 2 + rect.width / 2}px`;
   }
-}
+};
 
-function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
+const FloatingLinkEditor = ({ editor }: { editor: LexicalEditor }) => {
   const editorRef = useRef<HTMLInputElement>(null);
   const mouseDownRef = useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -158,35 +157,56 @@ function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
     }
   }, [isEditMode]);
 
+  useEffect(() => {
+    setEditMode(true);
+  }, []);
+
+  const linkAttributes = {
+    target: "_blank",
+    rel: "noopener noreferrer",
+  };
+
+  const handleSubmit = () => {
+    if (lastSelection && linkUrl) {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
+        url: linkUrl,
+        ...linkAttributes,
+      });
+    }
+    setEditMode(false);
+  };
+
   return (
     <div ref={editorRef} className="link-editor">
-      <Input
-        className="bg-white"
-        ref={inputRef}
-        value={linkUrl}
-        onChange={(event) => {
-          setLinkUrl(event.target.value);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            if (lastSelection !== null) {
-              if (linkUrl !== "") {
-                editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
+      {isEditMode && (
+        <div className="flex">
+          <Input
+            className="bg-white"
+            ref={inputRef}
+            value={linkUrl}
+            onChange={(event) => {
+              setLinkUrl(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleSubmit();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                setEditMode(false);
               }
-              setEditMode(false);
-            }
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            setEditMode(false);
-          }
-        }}
-      />
+            }}
+          />
+          <Button className="py-2" onClick={handleSubmit}>
+            Add
+          </Button>
+        </div>
+      )}
     </div>
   );
-}
+};
 
-function getSelectedNode(selection: RangeSelection) {
+const getSelectedNode = (selection: RangeSelection) => {
   const anchor = selection.anchor;
   const focus = selection.focus;
   const anchorNode = selection.anchor.getNode();
@@ -200,9 +220,9 @@ function getSelectedNode(selection: RangeSelection) {
   } else {
     return $isAtNodeEnd(anchor) ? focusNode : anchorNode;
   }
-}
+};
 
-export default function ToolbarPlugin(props: TextEditorProps) {
+export const ToolbarPlugin = (props: TextEditorProps) => {
   const [editor] = useLexicalComposerContext();
 
   const toolbarRef = useRef(null);
@@ -401,11 +421,33 @@ export default function ToolbarPlugin(props: TextEditorProps) {
 
   const insertLink = useCallback(() => {
     if (!isLink) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, "https://");
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
+        url: "https://",
+      });
     } else {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
     }
   }, [editor, isLink]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      PASTE_COMMAND,
+      (e: ClipboardEvent) => {
+        const text = e.clipboardData?.getData("text/plain");
+
+        editor.update(() => {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            selection.insertRawText(text ?? "");
+          }
+        });
+
+        e.preventDefault();
+        return true; // Prevent the default paste handler
+      },
+      COMMAND_PRIORITY_CRITICAL
+    );
+  }, [editor]);
 
   if (!props.editable) return <></>;
   return (
@@ -499,4 +541,4 @@ export default function ToolbarPlugin(props: TextEditorProps) {
       </>
     </div>
   );
-}
+};

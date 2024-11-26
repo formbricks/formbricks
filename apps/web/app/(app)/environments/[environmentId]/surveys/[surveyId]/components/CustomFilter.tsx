@@ -4,20 +4,16 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { fetchFile } from "@/app/lib/fetchFile";
-import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
-import { createId } from "@paralleldrive/cuid2";
-import { differenceInDays, format, subDays } from "date-fns";
-import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
+import { differenceInDays, format, startOfDay, subDays } from "date-fns";
+import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-
-import { getTodaysDateFormatted } from "@formbricks/lib/time";
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
+import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { Calendar } from "@formbricks/ui/Calendar";
 import {
   DropdownMenu,
@@ -25,8 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-
-import ResponseFilter from "./ResponseFilter";
+import { ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
   FROM = "from",
@@ -46,10 +41,7 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
-  environmentTags: TTag[];
   survey: TSurvey;
-  responses: TResponse[];
-  totalResponses: TResponse[];
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -63,8 +55,11 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
-  const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
+export const CustomFilter = ({ survey }: CustomFilterProps) => {
+  const params = useParams();
+  const isSharingPage = !!params.sharingKey;
+
+  const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -73,74 +68,31 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
-  const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
 
-  // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
+  const firstMountRef = useRef(true);
+
   useEffect(() => {
-    const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
-      survey,
-      totalResponses,
-      environmentTags
-    );
-    setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [totalResponses, survey, setSelectedOptions, environmentTags]);
+    if (!firstMountRef.current) {
+      firstMountRef.current = false;
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!firstMountRef.current) {
+      resetState();
+    }
+  }, [survey?.id, resetState]);
+
+  const filters = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedFilter, dateRange]
+  );
 
   const datePickerRef = useRef<HTMLDivElement>(null);
-
-  const getMatchQandA = (responses: TResponse[], survey: TSurvey) => {
-    if (survey && responses) {
-      // Create a mapping of question IDs to their headlines
-      const questionIdToHeadline = {};
-      survey.questions.forEach((question) => {
-        questionIdToHeadline[question.id] = question.headline;
-      });
-
-      // Replace question IDs with question headlines in response data
-      const updatedResponses = responses.map((response) => {
-        const updatedResponse: Array<{
-          id: string;
-          question: string;
-          answer: string;
-          type: string;
-          scale?: "number" | "star" | "smiley";
-          range?: number;
-        }> = []; // Specify the type of updatedData
-        // iterate over survey questions and build the updated response
-        for (const question of survey.questions) {
-          const answer = response.data[question.id];
-          if (answer) {
-            updatedResponse.push({
-              id: createId(),
-              question: question.headline,
-              type: question.type,
-              scale: question.scale,
-              range: question.range,
-              answer: answer as string,
-            });
-          }
-        }
-        return { ...response, responses: updatedResponse };
-      });
-
-      const updatedResponsesWithTags = updatedResponses.map((response) => ({
-        ...response,
-        tags: response.tags?.map((tag) => tag),
-      }));
-
-      return updatedResponsesWithTags;
-    }
-    return [];
-  };
-
-  const downloadFileName = useMemo(() => {
-    if (survey) {
-      const formattedDateString = getTodaysDateFormatted("_");
-      return `${survey.name.split(" ").join("_")}_responses_${formattedDateString}`.toLocaleLowerCase();
-    }
-
-    return "my_survey_responses";
-  }, [survey]);
 
   const extracMetadataKeys = useCallback((obj, parentKey = "") => {
     let keys: string[] = [];
@@ -155,151 +107,6 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
     return keys;
   }, []);
-
-  const getAllResponsesInBatches = useCallback(async () => {
-    const BATCH_SIZE = 3000;
-    const responses: TResponse[] = [];
-    for (let page = 1; ; page++) {
-      const batchResponses = await getMoreResponses(survey.id, page, BATCH_SIZE);
-      responses.push(...batchResponses);
-      if (batchResponses.length < BATCH_SIZE) {
-        break;
-      }
-    }
-    return responses;
-  }, [survey.id]);
-
-  const downloadResponses = useCallback(
-    async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
-      const downloadResponse = filter === FilterDownload.ALL ? await getAllResponsesInBatches() : responses;
-
-      const questionNames = survey.questions?.map((question) => question.headline);
-      const hiddenFieldIds = survey.hiddenFields.fieldIds;
-      const hiddenFieldResponse = {};
-      let metaDataFields = extracMetadataKeys(downloadResponse[0].meta);
-      const userAttributes = ["Init Attribute 1", "Init Attribute 2"];
-      const matchQandA = getMatchQandA(downloadResponse, survey);
-      const jsonData = matchQandA.map((response) => {
-        const basicInfo = {
-          "Response ID": response.id,
-          Timestamp: response.createdAt,
-          Finished: response.finished,
-          "User ID": response.person?.userId,
-          "Survey ID": response.surveyId,
-        };
-        const metaDataKeys = extracMetadataKeys(response.meta);
-        let metaData = {};
-        metaDataKeys.forEach((key) => {
-          if (!metaDataFields.includes(key)) metaDataFields.push(key);
-          if (response.meta) {
-            if (key.includes("-")) {
-              const nestedKeyArray = key.split("-");
-              metaData[key] = response.meta[nestedKeyArray[0].trim()][nestedKeyArray[1].trim()] ?? "";
-            } else {
-              metaData[key] = response.meta[key] ?? "";
-            }
-          }
-        });
-
-        const personAttributes = response.personAttributes;
-        if (hiddenFieldIds && hiddenFieldIds.length > 0) {
-          hiddenFieldIds.forEach((hiddenFieldId) => {
-            hiddenFieldResponse[hiddenFieldId] = response.data[hiddenFieldId] ?? "";
-          });
-        }
-        const tags = { Tags: response.tags.map((tag) => tag.name).join(", ") };
-        const notes = {
-          Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
-        };
-
-        const fileResponse = {
-          ...basicInfo,
-          ...metaData,
-          ...personAttributes,
-          ...hiddenFieldResponse,
-          ...tags,
-          ...notes,
-        };
-        // Map each question name to its corresponding answer
-        questionNames.forEach((questionName: string) => {
-          const matchingQuestion = response.responses.find((question) => question.question === questionName);
-          let transformedAnswer = "";
-          if (matchingQuestion) {
-            const answer = matchingQuestion.answer;
-            if (Array.isArray(answer)) {
-              transformedAnswer = answer.join("; ");
-            } else {
-              transformedAnswer = answer;
-            }
-          }
-          fileResponse[questionName] = matchingQuestion ? transformedAnswer : "";
-        });
-
-        return fileResponse;
-      });
-
-      // Fields which will be used as column headers in the file
-      const fields = [
-        "Response ID",
-        "Timestamp",
-        "Finished",
-        "Survey ID",
-        "User ID",
-        "Notes",
-        "Tags",
-        ...metaDataFields,
-        ...questionNames,
-        ...(hiddenFieldIds ?? []),
-        ...(survey.type === "web" ? userAttributes : []),
-      ];
-
-      let response;
-
-      try {
-        response = await fetchFile(
-          {
-            json: jsonData,
-            fields,
-            fileName: downloadFileName,
-          },
-          filetype
-        );
-      } catch (err) {
-        toast.error(`Error downloading ${filetype === "csv" ? "CSV" : "Excel"}`);
-        return;
-      }
-
-      let blob: Blob;
-      if (filetype === "csv") {
-        blob = new Blob([response.fileResponse], { type: "text/csv;charset=utf-8;" });
-      } else if (filetype === "xlsx") {
-        const binaryString = atob(response["fileResponse"]);
-        const byteArray = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          byteArray[i] = binaryString.charCodeAt(i);
-        }
-        blob = new Blob([byteArray], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-      } else {
-        throw new Error(`Unsupported filetype: ${filetype}`);
-      }
-
-      const downloadUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `${downloadFileName}.${filetype}`;
-
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(downloadUrl);
-    },
-    [downloadFileName, responses, survey, extracMetadataKeys, getAllResponsesInBatches]
-  );
 
   const handleDateHoveredChange = (date: Date) => {
     if (selectingDate === DateSelected.FROM) {
@@ -363,20 +170,43 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     setSelectingDate(DateSelected.FROM);
   };
 
+  const handleDowndloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
+    try {
+      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+      const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
+        surveyId: survey.id,
+        format: filetype,
+        filterCriteria: responseFilters,
+      });
+      if (responsesDownloadUrlResponse?.data) {
+        const link = document.createElement("a");
+        link.href = responsesDownloadUrlResponse.data;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        const errorMessage = getFormattedErrorMessage(responsesDownloadUrlResponse);
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      toast.error("Error downloading responses");
+    }
+  };
+
   useClickOutside(datePickerRef, () => handleDatePickerClose());
 
   return (
     <>
-      <div className="relative mb-12 flex justify-between">
+      <div className="relative flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter />
+          <ResponseFilter survey={survey} />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();
               setIsFilterDropDownOpen(value);
             }}>
             <DropdownMenuTrigger>
-              <div className="flex h-auto min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
+              <div className="flex min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
                 <span className="text-sm text-slate-700">
                   {filterRange === FilterDropDownLabels.CUSTOM_RANGE
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
@@ -404,7 +234,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_7_DAYS);
-                  setDateRange({ from: subDays(new Date(), 7), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 7 days</p>
               </DropdownMenuItem>
@@ -412,7 +242,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_30_DAYS);
-                  setDateRange({ from: subDays(new Date(), 30), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 30 days</p>
               </DropdownMenuItem>
@@ -427,60 +257,58 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <DropdownMenu
-            onOpenChange={(value) => {
-              value && handleDatePickerClose();
-              setIsDownloadDropDownOpen(value);
-            }}>
-            <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
-                <div className="hidden w-full items-center justify-between sm:flex">
-                  <span className="text-sm text-slate-700">Download</span>
-                  {isDownloadDropDownOpen ? (
-                    <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
-                  ) : (
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                  )}
+          {!isSharingPage && (
+            <DropdownMenu
+              onOpenChange={(value) => {
+                value && handleDatePickerClose();
+              }}>
+              <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
+                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:px-6 sm:py-3">
+                  <div className="hidden w-full items-center justify-between sm:flex">
+                    <span className="text-sm text-slate-700">Download</span>
+                    <ArrowDownToLineIcon className="ml-2 h-4 w-4" />
+                  </div>
+                  <DownloadIcon className="block h-4 sm:hidden" />
                 </div>
-                <DownloadIcon className="block h-4 sm:hidden" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  downloadResponses(FilterDownload.ALL, "csv");
-                }}>
-                <p className="text-slate-700">All responses (CSV)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  downloadResponses(FilterDownload.ALL, "xlsx");
-                }}>
-                <p className="text-slate-700">All responses (Excel)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  downloadResponses(FilterDownload.FILTER, "csv");
-                }}>
-                <p className="text-slate-700">Current selection (CSV)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  downloadResponses(FilterDownload.FILTER, "xlsx");
-                }}>
-                <p className="text-slate-700">Current selection (Excel)</p>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.ALL, "csv");
+                  }}>
+                  <p className="text-slate-700">All responses (CSV)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.ALL, "xlsx");
+                  }}>
+                  <p className="text-slate-700">All responses (Excel)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.FILTER, "csv");
+                  }}>
+                  <p className="text-slate-700">Current selection (CSV)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
+                  }}>
+                  <p className="text-slate-700">Current selection (Excel)</p>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         {isDatePickerOpen && (
           <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
             <Calendar
-              initialFocus
+              autoFocus
               mode="range"
               defaultMonth={dateRange?.from}
               selected={hoveredRange ? hoveredRange : dateRange}
@@ -498,5 +326,3 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     </>
   );
 };
-
-export default CustomFilter;

@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { VNode } from "preact";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-
+import { useEffect, useRef, useState } from "preact/hooks";
 import { TPlacement } from "@formbricks/types/common";
 
 interface ModalProps {
@@ -14,15 +13,7 @@ interface ModalProps {
   onClose: () => void;
 }
 
-export default function Modal({
-  children,
-  isOpen,
-  placement,
-  clickOutside,
-  darkOverlay,
-  highlightBorderColor,
-  onClose,
-}: ModalProps) {
+export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, onClose }: ModalProps) => {
   const [show, setShow] = useState(false);
   const isCenter = placement === "center";
   const modalRef = useRef(null);
@@ -34,7 +25,7 @@ export default function Modal({
   useEffect(() => {
     if (!isCenter) return;
 
-    function handleClickOutside(e: MouseEvent) {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         clickOutside &&
         show &&
@@ -43,7 +34,7 @@ export default function Modal({
       ) {
         onClose();
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -54,32 +45,19 @@ export default function Modal({
   const getPlacementStyle = (placement: TPlacement) => {
     switch (placement) {
       case "bottomRight":
-        return "sm:bottom-3 sm:right-3";
+        return "sm:fb-bottom-3 sm:fb-right-3";
       case "topRight":
-        return "sm:top-3 sm:right-3 sm:bottom-3";
+        return "sm:fb-top-3 sm:fb-right-3 sm:fb-bottom-3";
       case "topLeft":
-        return "sm:top-3 sm:left-3 sm:bottom-3";
+        return "sm:fb-top-3 sm:fb-left-3 sm:fb-bottom-3";
       case "bottomLeft":
-        return "sm:bottom-3 sm:left-3";
+        return "sm:fb-bottom-3 sm:fb-left-3";
       case "center":
-        return "sm:top-1/2 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2";
+        return "sm:fb-top-1/2 sm:fb-left-1/2 sm:fb-transform sm:-fb-translate-x-1/2 sm:-fb-translate-y-1/2";
       default:
-        return "sm:bottom-3 sm:right-3";
+        return "sm:fb-bottom-3 sm:fb-right-3";
     }
   };
-
-  const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor)
-      return {
-        overflow: "visible",
-      };
-
-    return {
-      borderRadius: "8px",
-      border: "2px solid",
-      borderColor: highlightBorderColor,
-    };
-  }, [highlightBorderColor]);
 
   if (!show) return null;
 
@@ -87,47 +65,28 @@ export default function Modal({
     <div
       aria-live="assertive"
       className={cn(
-        isCenter ? "pointer-events-auto" : "pointer-events-none",
-        "z-999999 fixed inset-0 flex items-end"
+        isCenter ? "fb-pointer-events-auto" : "fb-pointer-events-none",
+        "fb-z-999999 fb-fixed fb-inset-0 fb-flex fb-items-end"
       )}>
       <div
         className={cn(
-          "relative h-full w-full",
+          "fb-relative fb-h-full fb-w-full",
           isCenter
             ? darkOverlay
-              ? "bg-gray-700/80"
-              : "bg-white/50"
-            : "bg-none transition-all duration-500 ease-in-out"
+              ? "fb-bg-gray-700/80"
+              : "fb-bg-white/50"
+            : "fb-bg-none fb-transition-all fb-duration-500 fb-ease-in-out"
         )}>
         <div
           ref={modalRef}
           className={cn(
             getPlacementStyle(placement),
-            show ? "opacity-100" : "opacity-0",
-            "border-border pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible rounded-lg border bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+            show ? "fb-opacity-100" : "fb-opacity-0",
+            "fb-rounded-custom fb-pointer-events-auto fb-absolute fb-bottom-0 fb-h-fit fb-w-full fb-overflow-visible fb-bg-white fb-shadow-lg fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4 sm:fb-max-w-sm"
           )}>
-          {!isCenter && (
-            <div class="absolute right-0 top-0 block pr-2 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                class="text-close-button hover:text-close-button-focus focus:ring-close-button-focus relative h-5 w-5 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2">
-                <span class="sr-only">Close survey</span>
-                <svg
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4L20 20M4 20L20 4" />
-                </svg>
-              </button>
-            </div>
-          )}
-          <div style={highlightBorderColorStyle}>{children}</div>
+          <div>{children}</div>
         </div>
       </div>
     </div>
   );
-}
+};

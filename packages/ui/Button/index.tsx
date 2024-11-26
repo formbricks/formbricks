@@ -1,13 +1,13 @@
 import { LucideIcon } from "lucide-react";
 import Link, { LinkProps } from "next/link";
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "react";
-
 import { cn } from "@formbricks/lib/cn";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
 
 export type ButtonBaseProps = {
-  variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert" | "darkCTA";
+  variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert";
   size?: "base" | "sm" | "lg" | "fab" | "icon";
   loading?: boolean;
   disabled?: boolean;
@@ -17,6 +17,9 @@ export type ButtonBaseProps = {
   EndIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   endIconClassName?: string;
   shallow?: boolean;
+  tooltip?: string;
+  tooltipSide?: "top" | "right" | "bottom" | "left";
+  tooltipOffset?: number;
 };
 type ButtonBasePropsWithTarget = ButtonBaseProps & { target?: string };
 
@@ -28,10 +31,7 @@ export type ButtonProps = ButtonBasePropsWithTarget &
 
 export const Button: React.ForwardRefExoticComponent<
   React.PropsWithoutRef<ButtonProps> & React.RefAttributes<HTMLAnchorElement | HTMLButtonElement>
-> = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonProps>(function Button(
-  props: ButtonProps,
-  forwardedRef
-) {
+> = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonProps>((props: ButtonProps, forwardedRef) => {
   const {
     loading = false,
     variant = "primary",
@@ -41,6 +41,8 @@ export const Button: React.ForwardRefExoticComponent<
     endIconClassName,
     EndIcon,
     shallow,
+    tooltipSide = "top",
+    tooltipOffset = 4,
     // attributes propagated from `HTMLAnchorProps` or `HTMLButtonProps`
     ...passThroughProps
   } = props;
@@ -77,13 +79,13 @@ export const Button: React.ForwardRefExoticComponent<
             : "text-white bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 transition ease-in-out delay-50 hover:scale-105"),
         variant === "primary" &&
           (disabled
-            ? "border border-transparent bg-slate-400 text-white"
-            : "text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"),
+            ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
+            : "text-slate-100 hover:text-slate-50 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
 
         variant === "minimal" &&
           (disabled
             ? "border border-slate-200 text-slate-400"
-            : "hover:text-slate-600 text-slate-700  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:text-slate-700 dark:hover:text-slate-500"),
+            : "hover:text-slate-600 text-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:text-slate-700 dark:hover:text-slate-500"),
         variant === "alert" &&
           (disabled
             ? "border border-transparent bg-slate-400 text-white"
@@ -96,10 +98,6 @@ export const Button: React.ForwardRefExoticComponent<
           (disabled
             ? "text-slate-400 bg-transparent"
             : "hover:bg-red-200 text-red-700 bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:bg-red-50 focus:ring-red-500"),
-        variant === "darkCTA" &&
-          (disabled
-            ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
-            : "text-slate-100 hover:text-slate-50 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
 
         // set not-allowed cursor if disabled
         loading ? "cursor-wait" : disabled ? "cursor-not-allowed" : "",
@@ -115,11 +113,7 @@ export const Button: React.ForwardRefExoticComponent<
     <>
       {StartIcon && (
         <StartIcon
-          className={cn(
-            "flex",
-            size === "icon" ? "h-4 w-4 " : "-ml-1 mr-1 h-3 w-3",
-            startIconClassName || ""
-          )}
+          className={cn("flex", size === "icon" ? "h-4 w-4" : "-ml-1 mr-1 h-3 w-3", startIconClassName || "")}
         />
       )}
       {props.children}
@@ -142,7 +136,7 @@ export const Button: React.ForwardRefExoticComponent<
           </svg>
         </div>
       )}
-      {EndIcon && <EndIcon className={cn("-mr-1 ml-2 inline h-5 w-5 rtl:mr-2", endIconClassName || "")} />}
+      {EndIcon && <EndIcon className={cn("-mr-1 ml-2 inline h-4 w-4 rtl:mr-2", endIconClassName || "")} />}
     </>
   );
   return props.href ? (
@@ -150,6 +144,41 @@ export const Button: React.ForwardRefExoticComponent<
       {element}
     </Link>
   ) : (
-    element
+    <Wrapper
+      data-testid="wrapper"
+      tooltip={props.tooltip}
+      tooltipSide={tooltipSide}
+      tooltipOffset={tooltipOffset}>
+      {element}
+    </Wrapper>
   );
 });
+
+const Wrapper = ({
+  children,
+  tooltip,
+  tooltipSide = "top",
+  tooltipOffset = 0,
+}: {
+  tooltip?: string;
+  children: React.ReactNode;
+  tooltipSide?: "top" | "right" | "bottom" | "left";
+  tooltipOffset?: number;
+}) => {
+  if (!tooltip) {
+    return <>{children}</>;
+  }
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent side={tooltipSide} sideOffset={tooltipOffset}>
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+Button.displayName = "Button";

@@ -1,7 +1,6 @@
 import cuid2 from "@paralleldrive/cuid2";
-
 import { decryptAES128, symmetricDecrypt, symmetricEncrypt } from "../../lib/crypto";
-import { env } from "../../lib/env.mjs";
+import { env } from "../../lib/env";
 
 // generate encrypted single use id for the survey
 export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
@@ -12,6 +11,16 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
 
   const encryptedCuid = symmetricEncrypt(cuid, env.ENCRYPTION_KEY);
   return encryptedCuid;
+};
+
+export const generateSurveySingleUseIds = (count: number, isEncrypted: boolean): string[] => {
+  const singleUseIds: string[] = [];
+
+  for (let i = 0; i < count; i++) {
+    singleUseIds.push(generateSurveySingleUseId(isEncrypted));
+  }
+
+  return singleUseIds;
 };
 
 // validate the survey single use id

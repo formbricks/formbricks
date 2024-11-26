@@ -1,47 +1,52 @@
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { getSpreadsheetNameByIdAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+import {
+  constructGoogleSheetsUrl,
+  extractSpreadsheetIdFromUrl,
+  isValidGoogleSheetsUrl,
+} from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/util";
+import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-
-import { TIntegrationItem } from "@formbricks/types/integration";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
   TIntegrationGoogleSheetsInput,
-} from "@formbricks/types/integration/googleSheet";
-import { TSurvey } from "@formbricks/types/surveys";
+} from "@formbricks/types/integration/google-sheet";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { AdditionalIntegrationSettings } from "@formbricks/ui/AdditionalIntegrationSettings";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
+import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
+import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 
-import GoogleSheetLogo from "../images/google-sheets-small.png";
-
-interface AddWebhookModalProps {
+interface AddIntegrationModalProps {
   environmentId: string;
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
-  spreadsheets: TIntegrationItem[];
   googleSheetIntegration: TIntegrationGoogleSheets;
   selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
+  attributeClasses: TAttributeClass[];
 }
 
-export default function AddIntegrationModal({
+export const AddIntegrationModal = ({
   environmentId,
   surveys,
   open,
   setOpen,
-  spreadsheets,
   googleSheetIntegration,
   selectedIntegration,
-}: AddWebhookModalProps) {
-  const { handleSubmit } = useForm();
-
-  const integrationData = {
+  attributeClasses,
+}: AddIntegrationModalProps) => {
+  const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
     surveyId: "",
@@ -50,13 +55,15 @@ export default function AddIntegrationModal({
     questions: "",
     createdAt: new Date(),
   };
-
+  const { handleSubmit } = useForm();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingSheet, setIsLinkingSheet] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
-  const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
-  const [isDeleting, setIsDeleting] = useState<any>(null);
+  const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const existingIntegrationData = googleSheetIntegration?.config?.data;
+  const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
+  const [includeMetadata, setIncludeMetadata] = useState(false);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
     type: "googleSheets",
     config: {
@@ -67,46 +74,51 @@ export default function AddIntegrationModal({
   };
 
   useEffect(() => {
-    if (selectedSurvey) {
+    if (selectedSurvey && !selectedIntegration) {
       const questionIds = selectedSurvey.questions.map((question) => question.id);
-      if (!selectedIntegration) {
-        setSelectedQuestions(questionIds);
-      }
+      setSelectedQuestions(questionIds);
     }
   }, [selectedIntegration, selectedSurvey]);
 
   useEffect(() => {
     if (selectedIntegration) {
-      setSelectedSpreadsheet({
-        id: selectedIntegration.spreadsheetId,
-        name: selectedIntegration.spreadsheetName,
-      });
+      setSpreadsheetUrl(constructGoogleSheetsUrl(selectedIntegration.spreadsheetId));
       setSelectedSurvey(
         surveys.find((survey) => {
           return survey.id === selectedIntegration.surveyId;
         })!
       );
       setSelectedQuestions(selectedIntegration.questionIds);
+      setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
+      setIncludeMetadata(!!selectedIntegration.includeMetadata);
       return;
+    } else {
+      setSpreadsheetUrl("");
     }
     resetForm();
   }, [selectedIntegration, surveys]);
 
   const linkSheet = async () => {
     try {
-      if (!selectedSpreadsheet) {
-        throw new Error("Please select a spreadsheet");
+      if (!isValidGoogleSheetsUrl(spreadsheetUrl)) {
+        throw new Error("Please enter a valid spreadsheet url");
       }
       if (!selectedSurvey) {
         throw new Error("Please select a survey");
       }
-
       if (selectedQuestions.length === 0) {
         throw new Error("Please select at least one question");
       }
+      const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
+      const spreadsheetName = await getSpreadsheetNameByIdAction(
+        googleSheetIntegration,
+        environmentId,
+        spreadsheetId
+      );
+
       setIsLinkingSheet(true);
-      integrationData.spreadsheetId = selectedSpreadsheet.id;
-      integrationData.spreadsheetName = selectedSpreadsheet.name;
+      integrationData.spreadsheetId = spreadsheetId;
+      integrationData.spreadsheetName = spreadsheetName;
       integrationData.surveyId = selectedSurvey.id;
       integrationData.surveyName = selectedSurvey.name;
       integrationData.questionIds = selectedQuestions;
@@ -115,6 +127,8 @@ export default function AddIntegrationModal({
           ? "All questions"
           : "Selected questions";
       integrationData.createdAt = new Date();
+      integrationData.includeHiddenFields = includeHiddenFields;
+      integrationData.includeMetadata = includeMetadata;
       if (selectedIntegration) {
         // update action
         googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
@@ -122,7 +136,7 @@ export default function AddIntegrationModal({
         // create action
         googleSheetIntegrationData.config!.data.push(integrationData);
       }
-      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
@@ -142,20 +156,23 @@ export default function AddIntegrationModal({
   };
 
   const setOpenWithStates = (isOpen: boolean) => {
+    resetForm();
     setOpen(isOpen);
   };
 
   const resetForm = () => {
+    setSpreadsheetUrl("");
     setIsLinkingSheet(false);
-    setSelectedSpreadsheet("");
     setSelectedSurvey(null);
+    setIncludeHiddenFields(false);
+    setIncludeMetadata(false);
   };
 
   const deleteLink = async () => {
     googleSheetIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction({ environmentId, integrationData: googleSheetIntegrationData });
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {
@@ -165,58 +182,8 @@ export default function AddIntegrationModal({
     }
   };
 
-  const hasMatchingId = googleSheetIntegration.config.data.some((configData) => {
-    if (!selectedSpreadsheet) {
-      return false;
-    }
-    return configData.spreadsheetId === selectedSpreadsheet.id;
-  });
-
-  const DropdownSelector = ({ label, items, selectedItem, setSelectedItem, disabled }) => {
-    return (
-      <div className="col-span-1">
-        <Label htmlFor={label}>{label}</Label>
-        <div className="mt-1 flex">
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <button
-                disabled={disabled ? disabled : false}
-                type="button"
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
-                <span className="flex flex-1">
-                  <span>{selectedItem ? selectedItem.name : `${label}`}</span>
-                </span>
-                <span className="flex h-full items-center border-l pl-3">
-                  <ChevronDownIcon className="h-4 w-4 text-slate-500" />
-                </span>
-              </button>
-            </DropdownMenu.Trigger>
-
-            {!disabled && (
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="z-50 max-h-[10rem] min-w-[220px] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
-                  align="start">
-                  {items &&
-                    items.map((item) => (
-                      <DropdownMenu.Item
-                        key={item.id}
-                        className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                        onSelect={() => setSelectedItem(item)}>
-                        {item.name}
-                      </DropdownMenu.Item>
-                    ))}
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            )}
-          </DropdownMenu.Root>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
+    <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={true}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex w-full items-center justify-between p-6">
@@ -236,23 +203,13 @@ export default function AddIntegrationModal({
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
-                  <DropdownSelector
-                    label="Select Spreadsheet"
-                    items={spreadsheets}
-                    selectedItem={selectedSpreadsheet}
-                    setSelectedItem={setSelectedSpreadsheet}
-                    disabled={spreadsheets.length === 0}
+                  <Label>Spreadsheet URL</Label>
+                  <Input
+                    value={spreadsheetUrl}
+                    onChange={(e) => setSpreadsheetUrl(e.target.value)}
+                    placeholder="https://docs.google.com/spreadsheets/d/<your-spreadsheet-id>"
+                    className="mt-1"
                   />
-                  {selectedSpreadsheet && hasMatchingId && (
-                    <p className="text-xs text-amber-700">
-                      <strong>Warning:</strong> You have already connected one survey with this sheet. Your
-                      data will be inconsistent
-                    </p>
-                  )}
-                  <p className="m-1 text-xs text-slate-500">
-                    {spreadsheets.length === 0 &&
-                      "You have to create at least one spreadshseet to be able to setup this integration"}
-                  </p>
                 </div>
                 <div>
                   <DropdownSelector
@@ -269,29 +226,41 @@ export default function AddIntegrationModal({
                 </div>
               </div>
               {selectedSurvey && (
-                <div>
-                  <Label htmlFor="Surveys">Questions</Label>
-                  <div className="mt-1 rounded-lg border border-slate-200">
-                    <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                      {selectedSurvey?.questions.map((question) => (
-                        <div key={question.id} className="my-1 flex items-center space-x-2">
-                          <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                            <Checkbox
-                              type="button"
-                              id={question.id}
-                              value={question.id}
-                              className="bg-white"
-                              checked={selectedQuestions.includes(question.id)}
-                              onCheckedChange={() => {
-                                handleCheckboxChange(question.id);
-                              }}
-                            />
-                            <span className="ml-2">{question.headline}</span>
-                          </label>
-                        </div>
-                      ))}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="Surveys">Questions</Label>
+                    <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
+                      <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
+                        {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions.map(
+                          (question) => (
+                            <div key={question.id} className="my-1 flex items-center space-x-2">
+                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                                <Checkbox
+                                  type="button"
+                                  id={question.id}
+                                  value={question.id}
+                                  className="bg-white"
+                                  checked={selectedQuestions.includes(question.id)}
+                                  onCheckedChange={() => {
+                                    handleCheckboxChange(question.id);
+                                  }}
+                                />
+                                <span className="ml-2 w-[30rem] truncate">
+                                  {getLocalizedValue(question.headline, "default")}
+                                </span>
+                              </label>
+                            </div>
+                          )
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <AdditionalIntegrationSettings
+                    includeHiddenFields={includeHiddenFields}
+                    includeMetadata={includeMetadata}
+                    setIncludeHiddenFields={setIncludeHiddenFields}
+                    setIncludeMetadata={setIncludeMetadata}
+                  />
                 </div>
               )}
             </div>
@@ -319,7 +288,7 @@ export default function AddIntegrationModal({
                   Cancel
                 </Button>
               )}
-              <Button variant="darkCTA" type="submit" loading={isLinkingSheet}>
+              <Button type="submit" loading={isLinkingSheet}>
                 {selectedIntegration ? "Update" : "Link Sheet"}
               </Button>
             </div>
@@ -328,4 +297,4 @@ export default function AddIntegrationModal({
       </div>
     </Modal>
   );
-}
+};

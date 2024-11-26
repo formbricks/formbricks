@@ -1,7 +1,7 @@
-import BackToLoginButton from "@/app/(auth)/auth/components/BackToLoginButton";
-import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
+import { BackToLoginButton } from "@/app/(auth)/auth/components/BackToLoginButton";
+import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
 
-export default function ResetPasswordSuccessPage() {
+const Page = () => {
   return (
     <FormWrapper>
       <div>
@@ -13,4 +13,6 @@ export default function ResetPasswordSuccessPage() {
       </div>
     </FormWrapper>
   );
-}
+};
+
+export default Page;

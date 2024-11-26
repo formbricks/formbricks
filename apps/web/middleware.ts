@@ -3,10 +3,12 @@ import {
   loginLimiter,
   shareUrlLimiter,
   signUpLimiter,
+  syncUserIdentificationLimiter,
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
-  isWebAppRoute,
+  isAuthProtectedRoute,
+  isSyncWithUserIdentificationEndpoint,
   loginRoute,
   shareUrlRoute,
   signupRoute,
@@ -14,56 +16,59 @@ import {
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
+import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-
-export async function middleware(request: NextRequest) {
+export const middleware = async (request: NextRequest) => {
+  // issue with next auth types & Next 15; let's review when new fixes are available
   const token = await getToken({ req: request });
 
-  if (isWebAppRoute(request.nextUrl.pathname) && !token) {
-    const loginUrl = new URL(
-      `/auth/login?callbackUrl=${encodeURIComponent(request.nextUrl.toString())}`,
-      WEBAPP_URL
-    );
-    return NextResponse.redirect(loginUrl.href);
+  if (isAuthProtectedRoute(request.nextUrl.pathname) && !token) {
+    const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;
+    return NextResponse.redirect(loginUrl);
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+  if (callbackUrl && !isValidCallbackUrl(callbackUrl, WEBAPP_URL)) {
+    return NextResponse.json({ error: "Invalid callback URL" });
+  }
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
-
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
     return NextResponse.next();
   }
 
-  const res = NextResponse.next();
-  let ip = request.ip ?? request.headers.get("x-real-ip");
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (!ip && forwardedFor) {
-    ip = forwardedFor.split(",").at(0) ?? null;
-  }
+  let ip =
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    request.ip;
 
   if (ip) {
     try {
       if (loginRoute(request.nextUrl.pathname)) {
-        await loginLimiter.check(ip);
+        await loginLimiter(`login-${ip}`);
       } else if (signupRoute(request.nextUrl.pathname)) {
-        await signUpLimiter.check(ip);
+        await signUpLimiter(`signup-${ip}`);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
-        await clientSideApiEndpointsLimiter.check(ip);
-      } else if (shareUrlRoute(request.nextUrl.pathname)) {
-        await shareUrlLimiter.check(ip);
-      }
-      return res;
-    } catch (_e) {
-      console.log("Rate Limiting IP: ", ip);
+        await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
 
+        const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
+        if (envIdAndUserId) {
+          const { environmentId, userId } = envIdAndUserId;
+          await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
+        }
+      } else if (shareUrlRoute(request.nextUrl.pathname)) {
+        await shareUrlLimiter(`share-${ip}`);
+      }
+      return NextResponse.next();
+    } catch (e) {
+      console.log(`Rate Limiting IP: ${ip}`);
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
   }
-  return res;
-}
+  return NextResponse.next();
+};
 
 export const config = {
   matcher: [
@@ -74,7 +79,9 @@ export const config = {
     "/api/v1/client/storage",
     "/share/(.*)/:path",
     "/environments/:path*",
+    "/setup/organization/:path*",
     "/api/auth/signout",
     "/auth/login",
+    "/api/packages/:path*",
   ],
 };

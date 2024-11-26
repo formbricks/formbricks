@@ -5,7 +5,7 @@ export type TAccessType = z.infer<typeof ZAccessType>;
 
 export const ZStorageRetrievalParams = z.object({
   fileName: z.string(),
-  environmentId: z.string().cuid(),
+  environmentId: z.string().cuid2(),
   accessType: ZAccessType,
 });
 
@@ -15,3 +15,21 @@ export const ZUploadFileConfig = z.object({
 });
 
 export type TUploadFileConfig = z.infer<typeof ZUploadFileConfig>;
+
+const ZUploadFileResponse = z.object({
+  data: z.object({
+    signedUrl: z.string(),
+    fileUrl: z.string(),
+    signingData: z
+      .object({
+        signature: z.string(),
+        timestamp: z.number(),
+        uuid: z.string(),
+      })
+      .nullable(),
+    presignedFields: z.record(z.string()).optional(),
+    updatedFileName: z.string(),
+  }),
+});
+
+export type TUploadFileResponse = z.infer<typeof ZUploadFileResponse>;

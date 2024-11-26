@@ -1,50 +1,42 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "./lib/fixtures";
+import { organizations } from "./utils/mock";
 
-import { signUpAndLogin } from "./utils/helper";
-import { teams, users } from "./utils/mock";
-
-const { role, productName, useCase } = teams.onboarding[0];
+const { productName } = organizations.onboarding[0];
 
 test.describe("Onboarding Flow Test", async () => {
-  test("Step by Step", async ({ page }) => {
-    const { name, email, password } = users.onboarding[0];
-    await signUpAndLogin(page, name, email, password);
-    await page.waitForURL("/onboarding");
-    await expect(page).toHaveURL("/onboarding");
+  test("link survey", async ({ page, users }) => {
+    const user = await users.create({ withoutProduct: true });
+    await user.login();
 
-    await page.getByRole("button", { name: "Begin (1 min)" }).click();
-    await page.getByLabel(role).check();
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
 
-    await expect(page.getByLabel(useCase)).toBeVisible();
-    await page.getByLabel(useCase).check();
-    await page.getByRole("button", { name: "Next" }).click();
-
-    await expect(page.getByPlaceholder("e.g. Formbricks")).toBeVisible();
+    await page.getByRole("button", { name: "Anywhere online Link" }).click();
+    await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
+    await page.getByPlaceholder("e.g. Formbricks").click();
     await page.getByPlaceholder("e.g. Formbricks").fill(productName);
-
-    await page.locator("#color-picker").click();
-    await page.getByLabel("Hue").click();
-
-    await page.locator("div").filter({ hasText: "Create your team's product." }).nth(1).click();
-    await page.getByRole("button", { name: "Done" }).click();
+    await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(productName)).toBeVisible();
   });
 
-  test("Skip", async ({ page }) => {
-    const { name, email, password } = users.onboarding[1];
-    await signUpAndLogin(page, name, email, password);
-    await page.waitForURL("/onboarding");
-    await expect(page).toHaveURL("/onboarding");
+  test("website survey", async ({ page, users }) => {
+    const user = await users.create({ withoutProduct: true });
+    await user.login();
 
-    await page.getByRole("button", { name: "I'll do it later" }).click();
-    await page.getByRole("button", { name: "I'll do it later" }).click();
+    await page.waitForURL(/\/organizations\/[^/]+\/products\/new\/channel/);
+
+    await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
+    await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
+    await page.getByPlaceholder("e.g. Formbricks").click();
+    await page.getByPlaceholder("e.g. Formbricks").fill(productName);
+    await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
+    await page.getByRole("button", { name: "I don't know how to do it" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/connect\/invite/);
+    await page.getByRole("button", { name: "Not now" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
-    await expect(page.getByText("My Product")).toBeVisible();
+    await expect(page.getByText(productName)).toBeVisible();
   });
 });

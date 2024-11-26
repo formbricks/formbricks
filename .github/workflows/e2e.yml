@@ -2,64 +2,83 @@ name: E2E Tests
 on:
   workflow_call:
   workflow_dispatch:
+env:
+  TELEMETRY_DISABLED: 1
 jobs:
   build:
     name: Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U testuser"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
 
-      - name: Build & Cache Web Binaries
-        uses: ./.github/actions/cache-build-web
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --config.platform=linux --config.architecture=x64
+        shell: bash
 
-      - name: Start PostgreSQL
+      - name: create .env
+        run: cp .env.example .env
+        shell: bash
+
+      - name: Fill ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
         run: |
-          cd packages/database && pnpm db:up &
-          for attempt in {1..20}; do
-            if nc -zv localhost 5432; then
-              echo "Ready"
-              break
-            fi
-            echo "Waiting..."
-            sleep 5
-          done
-          pnpm db:migrate:dev
-      - name: Serve packages for lazy loading
+          RANDOM_KEY=$(openssl rand -hex 32)
+          sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
+          sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
+          echo "E2E_TESTING=1" >> .env
+        shell: bash
+
+      - name: Build App
         run: |
-          cd packages/surveys && pnpm serve &
+          pnpm build --filter=@formbricks/web...
+
+      - name: Apply Prisma Migrations
+        run: |
+          pnpm prisma migrate deploy
 
       - name: Run App
         run: |
-          NODE_ENV=test pnpm start --filter=web &
-          for attempt in {1..20}; do
+          NODE_ENV=test pnpm start --filter=@formbricks/web &
+          sleep 10  # Optional: gives some buffer for the app to start
+          for attempt in {1..10}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
-              echo "Ready"
+              echo "Application is ready."
               break
             fi
-            echo "Waiting..."
+            if [ $attempt -eq 10 ]; then
+              echo "Application failed to start in time."
+              exit 1
+            fi
+            echo "Still waiting for the application to be ready..."
             sleep 10
           done
 
-      - name: Test Serve endpoints
-        run: |
-          curl -s http://localhost:3003
-
-      - name: Cache Playwright
-        uses: actions/cache@v3
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
-
       - name: Install Playwright
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
 
       - name: Run E2E Tests

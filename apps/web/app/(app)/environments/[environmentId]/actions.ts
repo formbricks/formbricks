@@ -1,98 +1,98 @@
 "use server";
 
-import { Team } from "@prisma/client";
-import { getServerSession } from "next-auth";
-
-import { authOptions } from "@formbricks/lib/authOptions";
-import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { z } from "zod";
+import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
+import { authenticatedActionClient } from "@formbricks/lib/actionClient";
+import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createMembership } from "@formbricks/lib/membership/service";
+import { createOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createShortUrl } from "@formbricks/lib/shortUrl/service";
-import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { updateUser } from "@formbricks/lib/user/service";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { ZProductUpdateInput } from "@formbricks/types/product";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
-export const createShortUrlAction = async (url: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthenticationError("Not authenticated");
+const ZCreateOrganizationAction = z.object({
+  organizationName: z.string(),
+});
 
-  const regexPattern = new RegExp("^" + WEBAPP_URL);
-  const isValidUrl = regexPattern.test(url);
+export const createOrganizationAction = authenticatedActionClient
+  .schema(ZCreateOrganizationAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+    if (!isMultiOrgEnabled)
+      throw new OperationNotAllowedError(
+        "Creating Multiple organization is restricted on your instance of Formbricks"
+      );
 
-  if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
+    const newOrganization = await createOrganization({
+      name: parsedInput.organizationName,
+    });
 
-  const shortUrl = await createShortUrl(url);
-  const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
-  return fullShortUrl;
-};
+    await createMembership(newOrganization.id, ctx.user.id, {
+      role: "owner",
+      accepted: true,
+    });
 
-export async function createTeamAction(teamName: string): Promise<Team> {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+    const product = await createProduct(newOrganization.id, {
+      name: "My Product",
+    });
 
-  const newTeam = await createTeam({
-    name: teamName,
+    const updatedNotificationSettings: TUserNotificationSettings = {
+      ...ctx.user.notificationSettings,
+      alert: {
+        ...ctx.user.notificationSettings?.alert,
+      },
+      weeklySummary: {
+        ...ctx.user.notificationSettings?.weeklySummary,
+        [product.id]: true,
+      },
+      unsubscribedOrganizationIds: Array.from(
+        new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
+      ),
+    };
+
+    await updateUser(ctx.user.id, {
+      notificationSettings: updatedNotificationSettings,
+    });
+
+    return newOrganization;
   });
 
-  await createMembership(newTeam.id, session.user.id, {
-    role: "owner",
-    accepted: true,
+const ZCreateProductAction = z.object({
+  organizationId: ZId,
+  data: ZProductUpdateInput,
+});
+
+export const createProductAction = authenticatedActionClient
+  .schema(ZCreateProductAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const { user } = ctx;
+
+    await checkAuthorization({
+      schema: ZProductUpdateInput,
+      data: parsedInput.data,
+      userId: user.id,
+      organizationId: parsedInput.organizationId,
+      rules: ["product", "create"],
+    });
+
+    const product = await createProduct(parsedInput.organizationId, parsedInput.data);
+    const updatedNotificationSettings = {
+      ...user.notificationSettings,
+      alert: {
+        ...user.notificationSettings?.alert,
+      },
+      weeklySummary: {
+        ...user.notificationSettings?.weeklySummary,
+        [product.id]: true,
+      },
+    };
+
+    await updateUser(user.id, {
+      notificationSettings: updatedNotificationSettings,
+    });
+
+    return product;
   });
-
-  const product = await createProduct(newTeam.id, {
-    name: "My Product",
-  });
-
-  const updatedNotificationSettings = {
-    ...session.user.notificationSettings,
-    alert: {
-      ...session.user.notificationSettings?.alert,
-    },
-    weeklySummary: {
-      ...session.user.notificationSettings?.weeklySummary,
-      [product.id]: true,
-    },
-  };
-
-  await updateUser(session.user.id, {
-    notificationSettings: updatedNotificationSettings,
-  });
-
-  return newTeam;
-}
-
-export const createProductAction = async (environmentId: string, productName: string) => {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const team = await getTeamByEnvironmentId(environmentId);
-  if (!team) throw new ResourceNotFoundError("Team from environment", environmentId);
-
-  const product = await createProduct(team.id, {
-    name: productName,
-  });
-  const updatedNotificationSettings = {
-    ...session.user.notificationSettings,
-    alert: {
-      ...session.user.notificationSettings?.alert,
-    },
-    weeklySummary: {
-      ...session.user.notificationSettings?.weeklySummary,
-      [product.id]: true,
-    },
-  };
-
-  await updateUser(session.user.id, {
-    notificationSettings: updatedNotificationSettings,
-  });
-
-  // get production environment
-  const productionEnvironment = product.environments.find((environment) => environment.type === "production");
-  if (!productionEnvironment) throw new ResourceNotFoundError("Production environment", environmentId);
-
-  return productionEnvironment;
-};

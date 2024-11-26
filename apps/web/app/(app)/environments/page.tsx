@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
-export default function EnvironmentsPage({}) {
+const Page = () => {
   return redirect("/");
-}
+};
+
+export default Page;
