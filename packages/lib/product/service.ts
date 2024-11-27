@@ -320,16 +320,6 @@ export const createProduct = async (
   const { environments, teamIds, ...data } = productInput;
 
   try {
-    const existingProduct = await prisma.product.findFirst({
-      where: {
-        organizationId,
-        name: productInput.name,
-      },
-    });
-
-    if (existingProduct) {
-      throw new InvalidInputError("A product with this name already exists in your organization");
-    }
     let product = await prisma.product.create({
       data: {
         config: {
@@ -371,6 +361,10 @@ export const createProduct = async (
 
     return updatedProduct;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new InvalidInputError("A product with this name already exists in your organization");
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error(error.message);
       throw new DatabaseError(error.message);
