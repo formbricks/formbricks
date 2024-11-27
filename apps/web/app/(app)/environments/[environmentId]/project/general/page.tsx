@@ -32,7 +32,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   ]);
 
   if (!project) {
-    throw new Error(t("environments.project.general.project_not_found"));
+    throw new Error(t("common.project_not_found"));
   }
   if (!session) {
     throw new Error(t("common.session_not_found"));

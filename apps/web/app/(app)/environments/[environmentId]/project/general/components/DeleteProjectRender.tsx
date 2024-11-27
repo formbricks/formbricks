@@ -9,14 +9,15 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { truncate } from "@formbricks/lib/utils/strings";
 import { TProject } from "@formbricks/types/project";
 
-type DeleteProjectRenderProps = {
+interface DeleteProjectRenderProps {
   isDeleteDisabled: boolean;
   isOwnerOrManager: boolean;
   project: TProject;
-};
+}
 
 export const DeleteProjectRender = ({
   isDeleteDisabled,
@@ -31,6 +32,7 @@ export const DeleteProjectRender = ({
     setIsDeleting(true);
     const deleteProjectResponse = await deleteProjectAction({ projectId: project.id });
     if (deleteProjectResponse?.data) {
+      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       toast.success(t("environments.project.general.project_deleted_successfully"));
       router.push("/");
     } else {
