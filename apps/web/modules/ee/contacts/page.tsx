@@ -1,3 +1,4 @@
+import { contactCache } from "@/lib/cache/contact";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getContactAttributeKeys, getContacts } from "@/modules/ee/contacts/lib/contacts";
@@ -63,6 +64,11 @@ export const ContactsPage = async ({
     <UploadContactsCSVButton environmentId={environment.id} contactAttributeKeys={contactAttributeKeys} />
   );
 
+  const refreshContacts = async () => {
+    "use server";
+    contactCache.revalidate({ environmentId: params.environmentId });
+  };
+
   return (
     <PageContentWrapper>
       <PageHeader
@@ -80,6 +86,7 @@ export const ContactsPage = async ({
           isReadOnly={isReadOnly}
           initialContacts={initialContacts}
           hasMore={initialContacts.length <= ITEMS_PER_PAGE}
+          refreshContacts={refreshContacts}
         />
       ) : (
         <div className="flex items-center justify-center">

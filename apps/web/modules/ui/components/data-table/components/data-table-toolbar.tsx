@@ -1,6 +1,6 @@
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Table } from "@tanstack/react-table";
-import { MoveVerticalIcon, SettingsIcon } from "lucide-react";
+import { MoveVerticalIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { SelectedRowSettings } from "./selected-row-settings";
@@ -13,6 +13,7 @@ interface DataTableToolbarProps<T> {
   deleteRows: (rowIds: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
+  refreshContacts: () => void;
 }
 
 export const DataTableToolbar = <T,>({
@@ -23,8 +24,10 @@ export const DataTableToolbar = <T,>({
   deleteRows,
   type,
   deleteAction,
+  refreshContacts,
 }: DataTableToolbarProps<T>) => {
   const t = useTranslations();
+
   return (
     <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
@@ -33,6 +36,13 @@ export const DataTableToolbar = <T,>({
         <div></div>
       )}
       <div className="flex space-x-2">
+        <TooltipRenderer tooltipContent={t("common.table_settings")} shouldRender={true}>
+          <div
+            onClick={() => refreshContacts()}
+            className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
+            <RefreshCcwIcon strokeWidth={1.5} className="m-1 h-6 w-6 p-0.5" />
+          </div>
+        </TooltipRenderer>
         <TooltipRenderer tooltipContent={t("common.table_settings")} shouldRender={true}>
           <div
             onClick={() => setIsTableSettingsModalOpen(true)}

@@ -22,6 +22,7 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   hasMore: boolean;
+  refreshContacts: () => void;
 }
 
 export const ContactDataView = ({
@@ -31,10 +32,10 @@ export const ContactDataView = ({
   isReadOnly,
   hasMore: initialHasMore,
   initialContacts,
+  refreshContacts,
 }: ContactDataViewProps) => {
   const router = useRouter();
   const [contacts, setContacts] = useState<TContactWithAttributes[]>([...initialContacts]);
-  // const [isContactsLoaded, setIsContactsLoaded] = useState(false);
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
@@ -105,6 +106,7 @@ export const ContactDataView = ({
       searchValue={searchValue}
       setSearchValue={setSearchValue}
       isReadOnly={isReadOnly}
+      refreshContacts={refreshContacts}
     />
   );
 };
