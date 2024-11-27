@@ -115,14 +115,15 @@ export const ContactsTable = ({
         .getAllLeafColumns()
         .map((column) => column.id)
         .reduce((acc, curr) => {
-          acc[curr] = true;
+          acc[curr] = false;
           return acc;
         }, {}) as Record<string, true>;
 
       setColumnVisibility({
         ...initialVisibility,
-        userId: false,
-        contactsTableUser: false,
+        email: true,
+        firstName: true,
+        lastName: true,
       });
     }
 
