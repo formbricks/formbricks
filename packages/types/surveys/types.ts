@@ -2,7 +2,7 @@ import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
-import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
+import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZInsight } from "../insights";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
@@ -31,13 +31,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z
-    .string()
-    .url({ message: "Invalid Button Url in Ending card" })
-    .refine((url) => url.startsWith("https://"), {
-      message: "URL must start with https://",
-    })
-    .optional(),
+  buttonLink: getZSafeUrl("Invalid Button Url in Ending card").optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -46,13 +40,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z
-    .string()
-    .url({ message: "Invalid Redirect Url in Ending card" })
-    .refine((url) => url.startsWith("https://"), {
-      message: "URL must start with https://",
-    })
-    .optional(),
+  url: getZSafeUrl("Invalid Redirect Url").optional(),
   label: z.string().optional(),
 });
 
