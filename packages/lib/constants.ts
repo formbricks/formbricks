@@ -145,6 +145,7 @@ export const LOGIN_RATE_LIMIT = {
   interval: 15 * 60, // 15 minutes
   allowedPerInterval: 30,
 };
+
 export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 5 * 60, // 5 minutes
   allowedPerInterval: 200,

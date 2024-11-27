@@ -1,11 +1,3 @@
-import { FormWrapper } from "@/app/(auth)/auth/components/FormWrapper";
-import { PasswordResetForm } from "@/app/(auth)/auth/forgot-password/components/PasswordResetForm";
+import { ForgotPasswordPage } from "@/modules/auth/forgot-password/page";
 
-const Page = () => {
-  return (
-    <FormWrapper>
-      <PasswordResetForm />
-    </FormWrapper>
-  );
-};
-export default Page;
+export default ForgotPasswordPage;
