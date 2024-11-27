@@ -312,7 +312,6 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsContactsEnabled = async (): Promise<boolean> => {
-  return true;
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
     return previousResult && previousResult.features ? previousResult.features.contacts : false;
