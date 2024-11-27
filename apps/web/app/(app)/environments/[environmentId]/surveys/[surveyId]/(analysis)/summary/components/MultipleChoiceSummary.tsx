@@ -142,7 +142,7 @@ export const MultipleChoiceSummary = ({
                         <Link
                           href={
                             otherValue.contact.id
-                              ? `/environments/${environmentId}/people/${otherValue.contact.id}`
+                              ? `/environments/${environmentId}/contacts/${otherValue.contact.id}`
                               : { pathname: null }
                           }
                           key={idx}

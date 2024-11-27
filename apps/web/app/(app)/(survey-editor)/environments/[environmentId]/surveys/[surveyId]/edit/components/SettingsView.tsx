@@ -1,3 +1,4 @@
+import { TargetingLockedCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/TargetingLockedCard";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -52,14 +53,8 @@ export const SettingsView = ({
 
       {localSurvey.type === "app" ? (
         <div>
-          {isUserTargetingAllowed && (
+          {isUserTargetingAllowed ? (
             <div className="relative">
-              {/* <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4">
-                <p className="text-lg font-medium text-slate-900">Please Upgrade</p>
-                <Button variant="primary" size="sm" className="w-max">
-                  Upgrade
-                </Button>
-              </div> */}
               <div className="blur-none">
                 <TargetingCard
                   key={localSurvey.segment?.id}
@@ -72,6 +67,8 @@ export const SettingsView = ({
                 />
               </div>
             </div>
+          ) : (
+            <TargetingLockedCard environmentId={environment.id} />
           )}
         </div>
       ) : null}

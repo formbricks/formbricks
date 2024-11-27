@@ -195,7 +195,7 @@ function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: Att
               });
             }}>
             <TagIcon className="h-4 w-4" />
-            <p>{attributeKey.name}</p>
+            <p>{attributeKey.name ?? attributeKey.key}</p>
           </div>
         );
       })}
@@ -240,14 +240,14 @@ export function AddFilterModal({
     []
   );
 
-  const attributeClassesFiltered = useMemo(() => {
+  const contactAttributeKeysFiltered = useMemo(() => {
     if (!contactAttributeKeys) return [];
 
     if (!searchValue) return contactAttributeKeys;
 
-    return contactAttributeKeys.filter((attributeClass) => {
-      const searchValue = attributeClass.name ?? attributeClass.key;
-      return searchValue.toLowerCase().includes(searchValue.toLowerCase());
+    return contactAttributeKeys.filter((attributeKey) => {
+      const attributeValueToSeach = attributeKey.name ?? attributeKey.key;
+      return attributeValueToSeach.toLowerCase().includes(searchValue.toLowerCase());
     });
   }, [contactAttributeKeys, searchValue]);
 
@@ -276,13 +276,13 @@ export function AddFilterModal({
   const allFiltersFiltered = useMemo(
     () => [
       {
-        attributes: attributeClassesFiltered,
+        attributes: contactAttributeKeysFiltered,
         contactAttributeFiltered,
         segments: segmentsFiltered,
         devices: deviceTypesFiltered,
       },
     ],
-    [attributeClassesFiltered, deviceTypesFiltered, contactAttributeFiltered, segmentsFiltered]
+    [contactAttributeKeysFiltered, deviceTypesFiltered, contactAttributeFiltered, segmentsFiltered]
   );
 
   const getAllTabContent = () => {
@@ -317,7 +317,7 @@ export function AddFilterModal({
                       });
                     }}>
                     <TagIcon className="h-4 w-4" />
-                    <p>{attributeKey.name}</p>
+                    <p>{attributeKey.name ?? attributeKey.key}</p>
                   </div>
                 );
               })}
@@ -383,7 +383,7 @@ export function AddFilterModal({
   const getAttributesTabContent = () => {
     return (
       <AttributeTabContent
-        contactAttributeKeys={attributeClassesFiltered}
+        contactAttributeKeys={contactAttributeKeysFiltered}
         onAddFilter={onAddFilter}
         setOpen={setOpen}
       />

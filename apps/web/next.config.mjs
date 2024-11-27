@@ -236,6 +236,10 @@ const nextConfig = {
         destination: "/api/v1/client/:environmentId/identify/people/:userId",
       },
       {
+        source: "/api/v1/client/:environmentId/identify/people/:userId",
+        destination: "/api/v1/client/:environmentId/identify/contacts/:userId",
+      },
+      {
         source: "/api/v1/client/:environmentId/people/:userId/attributes",
         destination: "/api/v1/client/:environmentId/contacts/:userId/attributes",
       },

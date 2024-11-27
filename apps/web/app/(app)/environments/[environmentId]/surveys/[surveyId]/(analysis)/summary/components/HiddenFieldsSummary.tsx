@@ -57,7 +57,7 @@ export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: Hi
               {response.contact ? (
                 <Link
                   className="ph-no-capture group flex items-center"
-                  href={`/environments/${environment.id}/people/${response.contact.id}`}>
+                  href={`/environments/${environment.id}/contacts/${response.contact.id}`}>
                   <div className="hidden md:flex">
                     <PersonAvatar personId={response.contact.id} />
                   </div>

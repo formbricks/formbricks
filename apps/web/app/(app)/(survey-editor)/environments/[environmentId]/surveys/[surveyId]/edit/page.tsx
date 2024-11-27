@@ -3,7 +3,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
-  getAdvancedTargetingPermission,
+  getIsContactsEnabled,
   getMultiLanguagePermission,
   getSurveyFollowUpsPermission,
 } from "@/modules/ee/license-check/lib/utils";
@@ -86,7 +86,7 @@ const Page = async (props) => {
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
   const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
 
-  const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
+  const isUserTargetingAllowed = await getIsContactsEnabled();
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization);
 

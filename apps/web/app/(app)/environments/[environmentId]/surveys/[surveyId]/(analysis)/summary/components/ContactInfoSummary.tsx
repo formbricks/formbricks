@@ -49,7 +49,7 @@ export const ContactInfoSummary = ({
                   {response.contact ? (
                     <Link
                       className="ph-no-capture group flex items-center"
-                      href={`/environments/${environmentId}/people/${response.contact.id}`}>
+                      href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
                       <div className="hidden md:flex">
                         <PersonAvatar personId={response.contact.id} />
                       </div>

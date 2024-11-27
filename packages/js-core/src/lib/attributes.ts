@@ -59,7 +59,7 @@ export const updateAttribute = async (
       code: (res.error as ForbiddenError).code ?? "network_error",
       status: (res.error as NetworkError | ForbiddenError).status ?? 500,
       message: `Error updating person with userId ${userId}`,
-      url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`),
       responseMessage: res.error.message,
     });
   }
