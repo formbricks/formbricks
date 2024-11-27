@@ -9,12 +9,8 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { createMembership } from "@formbricks/lib/membership/service";
-import {
-  createOrganization,
-  getOrganization,
-  getOrganizationProjectsCount,
-} from "@formbricks/lib/organization/service";
-import { createProject } from "@formbricks/lib/project/service";
+import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
+import { createProject, getOrganizationProjectsCount } from "@formbricks/lib/project/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";

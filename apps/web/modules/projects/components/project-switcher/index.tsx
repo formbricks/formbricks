@@ -64,17 +64,20 @@ export const ProjectSwitcher = ({
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
-    if (isFormbricksCloud) {
+    if (isFormbricksCloud && organization.billing.plan !== "enterprise") {
       return [
         {
-          text: organization.billing.plan === "free" ? "Srart free trial" : "Upgrade",
+          text:
+            organization.billing.plan === "free"
+              ? t("environments.settings.billing.start_free_trial")
+              : t("environments.settings.billing.upgrade"),
           onClick: () => {
             setOpenLimitModal(false);
             router.push(`/environments/${environmentId}/settings/billing`);
           },
         },
         {
-          text: "Learn more",
+          text: t("environments.settings.billing.learn_more"),
           onClick: () => {
             setOpenLimitModal(false);
             router.push(`/environments/${environmentId}/settings/billing`);
@@ -85,12 +88,12 @@ export const ProjectSwitcher = ({
       if (isLicenseActive) {
         return [
           {
-            text: "Get in touch",
+            text: t("environments.settings.billing.get_in_touch"),
             href: "https://cal.com/johannes/license",
             onClick: () => setOpenLimitModal(false),
           },
           {
-            text: "Learn more",
+            text: t("environments.settings.billing.learn_more"),
             href: "https://formbricks.com/docs/self-hosting/license",
             onClick: () => setOpenLimitModal(false),
           },
@@ -99,12 +102,15 @@ export const ProjectSwitcher = ({
 
       return [
         {
-          text: organization.billing.plan === "free" ? "Srart free trial" : "Get in touch",
+          text:
+            organization.billing.plan === "free"
+              ? t("environments.settings.billing.start_free_trial")
+              : t("environments.settings.billing.get_in_touch"),
           href: "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
           onClick: () => setOpenLimitModal(false),
         },
         {
-          text: "Learn more",
+          text: t("environments.settings.billing.learn_more"),
           href: "https://formbricks.com/docs/self-hosting/license",
           onClick: () => setOpenLimitModal(false),
         },
@@ -153,7 +159,7 @@ export const ProjectSwitcher = ({
                       isTextVisible ? "opacity-0" : "opacity-100"
                     )}>
                     {project.config.channel === "link"
-                      ? "Link & Email"
+                      ? t("common.link_and_email")
                       : capitalizeFirstLetter(project.config.channel)}
                   </p>
                 </div>

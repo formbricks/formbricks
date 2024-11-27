@@ -20,18 +20,18 @@ import { z } from "zod";
 import { TProject, ZProject } from "@formbricks/types/project";
 import { updateProjectAction } from "../../actions";
 
-type EditWaitingTimeProps = {
+interface EditWaitingTimeProps {
   project: TProject;
   isReadOnly: boolean;
-};
+}
 
 const ZProjectRecontactDaysInput = ZProject.pick({ recontactDays: true });
 
-type EditWaitingTimeFormValues = z.infer<typeof ZProjectRecontactDaysInput>;
+type TEditWaitingTimeFormValues = z.infer<typeof ZProjectRecontactDaysInput>;
 
 export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ project, isReadOnly }) => {
   const t = useTranslations();
-  const form = useForm<EditWaitingTimeFormValues>({
+  const form = useForm<TEditWaitingTimeFormValues>({
     defaultValues: {
       recontactDays: project.recontactDays,
     },
@@ -41,7 +41,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ project, i
 
   const { isDirty, isSubmitting } = form.formState;
 
-  const updateWaitingTime: SubmitHandler<EditWaitingTimeFormValues> = async (data) => {
+  const updateWaitingTime: SubmitHandler<TEditWaitingTimeFormValues> = async (data) => {
     try {
       const updatedProjectResponse = await updateProjectAction({ projectId: project.id, data });
       if (updatedProjectResponse?.data) {

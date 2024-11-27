@@ -14,8 +14,8 @@ import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
-  getOrganizationProjectsCount,
 } from "@formbricks/lib/organization/service";
+import { getOrganizationProjectsCount } from "@formbricks/lib/project/service";
 import { PricingTable } from "./components/pricing-table";
 
 export const PricingPage = async (props) => {

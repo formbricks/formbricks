@@ -33,13 +33,13 @@ export const ResponseSection = async ({
 
   const t = await getTranslations();
   if (!session) {
-    throw new Error(t("common.no_session_found"));
+    throw new Error(t("common.session_not_found"));
   }
 
   const user = await getUser(session.user.id);
 
   if (!user) {
-    throw new Error(t("common.no_user_found"));
+    throw new Error(t("common.user_not_found"));
   }
 
   if (!responses) {
@@ -49,7 +49,7 @@ export const ResponseSection = async ({
   const project = await getProjectByEnvironmentId(environment.id);
 
   if (!project) {
-    throw new Error(t("common.no_product_found"));
+    throw new Error(t("common.project_not_found"));
   }
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);

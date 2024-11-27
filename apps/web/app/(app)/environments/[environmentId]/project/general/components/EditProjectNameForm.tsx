@@ -20,10 +20,10 @@ import { z } from "zod";
 import { TProject, ZProject } from "@formbricks/types/project";
 import { updateProjectAction } from "../../actions";
 
-type EditProjectNameProps = {
+interface EditProjectNameProps {
   project: TProject;
   isReadOnly: boolean;
-};
+}
 
 const ZProjectNameInput = ZProject.pick({ name: true });
 
@@ -82,7 +82,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
             render={({ field }) => (
               <FormItem>
                 <FormLabel htmlFor="name">
-                  {t("environments.project.general.whats_your_product_called")}
+                  {t("environments.project.general.whats_your_project_called")}
                 </FormLabel>
                 <FormControl>
                   <Input

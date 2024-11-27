@@ -21,7 +21,7 @@ const Loading = () => {
     },
     {
       title: t("environments.project.general.delete_project"),
-      description: t("environments.project.general.delete_product_settings_description"),
+      description: t("environments.project.general.delete_project_settings_description"),
       skeletonLines: [{ classes: "h-4 w-96" }, { classes: "h-8 w-24" }],
     },
   ];

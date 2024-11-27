@@ -20,7 +20,7 @@ export const PersonSecondaryNavigation = async ({
     project = await getProjectByEnvironmentId(environmentId);
 
     if (!project) {
-      throw new Error("Project not found");
+      throw new Error(t("common.project_not_found"));
     }
   }
 

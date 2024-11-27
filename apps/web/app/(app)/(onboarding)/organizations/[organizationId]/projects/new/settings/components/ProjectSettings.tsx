@@ -94,7 +94,7 @@ export const ProjectSettings = ({
         toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error("Project creation failed");
+      toast.error(t("organizations.projects.new.settings.project_creation_failed"));
       console.error(error);
     }
   };
@@ -151,9 +151,9 @@ export const ProjectSettings = ({
               render={({ field, fieldState: { error } }) => (
                 <FormItem className="w-full space-y-4">
                   <div>
-                    <FormLabel>{t("organizations.projects.new.settings.product_name")}</FormLabel>
+                    <FormLabel>{t("organizations.projects.new.settings.project_name")}</FormLabel>
                     <FormDescription>
-                      {t("organizations.projects.new.settings.product_name_description")}
+                      {t("organizations.projects.new.settings.project_name_description")}
                     </FormDescription>
                   </div>
                   <FormControl>

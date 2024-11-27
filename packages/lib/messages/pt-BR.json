@@ -820,7 +820,7 @@
         "this_action_cannot_be_undone": "Essa ação não pode ser desfeita.",
         "wait_x_days_before_showing_next_survey": "Espere X dias antes de mostrar a próxima pesquisa:",
         "waiting_period_updated_successfully": "Período de espera atualizado com sucesso",
-        "whats_your_product_called": "Como é o nome do seu produto?",
+        "whats_your_project_called": "Como é o nome do seu projeto?",
         "you_left_the_organization_successfully": "Você saiu da organização com sucesso"
       },
       "languages": {
@@ -1004,6 +1004,8 @@
         "free": "grátis",
         "free_description": "Pesquisas ilimitadas, membros da equipe e mais.",
         "get_2_months_free": "Ganhe 2 meses grátis",
+        "get_in_touch": "Entre em contato",
+        "learn_more": "Saiba mais",
         "link_surveys": "Link de Pesquisas (Compartilhável)",
         "logic_jumps_hidden_fields_recurring_surveys": "Pulos Lógicos, Campos Ocultos, Pesquisas Recorrentes, etc.",
         "manage_card_details": "Gerenciar Detalhes do Cartão",
@@ -1032,6 +1034,7 @@
         "unlimited_responses": "Respostas Ilimitadas",
         "unlimited_surveys": "Pesquisas Ilimitadas",
         "unlimited_team_members": "Membros Ilimitados na Equipe",
+        "upgrade": "Atualizar",
         "uptime_sla_99": "Tempo de atividade SLA (99%)",
         "website_surveys": "Pesquisas de Site"
       },
@@ -1893,8 +1896,9 @@
           "channel_settings_title": "Combine sua marca, receba 2x mais respostas.",
           "create_new_team": "Criar nova equipe",
           "link_channel_headline": "Você mantém um produto, que empolgante!",
-          "product_name": "Nome do produto",
-          "product_name_description": "Como se chama o seu produto?",
+          "project_creation_failed": "Falha ao criar o projeto",
+          "project_name": "Nome do produto",
+          "project_name_description": "Como se chama o seu produto?",
           "website_channel_headline": "Vamos aproveitar ao máximo o tráfego do seu site!"
         }
       }
@@ -1985,7 +1989,7 @@
     "book_interview": "Marcar entrevista",
     "build_product_roadmap_description": "Identifique a ÚNICA coisa que seus usuários mais querem e construa isso.",
     "build_product_roadmap_name": "Construir Roteiro do Produto",
-    "build_product_roadmap_name_with_product_name": "Entrada do Roadmap do {{projectName}}",
+    "build_product_roadmap_name_with_project_name": "Entrada do Roadmap do {{projectName}}",
     "build_product_roadmap_question_1_headline": "Quão satisfeito(a) você está com os recursos e funcionalidades do {{projectName}}?",
     "build_product_roadmap_question_1_lower_label": "Nada satisfeito",
     "build_product_roadmap_question_1_upper_label": "Super satisfeito",
@@ -2417,7 +2421,7 @@
     "identify_sign_up_barriers_question_9_dismiss_button_label": "Pular por enquanto",
     "identify_sign_up_barriers_question_9_headline": "Valeu! Aqui está seu código: SIGNUPNOW10",
     "identify_sign_up_barriers_question_9_html": "Valeu demais por tirar um tempinho pra compartilhar seu feedback 🙏",
-    "identify_sign_up_barriers_with_product_name": "Barreiras de Cadastro do {{projectName}}",
+    "identify_sign_up_barriers_with_project_name": "Barreiras de Cadastro do {{projectName}}",
     "identify_upsell_opportunities_description": "Descubra quanto tempo seu produto economiza para o usuário. Use isso para fazer upsell.",
     "identify_upsell_opportunities_name": "Identificar Oportunidades de Upsell",
     "identify_upsell_opportunities_question_1_choice_1": "Menos de 1 hora",

@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 3 * 60 * 1000; // 3 minutes in milliseconds
@@ -20,6 +20,12 @@ async function runMigration(): Promise<void> {
   await prisma.$transaction(
     async (transactionPrisma) => {
       const organization = await transactionPrisma.organization.findMany({
+        where: {
+          billing: {
+            path: ["limits", "projects"],
+            equals: Prisma.DbNull,
+          },
+        },
         select: {
           id: true,
           billing: true,

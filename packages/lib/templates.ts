@@ -4616,7 +4616,7 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
     description: translate("identify_sign_up_barriers_description", locale),
     preset: {
       ...localSurvey,
-      name: translate("identify_sign_up_barriers_with_product_name", locale),
+      name: translate("identify_sign_up_barriers_with_project_name", locale),
       questions: [
         {
           id: reusableQuestionIds[0],
@@ -5059,7 +5059,7 @@ const buildProductRoadmap = (locale: string): TTemplate => {
     description: translate("build_product_roadmap_description", locale),
     preset: {
       ...getDefaultSurveyPreset(locale),
-      name: translate("build_product_roadmap_name_with_product_name", locale),
+      name: translate("build_product_roadmap_name_with_project_name", locale),
       questions: [
         {
           id: createId(),

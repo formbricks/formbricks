@@ -29,14 +29,14 @@ import { TProject, TProjectStyling, ZProjectStyling } from "@formbricks/types/pr
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { updateProjectAction } from "../../actions";
 
-type ThemeStylingProps = {
+interface ThemeStylingProps {
   project: TProject;
   environmentId: string;
   colors: string[];
   isUnsplashConfigured: boolean;
   locale: string;
   isReadOnly: boolean;
-};
+}
 
 export const ThemeStyling = ({
   project,

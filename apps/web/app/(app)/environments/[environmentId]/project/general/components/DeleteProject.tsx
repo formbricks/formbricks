@@ -6,11 +6,11 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getUserProjects } from "@formbricks/lib/project/service";
 import { TProject } from "@formbricks/types/project";
 
-type DeleteProjectProps = {
+interface DeleteProjectProps {
   environmentId: string;
   project: TProject;
   isOwnerOrManager: boolean;
-};
+}
 
 export const DeleteProject = async ({ environmentId, project, isOwnerOrManager }: DeleteProjectProps) => {
   const t = await getTranslations();

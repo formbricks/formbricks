@@ -5,7 +5,8 @@ import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganization, getOrganizationProjectsCount } from "@formbricks/lib/organization/service";
+import { getOrganization } from "@formbricks/lib/organization/service";
+import { getOrganizationProjectsCount } from "@formbricks/lib/project/service";
 
 const OnboardingLayout = async (props) => {
   const params = await props.params;

@@ -820,7 +820,7 @@
         "this_action_cannot_be_undone": "This action cannot be undone.",
         "wait_x_days_before_showing_next_survey": "Wait X days before showing next survey:",
         "waiting_period_updated_successfully": "Waiting period updated successfully",
-        "whats_your_product_called": "What's your product called?",
+        "whats_your_project_called": "What's your project called?",
         "you_left_the_organization_successfully": "You left the organization successfully"
       },
       "languages": {
@@ -1004,6 +1004,8 @@
         "free": "Free",
         "free_description": "Unlimited Surveys, Team Members, and more.",
         "get_2_months_free": "Get 2 months free",
+        "get_in_touch": "Get in touch",
+        "learn_more": "Learn more",
         "link_surveys": "Link Surveys (Shareable)",
         "logic_jumps_hidden_fields_recurring_surveys": "Logic Jumps, Hidden Fields, Recurring Surveys, etc.",
         "manage_card_details": "Manage Card Details",
@@ -1032,6 +1034,7 @@
         "unlimited_responses": "Unlimited Responses",
         "unlimited_surveys": "Unlimited Surveys",
         "unlimited_team_members": "Unlimited Team Members",
+        "upgrade": "Upgrade",
         "uptime_sla_99": "Uptime SLA (99%)",
         "website_surveys": "Website Surveys"
       },
@@ -1893,8 +1896,9 @@
           "channel_settings_title": "Match your brand, get 2x more responses.",
           "create_new_team": "Create new team",
           "link_channel_headline": "You maintain a product, how exciting!",
-          "product_name": "Product name",
-          "product_name_description": "What is your product called?",
+          "project_creation_failed": "Project creation failed",
+          "project_name": "Product name",
+          "project_name_description": "What is your product called?",
           "website_channel_headline": "Let's get the most out of your website traffic!"
         }
       }
@@ -1985,7 +1989,7 @@
     "book_interview": "Book interview",
     "build_product_roadmap_description": "Identify the ONE thing your users want the most and build it.",
     "build_product_roadmap_name": "Build Product Roadmap",
-    "build_product_roadmap_name_with_product_name": "{{projectName}} Roadmap Input",
+    "build_product_roadmap_name_with_project_name": "{{projectName}} Roadmap Input",
     "build_product_roadmap_question_1_headline": "How satisfied are you with the features and functionality of {{projectName}}?",
     "build_product_roadmap_question_1_lower_label": "Not at all satisfied",
     "build_product_roadmap_question_1_upper_label": "Extremely satisfied",
@@ -2417,7 +2421,7 @@
     "identify_sign_up_barriers_question_9_dismiss_button_label": "Skip for now",
     "identify_sign_up_barriers_question_9_headline": "Thanks! Here is your code: SIGNUPNOW10",
     "identify_sign_up_barriers_question_9_html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>Thanks a lot for taking the time to share feedback 🙏</span></p>",
-    "identify_sign_up_barriers_with_product_name": "{{projectName}} Sign Up Barriers",
+    "identify_sign_up_barriers_with_project_name": "{{projectName}} Sign Up Barriers",
     "identify_upsell_opportunities_description": "Find out how much time your product saves your user. Use it to upsell.",
     "identify_upsell_opportunities_name": "Identify Upsell Opportunities",
     "identify_upsell_opportunities_question_1_choice_1": "Less than 1 hour",

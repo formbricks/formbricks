@@ -367,3 +367,32 @@ export const createProject = async (
     throw error;
   }
 };
+
+export const getOrganizationProjectsCount = reactCache(
+  async (organizationId: string): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZId]);
+
+        try {
+          const projects = await prisma.project.count({
+            where: {
+              organizationId,
+            },
+          });
+          return projects;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getOrganizationProjectsCount-${organizationId}`],
+      {
+        revalidate: 60 * 60 * 2, // 2 hours
+        tags: [projectCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
