@@ -29,7 +29,7 @@ export const DeleteContactButton = ({ environmentId, contactId, isReadOnly }: De
       if (deletePersonResponse?.data) {
         router.refresh();
         router.push(`/environments/${environmentId}/contacts`);
-        toast.success(t("environments.people.person_deleted_successfully"));
+        toast.success(t("environments.contacts.contact_deleted_successfully"));
       } else {
         const errorMessage = getFormattedErrorMessage(deletePersonResponse);
         toast.error(errorMessage);

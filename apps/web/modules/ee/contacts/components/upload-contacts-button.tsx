@@ -10,6 +10,7 @@ import { Modal } from "@/modules/ui/components/modal";
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -24,6 +25,7 @@ export const UploadContactsCSVButton = ({
   environmentId,
   contactAttributeKeys,
 }: UploadContactsCSVButtonProps) => {
+  const t = useTranslations();
   const router = useRouter();
 
   const errorContainerRef = useRef<HTMLDivElement | null>(null);
@@ -207,7 +209,7 @@ export const UploadContactsCSVButton = ({
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
-        Upload CSV
+        {t("common.upload")} CSV
       </Button>
       <Modal
         open={open}
@@ -235,9 +237,9 @@ export const UploadContactsCSVButton = ({
                   <FileUpIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xl font-medium text-slate-700">Upload CSV</div>
+                  <div className="text-xl font-medium text-slate-700">{t("common.upload")} CSV</div>
                   <div className="text-sm text-slate-500">
-                    Upload a CSV to quickly import contacts with attributes
+                    {t("environments.contacts.upload_contacts_modal_description")}
                   </div>
                 </div>
               </div>
@@ -268,7 +270,7 @@ export const UploadContactsCSVButton = ({
                 <div className="flex flex-col items-center justify-center pb-6 pt-5">
                   <ArrowUpFromLineIcon className="h-6 text-slate-500" />
                   <p className={cn("mt-2 text-center text-sm text-slate-500")}>
-                    <span className="font-semibold">Click or drag to upload files.</span>
+                    <span className="font-semibold">{t("common.upload_input_description")}</span>
                   </p>
                   <input
                     type="file"
@@ -282,7 +284,9 @@ export const UploadContactsCSVButton = ({
               </label>
             ) : (
               <div className="flex flex-col items-center gap-8">
-                <h3 className="font-medium text-slate-500">Here&apos;s a preview of your data.</h3>
+                <h3 className="font-medium text-slate-500">
+                  {t("environments.contacts.upload_contacts_modal_preview")}
+                </h3>
                 <div className="h-[300px] w-full overflow-auto rounded-md border border-slate-300">
                   <CsvTable data={[...csvResponse.slice(0, 11)]} />
                 </div>
@@ -292,8 +296,12 @@ export const UploadContactsCSVButton = ({
 
           {csvResponse.length > 0 ? (
             <div className="flex flex-col">
-              <h3 className="font-medium text-slate-900">Attributes</h3>
-              <p className="mb-2 text-slate-500">Attribute mappings</p>
+              <h3 className="font-medium text-slate-900">
+                {t("environments.contacts.upload_contacts_modal_attributes_title")}
+              </h3>
+              <p className="mb-2 text-slate-500">
+                {t("environments.contacts.upload_contacts_modal_attributes_description")}
+              </p>
 
               <div className="flex flex-col gap-2">
                 {csvColumns.map((column, index) => {
@@ -312,16 +320,27 @@ export const UploadContactsCSVButton = ({
           ) : null}
 
           <div className="flex flex-col">
-            <h3 className="font-medium text-slate-900">Duplicates</h3>
+            <h3 className="font-medium text-slate-900">
+              {t("environments.contacts.upload_contacts_modal_duplicates_title")}
+            </h3>
             <p className="mb-2 text-slate-500">
-              How should we handle if a contact already exists in your contacts?
+              {t("environments.contacts.upload_contacts_modal_duplicates_description")}
             </p>
             <StylingTabs
               id="duplicate-contacts"
               options={[
-                { value: "skip", label: "Skip" },
-                { value: "update", label: "Update" },
-                { value: "overwrite", label: "Overwrite" },
+                {
+                  value: "skip",
+                  label: t("environments.contacts.upload_contacts_modal_duplicates_skip_title"),
+                },
+                {
+                  value: "update",
+                  label: t("environments.contacts.upload_contacts_modal_duplicates_update_title"),
+                },
+                {
+                  value: "overwrite",
+                  label: t("environments.contacts.upload_contacts_modal_duplicates_overwrite_title"),
+                },
               ]}
               defaultSelected={duplicateContactsAction}
               onChange={(value) => setDuplicateContactsAction(value)}
@@ -331,9 +350,12 @@ export const UploadContactsCSVButton = ({
 
             <div className="mt-1">
               <p className="text-sm font-medium text-slate-500">
-                {duplicateContactsAction === "skip" && "Skips the duplicate contacts"}
-                {duplicateContactsAction === "update" && "Updates the duplicate contacts"}
-                {duplicateContactsAction === "overwrite" && "Overwrites the duplicate contacts"}
+                {duplicateContactsAction === "skip" &&
+                  t("environments.contacts.upload_contacts_modal_duplicates_skip_description")}
+                {duplicateContactsAction === "update" &&
+                  t("environments.contacts.upload_contacts_modal_duplicates_update_description")}
+                {duplicateContactsAction === "overwrite" &&
+                  t("environments.contacts.upload_contacts_modal_duplicates_overwrite_description")}
               </p>
             </div>
           </div>
@@ -349,7 +371,7 @@ export const UploadContactsCSVButton = ({
                   resetState();
                 }}
                 className="mr-2">
-                Pick a different file
+                {t("environments.contacts.upload_contacts_modal_pick_different_file")}
               </Button>
             ) : null}
 
@@ -359,7 +381,7 @@ export const UploadContactsCSVButton = ({
               onClick={handleUpload}
               loading={loading}
               disabled={loading || !csvResponse.length}>
-              Upload contacts
+              {t("environments.contacts.upload_contacts_modal_upload_btn")}
             </Button>
           </div>
         </div>

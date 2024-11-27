@@ -69,7 +69,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
-  const isContactsEnabled = features?.isContactsEnabled ?? false;
+  const isContactsEnabled = features?.contacts ?? false;
 
   let peopleCount = 0;
   let responseCount = 0;

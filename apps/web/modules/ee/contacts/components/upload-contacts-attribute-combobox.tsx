@@ -9,6 +9,7 @@ import {
   CommandList,
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 type Key = {
@@ -37,6 +38,7 @@ export const UploadContactsAttributeCombobox = ({
   setOpen,
   currentKey,
 }: ITagsComboboxProps) => {
+  const t = useTranslations();
   useEffect(() => {
     // reset search value and value when closing the combobox
     if (!open) {
@@ -73,7 +75,11 @@ export const UploadContactsAttributeCombobox = ({
           }}>
           <div className="p-1">
             <CommandInput
-              placeholder={keys?.length === 0 ? "Add attribute" : "Search or add attributes..."}
+              placeholder={
+                keys?.length === 0
+                  ? "Add attribute"
+                  : t("environments.contacts.upload_contacts_attributes_search_or_add")
+              }
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}

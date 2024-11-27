@@ -9,7 +9,7 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { UserIcon } from "lucide-react";
+import { UsersIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -96,16 +96,16 @@ export const SegmentsPage = async ({
       ) : (
         <div className="flex items-center justify-center">
           <UpgradePrompt
-            icon={<UserIcon className="h-6 w-6 text-slate-900" />}
-            title="Unlock segments with a higher plan"
-            description="Organize contacts into segments to target specific user groups"
+            icon={<UsersIcon className="h-6 w-6 text-slate-900" />}
+            title={t("environments.segments.unlock_segments_title")}
+            description={t("environments.segments.unlock_segments_description")}
             buttons={[
               {
-                text: "Upgrade",
+                text: t("common.upgrade_now"),
                 href: `/environments/${params.environmentId}/settings/billing`,
               },
               {
-                text: "Learn more",
+                text: t("common.learn_more"),
                 href: "https://formbricks.com/pricing",
               },
             ]}

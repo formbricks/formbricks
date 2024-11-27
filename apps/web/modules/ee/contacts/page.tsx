@@ -65,7 +65,9 @@ export const ContactsPage = async ({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Contacts" cta={isContactsEnabled && !isReadOnly ? AddContactsButton : undefined}>
+      <PageHeader
+        pageTitle={t("common.contacts")}
+        cta={isContactsEnabled && !isReadOnly ? AddContactsButton : undefined}>
         <ContactsSecondaryNavigation activeId="contacts" environmentId={params.environmentId} />
       </PageHeader>
 
@@ -83,11 +85,11 @@ export const ContactsPage = async ({
         <div className="flex items-center justify-center">
           <UpgradePrompt
             icon={<UserIcon className="h-6 w-6 text-slate-900" />}
-            title="Unlock contacts with a higher plan"
-            description="Manage contacts and send out targeted surveys"
+            title={t("environments.contacts.unlock_contacts_title")}
+            description={t("environments.contacts.unlock_contacts_description")}
             buttons={[
-              { text: "Upgrade now", href: `/environments/${environment.id}/settings/billing` },
-              { text: "Learn more", href: `/environments/${environment.id}/settings/billing` },
+              { text: t("common.upgrade_now"), href: `/environments/${environment.id}/settings/billing` },
+              { text: t("common.learn_more"), href: `/environments/${environment.id}/settings/billing` },
             ]}
           />
         </div>

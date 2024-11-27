@@ -38,15 +38,15 @@ export const TargetingLockedCard = ({ environmentId }: TargetingLockedCardProps)
         <div className="flex items-center justify-center">
           <UpgradePrompt
             icon={<UsersIcon className="h-6 w-6 text-slate-900" />}
-            title="Unlock targeting with a higher plan"
-            description="Target specific user groups based on attributes or device information"
+            title={t("environments.surveys.edit.unlock_targeting_title")}
+            description={t("environments.surveys.edit.unlock_targeting_description")}
             buttons={[
               {
-                text: "Upgrade",
+                text: t("common.upgrade_now"),
                 href: `/environments/${environmentId}/settings/billing`,
               },
               {
-                text: "Learn more",
+                text: t("common.learn_more"),
                 href: `/environments/${environmentId}/settings/billing`,
               },
             ]}

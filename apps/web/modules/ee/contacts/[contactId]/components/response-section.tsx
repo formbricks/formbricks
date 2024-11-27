@@ -43,7 +43,7 @@ export const ResponseSection = async ({
   }
 
   if (!responses) {
-    throw new Error(t("environments.people.no_responses_found"));
+    throw new Error(t("environments.contacts.no_responses_found"));
   }
 
   const product = await getProductByEnvironmentId(environment.id);

@@ -27,7 +27,7 @@ export const ContactsSecondaryNavigation = async ({
   const navigation = [
     {
       id: "contacts",
-      label: "Contacts",
+      label: t("common.contacts"),
       href: `/environments/${environmentId}/contacts`,
     },
     {

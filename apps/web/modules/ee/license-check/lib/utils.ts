@@ -81,7 +81,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
       // first call
       const newResult = {
         active: true,
-        features: { isMultiOrgEnabled: true, twoFactorAuth: true, sso: true, isContactsEnabled: true },
+        features: { isMultiOrgEnabled: true, twoFactorAuth: true, sso: true, contacts: true },
         lastChecked: currentTime,
       };
       await setPreviousResult(newResult);
@@ -138,7 +138,7 @@ export const getEnterpriseLicense = async (): Promise<{
     if (isValid === null) {
       const newResult = {
         active: false,
-        features: { isMultiOrgEnabled: false, twoFactorAuth: false, sso: false, isContactsEnabled: false },
+        features: { isMultiOrgEnabled: false, twoFactorAuth: false, sso: false, contacts: false },
         lastChecked: new Date(),
       };
 
@@ -314,11 +314,11 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
 export const getIsContactsEnabled = async (): Promise<boolean> => {
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult && previousResult.features ? previousResult.features.isContactsEnabled : false;
+    return previousResult && previousResult.features ? previousResult.features.contacts : false;
   }
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
-  return licenseFeatures.isContactsEnabled;
+  return licenseFeatures.contacts;
 };
 
 export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {

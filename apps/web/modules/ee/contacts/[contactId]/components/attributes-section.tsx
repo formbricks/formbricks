@@ -8,7 +8,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
   const [contact, attributes] = await Promise.all([getContact(contactId), getContactAttributes(contactId)]);
 
   if (!contact) {
-    throw new Error(t("environments.people.contact_not_found"));
+    throw new Error(t("environments.contacts.contact_not_found"));
   }
 
   const responses = await getResponsesByContactId(contactId);
@@ -23,7 +23,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
           {attributes.email ? (
             <span>{attributes.email}</span>
           ) : (
-            <span className="text-slate-300">{t("environments.people.not_provided")}</span>
+            <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>
           )}
         </dd>
       </div>
@@ -33,7 +33,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
           {attributes.language ? (
             <span>{attributes.language}</span>
           ) : (
-            <span className="text-slate-300">{t("environments.people.not_provided")}</span>
+            <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>
           )}
         </dd>
       </div>
@@ -43,7 +43,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
           {attributes.userId ? (
             <span>{attributes.userId}</span>
           ) : (
-            <span className="text-slate-300">{t("environments.people.not_provided")}</span>
+            <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>
           )}
         </dd>
       </div>

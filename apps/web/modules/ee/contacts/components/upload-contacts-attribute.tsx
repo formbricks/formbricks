@@ -1,6 +1,7 @@
 import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
 import { Badge } from "@/modules/ui/components/badge";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 
@@ -17,6 +18,7 @@ export const UploadContactsAttributes = ({
   setAttributeMap,
   csvColumn,
 }: UploadContactsAttributesProps) => {
+  const t = useTranslations();
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = useState(false);
   const [isNewTag, setIsNewTag] = useState(false);
@@ -125,7 +127,9 @@ export const UploadContactsAttributes = ({
   return (
     <div className="flex w-full items-center justify-start gap-4">
       <span className="w-20 font-medium text-slate-700">{csvColumn}</span>
-      <h4 className="text-sm font-medium text-slate-500">should be mapped to</h4>
+      <h4 className="text-sm font-medium text-slate-500">
+        {t("environments.contacts.upload_contacts_modal_attributes_should_be_mapped_to")}
+      </h4>
       <div className="flex flex-1 items-center gap-2">
         <UploadContactsAttributeCombobox
           open={open}
@@ -138,7 +142,14 @@ export const UploadContactsAttributes = ({
           createKey={handleCreateTag}
         />
 
-        {isNewTag ? <Badge size="normal" text="New Attribute" type="success" className="rounded-md" /> : null}
+        {isNewTag ? (
+          <Badge
+            size="normal"
+            text={t("environments.contacts.upload_contacts_modal_attributes_new")}
+            type="success"
+            className="rounded-md"
+          />
+        ) : null}
       </div>
     </div>
   );

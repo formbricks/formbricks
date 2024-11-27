@@ -207,7 +207,7 @@ export const ContactsTable = ({
     }
   };
 
-  const deletePerson = async (contactId: string) => {
+  const deleteContact = async (contactId: string) => {
     await deleteContactAction({ contactId });
   };
 
@@ -230,7 +230,7 @@ export const ContactsTable = ({
           table={table}
           deleteRows={deleteContacts}
           type="contact"
-          deleteAction={deletePerson}
+          deleteAction={deleteContact}
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
